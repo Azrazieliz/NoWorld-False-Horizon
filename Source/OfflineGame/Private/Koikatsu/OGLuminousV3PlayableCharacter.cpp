@@ -54,6 +54,41 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
 }
 }
 
+FOGLuminousV3AppearanceProjection FOGLuminousV3AppearancePolicy::Resolve(
+    EOGLuminousV3Wardrobe Actual,
+    bool bPrivacySfw,
+    bool bExplicitContextAuthorized,
+    bool bSafeClothedAssetAvailable)
+{
+    FOGLuminousV3AppearanceProjection Result;
+    Result.ActualWardrobe = Actual;
+    Result.bPrivacySfwEnabled = bPrivacySfw;
+    Result.bDefaultBaseAppearance = Actual == EOGLuminousV3Wardrobe::Clothed;
+    // This is a pure read-only function: no store, equipment or world writes.
+    switch (Actual)
+    {
+    case EOGLuminousV3Wardrobe::Clothed:
+        Result.EffectiveRenderedWardrobe = EOGLuminousV3Wardrobe::Clothed;
+        Result.bRenderable = bSafeClothedAssetAvailable;
+        return Result;
+    case EOGLuminousV3Wardrobe::Underwear:
+    case EOGLuminousV3Wardrobe::Nude:
+        if (bPrivacySfw || !bExplicitContextAuthorized)
+        {
+            Result.EffectiveRenderedWardrobe = EOGLuminousV3Wardrobe::Clothed;
+            Result.bMaskedForPrivacyOrUnavailableAdultContext = true;
+            Result.bRenderable = bSafeClothedAssetAvailable;
+            return Result;
+        }
+        Result.EffectiveRenderedWardrobe = Actual;
+        Result.bRenderable = true;
+        return Result;
+    default:
+        Result.bRenderable = false; // Unsupported asset: never display an old explicit pose.
+        return Result;
+    }
+}
+
 AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -155,7 +190,9 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
         Component->SetVisibility(Prepared.IsValidIndex(Index), true);
     }
     ActivePartCount = Prepared.Num();
-    CurrentWardrobe = Desired;
+    // Assign only the rendered geometry. Actual selected clothing is owned by
+    // CurrentWardrobe, never by the Privacy/SFW presentation resolver.
+    EffectiveAppearance.EffectiveRenderedWardrobe = Desired;
     CurrentNativeClip = nullptr;
     bCompatibleNativeMotion = false;
     CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
@@ -163,6 +200,67 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     if (GetMesh()) GetMesh()->SetHiddenInGame(true);
     UE_LOG(LogTemp, Display, TEXT("Gate12 Luminous: native wardrobe=%s parts=%d/45 skeletons=975"),
         WardrobeName(Desired), ActivePartCount);
+    return true;
+}
+
+bool AOGLuminousV3PlayableCharacter::IsIsolatedWardrobeQAContext() const
+{
+    return bRunNonPersistentWardrobeQACycle || bRunNativeMotionQACycle ||
+        bEnableNativeWardrobeQATouchPanel || bEnterWorldModeOnIsolatedQAStartup;
+}
+
+void AOGLuminousV3PlayableCharacter::ConcealUnsafeVisualParts()
+{
+    for (USkeletalMeshComponent* Part : RuntimeParts)
+    {
+        if (Part) Part->SetVisibility(false, true);
+    }
+}
+
+bool AOGLuminousV3PlayableCharacter::RefreshPrivacyRenderedAppearance()
+{
+    // Only the rendered representation is changed by Privacy. The actual
+    // wardrobe, equipment, identity, Manifestation and canonical DB remain
+    // completely untouched by this method.
+    const bool bPrivacy = GetSfwPresentation();
+    const bool bQAAuthorized = IsIsolatedWardrobeQAContext();
+    const bool bHasSafeBase = ClothedNativeParts.Num() ==
+        ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed);
+    const FOGLuminousV3AppearanceProjection Decision =
+        FOGLuminousV3AppearancePolicy::Resolve(
+            CurrentWardrobe, bPrivacy, bQAAuthorized, bHasSafeBase);
+
+    if (!Decision.bRenderable)
+    {
+        ConcealUnsafeVisualParts();
+        EffectiveAppearance = Decision;
+        LastLuminousError =
+            TEXT("No safe/authorized Luminous presentation can be rendered.");
+        return false;
+    }
+
+    if (!bLuminousReady ||
+        Decision.EffectiveRenderedWardrobe != EffectiveAppearance.EffectiveRenderedWardrobe ||
+        ActivePartCount != ExpectedPartsFor(Decision.EffectiveRenderedWardrobe))
+    {
+        FString Error;
+        if (!ApplyVisualWardrobe(Decision.EffectiveRenderedWardrobe, Error))
+        {
+            ConcealUnsafeVisualParts();
+            LastLuminousError = Error;
+            return false;
+        }
+    }
+
+    EffectiveAppearance = Decision;
+    bLastAppliedPrivacy = bPrivacy;
+    bLastAppliedExplicitContext = bQAAuthorized;
+    UE_LOG(LogTemp, Display,
+        TEXT("G12_LUMINOUS_PRIVACY_RENDER_ONLY actual=%s effective=%s sfw=%d masked=%d"),
+        WardrobeName(CurrentWardrobe),
+        WardrobeName(EffectiveAppearance.EffectiveRenderedWardrobe),
+        bPrivacy ? 1 : 0,
+        Decision.bMaskedForPrivacyOrUnavailableAdultContext ? 1 : 0);
     return true;
 }
 
@@ -249,9 +347,11 @@ bool AOGLuminousV3PlayableCharacter::RestoreCanonicalWardrobe()
     EOGLuminousV3Wardrobe Saved;
     if (!Outfit->TryGetStringField(TEXT("luminous_v3_wardrobe"), Value) || !ParseWardrobe(Value, Saved))
         return false;
-    if (!ApplyVisualWardrobe(Saved, Error))
+    const EOGLuminousV3Wardrobe Before = CurrentWardrobe;
+    CurrentWardrobe = Saved;
+    if (!RefreshPrivacyRenderedAppearance())
     {
-        LastLuminousError = Error;
+        CurrentWardrobe = Before;
         return false;
     }
     return true;
@@ -269,13 +369,34 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousWardrobe(
         FOGFoundationCharacterContext Context;
         if (!ResolveCanonicalControlledContext(Context, LastLuminousError)) return false;
     }
+    // Production explicit-asset eligibility must come from accepted Gate11
+    // character lore/asset contracts. No writable Blueprint override or guessed
+    // maturity flag is trusted. Only isolated engineering QA may preview them.
+    if (Desired != EOGLuminousV3Wardrobe::Clothed &&
+        !IsIsolatedWardrobeQAContext())
+    {
+        LastLuminousError =
+            TEXT("Explicit outfit selection requires approved canonical adult context; only isolated QA can preview it.");
+        return false;
+    }
+    if (!ValidateWardrobeAssets(Desired, LastLuminousError)) return false;
+
     const EOGLuminousV3Wardrobe Before = CurrentWardrobe;
-    if (!bLuminousReady || Desired != CurrentWardrobe)
-        if (!ApplyVisualWardrobe(Desired, LastLuminousError)) return false;
+    CurrentWardrobe = Desired;
+    if (!RefreshPrivacyRenderedAppearance())
+    {
+        const FString FailedRenderError = LastLuminousError;
+        CurrentWardrobe = Before;
+        RefreshPrivacyRenderedAppearance();
+        LastLuminousError = FailedRenderError;
+        return false;
+    }
     if (bPersist && !PersistCanonicalWardrobe(Desired, LastLuminousError))
     {
-        FString RollbackError;
-        if (Before != Desired) ApplyVisualWardrobe(Before, RollbackError);
+        const FString FailedSaveError = LastLuminousError;
+        CurrentWardrobe = Before;
+        RefreshPrivacyRenderedAppearance();
+        LastLuminousError = FailedSaveError;
         return false;
     }
     return true;
@@ -329,7 +450,9 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     case EOGLuminousV3MotionPhase::Jump: Clips = &NativeJumpByWardrobe; break;
     default: return nullptr;
     }
-    const int32 State = static_cast<int32>(CurrentWardrobe);
+    // Animation must follow the ACTUALLY RENDERED 975-bone skeleton, which
+    // can differ from the real clothing state under Privacy/SFW masking.
+    const int32 State = static_cast<int32>(EffectiveAppearance.EffectiveRenderedWardrobe);
     if (!Clips || Clips->Num() != 3 || !Clips->IsValidIndex(State)) return nullptr;
     if (!(*Clips)[State].ToString().StartsWith(
         TEXT("/Game/Experimental/LuminousValentineV3/NativeMocapV3/"))) return nullptr;
@@ -410,9 +533,10 @@ void AOGLuminousV3PlayableCharacter::BeginPlay()
 {
     Super::BeginPlay();
     FString Error;
-    if (!ApplyVisualWardrobe(InitialWardrobe, Error))
+    CurrentWardrobe = InitialWardrobe;
+    if (!RefreshPrivacyRenderedAppearance())
     {
-        LastLuminousError = Error;
+        const FString Error = LastLuminousError;
         UE_LOG(LogTemp, Error, TEXT("Gate12 Luminous native startup failed: %s"), *Error);
         return;
     }
@@ -446,6 +570,13 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     if (!bLuminousReady || !GetWorld()) return;
+    if (GetSfwPresentation() != bLastAppliedPrivacy ||
+        IsIsolatedWardrobeQAContext() != bLastAppliedExplicitContext)
+    {
+        // Device Privacy is non-authoritative, so toggling it cannot call
+        // SetLuminousWardrobe(bPersist=true) or modify the canonical store.
+        RefreshPrivacyRenderedAppearance();
+    }
     if (bEnableNativeWardrobeQATouchPanel && !WardrobeQAWidget &&
         IsLocallyControlled() && GetController())
     {
