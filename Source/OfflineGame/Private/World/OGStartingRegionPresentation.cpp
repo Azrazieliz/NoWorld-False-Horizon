@@ -49,6 +49,7 @@
 #include "ProceduralMeshComponent.h"
 #include "Runtime/OGAndroidBackupDocumentBridge.h"
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGPlayerProfileSettings.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "Runtime/OGReportService.h"
@@ -5526,15 +5527,38 @@ void AOGWorldPresentationHud::DrawFoundationText(const FString& Text, FLinearCol
 
 FOGEntityId AOGWorldPresentationHud::GetFoundationRulerPresentationOwner() const
 {
-    return FoundationRulerOwner.IsValid()
-        ? FoundationRulerOwner
-        : FoundationRulerProjectionId();
+    // Never invent a Ruler to make an empty shell look populated.
+    if (UGameInstance* GameInstance = GetGameInstance())
+    {
+        if (UOGGate12RulerSessionSubsystem* Session =
+                GameInstance->GetSubsystem<UOGGate12RulerSessionSubsystem>())
+        {
+            if (Session->IsBoundToStoredRuler())
+            {
+                return Session->BoundRulerId;
+            }
+        }
+    }
+    return FOGEntityId();
 }
 
 void AOGWorldPresentationHud::SetFoundationRulerPresentationOwner(
     const FOGEntityId& RulerId)
 {
-    FoundationRulerOwner = RulerId;
+    FString Error;
+    UOGGate12RulerSessionSubsystem* Session = GetGameInstance()
+        ? GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>()
+        : nullptr;
+    if (!Session || !Session->BindExistingRuler(RulerId, Error))
+    {
+        FoundationRulerOwner = FOGEntityId();
+        FoundationStatusMessage = Error.IsEmpty()
+            ? TEXT("No validated Ruler owner available.")
+            : Error;
+        return;
+    }
+    FoundationRulerOwner = Session->BoundRulerId;
+    FoundationStatusMessage.Reset();
     SelectedRosterIndex = INDEX_NONE;
     SelectedManifestationIndex = INDEX_NONE;
     SelectedTerritoryIndex = INDEX_NONE;
@@ -9853,9 +9877,12 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
     if (BoxName == FName(TEXT("OG.Opening.Continue")))
     {
         OpeningPage = FName(TEXT("main"));
+        RulerDestination = FName(TEXT("home"));
         Character->SetFoundationSettingsOpen(false);
         Character->SetFoundationPauseMenuOpen(false);
-        SetFoundationSurface(FName(TEXT("world")));
+        // The player-facing Continue path enters the portrait Ruler Home.
+        // World remains accessible through the separate Ruler->World action.
+        SetFoundationSurface(FName(TEXT("ruler")));
         return;
     }
 
