@@ -1,6 +1,9 @@
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Koikatsu/OGLuminousV3WardrobeQAWidget.h"
 
 #include "Animation/AnimSequence.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/InputComponent.h"
 #include "Animation/Skeleton.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Combat/OGDiagnosticCombatComponent.h"
@@ -382,6 +385,27 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
     }
 }
 
+void AOGLuminousV3PlayableCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
+    if (!PlayerInputComponent) return;
+    PlayerInputComponent->BindKey(EKeys::Gamepad_DPad_Right, IE_Pressed,
+        this, &AOGLuminousV3PlayableCharacter::CycleLuminousWardrobeFromGamepad);
+    PlayerInputComponent->BindKey(EKeys::T, IE_Pressed,
+        this, &AOGLuminousV3PlayableCharacter::CycleLuminousWardrobeFromGamepad);
+}
+
+void AOGLuminousV3PlayableCharacter::CycleLuminousWardrobeFromGamepad()
+{
+    if (!bEnableNativeWardrobeQATouchPanel) return;
+    const int32 NextIndex = (static_cast<int32>(CurrentWardrobe) + 1) % 3;
+    const bool bSuccess = SetLuminousWardrobe(
+        static_cast<EOGLuminousV3Wardrobe>(NextIndex), false);
+    UE_LOG(LogTemp, Display,
+        TEXT("G12_LUMINOUS_GAMEPAD_WARDROBE_CYCLE=%d result=%s"),
+        NextIndex, bSuccess ? TEXT("PASS") : TEXT("FAIL"));
+}
+
 void AOGLuminousV3PlayableCharacter::BeginPlay()
 {
     Super::BeginPlay();
@@ -395,14 +419,16 @@ void AOGLuminousV3PlayableCharacter::BeginPlay()
     // Only applies if the selected saved canonical character is *actually*
     // this Gate11 Luminous identity; it cannot overwrite a Ruler/another copy.
     RestoreCanonicalWardrobe();
-    if (bRunNonPersistentWardrobeQACycle && bLuminousReady && GetWorld())
+    if ((bRunNonPersistentWardrobeQACycle || bEnterWorldModeOnIsolatedQAStartup) &&
+        bLuminousReady && GetWorld())
         GetWorldTimerManager().SetTimer(QAWorldModeTimer, this,
             &AOGLuminousV3PlayableCharacter::ActivateNativeQAWorldMode, 1.25f, false);
 }
 
 void AOGLuminousV3PlayableCharacter::ActivateNativeQAWorldMode()
 {
-    if (!bRunNonPersistentWardrobeQACycle || !bLuminousReady || !GetWorld()) return;
+    if ((!bRunNonPersistentWardrobeQACycle && !bEnterWorldModeOnIsolatedQAStartup) ||
+        !bLuminousReady || !GetWorld()) return;
     UGameInstance* GI = GetGameInstance();
     UOGPresentationModeSubsystem* Presentation = GI ? GI->GetSubsystem<UOGPresentationModeSubsystem>() : nullptr;
     if (!Presentation)
@@ -420,6 +446,18 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     if (!bLuminousReady || !GetWorld()) return;
+    if (bEnableNativeWardrobeQATouchPanel && !WardrobeQAWidget &&
+        IsLocallyControlled() && GetController())
+    {
+        WardrobeQAWidget = CreateWidget<UOGLuminousV3WardrobeQAWidget>(
+            GetWorld(), UOGLuminousV3WardrobeQAWidget::StaticClass());
+        if (WardrobeQAWidget)
+        {
+            WardrobeQAWidget->SetTargetCharacter(this);
+            WardrobeQAWidget->AddToViewport(70);
+            UE_LOG(LogTemp, Display, TEXT("G12_LUMINOUS_TOUCH_WARDROBE_PANEL=CREATED"));
+        }
+    }
     const float Now = GetWorld()->GetTimeSeconds();
     if (bRunNonPersistentWardrobeQACycle && QACycleStep < 3 &&
         Now >= QANextCycleSeconds)
@@ -465,6 +503,11 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
 
 void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
+    if (WardrobeQAWidget)
+    {
+        WardrobeQAWidget->RemoveFromParent();
+        WardrobeQAWidget = nullptr;
+    }
     GetWorldTimerManager().ClearTimer(QAWorldModeTimer);
     CurrentNativeClip = nullptr;
     RuntimeParts.Reset();

@@ -8,6 +8,8 @@
 class USkeletalMesh;
 class USkeletalMeshComponent;
 class UAnimSequence;
+class UInputComponent;
+class UOGLuminousV3WardrobeQAWidget;
 
 /** Three clothing states of one canonical character; never Manifestations. */
 UENUM(BlueprintType)
@@ -76,6 +78,13 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|QA")
     bool bRunNativeMotionQACycle = false;
 
+    /** Mobile/gamepad wardrobe QA controls, disabled by default and never substitutes Gate10 UI. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|QA")
+    bool bEnableNativeWardrobeQATouchPanel = false;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|QA")
+    bool bEnterWorldModeOnIsolatedQAStartup = false;
+
     /**
      * If bPersist=false: local engineering/preview wardrobe switch.
      * If bPersist=true: must target the selected matching canonical Luminous
@@ -102,6 +111,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void Tick(float DeltaSeconds) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
@@ -111,6 +121,11 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnimSequence> CurrentNativeClip;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UOGLuminousV3WardrobeQAWidget> WardrobeQAWidget;
+
+    void CycleLuminousWardrobeFromGamepad();
 
     int32 ActivePartCount = 0;
     bool bCompatibleNativeMotion = false;
