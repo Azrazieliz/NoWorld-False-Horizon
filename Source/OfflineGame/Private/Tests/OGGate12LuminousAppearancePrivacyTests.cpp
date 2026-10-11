@@ -75,9 +75,9 @@ bool FOGGate12LuminousPrivacyPreservesSqliteTest::RunTest(const FString&)
     const FString SecondJson =
         TEXT("{\"luminous_v3_wardrobe\":\"UNDERWEAR\",\"relationship\":\"preserved\"}");
 
-    if (bOk) bOk = Store.UpsertEntity(Ruler, TEXT("ruler"), 0, TEXT("{}"), Error) &&
-        Store.UpsertEntity(First, TEXT("character"), 0, TEXT("{}"), Error) &&
-        Store.UpsertEntity(Second, TEXT("character"), 0, TEXT("{}"), Error);
+    if (bOk) bOk = Store.UpsertEntity(Ruler, FName(TEXT("ruler")), 0, TEXT("{}"), Error) &&
+        Store.UpsertEntity(First, FName(TEXT("character")), 0, TEXT("{}"), Error) &&
+        Store.UpsertEntity(Second, FName(TEXT("character")), 0, TEXT("{}"), Error);
     for (int32 Index = 0; bOk && Index < 2; ++Index)
     {
         FOGCharacterManifestationRecord Manifestation;
