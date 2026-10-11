@@ -1,0 +1,140 @@
+{
+  "status": "FAIL_ANATOMICAL_HINGE_AXIS_CONTRACT",
+  "source": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\full_fidelity_primitive_shards\\Mesh_03_Prim_00.glb",
+  "tested": 8,
+  "longitudinal_twist_rejections": 8,
+  "unreal_engine_native_axes_verified": false,
+  "user_visual_motion_quality": "FAIL_OBSERVED",
+  "current_76_native_animations_skeleton_compatible": true,
+  "current_76_native_animations_anatomically_approved": false,
+  "findings": [
+    {
+      "joint": "thigh_l",
+      "child": "calf_l",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        -0.018244989216327667,
+        -0.4080132842063904,
+        -0.006937678903341293
+      ],
+      "absolute_axis_bone_dot": 0.998858,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    },
+    {
+      "joint": "thigh_r",
+      "child": "calf_r",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        0.018245063722133636,
+        -0.4080132246017456,
+        -0.007028661668300629
+      ],
+      "absolute_axis_bone_dot": 0.998854,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    },
+    {
+      "joint": "calf_l",
+      "child": "Left ankle",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        -0.018911872059106827,
+        -0.4295331835746765,
+        0.0267754178494215
+      ],
+      "absolute_axis_bone_dot": 0.9971,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    },
+    {
+      "joint": "calf_r",
+      "child": "Right ankle",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        0.01891116425395012,
+        -0.42952415347099304,
+        0.026676766574382782
+      ],
+      "absolute_axis_bone_dot": 0.997115,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    },
+    {
+      "joint": "upperarm_l",
+      "child": "lowerarm_l",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        0.04129263013601303,
+        -0.21810901165008545,
+        -0.03459721803665161
+      ],
+      "absolute_axis_bone_dot": 0.970826,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    },
+    {
+      "joint": "upperarm_r",
+      "child": "lowerarm_r",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        -0.04201965034008026,
+        -0.21800601482391357,
+        -0.03468182682991028
+      ],
+      "absolute_axis_bone_dot": 0.970161,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    },
+    {
+      "joint": "lowerarm_l",
+      "child": "hand_l",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        -0.027680929750204086,
+        0.20222485065460205,
+        -0.007268059998750687
+      ],
+      "absolute_axis_bone_dot": 0.990134,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    },
+    {
+      "joint": "lowerarm_r",
+      "child": "hand_r",
+      "v2_rotation_axis": [
+        0,
+        1,
+        0
+      ],
+      "reference_bone_direction_local": [
+        -0.02815684676170349,
+        0.20215816795825958,
+        0.007293331436812878
+      ],
+      "absolute_axis_bone_dot": 0.989808,
+      "classification": "REJECT_ROTATES_NEAR_BONE_LONG_AXIS"
+    }
+  ]
+}
