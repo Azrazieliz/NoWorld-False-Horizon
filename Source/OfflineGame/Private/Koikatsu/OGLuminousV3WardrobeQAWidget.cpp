@@ -50,9 +50,9 @@ void UOGLuminousV3WardrobeQAWidget::NativeOnInitialized()
         return Button;
     };
 
-    UButton* Clothed = AddButton(TEXT("CLOTHED"), FLinearColor(0.1f, 0.19f, 0.3f));
-    UButton* Underwear = AddButton(TEXT("UNDERWEAR"), FLinearColor(0.21f, 0.15f, 0.25f));
-    UButton* Nude = AddButton(TEXT("NUDE"), FLinearColor(0.25f, 0.16f, 0.18f));
+    UButton* Clothed = AddButton(TEXT("QA CLOTHED"), FLinearColor(0.1f, 0.19f, 0.3f));
+    UButton* Underwear = AddButton(TEXT("QA UNDERWEAR"), FLinearColor(0.21f, 0.15f, 0.25f));
+    UButton* Nude = AddButton(TEXT("QA NUDE"), FLinearColor(0.25f, 0.16f, 0.18f));
     if (Clothed) Clothed->OnClicked.AddDynamic(this, &ThisClass::OnClothedClicked);
     if (Underwear) Underwear->OnClicked.AddDynamic(this, &ThisClass::OnUnderwearClicked);
     if (Nude) Nude->OnClicked.AddDynamic(this, &ThisClass::OnNudeClicked);
