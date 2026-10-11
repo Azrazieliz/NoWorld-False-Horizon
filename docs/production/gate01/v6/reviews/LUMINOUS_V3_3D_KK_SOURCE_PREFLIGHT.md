@@ -1,9 +1,23 @@
-# Luminous Valentine — 3D source preflight (2026-10-11)
+# Gate 01 — Luminous Valentine 3D source intake UPDATED 2026-10-11
 
-**Current actual status:** 2D v3 APPROVED, native KK source NOT ACQUIRED, Koikatsu Party load NOT VERIFIED, derived model/GLB NONE, Gate 11/Gate 12 PASS NOT CLAIMED.
+## Authenticated source discovered
+User uploaded **one genuine embedded-data Koikatsu Party character-card PNG** corresponding to previously discovered Luminous Valentine source listing `https://koikatsucards.com/contents/pixiv-121515691` (creator attributed by listing to うまべや（休業）, original Pixiv `https://www.pixiv.net/artworks/121515691`). The previous claim that the uploaded 252×352 file was merely a preview was INCORRECT; image dimensions do not determine embedded data presence.
 
-- Single most relevant source candidate: https://koikatsucards.com/contents/pixiv-121515691 (creator うまべや（休業）, original https://www.pixiv.net/artworks/121515691). Source images appear character-specific. Listing labels itself unverified; download redirects to unavailable local login. No full-size image file was obtained; no authentic KK data, author rights or Party load can yet be verified.
-- Excluded other source: https://payhip.com/b/9sxge explicitly says its PNG is an Emotion Creators card convertible to KK; not a genuine KK baseline.
-- Existing Windows Koikatsu Party installation contains BepInEx Sideloader and relevant plugins but only one pose ZIPMOD under active mods. Gate 1.5 HF Patch v4.2 and other ZIPMOD files remain STAGED, not installed.
-- Approved immutable 2D master 941x1672, 1939595 bytes, SHA-256 daea9a014a250a5e74dcbfc707bd0829992fc91d321d217fb690dad727d50413. A portable ZIP with full image + modeling spec is available in its ChatGPT conversation, not currently mounted on Windows workstation.
-- Gate 01 must secure a genuine source card or request explicit original-build exception. Only after genuine Party load and copy preservation may specific 3D modeling and exact-frozen comparison begin. Do not use a generic KK card or pretend a screenshot is an editable model.
+**Raw user-supplied bytes**: 14,461,753 bytes, SHA-256 `995e533c63f5db60a1d1dc6bd0ba6fc5a94b5704e1a7f94ac489e764d60e85a8`. The 252x352 visible PNG ends at byte 157143. Appended block contains `【KoiKatuChara】`, a nested PNG and a parsed MessagePack block directory with `Custom` (3672), `Coordinate` (70732), `Parameter` (595), `Status` (767), and `KKEx` (14082625). The extended character content references additional custom hairstyles and outfit assets including HEXA/Quokka. **This establishes a native-format KK card structure, but NOT an actual successful Party import/visible model.**
+
+The card was preserved bit-for-bit and packaged in the conversation artifact `Gate01_LuminousValentine_KK_Authentic_Source_Intake_20261011.zip` alongside:
+- Frozen 2D master `Gate01_Luminous_Valentine_LN_2D_FROZEN_2026-10-11.png` 941x1672 RGB, 1,939,595 bytes, SHA-256 `daea9a014a250a5e74dcbfc707bd0829992fc91d321d217fb690dad727d50413`.
+- SHA256SUMS, structure and plugin inventory, staged read-only importer.
+- No other candidate source cards. **No original-model fallback needed for this commission.**
+
+## Current engineering boundary
+The uploaded original PNG **resides in the current ChatGPT artifact runtime**; it is **NOT** mounted in the authorized Windows workstation's `Koikatsu Party/UserData/chara/female`. User needs to download the 15-MB intake ZIP into the connected PC's Downloads directory, after which Gate01 can stage via verified SHA and test in real Party. Never claim remote delivery or physical Party load before observed.
+
+Windows Party preflight detected BepInEx KKAPI, Sideloader, KKBP Exporter and MoreAccessories; only one installed pose ZIPMOD in `mods`. Gate 1.5 HF Patch v4.2 and other packs are STAGED and not installed, so missing hair/outfit assets and plugin-dependent appearance remain expected risks. Observe actual effect before adding mods; back up saves and avoid duplicate dependency installs.
+
+Frozen Foundation `3f54f07cacbf193e160d0be15a7be5a7bc730c3b`, existing saves, unmerged PR16 and G12-KK-NONANIM reference untouched.
+
+## Gate flags
+2D_APPROVED=true; RAW_KK_SOURCE_RECEIVED=true; EMBEDDED_KK_BLOCKS_PARSED=true; WINDOWS_PARTY_SOURCE_COPIED=false; PARTY_LOAD_VERIFIED=false; MODEL_RECONSTRUCTED=false; GATE00_3D_FIDELITY_APPROVED=false; GATE11_ARTIFACT_READY=false; GATE12_NATIVE_PASS=false; GATE12_ANDROID_PASS=false.
+
+Original creator rights for game redistribution have not been established; retain provenance and do not distribute source card assets in shipped build until reviewed.
