@@ -1,0 +1,1739 @@
+{
+  "schema": "GATE12_LUMINOUS_V3_AUTHORITATIVE_CONTINUATION_MANIFEST_20261011",
+  "generated_at_utc": "2026-10-11T18:59:44.591027+00:00",
+  "device": {
+    "name": "LAPTOP-1LI4VRCJ",
+    "id": "3f193111-df57-4fc2-9e4f-1c4d8e8a5d87",
+    "target_phone": "Samsung Galaxy S26 Ultra SM-S948B",
+    "adb_serial": "R3GYC0LSC7K"
+  },
+  "paths": {
+    "isolated_ue_worktree": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010",
+    "frozen_foundation": "D:\\UnrealProjects\\Offline-Game",
+    "intake_and_conversions": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011",
+    "native_journals": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3",
+    "lossless_source_shards": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\LosslessSources",
+    "original_party_install": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party",
+    "pipeline_scripts": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline",
+    "new_luminous_native_ue_uassets": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts",
+    "source_cards": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INPUTS"
+  },
+  "git": {
+    "branch": "production/gate12-koikatsu-ue583-fixture-20261010",
+    "head_at_checkpoint": "f67ec16e7349f366b29c25a9ecdbe39f835dac14",
+    "remote": "https://github.com/Azrazieliz/Offline-Game.git",
+    "frozen_foundation_commit": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+    "known_open_draft_pr": "16"
+  },
+  "source_archive": {
+    "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE00_LUMINOUS_V3_Koikatsu_3D_Source_and_Registry_Intake_20261011.zip",
+    "exists": true,
+    "bytes": 95313987,
+    "sha256": "0fd7d10d09b925bbd27ae26771a3559d6664171984c1c916e0cc0bc96c62f782"
+  },
+  "intake": {
+    "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INTAKE_RECEIPT.json",
+    "exists": true,
+    "bytes": 3386,
+    "sha256": "eb02483ae86ec48e7fd15d5cabaaa3000a5ebdda94f6669d9a16364b60374ce7"
+  },
+  "kkbp_exporter_restoration": {
+    "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\KKBP_EXPORTER_SINGLE_DLL_RESTORE_RECEIPT.json",
+    "exists": true,
+    "bytes": 947,
+    "sha256": "c3955a41f04480e1d01e9fd5a589e6ad570b95e8a51bce56d1004fb8f48da037"
+  },
+  "animation_source_probe": {
+    "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\KOIKATSU_INSTALLED_ANIMATION_CLIP_READONLY_PROBE.json",
+    "exists": true,
+    "bytes": 8765,
+    "sha256": "8a6b3b6deb256c37166375525c9f5847062605032742febfa4265764952848f3"
+  },
+  "animation_native_curve_probe": {
+    "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\KOIKATSU_ANIMATION_NATIVE_CURVE_STRUCTURE.json",
+    "exists": true,
+    "bytes": 5336,
+    "sha256": "09a6fe431c41fd528c7595b8f292d60d2228b8e3fa7a10afc29ca2fdada46b9f"
+  },
+  "states": {
+    "CLOTHED": {
+      "card_source": {
+        "sha256": "34f4ee644087797cdad955dcc53f69a90479136b582a4359bf3eaa3673e04424",
+        "bytes": 14469657,
+        "source": "user_saved_Koikatsu_Party_card_embedded_character_data",
+        "embedded_coordinate_zero_outfit_part_ids": [
+          2,
+          790,
+          12,
+          101,
+          1881,
+          102,
+          0,
+          2,
+          15
+        ],
+        "matching_primary_user_saved_party_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261011125548298_バレンタイン ルミナス.png",
+        "sealed_staging_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INPUTS\\CLOTHED.png"
+      },
+      "real_party_export": {
+        "status": "PASS_REAL_PARTY_KKBP_PMX_TEXTURE_METADATA_EXPORT_COPIED_AND_HASHED",
+        "files": 322,
+        "bytes": 117744979,
+        "source_dir": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\Export_PMX\\20261011185636_バレンタインLuminous",
+        "sealed_export_dir": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_PARTY_EXPORTS\\CLOTHED",
+        "underlying_file_inventory_embedded_in_receipt": 322
+      },
+      "blender": {
+        "status": "PASS_REAL_PRIMARY_PARTY_SOURCE_BLENDER_FBX_GLB_EXPORTED_PENDING_INDEPENDENT_VALIDATION",
+        "geometry": {
+          "object_count": 7,
+          "mesh_count": 6,
+          "vertices": 57221,
+          "faces": 92505,
+          "skin_armature_count": 1,
+          "armature_bones": 975,
+          "shape_keys": 2160,
+          "material_count": 71,
+          "image_count": 126
+        },
+        "steps": [
+          "VERIFIED_PRIMARY_KKBP_SOURCE",
+          "BLENDER_ADDONS_REGISTERED",
+          "KKBP_NATIVE_REAL_IMPORT",
+          "EDITABLE_BLENDER_SOURCE_SAVED",
+          "FBX_NATIVE_SKELETON_EXPORTED",
+          "GLB_SKIN_MORPH_TEXTURE_EXPORTED"
+        ]
+      },
+      "glb": {
+        "status": "PASS_REAL_SOURCE_GEOMETRY_SKINS_UVS_IMAGES_WITH_MORPH_LINKS",
+        "source_joint_count": [
+          975
+        ],
+        "mesh_primitives": 45,
+        "morph_slots": 5556,
+        "textures": 40,
+        "material_count": 45
+      },
+      "lossless_shards": {
+        "status": "SOURCE_LOSSLESS_SHARDS_VERIFIED",
+        "count": 45,
+        "source_sha256": "c1efbc9d1e0a09d840201922de9634147b359828cdfc59e5a79c7f723891c441",
+        "all_shard_sha256_in_manifest": true
+      },
+      "effective_morphs": {
+        "nominal": 5556,
+        "nonzero_position": 595
+      },
+      "critical_files": {
+        "primary_party_card": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INPUTS\\CLOTHED.png",
+          "exists": true,
+          "bytes": 14469657,
+          "sha256": "34f4ee644087797cdad955dcc53f69a90479136b582a4359bf3eaa3673e04424"
+        },
+        "primary_party_pmx": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_PARTY_EXPORTS\\CLOTHED\\model.pmx",
+          "exists": true,
+          "bytes": 11282478,
+          "sha256": "62b1112ebe4b52d4ecaabf0fa990501525505ccfbf97a6d05577ecd05fffcf33"
+        },
+        "blender_editable": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\CLOTHED\\LUMINOUS_V3_CLOTHED_original_import.blend",
+          "exists": true,
+          "bytes": 144530342,
+          "sha256": "03a84054fd3031bbfdbe6c76ed505ec3c80a4ed2f4fae157b8f39bab0824a6cb"
+        },
+        "fbx_with_bones": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\CLOTHED\\LUMINOUS_V3_CLOTHED_native.fbx",
+          "exists": true,
+          "bytes": 48869740,
+          "sha256": "09fc0b9a6111a33dda63e3d95e6c8b683fd8cb4306157723a0c7755365dec38a"
+        },
+        "skinned_morphed_glb": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\CLOTHED\\LUMINOUS_V3_CLOTHED_skinned.glb",
+          "exists": true,
+          "bytes": 53022612,
+          "sha256": "c1efbc9d1e0a09d840201922de9634147b359828cdfc59e5a79c7f723891c441"
+        },
+        "export_receipt": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_EXPORT_CLOTHED_RECEIPT.json",
+          "exists": true,
+          "bytes": 58390,
+          "sha256": "db1afe000eb131f2ba3e1992530426c381f3883cbf5352fb76dcb75ff9614e14"
+        },
+        "blend_receipt": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\CLOTHED\\GATE12_FRESH_BLENDER_CONVERSION_RECEIPT.json",
+          "exists": true,
+          "bytes": 46173,
+          "sha256": "00f8336f2b23d1aeaa568848beeff51a6893ac8959c25b0a5354e0c22cc71ad1"
+        },
+        "glb_audit": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\CLOTHED\\GATE12_GLTF_REAL_GEOMETRY_MORPH_AUDIT.json",
+          "exists": true,
+          "bytes": 10517,
+          "sha256": "b79be0173f50700c190935c2885a8487639f50a7a8b0e9d67d481486b7909a4d"
+        },
+        "shard_manifest": {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\LosslessSources\\LuminousV3CLOTHED\\shards\\manifest_full_fidelity_primitives.json",
+          "exists": true,
+          "bytes": 272316,
+          "sha256": "5352c42bb0fc4a62c6d600fe181986315e3d18fe0c2efd9f4b9ce09f20e499c3"
+        },
+        "nonzero_morph_inventory": {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\CLOTHED\\source_shards_actual_nonzero_morph_inventory.json",
+          "exists": true,
+          "bytes": 14839,
+          "sha256": "d242fa80ea90bffd207dad9d471a6d779d86783780a6f16680a7d6bc599a6a3c"
+        }
+      }
+    },
+    "UNDERWEAR": {
+      "card_source": {
+        "sha256": "f9770a7432fb32433b701b33b064786ad021e1ac7eccfd6f339211b0af4524d5",
+        "bytes": 14448326,
+        "source": "user_saved_Koikatsu_Party_card_embedded_character_data",
+        "embedded_coordinate_zero_outfit_part_ids": [
+          0,
+          0,
+          17,
+          177355771,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "matching_primary_user_saved_party_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261011125645243_バレンタイン Luminous.png",
+        "sealed_staging_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INPUTS\\UNDERWEAR.png"
+      },
+      "real_party_export": {
+        "status": "PASS_REAL_PARTY_KKBP_PMX_TEXTURE_METADATA_EXPORT_COPIED_AND_HASHED",
+        "files": 241,
+        "bytes": 82520247,
+        "source_dir": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\Export_PMX\\20261011190414_バレンタインLuminous",
+        "sealed_export_dir": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_PARTY_EXPORTS\\UNDERWEAR",
+        "underlying_file_inventory_embedded_in_receipt": 241
+      },
+      "blender": {
+        "status": "PASS_REAL_PRIMARY_PARTY_SOURCE_BLENDER_FBX_GLB_EXPORTED_PENDING_INDEPENDENT_VALIDATION",
+        "geometry": {
+          "object_count": 7,
+          "mesh_count": 6,
+          "vertices": 47639,
+          "faces": 78404,
+          "skin_armature_count": 1,
+          "armature_bones": 975,
+          "shape_keys": 2174,
+          "material_count": 65,
+          "image_count": 106
+        },
+        "steps": [
+          "VERIFIED_PRIMARY_KKBP_SOURCE",
+          "BLENDER_ADDONS_REGISTERED",
+          "KKBP_NATIVE_REAL_IMPORT",
+          "EDITABLE_BLENDER_SOURCE_SAVED",
+          "FBX_NATIVE_SKELETON_EXPORTED",
+          "GLB_SKIN_MORPH_TEXTURE_EXPORTED"
+        ]
+      },
+      "glb": {
+        "status": "PASS_REAL_SOURCE_GEOMETRY_SKINS_UVS_IMAGES_WITH_MORPH_LINKS",
+        "source_joint_count": [
+          975
+        ],
+        "mesh_primitives": 39,
+        "morph_slots": 5518,
+        "textures": 34,
+        "material_count": 39
+      },
+      "lossless_shards": {
+        "status": "SOURCE_LOSSLESS_SHARDS_VERIFIED",
+        "count": 39,
+        "source_sha256": "bdf8a59f319ccf49eb186395d3ec9c7a2434156bd07be7a3652be3b3e4b05257",
+        "all_shard_sha256_in_manifest": true
+      },
+      "effective_morphs": {
+        "nominal": 5518,
+        "nonzero_position": 590
+      },
+      "critical_files": {
+        "primary_party_card": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INPUTS\\UNDERWEAR.png",
+          "exists": true,
+          "bytes": 14448326,
+          "sha256": "f9770a7432fb32433b701b33b064786ad021e1ac7eccfd6f339211b0af4524d5"
+        },
+        "primary_party_pmx": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_PARTY_EXPORTS\\UNDERWEAR\\model.pmx",
+          "exists": true,
+          "bytes": 11506584,
+          "sha256": "b423dc2462d83b7882f48c0bfe00eb99b4e1e5cb03e66cc53ee519a3f243151b"
+        },
+        "blender_editable": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\UNDERWEAR\\LUMINOUS_V3_UNDERWEAR_original_import.blend",
+          "exists": true,
+          "bytes": 115547487,
+          "sha256": "e31424733d38a2365d21a4f7f00abbb46950685a59228460b88345188e89fe35"
+        },
+        "fbx_with_bones": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\UNDERWEAR\\LUMINOUS_V3_UNDERWEAR_native.fbx",
+          "exists": true,
+          "bytes": 36248684,
+          "sha256": "3557d13f9f0305d0b86e08358dce8517341cc1c842ff84bf22d09400f7524d47"
+        },
+        "skinned_morphed_glb": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\UNDERWEAR\\LUMINOUS_V3_UNDERWEAR_skinned.glb",
+          "exists": true,
+          "bytes": 39907060,
+          "sha256": "bdf8a59f319ccf49eb186395d3ec9c7a2434156bd07be7a3652be3b3e4b05257"
+        },
+        "export_receipt": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_EXPORT_UNDERWEAR_RECEIPT.json",
+          "exists": true,
+          "bytes": 43600,
+          "sha256": "fda8f3ab64ac251c374a083d28df63498d43bce0ea07fedc3640bf326b6e3336"
+        },
+        "blend_receipt": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\UNDERWEAR\\GATE12_FRESH_BLENDER_CONVERSION_RECEIPT.json",
+          "exists": true,
+          "bytes": 40284,
+          "sha256": "1934c108c33fa0d7cefd6fac620ce6e7c8d396eff8c9b78030f51058ee8efdff"
+        },
+        "glb_audit": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\UNDERWEAR\\GATE12_GLTF_REAL_GEOMETRY_MORPH_AUDIT.json",
+          "exists": true,
+          "bytes": 9077,
+          "sha256": "510f78d4414e24fbe1ba31f1b03fb8f5fc1cb43b722a1a12d14cd6cc04cd6545"
+        },
+        "shard_manifest": {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\LosslessSources\\LuminousV3UNDERWEAR\\shards\\manifest_full_fidelity_primitives.json",
+          "exists": true,
+          "bytes": 263826,
+          "sha256": "233f4f4115207c8fc43b72bdf34b933f5595f8aa09779f375948a2551eb15957"
+        },
+        "nonzero_morph_inventory": {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\UNDERWEAR\\source_shards_actual_nonzero_morph_inventory.json",
+          "exists": true,
+          "bytes": 12920,
+          "sha256": "a66a146698c68ebbc882f781b831ea9ae71d622a3917a15df7af4ccfb23f18b3"
+        }
+      }
+    },
+    "NUDE": {
+      "card_source": {
+        "sha256": "b0298bbb3ebad6ce5e45e0d11437ed56891a106788ee6f6d8c510fbab22ec3de",
+        "bytes": 14451628,
+        "source": "user_saved_Koikatsu_Party_card_embedded_character_data",
+        "embedded_coordinate_zero_outfit_part_ids": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "matching_primary_user_saved_party_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261011125619726_バレンタイン Luminous.png",
+        "sealed_staging_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INPUTS\\NUDE.png"
+      },
+      "real_party_export": {
+        "status": "PASS_REAL_PARTY_KKBP_PMX_TEXTURE_METADATA_EXPORT_COPIED_AND_HASHED",
+        "files": 218,
+        "bytes": 74719348,
+        "source_dir": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\Export_PMX\\20261011191011_バレンタインLuminous",
+        "sealed_export_dir": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_PARTY_EXPORTS\\NUDE",
+        "underlying_file_inventory_embedded_in_receipt": 218
+      },
+      "blender": {
+        "status": "PASS_REAL_PRIMARY_PARTY_SOURCE_BLENDER_FBX_GLB_EXPORTED_PENDING_INDEPENDENT_VALIDATION",
+        "geometry": {
+          "object_count": 7,
+          "mesh_count": 6,
+          "vertices": 40209,
+          "faces": 64267,
+          "skin_armature_count": 1,
+          "armature_bones": 975,
+          "shape_keys": 2174,
+          "material_count": 63,
+          "image_count": 100
+        },
+        "steps": [
+          "VERIFIED_PRIMARY_KKBP_SOURCE",
+          "BLENDER_ADDONS_REGISTERED",
+          "KKBP_NATIVE_REAL_IMPORT",
+          "EDITABLE_BLENDER_SOURCE_SAVED",
+          "FBX_NATIVE_SKELETON_EXPORTED",
+          "GLB_SKIN_MORPH_TEXTURE_EXPORTED"
+        ]
+      },
+      "glb": {
+        "status": "PASS_REAL_SOURCE_GEOMETRY_SKINS_UVS_IMAGES_WITH_MORPH_LINKS",
+        "source_joint_count": [
+          975
+        ],
+        "mesh_primitives": 37,
+        "morph_slots": 5518,
+        "textures": 32,
+        "material_count": 37
+      },
+      "lossless_shards": {
+        "status": "SOURCE_LOSSLESS_SHARDS_VERIFIED",
+        "count": 37,
+        "source_sha256": "a5800ca3865d1971c381ff510103730a1bcebeacda21daaa9bc4d32e9cb90074",
+        "all_shard_sha256_in_manifest": true
+      },
+      "effective_morphs": {
+        "nominal": 5518,
+        "nonzero_position": 590
+      },
+      "critical_files": {
+        "primary_party_card": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\SEALED_INPUTS\\NUDE.png",
+          "exists": true,
+          "bytes": 14451628,
+          "sha256": "b0298bbb3ebad6ce5e45e0d11437ed56891a106788ee6f6d8c510fbab22ec3de"
+        },
+        "primary_party_pmx": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_PARTY_EXPORTS\\NUDE\\model.pmx",
+          "exists": true,
+          "bytes": 11505488,
+          "sha256": "4db5a3631ae8c654e535faffca5891692d1edba78bda6771b4e3c078ddee81c3"
+        },
+        "blender_editable": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\NUDE\\LUMINOUS_V3_NUDE_original_import.blend",
+          "exists": true,
+          "bytes": 110313001,
+          "sha256": "ff674110dafc9386f69faf8123d50d8898b3d65f58400dfc39a438c28dc430c1"
+        },
+        "fbx_with_bones": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\NUDE\\LUMINOUS_V3_NUDE_native.fbx",
+          "exists": true,
+          "bytes": 35403420,
+          "sha256": "ad8d5a4b00ac356aa598d5088f82354fce35c16eec30e73094d5015c340cb418"
+        },
+        "skinned_morphed_glb": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\NUDE\\LUMINOUS_V3_NUDE_skinned.glb",
+          "exists": true,
+          "bytes": 39142712,
+          "sha256": "a5800ca3865d1971c381ff510103730a1bcebeacda21daaa9bc4d32e9cb90074"
+        },
+        "export_receipt": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\FRESH_EXPORT_NUDE_RECEIPT.json",
+          "exists": true,
+          "bytes": 39524,
+          "sha256": "359af7580b7a9a6828dfc8b931a53942997c426f9479ed0f5af2d79166df7538"
+        },
+        "blend_receipt": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\NUDE\\GATE12_FRESH_BLENDER_CONVERSION_RECEIPT.json",
+          "exists": true,
+          "bytes": 37623,
+          "sha256": "8fa98e54a2a75df37b1ae9ec04b3cd58a9e5ba499328d3dcdd33cc8ca79efe84"
+        },
+        "glb_audit": {
+          "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\characters\\LUMINOUS_VALENTINE_V3\\gate12_fresh_export_20261011\\BLENDER_FRESH\\NUDE\\GATE12_GLTF_REAL_GEOMETRY_MORPH_AUDIT.json",
+          "exists": true,
+          "bytes": 8609,
+          "sha256": "d5b67c797f287e0cd74154f7773d19258036168a238342a0c53a4ebe0dd4bdb7"
+        },
+        "shard_manifest": {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\LosslessSources\\LuminousV3NUDE\\shards\\manifest_full_fidelity_primitives.json",
+          "exists": true,
+          "bytes": 259969,
+          "sha256": "39e854e313c8af106aa7630d17519f3ceb07c6c1b4943525e2f46fe776f05ab5"
+        },
+        "nonzero_morph_inventory": {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\NUDE\\source_shards_actual_nonzero_morph_inventory.json",
+          "exists": true,
+          "bytes": 12274,
+          "sha256": "ffe86a9b00a51ba1f7b1a16aff62c742050aba5a2b119468a76f0647403a41f2"
+        }
+      }
+    }
+  },
+  "native_import": {
+    "CLOTHED": {
+      "batch_journals": [
+        {
+          "journal": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\CLOTHED\\native_shards_000_count01_ue583.json",
+          "journal_sha256": "4905f15057c0432d61cb8129857965a86ae7817c045672309973a5164db5d60b",
+          "batch_status": "PASS_THIS_BATCH_NATIVE_UE_SOURCE_AND_MORPHS",
+          "error": null,
+          "parts": [
+            {
+              "index": 0,
+              "mesh": 0,
+              "primitive": 0,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": null,
+              "ue_total_native_morph_targets": 1,
+              "ue_asset_count": 4,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/Materials/KK_Gag00_バレンタインLuminous.KK_Gag00_バレンタインLuminous",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00.Mesh_00_Prim_00",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 1
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_PhysicsAsset.Mesh_00_Prim_00_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_Skeleton.Mesh_00_Prim_00_Skeleton",
+                  "class": "Skeleton"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "journal": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\CLOTHED\\native_shards_001_count04_ue583.json",
+          "journal_sha256": "9b151e0dea9f671cf63751ee8f09a6e90039b1f9153d0147fd918adceaf6df71",
+          "batch_status": "PASS_THIS_BATCH_NATIVE_UE_SOURCE_AND_MORPHS",
+          "error": null,
+          "parts": [
+            {
+              "index": 1,
+              "mesh": 0,
+              "primitive": 1,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 1,
+              "ue_total_native_morph_targets": 1,
+              "ue_asset_count": 4,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim001/Mesh_00_Prim_01/Materials/KK_Gag01_バレンタインLuminous.KK_Gag01_バレンタインLuminous",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim001/Mesh_00_Prim_01/SkeletalMeshes/Mesh_00_Prim_01.Mesh_00_Prim_01",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 1
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim001/Mesh_00_Prim_01/SkeletalMeshes/Mesh_00_Prim_01_PhysicsAsset.Mesh_00_Prim_01_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim001/Mesh_00_Prim_01/SkeletalMeshes/Mesh_00_Prim_01_Skeleton.Mesh_00_Prim_01_Skeleton",
+                  "class": "Skeleton"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "mesh": 0,
+              "primitive": 2,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 1,
+              "ue_total_native_morph_targets": 1,
+              "ue_asset_count": 4,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim002/Mesh_00_Prim_02/Materials/KK_Gag02_バレンタインLuminous.KK_Gag02_バレンタインLuminous",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim002/Mesh_00_Prim_02/SkeletalMeshes/Mesh_00_Prim_02.Mesh_00_Prim_02",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 1
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim002/Mesh_00_Prim_02/SkeletalMeshes/Mesh_00_Prim_02_PhysicsAsset.Mesh_00_Prim_02_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim002/Mesh_00_Prim_02/SkeletalMeshes/Mesh_00_Prim_02_Skeleton.Mesh_00_Prim_02_Skeleton",
+                  "class": "Skeleton"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "mesh": 1,
+              "primitive": 0,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 114,
+              "ue_total_native_morph_targets": 114,
+              "ue_asset_count": 4,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh001Prim000/Mesh_01_Prim_00/Materials/KK_Tears_バレンタインLuminous.KK_Tears_バレンタインLuminous",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh001Prim000/Mesh_01_Prim_00/SkeletalMeshes/Mesh_01_Prim_00.Mesh_01_Prim_00",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 114
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh001Prim000/Mesh_01_Prim_00/SkeletalMeshes/Mesh_01_Prim_00_PhysicsAsset.Mesh_01_Prim_00_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh001Prim000/Mesh_01_Prim_00/SkeletalMeshes/Mesh_01_Prim_00_Skeleton.Mesh_01_Prim_00_Skeleton",
+                  "class": "Skeleton"
+                }
+              ]
+            },
+            {
+              "index": 4,
+              "mesh": 2,
+              "primitive": 0,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 0,
+              "ue_total_native_morph_targets": 0,
+              "ue_asset_count": 4,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh002Prim000/Mesh_02_Prim_00/Materials/KK_cf_m_tang_001.KK_cf_m_tang_001",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh002Prim000/Mesh_02_Prim_00/SkeletalMeshes/Mesh_02_Prim_00.Mesh_02_Prim_00",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 0
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh002Prim000/Mesh_02_Prim_00/SkeletalMeshes/Mesh_02_Prim_00_PhysicsAsset.Mesh_02_Prim_00_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh002Prim000/Mesh_02_Prim_00/SkeletalMeshes/Mesh_02_Prim_00_Skeleton.Mesh_02_Prim_00_Skeleton",
+                  "class": "Skeleton"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "journal": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\CLOTHED\\native_shards_005_count08_ue583.json",
+          "journal_sha256": "4d21d6fda3f15fb6197ac3bfc4397c20ff01e181cd85023063e192f3c1b70734",
+          "batch_status": "FAIL_OR_PARTIAL_NATIVE_SHARD_BATCH",
+          "error": "RuntimeError('Native source part did not survive import')",
+          "parts": [
+            {
+              "index": 5,
+              "mesh": 3,
+              "primitive": 0,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 96,
+              "ue_total_native_morph_targets": 96,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim000/Mesh_03_Prim_00/Materials/KK_cf_m_face_00.KK_cf_m_face_00",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim000/Mesh_03_Prim_00/SkeletalMeshes/Mesh_03_Prim_00.Mesh_03_Prim_00",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 96
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim000/Mesh_03_Prim_00/SkeletalMeshes/Mesh_03_Prim_00_PhysicsAsset.Mesh_03_Prim_00_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim000/Mesh_03_Prim_00/SkeletalMeshes/Mesh_03_Prim_00_Skeleton.Mesh_03_Prim_00_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim000/Mesh_03_Prim_00/Textures/cf_m_face_00_light.cf_m_face_00_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 6,
+              "mesh": 3,
+              "primitive": 1,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 16,
+              "ue_total_native_morph_targets": 16,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim001/Mesh_03_Prim_01/Materials/KK_cf_m_mayuge_00.KK_cf_m_mayuge_00",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim001/Mesh_03_Prim_01/SkeletalMeshes/Mesh_03_Prim_01.Mesh_03_Prim_01",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 16
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim001/Mesh_03_Prim_01/SkeletalMeshes/Mesh_03_Prim_01_PhysicsAsset.Mesh_03_Prim_01_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim001/Mesh_03_Prim_01/SkeletalMeshes/Mesh_03_Prim_01_Skeleton.Mesh_03_Prim_01_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim001/Mesh_03_Prim_01/Textures/cf_m_mayuge_00_light.cf_m_mayuge_00_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 7,
+              "mesh": 3,
+              "primitive": 2,
+              "status": "FAIL_MISSING_SKELETAL_OR_EFFECTIVE_MORPH",
+              "source_nonzero_position_morphs": 91,
+              "ue_total_native_morph_targets": 82,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim002/Mesh_03_Prim_02/Materials/KK_cf_m_noseline_00.KK_cf_m_noseline_00",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim002/Mesh_03_Prim_02/SkeletalMeshes/Mesh_03_Prim_02.Mesh_03_Prim_02",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 82
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim002/Mesh_03_Prim_02/SkeletalMeshes/Mesh_03_Prim_02_PhysicsAsset.Mesh_03_Prim_02_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim002/Mesh_03_Prim_02/SkeletalMeshes/Mesh_03_Prim_02_Skeleton.Mesh_03_Prim_02_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim002/Mesh_03_Prim_02/Textures/cf_m_noseline_00_light.cf_m_noseline_00_light",
+                  "class": "Texture2D"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "journal": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\CLOTHED\\native_shards_008_count08_ue583.json",
+          "journal_sha256": "7ce8552d4db27fe27d4a6edb5180b5e708a11562653efd820a105b69a3034185",
+          "batch_status": "PASS_THIS_BATCH_NATIVE_UE_SOURCE_AND_MORPHS",
+          "error": null,
+          "parts": [
+            {
+              "index": 8,
+              "mesh": 3,
+              "primitive": 3,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 43,
+              "ue_total_native_morph_targets": 43,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim003/Mesh_03_Prim_03/Materials/KK_cf_m_tooth.KK_cf_m_tooth",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim003/Mesh_03_Prim_03/SkeletalMeshes/Mesh_03_Prim_03.Mesh_03_Prim_03",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 43
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim003/Mesh_03_Prim_03/SkeletalMeshes/Mesh_03_Prim_03_PhysicsAsset.Mesh_03_Prim_03_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim003/Mesh_03_Prim_03/SkeletalMeshes/Mesh_03_Prim_03_Skeleton.Mesh_03_Prim_03_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim003/Mesh_03_Prim_03/Textures/cf_m_tooth_light.cf_m_tooth_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 9,
+              "mesh": 3,
+              "primitive": 4,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 39,
+              "ue_total_native_morph_targets": 39,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim004/Mesh_03_Prim_04/Materials/KK_cf_m_eyeline_down.KK_cf_m_eyeline_down",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim004/Mesh_03_Prim_04/SkeletalMeshes/Mesh_03_Prim_04.Mesh_03_Prim_04",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 39
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim004/Mesh_03_Prim_04/SkeletalMeshes/Mesh_03_Prim_04_PhysicsAsset.Mesh_03_Prim_04_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim004/Mesh_03_Prim_04/SkeletalMeshes/Mesh_03_Prim_04_Skeleton.Mesh_03_Prim_04_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim004/Mesh_03_Prim_04/Textures/cf_m_eyeline_down_light.cf_m_eyeline_down_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 10,
+              "mesh": 3,
+              "primitive": 5,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 39,
+              "ue_total_native_morph_targets": 39,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim005/Mesh_03_Prim_05/Materials/KK_cf_m_eyeline_00_up.KK_cf_m_eyeline_00_up",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim005/Mesh_03_Prim_05/SkeletalMeshes/Mesh_03_Prim_05.Mesh_03_Prim_05",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 39
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim005/Mesh_03_Prim_05/SkeletalMeshes/Mesh_03_Prim_05_PhysicsAsset.Mesh_03_Prim_05_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim005/Mesh_03_Prim_05/SkeletalMeshes/Mesh_03_Prim_05_Skeleton.Mesh_03_Prim_05_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim005/Mesh_03_Prim_05/Textures/cf_m_eyeline_00_up_light.cf_m_eyeline_00_up_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 11,
+              "mesh": 3,
+              "primitive": 6,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 39,
+              "ue_total_native_morph_targets": 39,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim006/Mesh_03_Prim_06/Materials/KK_cf_m_eyeline_kage.KK_cf_m_eyeline_kage",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim006/Mesh_03_Prim_06/SkeletalMeshes/Mesh_03_Prim_06.Mesh_03_Prim_06",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 39
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim006/Mesh_03_Prim_06/SkeletalMeshes/Mesh_03_Prim_06_PhysicsAsset.Mesh_03_Prim_06_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim006/Mesh_03_Prim_06/SkeletalMeshes/Mesh_03_Prim_06_Skeleton.Mesh_03_Prim_06_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim006/Mesh_03_Prim_06/Textures/cf_m_eyeline_kage_light.cf_m_eyeline_kage_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 12,
+              "mesh": 3,
+              "primitive": 7,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 39,
+              "ue_total_native_morph_targets": 39,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim007/Mesh_03_Prim_07/Materials/KK_cf_m_sirome_00.KK_cf_m_sirome_00",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim007/Mesh_03_Prim_07/SkeletalMeshes/Mesh_03_Prim_07.Mesh_03_Prim_07",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 39
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim007/Mesh_03_Prim_07/SkeletalMeshes/Mesh_03_Prim_07_PhysicsAsset.Mesh_03_Prim_07_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim007/Mesh_03_Prim_07/SkeletalMeshes/Mesh_03_Prim_07_Skeleton.Mesh_03_Prim_07_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim007/Mesh_03_Prim_07/Textures/cf_m_sirome_00_light.cf_m_sirome_00_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 13,
+              "mesh": 3,
+              "primitive": 8,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 9,
+              "ue_total_native_morph_targets": 9,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim008/Mesh_03_Prim_08/Materials/KK_cf_m_hitomi_00_cf_Ohitomi_L02.KK_cf_m_hitomi_00_cf_Ohitomi_L02",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim008/Mesh_03_Prim_08/SkeletalMeshes/Mesh_03_Prim_08.Mesh_03_Prim_08",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 9
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim008/Mesh_03_Prim_08/SkeletalMeshes/Mesh_03_Prim_08_PhysicsAsset.Mesh_03_Prim_08_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim008/Mesh_03_Prim_08/SkeletalMeshes/Mesh_03_Prim_08_Skeleton.Mesh_03_Prim_08_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim008/Mesh_03_Prim_08/Textures/cf_m_hitomi_00_cf_Ohitomi_L02_light.cf_m_hitomi_00_cf_Ohitomi_L02_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 14,
+              "mesh": 3,
+              "primitive": 9,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 9,
+              "ue_total_native_morph_targets": 9,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim009/Mesh_03_Prim_09/Materials/KK_cf_m_hitomi_00_cf_Ohitomi_R02.KK_cf_m_hitomi_00_cf_Ohitomi_R02",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim009/Mesh_03_Prim_09/SkeletalMeshes/Mesh_03_Prim_09.Mesh_03_Prim_09",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 9
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim009/Mesh_03_Prim_09/SkeletalMeshes/Mesh_03_Prim_09_PhysicsAsset.Mesh_03_Prim_09_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim009/Mesh_03_Prim_09/SkeletalMeshes/Mesh_03_Prim_09_Skeleton.Mesh_03_Prim_09_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim009/Mesh_03_Prim_09/Textures/cf_m_hitomi_00_cf_Ohitomi_R02_light.cf_m_hitomi_00_cf_Ohitomi_R02_light",
+                  "class": "Texture2D"
+                }
+              ]
+            },
+            {
+              "index": 15,
+              "mesh": 3,
+              "primitive": 10,
+              "status": "PASS_NATIVE_UE_SKELETAL_SOURCE_AND_MORPHS",
+              "source_nonzero_position_morphs": 38,
+              "ue_total_native_morph_targets": 38,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim010/Mesh_03_Prim_10/Materials/KK_cf_m_tang.KK_cf_m_tang",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim010/Mesh_03_Prim_10/SkeletalMeshes/Mesh_03_Prim_10.Mesh_03_Prim_10",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 38
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim010/Mesh_03_Prim_10/SkeletalMeshes/Mesh_03_Prim_10_PhysicsAsset.Mesh_03_Prim_10_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim010/Mesh_03_Prim_10/SkeletalMeshes/Mesh_03_Prim_10_Skeleton.Mesh_03_Prim_10_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim010/Mesh_03_Prim_10/Textures/cf_m_tang_light.cf_m_tang_light",
+                  "class": "Texture2D"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "journal": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\CLOTHED\\native_shards_016_count08_ue583.json",
+          "journal_sha256": "dd383ee066b6269331ef7fbb29c346d8bbc87a0bb36549cb096bd84d0324908d",
+          "batch_status": "FAIL_OR_PARTIAL_NATIVE_SHARD_BATCH",
+          "error": "RuntimeError('Native real source part invalid: FAIL_MAJOR_NATIVE_MORPH_LOSS')",
+          "parts": [
+            {
+              "index": 16,
+              "mesh": 3,
+              "primitive": 11,
+              "status": "FAIL_MAJOR_NATIVE_MORPH_LOSS",
+              "source_nonzero_position_morphs": 15,
+              "ue_total_native_morph_targets": 9,
+              "ue_asset_count": 5,
+              "assets": [
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim011/Mesh_03_Prim_11/Materials/KK_cf_m_body.KK_cf_m_body",
+                  "class": "MaterialInstanceConstant"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim011/Mesh_03_Prim_11/SkeletalMeshes/Mesh_03_Prim_11.Mesh_03_Prim_11",
+                  "class": "SkeletalMesh",
+                  "skeletal_bones": 975,
+                  "skeletal_morphs": 9
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim011/Mesh_03_Prim_11/SkeletalMeshes/Mesh_03_Prim_11_PhysicsAsset.Mesh_03_Prim_11_PhysicsAsset",
+                  "class": "PhysicsAsset"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim011/Mesh_03_Prim_11/SkeletalMeshes/Mesh_03_Prim_11_Skeleton.Mesh_03_Prim_11_Skeleton",
+                  "class": "Skeleton"
+                },
+                {
+                  "path": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh003Prim011/Mesh_03_Prim_11/Textures/cf_m_body_light.cf_m_body_light",
+                  "class": "Texture2D"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "uncommitted_native_uassets": [
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim000\\Mesh_00_Prim_00\\Materials\\KK_Gag00_バレンタインLuminous.uasset",
+          "exists": true,
+          "bytes": 63406,
+          "sha256": "4b680aec09ee92bba877a3a4aeaaf076b5a3d8106f6fa910809de0fde18e6a44"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim000\\Mesh_00_Prim_00\\SkeletalMeshes\\Mesh_00_Prim_00.uasset",
+          "exists": true,
+          "bytes": 325379,
+          "sha256": "8d6929d8f78ef011be91dc37a41812232b2d751a5825cff109ae791d99c7d1e4"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim000\\Mesh_00_Prim_00\\SkeletalMeshes\\Mesh_00_Prim_00_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 7292,
+          "sha256": "605dd8edeb56bd7a0b8e2ee2eb60c0b5d04e909544d08d7a039554297afbe05b"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim000\\Mesh_00_Prim_00\\SkeletalMeshes\\Mesh_00_Prim_00_Skeleton.uasset",
+          "exists": true,
+          "bytes": 398911,
+          "sha256": "bec842b8cf7b9d1119064b823233d5c73f5ff9042ce0729906730b23a3434ef5"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim001\\Mesh_00_Prim_01\\Materials\\KK_Gag01_バレンタインLuminous.uasset",
+          "exists": true,
+          "bytes": 63406,
+          "sha256": "3983f3edec1672e1c76de1071a8bf130666eee8e79439b6653c4ec0117fd06d3"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim001\\Mesh_00_Prim_01\\SkeletalMeshes\\Mesh_00_Prim_01.uasset",
+          "exists": true,
+          "bytes": 326506,
+          "sha256": "fe97e7ac5a12e675849ad322ed8e068ce774cb1fee289e1313f5ee5426f42274"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim001\\Mesh_00_Prim_01\\SkeletalMeshes\\Mesh_00_Prim_01_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 7292,
+          "sha256": "d8435f5a0763fa92a0dcfeaf925b6c244a25c3cbd3b087695a0242fd2c618ed9"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim001\\Mesh_00_Prim_01\\SkeletalMeshes\\Mesh_00_Prim_01_Skeleton.uasset",
+          "exists": true,
+          "bytes": 398911,
+          "sha256": "f8de992b764ab07e8f0e6e159c5177101dd48f2419dbfc22860a9ce07dd3aa67"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim002\\Mesh_00_Prim_02\\Materials\\KK_Gag02_バレンタインLuminous.uasset",
+          "exists": true,
+          "bytes": 63406,
+          "sha256": "aaa727a862f9b7834a875f0d8f7e08bb3fb556e7775ac4dd38c6ffe78715c2e0"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim002\\Mesh_00_Prim_02\\SkeletalMeshes\\Mesh_00_Prim_02.uasset",
+          "exists": true,
+          "bytes": 325227,
+          "sha256": "a05c55d2880f3d9bfb675245bfea85aed5e482e0bb9cfe328c6d374836c15671"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim002\\Mesh_00_Prim_02\\SkeletalMeshes\\Mesh_00_Prim_02_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 7292,
+          "sha256": "bcd74a5115ff0130ab325502727af5842f842301f65ddeb77103e42f4ecdbca2"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh000Prim002\\Mesh_00_Prim_02\\SkeletalMeshes\\Mesh_00_Prim_02_Skeleton.uasset",
+          "exists": true,
+          "bytes": 398911,
+          "sha256": "d8bfe460d350c8f50cf6030d37c753c5de31f3537d1bc7feb62ac62ee7dff27e"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh001Prim000\\Mesh_01_Prim_00\\Materials\\KK_Tears_バレンタインLuminous.uasset",
+          "exists": true,
+          "bytes": 63406,
+          "sha256": "edabdc7b5b3efdcb21ab63979972496e82f7067b831ed2f03b9d8e119ba55af2"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh001Prim000\\Mesh_01_Prim_00\\SkeletalMeshes\\Mesh_01_Prim_00.uasset",
+          "exists": true,
+          "bytes": 3768675,
+          "sha256": "18c4a80d861e25415f7d9f8368594dc7d299d97b781eb8901f200c05aab89f4e"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh001Prim000\\Mesh_01_Prim_00\\SkeletalMeshes\\Mesh_01_Prim_00_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 4233,
+          "sha256": "7a5c59657808a59ed554a19604a45d5862ca8953f6acf286f6ed35d9516cb697"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh001Prim000\\Mesh_01_Prim_00\\SkeletalMeshes\\Mesh_01_Prim_00_Skeleton.uasset",
+          "exists": true,
+          "bytes": 398911,
+          "sha256": "d72cac093842f6e1f3368644bf1eeb1e6502af2e57b28f77e65c188412c20b39"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh002Prim000\\Mesh_02_Prim_00\\Materials\\KK_cf_m_tang_001.uasset",
+          "exists": true,
+          "bytes": 60297,
+          "sha256": "daa2e00c16310d9b42d9dc65c87e014d2b0d09664a0c0d67127d87d6d62fb93b"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh002Prim000\\Mesh_02_Prim_00\\SkeletalMeshes\\Mesh_02_Prim_00.uasset",
+          "exists": true,
+          "bytes": 310821,
+          "sha256": "7cdd469cd5d7c1e32461f73da8884ee6835a3c312c7d3680db4d396872ac802c"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh002Prim000\\Mesh_02_Prim_00\\SkeletalMeshes\\Mesh_02_Prim_00_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 10305,
+          "sha256": "b42940b1e34e34c6ea7a987c467c4b8fdf007cbc615bed00ab96c0d63b7eaa9b"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh002Prim000\\Mesh_02_Prim_00\\SkeletalMeshes\\Mesh_02_Prim_00_Skeleton.uasset",
+          "exists": true,
+          "bytes": 361503,
+          "sha256": "eec17874cb94eea42972273e90759921e199ef695c6d1021aa1c1c025c30d6a0"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim000\\Mesh_03_Prim_00\\Materials\\KK_cf_m_face_00.uasset",
+          "exists": true,
+          "bytes": 67692,
+          "sha256": "1517cb111f590bd0bb8337d3379dde3378e14ba9fadcb5aa11e604ad4b026f2e"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim000\\Mesh_03_Prim_00\\SkeletalMeshes\\Mesh_03_Prim_00.uasset",
+          "exists": true,
+          "bytes": 5519238,
+          "sha256": "ff4d5f8823835de771a55bccf5ca8d321e6171b3a0ce0981a881bed4a003a07a"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim000\\Mesh_03_Prim_00\\SkeletalMeshes\\Mesh_03_Prim_00_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 7294,
+          "sha256": "403d77ff4f5bb38cd5e2ee6c2763a6f0e24ed4bacf846ed9c11744428f5db057"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim000\\Mesh_03_Prim_00\\SkeletalMeshes\\Mesh_03_Prim_00_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "2d26f374bf52b17b120b06dc9d34590494878406f57d1aa4f6cf671d2bf521a9"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim000\\Mesh_03_Prim_00\\Textures\\cf_m_face_00_light.uasset",
+          "exists": true,
+          "bytes": 972309,
+          "sha256": "b9eb0c0fb22ede9d31b61de165a0a6df84896c4b4b4026884a2b52b266e1d094"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim001\\Mesh_03_Prim_01\\Materials\\KK_cf_m_mayuge_00.uasset",
+          "exists": true,
+          "bytes": 67925,
+          "sha256": "29aea67e2ef755c7b57b8be9b3e3a87684996011ace51e7e602524b604cfbb11"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim001\\Mesh_03_Prim_01\\SkeletalMeshes\\Mesh_03_Prim_01.uasset",
+          "exists": true,
+          "bytes": 510492,
+          "sha256": "e5a7104545956a1240dfcea497a0d42f028af10f618583830958f2ff9e0c9795"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim001\\Mesh_03_Prim_01\\SkeletalMeshes\\Mesh_03_Prim_01_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 8929,
+          "sha256": "5e09363f8220cafc146e5ff5a73318ab944abf1d83aea5407912ee76edad3cd5"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim001\\Mesh_03_Prim_01\\SkeletalMeshes\\Mesh_03_Prim_01_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "a88cc8c23452a9f09d29f1eb744a9783434ba2960a3635d53b90189ea77e49b9"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim001\\Mesh_03_Prim_01\\Textures\\cf_m_mayuge_00_light.uasset",
+          "exists": true,
+          "bytes": 72069,
+          "sha256": "e77b3027541909eee03422ba6c35f48abefa95aa1148f360ba0138abc0a7aef3"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim002\\Mesh_03_Prim_02\\Materials\\KK_cf_m_noseline_00.uasset",
+          "exists": true,
+          "bytes": 67967,
+          "sha256": "f9bd32cf0e7b35773f46b4fc8a510fc0ea033909a2719a76ebeacf05def28da7"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim002\\Mesh_03_Prim_02\\SkeletalMeshes\\Mesh_03_Prim_02.uasset",
+          "exists": true,
+          "bytes": 379861,
+          "sha256": "8a3c171c648a1982d198edf13160ae0d387f7a47d46118fc4f9098837f3229d5"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim002\\Mesh_03_Prim_02\\SkeletalMeshes\\Mesh_03_Prim_02_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 4234,
+          "sha256": "baf42ca8372db85baf57b5bcede2bb46fbc1d6eed6c0635bbe9c2fdb33fdf4b0"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim002\\Mesh_03_Prim_02\\SkeletalMeshes\\Mesh_03_Prim_02_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "7ccd58cd557940159f712deed44b0a9e5df4f468d0a2488dbef18d23aae27dd4"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim002\\Mesh_03_Prim_02\\Textures\\cf_m_noseline_00_light.uasset",
+          "exists": true,
+          "bytes": 76555,
+          "sha256": "a38b1fdee30cb5b325acd681dab8cc1050dded33f5bfcc1f59b945f15f20c457"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim003\\Mesh_03_Prim_03\\Materials\\KK_cf_m_tooth.uasset",
+          "exists": true,
+          "bytes": 67650,
+          "sha256": "d94e8d5bcae11593bd469181a3775d27a7e4b67c0f4b90b7f0fb17b961da3335"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim003\\Mesh_03_Prim_03\\SkeletalMeshes\\Mesh_03_Prim_03.uasset",
+          "exists": true,
+          "bytes": 750328,
+          "sha256": "ac2648523e5cdbde5d13cabd7d42e04a0fcb6a2ba255277e619e2f240de6abf3"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim003\\Mesh_03_Prim_03\\SkeletalMeshes\\Mesh_03_Prim_03_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 7299,
+          "sha256": "d6e788ce197297f9c3ae77723957f03acbd05b984d74f4a1667d3f7a26793b12"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim003\\Mesh_03_Prim_03\\SkeletalMeshes\\Mesh_03_Prim_03_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "1adac0276bc4e6eb216f07431850873f1229761f0f7e5ba15dce11e202a88242"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim003\\Mesh_03_Prim_03\\Textures\\cf_m_tooth_light.uasset",
+          "exists": true,
+          "bytes": 62375,
+          "sha256": "f3d50d2010d0d61db93a8671478fd7e36b2d5c37dc3c9982e348aefead5761a4"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim004\\Mesh_03_Prim_04\\Materials\\KK_cf_m_eyeline_down.uasset",
+          "exists": true,
+          "bytes": 67988,
+          "sha256": "93024deb0a6bd24f3c9dde3700f2de56da80fe2d96f1975e1c927198a54554bb"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim004\\Mesh_03_Prim_04\\SkeletalMeshes\\Mesh_03_Prim_04.uasset",
+          "exists": true,
+          "bytes": 918599,
+          "sha256": "2a196a46a54db4a782d95ec224ae41269e30a4d86f3d6068de3d19ca4d7da79f"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim004\\Mesh_03_Prim_04\\SkeletalMeshes\\Mesh_03_Prim_04_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 8951,
+          "sha256": "b08f47f33b943f30438f376c14b0e2a2dc725e42f745da12c1c146e13dd6d7b0"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim004\\Mesh_03_Prim_04\\SkeletalMeshes\\Mesh_03_Prim_04_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "6fe7cc2f2f838962087ff5974268cbbb783061c444b023ab828941a7b0e6fdfa"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim004\\Mesh_03_Prim_04\\Textures\\cf_m_eyeline_down_light.uasset",
+          "exists": true,
+          "bytes": 62212,
+          "sha256": "e9ab64b54468fe914239ba36cce95a327b03e9e4d875487ae277a390b8c9c994"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim005\\Mesh_03_Prim_05\\Materials\\KK_cf_m_eyeline_00_up.uasset",
+          "exists": true,
+          "bytes": 68009,
+          "sha256": "1c10e4924294569ac19fdb42f8f2cb6a62feba087dbf4386bd1fc7d16cf22837"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim005\\Mesh_03_Prim_05\\SkeletalMeshes\\Mesh_03_Prim_05.uasset",
+          "exists": true,
+          "bytes": 869369,
+          "sha256": "a9a2d0aed874c93888cc2a14a62f957628a978b4a1211b6cf345fe7753f9b658"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim005\\Mesh_03_Prim_05\\SkeletalMeshes\\Mesh_03_Prim_05_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 8951,
+          "sha256": "c6261e98c1a86cb3e37ee67e450f8ec2db76d43e0573a6ccb075b0b4410815f0"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim005\\Mesh_03_Prim_05\\SkeletalMeshes\\Mesh_03_Prim_05_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "c39886ed587c05186ab369760f808feee4116c04a78fe87bd20943e35a7f3069"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim005\\Mesh_03_Prim_05\\Textures\\cf_m_eyeline_00_up_light.uasset",
+          "exists": true,
+          "bytes": 293022,
+          "sha256": "f208310466b4941f340605afe6011febfa2fd119fc3eead1615549760cd3b86d"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim006\\Mesh_03_Prim_06\\Materials\\KK_cf_m_eyeline_kage.uasset",
+          "exists": true,
+          "bytes": 67997,
+          "sha256": "e50d38deff625070666f7d07928c6bffba53469b8c2703e10cb048cbcff12fa8"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim006\\Mesh_03_Prim_06\\SkeletalMeshes\\Mesh_03_Prim_06.uasset",
+          "exists": true,
+          "bytes": 927580,
+          "sha256": "a2b1c7a2b910d41e687d3dc85e17502b30f465ac87ffc37e4540a22e3104b50b"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim006\\Mesh_03_Prim_06\\SkeletalMeshes\\Mesh_03_Prim_06_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 8951,
+          "sha256": "2a7da206d52c92a813c8c5d38ae0af72c59b7a55bb23952be88ecc0e3aa2a736"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim006\\Mesh_03_Prim_06\\SkeletalMeshes\\Mesh_03_Prim_06_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "f27f92c698197b3e6d5d85e43808130ddaaef364ee4f61d0c14a31d12dfb685c"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim006\\Mesh_03_Prim_06\\Textures\\cf_m_eyeline_kage_light.uasset",
+          "exists": true,
+          "bytes": 62221,
+          "sha256": "a4f030c1a2dce0d9af785976724271fca19bb9397d9f967c97368e031bb74e78"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim007\\Mesh_03_Prim_07\\Materials\\KK_cf_m_sirome_00.uasset",
+          "exists": true,
+          "bytes": 67743,
+          "sha256": "277c363e1241c54d003de62af099d895ffa574f0dc371abaeedcfef27f85c5c0"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim007\\Mesh_03_Prim_07\\SkeletalMeshes\\Mesh_03_Prim_07.uasset",
+          "exists": true,
+          "bytes": 639157,
+          "sha256": "15848006b9b9357b6e2913b94a969d8312b85c1d46cd54df5b5e86873968510d"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim007\\Mesh_03_Prim_07\\SkeletalMeshes\\Mesh_03_Prim_07_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 4233,
+          "sha256": "42ea416837148171f77326a8f2f4060b0c88319d2ac9f08de41fd0614f285b08"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim007\\Mesh_03_Prim_07\\SkeletalMeshes\\Mesh_03_Prim_07_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "8fb54e4594ba08ee5de1660639315da06cadae83a4d59c02ec4f45a485302116"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim007\\Mesh_03_Prim_07\\Textures\\cf_m_sirome_00_light.uasset",
+          "exists": true,
+          "bytes": 68821,
+          "sha256": "7708b43cc021dc1af2389d50a8baa2352328c296c922ed579510873954682950"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim008\\Mesh_03_Prim_08\\Materials\\KK_cf_m_hitomi_00_cf_Ohitomi_L02.uasset",
+          "exists": true,
+          "bytes": 68249,
+          "sha256": "6b7151d19d13efff983024cb84cfcfb8040f5d0577e464882d917b73ca1f1fb6"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim008\\Mesh_03_Prim_08\\SkeletalMeshes\\Mesh_03_Prim_08.uasset",
+          "exists": true,
+          "bytes": 325709,
+          "sha256": "8d588f8c1ba150fa3c825b94ff9883fdc9a6059ac028e8b5e622b2fed544c4c3"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim008\\Mesh_03_Prim_08\\SkeletalMeshes\\Mesh_03_Prim_08_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 3444,
+          "sha256": "f2efffb9a47ea84f82d8d01559f759cbbfc6891525f3717c4f4a8684a7d983a0"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim008\\Mesh_03_Prim_08\\SkeletalMeshes\\Mesh_03_Prim_08_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "8cad17fd8ff86a898700cb4dbae702576b99a85f358bce9105670e77d3e6a607"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim008\\Mesh_03_Prim_08\\Textures\\cf_m_hitomi_00_cf_Ohitomi_L02_light.uasset",
+          "exists": true,
+          "bytes": 114768,
+          "sha256": "77aa38cd5b1c4b458e8b10fae0c99d153bfa157b7c2f473773308077ea930ed2"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim009\\Mesh_03_Prim_09\\Materials\\KK_cf_m_hitomi_00_cf_Ohitomi_R02.uasset",
+          "exists": true,
+          "bytes": 68249,
+          "sha256": "3e6cc30f3a8fcd25bec938f7e28278e7e85eafb9dbb65af235275f3ebc9db6d4"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim009\\Mesh_03_Prim_09\\SkeletalMeshes\\Mesh_03_Prim_09.uasset",
+          "exists": true,
+          "bytes": 326156,
+          "sha256": "28f20e2b86415551b614b1c2065ed7602a67811981472791ed91b128f7c923ac"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim009\\Mesh_03_Prim_09\\SkeletalMeshes\\Mesh_03_Prim_09_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 3445,
+          "sha256": "bd1c8a9edee12f6422d58e60a414c6af37056458fe7505f06ace99c5ef630b2d"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim009\\Mesh_03_Prim_09\\SkeletalMeshes\\Mesh_03_Prim_09_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253047,
+          "sha256": "4d3d4e6155d0e9717e1537db0c79bbf42082ef1d4a240b24930f433aa10a682c"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim009\\Mesh_03_Prim_09\\Textures\\cf_m_hitomi_00_cf_Ohitomi_R02_light.uasset",
+          "exists": true,
+          "bytes": 116394,
+          "sha256": "a082745bf10309239bb26782bc617610c5a6307bba83acd06ebbcb0144ed07f2"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim010\\Mesh_03_Prim_10\\Materials\\KK_cf_m_tang.uasset",
+          "exists": true,
+          "bytes": 67638,
+          "sha256": "2ba0f68d01cc79799c0755a2e881b4171eb2b3f52011dd3644227ebb6244c795"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim010\\Mesh_03_Prim_10\\SkeletalMeshes\\Mesh_03_Prim_10.uasset",
+          "exists": true,
+          "bytes": 686652,
+          "sha256": "b9554161e77aeac14d700cd01351e13e512f787659aafcedefa6bcf1cdeafc50"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim010\\Mesh_03_Prim_10\\SkeletalMeshes\\Mesh_03_Prim_10_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 3446,
+          "sha256": "b686ed5d2009e4912b3e5d9f920238e4ea3bfdad02df6d0b16391c02b43bc31b"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim010\\Mesh_03_Prim_10\\SkeletalMeshes\\Mesh_03_Prim_10_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253041,
+          "sha256": "f2c9830b5f521129ab59e7dd15fe0e7ba05b46706144324f434091a117d8ca59"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim010\\Mesh_03_Prim_10\\Textures\\cf_m_tang_light.uasset",
+          "exists": true,
+          "bytes": 66400,
+          "sha256": "d9d7dce0a70273e1d4c1f4f26a3a1782281ad4221806b4226391a3f01c64006e"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim011\\Mesh_03_Prim_11\\Materials\\KK_cf_m_body.uasset",
+          "exists": true,
+          "bytes": 67629,
+          "sha256": "c723b7d3a808369c0570b2db4a88d28c6c175a496dbbb905ad01890566e041d7"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim011\\Mesh_03_Prim_11\\SkeletalMeshes\\Mesh_03_Prim_11.uasset",
+          "exists": true,
+          "bytes": 2819280,
+          "sha256": "72c88a9a0dcd3a77eb2bb6541d6e6a745ddafd97c0969cfc6681d3f7363ec91f"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim011\\Mesh_03_Prim_11\\SkeletalMeshes\\Mesh_03_Prim_11_PhysicsAsset.uasset",
+          "exists": true,
+          "bytes": 24126,
+          "sha256": "25796f88e00547ea02dd446d7683073ae93c9844b58ec9b0d76548774c156288"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim011\\Mesh_03_Prim_11\\SkeletalMeshes\\Mesh_03_Prim_11_Skeleton.uasset",
+          "exists": true,
+          "bytes": 253041,
+          "sha256": "7d4759198a2887da8a9acfa2a2ad56cfd2424a6cd09bcdb2a5d53094ab327555"
+        },
+        {
+          "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Content\\Experimental\\LuminousValentineV3\\CLOTHED\\Parts\\Mesh003Prim011\\Mesh_03_Prim_11\\Textures\\cf_m_body_light.uasset",
+          "exists": true,
+          "bytes": 3027659,
+          "sha256": "7d86ea80f20ec83ee6a295b15fbe0b4b12b3b094340bbd8eef3c2dce04a9a6a9"
+        }
+      ],
+      "uncommitted_native_uasset_total_bytes": 30975907,
+      "uncommitted_native_uasset_count": 80
+    },
+    "UNDERWEAR": {
+      "batch_journals": []
+    },
+    "NUDE": {
+      "batch_journals": []
+    }
+  },
+  "code_files": {
+    "gate12_native_scripts": {
+      "audit_luminous_v3_all_shards_effective_morphs.py": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\audit_luminous_v3_all_shards_effective_morphs.py",
+        "exists": true,
+        "bytes": 2905,
+        "sha256": "f10a66c9cd0a01ce80b904251beb82c50518dfdaf5dc8924f6172f5f97961572"
+      },
+      "import_luminous_v3_full_glb_real_ue583.py": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\import_luminous_v3_full_glb_real_ue583.py",
+        "exists": true,
+        "bytes": 4677,
+        "sha256": "ffb8a45f76e84b9796ba3b4522ab5746adc96390c736710321a6652986bc57ec"
+      },
+      "import_luminous_v3_lossless_shards_one_batch_ue583.py": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\import_luminous_v3_lossless_shards_one_batch_ue583.py",
+        "exists": true,
+        "bytes": 6054,
+        "sha256": "b40544eff02a9214b909086eb80bf63aed458a1769c9153a4dc7f34a2ee3461a"
+      },
+      "run_luminous_v3_native_full_glb_one_state_guarded.ps1": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\run_luminous_v3_native_full_glb_one_state_guarded.ps1",
+        "exists": true,
+        "bytes": 4246,
+        "sha256": "2073d2da4ec06410f3bf3fd6c47a5b46ea61188072807bb2e7843c1c9dee5733"
+      },
+      "run_luminous_v3_native_shard_batch_guarded.ps1": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\run_luminous_v3_native_shard_batch_guarded.ps1",
+        "exists": true,
+        "bytes": 4015,
+        "sha256": "f60f3e39531f0f51c12e40da4cc617f9d1902ca415429cd4e59d5e12acc00ba9"
+      },
+      "validate_luminous_source_morph_actual_deltas.py": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\validate_luminous_source_morph_actual_deltas.py",
+        "exists": true,
+        "bytes": 3883,
+        "sha256": "c992cd027450cb1bd75ed03418412c4bbbb2ac2661a504dd3525975f091a8a44"
+      },
+      "build_kk_export_generic.py": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\build_kk_export_generic.py",
+        "exists": true,
+        "bytes": 14073,
+        "sha256": "7ce5796b4637f1c111e495ad91fa74bfb828023e6d1d0dcc4819f1cecd18571f"
+      },
+      "verify_kk_nonanimation_baseline.py": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\verify_kk_nonanimation_baseline.py",
+        "exists": true,
+        "bytes": 5562,
+        "sha256": "35dd1bf554c1a441aa3cfd298dee0239d85b0f8d656714ac5ce327e34974ede4"
+      },
+      "import_luminous_v3_first_native_part_guarded.ps1": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Scripts\\Gate12Koikatsu\\import_luminous_v3_first_native_part_guarded.ps1",
+        "exists": true,
+        "bytes": 4866,
+        "sha256": "57ce83ed51d980d7b7b6f28e3db2ac0773bfe12ca18509e5e2b39435e7f9ab99"
+      }
+    },
+    "external_workstation_pipeline_scripts": {
+      "gate12_click_kk_maker_load_selected.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_click_kk_maker_load_selected.py",
+        "exists": true,
+        "bytes": 1048,
+        "sha256": "8845d5629d67b3e2cf6a539db87a826902609bab108dd925a57f08f151d55c6c"
+      },
+      "gate12_click_kkbp_export_clothed.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_click_kkbp_export_clothed.py",
+        "exists": true,
+        "bytes": 1641,
+        "sha256": "378c88d200faaa82c4e9f97bdfd5df3149fdea42141105c8c8847b850ab8fd68"
+      },
+      "gate12_click_kkbp_export_selected_state.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_click_kkbp_export_selected_state.py",
+        "exists": true,
+        "bytes": 2271,
+        "sha256": "9c02cd86a48e79b2ce6b8e332e0c17455c295b49ef536c47628288a00e0d7b63"
+      },
+      "gate12_collect_fresh_luminous_party_export.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_collect_fresh_luminous_party_export.py",
+        "exists": true,
+        "bytes": 4143,
+        "sha256": "4e17301abb0b3a996c6a47887cba0514ee061afef63d76f3457d9e049af0e11b"
+      },
+      "gate12_compare_luminous_v3_three_state_rigs.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_compare_luminous_v3_three_state_rigs.py",
+        "exists": true,
+        "bytes": 2418,
+        "sha256": "47afa4eb19c0564dac3eb0cb5dae9a7910ec9676d10647396e19ca98e4251404"
+      },
+      "gate12_compare_luminous_v3_wardrobe_bone_differences.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_compare_luminous_v3_wardrobe_bone_differences.py",
+        "exists": true,
+        "bytes": 2000,
+        "sha256": "47e1569523890871ab0b0af3241470cee0931f3f565fdad0947478ac45385549"
+      },
+      "gate12_debug_party_selected_load_underwear.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_debug_party_selected_load_underwear.py",
+        "exists": true,
+        "bytes": 1247,
+        "sha256": "4f9024024e8cb9cc673d495a72d212ed39040060e90eb4d004d3ed5bb77a3e80"
+      },
+      "gate12_extract_kk_standing_swim_real_unity_curves.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_extract_kk_standing_swim_real_unity_curves.py",
+        "exists": true,
+        "bytes": 4389,
+        "sha256": "6d5244a7e2b95c64ffb4e1e6faf5293098655398abda7d31a43c5262f55bbdc1"
+      },
+      "gate12_fresh_luminous_blender_conversion.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_fresh_luminous_blender_conversion.py",
+        "exists": true,
+        "bytes": 5804,
+        "sha256": "6921d99ee3f7d1b644450914f8c446630484d579500ef1c595f6b0594de4491a"
+      },
+      "gate12_inspect_native_unity_clip_curves.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_inspect_native_unity_clip_curves.py",
+        "exists": true,
+        "bytes": 2794,
+        "sha256": "ec8dd06dac59770d02b5569d6e9c2346c7a51a5a5c82e9991085fa9dc304ab2d"
+      },
+      "gate12_intake_luminous_v3_fresh_sealed.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_intake_luminous_v3_fresh_sealed.py",
+        "exists": true,
+        "bytes": 4073,
+        "sha256": "6e894da5a49a1a212e962bb6f013b85b44e25562f338b2adcbaf426665401ebe"
+      },
+      "gate12_luminous_fresh_state_blender_roundtrip.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_luminous_fresh_state_blender_roundtrip.py",
+        "exists": true,
+        "bytes": 6065,
+        "sha256": "aa9b464d0ae8a51eb905239ce171ce47613db41106e40f58e672bcef13cebeb4"
+      },
+      "gate12_party_gui_search.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_party_gui_search.py",
+        "exists": true,
+        "bytes": 988,
+        "sha256": "578e2f8a92d613268cf95b909705d363ae566a9c057b18bdf436426ea9c972b2"
+      },
+      "gate12_probe_kk_animation_unitypy.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_probe_kk_animation_unitypy.py",
+        "exists": true,
+        "bytes": 2581,
+        "sha256": "194968d2ef9efa8741ad2d5c8645055491a0f8c707696afd210194bd7eb8f77f"
+      },
+      "gate12_restore_kkbp_exporter_luminous_v3.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_restore_kkbp_exporter_luminous_v3.py",
+        "exists": true,
+        "bytes": 2275,
+        "sha256": "9e0b0d810e0e77d07c298654d3dea128a1371413d510be289d435f3af6e25973"
+      },
+      "gate12_run_luminous_blender_state_guarded.ps1": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_run_luminous_blender_state_guarded.ps1",
+        "exists": true,
+        "bytes": 2946,
+        "sha256": "34b24b0740b4aaa0e910eb4dd08b344b6a7dc428c789471589f593111af2850b"
+      },
+      "gate12_select_luminous_party_state.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_select_luminous_party_state.py",
+        "exists": true,
+        "bytes": 1725,
+        "sha256": "01a1f500abc5b48cfc0e6deb540bdccb472cb66fc16501f282c90a55202c2f2d"
+      },
+      "gate12_verify_luminous_converted_glb.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_verify_luminous_converted_glb.py",
+        "exists": true,
+        "bytes": 3821,
+        "sha256": "08af6fa457a911125cd3ebe6210a82de45a0bc8a313790f3dfcbf732b0668e38"
+      },
+      "gate12_verify_three_real_luminous_skeletons.py": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\gate12_verify_three_real_luminous_skeletons.py",
+        "exists": true,
+        "bytes": 3801,
+        "sha256": "330ec519b83f970365bd37ef7a901dc2e0c46d05c5505ef270f6b7f778fce007"
+      },
+      "run_gate12_luminous_remaining_blender_states_guarded.ps1": {
+        "path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\pipeline\\run_gate12_luminous_remaining_blender_states_guarded.ps1",
+        "exists": true,
+        "bytes": 3066,
+        "sha256": "e27bb6b0088fb3b86910c1d4a52494d6fc67fbae21fefb0fe9b2f628c3cc0cd0"
+      }
+    },
+    "uncompiled_wip_cpp": {
+      "header": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Public\\Koikatsu\\OGKoikatsuPlayableCharacter.h",
+        "exists": true,
+        "bytes": 5367,
+        "sha256": "8442f748ad12099dccdc2c86deb8a599855d3cc876621f9205be179736e1ae33"
+      },
+      "implementation": {
+        "path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Private\\Koikatsu\\OGKoikatsuPlayableCharacter.cpp",
+        "exists": true,
+        "bytes": 17761,
+        "sha256": "4fe788b85e916dda788bc04539a51333a0143ac53e5aaadf3bec4b5fdda1fbb1"
+      }
+    }
+  },
+  "not_yet_done": {
+    "whole_luminous_runtime_playable": true,
+    "runtime_state_switch_three_real_outfits": true,
+    "all_121_real_ue_skeletal_parts_complete": true,
+    "all_native_morphs_equal_meaningful_source_targets": true,
+    "luminous_android_cook_and_package": true,
+    "s26_luminous_apk_install": true,
+    "s26_luminous_gameplay_test": true,
+    "unreal_renderer_frame_time_measurement": true,
+    "gate11_artifact_ready": true
+  },
+  "instruction": "Do not treat PASS importer journals as production Gate11 acceptance; never reset or delete the source data, frozen Foundation, saves, original Android package, draft PR16, or existing partial uassets."
+}
