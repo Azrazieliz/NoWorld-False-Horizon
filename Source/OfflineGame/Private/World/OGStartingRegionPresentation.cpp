@@ -132,6 +132,14 @@ FString WriteJsonStringPreference(
     return Result;
 }
 
+FOGEntityId FoundationCombatQAFixtureEntityId()
+{
+    // Diagnostic combat fixture only, never a canonical Ruler/progression ID.
+    // Retain the original historical GUID so existing QA references match.
+    return FOGEntityId(
+        FGuid(0x4f47464e, 0x44525631, 0x52554c45, 0x5250524f));
+}
+
 FVector2D RotatePoint(const FVector2D& Point, float Radians)
 {
     const float C = FMath::Cos(Radians);
@@ -3436,7 +3444,7 @@ void AOGWorldPrototypeCharacter::ConfigureFoundationParty()
     TArray<FOGCombatUnitState> Units;
     Units.Add(
         MakeUnit(
-            FoundationRulerProjectionId(),
+            FoundationCombatQAFixtureEntityId(),
             TEXT("foundation:protagonist"),
             true));
 
