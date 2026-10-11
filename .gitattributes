@@ -19,3 +19,7 @@
 *.sql text eol=lf
 *.md text eol=lf
 *.json text eol=lf
+
+# Preserve exact original CMU MoCap bytes including author whitespace.
+SourceAssets/Gate12/MotionV3/CMU/*.bvh -text -diff
+SourceAssets/Gate12/MotionV3/CMU/READMEFIRST.txt -text -diff

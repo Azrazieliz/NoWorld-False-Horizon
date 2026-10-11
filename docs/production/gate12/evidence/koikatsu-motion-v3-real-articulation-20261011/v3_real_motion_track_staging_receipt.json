@@ -1,0 +1,29 @@
+{
+  "status": "PASS_3_CMUMOCAP_TRACK_SETS_READY_FOR_NATIVE_UE_AUTHORING",
+  "all_three_sources_immutable": true,
+  "native_glb_map_exact_onepart": "PASS_21_BONE_IMPORT_CALIBRATION",
+  "runtime_new_animations": "NOT_AUTHORED",
+  "action_states": [
+    "Walk",
+    "Run",
+    "Jump"
+  ],
+  "frames": {
+    "Walk": 86,
+    "Run": 44,
+    "Jump": 121
+  },
+  "real_quaternion_bone_tracks": {
+    "Walk": 22,
+    "Run": 22,
+    "Jump": 22
+  },
+  "left_right_joint_articulation": "REAL_MOCAP_NOT_SINUSOIDAL",
+  "original_source_poses_preserved": true,
+  "duration_secs": {
+    "Walk": 2.8333,
+    "Run": 1.4333,
+    "Jump": 4.0
+  },
+  "time_utc": "2026-10-11T10:02:11Z"
+}
