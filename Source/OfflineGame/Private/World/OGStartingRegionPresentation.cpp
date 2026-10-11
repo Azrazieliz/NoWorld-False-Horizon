@@ -10004,9 +10004,42 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         }
         if (Click.StartsWith(ManifestationPrefix))
         {
-            SelectedManifestationIndex =
-                FCString::Atoi(
-                    *Click.Mid(ManifestationPrefix.Len()));
+            const int32 RequestedIndex = FCString::Atoi(
+                *Click.Mid(ManifestationPrefix.Len()));
+            UGameInstance* GameInstance = GetGameInstance();
+            UOGGameCoreSubsystem* Core = GameInstance
+                ? GameInstance->GetSubsystem<UOGGameCoreSubsystem>()
+                : nullptr;
+            UOGGate12RulerSessionSubsystem* Session = GameInstance
+                ? GameInstance->GetSubsystem<UOGGate12RulerSessionSubsystem>()
+                : nullptr;
+            TArray<FOGRosterIdentityViewModel> Roster;
+            FString Error;
+            if (!Core || !Core->GetWorldStore() || !Session ||
+                !Session->IsBoundToStoredRuler() ||
+                !FOGUiViewModelService(*Core->GetWorldStore()).BuildRoster(
+                    Session->BoundRulerId, Roster, Error) ||
+                !Roster.IsValidIndex(SelectedRosterIndex) ||
+                !Roster[SelectedRosterIndex].Manifestations.IsValidIndex(
+                    RequestedIndex))
+            {
+                FoundationStatusMessage = Error.IsEmpty()
+                    ? TEXT("No validated owned Manifestation available.")
+                    : Error;
+                return;
+            }
+            const FOGRosterIdentityViewModel& Identity =
+                Roster[SelectedRosterIndex];
+            const FOGRosterManifestationViewModel& Instance =
+                Identity.Manifestations[RequestedIndex];
+            if (!Session->SelectOwnedManifestation(
+                    Identity.IdentityId, Instance.ManifestationId, Error))
+            {
+                FoundationStatusMessage = Error;
+                return;
+            }
+            SelectedManifestationIndex = RequestedIndex;
+            FoundationStatusMessage = TEXT("Owned character selection saved.");
             return;
         }
         if (Click.StartsWith(TerritoryPrefix))
