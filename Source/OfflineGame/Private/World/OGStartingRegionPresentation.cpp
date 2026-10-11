@@ -132,19 +132,6 @@ FString WriteJsonStringPreference(
     return Result;
 }
 
-FOGEntityId FoundationRulerProjectionId()
-{
-    // Stable presentation-query owner for Foundation shells. This ID is not
-    // persisted or treated as canonical world state; real content may replace
-    // the Ruler identity without changing the presentation contract.
-    return FOGEntityId(
-        FGuid(
-            0x4f47464e,
-            0x44525631,
-            0x52554c45,
-            0x5250524f));
-}
-
 FVector2D RotatePoint(const FVector2D& Point, float Radians)
 {
     const float C = FMath::Cos(Radians);
