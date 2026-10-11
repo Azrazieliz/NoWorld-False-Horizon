@@ -63,6 +63,7 @@ FOGLuminousV3AppearanceProjection FOGLuminousV3AppearancePolicy::Resolve(
     FOGLuminousV3AppearanceProjection Result;
     Result.ActualWardrobe = Actual;
     Result.bPrivacySfwEnabled = bPrivacySfw;
+    Result.bExplicitContextAuthorized = bExplicitContextAuthorized;
     Result.bDefaultBaseAppearance = Actual == EOGLuminousV3Wardrobe::Clothed;
     // This is a pure read-only function: no store, equipment or world writes.
     switch (Actual)
@@ -205,8 +206,12 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
 
 bool AOGLuminousV3PlayableCharacter::IsIsolatedWardrobeQAContext() const
 {
+#if UE_BUILD_SHIPPING
+    return false;
+#else
     return bRunNonPersistentWardrobeQACycle || bRunNativeMotionQACycle ||
         bEnableNativeWardrobeQATouchPanel || bEnterWorldModeOnIsolatedQAStartup;
+#endif
 }
 
 void AOGLuminousV3PlayableCharacter::ConcealUnsafeVisualParts()
@@ -520,7 +525,7 @@ void AOGLuminousV3PlayableCharacter::SetupPlayerInputComponent(UInputComponent* 
 
 void AOGLuminousV3PlayableCharacter::CycleLuminousWardrobeFromGamepad()
 {
-    if (!bEnableNativeWardrobeQATouchPanel) return;
+    if (!IsIsolatedWardrobeQAContext() || !bEnableNativeWardrobeQATouchPanel) return;
     const int32 NextIndex = (static_cast<int32>(CurrentWardrobe) + 1) % 3;
     const bool bSuccess = SetLuminousWardrobe(
         static_cast<EOGLuminousV3Wardrobe>(NextIndex), false);
@@ -577,7 +582,8 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
         // SetLuminousWardrobe(bPersist=true) or modify the canonical store.
         RefreshPrivacyRenderedAppearance();
     }
-    if (bEnableNativeWardrobeQATouchPanel && !WardrobeQAWidget &&
+    if (!UE_BUILD_SHIPPING && IsIsolatedWardrobeQAContext() &&
+        bEnableNativeWardrobeQATouchPanel && !WardrobeQAWidget &&
         IsLocallyControlled() && GetController())
     {
         WardrobeQAWidget = CreateWidget<UOGLuminousV3WardrobeQAWidget>(
