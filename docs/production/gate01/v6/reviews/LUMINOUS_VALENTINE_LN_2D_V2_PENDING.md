@@ -1,6 +1,6 @@
 # Gate 01 character design review — Luminous Valentine LN, v2 (2026-10-11)
 
-Status: **CREATIVE_IN_REVIEW** / not approved. Earlier v1 **REJECTED** by user. Existing Character Adaptation: Luminous Valentine (Tensura), light-novel incarnation.
+Status: **SUPERSEDED_BY_V3_FROZEN** / superseded and not frozen; the user explicitly approved v3 on 2026-10-11. Earlier v1 **REJECTED** by user. Existing Character Adaptation: Luminous Valentine (Tensura), light-novel incarnation.
 
 ## Asset
 - Current generated full-body 2D concept PNG, 941 x 1672 RGB, `sha256:982323e95463f3b5589b5379c79421bf281b2021d3ce38efc2c31cbbfd5a3f80`.
