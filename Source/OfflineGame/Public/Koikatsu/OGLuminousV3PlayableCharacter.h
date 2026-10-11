@@ -38,6 +38,9 @@ struct OFFLINEGAME_API FOGLuminousV3AppearanceProjection
     bool bPrivacySfwEnabled = false;
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    bool bExplicitContextAuthorized = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
     bool bMaskedForPrivacyOrUnavailableAdultContext = false;
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
