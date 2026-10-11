@@ -18,6 +18,45 @@ enum class EOGLuminousV3Wardrobe : uint8
     Clothed, Underwear, Nude
 };
 
+/**
+ * Read-only appearance projection for the Gate10 character detail adapter.
+ * ActualWardrobe is the authoritative clothing choice; RenderedWardrobe is
+ * strictly derived and may be substituted for Privacy/SFW.
+ */
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGLuminousV3AppearanceProjection
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    EOGLuminousV3Wardrobe ActualWardrobe = EOGLuminousV3Wardrobe::Clothed;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    EOGLuminousV3Wardrobe EffectiveRenderedWardrobe = EOGLuminousV3Wardrobe::Clothed;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    bool bPrivacySfwEnabled = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    bool bMaskedForPrivacyOrUnavailableAdultContext = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    bool bRenderable = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    bool bDefaultBaseAppearance = true;
+};
+
+/** Pure presentation policy: never touches world store, outfit JSON or items. */
+struct OFFLINEGAME_API FOGLuminousV3AppearancePolicy
+{
+    static FOGLuminousV3AppearanceProjection Resolve(
+        EOGLuminousV3Wardrobe Actual,
+        bool bPrivacySfw,
+        bool bExplicitContextAuthorized,
+        bool bSafeClothedAssetAvailable);
+};
+
 UENUM(BlueprintType)
 enum class EOGLuminousV3MotionPhase : uint8
 {
@@ -71,6 +110,10 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Wardrobe")
     EOGLuminousV3Wardrobe CurrentWardrobe = EOGLuminousV3Wardrobe::Clothed;
 
+    /** Render-only state; does not become a new wardrobe or equipment record. */
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|Presentation")
+    FOGLuminousV3AppearanceProjection EffectiveAppearance;
+
     /** Only for isolated Gate12 QA world. Never persists, never enabled in production. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|QA")
     bool bRunNonPersistentWardrobeQACycle = false;
@@ -95,6 +138,10 @@ public:
 
     UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|Wardrobe")
     int32 GetActiveLuminousPartCount() const { return ActivePartCount; }
+
+    /** Explicit visual refresh; never writes the canonical store or alters actual clothing. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Presentation")
+    bool RefreshPrivacyRenderedAppearance();
 
     UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|Wardrobe")
     FString GetLastLuminousError() const { return LastLuminousError; }
@@ -128,6 +175,8 @@ private:
     void CycleLuminousWardrobeFromGamepad();
 
     int32 ActivePartCount = 0;
+    bool bLastAppliedPrivacy = false;
+    bool bLastAppliedExplicitContext = false;
     bool bCompatibleNativeMotion = false;
     bool bLuminousReady = false;
     int32 QACycleStep = 0;
@@ -145,6 +194,8 @@ private:
     static int32 ExpectedPartsFor(EOGLuminousV3Wardrobe State);
     bool ValidateWardrobeAssets(EOGLuminousV3Wardrobe Desired, FString& Error) const;
     bool ApplyVisualWardrobe(EOGLuminousV3Wardrobe Desired, FString& Error);
+    bool IsIsolatedWardrobeQAContext() const;
+    void ConcealUnsafeVisualParts();
     bool ResolveCanonicalControlledContext(struct FOGFoundationCharacterContext& OutContext, FString& Error) const;
     bool RestoreCanonicalWardrobe();
     bool PersistCanonicalWardrobe(EOGLuminousV3Wardrobe Desired, FString& Error);
