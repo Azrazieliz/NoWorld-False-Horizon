@@ -5903,12 +5903,12 @@ void AOGWorldPresentationHud::DrawFoundationOpening(
     }
 
     DrawFoundationText(
-        TEXT("Your journey"),
+        TEXT("NoWorld: False Horizon"),
         MainText,
         X + 32.0f * Scale,
         Y + 30.0f * Scale + TitleFloat,
         nullptr,
-        1.05f * Scale,
+        0.80f * Scale,
         false);
     DrawFoundationText(
         TEXT("Continue exploring your world"),
