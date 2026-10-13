@@ -476,6 +476,13 @@ public:
     bool IsFoundationWorldInputAllowed() const;
     void RefreshFoundationInputState();
     virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
+
+    /** Mobile pinch and accessible UI/gamepad zoom controls. No world-state write. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Camera")
+    void AdjustThirdPersonCameraZoom(float DistanceDelta);
+
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Camera")
+    float GetThirdPersonCameraDistance() const;
     void SetFoundationSettingsOpen(bool bOpen);
     void SetFoundationPauseMenuOpen(bool bOpen);
     int32 GetFoundationSettingsPage() const { return FoundationSettingsPage; }
@@ -705,6 +712,8 @@ private:
     void TouchPressed(ETouchIndex::Type FingerIndex, FVector Location);
     void TouchMoved(ETouchIndex::Type FingerIndex, FVector Location);
     void TouchReleased(ETouchIndex::Type FingerIndex, FVector Location);
+    void CameraZoomInPressed();
+    void CameraZoomOutPressed();
     void JumpPressed();
     void JumpReleased();
     void TraversalDownPressed();
@@ -840,6 +849,11 @@ private:
     ETouchIndex::Type CameraTouchIndex = ETouchIndex::Touch1;
     FVector2D LastCameraTouchPosition = FVector2D::ZeroVector;
     FVector2D CameraTouchStartPosition = FVector2D::ZeroVector;
+    bool bCameraPinchActive = false;
+    ETouchIndex::Type CameraPinchTouchIndex = ETouchIndex::Touch2;
+    FVector2D CameraPinchPosition = FVector2D::ZeroVector;
+    float LastCameraPinchDistance = 0.0f;
+    bool bCameraPinchUsed = false;
     bool bTraversalAscendHeld = false;
     bool bTraversalDescendHeld = false;
 };
