@@ -148,4 +148,50 @@ bool FOGGate12LuminousPrivacyPreservesSqliteTest::RunTest(const FString&)
     IFileManager::Get().DeleteDirectory(*Directory, false, true);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FOGGate12LuminousImportedFaceToActorDirectionTest,
+    "OfflineGame.Gate12.Luminous.MeasuredSourceFacingMatchesActor16Directions",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FOGGate12LuminousImportedFaceToActorDirectionTest::RunTest(const FString&)
+{
+    // Measured from all three actual Mesh_03_Prim_00.glb skeletons:
+    // source eye midpoint -> nose is glTF +Z (dot 0.9999999946).
+    // Verified native UE imported basis maps source +Z to UE mesh +Y.
+    // This corrects visual facing while actor movement stays +X.
+    const FVector ImportedFaceForward(0.0f, 1.0f, 0.0f);
+    const FRotator ComponentCorrection(0.0f, -90.0f, 0.0f);
+    const FVector CorrectedLocalFront =
+        ComponentCorrection.RotateVector(ImportedFaceForward);
+
+    TestTrue(TEXT("Calibrated Luminous visual front aligns actor +X"),
+        CorrectedLocalFront.Equals(FVector::ForwardVector, 0.0001f));
+
+    const TArray<FVector> CardinalVelocities = {
+        FVector(1.f,0.f,0.f), FVector(-1.f,0.f,0.f),
+        FVector(0.f,1.f,0.f), FVector(0.f,-1.f,0.f)
+    };
+    int32 Cases = 0;
+    for (const float ActorYaw : { 0.0f, 90.0f, 180.0f, 270.0f })
+    {
+        const FRotator ActorRotation(0.f, ActorYaw, 0.f);
+        const FVector ActorWorldForward =
+            ActorRotation.RotateVector(FVector::ForwardVector);
+        const FVector NativeVisualForward =
+            ActorRotation.RotateVector(CorrectedLocalFront);
+        for (const FVector& WorldVelocity : CardinalVelocities)
+        {
+            ++Cases;
+            TestTrue(*FString::Printf(
+                TEXT("Measured native facing matches actor world velocity case %d"),
+                Cases),
+                FMath::IsNearlyEqual(
+                    FVector::DotProduct(WorldVelocity, NativeVisualForward),
+                    FVector::DotProduct(WorldVelocity, ActorWorldForward),
+                    0.0001f));
+        }
+    }
+    TestEqual(TEXT("Every cardinal actor/world mapping checked"), Cases, 16);
+    return true;
+}
+
 #endif
