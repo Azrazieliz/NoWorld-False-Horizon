@@ -71,7 +71,7 @@ private:
     TObjectPtr<UVerticalBox> Content;
 
     UPROPERTY(Transient)
-    TObjectPtr<UHorizontalBox> Navigation;
+    TObjectPtr<UHorizontalBox> NavigationBar;
 
     int32 OpenIdentityIndex = INDEX_NONE;
     FString LastUiError;
