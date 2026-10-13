@@ -72,7 +72,8 @@ bool FOGGate12LocalRulerBootstrap::TryLoad(
             OwnerState, OwnerRevision, OutError))
         return false;
 
-    if (!bOwnerFound || OwnerKind != FName(TEXT("ruler")))
+    if (!bOwnerFound || OwnerKind != FName(TEXT("ruler")) ||
+        OwnerState.Contains(TEXT("\"diagnosticFixture\"")))
     {
         OutError = TEXT("Bound local player is not an existing canonical Ruler.");
         return false;
