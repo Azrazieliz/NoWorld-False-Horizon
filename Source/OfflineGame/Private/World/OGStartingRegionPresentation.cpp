@@ -6347,6 +6347,22 @@ void AOGWorldPresentationHud::DrawFoundationRuler(
             RulerDestination==TEXT("gacha")?TEXT("Summon"):
             RulerDestination==TEXT("territory")?TEXT("World map"):TEXT("Journal");
         DrawGameText(Page,M,28*S,48*S,White,W*.48f);
+        if (!GetFoundationRulerPresentationOwner().IsValid())
+        {
+            // A new player explicitly creates a real persisted local Ruler.
+            // Do not fabricate characters, possessions, banners or claims.
+            DrawGameText(TEXT("NO LOCAL RULER IN THIS WORLD"),
+                M, H * 0.28f, 32*S, Gold, W-2*M);
+            DrawGameText(TEXT("Start with an independent Ruler. No companions, "
+                "territory, tickets or currency are granted automatically."),
+                M, H * 0.38f, 23*S, Muted, W-2*M);
+            DrawGameButton(TEXT("Create Local Ruler"),
+                TEXT("OG.Ruler.Create"), M, H * 0.53f, W-2*M, 90*S);
+            if (!FoundationStatusMessage.IsEmpty())
+                DrawGameText(FoundationStatusMessage,
+                    M, H * 0.69f, 20*S, Muted, W-2*M);
+            return;
+        }
         DrawGameButton(TEXT("Menu"),TEXT("OG.Diagnostics.Open"),W-390*S,26*S,150*S,66*S);
         DrawGameButton(TEXT("Settings"),TEXT("OG.Settings.Toggle"),W-220*S,26*S,188*S,66*S);
         const float Top=125*S,NavH=118*S,Bottom=H-NavH-96*S;
@@ -10036,6 +10052,26 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         return;
     }
 
+    if (BoxName == FName(TEXT("OG.Ruler.Create")))
+    {
+        UOGGate12RulerSessionSubsystem* Session = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>()
+            : nullptr;
+        FString Error;
+        if (!Session || !Session->CreateLocalRuler(Error))
+        {
+            FoundationStatusMessage = Error.IsEmpty()
+                ? TEXT("Local Ruler creation unavailable.")
+                : Error;
+        }
+        else
+        {
+            FoundationRulerOwner = Session->BoundRulerId;
+            RulerDestination = FName(TEXT("home"));
+            FoundationStatusMessage = TEXT("Local Ruler created in canonical world.");
+        }
+        return;
+    }
     if (BoxName == FName(TEXT("OG.Ruler.World")))
     {
         Character->SetFoundationSettingsOpen(false);
