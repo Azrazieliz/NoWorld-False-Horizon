@@ -5256,6 +5256,11 @@ void AOGWorldPrototypeCharacter::SetupPlayerInputComponent(
         IE_Released,
         this,
         &AOGWorldPrototypeCharacter::TouchReleased).bExecuteWhenPaused = true;
+
+    PlayerInputComponent->BindKey(EKeys::MouseScrollUp, IE_Pressed,
+        this, &AOGWorldPrototypeCharacter::CameraZoomInPressed);
+    PlayerInputComponent->BindKey(EKeys::MouseScrollDown, IE_Pressed,
+        this, &AOGWorldPrototypeCharacter::CameraZoomOutPressed);
 }
 
 void AOGWorldPrototypeCharacter::MoveForward(float Value)
