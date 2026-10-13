@@ -39,6 +39,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|P0")
     bool Navigate(EOGRulerPrimaryDestination Destination, FString& OutError);
 
+    /** Native Records detail is strictly read-only and never invents history. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Records")
+    bool RefreshRecordsDetail(FString& OutError);
+
     /** Persist identity-specific "last used" only after validating actual ownership. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|P0")
     bool SelectOwnedManifestation(
@@ -80,6 +84,12 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|P0")
     FOGRecordsHubViewModel RecordsProjection;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Records")
+    TArray<FOGChronicleEntryViewModel> ChronicleProjection;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Records")
+    TArray<FOGIntelligenceEntryViewModel> IntelligenceProjection;
 
     /** Unlocked access does not imply any approved/authored banner exists. */
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|P0")
