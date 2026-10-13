@@ -216,9 +216,10 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     {
         AddMessage(Content, TEXT("NO CANONICAL RULER SELECTED"), 25, Gold);
         AddMessage(Content,
-            TEXT("A real existing Ruler/world must be loaded before any roster, "
-                 "gacha balance or territory can be shown. Nothing has been fabricated."),
+            TEXT("A local player must exist in the current canonical world. "
+                 "Creating one does not grant characters, territory, currency or banners."),
             18, TextMuted);
+        AddAction(Content, TEXT("CREATE LOCAL RULER"), TEXT("create-ruler"));
         BuildNav();
         return;
     }
@@ -468,6 +469,15 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     }
 
     FString Error;
+    if (Action == TEXT("create-ruler"))
+    {
+        if (!Session->CreateLocalRuler(Error))
+            LastUiError = Error;
+        else
+            LastUiError.Reset();
+        RefreshFromCanonical();
+        return;
+    }
     if (Action.StartsWith(TEXT("records/")))
     {
         const int32 Index = FCString::Atoi(*Action.Mid(8));
