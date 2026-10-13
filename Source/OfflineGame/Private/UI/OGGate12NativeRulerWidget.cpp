@@ -262,13 +262,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
             AddMessage(Content, TEXT("No territory holdings in current world."), 18, TextMuted);
         break;
     case EOGRulerPrimaryDestination::Records:
-        AddMessage(Content,
-            FString::Printf(TEXT("%d reports"),
-                Session->RecordsProjection.ReportCount), 20);
-        AddMessage(Content,
-            TEXT("Reports / Chronicle / Codex / Intelligence consume the existing "
-                 "canonical records services; no fabricated historical entries."),
-            17, TextMuted);
+        BuildRecords();
         break;
     }
     BuildNav();
@@ -349,6 +343,79 @@ void UOGGate12NativeRulerWidget::BuildRoster()
     }
 }
 
+void UOGGate12NativeRulerWidget::BuildRecords()
+{
+    UGameInstance* GI = GetGameInstance();
+    UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session) return;
+
+    static const TCHAR* Sections[4] =
+    {
+        TEXT("REPORTS"), TEXT("CHRONICLE"), TEXT("CODEX"), TEXT("INTELLIGENCE")
+    };
+    for (int32 Index = 0; Index < 4; ++Index)
+        AddAction(Content, Sections[Index],
+            FString::Printf(TEXT("records/%d"), Index));
+
+    FString Error;
+    if ((RecordsSection == 1 || RecordsSection == 3) &&
+        !Session->RefreshRecordsDetail(Error))
+    {
+        AddMessage(Content, Error.IsEmpty()
+            ? TEXT("Canonical Records unavailable.") : Error, 16, TextMuted);
+        return;
+    }
+    switch (RecordsSection)
+    {
+    case 0:
+        AddMessage(Content,
+            FString::Printf(TEXT("%d verified reports / %d unacknowledged"),
+                Session->RecordsProjection.ReportCount,
+                Session->RecordsProjection.UnacknowledgedReportCount),
+            18, TextMain);
+        if (Session->RecordsProjection.ReportCount <= 0)
+            AddMessage(Content, TEXT("No reports in this world."), 16, TextMuted);
+        else
+            AddMessage(Content,
+                TEXT("Report count is authoritative. Detailed report browser "
+                     "requires installed report projection; no invented reports."),
+                16, TextMuted);
+        break;
+    case 1:
+        if (Session->ChronicleProjection.IsEmpty())
+            AddMessage(Content, TEXT("No known Chronicle entries."), 16, TextMuted);
+        for (const FOGChronicleEntryViewModel& Event : Session->ChronicleProjection)
+            AddMessage(Content,
+                FString::Printf(TEXT("%s  /  world tick %lld"),
+                    *Event.EventType.ToString(), Event.WorldTick),
+                16, TextMain);
+        break;
+    case 2:
+        AddMessage(Content,
+            TEXT("No verified installed Codex entries are available. "
+                 "Unknown lore remains unknown."),
+            16, TextMuted);
+        break;
+    case 3:
+        if (Session->IntelligenceProjection.IsEmpty())
+            AddMessage(Content, TEXT("No known Intelligence entries."), 16, TextMuted);
+        for (const FOGIntelligenceEntryViewModel& Entry : Session->IntelligenceProjection)
+        {
+            // BuildIntelligence applies owner knowledge semantics; do not
+            // reveal the value JSON of unknown/outdated intelligence.
+            AddMessage(Content,
+                FString::Printf(TEXT("%s / %s"),
+                    *Entry.FactKey.ToString(),
+                    Entry.Knowledge.KnowledgeState ==
+                        EOGUiKnowledgeState::Confirmed
+                        ? TEXT("Confirmed") : TEXT("Unconfirmed")),
+                16, TextMain);
+        }
+        break;
+    }
+}
+
 void UOGGate12NativeRulerWidget::BuildCharacterDetail()
 {
     UGameInstance* GI = GetGameInstance();
@@ -401,7 +468,13 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     }
 
     FString Error;
-    if (Action.StartsWith(TEXT("nav/")))
+    if (Action.StartsWith(TEXT("records/")))
+    {
+        const int32 Index = FCString::Atoi(*Action.Mid(8));
+        if (Index < 0 || Index >= 4) return;
+        RecordsSection = Index;
+    }
+    else if (Action.StartsWith(TEXT("nav/")))
     {
         const int32 Index = FCString::Atoi(*Action.Mid(4));
         if (Index < 0 || Index >= 5) return;
