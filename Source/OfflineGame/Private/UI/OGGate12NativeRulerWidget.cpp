@@ -126,8 +126,8 @@ void UOGGate12NativeRulerWidget::AddMessage(
     FSlateFontInfo Font = Label->GetFont();
     Font.Size = FontSize;
     Label->SetFont(Font);
-    UVerticalBoxSlot* Slot = Parent->AddChildToVerticalBox(Label);
-    Slot->SetPadding(FMargin(8.0f, 7.0f));
+    UVerticalBoxSlot* LayoutSlot = Parent->AddChildToVerticalBox(Label);
+    LayoutSlot->SetPadding(FMargin(8.0f, 7.0f));
 }
 
 void UOGGate12NativeRulerWidget::AddAction(
@@ -149,8 +149,8 @@ void UOGGate12NativeRulerWidget::AddAction(
     Label->SetColorAndOpacity(FSlateColor(bEnabled ? TextMain : TextMuted));
     Label->SetJustification(ETextJustify::Center);
     Button->AddChild(Label);
-    UVerticalBoxSlot* Slot = Parent->AddChildToVerticalBox(Button);
-    Slot->SetPadding(FMargin(5.0f, 4.0f, 5.0f, 4.0f));
+    UVerticalBoxSlot* LayoutSlot = Parent->AddChildToVerticalBox(Button);
+    LayoutSlot->SetPadding(FMargin(5.0f, 4.0f, 5.0f, 4.0f));
 }
 
 void UOGGate12NativeRulerWidget::BuildNav()
@@ -180,9 +180,9 @@ void UOGGate12NativeRulerWidget::BuildNav()
         Font.Size = 13;
         Label->SetFont(Font);
         Button->AddChild(Label);
-        UHorizontalBoxSlot* Slot = NavigationBar->AddChildToHorizontalBox(Button);
-        Slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-        Slot->SetPadding(FMargin(2.0f));
+        UHorizontalBoxSlot* LayoutSlot = NavigationBar->AddChildToHorizontalBox(Button);
+        LayoutSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        LayoutSlot->SetPadding(FMargin(2.0f));
     }
 }
 
