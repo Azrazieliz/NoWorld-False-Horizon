@@ -168,7 +168,8 @@ bool UOGGate12RulerSessionSubsystem::BindExistingRuler(
 
     // Refuse to turn an arbitrary World entity or presentation fixture into
     // a player owner. FName is case-insensitive in Unreal.
-    if (!bFound || Kind != FName(TEXT("ruler")))
+    if (!bFound || Kind != FName(TEXT("ruler")) ||
+        StateJson.Contains(TEXT("\"diagnosticFixture\"")))
     {
         OutError =
             TEXT("Candidate is not a stored canonical Ruler entity.");
