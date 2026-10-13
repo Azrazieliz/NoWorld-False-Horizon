@@ -7,6 +7,7 @@
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
+class UHorizontalBox;
 class UOGGate12NativeRulerWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOGGate12WorldPresentationRequested);
@@ -70,7 +71,7 @@ private:
     TObjectPtr<UVerticalBox> Content;
 
     UPROPERTY(Transient)
-    TObjectPtr<UVerticalBox> Navigation;
+    TObjectPtr<UHorizontalBox> Navigation;
 
     int32 OpenIdentityIndex = INDEX_NONE;
     FString LastUiError;
