@@ -74,12 +74,14 @@ private:
     TObjectPtr<UHorizontalBox> NavigationBar;
 
     int32 OpenIdentityIndex = INDEX_NONE;
+    int32 RecordsSection = 0;
     FString LastUiError;
 
     void BuildRoot();
     void BuildCurrentPage();
     void BuildRoster();
     void BuildCharacterDetail();
+    void BuildRecords();
     void BuildNav();
     void AddMessage(UVerticalBox* Parent, const FString& Value, int32 FontSize = 22,
         FLinearColor Tint = FLinearColor(0.83f, 0.84f, 0.88f, 1.0f));
