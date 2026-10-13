@@ -117,5 +117,6 @@ private:
         FString& OutError) const;
 
     void ClearProjectionAndSelection();
+    void HandleCanonicalRuntimeReleasing();
     bool bRulerValidated = false;
 };
