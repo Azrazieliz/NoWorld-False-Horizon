@@ -1763,11 +1763,13 @@ AOGWorldPrototypeCharacter::AOGWorldPrototypeCharacter()
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetCapsuleComponent());
-    CameraBoom->TargetArmLength = 680.0f;
+    // Android character-first framing; the user can zoom rather than being
+    // locked at the former distant engineering-playground camera position.
+    CameraBoom->TargetArmLength = 395.0f;
     CameraBoom->TargetOffset = FVector(0.0f, 0.0f, 55.0f);
     CameraBoom->ProbeSize = 16.0f;
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-    CameraBoom->SocketOffset = FVector(0.0f, 48.0f, 82.0f);
+    CameraBoom->SocketOffset = FVector(0.0f, 38.0f, 82.0f);
     CameraBoom->bUsePawnControlRotation = true;
     CameraBoom->bEnableCameraLag = true;
     CameraBoom->CameraLagSpeed = 14.0f;
@@ -2252,6 +2254,28 @@ void AOGWorldPrototypeCharacter::SetFoundationPauseMenuOpen(bool bOpen)
     bFoundationPauseMenuOpen = bOpen;
     RefreshFoundationInputState();
     if (GetWorld()) UGameplayStatics::SetGamePaused(GetWorld(), bOpen);
+}
+
+float AOGWorldPrototypeCharacter::GetThirdPersonCameraDistance() const
+{
+    return CameraBoom ? CameraBoom->TargetArmLength : 395.0f;
+}
+
+void AOGWorldPrototypeCharacter::AdjustThirdPersonCameraZoom(float DistanceDelta)
+{
+    if (!CameraBoom || !IsFoundationWorldInputAllowed()) return;
+    CameraBoom->TargetArmLength = FMath::Clamp(
+        CameraBoom->TargetArmLength + DistanceDelta, 235.0f, 850.0f);
+}
+
+void AOGWorldPrototypeCharacter::CameraZoomInPressed()
+{
+    AdjustThirdPersonCameraZoom(-55.0f);
+}
+
+void AOGWorldPrototypeCharacter::CameraZoomOutPressed()
+{
+    AdjustThirdPersonCameraZoom(55.0f);
 }
 
 void AOGWorldPrototypeCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
@@ -2925,15 +2949,18 @@ bool AOGWorldPrototypeCharacter::IsCameraDragTouch(
         return false;
     }
 
-    // Keep the top-right Settings hit target out of camera input. Action
-    // controls start below the upper camera field, so the two systems never
-    // compete for the same finger.
-    const bool bCameraSide =
-        bLeftHandedControls
-            ? NormalizedX <= 0.58f
-            : NormalizedX >= 0.42f;
-    return bCameraSide &&
-        NormalizedY <= 0.55f;
+    // The old hard-coded half-screen, upper-55%-only strip caused the
+    // unusable camera demonstrated on the S26. Permit all unoccupied look
+    // surface, while reserving joystick, action cluster and top HUD areas.
+    // Exact UMG controls are excluded by GetHitBoxAtCoordinates above.
+    const bool bTopUi = NormalizedY < 0.11f;
+    const bool bMovementZone = NormalizedY > 0.54f &&
+        (bLeftHandedControls ? NormalizedX > 0.67f
+                            : NormalizedX < 0.33f);
+    const bool bActionZone = NormalizedY > 0.62f &&
+        (bLeftHandedControls ? NormalizedX < 0.35f
+                            : NormalizedX > 0.65f);
+    return !bTopUi && !bMovementZone && !bActionZone;
 }
 
 void AOGWorldPrototypeCharacter::TouchPressed(
@@ -2947,12 +2974,23 @@ void AOGWorldPrototypeCharacter::TouchPressed(
             if (Hud->GetHitBoxAtCoordinates(FVector2D(Location.X, Location.Y), true)) return;
         }
     }
-    if (bCameraTouchActive ||
-        !IsCameraDragTouch(Location))
+    if (bCameraTouchActive)
     {
+        if (!bCameraPinchActive && FingerIndex != CameraTouchIndex &&
+            IsCameraDragTouch(Location))
+        {
+            bCameraPinchActive = true;
+            bCameraPinchUsed = true;
+            CameraPinchTouchIndex = FingerIndex;
+            CameraPinchPosition = FVector2D(Location.X, Location.Y);
+            LastCameraPinchDistance = FVector2D::Distance(
+                LastCameraTouchPosition, CameraPinchPosition);
+        }
         return;
     }
 
+    if (!IsCameraDragTouch(Location)) return;
+    bCameraPinchUsed = false;
     bCameraTouchActive = true;
     CameraTouchIndex = FingerIndex;
     LastCameraTouchPosition =
@@ -2966,13 +3004,29 @@ void AOGWorldPrototypeCharacter::TouchMoved(
     FVector Location)
 {
     if (!IsFoundationWorldInputAllowed() || !bCameraTouchActive ||
-        FingerIndex != CameraTouchIndex ||
         !Controller)
     {
         return;
     }
 
     const FVector2D Current(Location.X, Location.Y);
+    if (bCameraPinchActive)
+    {
+        if (FingerIndex == CameraTouchIndex)
+            LastCameraTouchPosition = Current;
+        else if (FingerIndex == CameraPinchTouchIndex)
+            CameraPinchPosition = Current;
+        else
+            return;
+
+        const float Separation = FVector2D::Distance(
+            LastCameraTouchPosition, CameraPinchPosition);
+        if (LastCameraPinchDistance > KINDA_SMALL_NUMBER)
+            AdjustThirdPersonCameraZoom((LastCameraPinchDistance - Separation) * 0.70f);
+        LastCameraPinchDistance = Separation;
+        return;
+    }
+    if (FingerIndex != CameraTouchIndex) return;
     const FVector2D Delta =
         Current - LastCameraTouchPosition;
     LastCameraTouchPosition = Current;
@@ -3025,12 +3079,17 @@ void AOGWorldPrototypeCharacter::TouchReleased(
     ETouchIndex::Type FingerIndex,
     FVector Location)
 {
-    if (!bCameraTouchActive ||
-        FingerIndex != CameraTouchIndex)
+    if (bCameraPinchActive && FingerIndex == CameraPinchTouchIndex)
     {
+        bCameraPinchActive = false;
+        bCameraPinchUsed = true;
         return;
     }
+    if (!bCameraTouchActive || FingerIndex != CameraTouchIndex) return;
 
+    const bool bWasPinching = bCameraPinchUsed || bCameraPinchActive;
+    bCameraPinchActive = false;
+    bCameraPinchUsed = false;
     const FVector2D End(Location.X, Location.Y);
     const float DragDistance =
         FVector2D::Distance(
@@ -3041,7 +3100,7 @@ void AOGWorldPrototypeCharacter::TouchReleased(
 
     // A short right-side tap is also the direct-touch target-selection
     // contract required by World Mode. Dragging never changes the lock.
-    if (IsFoundationWorldInputAllowed() && DragDistance <= 22.0f)
+    if (!bWasPinching && IsFoundationWorldInputAllowed() && DragDistance <= 22.0f)
     {
         if (APlayerController* PlayerController =
                 Cast<APlayerController>(Controller))
