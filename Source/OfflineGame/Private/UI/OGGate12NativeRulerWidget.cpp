@@ -109,9 +109,9 @@ void UOGGate12NativeRulerWidget::BuildRoot()
         UVerticalBox::StaticClass(), TEXT("CanonicalPageBody"));
     Scroll->AddChild(Content);
 
-    Navigation = WidgetTree->ConstructWidget<UHorizontalBox>(
+    NavigationBar = WidgetTree->ConstructWidget<UHorizontalBox>(
         UHorizontalBox::StaticClass(), TEXT("RulerFiveDestinations"));
-    UVerticalBoxSlot* NavSlot = Screen->AddChildToVerticalBox(Navigation);
+    UVerticalBoxSlot* NavSlot = Screen->AddChildToVerticalBox(NavigationBar);
     NavSlot->SetPadding(FMargin(6.0f, 8.0f, 6.0f, 18.0f));
 }
 
@@ -155,8 +155,8 @@ void UOGGate12NativeRulerWidget::AddAction(
 
 void UOGGate12NativeRulerWidget::BuildNav()
 {
-    if (!Navigation || !WidgetTree) return;
-    Navigation->ClearChildren();
+    if (!NavigationBar || !WidgetTree) return;
+    NavigationBar->ClearChildren();
     static const TCHAR* Titles[5] =
     {
         TEXT("Home"), TEXT("Characters"), TEXT("Gacha"),
@@ -180,7 +180,7 @@ void UOGGate12NativeRulerWidget::BuildNav()
         Font.Size = 13;
         Label->SetFont(Font);
         Button->AddChild(Label);
-        UHorizontalBoxSlot* Slot = Navigation->AddChildToHorizontalBox(Button);
+        UHorizontalBoxSlot* Slot = NavigationBar->AddChildToHorizontalBox(Button);
         Slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
         Slot->SetPadding(FMargin(2.0f));
     }
