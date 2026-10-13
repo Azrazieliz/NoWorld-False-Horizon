@@ -18,6 +18,8 @@ void UOGGate12RulerSessionSubsystem::ClearProjectionAndSelection()
     OwnedRoster.Reset();
     TerritoryProjection = FOGTerritoryViewModel();
     RecordsProjection = FOGRecordsHubViewModel();
+    ChronicleProjection.Reset();
+    IntelligenceProjection.Reset();
     bRealGachaAccessUnlocked = false;
     bApprovedBannerProvided = false;
     UserFacingAvailability = TEXT("No existing Ruler is selected.");
@@ -203,6 +205,31 @@ bool UOGGate12RulerSessionSubsystem::RefreshCanonicalProjections(
             UserFacingAvailability = TEXT("Ruler Home is connected to canonical world state.");
             break;
     }
+    return true;
+}
+
+bool UOGGate12RulerSessionSubsystem::RefreshRecordsDetail(FString& OutError)
+{
+    OutError.Reset();
+    if (!bRulerValidated || !BoundRulerId.IsValid())
+    {
+        OutError = TEXT("No real Ruler selected for Records.");
+        return false;
+    }
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError))
+        return false;
+
+    FOGUiViewModelService Ui(*Store);
+    TArray<FOGChronicleEntryViewModel> ActualChronicle;
+    TArray<FOGIntelligenceEntryViewModel> ActualIntelligence;
+    if (!Ui.BuildChronicle(BoundRulerId, 25, ActualChronicle, OutError) ||
+        !Ui.BuildIntelligence(BoundRulerId, ActualIntelligence, OutError))
+        return false;
+
+    ChronicleProjection = MoveTemp(ActualChronicle);
+    IntelligenceProjection = MoveTemp(ActualIntelligence);
     return true;
 }
 
