@@ -220,7 +220,8 @@ bool UOGGate12RulerSessionSubsystem::RefreshCanonicalProjections(
     if (!Store->TryReadEntity(BoundRulerId, bOwnerStillFound,
             OwnerKind, OwnerState, OwnerCreated, OutError))
         return false;
-    if (!bOwnerStillFound || OwnerKind != FName(TEXT("ruler")))
+    if (!bOwnerStillFound || OwnerKind != FName(TEXT("ruler")) ||
+        OwnerState.Contains(TEXT("\"diagnosticFixture\"")))
     {
         ClearProjectionAndSelection();
         OutError = TEXT("Bound player is no longer a valid Ruler in this world.");
