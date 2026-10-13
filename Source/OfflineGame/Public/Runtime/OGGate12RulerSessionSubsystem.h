@@ -26,7 +26,16 @@ class OFFLINEGAME_API UOGGate12RulerSessionSubsystem final
     GENERATED_BODY()
 
 public:
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
+
+    /** Read the world-embedded local owner binding; never creates a test owner. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|P0")
+    bool TryRestoreLocalRuler(FString& OutError);
+
+    /** Explicit New Game action: creates only a real local Ruler, transactionally. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|P0")
+    bool CreateLocalRuler(FString& OutError);
 
     /** Bind an existing, store-backed player owner. No synthetic fallback ID. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|P0")
