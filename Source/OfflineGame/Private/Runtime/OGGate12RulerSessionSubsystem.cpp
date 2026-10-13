@@ -13,6 +13,13 @@ void UOGGate12RulerSessionSubsystem::Initialize(
 {
     Super::Initialize(Collection);
     Collection.InitializeDependency<UOGGameCoreSubsystem>();
+    if (UOGGameCoreSubsystem* Core = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>()
+            : nullptr)
+    {
+        Core->OnCanonicalRuntimeReleasing.AddUObject(
+            this, &UOGGate12RulerSessionSubsystem::HandleCanonicalRuntimeReleasing);
+    }
     FString Error;
     if (!TryRestoreLocalRuler(Error) && !Error.IsEmpty())
     {
@@ -69,6 +76,13 @@ bool UOGGate12RulerSessionSubsystem::CreateLocalRuler(FString& OutError)
     return BindExistingRuler(Created, OutError);
 }
 
+void UOGGate12RulerSessionSubsystem::HandleCanonicalRuntimeReleasing()
+{
+    // Never show an owner/roster from the previous canonical database after
+    // Clear, Recovery Import, world rollback, or runtime replacement.
+    ClearProjectionAndSelection();
+}
+
 void UOGGate12RulerSessionSubsystem::ClearProjectionAndSelection()
 {
     bRulerValidated = false;
@@ -89,6 +103,12 @@ void UOGGate12RulerSessionSubsystem::ClearProjectionAndSelection()
 
 void UOGGate12RulerSessionSubsystem::Deinitialize()
 {
+    if (UOGGameCoreSubsystem* Core = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>()
+            : nullptr)
+    {
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    }
     ClearProjectionAndSelection();
     Super::Deinitialize();
 }
@@ -186,6 +206,23 @@ bool UOGGate12RulerSessionSubsystem::RefreshCanonicalProjections(
     IOGWorldStore* Store = nullptr;
     if (!ResolveStore(Core, Store, OutError))
     {
+        UserFacingAvailability = OutError;
+        return false;
+    }
+
+    // Recheck the bound owner on every refresh. A world import/recovery may
+    // have swapped databases since selection was established.
+    bool bOwnerStillFound = false;
+    FName OwnerKind;
+    FString OwnerState;
+    int64 OwnerCreated = 0;
+    if (!Store->TryReadEntity(BoundRulerId, bOwnerStillFound,
+            OwnerKind, OwnerState, OwnerCreated, OutError))
+        return false;
+    if (!bOwnerStillFound || OwnerKind != FName(TEXT("ruler")))
+    {
+        ClearProjectionAndSelection();
+        OutError = TEXT("Bound player is no longer a valid Ruler in this world.");
         UserFacingAvailability = OutError;
         return false;
     }
