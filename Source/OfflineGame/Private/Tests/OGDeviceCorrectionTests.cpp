@@ -297,7 +297,13 @@ bool FOGDistinctActionTargetsTest::RunTest(const FString&)
         Canvas->Init(Size.X, Size.Y, nullptr, &Drawing);
         auto* Hud = World->SpawnActor<AOGWorldPresentationHud>();
         Hud->SetOwner(PC); Hud->PlayerOwner = PC; Hud->SetCanvas(Canvas, Canvas);
+        // Continue now correctly opens portrait Ruler. Verify it does not
+        // leak landscape combat actions, then explicitly enter World Mode.
         Hud->NotifyHitBoxClick(TEXT("OG.Opening.Continue"));
+        Hud->DrawHUD();
+        TestNull(TEXT("Portrait Ruler must not expose World attack"),
+            Hud->GetHitBoxWithName(FName(TEXT("OG.World.Attack"))));
+        Hud->NotifyHitBoxClick(TEXT("OG.Ruler.World"));
         Hud->DrawHUD();
         TArray<FBox2D> Rectangles;
         for (const FName Name : {FName(TEXT("OG.World.Attack")), FName(TEXT("OG.World.Dodge")),
