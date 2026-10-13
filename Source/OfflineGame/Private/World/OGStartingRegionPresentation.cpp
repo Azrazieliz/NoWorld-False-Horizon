@@ -45,6 +45,7 @@
 #include "Misc/Parse.h"
 #include "OfflineGame.h"
 #include "UI/OGUiViewModelService.h"
+#include "UI/OGGate12NativeRulerWidget.h"
 #include "Persistence/OGWorldStore.h"
 #include "ProceduralMeshComponent.h"
 #include "Runtime/OGAndroidBackupDocumentBridge.h"
@@ -5647,8 +5648,48 @@ void AOGWorldPresentationHud::AddFoundationHitBox(
     AHUD::AddHitBox(Minimum, Maximum - Minimum, Name, bConsumesInput, Priority);
 }
 
+void AOGWorldPresentationHud::SetGate12NativeRulerUMGEnabled(bool bEnabled)
+{
+    bGate12NativeRulerUMGEnabled = bEnabled;
+    if (!bEnabled) SynchronizeGate12NativeRulerUMG(false);
+}
+
+void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
+{
+    SetFoundationSurface(FName(TEXT("world")));
+}
+
+void AOGWorldPresentationHud::SynchronizeGate12NativeRulerUMG(bool bShouldShow)
+{
+    if (!bShouldShow)
+    {
+        if (Gate12NativeRulerWidget && Gate12NativeRulerWidget->IsInViewport())
+            Gate12NativeRulerWidget->RemoveFromParent();
+        return;
+    }
+    if (!PlayerOwner || !GetWorld())
+        return;
+
+    if (!Gate12NativeRulerWidget)
+    {
+        Gate12NativeRulerWidget = CreateWidget<UOGGate12NativeRulerWidget>(
+            PlayerOwner, UOGGate12NativeRulerWidget::StaticClass());
+        if (!Gate12NativeRulerWidget)
+            return;
+        Gate12NativeRulerWidget->OnWorldPresentationRequested.AddDynamic(
+            this, &AOGWorldPresentationHud::OnGate12NativeWorldRequested);
+    }
+    if (!Gate12NativeRulerWidget->IsInViewport())
+    {
+        Gate12NativeRulerWidget->AddToViewport(50);
+        Gate12NativeRulerWidget->RefreshFromCanonical();
+    }
+}
+
 void AOGWorldPresentationHud::SetFoundationSurface(FName Surface)
 {
+    if (Surface != FName(TEXT("ruler")))
+        SynchronizeGate12NativeRulerUMG(false);
     FoundationSurface = Surface;
     GachaOverlay = NAME_None;
     PressedWorldControls.Reset();
@@ -7917,6 +7958,14 @@ void AOGWorldPresentationHud::DrawHUD()
         Character && Character->IsFoundationSettingsOpen();
     const bool bPauseOpen =
         Character && Character->IsFoundationPauseMenuOpen();
+
+    const bool bNativeRulerVisible =
+        bGate12NativeRulerUMGEnabled && !bSettingsOpen && !bPauseOpen &&
+        FoundationSurface == FName(TEXT("ruler"));
+    SynchronizeGate12NativeRulerUMG(bNativeRulerVisible);
+    if (bNativeRulerVisible && Gate12NativeRulerWidget &&
+        Gate12NativeRulerWidget->IsInViewport())
+        return;
 
     float Scale =
         FMath::Clamp(Canvas->ClipY / 1080.0f, 0.72f, 1.2f);
