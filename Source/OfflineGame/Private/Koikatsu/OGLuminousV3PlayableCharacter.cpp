@@ -537,12 +537,10 @@ void AOGLuminousV3PlayableCharacter::CycleLuminousWardrobeFromGamepad()
 void AOGLuminousV3PlayableCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    FString Error;
     CurrentWardrobe = InitialWardrobe;
     if (!RefreshPrivacyRenderedAppearance())
     {
-        const FString Error = LastLuminousError;
-        UE_LOG(LogTemp, Error, TEXT("Gate12 Luminous native startup failed: %s"), *Error);
+        UE_LOG(LogTemp, Error, TEXT("Gate12 Luminous native startup failed: %s"), *LastLuminousError);
         return;
     }
     // Only applies if the selected saved canonical character is *actually*
