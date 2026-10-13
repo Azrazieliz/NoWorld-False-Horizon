@@ -21,6 +21,27 @@ const FLinearColor TextMain(0.90f, 0.90f, 0.89f, 1.0f);
 const FLinearColor TextMuted(0.55f, 0.58f, 0.61f, 1.0f);
 const FLinearColor Gold(0.72f, 0.62f, 0.44f, 1.0f);
 
+struct FNativeRarityColors
+{
+    FLinearColor Frame;
+    FLinearColor Badge;
+    bool bKnown = false;
+};
+
+FNativeRarityColors ResolveRarity(FName Tier)
+{
+    // Frozen six-tier Gate10 palette; no fabricated/universal Absolute tier.
+    // Matte outer lines only. Metallic treatment is reserved for insignia.
+    if (Tier == TEXT("R"))   return { FLinearColor(.90f,.72f,.16f,1), FLinearColor(.94f,.81f,.32f,1), true };
+    if (Tier == TEXT("SR"))  return { FLinearColor(.87f,.34f,.60f,1), FLinearColor(.92f,.47f,.70f,1), true };
+    if (Tier == TEXT("SSR")) return { FLinearColor(.78f,.16f,.22f,1), FLinearColor(.92f,.25f,.31f,1), true };
+    if (Tier == TEXT("UR"))  return { FLinearColor(.22f,.40f,.82f,1), FLinearColor(.38f,.59f,.92f,1), true };
+    if (Tier == TEXT("LR"))  return { FLinearColor(.68f,.70f,.72f,1), FLinearColor(.81f,.67f,.34f,1), true };
+    if (Tier == TEXT("MR"))  return { FLinearColor(.035f,.035f,.040f,1), FLinearColor(.77f,.80f,.86f,1), true };
+    // Unknown and Absolute require authored source; neutral fallback only.
+    return { FLinearColor(.13f,.14f,.16f,1), TextMuted, false };
+}
+
 FString DestinationTitle(EOGRulerPrimaryDestination Dest)
 {
     switch (Dest)
@@ -292,8 +313,23 @@ void UOGGate12NativeRulerWidget::BuildRoster()
         Button->OnClicked.AddDynamic(Button, &UOGGate12RulerActionButton::InvokeAction);
         Button->SetBackgroundColor(FLinearColor(0.07f, 0.075f, 0.09f, 1.0f));
 
+        const FOGRosterManifestationViewModel* Selected =
+            Identity.Manifestations.FindByPredicate(
+                [&Identity](const FOGRosterManifestationViewModel& Candidate)
+                {
+                    return Candidate.ManifestationId == Identity.SelectedManifestationId;
+                });
+        const FName Rarity = Selected ? Selected->CurrentRarity : NAME_None;
+        const FNativeRarityColors RarityColors = ResolveRarity(Rarity);
+        UBorder* AngularFrameBase = WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass());
+        AngularFrameBase->SetBrushColor(RarityColors.Frame);
+        AngularFrameBase->SetPadding(FMargin(1.5f));
+
         UVerticalBox* CardBody = WidgetTree->ConstructWidget<UVerticalBox>(
             UVerticalBox::StaticClass());
+        if (RarityColors.bKnown)
+            AddMessage(CardBody, Rarity.ToString(), 16, RarityColors.Badge);
         UVerticalBoxSlot* Spacer = CardBody->AddChildToVerticalBox(
             WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass()));
         Spacer->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -307,7 +343,8 @@ void UOGGate12NativeRulerWidget::BuildRoster()
             FString::Printf(TEXT("%d manifestations"), Identity.ManifestationCount),
             12, Gold);
         Button->AddChild(CardBody);
-        Fixed->AddChild(Button);
+        AngularFrameBase->AddChild(Button);
+        Fixed->AddChild(AngularFrameBase);
         Grid->AddChildToUniformGrid(Fixed, Index / 3, Index % 3);
     }
 }
