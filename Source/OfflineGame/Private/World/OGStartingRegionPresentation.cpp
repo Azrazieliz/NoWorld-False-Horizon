@@ -2228,6 +2228,9 @@ void AOGWorldPrototypeCharacter::RefreshFoundationInputState()
         FoundationInputController = PC;
         bOwnsFoundationInputSuppression = true;
         bCameraTouchActive = false;
+        bCameraPinchActive = false;
+        bCameraPinchUsed = false;
+        LastCameraPinchDistance = 0.0f;
         bTraversalAscendHeld = bTraversalDescendHeld = false;
         bSprinting = false;
         StopJumping();
