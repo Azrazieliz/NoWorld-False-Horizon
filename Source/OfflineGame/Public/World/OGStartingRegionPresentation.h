@@ -863,6 +863,17 @@ class OFFLINEGAME_API AOGWorldPresentationHud : public AHUD
 
 public:
     virtual void DrawHUD() override;
+
+    /** Opt-in native UMG Ruler presentation. Canvas remains the safe fallback. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
+    void SetGate12NativeRulerUMGEnabled(bool bEnabled);
+
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Ruler|UMG")
+    bool IsGate12NativeRulerUMGEnabled() const { return bGate12NativeRulerUMGEnabled; }
+
+    /** Native UMG world transition uses existing HUD/presentation contracts. */
+    UFUNCTION()
+    void OnGate12NativeWorldRequested();
     virtual void NotifyHitBoxClick(FName BoxName) override;
     virtual void NotifyHitBoxRelease(FName BoxName) override;
     TSet<FName> PressedWorldControls;
@@ -887,6 +898,14 @@ public:
     void ClearActiveGachaPresentation();
 
 private:
+    void SynchronizeGate12NativeRulerUMG(bool bShouldShow);
+
+    UPROPERTY(EditDefaultsOnly, Category="OfflineGame|Ruler|UMG")
+    bool bGate12NativeRulerUMGEnabled = false;
+
+    UPROPERTY(Transient)
+    TObjectPtr<class UOGGate12NativeRulerWidget> Gate12NativeRulerWidget;
+
     void DrawGamePolygon(const TArray<FVector2D>& Points, FLinearColor Color);
     void DrawGamePanel(FLinearColor Fill, float X, float Y, float W, float H);
     void DrawGameText(const FString& Text, float X, float Y, float Height, FLinearColor Color, float MaxWidth = 0);
