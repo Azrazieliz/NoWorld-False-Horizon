@@ -3,9 +3,71 @@
 #include "Engine/GameInstance.h"
 #include "Persistence/OGWorldStore.h"
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Runtime/OGGate12LocalRulerBootstrap.h"
 #include "Runtime/OGPackageReportManagementRecords.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "UI/OGUiViewModelService.h"
+
+void UOGGate12RulerSessionSubsystem::Initialize(
+    FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+    Collection.InitializeDependency<UOGGameCoreSubsystem>();
+    FString Error;
+    if (!TryRestoreLocalRuler(Error) && !Error.IsEmpty())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Gate12 local Ruler restore is fail-closed: %s"), *Error);
+        UserFacingAvailability = Error;
+    }
+}
+
+bool UOGGate12RulerSessionSubsystem::TryRestoreLocalRuler(FString& OutError)
+{
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError))
+        return false;
+
+    bool bFound = false;
+    FOGEntityId ExistingRuler;
+    if (!FOGGate12LocalRulerBootstrap::TryLoad(
+            *Store, bFound, ExistingRuler, OutError))
+    {
+        UserFacingAvailability = OutError;
+        return false;
+    }
+    if (!bFound)
+    {
+        UserFacingAvailability =
+            TEXT("No local Ruler exists. Use Create Local Ruler to begin.");
+        OutError.Reset();
+        return false;
+    }
+    return BindExistingRuler(ExistingRuler, OutError);
+}
+
+bool UOGGate12RulerSessionSubsystem::CreateLocalRuler(FString& OutError)
+{
+    OutError.Reset();
+    if (bRulerValidated)
+    {
+        OutError = TEXT("Local Ruler is already active. No duplicate created.");
+        return false;
+    }
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError))
+        return false;
+
+    FOGEntityId Created;
+    if (!FOGGate12LocalRulerBootstrap::Create(
+            *Store, Core->GetCanonicalWorldTick(), Created, OutError))
+    {
+        UserFacingAvailability = OutError;
+        return false;
+    }
+    return BindExistingRuler(Created, OutError);
+}
 
 void UOGGate12RulerSessionSubsystem::ClearProjectionAndSelection()
 {
