@@ -175,6 +175,13 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
         if (!Component) { Error = TEXT("Luminous V3: skeletal component allocation failed"); return false; }
         Component->SetupAttachment(GetRootComponent());
         Component->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
+        // MEASURED Luminous source axis: eyes→nose = glTF +Z
+        // (CLOTHED, UNDERWEAR, NUDE: +Z dot 0.9999999946). Native UE glTF
+        // importer maps +Z to mesh +Y. Unreal movement actor uses +X front.
+        // A component-space -90 yaw maps imported visual +Y to actor +X.
+        // This is an isolated reversible presentation transform; NEVER
+        // rewrite original glTF, imported skeleton, native clips or root.
+        Component->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
         Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         Component->SetCastShadow(true);
         Component->SetAnimationMode(EAnimationMode::AnimationSingleNode);
