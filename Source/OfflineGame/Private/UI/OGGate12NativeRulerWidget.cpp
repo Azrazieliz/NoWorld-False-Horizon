@@ -193,13 +193,26 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
 
-    if (Session && Session->IsBoundToStoredRuler())
+    if (Session)
     {
         FString Error;
-        if (!Session->RefreshCanonicalProjections(Error))
+        if (!Session->IsBoundToStoredRuler())
+        {
+            // Recovery/import can replace the canonical runtime after this
+            // widget is constructed. Attempt a READ-ONLY restore.
+            Session->TryRestoreLocalRuler(Error);
+        }
+        if (Session->IsBoundToStoredRuler())
+        {
+            if (!Session->RefreshCanonicalProjections(Error))
+                LastUiError = Error;
+            else
+                LastUiError.Reset();
+        }
+        else if (!Error.IsEmpty())
+        {
             LastUiError = Error;
-        else
-            LastUiError.Reset();
+        }
     }
     BuildCurrentPage();
 }
