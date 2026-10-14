@@ -305,6 +305,15 @@ bool FOGDistinctActionTargetsTest::RunTest(const FString&)
             Hud->GetHitBoxWithName(FName(TEXT("OG.World.Attack"))));
         Hud->NotifyHitBoxClick(TEXT("OG.Ruler.World"));
         Hud->DrawHUD();
+        // A detached HUD fixture has no canonical GameInstance / owner.
+        // The player-facing entry MUST remain blocked, so force World only
+        // through the non-shipping HUD geometry seam for hitbox QA.
+        TestFalse(TEXT("Unbound World transition must be rejected"),
+            Hud->AllowsWorldGameplayInput());
+        TestNull(TEXT("Unbound Ruler cannot render World attack"),
+            Hud->GetHitBoxWithName(FName(TEXT("OG.World.Attack"))));
+        Hud->ForceWorldPresentationForActionHitboxFixture();
+        Hud->DrawHUD();
         TArray<FBox2D> Rectangles;
         for (const FName Name : {FName(TEXT("OG.World.Attack")), FName(TEXT("OG.World.Dodge")),
             FName(TEXT("OG.World.Jump")), FName(TEXT("OG.World.Lock")), FName(TEXT("OG.World.Sprint"))})
