@@ -911,6 +911,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "OfflineGame|Ruler|Gacha")
     void ClearActiveGachaPresentation();
 
+#if WITH_DEV_AUTOMATION_TESTS
+    /** Test-only HUD geometry seam, deliberately unavailable to shipping. */
+    void ForceWorldPresentationForActionHitboxFixture()
+    {
+        SetFoundationSurface(FName(TEXT("world")));
+    }
+#endif
+
 private:
     void SynchronizeGate12NativeRulerUMG(bool bShouldShow);
 
