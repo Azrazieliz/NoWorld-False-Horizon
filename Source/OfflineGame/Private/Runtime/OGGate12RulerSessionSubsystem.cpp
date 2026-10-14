@@ -94,6 +94,7 @@ void UOGGate12RulerSessionSubsystem::ClearProjectionAndSelection()
     OwnedRoster.Reset();
     TerritoryProjection = FOGTerritoryViewModel();
     RecordsProjection = FOGRecordsHubViewModel();
+    GachaHistoryProjection.Reset();
     ChronicleProjection.Reset();
     IntelligenceProjection.Reset();
     bRealGachaAccessUnlocked = false;
@@ -306,6 +307,30 @@ bool UOGGate12RulerSessionSubsystem::RefreshCanonicalProjections(
             UserFacingAvailability = TEXT("Ruler Home is connected to canonical world state.");
             break;
     }
+    return true;
+}
+
+bool UOGGate12RulerSessionSubsystem::RefreshGachaHistory(FString& OutError)
+{
+    OutError.Reset();
+    if (!bRulerValidated || !BoundRulerId.IsValid())
+    {
+        OutError = TEXT("Gacha history requires an existing local Ruler.");
+        return false;
+    }
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError))
+        return false;
+
+    // History is a genuine recorded event stream, not a claim of active
+    // banner, currency, rate/pity context or new reward transaction.
+    FOGUiViewModelService Ui(*Store);
+    TArray<FOGGachaHistoryEntryViewModel> ActualHistory;
+    if (!Ui.BuildGachaHistory(BoundRulerId, 50, ActualHistory, OutError))
+        return false;
+
+    GachaHistoryProjection = MoveTemp(ActualHistory);
     return true;
 }
 
