@@ -19,6 +19,7 @@ bool FOGGate12LocalPlayerCreateRestoreTest::RunTest(const FString&)
     const FString Database = FPaths::Combine(Directory, TEXT("ruler.db"));
 
     bool bPassed = true;
+    FOGEntityId ExpectedCreatedOwner;
     {
         FOGSQLiteWorldStore Store;
         FString Error;
@@ -39,6 +40,7 @@ bool FOGGate12LocalPlayerCreateRestoreTest::RunTest(const FString&)
         bPassed &= TestTrue(TEXT("Explicit new local Ruler transaction succeeds"),
             FOGGate12LocalRulerBootstrap::Create(Store, 17, Created, Error));
         bPassed &= TestTrue(TEXT("New Ruler ID is a genuine generated UUID"), Created.IsValid());
+        ExpectedCreatedOwner = Created;
         if (!Error.IsEmpty()) AddError(Error);
 
         bFound = false;
@@ -62,10 +64,12 @@ bool FOGGate12LocalPlayerCreateRestoreTest::RunTest(const FString&)
         bPassed &= TestTrue(TEXT("Canonical territory claims remain queryable"),
             Store.ListTerritoryClaimsByRuler(Created, Claims, Error));
         bPassed &= TestEqual(TEXT("No fabricated controlled territories"), Claims.Num(), 0);
-        bool bCurrencyFound = false;
+        bool bGachaFound = false;
         FOGGachaStateRecord Gacha;
-        // There is deliberately no fake pull grant or banner state.
-        // The Ruler service's Gacha empty state is independently projected.
+        bPassed &= TestTrue(TEXT("Missing gacha banner state reads without writes"),
+            Store.TryReadGachaState(Created, FName(TEXT("missing_banner")),
+                bGachaFound, Gacha, Error));
+        bPassed &= TestFalse(TEXT("No fictitious gacha banner created"), bGachaFound);
         Store.Close();
     }
     {
@@ -78,7 +82,8 @@ bool FOGGate12LocalPlayerCreateRestoreTest::RunTest(const FString&)
         bPassed &= TestTrue(TEXT("Reload resolves existing Ruler after process/world restart"),
             FOGGate12LocalRulerBootstrap::TryLoad(Reopened, bFound, Recovered, Error));
         bPassed &= TestTrue(TEXT("Reload found owner"), bFound);
-        bPassed &= TestTrue(TEXT("Reload preserved owner UUID"), Recovered.IsValid());
+        bPassed &= TestTrue(TEXT("Reload preserved exact owner UUID"),
+            Recovered == ExpectedCreatedOwner);
         Reopened.Close();
     }
 
