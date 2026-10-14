@@ -266,8 +266,41 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
                 : TEXT("Gacha is locked by the canonical world state."),
             19, TextMuted);
         AddMessage(Content,
-            TEXT("No fabricated banner, pool, ticket, currency or duplicate chip rewards."),
+            TEXT("No fabricated banner, pool, ticket, currency or secondary duplicate rewards."),
             16, TextMuted);
+        AddAction(Content,
+            bGachaHistoryExpanded ? TEXT("HIDE ACQUISITION HISTORY")
+                                  : TEXT("VIEW ACQUISITION HISTORY"),
+            TEXT("gacha-history-toggle"));
+        if (bGachaHistoryExpanded)
+        {
+            FString GachaError;
+            if (!Session->RefreshGachaHistory(GachaError))
+            {
+                AddMessage(Content, GachaError.IsEmpty()
+                    ? TEXT("Canonical gacha history unavailable.")
+                    : GachaError, 16, TextMuted);
+            }
+            else if (Session->GachaHistoryProjection.IsEmpty())
+            {
+                AddMessage(Content, TEXT("No recorded acquisition events."),
+                    16, TextMuted);
+            }
+            else
+            {
+                for (const FOGGachaHistoryEntryViewModel& Entry :
+                    Session->GachaHistoryProjection)
+                {
+                    AddMessage(Content,
+                        FString::Printf(TEXT("%s  %s  %s  tick %lld"),
+                            *Entry.IdentityId.ToString(),
+                            *Entry.VersionId.ToString(),
+                            *Entry.Rarity.ToString(),
+                            Entry.WorldTick),
+                        15, TextMain);
+                }
+            }
+        }
         break;
     case EOGRulerPrimaryDestination::Territory:
         BuildTerritory();
@@ -580,7 +613,11 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         RefreshFromCanonical();
         return;
     }
-    if (Action.StartsWith(TEXT("territory/")))
+    if (Action == TEXT("gacha-history-toggle"))
+    {
+        bGachaHistoryExpanded = !bGachaHistoryExpanded;
+    }
+    else if (Action.StartsWith(TEXT("territory/")))
     {
         const int32 Index = FCString::Atoi(*Action.Mid(10));
         if (Session->TerritoryProjection.Territories.IsValidIndex(Index))
