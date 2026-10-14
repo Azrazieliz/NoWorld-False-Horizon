@@ -52,6 +52,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Records")
     bool RefreshRecordsDetail(FString& OutError);
 
+    /** Read persisted pull history even if no current approved banner exists. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Gacha")
+    bool RefreshGachaHistory(FString& OutError);
+
     /** Historical results only; never synthesizes a banner or transaction. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Gacha")
     bool RefreshGachaHistory(FString& OutError);
@@ -106,6 +110,9 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Records")
     TArray<FOGIntelligenceEntryViewModel> IntelligenceProjection;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Gacha")
+    TArray<FOGGachaHistoryEntryViewModel> GachaHistoryProjection;
 
     /** Unlocked access does not imply any approved/authored banner exists. */
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|P0")
