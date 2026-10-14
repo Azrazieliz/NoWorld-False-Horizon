@@ -269,11 +269,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
             16, TextMuted);
         break;
     case EOGRulerPrimaryDestination::Territory:
-        AddMessage(Content,
-            FString::Printf(TEXT("%d actual controlled territories"),
-                Session->TerritoryProjection.Territories.Num()), 20);
-        if (Session->TerritoryProjection.Territories.IsEmpty())
-            AddMessage(Content, TEXT("No territory holdings in current world."), 18, TextMuted);
+        BuildTerritory();
         break;
     case EOGRulerPrimaryDestination::Records:
         BuildRecords();
@@ -355,6 +351,82 @@ void UOGGate12NativeRulerWidget::BuildRoster()
         Fixed->AddChild(AngularFrameBase);
         Grid->AddChildToUniformGrid(Fixed, Index / 3, Index % 3);
     }
+}
+
+void UOGGate12NativeRulerWidget::BuildTerritory()
+{
+    UGameInstance* GI = GetGameInstance();
+    const UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session) return;
+
+    const FOGTerritoryViewModel& Territory = Session->TerritoryProjection;
+    AddMessage(Content,
+        FString::Printf(TEXT("%d canonical territory holdings"),
+            Territory.Territories.Num()), 19, TextMain);
+
+    if (Territory.Territories.IsEmpty())
+    {
+        AddMessage(Content,
+            TEXT("No territorial holdings in this world. "
+                 "World ownership and geography have not been invented."),
+            17, TextMuted);
+        return;
+    }
+
+    // Existing authoritative view-model overlays are navigation/filter state;
+    // no fictional coordinates, world map tiles or terrain are generated.
+    AddMessage(Content, TEXT("ANALYTICAL OVERLAY"), 16, Gold);
+    for (int32 Index = 0; Index < Territory.AnalyticalOverlays.Num(); ++Index)
+    {
+        const FName Overlay = Territory.AnalyticalOverlays[Index];
+        AddAction(Content,
+            FString::Printf(TEXT("%s%s"),
+                Index == SelectedTerritoryOverlayIndex ? TEXT("> ") : TEXT(""),
+                *Overlay.ToString()),
+            FString::Printf(TEXT("overlay/%d"), Index));
+    }
+
+    AddMessage(Content, TEXT("MY TERRITORIES"), 16, Gold);
+    const FOGTerritorySummaryViewModel* Chosen = nullptr;
+    for (int32 Index = 0; Index < Territory.Territories.Num(); ++Index)
+    {
+        const FOGTerritorySummaryViewModel& Entry = Territory.Territories[Index];
+        if (Entry.TerritoryId == SelectedTerritoryId ||
+            (!SelectedTerritoryId.IsValid() && Index == 0))
+            Chosen = &Entry;
+
+        AddAction(Content,
+            FString::Printf(TEXT("%s  %s  (%s)%s"),
+                Entry.bMainTerritory ? TEXT("MAIN") : TEXT("REGION"),
+                *Entry.TerritoryId.ToString(),
+                *Entry.ControlState.ToString(),
+                Entry.bContested ? TEXT(" [CONTESTED]") : TEXT("")),
+            FString::Printf(TEXT("territory/%d"), Index));
+    }
+
+    if (Chosen)
+    {
+        AddMessage(Content, TEXT("SELECTED HOLDING"), 18, Gold);
+        AddMessage(Content,
+            FString::Printf(TEXT("Territory ID: %s"), *Chosen->TerritoryId.ToString()),
+            15, TextMain);
+        AddMessage(Content,
+            FString::Printf(TEXT("Control: %s / Domain: %s"),
+                *Chosen->ControlState.ToString(), *Chosen->DomainState.ToString()),
+            15, TextMuted);
+        if (Chosen->RootLocationId.IsValid())
+            AddMessage(Content,
+                FString::Printf(TEXT("Root location: %s"),
+                    *Chosen->RootLocationId.ToString()), 15, TextMuted);
+        if (Chosen->bContested)
+            AddMessage(Content, TEXT("Control is contested."), 15, Gold);
+    }
+
+    AddMessage(Content,
+        TEXT("Interactive geographic imagery will appear only when a verified "
+             "Gate 02 location/terrain map is installed. No placeholder coordinates."),
+        14, TextMuted);
 }
 
 void UOGGate12NativeRulerWidget::BuildRecords()
@@ -491,7 +563,20 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         RefreshFromCanonical();
         return;
     }
-    if (Action.StartsWith(TEXT("records/")))
+    if (Action.StartsWith(TEXT("territory/")))
+    {
+        const int32 Index = FCString::Atoi(*Action.Mid(10));
+        if (Session->TerritoryProjection.Territories.IsValidIndex(Index))
+            SelectedTerritoryId =
+                Session->TerritoryProjection.Territories[Index].TerritoryId;
+    }
+    else if (Action.StartsWith(TEXT("overlay/")))
+    {
+        const int32 Index = FCString::Atoi(*Action.Mid(8));
+        if (Session->TerritoryProjection.AnalyticalOverlays.IsValidIndex(Index))
+            SelectedTerritoryOverlayIndex = Index;
+    }
+    else if (Action.StartsWith(TEXT("records/")))
     {
         const int32 Index = FCString::Atoi(*Action.Mid(8));
         if (Index < 0 || Index >= 4) return;
