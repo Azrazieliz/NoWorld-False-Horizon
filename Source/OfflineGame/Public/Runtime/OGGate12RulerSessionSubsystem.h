@@ -52,6 +52,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Records")
     bool RefreshRecordsDetail(FString& OutError);
 
+    /** Historical results only; never synthesizes a banner or transaction. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Gacha")
+    bool RefreshGachaHistory(FString& OutError);
+
     /** Persist identity-specific "last used" only after validating actual ownership. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|P0")
     bool SelectOwnedManifestation(
@@ -93,6 +97,9 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|P0")
     FOGRecordsHubViewModel RecordsProjection;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Gacha")
+    TArray<FOGGachaHistoryEntryViewModel> GachaHistoryProjection;
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Records")
     TArray<FOGChronicleEntryViewModel> ChronicleProjection;
