@@ -75,7 +75,7 @@ private:
 
     int32 OpenIdentityIndex = INDEX_NONE;
     int32 RecordsSection = 0;
-    int32 SelectedTerritoryIndex = INDEX_NONE;
+    FOGEntityId SelectedTerritoryId;
     int32 SelectedTerritoryOverlayIndex = 0;
     FString LastUiError;
 
