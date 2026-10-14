@@ -75,6 +75,7 @@ private:
 
     int32 OpenIdentityIndex = INDEX_NONE;
     int32 RecordsSection = 0;
+    bool bGachaHistoryExpanded = false;
     FOGEntityId SelectedTerritoryId;
     int32 SelectedTerritoryOverlayIndex = 0;
     FString LastUiError;
