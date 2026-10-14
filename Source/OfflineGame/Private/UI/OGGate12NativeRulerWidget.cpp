@@ -19,7 +19,7 @@ namespace
 {
 const FLinearColor TextMain(0.90f, 0.90f, 0.89f, 1.0f);
 const FLinearColor TextMuted(0.55f, 0.58f, 0.61f, 1.0f);
-const FLinearColor Gold(0.72f, 0.62f, 0.44f, 1.0f);
+const FLinearColor Gate12RulerGold(0.72f, 0.62f, 0.44f, 1.0f);
 
 struct FNativeRarityColors
 {
@@ -93,7 +93,7 @@ void UOGGate12NativeRulerWidget::BuildRoot()
     UTextBlock* Heading = WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass(), TEXT("GameTitle"));
     Heading->SetText(FText::FromString(TEXT("NoWorld: False Horizon")));
-    Heading->SetColorAndOpacity(FSlateColor(Gold));
+    Heading->SetColorAndOpacity(FSlateColor(Gate12RulerGold));
     FSlateFontInfo HeadingFont = Heading->GetFont();
     HeadingFont.Size = 24;
     Heading->SetFont(HeadingFont);
@@ -227,7 +227,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
 
     if (!Session || !Session->IsBoundToStoredRuler())
     {
-        AddMessage(Content, TEXT("NO CANONICAL RULER SELECTED"), 25, Gold);
+        AddMessage(Content, TEXT("NO CANONICAL RULER SELECTED"), 25, Gate12RulerGold);
         AddMessage(Content,
             TEXT("A local player must exist in the current canonical world. "
                  "Creating one does not grant characters, territory, currency or banners."),
@@ -238,7 +238,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         return;
     }
 
-    AddMessage(Content, DestinationTitle(Session->CurrentDestination), 26, Gold);
+    AddMessage(Content, DestinationTitle(Session->CurrentDestination), 26, Gate12RulerGold);
     if (!LastUiError.IsEmpty()) AddMessage(Content, LastUiError, 16, TextMuted);
     switch (Session->CurrentDestination)
     {
@@ -379,7 +379,7 @@ void UOGGate12NativeRulerWidget::BuildRoster()
             16, TextMain);
         AddMessage(CardBody,
             FString::Printf(TEXT("%d manifestations"), Identity.ManifestationCount),
-            12, Gold);
+            12, Gate12RulerGold);
         Button->AddChild(CardBody);
         AngularFrameBase->AddChild(Button);
         Fixed->AddChild(AngularFrameBase);
@@ -410,7 +410,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
 
     // Existing authoritative view-model overlays are navigation/filter state;
     // no fictional coordinates, world map tiles or terrain are generated.
-    AddMessage(Content, TEXT("ANALYTICAL OVERLAY"), 16, Gold);
+    AddMessage(Content, TEXT("ANALYTICAL OVERLAY"), 16, Gate12RulerGold);
     for (int32 Index = 0; Index < Territory.AnalyticalOverlays.Num(); ++Index)
     {
         const FName Overlay = Territory.AnalyticalOverlays[Index];
@@ -421,7 +421,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
             FString::Printf(TEXT("overlay/%d"), Index));
     }
 
-    AddMessage(Content, TEXT("MY TERRITORIES"), 16, Gold);
+    AddMessage(Content, TEXT("MY TERRITORIES"), 16, Gate12RulerGold);
     const FOGTerritorySummaryViewModel* Chosen = nullptr;
     for (int32 Index = 0; Index < Territory.Territories.Num(); ++Index)
     {
@@ -446,7 +446,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
 
     if (Chosen)
     {
-        AddMessage(Content, TEXT("SELECTED HOLDING"), 18, Gold);
+        AddMessage(Content, TEXT("SELECTED HOLDING"), 18, Gate12RulerGold);
         AddMessage(Content,
             FString::Printf(TEXT("Territory ID: %s"), *Chosen->TerritoryId.ToString()),
             15, TextMain);
@@ -459,7 +459,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
                 FString::Printf(TEXT("Root location: %s"),
                     *Chosen->RootLocationId.ToString()), 15, TextMuted);
         if (Chosen->bContested)
-            AddMessage(Content, TEXT("Control is contested."), 15, Gold);
+            AddMessage(Content, TEXT("Control is contested."), 15, Gate12RulerGold);
     }
 
     AddMessage(Content,
