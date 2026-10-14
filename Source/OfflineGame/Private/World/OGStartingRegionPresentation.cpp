@@ -5785,7 +5785,14 @@ void AOGWorldPresentationHud::SetFoundationSurface(FName Surface)
         Character->HandleWorldHudControl(TEXT("OG.World.Jump"), false);
         Character->HandleWorldHudControl(TEXT("OG.World.Descend"), false);
         Character->HandleWorldHudControl(TEXT("OG.World.Sprint"), false);
-        Character->FindComponentByClass<UOGSemanticAudioRuntime>()->SetWorldPresentationActive(Surface == TEXT("world"));
+        // Some character types do not install the optional semantic audio
+        // component. A mode transition must never dereference a null actor
+        // component on Android or during map changes.
+        if (UOGSemanticAudioRuntime* SemanticAudio =
+                Character->FindComponentByClass<UOGSemanticAudioRuntime>())
+        {
+            SemanticAudio->SetWorldPresentationActive(Surface == TEXT("world"));
+        }
     }
     if (Character) Character->RefreshFoundationInputState();
 }
@@ -10074,9 +10081,24 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
     }
     if (BoxName == FName(TEXT("OG.Ruler.World")))
     {
+        // Canvas and native UMG must share the SAME validated owner and
+        // presentation transaction. The old Canvas route bypassed the real
+        // Ruler session and allowed an unbound player to enter World Mode.
+        UOGGate12RulerSessionSubsystem* Session = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>()
+            : nullptr;
+        FString Error;
+        if (!Session || !Session->EnterWorld(Error))
+        {
+            FoundationStatusMessage = Error.IsEmpty()
+                ? TEXT("World Mode requires a valid local Ruler.")
+                : Error;
+            return;
+        }
         Character->SetFoundationSettingsOpen(false);
         Character->SetFoundationPauseMenuOpen(false);
         SetFoundationSurface(FName(TEXT("world")));
+        FoundationStatusMessage.Reset();
         return;
     }
 
