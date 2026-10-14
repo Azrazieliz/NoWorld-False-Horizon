@@ -6363,11 +6363,13 @@ void AOGWorldPresentationHud::DrawFoundationRuler(
             DrawGameText(TEXT("Start with an independent Ruler. No companions, "
                 "territory, tickets or currency are granted automatically."),
                 M, H * 0.38f, 23*S, Muted, W-2*M);
+            DrawGameButton(TEXT("Continue Existing Ruler"),
+                TEXT("OG.Ruler.Restore"), M, H * 0.50f, W-2*M, 70*S);
             DrawGameButton(TEXT("Create Local Ruler"),
-                TEXT("OG.Ruler.Create"), M, H * 0.53f, W-2*M, 90*S);
+                TEXT("OG.Ruler.Create"), M, H * 0.60f, W-2*M, 70*S);
             if (!FoundationStatusMessage.IsEmpty())
                 DrawGameText(FoundationStatusMessage,
-                    M, H * 0.69f, 20*S, Muted, W-2*M);
+                    M, H * 0.73f, 20*S, Muted, W-2*M);
             return;
         }
         DrawGameButton(TEXT("Menu"),TEXT("OG.Diagnostics.Open"),W-390*S,26*S,150*S,66*S);
@@ -10059,6 +10061,26 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         return;
     }
 
+    if (BoxName == FName(TEXT("OG.Ruler.Restore")))
+    {
+        UOGGate12RulerSessionSubsystem* Session = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>()
+            : nullptr;
+        FString Error;
+        if (!Session || !Session->TryRestoreLocalRuler(Error))
+        {
+            FoundationStatusMessage = Error.IsEmpty()
+                ? TEXT("No existing local Ruler found in this world.")
+                : Error;
+        }
+        else
+        {
+            FoundationRulerOwner = Session->BoundRulerId;
+            RulerDestination = FName(TEXT("home"));
+            FoundationStatusMessage = TEXT("Existing local Ruler restored.");
+        }
+        return;
+    }
     if (BoxName == FName(TEXT("OG.Ruler.Create")))
     {
         UOGGate12RulerSessionSubsystem* Session = GetGameInstance()
