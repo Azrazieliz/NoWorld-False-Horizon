@@ -447,9 +447,18 @@ bool UOGGate12RulerSessionSubsystem::SelectOwnedManifestation(
 bool UOGGate12RulerSessionSubsystem::EnterWorld(FString& OutError)
 {
     OutError.Reset();
-    if (!bRulerValidated)
+    if (!bRulerValidated || !BoundRulerId.IsValid())
     {
         OutError = TEXT("World transition requires an actual bound Ruler.");
+        return false;
+    }
+    // A once-valid session cannot authorize World entry after import/restore
+    // removed its owner. Recheck the canonical SQLite row and projections
+    // immediately before flipping presentation/orientation.
+    if (!RefreshCanonicalProjections(OutError))
+    {
+        if (OutError.IsEmpty())
+            OutError = TEXT("Canonical Ruler validation failed before World entry.");
         return false;
     }
     UOGPresentationModeSubsystem* Presentation = GetGameInstance()
