@@ -405,6 +405,11 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
             FString::Printf(TEXT("territory/%d"), Index));
     }
 
+    // The selected GUID may belong to a world that was replaced through
+    // recovery. Never show stale details; fall back to a real current row.
+    if (!Chosen && !Territory.Territories.IsEmpty())
+        Chosen = &Territory.Territories[0];
+
     if (Chosen)
     {
         AddMessage(Content, TEXT("SELECTED HOLDING"), 18, Gold);
