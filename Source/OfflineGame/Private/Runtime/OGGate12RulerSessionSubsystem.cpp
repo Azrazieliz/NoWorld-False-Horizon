@@ -97,7 +97,6 @@ void UOGGate12RulerSessionSubsystem::ClearProjectionAndSelection()
     GachaHistoryProjection.Reset();
     ChronicleProjection.Reset();
     IntelligenceProjection.Reset();
-    GachaHistoryProjection.Reset();
     bRealGachaAccessUnlocked = false;
     bApprovedBannerProvided = false;
     UserFacingAvailability = TEXT("No existing Ruler is selected.");
@@ -332,43 +331,6 @@ bool UOGGate12RulerSessionSubsystem::RefreshGachaHistory(FString& OutError)
         return false;
 
     GachaHistoryProjection = MoveTemp(ActualHistory);
-    return true;
-}
-
-bool UOGGate12RulerSessionSubsystem::RefreshGachaHistory(FString& OutError)
-{
-    OutError.Reset();
-    if (!bRulerValidated || !BoundRulerId.IsValid())
-    {
-        OutError = TEXT("No canonical Ruler bound; gacha history unavailable.");
-        return false;
-    }
-
-    UOGGameCoreSubsystem* Core = nullptr;
-    IOGWorldStore* Store = nullptr;
-    if (!ResolveStore(Core, Store, OutError))
-        return false;
-
-    bool bExistingRuler = false;
-    FName Kind;
-    FString Json;
-    int64 Revision = 0;
-    if (!Store->TryReadEntity(BoundRulerId, bExistingRuler,
-        Kind, Json, Revision, OutError))
-        return false;
-    if (!bExistingRuler || Kind != FName(TEXT("ruler")) ||
-        Json.Contains(TEXT("\"diagnosticFixture\"")))
-    {
-        GachaHistoryProjection.Reset();
-        OutError = TEXT("History owner no longer valid in canonical world.");
-        return false;
-    }
-
-    TArray<FOGGachaHistoryEntryViewModel> Actual;
-    if (!FOGUiViewModelService(*Store).BuildGachaHistory(
-        BoundRulerId, 50, Actual, OutError))
-        return false;
-    GachaHistoryProjection = MoveTemp(Actual);
     return true;
 }
 
