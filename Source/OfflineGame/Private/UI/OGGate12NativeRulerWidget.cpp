@@ -232,6 +232,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
             TEXT("A local player must exist in the current canonical world. "
                  "Creating one does not grant characters, territory, currency or banners."),
             18, TextMuted);
+        AddAction(Content, TEXT("CONTINUE EXISTING RULER"), TEXT("restore-ruler"));
         AddAction(Content, TEXT("CREATE LOCAL RULER"), TEXT("create-ruler"));
         BuildNav();
         return;
@@ -559,6 +560,17 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     }
 
     FString Error;
+    if (Action == TEXT("restore-ruler"))
+    {
+        if (!Session->TryRestoreLocalRuler(Error))
+            LastUiError = Error.IsEmpty()
+                ? TEXT("No saved local Ruler is available in this world.")
+                : Error;
+        else
+            LastUiError.Reset();
+        RefreshFromCanonical();
+        return;
+    }
     if (Action == TEXT("create-ruler"))
     {
         if (!Session->CreateLocalRuler(Error))
