@@ -1,0 +1,357 @@
+{
+  "name": "Test02_AutumnIvoryBunny",
+  "reference": {
+    "image": "351888.jpg",
+    "hair": "very-long layered warm-ivory blond straight bangs",
+    "eye_color": "amber-gold",
+    "face": "mature woman soft smile no blush",
+    "outfit": "glossy white sweetheart corset bunny suit with black necktie cuffs and fishnets"
+  },
+  "morphs": [
+    {
+      "group": "body",
+      "index": 0,
+      "value": 0.69
+    },
+    {
+      "group": "body",
+      "index": 1,
+      "value": 0.44
+    },
+    {
+      "group": "body",
+      "index": 2,
+      "value": 1.0
+    },
+    {
+      "group": "body",
+      "index": 3,
+      "value": 0.58
+    },
+    {
+      "group": "body",
+      "index": 5,
+      "value": 0.58
+    },
+    {
+      "group": "body",
+      "index": 7,
+      "value": 0.57
+    },
+    {
+      "group": "body",
+      "index": 8,
+      "value": 0.64
+    },
+    {
+      "group": "body",
+      "index": 9,
+      "value": 0.7
+    },
+    {
+      "group": "body",
+      "index": 10,
+      "value": 0.73
+    },
+    {
+      "group": "body",
+      "index": 17,
+      "value": 0.64
+    },
+    {
+      "group": "body",
+      "index": 19,
+      "value": 0.57
+    },
+    {
+      "group": "body",
+      "index": 21,
+      "value": 0.58
+    },
+    {
+      "group": "body",
+      "index": 23,
+      "value": 0.55
+    },
+    {
+      "group": "body",
+      "index": 25,
+      "value": 0.47
+    },
+    {
+      "group": "body",
+      "index": 26,
+      "value": 0.52
+    },
+    {
+      "group": "body",
+      "index": 27,
+      "value": 0.54
+    },
+    {
+      "group": "body",
+      "index": 28,
+      "value": 0.55
+    },
+    {
+      "group": "body",
+      "index": 29,
+      "value": 1.0
+    },
+    {
+      "group": "body",
+      "index": 30,
+      "value": 0.57
+    },
+    {
+      "group": "body",
+      "index": 38,
+      "value": 1.0
+    },
+    {
+      "group": "body",
+      "index": 39,
+      "value": 0.92
+    },
+    {
+      "group": "body",
+      "index": 40,
+      "value": 0.76
+    },
+    {
+      "group": "face",
+      "index": 0,
+      "value": 0.47
+    },
+    {
+      "group": "face",
+      "index": 16,
+      "value": 0.58
+    },
+    {
+      "group": "face",
+      "index": 24,
+      "value": 0.6
+    },
+    {
+      "group": "face",
+      "index": 25,
+      "value": 0.56
+    },
+    {
+      "group": "face",
+      "index": 30,
+      "value": 0.47
+    },
+    {
+      "group": "face",
+      "index": 31,
+      "value": 0.55
+    },
+    {
+      "group": "face",
+      "index": 34,
+      "value": 0.74
+    },
+    {
+      "group": "face",
+      "index": 35,
+      "value": 0.74
+    },
+    {
+      "group": "face",
+      "index": 41,
+      "value": 0.56
+    },
+    {
+      "group": "face",
+      "index": 42,
+      "value": 0.58
+    },
+    {
+      "group": "face",
+      "index": 46,
+      "value": 0.59
+    }
+  ],
+  "eye_iris": [
+    0.98,
+    0.53,
+    0.08
+  ],
+  "hair": [
+    {
+      "slot": 0,
+      "runtime_id": 2,
+      "color": [
+        0.94,
+        0.86,
+        0.73
+      ]
+    },
+    {
+      "slot": 1,
+      "runtime_id": 2,
+      "color": [
+        0.96,
+        0.89,
+        0.79
+      ]
+    }
+  ],
+  "clothing": [
+    {
+      "slot": 0,
+      "guid": "shinyBunny",
+      "category": 105,
+      "original_id": 997,
+      "color": [
+        0.99,
+        0.99,
+        0.98
+      ]
+    },
+    {
+      "slot": 2,
+      "runtime_id": 0
+    },
+    {
+      "slot": 3,
+      "runtime_id": 0
+    },
+    {
+      "slot": 6,
+      "runtime_id": 0
+    },
+    {
+      "slot": 7,
+      "runtime_id": 0
+    },
+    {
+      "slot": 8,
+      "runtime_id": 0
+    }
+  ],
+  "accessories": [
+    {
+      "slot": 0,
+      "guid": "com.nep.extrabunnyears",
+      "category": 122,
+      "original_id": 22026401,
+      "parent": "a_n_headtop",
+      "color": [
+        0.95,
+        0.87,
+        0.76
+      ],
+      "transforms": {
+        "pos": [
+          0,
+          3,
+          0
+        ],
+        "scale": [
+          1.25,
+          1.25,
+          1.25
+        ]
+      }
+    },
+    {
+      "slot": 1,
+      "guid": "lrdj.minami_ssr_outfits",
+      "category": 122,
+      "original_id": 2,
+      "parent": "a_n_headside",
+      "color": [
+        0.97,
+        0.89,
+        0.78
+      ]
+    },
+    {
+      "slot": 2,
+      "guid": "lrdj.minami_ssr_outfits",
+      "category": 122,
+      "original_id": 1,
+      "parent": "a_n_headside",
+      "color": [
+        0.97,
+        0.89,
+        0.78
+      ]
+    },
+    {
+      "slot": 3,
+      "guid": "[Frostation] Accessories MK1",
+      "category": 124,
+      "original_id": 4,
+      "parent": "a_n_neck",
+      "color": [
+        0.08,
+        0.075,
+        0.08
+      ],
+      "transforms": {
+        "pos": [
+          0,
+          -2,
+          0
+        ],
+        "scale": [
+          0.78,
+          0.78,
+          0.78
+        ]
+      }
+    },
+    {
+      "slot": 4,
+      "guid": "[Frostation] Accessories MK1",
+      "category": 128,
+      "original_id": 14,
+      "parent": "a_n_hand_L",
+      "color": [
+        0.99,
+        0.99,
+        0.97
+      ],
+      "transforms": {
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      }
+    },
+    {
+      "slot": 5,
+      "guid": "[Frostation] Accessories MK1",
+      "category": 128,
+      "original_id": 14,
+      "parent": "a_n_hand_R",
+      "color": [
+        0.99,
+        0.99,
+        0.97
+      ],
+      "transforms": {
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      }
+    }
+  ]
+}

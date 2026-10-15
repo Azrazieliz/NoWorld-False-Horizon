@@ -1,0 +1,600 @@
+﻿{
+    "body":  [
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "Height",
+                     "index":  0
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "HeadSize",
+                     "index":  1
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustSize",
+                     "index":  2
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustY",
+                     "index":  3
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustRotX",
+                     "index":  4
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustX",
+                     "index":  5
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustRotY",
+                     "index":  6
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustSharp",
+                     "index":  7
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustForm",
+                     "index":  8
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustSoftness",
+                     "index":  9
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BustWeight",
+                     "index":  10
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "AreolaBulge",
+                     "index":  11
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "NipWeight",
+                     "index":  12
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "NipStand",
+                     "index":  13
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "AreolaSize",
+                     "index":  14
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "NeckW",
+                     "index":  15
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "NeckZ",
+                     "index":  16
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BodyShoulderW",
+                     "index":  17
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BodyShoulderZ",
+                     "index":  18
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BodyUpW",
+                     "index":  19
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BodyUpZ",
+                     "index":  20
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BodyLowW",
+                     "index":  21
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "BodyLowZ",
+                     "index":  22
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "WaistY",
+                     "index":  23
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "Belly",
+                     "index":  24
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "WaistUpW",
+                     "index":  25
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "WaistUpZ",
+                     "index":  26
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "WaistLowW",
+                     "index":  27
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "WaistLowZ",
+                     "index":  28
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "Hip",
+                     "index":  29
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "HipRotX",
+                     "index":  30
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ShoulderW",
+                     "index":  31
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ShoulderZ",
+                     "index":  32
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ArmUpW",
+                     "index":  33
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ArmUpZ",
+                     "index":  34
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ElbowW",
+                     "index":  35
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ElbowZ",
+                     "index":  36
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ArmLow",
+                     "index":  37
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ThighUpW",
+                     "index":  38
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ThighUpZ",
+                     "index":  39
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ThighLowW",
+                     "index":  40
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ThighLowZ",
+                     "index":  41
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "KneeLowW",
+                     "index":  42
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "KneeLowZ",
+                     "index":  43
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "Calf",
+                     "index":  44
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "AnkleW",
+                     "index":  45
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "AnkleZ",
+                     "index":  46
+                 }
+             ],
+    "face":  [
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "FaceBaseW",
+                     "index":  0
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "FaceUpZ",
+                     "index":  1
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "FaceUpY",
+                     "index":  2
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "FaceUpSize",
+                     "index":  3
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "FaceLowZ",
+                     "index":  4
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "FaceLowW",
+                     "index":  5
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinLowY",
+                     "index":  6
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinLowZ",
+                     "index":  7
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinY",
+                     "index":  8
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinW",
+                     "index":  9
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinZ",
+                     "index":  10
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinTipY",
+                     "index":  11
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinTipZ",
+                     "index":  12
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "ChinTipW",
+                     "index":  13
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "CheekBoneW",
+                     "index":  14
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "CheekBoneZ",
+                     "index":  15
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "CheekW",
+                     "index":  16
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "CheekZ",
+                     "index":  17
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "CheekY",
+                     "index":  18
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyebrowY",
+                     "index":  19
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyebrowX",
+                     "index":  20
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyebrowRotZ",
+                     "index":  21
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyebrowInForm",
+                     "index":  22
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyebrowOutForm",
+                     "index":  23
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyelidsUpForm1",
+                     "index":  24
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyelidsUpForm2",
+                     "index":  25
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyelidsUpForm3",
+                     "index":  26
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyelidsLowForm1",
+                     "index":  27
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyelidsLowForm2",
+                     "index":  28
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyelidsLowForm3",
+                     "index":  29
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeY",
+                     "index":  30
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeX",
+                     "index":  31
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeZ",
+                     "index":  32
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeTilt",
+                     "index":  33
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeH",
+                     "index":  34
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeW",
+                     "index":  35
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeInX",
+                     "index":  36
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EyeOutY",
+                     "index":  37
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "NoseTipH",
+                     "index":  38
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "NoseY",
+                     "index":  39
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "NoseBridgeH",
+                     "index":  40
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "MouthY",
+                     "index":  41
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "MouthW",
+                     "index":  42
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "MouthZ",
+                     "index":  43
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "MouthUpForm",
+                     "index":  44
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "MouthLowForm",
+                     "index":  45
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "MouthCornerForm",
+                     "index":  46
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EarSize",
+                     "index":  47
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EarRotY",
+                     "index":  48
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EarRotZ",
+                     "index":  49
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EarUpForm",
+                     "index":  50
+                 },
+                 {
+                     "normalized_min":  0,
+                     "normalized_max":  1,
+                     "control_name":  "EarLowForm",
+                     "index":  51
+                 }
+             ]
+}
