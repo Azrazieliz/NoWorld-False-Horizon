@@ -97,12 +97,14 @@ def command(job):
   return [str(UEEXE),str(UEPROJECT),"-run=pythonscript","-script="+str(script),
      "-nullrhi","-unattended","-nosplash","-nop4","-NoSound"]
  raise ValueError("Unhandled job")
-def verify_postconditions(job):
+def verify_postconditions(job,started_wall=None):
  checks=[]
  for cond in job.get("postconditions",[]):
   path=pathlib.Path(cond["path"]).resolve()
   c={"path":str(path),"field":cond.get("field"),"passed":False}
   try:
+   if started_wall is not None and path.stat().st_mtime < started_wall-2:
+    raise RuntimeError("Stale preexisting receipt cannot validate a new run")
    data=json.loads(path.read_text(encoding="utf-8"))
    val=data
    for field in str(cond["field"]).split("."):
@@ -150,6 +152,7 @@ def run(job,preflight=False):
   if job["software"]=="unreal" and job["operation"]=="asset_author":
    env["NW_UNREAL_AUTHOR_JOB"]=str(job["params"]["spec"])
   t=time.perf_counter()
+  started_wall=time.time()
   try:
    p=subprocess.run(cmd,capture_output=True,text=True,encoding="utf-8",errors="replace",
      timeout=int(job["requirements"]["max_walltime_seconds"]),env=env)
@@ -162,7 +165,7 @@ def run(job,preflight=False):
    (out/"timeout.json").write_text(json.dumps({"seconds":e.timeout}))
   provenance["execution_seconds"]=round(time.perf_counter()-t,3)
  if not preflight and provenance["status"]=="PROCESS_EXIT_ZERO" and job.get("postconditions"):
-  passed=verify_postconditions(job)
+  passed=verify_postconditions(job,started_wall=started_wall)
   provenance["postconditions"]=passed
   provenance["status"]="NATIVE_VALIDATED" if all(c["passed"] for c in passed) else "NATIVE_VALIDATION_FAILED"
  bad=[name for name,old in src_hashes.items() if sha(name)!=old]
