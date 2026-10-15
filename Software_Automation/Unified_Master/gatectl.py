@@ -19,7 +19,7 @@ LOOKUP_ONLY={('blender','api_search'),('gaea','node_search'),('unreal','api_sear
 ALLOWED={
  "blender":{"api_search","architecture","morphology","weapon","semantic_motion","fight_mocap","grease_2d","kk_obj"},
  "gaea":{"graph","native_build","doctor","blender_tiles","node_search"},
- "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture","asset_author","paper2d","api_search","blueprint_compile"},
+ "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture","asset_author","paper2d","api_search","blueprint_compile","kk_material"},
  "koikatsu":{"recipe_dry_run","joint_wing_offline","mod_lookup","native_wing_test"}}
 def sha(p):
  h=hashlib.sha256()
@@ -93,7 +93,7 @@ def command(job):
   scripts={"capabilities":"probe_unreal_master_subsystems.py",
     "asset_import":"qa_batch_import.py",
     "animation_validate":"qa_animation_validate.py",
-    "pcg_fixture":"qa_pcg_procedural.py","asset_author":"native_asset_author.py","paper2d":"qa_paper2d_flipbook.py","blueprint_compile":"qa_blueprint_compile_proof.py"}
+    "pcg_fixture":"qa_pcg_procedural.py","asset_author":"native_asset_author.py","paper2d":"qa_paper2d_flipbook.py","blueprint_compile":"qa_blueprint_compile_proof.py","kk_material":"qa_native_kk_skin_material.py"}
   script=UE/scripts[o]
   return [str(UEEXE),str(UEPROJECT),"-run=pythonscript","-script="+str(script),
      "-nullrhi","-unattended","-nosplash","-nop4","-NoSound"]

@@ -1,8 +1,14 @@
 """Real Unreal native texture+material roundtrip for latest KK material, QA-only."""
-import unreal,json,pathlib,hashlib,traceback
-src=pathlib.Path(r'D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\MASTER_PACKAGES\KoikatsuParty_Steam6436979_HF4.2_SM01_v0.4.0_RUNTIME\VALIDATION\AutoCosmicMaterial_04b94ac272a6\texture_id_4.png')
-receipt=pathlib.Path(r'D:\UnrealProjects\NW_BlenderGateHandoff_QA_20261015\KKCosmicNativeMaterial_2140.json')
-dest='/Game/NW_MasterHub_QA/KKCosmicNativeMaterial_2140'
+import unreal,json,pathlib,hashlib,traceback,os,re
+params=json.loads(os.environ.get('NW_UNREAL_JOB_PARAMS','{}'))
+qa=pathlib.Path(r'D:\UnrealProjects\NW_BlenderGateHandoff_QA_20261015').resolve()
+sm01=pathlib.Path(r'D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\MASTER_PACKAGES\KoikatsuParty_Steam6436979_HF4.2_SM01_v0.4.0_RUNTIME\VALIDATION').resolve()
+label=str(params.get('job_id','KKCosmicNativeMaterial_2140'))
+if not re.fullmatch('[A-Za-z0-9_]{4,72}',label):raise ValueError('Unsafe job id')
+src=pathlib.Path(params.get('texture',str(sm01/'AutoCosmicMaterial_04b94ac272a6'/'texture_id_4.png'))).resolve()
+receipt=pathlib.Path(params.get('receipt',str(qa/(label+'.json')))).resolve()
+if not src.is_relative_to(sm01) or not receipt.is_relative_to(qa):raise ValueError('External source/destination forbidden')
+dest='/Game/NW_MasterHub_QA/'+label
 result={'schema':'NW_KK_SKIN_TO_UE_NATIVE_MATERIAL_V1','sandbox_only':True,'game_project_changed':False}
 try:
  if receipt.exists():raise FileExistsError(receipt)
