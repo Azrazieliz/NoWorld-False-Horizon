@@ -1,0 +1,127 @@
+{
+  "version": "4.5.10",
+  "coordinate_profiles": [],
+  "coordinate_calibration": "NOT_DONE",
+  "note": "UI paths from version-specific documentation or known Blender behavior; GUI selectors and coordinates are untested. API equivalents of VALIDATED entries were actually executed.",
+  "operations": [
+    {
+      "operation": "save_file",
+      "ui_path": "File > Save As",
+      "api": "bpy.ops.wm.save_as_mainfile(filepath=...)",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "geometry_nodes_group",
+      "ui_path": "Geometry Nodes workspace > Node Editor > New",
+      "api": "bpy.data.node_groups.new(...,'GeometryNodeTree')",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "node_group_interface",
+      "ui_path": "Group tab > Interface > Add Socket",
+      "api": "node_group.interface.new_socket(...)",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "geometry_nodes_modifier",
+      "ui_path": "Properties > Modifiers > Add Modifier > Geometry Nodes",
+      "api": "obj.modifiers.new(...,'NODES')",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "material_gradient",
+      "ui_path": "Shading workspace > Shader Editor > Group",
+      "api": "bpy.types.ShaderNodeGroup; NodeGroupInterface",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "material_gradient_placement",
+      "ui_path": "Shader Editor > Texture Coordinate / Geometry Position",
+      "api": "material.node_tree.links.new(...)",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "armature_create",
+      "ui_path": "Object > Add > Armature",
+      "api": "bpy.data.armatures.new; edit_bones.new",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "weight_mesh",
+      "ui_path": "Object Data > Vertex Groups; Add Armature Modifier",
+      "api": "obj.vertex_groups.new; modifiers.new('ARMATURE')",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "key_pose",
+      "ui_path": "Pose Mode > Insert Keyframe",
+      "api": "pose_bone.keyframe_insert(...)",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "action_slots",
+      "ui_path": "Dope Sheet > Action Editor > Action Slots",
+      "api": "rig.animation_data.action_slot.identifier",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "grease_pencil",
+      "ui_path": "2D Animation workspace > Draw Mode",
+      "api": "bpy.data.grease_pencils_v3.new; drawing.add_strokes",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "preview_render",
+      "ui_path": "Render > Render Image",
+      "api": "bpy.ops.render.render(write_still=True)",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "fbx_export",
+      "ui_path": "File > Export > FBX",
+      "api": "bpy.ops.export_scene.fbx(...)",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "fbx_import",
+      "ui_path": "File > Import > FBX",
+      "api": "bpy.ops.import_scene.fbx(...)",
+      "status": "VALIDATED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "sculpt_remesh",
+      "ui_path": "Properties > Modifiers > Add Remesh",
+      "api": "bpy.types.RemeshModifier",
+      "status": "RESEARCHED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "uv_nodes",
+      "ui_path": "Geometry Nodes > Mesh > UV Unwrap",
+      "api": "GeometryNodeUVUnwrap",
+      "status": "RESEARCHED",
+      "screenshot_calibrated": false
+    },
+    {
+      "operation": "sim_bake",
+      "ui_path": "Geometry Nodes > Bake Node",
+      "api": "GeometryNodeBake",
+      "status": "RESEARCHED",
+      "screenshot_calibrated": false
+    }
+  ]
+}

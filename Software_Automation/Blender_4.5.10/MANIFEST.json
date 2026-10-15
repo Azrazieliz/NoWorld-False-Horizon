@@ -1,0 +1,125 @@
+﻿{
+    "project":  "NoWorld False Horizon",
+    "blender":  "4.5.10 LTS",
+    "date":  "2026-10-15",
+    "branch":  "software/mastery-blender",
+    "acceptance":  "ENGINEERING_PROTOTYPE_ONLY",
+    "file_count":  23,
+    "files":  [
+                  {
+                      "relative_path":  "ARTISTIC_STANDARDS.md",
+                      "bytes":  2841,
+                      "sha256":  "e31e86d78279b0ea9d0ed0d8d9c5bcf38d297b72e92cf784692efbe4fb09ce49"
+                  },
+                  {
+                      "relative_path":  "CAPABILITY_REGISTRY.json",
+                      "bytes":  3650,
+                      "sha256":  "9836a82568ba7e00829a73f717a46efd10dcdd7564aa93895ccd5519ba9e2154"
+                  },
+                  {
+                      "relative_path":  "CONTINUATION.md",
+                      "bytes":  4808,
+                      "sha256":  "0d9211855b2cc56010d98dda45292df8e1fa8dc807f4cea08a702b223baa6cd2"
+                  },
+                  {
+                      "relative_path":  "MASTER_SOFTWARE_SPEC.md",
+                      "bytes":  3923,
+                      "sha256":  "d45d0a8b18ad358e1fab79dc313cc917b4df3fd6dd3488fbf23e1ef8070cc2f3"
+                  },
+                  {
+                      "relative_path":  "PARAMETER_REFERENCE.json",
+                      "bytes":  566996,
+                      "sha256":  "b0fcf96a84e8772cb898988daa2c0f7cf3267ebd4c1a2e6965e8767fa27b146a"
+                  },
+                  {
+                      "relative_path":  "RECOVERY.md",
+                      "bytes":  1559,
+                      "sha256":  "93f2a9a1e71b33443e607be878e93a832ecfbca33b098d9e994e37b022e92fb0"
+                  },
+                  {
+                      "relative_path":  "RESEARCH_COVERAGE_MATRIX.json",
+                      "bytes":  21796,
+                      "sha256":  "3b322751679a2456e7581b1e7690ad140aa4d5688f17365d07e17dac69c6fef4"
+                  },
+                  {
+                      "relative_path":  "SOURCE_ATLAS.md",
+                      "bytes":  6605,
+                      "sha256":  "0663a78aa220e413dca478323cf819351e5f38072718020a48146a6b76aa5858"
+                  },
+                  {
+                      "relative_path":  "START_HERE.md",
+                      "bytes":  3139,
+                      "sha256":  "a66b3d9a2ba5604b617d2bb654820621363eaf0a0424d3aa470507a6ed16228a"
+                  },
+                  {
+                      "relative_path":  "UI_CONTROL_MAP.json",
+                      "bytes":  4094,
+                      "sha256":  "d4cd60d232bd6f9848adf16c1a222002eaec07bdfceb8aa6019f92548ab76177"
+                  },
+                  {
+                      "relative_path":  "WORKFLOW_LIBRARY.md",
+                      "bytes":  2967,
+                      "sha256":  "ff02f619b6ed6e8317e3998944091f63357ec2736177c5833bc5ed981aa0c74a"
+                  },
+                  {
+                      "relative_path":  "AUTOMATION/batch_variants.py",
+                      "bytes":  1568,
+                      "sha256":  "f206b78903bd13cae6e0d44b751530e800409cf92eb7851a26ffcebd53d636ae"
+                  },
+                  {
+                      "relative_path":  "AUTOMATION/prototype_batch.py",
+                      "bytes":  14420,
+                      "sha256":  "749fe8014e044c4002b1cb6517612a2c05e9dc3cd0ab6441360883fc7fd96210"
+                  },
+                  {
+                      "relative_path":  "AUTOMATION/rna_catalog.py",
+                      "bytes":  3763,
+                      "sha256":  "0f4b0c0c7a8eb26bef47862cca445a92e531ce068ff7a76d1a4cbf50fcc6b135"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/roundtrip.py",
+                      "bytes":  3234,
+                      "sha256":  "54b6eff7f7691e9a11a1a1ababfe84a9614594f34d49db1e5afb3fbc9225ec6e"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/engineering_results.json",
+                      "bytes":  1525,
+                      "sha256":  "ec8d8abee956cb5838b1e867c2a2cf7f10b9bb3f5afc7cdd264965cbf7a0c99f"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/NW_Architecture_Test.fbx",
+                      "bytes":  91868,
+                      "sha256":  "f6b80b7ae3a7320862303e29efd78a77cede769dc7dfb3f13aba1b491050ac9c"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/NW_EditableVariant.blend",
+                      "bytes":  103595,
+                      "sha256":  "c44c51001d3db942314fd391717578f3cd430e3c24890f1a01afc37d7aeb4504"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/NW_EngineeringPreview.png",
+                      "bytes":  69473,
+                      "sha256":  "509f230ccb76a430ccccea12a4f887efc01b8e5c7e91590e09eecd5fefde36e1"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/NW_EngineeringTests.blend",
+                      "bytes":  108199,
+                      "sha256":  "8bf6c60b23c321071130ed1a60ccec5b101940e1941b747e73ca3dcf586ae42a"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/rna_catalog_results.json",
+                      "bytes":  246,
+                      "sha256":  "fb955029a603d46485e363179395f1a3d73d24762336c0f06766068ed2d97307"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/roundtrip_results.json",
+                      "bytes":  1119,
+                      "sha256":  "137253cee0ad81e762797aceeafdb2fed20008e10eb83723c24f1ee15bc20522"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/variant_results.json",
+                      "bytes":  351,
+                      "sha256":  "993fa93b65f040358780d8f2494f4708b19be7343234317689b0f25e5c6cce7d"
+                  }
+              ]
+}

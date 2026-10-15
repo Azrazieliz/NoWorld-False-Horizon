@@ -1,0 +1,119 @@
+{
+  "version": "4.5.10",
+  "canonical_game_content_modified": false,
+  "definitions": [
+    "DISCOVERED",
+    "RESEARCHED",
+    "TECHNICALLY UNDERSTOOD",
+    "IMPLEMENTED",
+    "EXECUTED",
+    "VALIDATED",
+    "PRODUCTION-READY"
+  ],
+  "entries": [
+    {
+      "id": "GN_BayArray",
+      "status": "VALIDATED",
+      "script": "AUTOMATION/prototype_batch.py",
+      "evidence": "VALIDATION/local/roundtrip_results.json",
+      "limitation": "Engineering correctness only: bay counts 5,7,9",
+      "production_ready": false
+    },
+    {
+      "id": "Shader_AsymGradient",
+      "status": "VALIDATED",
+      "script": "AUTOMATION/prototype_batch.py",
+      "evidence": "VALIDATION/local/variant_results.json",
+      "limitation": "No material bake/Unreal parity",
+      "production_ready": false
+    },
+    {
+      "id": "Rig_WingCycles",
+      "status": "VALIDATED",
+      "script": "AUTOMATION/prototype_batch.py",
+      "evidence": "VALIDATION/local/roundtrip_results.json",
+      "limitation": "Only proof of animated bones and source persist; not professional motion",
+      "production_ready": false
+    },
+    {
+      "id": "GPv3_Keyframes",
+      "status": "VALIDATED",
+      "script": "AUTOMATION/prototype_batch.py",
+      "evidence": "VALIDATION/local/roundtrip_results.json",
+      "limitation": "Four simple key drawings; visual artistic quality unreviewed",
+      "production_ready": false
+    },
+    {
+      "id": "Workbench_Preview",
+      "status": "EXECUTED",
+      "script": "AUTOMATION/prototype_batch.py",
+      "evidence": "VALIDATION/local/NW_EngineeringPreview.png",
+      "limitation": "320x240 proof, no full quality renderer",
+      "production_ready": false
+    },
+    {
+      "id": "FBX_Static_Export",
+      "status": "VALIDATED",
+      "script": "AUTOMATION/prototype_batch.py",
+      "evidence": "VALIDATION/local/roundtrip_results.json",
+      "limitation": "Blender 14-mesh re-import, no Unreal import",
+      "production_ready": false
+    },
+    {
+      "id": "RNA_Reflection",
+      "status": "VALIDATED",
+      "script": "AUTOMATION/rna_catalog.py",
+      "evidence": "PARAMETER_REFERENCE.json",
+      "limitation": "30 ops/31 types/1657 property descriptions, two missing types",
+      "production_ready": false
+    },
+    {
+      "id": "KKBP_Conversion",
+      "status": "RESEARCHED",
+      "script": null,
+      "evidence": "SOURCE_ATLAS.md",
+      "limitation": "Candidate plugin not installed/tested",
+      "production_ready": false
+    },
+    {
+      "id": "Unreal_Skeletal_Import",
+      "status": "RESEARCHED",
+      "script": null,
+      "evidence": "SOURCE_ATLAS.md",
+      "limitation": "Unreal 5.8 docs only; no isolated native test",
+      "production_ready": false
+    },
+    {
+      "id": "Sculpting",
+      "status": "DISCOVERED",
+      "script": null,
+      "evidence": "RESEARCH_COVERAGE_MATRIX.json",
+      "limitation": "No demonstration",
+      "production_ready": false
+    },
+    {
+      "id": "Complex_Architecture",
+      "status": "DISCOVERED",
+      "script": null,
+      "evidence": "RESEARCH_COVERAGE_MATRIX.json",
+      "limitation": "Only basic bay array tested",
+      "production_ready": false
+    },
+    {
+      "id": "2D_Anime_Cinematics",
+      "status": "DISCOVERED",
+      "script": null,
+      "evidence": "RESEARCH_COVERAGE_MATRIX.json",
+      "limitation": "Only GP data structure tested",
+      "production_ready": false
+    },
+    {
+      "id": "3D_Advanced_Locomotion",
+      "status": "DISCOVERED",
+      "script": null,
+      "evidence": "RESEARCH_COVERAGE_MATRIX.json",
+      "limitation": "Foot sliding validator pending",
+      "production_ready": false
+    }
+  ]
+}

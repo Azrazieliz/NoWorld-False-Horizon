@@ -1,0 +1,66 @@
+{
+  "blender": "4.5.10 LTS",
+  "status": "ALL_CURRENT_TESTS_PASS",
+  "tests": {
+    "shader_group_reuse": {
+      "pass": true,
+      "detail": null
+    },
+    "gradient_asymmetry": {
+      "pass": true,
+      "detail": null
+    },
+    "node_group_control": {
+      "pass": true,
+      "detail": null
+    },
+    "evaluated_geometry_nodes": {
+      "pass": true,
+      "detail": {
+        "vertices": 40,
+        "faces": 30
+      }
+    },
+    "skeletal_animation": {
+      "pass": true,
+      "detail": null
+    },
+    "keyframe_motion": {
+      "pass": true,
+      "detail": {
+        "frame1": 0.0,
+        "frame7": 0.47999998927116394
+      }
+    },
+    "grease_pencil_v3": {
+      "pass": true,
+      "detail": {
+        "keys": 4,
+        "strokes_per_frame": 3
+      }
+    },
+    "native_editable_source": {
+      "pass": true,
+      "detail": 108199
+    },
+    "preview_render": {
+      "pass": true,
+      "detail": null
+    },
+    "fbx_file_created": {
+      "pass": true,
+      "detail": 91868
+    }
+  },
+  "assets": [
+    "parametric architecture",
+    "asymmetric and world-space gradients",
+    "skeletal wing motion",
+    "Grease Pencil multi-frame speedline"
+  ],
+  "limitations": [
+    "FBX file is not proof of Unreal import or material equivalence"
+  ],
+  "duration_seconds": 4.797,
+  "blend_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\local\\NW_EngineeringTests.blend"
+}

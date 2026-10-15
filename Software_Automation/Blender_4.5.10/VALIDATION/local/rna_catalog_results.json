@@ -1,0 +1,12 @@
+{
+  "blender": "4.5.10 LTS",
+  "operator_count": 30,
+  "rna_type_count": 31,
+  "properties_total": 1657,
+  "missing_types": [
+    "GeometryNodesModifier",
+    "CyclesRenderSettings"
+  ],
+  "operation_failures": {},
+  "seconds": 0.042
+}

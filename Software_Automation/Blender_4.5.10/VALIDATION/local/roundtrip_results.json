@@ -1,0 +1,54 @@
+{
+  "blender": "4.5.10 LTS",
+  "checks": {
+    "gn_count_change_without_rebuild": {
+      "pass": true,
+      "details": {
+        "five": 40,
+        "seven": 56
+      }
+    },
+    "shader_parameter_edit": {
+      "pass": true,
+      "details": {
+        "before": -0.800000011920929,
+        "after": 1.7000000476837158
+      }
+    },
+    "animation_slot_persisted": {
+      "pass": true,
+      "details": {
+        "slot": "OBNW_WingPrototype_Rig"
+      }
+    },
+    "animation_key_persisted": {
+      "pass": true,
+      "details": 0.47999998927116394
+    },
+    "grease_pencil_persisted": {
+      "pass": true,
+      "details": 4
+    },
+    "preview_pixels": {
+      "pass": true,
+      "details": [
+        320,
+        240
+      ]
+    },
+    "fbx_reimport_blender": {
+      "pass": true,
+      "details": {
+        "original_arch_count": 14,
+        "imported_mesh_count": 14,
+        "operator": "{'FINISHED'}"
+      }
+    },
+    "fbx_nonempty_geometry": {
+      "pass": true,
+      "details": 732
+    }
+  },
+  "status": "PASS",
+  "duration_seconds": 0.191
+}
