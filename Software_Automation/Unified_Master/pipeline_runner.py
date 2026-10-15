@@ -18,8 +18,11 @@ def plan_validate(source):
  jobs=data.get("steps")
  if not isinstance(jobs,list) or not 1<=len(jobs)<=16:raise ValueError("Pipeline must have 1–16 steps")
  unique=[]
+ ids=set()
  for job in jobs:
   gate.validate(job)
+  if job['job_id'] in ids:raise ValueError('Duplicate job_id between pipeline steps')
+  ids.add(job['job_id'])
   cmd=gate.command(job)
   exe=pathlib.Path(cmd[0])
   if not exe.is_file():raise FileNotFoundError(exe)

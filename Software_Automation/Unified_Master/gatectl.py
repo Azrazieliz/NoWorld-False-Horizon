@@ -37,7 +37,9 @@ def validate(job):
  if s not in ALLOWED or op not in ALLOWED[s]:raise ValueError("Unsupported software/op")
  req=job.get("requirements",{})
  if not req.get("preserve_originals",False):raise ValueError("Source preservation required")
- if int(req.get("max_walltime_seconds",0))<10:raise ValueError("Time limit required")
+ if not 10 <= int(req.get("max_walltime_seconds",0)) <= 7200:raise ValueError("Time limit must be 10–7200 seconds")
+ if "postconditions" in job and not job["postconditions"]:raise ValueError("Empty postconditions cannot establish native validation")
+ if not isinstance(job.get("outputs",{}).get("receipt_directory"),str) or not job["outputs"]["receipt_directory"].strip():raise ValueError("Missing receipt directory")
  if s=="gaea" and op=="native_build" and req.get("dedicated_gui") is not True:
   raise ValueError("Gaea native build requires dedicated_gui:true to prevent interfering with active Gate02 session")
  if s=="koikatsu" and op=="native_wing_test" and req.get("dedicated_gui") is not True:
@@ -117,7 +119,6 @@ def run(job,preflight=False):
  validate(job)
  out=pathlib.Path(job["outputs"]["receipt_directory"]).resolve()
  if out.exists():raise FileExistsError("Refuse existing receipt folder "+str(out))
- out.mkdir(parents=True)
  src_hashes={}
  for x in job.get("source_paths",[]):
   path=pathlib.Path(x).resolve()
@@ -127,6 +128,11 @@ def run(job,preflight=False):
  if not pathlib.Path(cmd[0]).is_file():raise FileNotFoundError(cmd[0])
  missing=[x for x in cmd if x.endswith(".py") and not pathlib.Path(x.split("=",1)[-1]).is_file()]
  if missing:raise FileNotFoundError(str(missing))
+ if not preflight:
+  for cond in job.get("postconditions",[]):
+   if not isinstance(cond.get("path"),str) or not cond.get("field") or not any(k in cond for k in ("equals","minimum","is_true")):
+    raise ValueError("Malformed postcondition")
+ out.mkdir(parents=True)
  provenance={"schema":"NOWORLD_SOFTWARE_JOB_RECEIPT_V1","job_id":job["job_id"],
    "owner_gate":job["owner_gate"],"software":job["software"],
    "operation":job["operation"],"start_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
