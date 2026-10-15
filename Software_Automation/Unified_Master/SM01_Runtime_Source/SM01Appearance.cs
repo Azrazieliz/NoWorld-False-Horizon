@@ -111,6 +111,32 @@ namespace SM01Runtime {
      s.AppendLine("hair_count\t"+hair.Length);s.AppendLine("clothes_count\t"+clothes.Length);
      return true;
    }
+   if(cmd.op=="set_hair_palette"){
+     int part=cmd.index;
+     var hair=c.chaFile.custom.hair.parts;
+     if(part<0||part>=hair.Length)throw new IOException("Bad hair palette slot");
+     float red=cmd.value,green=cmd.value2,blue=cmd.value3;
+     if(red<0||red>1||green<0||green>1||blue<0||blue>1)throw new IOException("Hair palette channel out of range");
+     var item=hair[part];
+     item.baseColor=new Color(red,green,blue,1f);
+     item.startColor=new Color(red*.64f,green*.64f,blue*.64f,1f);
+     item.endColor=new Color(Mathf.Min(1,red*1.14f),Mathf.Min(1,green*1.14f),Mathf.Min(1,blue*1.14f),1f);
+     item.outlineColor=new Color(red*.48f,green*.48f,blue*.48f,1f);
+     c.ChangeSettingHairColor(part,true,true,true);
+     c.ChangeSettingHairOutlineColor(part);
+     s.AppendLine("native_hair_rgb\t"+f(red)+"\t"+f(green)+"\t"+f(blue));
+     s.AppendLine("native_hair_readback\t"+item.baseColor);
+     return true;
+   }
+   if(cmd.op=="set_iris_asset"){
+     int id=cmd.effectiveItemId;
+     if(id<0)throw new IOException("Invalid iris ID");
+     var p=c.chaFile.custom.face.pupil;
+     for(int i=0;i<p.Length;i++)p[i].id=id;
+     if(!c.ChangeSettingEye(true,true,true))throw new IOException("Native iris asset did not update");
+     s.AppendLine("native_iris_id\t"+p[0].id);
+     return true;
+   }
    if(cmd.op=="set_hair"){
      int part=cmd.index;
      var hair=c.chaFile.custom.hair.parts;
