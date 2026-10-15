@@ -1,397 +1,482 @@
-﻿{
-    "project":  "NoWorld False Horizon",
-    "blender":  "4.5.10 LTS",
-    "unreal":  "5.8.3",
-    "date":  "2026-10-15",
-    "branch":  "software/mastery-blender",
-    "acceptance":  "ENGINEERING_PROTOTYPES_AND_NATIVE_INTEROP_ONLY",
-    "professional_demonstrations_accepted":  0,
-    "file_count":  77,
-    "files":  [
-                  {
-                      "relative_path":  ".gitignore",
-                      "bytes":  37,
-                      "sha256":  "489eb7b3acd7562ca8f9bd4d9b0461b6cecc4ec52b23c2eb8571c848db382e92"
-                  },
-                  {
-                      "relative_path":  "ARTISTIC_STANDARDS.md",
-                      "bytes":  2841,
-                      "sha256":  "e31e86d78279b0ea9d0ed0d8d9c5bcf38d297b72e92cf784692efbe4fb09ce49"
-                  },
-                  {
-                      "relative_path":  "CAPABILITY_REGISTRY.json",
-                      "bytes":  6550,
-                      "sha256":  "6703e89e8d3f4f029a02753970c06cf6fe8493fcc30d72544210cb3755f16387"
-                  },
-                  {
-                      "relative_path":  "CONTINUATION.md",
-                      "bytes":  6713,
-                      "sha256":  "1fa8b0658e6e384efdea8bc0ca87e0e3e783dd3578a466a91479ab70b20aea0d"
-                  },
-                  {
-                      "relative_path":  "MASTER_SOFTWARE_SPEC.md",
-                      "bytes":  4389,
-                      "sha256":  "4a187d3061de9dbd1dca3859609a7af7479bb98ea3f4e837fad91c049c2686f4"
-                  },
-                  {
-                      "relative_path":  "PARAMETER_REFERENCE.json",
-                      "bytes":  566996,
-                      "sha256":  "b0fcf96a84e8772cb898988daa2c0f7cf3267ebd4c1a2e6965e8767fa27b146a"
-                  },
-                  {
-                      "relative_path":  "PHASE2_EXECUTED_EVIDENCE.md",
-                      "bytes":  6523,
-                      "sha256":  "cc3212f4ccf441edbe10fce3f9c0b22c4fdd07dd89a75d53b541558e111caf06"
-                  },
-                  {
-                      "relative_path":  "RECOVERY.md",
-                      "bytes":  1559,
-                      "sha256":  "93f2a9a1e71b33443e607be878e93a832ecfbca33b098d9e994e37b022e92fb0"
-                  },
-                  {
-                      "relative_path":  "RESEARCH_COVERAGE_MATRIX.json",
-                      "bytes":  23109,
-                      "sha256":  "5bcc00304e7f905283253a003ede7709e2537a52f506a9ed59fcd7513db71ae4"
-                  },
-                  {
-                      "relative_path":  "SOURCE_ATLAS.md",
-                      "bytes":  15051,
-                      "sha256":  "ca98e51173d8f9c0c6026c390b8a1eb13e7eb21fefd7e2af49928ad5ecb0cb51"
-                  },
-                  {
-                      "relative_path":  "START_HERE.md",
-                      "bytes":  4034,
-                      "sha256":  "c4229371178a671401662c1d5960b3289ddba4beaeef894d1e2ab6783bdc0ba7"
-                  },
-                  {
-                      "relative_path":  "UI_CONTROL_MAP.json",
-                      "bytes":  4094,
-                      "sha256":  "d4cd60d232bd6f9848adf16c1a222002eaec07bdfceb8aa6019f92548ab76177"
-                  },
-                  {
-                      "relative_path":  "WORKFLOW_LIBRARY.md",
-                      "bytes":  3175,
-                      "sha256":  "9ad1b23744bdeaa2c47594178c9a1b00a29beec34344ab41a7bcb7054fb0ccce"
-                  },
-                  {
-                      "relative_path":  "ANIMATION_2D/hybrid_strike.py",
-                      "bytes":  5400,
-                      "sha256":  "f579d2eb78438a8a49768e8e1a3b6531a9b449dd1ce43f79ccc652907bd9db47"
-                  },
-                  {
-                      "relative_path":  "AUTOMATION/batch_variants.py",
-                      "bytes":  1568,
-                      "sha256":  "f206b78903bd13cae6e0d44b751530e800409cf92eb7851a26ffcebd53d636ae"
-                  },
-                  {
-                      "relative_path":  "AUTOMATION/prototype_batch.py",
-                      "bytes":  14784,
-                      "sha256":  "49d39f1da429160aae2c8a42626398854b03ec6bfe3c29ca49fdbd5ea6ce9659"
-                  },
-                  {
-                      "relative_path":  "AUTOMATION/rna_catalog.py",
-                      "bytes":  3763,
-                      "sha256":  "0f4b0c0c7a8eb26bef47862cca445a92e531ce068ff7a76d1a4cbf50fcc6b135"
-                  },
-                  {
-                      "relative_path":  "CREATURES/rigged_beast.py",
-                      "bytes":  9559,
-                      "sha256":  "e8ce563474b239a8149ac48fe5fd1b759e7e7eba7f972b40e85ea1ece3dab53e"
-                  },
-                  {
-                      "relative_path":  "ENVIRONMENTS/parametric_sanctuary.py",
-                      "bytes":  8954,
-                      "sha256":  "eccac662d397c07d34ec6be6ad5205a2dcdf68d06d8ea983eea3ff0622d72162"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/export_mount_animation.py",
-                      "bytes":  1521,
-                      "sha256":  "f099a03a9ca33e057d9ccc5feb96b6158f87fea6b7b4b5de00e1a4cf81505ea2"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/koikatsu_glb_audit.py",
-                      "bytes":  2845,
-                      "sha256":  "4de26d5488b1618b068dc965bae47088272240cc37a24a88999f1cb94f0bcbdd"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/optimized_static_export.py",
-                      "bytes":  2912,
-                      "sha256":  "d9a62cf4b0ef94d7c6e383cfdfee09a52cb8ee4abbede3cdd66c80eee07cf965"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/UNREAL_5_8_3/audit_and_anim.py",
-                      "bytes":  2641,
-                      "sha256":  "53cd6366d197ddfa24d1ee8389e282acefe2e3082509e334fe830e6d4eb2f461"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/UNREAL_5_8_3/import_anim_only.py",
-                      "bytes":  1662,
-                      "sha256":  "67f8186578dfe1168929aa98498441f31ca5840d677597be9d91c43e8a4ca8e9"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/UNREAL_5_8_3/import_batched.py",
-                      "bytes":  1402,
-                      "sha256":  "3d780fd013563548eb22672df4d89f4c6fd3e012367a9ebdade3f771044196a7"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/UNREAL_5_8_3/import_native.py",
-                      "bytes":  2121,
-                      "sha256":  "e15e323c93d9dbf71c50a2249465a0050091ceea55ff45b7fa029076b21bfc62"
-                  },
-                  {
-                      "relative_path":  "INTEGRATIONS/UNREAL_5_8_3/NW_BlenderInterop.uproject",
-                      "bytes":  336,
-                      "sha256":  "ebaa0c01789a2c7cdfa533937791bc410435ffa4268289450f968e4441cd87f1"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/aggregate_koikatsu.py",
-                      "bytes":  1502,
-                      "sha256":  "ec2c7557a9bb94d24d6b087c2cea688bb51699b16367d633fc493fc05c9aefea"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/animation_contact_audit.py",
-                      "bytes":  2170,
-                      "sha256":  "c5e100a37c0a2dda7720207bf6c9fbc248fb4c5c9bb7c3529c5d515002b6b916"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/apply_phase2_registry.py",
-                      "bytes":  3406,
-                      "sha256":  "516f0620546ce2ec3dd8839fbfce8a657a04c9c6b0d67c6a237490b5bac252f8"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/image_compare.py",
-                      "bytes":  873,
-                      "sha256":  "8d716a102815d4ffdbd982bbb1318a2691774e1dd8998cbc4269cde04ea9a508"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/mesh_qc.py",
-                      "bytes":  939,
-                      "sha256":  "66f2797fded85e255ba5a27c4f31c7500516774a6a8b679938749f225e6eb62e"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/roundtrip.py",
-                      "bytes":  3234,
-                      "sha256":  "54b6eff7f7691e9a11a1a1ababfe84a9614594f34d49db1e5afb3fbc9225ec6e"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/skeletal_import.py",
-                      "bytes":  3569,
-                      "sha256":  "303140ac0abb2c9736825256cae60ad62026b386da36e33b14f2ea42b200a44f"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/verify_package.py",
-                      "bytes":  1563,
-                      "sha256":  "ba4ce8964ffe4b88de95ceb08fd6ad4394cc6584622838be486ba427d71b0f62"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/engineering_results.json",
-                      "bytes":  1627,
-                      "sha256":  "462c8519f260e316a1fbed6cc13d17147c3cae2098e280c04e4e3dc7bb5dbfcc"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/mesh_qc.json",
-                      "bytes":  2365,
-                      "sha256":  "2997d9975071ad9bfafef70c55b4e91ba7b0290cd33eda33c0ad068fa9793456"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/NW_Architecture_Test.fbx",
-                      "bytes":  92540,
-                      "sha256":  "dc05d45aec96734f65352da8dbd8a9c1d726bcaaa4a13a0096130b5f596c7a6f"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/NW_EditableVariant.blend",
-                      "bytes":  103924,
-                      "sha256":  "b6119fff5c52bc1f8aa9f6d1c6634add26a1f409e91e9d6ff5008d135c648554"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/NW_EngineeringPreview.png",
-                      "bytes":  69473,
-                      "sha256":  "be2418b98aea8d1bf5c698c602a558a38df88e6fe52481783a6322756667c54d"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/NW_EngineeringTests.blend",
-                      "bytes":  108774,
-                      "sha256":  "8c87fefceb3a52f6081d6164e595b85eaa672e6174dd2e56382ff745497feab0"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/rna_catalog_results.json",
-                      "bytes":  246,
-                      "sha256":  "fb955029a603d46485e363179395f1a3d73d24762336c0f06766068ed2d97307"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/roundtrip_results.json",
-                      "bytes":  1119,
-                      "sha256":  "cce03ecf4aa6188c53595f7561c87052ba6d407361d22ec7179a1ed1a786f7a0"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/local/variant_results.json",
-                      "bytes":  351,
-                      "sha256":  "186f7c0d3c8032dbf9823e1f5043d7eeeae70b2aefd0d9a3faaee34bb54ee4eb"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/animation_export.json",
-                      "bytes":  360,
-                      "sha256":  "546bdb37b4fa6a4616e0bc4ebade4e26db59b0b1b6c3108fe158c1d17a0a4070"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/batched_export_results.json",
-                      "bytes":  1944,
-                      "sha256":  "437d74ccdd2c4926f67a7c7f58420ebb645cf7751daf0139d96a3340b51111d6"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/batched_visual_diff.json",
-                      "bytes":  286,
-                      "sha256":  "55566517d5017cc5b5a92bdadc538ff517c5b552fc6d4b12a8b590c61b6685d6"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/beast_results.json",
-                      "bytes":  314,
-                      "sha256":  "d53beeeb2ae28fd3cf0da92b332b4f126df9535844e656ecdb9da561effe42a4"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/DEMONSTRATION_STATUS.json",
-                      "bytes":  6675,
-                      "sha256":  "c8f12d21f57bee4184126aba930be6960c6772877d00862c36dd2a5bcf41b9e5"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/hybrid_results.json",
-                      "bytes":  295,
-                      "sha256":  "30c54cb15d930f1dcf6f5f397a9d2ac18a0e17e159b04f61b5bac7cfc3edf7e0"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/koikatsu_shards_summary.json",
-                      "bytes":  843,
-                      "sha256":  "87d72312d16b521357b49471bbcebe60bd6d5626fcd02d378df8ec5581389d1a"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/koikatsu_shard_01_audit.json",
-                      "bytes":  22847,
-                      "sha256":  "80a5ae4678259708a6af41f82dcafabaa624cf45a552c8afd29007c56ad5af34"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/koikatsu_shard_02_audit.json",
-                      "bytes":  17702,
-                      "sha256":  "b8d382e58dfae5595fcc3c097010b42bbe213ae9a278aba09c3af139f69d71c0"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/koikatsu_shard_03_audit.json",
-                      "bytes":  9206,
-                      "sha256":  "7258db6b23fc7b3125ee3466f2dc5248a0318f93128e0986f65175ecea72da48"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/koikatsu_shard_04_audit.json",
-                      "bytes":  2140,
-                      "sha256":  "e1ff2b6b935c81ca8addddd0f12087f4a508a39f498f6dcb14a91680d7239b10"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/koikatsu_shard_05_audit.json",
-                      "bytes":  2894,
-                      "sha256":  "55cad99799d0ff1808b502ae99561f73ead97cdb9c2ddd96a434871452669c40"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/koikatsu_shard_audit.json",
-                      "bytes":  22914,
-                      "sha256":  "288a1dd991e2e5f8741e0ac4d0429920e37b81d2a9b1f94f6a7c33d40943af64"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/mount_contact_metrics.json",
-                      "bytes":  1797,
-                      "sha256":  "b13f9c79567624cf075322236ed214ea6d794ccff95a0cc5618e2df371a32f5a"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ArticulatedMount.blend",
-                      "bytes":  192646,
-                      "sha256":  "3c6db579a39b10ed09257fe733019ffecc2d0025f8ebd392628362cde44efb81"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ArticulatedMount.png",
-                      "bytes":  550488,
-                      "sha256":  "75d9f87c5178aa9d11efa95d2c3c239c18c71c5b5debfe65b5180b169a4ff896"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ArticulatedMount_Skeletal.fbx",
-                      "bytes":  906540,
-                      "sha256":  "caf0ed90478b26d26976263b2634ca2f528daa2879bcf1f878f68f2b3cb77459"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_Hybrid_Strike.blend",
-                      "bytes":  104488,
-                      "sha256":  "c7f095ad0b4be752e2efd929565c92cb772e8055623c304f9ba759c0cd4ae09d"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_Hybrid_Strike.mp4",
-                      "bytes":  43609,
-                      "sha256":  "bf4367d23db73c38318cce54c8add3906aaa4fb1ba600d225c656c32635e7b4d"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_Hybrid_Strike_Keyframe.png",
-                      "bytes":  241205,
-                      "sha256":  "436f2612575d00a40c8e02fdd0a950d46ac433a3cbaa96c0fb3f7606e2ee18b6"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_Mount_Walk_Test_AnimOnly.fbx",
-                      "bytes":  161692,
-                      "sha256":  "a83a2241a101693b657c8c8e1d63370bad41290ef12870a47def3fddf6548b98"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ParametricSanctuary.blend",
-                      "bytes":  163614,
-                      "sha256":  "abd95f460dc0e6ac72b9365ff8cd6186065609063bcedb9d38496bfdefc40a52"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ParametricSanctuary.fbx",
-                      "bytes":  1066284,
-                      "sha256":  "312abe653b7d3d1aa9210777ed8e4e3eb7d81ccad47dc0042c8dafd44df110df"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ParametricSanctuary.png",
-                      "bytes":  715845,
-                      "sha256":  "e0fa2ee9ef19539ffd4a9320b6d5f2791f12a27355c3498c4ad2699f5fc119db"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ParametricSanctuary_Batched.fbx",
-                      "bytes":  637900,
-                      "sha256":  "ee13ef6b262f41f33ae6837985d6c2023f40c8711f7c6de4f3635e1c6a2673e4"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ParametricSanctuary_Batched.png",
-                      "bytes":  716302,
-                      "sha256":  "2d2f121e4b24f50ed0fa7e8cf2730ced807394562fa1ccddf4b9b1b3e110c9b9"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/NW_ParametricSanctuary_BatchedExport.blend",
-                      "bytes":  354362,
-                      "sha256":  "ee5efc9bc4b3ebf31767f8eb49acd3c9f18ee761592ef0bfb37257687a0d2f35"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/sanctuary_results.json",
-                      "bytes":  1011,
-                      "sha256":  "dd48065b4e30c20cf9c5afd0e01e7da449e2e74297f4fc6ac22fe21eb28e660a"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/skeletal_reimport.json",
-                      "bytes":  1796,
-                      "sha256":  "2b76942b94e24d767c26be44601098378c227df42eb786c38c16d4125b68cdc3"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/Unreal/ue_anim_only_results.json",
-                      "bytes":  437,
-                      "sha256":  "5991e5c7026180a1e8de5a5040243867b56a888188059d0770f31eca0b0e178a"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/Unreal/ue_batch_results.json",
-                      "bytes":  1523,
-                      "sha256":  "2aeccd11a668528619fb1312d035fcd468b4baa22a59f777e817a1a7c1bd2086"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/Unreal/ue_import_results.json",
-                      "bytes":  1209,
-                      "sha256":  "e5912f5f020cb59bd8479e23c214a2d1ace91236ceeccf0b70b9f93fb476fa53"
-                  },
-                  {
-                      "relative_path":  "VALIDATION/phase2/Unreal/ue_native_deep_audit.json",
-                      "bytes":  598,
-                      "sha256":  "3737c4a61606189c0c6e8a1749758b2549a02831e1269b36e36905455b5b8be1"
-                  }
-              ]
+{
+  "project": "NoWorld False Horizon",
+  "blender": "4.5.10 LTS",
+  "unreal": "5.8.3",
+  "branch": "software/mastery-blender",
+  "date": "2026-10-15",
+  "acceptance": "TECHNICAL_VALIDATION_ONLY_PROFESSIONAL_ART_NOT_APPROVED",
+  "professional_demonstrations_accepted": 0,
+  "file_count": 94,
+  "files": [
+    {
+      "relative_path": ".gitignore",
+      "bytes": 37,
+      "sha256": "489eb7b3acd7562ca8f9bd4d9b0461b6cecc4ec52b23c2eb8571c848db382e92"
+    },
+    {
+      "relative_path": "ANIMATION_2D/hybrid_strike.py",
+      "bytes": 5400,
+      "sha256": "f579d2eb78438a8a49768e8e1a3b6531a9b449dd1ce43f79ccc652907bd9db47"
+    },
+    {
+      "relative_path": "ANIMATION_3D/bake_contact_ik_to_action.py",
+      "bytes": 2786,
+      "sha256": "6ce4932bd2e917bf7f3b9768540fc5d39ef8867174bd88678e82bfadd8949e6b"
+    },
+    {
+      "relative_path": "ANIMATION_3D/contact_ik_gait.py",
+      "bytes": 5081,
+      "sha256": "4c31f3911f6160c4e8ea0db763c4ab38ff5d45ef94832ca2df4a77004a1996c4"
+    },
+    {
+      "relative_path": "ANIMATION_3D/export_contact_ik_clip.py",
+      "bytes": 2903,
+      "sha256": "92bedb12d5993296ffa66fb1e4650dd68d6d1c5c01f9f06d410adea225295cca"
+    },
+    {
+      "relative_path": "ARTISTIC_PRODUCTION_ACCEPTANCE.md",
+      "bytes": 5823,
+      "sha256": "ce4b5155e3a3326bc7b2f48d7903fa8502fa3b3b7d2f59d6f044140da1e373cf"
+    },
+    {
+      "relative_path": "ARTISTIC_STANDARDS.md",
+      "bytes": 2841,
+      "sha256": "e31e86d78279b0ea9d0ed0d8d9c5bcf38d297b72e92cf784692efbe4fb09ce49"
+    },
+    {
+      "relative_path": "AUTOMATION/batch_variants.py",
+      "bytes": 1568,
+      "sha256": "f206b78903bd13cae6e0d44b751530e800409cf92eb7851a26ffcebd53d636ae"
+    },
+    {
+      "relative_path": "AUTOMATION/prototype_batch.py",
+      "bytes": 14784,
+      "sha256": "49d39f1da429160aae2c8a42626398854b03ec6bfe3c29ca49fdbd5ea6ce9659"
+    },
+    {
+      "relative_path": "AUTOMATION/rna_catalog.py",
+      "bytes": 3763,
+      "sha256": "0f4b0c0c7a8eb26bef47862cca445a92e531ce068ff7a76d1a4cbf50fcc6b135"
+    },
+    {
+      "relative_path": "CAPABILITY_REGISTRY.json",
+      "bytes": 6550,
+      "sha256": "6703e89e8d3f4f029a02753970c06cf6fe8493fcc30d72544210cb3755f16387"
+    },
+    {
+      "relative_path": "CONTINUATION.md",
+      "bytes": 7253,
+      "sha256": "513842519806589f660f0867a7fd6a23cb0353f7f38cd91cbdec72f0e45e928f"
+    },
+    {
+      "relative_path": "CREATURES/rigged_beast.py",
+      "bytes": 9559,
+      "sha256": "e8ce563474b239a8149ac48fe5fd1b759e7e7eba7f972b40e85ea1ece3dab53e"
+    },
+    {
+      "relative_path": "ENVIRONMENTS/parametric_sanctuary.py",
+      "bytes": 8954,
+      "sha256": "eccac662d397c07d34ec6be6ad5205a2dcdf68d06d8ea983eea3ff0622d72162"
+    },
+    {
+      "relative_path": "INTEGRATIONS/export_mount_animation.py",
+      "bytes": 1521,
+      "sha256": "f099a03a9ca33e057d9ccc5feb96b6158f87fea6b7b4b5de00e1a4cf81505ea2"
+    },
+    {
+      "relative_path": "INTEGRATIONS/koikatsu_glb_audit.py",
+      "bytes": 2845,
+      "sha256": "4de26d5488b1618b068dc965bae47088272240cc37a24a88999f1cb94f0bcbdd"
+    },
+    {
+      "relative_path": "INTEGRATIONS/optimized_static_export.py",
+      "bytes": 2912,
+      "sha256": "d9a62cf4b0ef94d7c6e383cfdfee09a52cb8ee4abbede3cdd66c80eee07cf965"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UNREAL_5_8_3/audit_and_anim.py",
+      "bytes": 2641,
+      "sha256": "53cd6366d197ddfa24d1ee8389e282acefe2e3082509e334fe830e6d4eb2f461"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UNREAL_5_8_3/import_anim_only.py",
+      "bytes": 1662,
+      "sha256": "67f8186578dfe1168929aa98498441f31ca5840d677597be9d91c43e8a4ca8e9"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UNREAL_5_8_3/import_batched.py",
+      "bytes": 1402,
+      "sha256": "3d780fd013563548eb22672df4d89f4c6fd3e012367a9ebdade3f771044196a7"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UNREAL_5_8_3/import_native.py",
+      "bytes": 2121,
+      "sha256": "e15e323c93d9dbf71c50a2249465a0050091ceea55ff45b7fa029076b21bfc62"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UNREAL_5_8_3/NW_BlenderInterop.uproject",
+      "bytes": 336,
+      "sha256": "ebaa0c01789a2c7cdfa533937791bc410435ffa4268289450f968e4441cd87f1"
+    },
+    {
+      "relative_path": "MASTER_SOFTWARE_SPEC.md",
+      "bytes": 4389,
+      "sha256": "4a187d3061de9dbd1dca3859609a7af7479bb98ea3f4e837fad91c049c2686f4"
+    },
+    {
+      "relative_path": "PARAMETER_REFERENCE.json",
+      "bytes": 566996,
+      "sha256": "b0fcf96a84e8772cb898988daa2c0f7cf3267ebd4c1a2e6965e8767fa27b146a"
+    },
+    {
+      "relative_path": "PHASE2_EXECUTED_EVIDENCE.md",
+      "bytes": 9527,
+      "sha256": "22af4ef09726d178e307fab6c84a50287d10cd7ed5cc7f659555f484f28b09da"
+    },
+    {
+      "relative_path": "RECOVERY.md",
+      "bytes": 1559,
+      "sha256": "93f2a9a1e71b33443e607be878e93a832ecfbca33b098d9e994e37b022e92fb0"
+    },
+    {
+      "relative_path": "RESEARCH_COVERAGE_MATRIX.json",
+      "bytes": 23109,
+      "sha256": "5bcc00304e7f905283253a003ede7709e2537a52f506a9ed59fcd7513db71ae4"
+    },
+    {
+      "relative_path": "SOURCE_ATLAS.md",
+      "bytes": 15051,
+      "sha256": "ca98e51173d8f9c0c6026c390b8a1eb13e7eb21fefd7e2af49928ad5ecb0cb51"
+    },
+    {
+      "relative_path": "START_HERE.md",
+      "bytes": 4347,
+      "sha256": "9a7c78ff38911c853aab22403fb8c25b3502b66dfdf67699e4585ece96e49c12"
+    },
+    {
+      "relative_path": "UI_CONTROL_MAP.json",
+      "bytes": 4094,
+      "sha256": "d4cd60d232bd6f9848adf16c1a222002eaec07bdfceb8aa6019f92548ab76177"
+    },
+    {
+      "relative_path": "VALIDATION/aggregate_koikatsu.py",
+      "bytes": 1502,
+      "sha256": "ec2c7557a9bb94d24d6b087c2cea688bb51699b16367d633fc493fc05c9aefea"
+    },
+    {
+      "relative_path": "VALIDATION/animation_contact_audit.py",
+      "bytes": 2170,
+      "sha256": "c5e100a37c0a2dda7720207bf6c9fbc248fb4c5c9bb7c3529c5d515002b6b916"
+    },
+    {
+      "relative_path": "VALIDATION/apply_phase2_registry.py",
+      "bytes": 3406,
+      "sha256": "516f0620546ce2ec3dd8839fbfce8a657a04c9c6b0d67c6a237490b5bac252f8"
+    },
+    {
+      "relative_path": "VALIDATION/image_compare.py",
+      "bytes": 873,
+      "sha256": "8d716a102815d4ffdbd982bbb1318a2691774e1dd8998cbc4269cde04ea9a508"
+    },
+    {
+      "relative_path": "VALIDATION/local/engineering_results.json",
+      "bytes": 1627,
+      "sha256": "462c8519f260e316a1fbed6cc13d17147c3cae2098e280c04e4e3dc7bb5dbfcc"
+    },
+    {
+      "relative_path": "VALIDATION/local/mesh_qc.json",
+      "bytes": 2365,
+      "sha256": "2997d9975071ad9bfafef70c55b4e91ba7b0290cd33eda33c0ad068fa9793456"
+    },
+    {
+      "relative_path": "VALIDATION/local/NW_Architecture_Test.fbx",
+      "bytes": 92540,
+      "sha256": "dc05d45aec96734f65352da8dbd8a9c1d726bcaaa4a13a0096130b5f596c7a6f"
+    },
+    {
+      "relative_path": "VALIDATION/local/NW_EditableVariant.blend",
+      "bytes": 103924,
+      "sha256": "b6119fff5c52bc1f8aa9f6d1c6634add26a1f409e91e9d6ff5008d135c648554"
+    },
+    {
+      "relative_path": "VALIDATION/local/NW_EngineeringPreview.png",
+      "bytes": 69473,
+      "sha256": "be2418b98aea8d1bf5c698c602a558a38df88e6fe52481783a6322756667c54d"
+    },
+    {
+      "relative_path": "VALIDATION/local/NW_EngineeringTests.blend",
+      "bytes": 108774,
+      "sha256": "8c87fefceb3a52f6081d6164e595b85eaa672e6174dd2e56382ff745497feab0"
+    },
+    {
+      "relative_path": "VALIDATION/local/rna_catalog_results.json",
+      "bytes": 246,
+      "sha256": "fb955029a603d46485e363179395f1a3d73d24762336c0f06766068ed2d97307"
+    },
+    {
+      "relative_path": "VALIDATION/local/roundtrip_results.json",
+      "bytes": 1119,
+      "sha256": "cce03ecf4aa6188c53595f7561c87052ba6d407361d22ec7179a1ed1a786f7a0"
+    },
+    {
+      "relative_path": "VALIDATION/local/variant_results.json",
+      "bytes": 351,
+      "sha256": "186f7c0d3c8032dbf9823e1f5043d7eeeae70b2aefd0d9a3faaee34bb54ee4eb"
+    },
+    {
+      "relative_path": "VALIDATION/mesh_qc.py",
+      "bytes": 939,
+      "sha256": "66f2797fded85e255ba5a27c4f31c7500516774a6a8b679938749f225e6eb62e"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/animation_export.json",
+      "bytes": 360,
+      "sha256": "546bdb37b4fa6a4616e0bc4ebade4e26db59b0b1b6c3108fe158c1d17a0a4070"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/batched_export_results.json",
+      "bytes": 1944,
+      "sha256": "437d74ccdd2c4926f67a7c7f58420ebb645cf7751daf0139d96a3340b51111d6"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/batched_visual_diff.json",
+      "bytes": 286,
+      "sha256": "55566517d5017cc5b5a92bdadc538ff517c5b552fc6d4b12a8b590c61b6685d6"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/beast_results.json",
+      "bytes": 314,
+      "sha256": "d53beeeb2ae28fd3cf0da92b332b4f126df9535844e656ecdb9da561effe42a4"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/contact_ik_baked_roundtrip.json",
+      "bytes": 427,
+      "sha256": "1d74a3bf597c55bb1577101910ea8a49b02eb7f700605cab493fab2abe824983"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/contact_ik_fbx_roundtrip.json",
+      "bytes": 1241,
+      "sha256": "d5838ce91c6e98c589545eff85372f69b12459125a9d608707ed8920dcc5f613"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/contact_ik_manual_bake.json",
+      "bytes": 1509,
+      "sha256": "e43ed89e43689f68c9fa213a85ed39ce37d371648d2f2ea3bddc3beda8be3b03"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/DEMONSTRATION_STATUS.json",
+      "bytes": 6675,
+      "sha256": "c8f12d21f57bee4184126aba930be6960c6772877d00862c36dd2a5bcf41b9e5"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/hybrid_results.json",
+      "bytes": 295,
+      "sha256": "30c54cb15d930f1dcf6f5f397a9d2ac18a0e17e159b04f61b5bac7cfc3edf7e0"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/koikatsu_shard_01_audit.json",
+      "bytes": 22847,
+      "sha256": "80a5ae4678259708a6af41f82dcafabaa624cf45a552c8afd29007c56ad5af34"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/koikatsu_shard_02_audit.json",
+      "bytes": 17702,
+      "sha256": "b8d382e58dfae5595fcc3c097010b42bbe213ae9a278aba09c3af139f69d71c0"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/koikatsu_shard_03_audit.json",
+      "bytes": 9206,
+      "sha256": "7258db6b23fc7b3125ee3466f2dc5248a0318f93128e0986f65175ecea72da48"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/koikatsu_shard_04_audit.json",
+      "bytes": 2140,
+      "sha256": "e1ff2b6b935c81ca8addddd0f12087f4a508a39f498f6dcb14a91680d7239b10"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/koikatsu_shard_05_audit.json",
+      "bytes": 2894,
+      "sha256": "55cad99799d0ff1808b502ae99561f73ead97cdb9c2ddd96a434871452669c40"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/koikatsu_shard_audit.json",
+      "bytes": 22914,
+      "sha256": "288a1dd991e2e5f8741e0ac4d0429920e37b81d2a9b1f94f6a7c33d40943af64"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/koikatsu_shards_summary.json",
+      "bytes": 843,
+      "sha256": "87d72312d16b521357b49471bbcebe60bd6d5626fcd02d378df8ec5581389d1a"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/mount_contact_ik_results.json",
+      "bytes": 1673,
+      "sha256": "dbed3a07bbdf0104964d4b3c44a869e7efdee56cf78f6926b35539d1ccb18712"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/mount_contact_metrics.json",
+      "bytes": 1797,
+      "sha256": "b13f9c79567624cf075322236ed214ea6d794ccff95a0cc5618e2df371a32f5a"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ArticulatedMount.blend",
+      "bytes": 192646,
+      "sha256": "3c6db579a39b10ed09257fe733019ffecc2d0025f8ebd392628362cde44efb81"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ArticulatedMount.png",
+      "bytes": 550488,
+      "sha256": "75d9f87c5178aa9d11efa95d2c3c239c18c71c5b5debfe65b5180b169a4ff896"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ArticulatedMount_IK.blend",
+      "bytes": 195573,
+      "sha256": "42555eef5c6171562ed599bdf052fab1e6a3fdc3c12465dea50a1ab8847623c3"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ArticulatedMount_IK.png",
+      "bytes": 552799,
+      "sha256": "1200e8d46815a5aeaaa213b77a27b298358f09c7518a7daa28f80fcf4a5c177d"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ArticulatedMount_IK_Baked.blend",
+      "bytes": 210583,
+      "sha256": "c39309bb85072c7824cc6e7eecbe78411ce0251d0d991274c3e3229809cb4cb0"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ArticulatedMount_Skeletal.fbx",
+      "bytes": 906540,
+      "sha256": "caf0ed90478b26d26976263b2634ca2f528daa2879bcf1f878f68f2b3cb77459"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ContactIK_Baked_AnimOnly.fbx",
+      "bytes": 164812,
+      "sha256": "9204c32c97c1720efdbcf4470c2ba716c2921bff28219dd50dc5c7cf00f3b474"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_Hybrid_Strike.blend",
+      "bytes": 104488,
+      "sha256": "c7f095ad0b4be752e2efd929565c92cb772e8055623c304f9ba759c0cd4ae09d"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_Hybrid_Strike.mp4",
+      "bytes": 43609,
+      "sha256": "bf4367d23db73c38318cce54c8add3906aaa4fb1ba600d225c656c32635e7b4d"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_Hybrid_Strike_Keyframe.png",
+      "bytes": 241205,
+      "sha256": "436f2612575d00a40c8e02fdd0a950d46ac433a3cbaa96c0fb3f7606e2ee18b6"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_Mount_ContactIK_AnimOnly.fbx",
+      "bytes": 164508,
+      "sha256": "d269ff61ebf0a33e2402ad0769449cdb31a32ec5ddf7013a672edefdd4960fab"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_Mount_ContactIK_Skeletal.fbx",
+      "bytes": 1048476,
+      "sha256": "9ad14aa582baa1f9d7197396f9c42bcbae0b2602ef353a1d9e415f3ba056bd73"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_Mount_Walk_Test_AnimOnly.fbx",
+      "bytes": 161692,
+      "sha256": "a83a2241a101693b657c8c8e1d63370bad41290ef12870a47def3fddf6548b98"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ParametricSanctuary.blend",
+      "bytes": 163614,
+      "sha256": "abd95f460dc0e6ac72b9365ff8cd6186065609063bcedb9d38496bfdefc40a52"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ParametricSanctuary.fbx",
+      "bytes": 1066284,
+      "sha256": "312abe653b7d3d1aa9210777ed8e4e3eb7d81ccad47dc0042c8dafd44df110df"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ParametricSanctuary.png",
+      "bytes": 715845,
+      "sha256": "e0fa2ee9ef19539ffd4a9320b6d5f2791f12a27355c3498c4ad2699f5fc119db"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ParametricSanctuary_Batched.fbx",
+      "bytes": 637900,
+      "sha256": "ee13ef6b262f41f33ae6837985d6c2023f40c8711f7c6de4f3635e1c6a2673e4"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ParametricSanctuary_Batched.png",
+      "bytes": 716302,
+      "sha256": "2d2f121e4b24f50ed0fa7e8cf2730ced807394562fa1ccddf4b9b1b3e110c9b9"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/NW_ParametricSanctuary_BatchedExport.blend",
+      "bytes": 354362,
+      "sha256": "ee5efc9bc4b3ebf31767f8eb49acd3c9f18ee761592ef0bfb37257687a0d2f35"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/sanctuary_results.json",
+      "bytes": 1011,
+      "sha256": "dd48065b4e30c20cf9c5afd0e01e7da449e2e74297f4fc6ac22fe21eb28e660a"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/skeletal_reimport.json",
+      "bytes": 1796,
+      "sha256": "2b76942b94e24d767c26be44601098378c227df42eb786c38c16d4125b68cdc3"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/Unreal/ue_anim_only_results.json",
+      "bytes": 437,
+      "sha256": "5991e5c7026180a1e8de5a5040243867b56a888188059d0770f31eca0b0e178a"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/Unreal/ue_batch_results.json",
+      "bytes": 1523,
+      "sha256": "2aeccd11a668528619fb1312d035fcd468b4baa22a59f777e817a1a7c1bd2086"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/Unreal/ue_ik_baked_results.json",
+      "bytes": 441,
+      "sha256": "2507ebb80106a4e0ebae5335c39708335bd97039115c619d597d7b0247230b9f"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/Unreal/ue_import_results.json",
+      "bytes": 1209,
+      "sha256": "e5912f5f020cb59bd8479e23c214a2d1ace91236ceeccf0b70b9f93fb476fa53"
+    },
+    {
+      "relative_path": "VALIDATION/phase2/Unreal/ue_native_deep_audit.json",
+      "bytes": 598,
+      "sha256": "3737c4a61606189c0c6e8a1749758b2549a02831e1269b36e36905455b5b8be1"
+    },
+    {
+      "relative_path": "VALIDATION/refresh_manifest.py",
+      "bytes": 911,
+      "sha256": "be530d1c954f97d604aa3dde3e1e919f1125888635d91152d4ac144ecf59368d"
+    },
+    {
+      "relative_path": "VALIDATION/roundtrip.py",
+      "bytes": 3234,
+      "sha256": "54b6eff7f7691e9a11a1a1ababfe84a9614594f34d49db1e5afb3fbc9225ec6e"
+    },
+    {
+      "relative_path": "VALIDATION/skeletal_import.py",
+      "bytes": 3569,
+      "sha256": "303140ac0abb2c9736825256cae60ad62026b386da36e33b14f2ea42b200a44f"
+    },
+    {
+      "relative_path": "VALIDATION/verify_ik_baked_roundtrip.py",
+      "bytes": 1688,
+      "sha256": "fd5b4f9e00014f44e2641640542f9cbf3b8e4b53861a8ba0dc8dd370ac452176"
+    },
+    {
+      "relative_path": "VALIDATION/verify_package.py",
+      "bytes": 1563,
+      "sha256": "ba4ce8964ffe4b88de95ceb08fd6ad4394cc6584622838be486ba427d71b0f62"
+    },
+    {
+      "relative_path": "WORKFLOW_LIBRARY.md",
+      "bytes": 3175,
+      "sha256": "9ad1b23744bdeaa2c47594178c9a1b00a29beec34344ab41a7bcb7054fb0ccce"
+    }
+  ]
 }

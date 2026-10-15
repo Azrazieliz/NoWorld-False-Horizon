@@ -1,0 +1,46 @@
+{
+  "blender": "4.5.10 LTS",
+  "in_place_original_has_sliding": true,
+  "movement": "translated root object + world-locked IK stance",
+  "stride_per_cycle": 1.05,
+  "cycle_frames": 24,
+  "stance_fraction": 0.63,
+  "metrics": {
+    "FrontL": {
+      "num_plant_steps": 30,
+      "max_plant_xy_drift": 1.3e-05,
+      "mean_plant_xy_drift": 3e-06,
+      "max_contact_target_3d_error": 7.8e-05,
+      "mean_contact_target_3d_error": 3.2e-05
+    },
+    "FrontR": {
+      "num_plant_steps": 29,
+      "max_plant_xy_drift": 1.5e-05,
+      "mean_plant_xy_drift": 4e-06,
+      "max_contact_target_3d_error": 4.8e-05,
+      "mean_contact_target_3d_error": 2.9e-05
+    },
+    "HindL": {
+      "num_plant_steps": 29,
+      "max_plant_xy_drift": 1.8e-05,
+      "mean_plant_xy_drift": 4e-06,
+      "max_contact_target_3d_error": 7.6e-05,
+      "mean_contact_target_3d_error": 3.1e-05
+    },
+    "HindR": {
+      "num_plant_steps": 30,
+      "max_plant_xy_drift": 1.6e-05,
+      "mean_plant_xy_drift": 4e-06,
+      "max_contact_target_3d_error": 7.6e-05,
+      "mean_contact_target_3d_error": 3.2e-05
+    }
+  },
+  "max_plant_xy_drift": 1.8e-05,
+  "max_target_error": 7.8e-05,
+  "numerical_contact_check_pass": true,
+  "blend_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ArticulatedMount_IK.blend",
+  "fbx_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_Mount_ContactIK_Skeletal.fbx",
+  "seconds": 1.077,
+  "artist_quality_approved": false,
+  "unreal_animation_import_validated": false
+}

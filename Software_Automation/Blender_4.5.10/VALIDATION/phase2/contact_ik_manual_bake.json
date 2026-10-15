@@ -1,0 +1,78 @@
+{
+  "blender": "4.5.10 LTS",
+  "bake_operator": "{'FINISHED'}",
+  "sample_source_world": {
+    "1": [
+      -0.75,
+      -0.919995,
+      0.199954
+    ],
+    "12": [
+      -0.75,
+      -0.920006,
+      0.199984
+    ],
+    "24": [
+      -0.75,
+      0.093062,
+      0.293475
+    ],
+    "36": [
+      -0.75,
+      0.129994,
+      0.199984
+    ],
+    "48": [
+      -0.75,
+      1.143058,
+      0.293496
+    ]
+  },
+  "sample_baked_world": {
+    "1": [
+      -0.75,
+      -0.919995,
+      0.199954
+    ],
+    "12": [
+      -0.75,
+      -0.920006,
+      0.199984
+    ],
+    "24": [
+      -0.75,
+      0.093061,
+      0.293475
+    ],
+    "36": [
+      -0.75,
+      0.129994,
+      0.199984
+    ],
+    "48": [
+      -0.75,
+      1.143058,
+      0.293496
+    ]
+  },
+  "sample_differences": {
+    "1": 0.0,
+    "12": 0.0,
+    "24": 1e-06,
+    "36": 0.0,
+    "48": 0.0
+  },
+  "max_diff": 1e-06,
+  "lower_constraints_remaining": {
+    "FrontL_Lower": 0,
+    "HindL_Lower": 0,
+    "FrontR_Lower": 0,
+    "HindR_Lower": 0
+  },
+  "same_pose_under_1mm": true,
+  "blend": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ArticulatedMount_IK_Baked.blend",
+  "fbx": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ContactIK_Baked_AnimOnly.fbx",
+  "bytes": 164812,
+  "seconds": 0.263,
+  "unreal_accepted": false
+}

@@ -1,0 +1,65 @@
+{
+  "source": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ArticulatedMount_IK.blend",
+  "fbx": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_Mount_ContactIK_AnimOnly.fbx",
+  "bytes": 164508,
+  "animation_action_name": "NW_Skyrunner_Mount_Rig|Scene",
+  "imported_skeleton_bones": 16,
+  "imported_action_present": true,
+  "source_samples": [
+    [
+      -0.75,
+      -0.92,
+      0.19995
+    ],
+    [
+      -0.75,
+      -0.92001,
+      0.19998
+    ],
+    [
+      -0.75,
+      0.09306,
+      0.29347
+    ],
+    [
+      -0.75,
+      0.12999,
+      0.19998
+    ],
+    [
+      -0.75,
+      1.14306,
+      0.2935
+    ]
+  ],
+  "import_samples": [
+    [
+      -0.75,
+      -0.92,
+      0.19995
+    ],
+    [
+      -0.75,
+      -0.92001,
+      0.19999
+    ],
+    [
+      -0.75,
+      -0.00579,
+      0.37547
+    ],
+    [
+      -0.75,
+      0.12999,
+      0.19999
+    ],
+    [
+      -0.75,
+      1.04422,
+      0.3754
+    ]
+  ],
+  "max_position_diff": 0.12843411735204943,
+  "source_vs_import_pose_match_under_5cm": false,
+  "seconds": 0.248
+}
