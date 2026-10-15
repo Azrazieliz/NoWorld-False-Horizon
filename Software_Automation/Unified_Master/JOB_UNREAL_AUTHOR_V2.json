@@ -1,0 +1,30 @@
+﻿{
+    "schema":  "NOWORLD_SOFTWARE_JOB_V1",
+    "job_id":  "UE_Multidomain_NativeAuthoring_RunnerV2",
+    "owner_gate":  "Gate12",
+    "test_only":  true,
+    "software":  "unreal",
+    "operation":  "asset_author",
+    "source_paths":  [
+                         "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\native_author_job_runner_v2.json"
+                     ],
+    "requirements":  {
+                         "preserve_originals":  true,
+                         "max_walltime_seconds":  180,
+                         "max_ram_gb":  6,
+                         "quality_acceptance_required":  false
+                     },
+    "params":  {
+                   "spec":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\native_author_job_runner_v2.json"
+               },
+    "outputs":  {
+                    "receipt_directory":  "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UnifiedUE_Multidomain_RunnerV2"
+                },
+    "postconditions":  [
+                           {
+                               "path":  "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_DeclarativeAssetAuthor_5Systems_v2.json",
+                               "field":  "full_success",
+                               "is_true":  true
+                           }
+                       ]
+}

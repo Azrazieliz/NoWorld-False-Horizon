@@ -18,7 +18,7 @@ GATES={"Gate01","Gate02","Gate09","Gate12","Gate00"}
 ALLOWED={
  "blender":{"api_search","architecture","morphology","weapon","semantic_motion","fight_mocap","grease_2d","kk_obj"},
  "gaea":{"graph","native_build","doctor"},
- "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture"},
+ "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture","asset_author","paper2d"},
  "koikatsu":{"recipe_dry_run","joint_wing_offline"}}
 def sha(p):
  h=hashlib.sha256()
@@ -71,7 +71,7 @@ def command(job):
   scripts={"capabilities":"probe_unreal_master_subsystems.py",
     "asset_import":"qa_batch_import.py",
     "animation_validate":"qa_animation_validate.py",
-    "pcg_fixture":"qa_pcg_procedural.py"}
+    "pcg_fixture":"qa_pcg_procedural.py","asset_author":"native_asset_author.py","paper2d":"qa_paper2d_flipbook.py"}
   script=UE/scripts[o]
   return [str(UEEXE),str(UEPROJECT),"-run=pythonscript","-script="+str(script),
      "-nullrhi","-unattended","-nosplash","-nop4","-NoSound"]
@@ -120,6 +120,9 @@ def run(job,preflight=False):
   env["DOTNET_ROOT"]=sdk;env["PATH"]=sdk+os.pathsep+env.get("PATH","")
   env["GAEA_ROOT"]=r"D:\Tools\Gaea 2"
   env["NW_UNREAL_JOB_PARAMS"]=json.dumps(job.get("params",{}))
+  env["NW_PAPER2D_JOB_PARAMS"]=json.dumps(job.get("params",{}))
+  if job["software"]=="unreal" and job["operation"]=="asset_author":
+   env["NW_UNREAL_AUTHOR_JOB"]=str(job["params"]["spec"])
   t=time.perf_counter()
   try:
    p=subprocess.run(cmd,capture_output=True,text=True,encoding="utf-8",errors="replace",

@@ -1,0 +1,62 @@
+{
+  "schema": "NW_UE_EDITOR_AUTHOR_V1",
+  "job_id": "NativeAuthoring_Test",
+  "destination": "/Game/NW_MasterHub_QA/NativeAuthoring_Test_20261015",
+  "receipt": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_DeclarativeAssetAuthor_5Systems.json",
+  "assets": [
+    {
+      "type": "material",
+      "name": "NW_Mat_Parameterized",
+      "base_color": [
+        0.28,
+        0.36,
+        0.55
+      ],
+      "roughness": 0.46,
+      "metallic": 0.04
+    },
+    {
+      "type": "pcg",
+      "name": "NW_PCG_DetailScatter",
+      "nodes": [
+        {
+          "id": "surface",
+          "type": "SurfaceSampler"
+        },
+        {
+          "id": "vary",
+          "type": "TransformPoints"
+        }
+      ],
+      "edges": [
+        [
+          "Input",
+          "surface"
+        ],
+        [
+          "surface",
+          "vary"
+        ],
+        [
+          "vary",
+          "Output"
+        ]
+      ]
+    },
+    {
+      "type": "sequence",
+      "name": "NW_Seq_CameraKeyed",
+      "fps": 24,
+      "frames": 96
+    },
+    {
+      "type": "niagara",
+      "name": "NW_Niagara_ReusableBase"
+    },
+    {
+      "type": "blueprint",
+      "name": "NW_BP_RuntimeExtensionActor",
+      "parent": "Actor"
+    }
+  ]
+}

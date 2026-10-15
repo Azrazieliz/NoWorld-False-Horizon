@@ -1,0 +1,30 @@
+{
+  "schema": "NOWORLD_SOFTWARE_JOB_V1",
+  "job_id": "UE_Paper2D_BlenderGP_RunV2",
+  "owner_gate": "Gate09",
+  "software": "unreal",
+  "operation": "paper2d",
+  "test_only": true,
+  "source_paths": [],
+  "requirements": {
+    "preserve_originals": true,
+    "max_walltime_seconds": 180
+  },
+  "params": {
+    "frames_dir": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames",
+    "destination": "/Game/NW_MasterHub_QA/NativeGP2D_Runner_20261015",
+    "receipt": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_Paper2D_GP_NativeFlipbook_RunnerV2.json",
+    "fps": 30,
+    "frame_run": 6
+  },
+  "postconditions": [
+    {
+      "path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_Paper2D_GP_NativeFlipbook_RunnerV2.json",
+      "field": "status",
+      "equals": "PASS_NATIVE_PAPER2D_FLIPBOOK"
+    }
+  ],
+  "outputs": {
+    "receipt_directory": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UnifiedUE_Paper2D_RunV2"
+  }
+}
