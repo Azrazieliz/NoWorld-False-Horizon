@@ -9,7 +9,7 @@
   "date": "2026-10-15",
   "professional_demonstrations_accepted": 0,
   "quality_target": "Studio-exceeding aspirational goal, not achieved",
-  "file_count": 76,
+  "file_count": 89,
   "files": [
     {
       "relative_path": ".gitignore",
@@ -67,6 +67,11 @@
       "sha256": "5db8878b4a5ec5f818b4e70f39acde93fe6ad454ce58d2a89f89ef47db660520"
     },
     {
+      "relative_path": "ANIMATION/repair_ue_ik_root.py",
+      "bytes": 5545,
+      "sha256": "2b6e1cbd0babefd0cf33ff8643fe664f30a1ce3c934c23a73a0243f88fb73a2b"
+    },
+    {
       "relative_path": "CLI/gate_runner.py",
       "bytes": 3133,
       "sha256": "973c825e6406aa3b6ac0a3b43506356ab324a4c4171b7f7d52c746f9e6ddabdf"
@@ -115,6 +120,11 @@
       "relative_path": "GATE02/architecture_job.py",
       "bytes": 4211,
       "sha256": "35bd1b5b3e1fb4a7dc00b3691f91c348c5680be91c5eb75f449eefa185586721"
+    },
+    {
+      "relative_path": "GATE02/pbr_art_refinement.py",
+      "bytes": 7282,
+      "sha256": "bda3277080a039a223df405430bcb572649844aba353883a66979b1fb3e2cdcc"
     },
     {
       "relative_path": "GATE09/2d_example.json",
@@ -177,6 +187,11 @@
       "sha256": "9a6cfc866925b2c90e1e29a4a470e52cc459e15682b3de6ae5ed1e2fe3c37341"
     },
     {
+      "relative_path": "GATE_HANDOFF/QUALITY_FIDELITY_25MIN_REPORT.md",
+      "bytes": 5844,
+      "sha256": "b8532fb0292bc2f1a54a58ef1419b2be50a0399ee3c99a2c30cd6e4081c2d36c"
+    },
+    {
       "relative_path": "GATE_HANDOFF/README_GATE01_GATE12.md",
       "bytes": 6553,
       "sha256": "6e70c413b5a0bf9289cdfde3fcd8bc68f1729fb5c87abbb629d111847b7ca5f5"
@@ -200,6 +215,16 @@
       "relative_path": "INTEGRATIONS/KK_BRIDGE/submit_kk_job.py",
       "bytes": 3343,
       "sha256": "499003e871ce6f95b03cbef5582f8ad7e314cc8fd25ca49df5d00ac91252783a"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UE583/fix_ik_chain_mapping_582.py",
+      "bytes": 3608,
+      "sha256": "48eb327d1099a0d162e3682061b44fda3d517ad5ec2fc776122f082e081c47f1"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UE583/import_rootnormalized_kk_58.py",
+      "bytes": 1500,
+      "sha256": "f112b72dcca484d2bcfa7a96af0880a4bbea56aa9bfc52f45ee8ab6dcbb5234f"
     },
     {
       "relative_path": "INTEGRATIONS/UE583/inspect_anim_api.py",
@@ -357,6 +382,41 @@
       "sha256": "1e265a41c3cf3c95feb1d5b6fcd7cd062a1c6823e739bb9797776aa4bca6c4ab"
     },
     {
+      "relative_path": "VALIDATION/kk_visibility_audit.py",
+      "bytes": 620,
+      "sha256": "7fe3c782d21d8b6901d3bd9c214268f310f7aa30e4cc1a96fe7f329f93ba34ff"
+    },
+    {
+      "relative_path": "VALIDATION/quality25_20261015/NW_Starfall_AfterStone_V2.jpg",
+      "bytes": 77850,
+      "sha256": "d0a43ee6bbe2bd5c696e1e2bb328cadc39c6b207b4d3810e988e0f3e7fab1fd7"
+    },
+    {
+      "relative_path": "VALIDATION/quality25_20261015/NW_Starfall_BeforeStone.jpg",
+      "bytes": 72649,
+      "sha256": "c1a4dd07175f73c3208fd6a7df9c6222b0b7b9440f5699aee442220ceb51b4da"
+    },
+    {
+      "relative_path": "VALIDATION/quality25_20261015/NW_Starfall_CC0_Quality_V2.json",
+      "bytes": 1857,
+      "sha256": "115530d232abf6df47612ee7f9ed9168caaf68c32fdd0c0aabba128441739388"
+    },
+    {
+      "relative_path": "VALIDATION/quality25_20261015/NW_Starfall_PhysicalLookdev_BeforeAfter.jpg",
+      "bytes": 185568,
+      "sha256": "b263f49256dce80d38bf2be88ff0245531463ea284fd8ebad44b11a12a0f6ff0"
+    },
+    {
+      "relative_path": "VALIDATION/quality25_20261015/UE58_IK_FixedChainMap.json",
+      "bytes": 1477,
+      "sha256": "c259ef603318c8ffbfade1590cf6144c2e2f621203cfccea2f59bef3c0fd1a0a"
+    },
+    {
+      "relative_path": "VALIDATION/quality25_20261015/UE58_KK_RootNormalized_NativeImport.json",
+      "bytes": 412,
+      "sha256": "5989097f9541a5cb395e8dccef44391f685365a7661fe931f1ece3d3c4ba2573"
+    },
+    {
       "relative_path": "VALIDATION/refresh_verify_522.py",
       "bytes": 1906,
       "sha256": "bf0e90c778405e0b945ec1f9a4bd668d356357b0084a1b5877302ef48fb4c14e"
@@ -375,6 +435,11 @@
       "relative_path": "VALIDATION/ue_autoik_pose_review.py",
       "bytes": 4042,
       "sha256": "52af317e70944a7662aacf2e0b5f7eac67be64e9b4d1fff34e3d0375bc972724"
+    },
+    {
+      "relative_path": "VALIDATION/ue_fbx_motion_audit.py",
+      "bytes": 1840,
+      "sha256": "f9098ccfe39f32b1e56b684bd7dadd37fd1cb1ee6af2bc47982e89d083c045e9"
     },
     {
       "relative_path": "VALIDATION/ue_notify_authoring_results.json",

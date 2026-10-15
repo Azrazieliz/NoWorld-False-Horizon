@@ -1,0 +1,37 @@
+{
+  "blender": "5.2.2 LTS",
+  "source_sha256_unchanged": true,
+  "source_meshes": [
+    906
+  ],
+  "material_slots_reused": [
+    "NW_Art_PaleStone",
+    "NW_Basalt",
+    "NW_Frosted_Masonry",
+    "NW_Slate_Stone",
+    "NW_Art_Gravel"
+  ],
+  "n_scanned_images": 9,
+  "scanned_images_and_sha256": {
+    "granite_wall_Diffuse.jpg": "a971fd7ad16322fb8731cfacb593224ceca24dd2eaf77724a5a84a1de50d17f1",
+    "granite_wall_nor_gl.jpg": "ff57f9aebe854895b5b69c44d8725451c06da59b32c15e9457df8994130a7c53",
+    "granite_wall_Rough.jpg": "e158fffb5af9e30ec181237fe8063a33c7eaa6fe1b74518b35daec54a1b1f3b9",
+    "rough_block_wall_Diffuse.jpg": "a906c5d3cf22d4b8da0bd11c91c27327181e30337995437b1fc58eb18c1667d5",
+    "rough_block_wall_nor_gl.jpg": "8814f67d9924dffc3919258ed135b4a4572e63afa2579549717eb8e585f32de7",
+    "rough_block_wall_Rough.jpg": "1af7b6c9bdeed362029af1e1f3a819262444ff40fb5734ae7fad62a758acbebc",
+    "stony_dirt_path_Diffuse.jpg": "a662000ff3f7f64e23c25d2b8cd5947b9c8fd893510c5ed49c0daa2847004758",
+    "stony_dirt_path_nor_gl.jpg": "2866303f71066f42bd218410bf6d38d9a21cda34c6e3543a8ac92900b7a09c75",
+    "stony_dirt_path_Rough.jpg": "05b4f087b3b6571e60e9f21872e36118530f702a20db45092d4f6dc576d34086"
+  },
+  "new_non_destructive_bevel_modifiers": 181,
+  "preserved_art_direction": true,
+  "same_camera_render_pair": [
+    "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Starfall_BeforeStone.jpg",
+    "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Starfall_AfterStone_V2.jpg"
+  ],
+  "output_editable_blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Starfall_ProfessionalStoneRefinement_V2.blend",
+  "output_sha256": "3bc436e71e479649e0f67de791800524d0af5bce3b89dbb117a4e266591030cb",
+  "minutes": 0.57,
+  "artist_quality_accepted": false,
+  "unreal_shader_parity": false
+}

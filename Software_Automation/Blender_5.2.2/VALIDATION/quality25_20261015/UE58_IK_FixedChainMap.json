@@ -1,0 +1,52 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "status": "CHAIN_MAPPED_NATIVE_EXPORT_PASS",
+  "ops_before": 0,
+  "ops_after": 5,
+  "before_mapping": {
+    "Spine": "Spine",
+    "Head": "Head",
+    "LeftLeg": "LeftLeg",
+    "LeftFoot": "LeftFoot",
+    "LeftClavicle": "LeftClavicle",
+    "LeftArm": "LeftArm",
+    "RightLeg": "RightLeg",
+    "RightFoot": "RightFoot",
+    "RightClavicle": "RightClavicle",
+    "RightArm": "RightArm"
+  },
+  "manual_verification": {
+    "Spine": true,
+    "Head": true,
+    "LeftLeg": true,
+    "LeftFoot": true,
+    "LeftClavicle": true,
+    "LeftArm": true,
+    "RightLeg": true,
+    "RightFoot": true,
+    "RightClavicle": true,
+    "RightArm": true
+  },
+  "after_mapping": {
+    "Spine": "Spine",
+    "Head": "Head",
+    "LeftLeg": "LeftLeg",
+    "LeftFoot": "LeftFoot",
+    "LeftClavicle": "LeftClavicle",
+    "LeftArm": "LeftArm",
+    "RightLeg": "RightLeg",
+    "RightFoot": "RightFoot",
+    "RightClavicle": "RightClavicle",
+    "RightArm": "RightArm"
+  },
+  "mapped_count": 10,
+  "alignment": "TARGET_AUTO_ALIGNED_CHAINS",
+  "native_paths": [
+    "/Game/NW_KK_FixMapped_NW_CMU_Punch_1p875sec_AnimOnly_ChainMappedV3"
+  ],
+  "native_frames": 44,
+  "native_target_skeleton": "/Game/NW_StudioMocap/Target/NW_KK_121Bone_TargetSkeletal_Private_Skeleton.NW_KK_121Bone_TargetSkeletal_Private_Skeleton",
+  "export_ok": true,
+  "export_bytes": 1305200,
+  "pose_deformation_accepted": false
+}

@@ -1,0 +1,8 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "status": "NATIVE_IMPORT_PASS",
+  "native_asset": "/Game/NW_MasterHub_QA/RetargetRootNormalized/NW_KK_Mocap_RootNormalized_AnimOnly.NW_KK_Mocap_RootNormalized_AnimOnly",
+  "frames": 43,
+  "skeleton": "/Game/NW_StudioMocap/Target/NW_KK_121Bone_TargetSkeletal_Private_Skeleton.NW_KK_121Bone_TargetSkeletal_Private_Skeleton",
+  "visually_accepted": false
+}

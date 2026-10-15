@@ -1,0 +1,29 @@
+# 2026-10-15 25-MINUTE PROFESSIONAL QUALITY / FIDELITY COMMISSION — STRICT HANDOFF
+
+**Authority:** Software-only tooling branch `software/mastery-blender`; all previous Gates, canonical characters, frozen Unreal Foundation and Koikatsu cards untouched. No artistic approvals granted; accepted premium demonstrations **0/25**.
+
+## A. Architecture / advanced textures — demonstrably refined, but not premium acceptance
+- **Automation:** `GATE02/pbr_art_refinement.py` reopens existing `Blender_4.5.10/VALIDATION/phase4/NW_StarfallSanctum_ArtDirected.blend` (906 source meshes), converts five named masonry materials to **9 actual Poly Haven CC0 image maps** (diffuse, OpenGL normal, roughness) using continuous object-anchor coordinates; creates procedural uneven patina, physically modelled normal/bump, and 181 non-destructive bevel modifiers.
+- **Real test:** 2 CPU Cycles 860×540 renders from identical camera/light, original and refined; V2 updated physical map scale to avoid erroneous stretched surfaces. Source SHA256 unchanged. Independent editable `NW_Starfall_ProfessionalStoneRefinement_V2.blend` located in `D:\UnrealProjects\NW_BlenderGateHandoff_QA_20261015`. 1k license/provenance in `Blender_4.5.10/MATERIALS/PolyHaven_CC0_1k/SOURCE_PROVENANCE.json`. Scan maps preserved locally, not vendored.
+- **Production limitation:** NOT accepted professional AAA architecture or Unreal shader parity; source visuals still stylized, materials may require directional UV repair and higher scan resolution. Blender output is a supplementary shader/detail pass, never a substitute for terrain Gaea or native Unreal.
+
+## B. Combat motion defect diagnosed and partially repaired
+- **Critical correction:** Unreal IK Retargeter `RTG_NW_CMU_to_KK` created from `IKRetargetFactory` had **ZERO retarget ops and ZERO mapped chains**, so earlier 44-frame output held all target joints STATIC. Do not reuse that false pass!
+- `INTEGRATIONS/UE583/fix_ik_chain_mapping_582.py` creates **5 default retarget ops** using `IKRetargeterController.add_default_ops()`, maps all **10 target chains** via `set_source_chain()` and auto-aligns target pose. True 44-frame target asset created. Imported UE FBX Blender action now has non-zero arm/hand key curves.
+- **Second quality defect:** Unreal scaled pelvis translation up to **5,922,089 units** due bone/rig scale incompatibility. `ANIMATION/repair_ue_ik_root.py` rescales pelvis *offset from first frame* to rig height, retains performance-relative trajectory and source actor joint rotations. Verified private derivative 121-bone Blender Action and 44-frame FBX; max pelvis travel ~0.507 scene units against 1.586 skeleton height. Original source SHA256 unchanged. Native reimport test result (if present) in validation.
+- **Remaining blockers:** source model mesh/rig spatial unit parity, foot contact, believable action pose and shader parity; three private render previews are NOT good art and must not be promoted. Retargeting success does NOT imply game animation quality.
+
+## C. Gaea 2.3.1 complement research and infrastructure
+- Open-source **gaea-mcp** from https://github.com/aguai2018/gaea-mcp installed locally into `D:\Tools\Python311` (MIT license). Source cloned externally: `D:\UnrealProjects\NW_Blender_ReferenceReview_20261015\external_sources\gaea-mcp`; official installed Gaea at `D:\Tools\Gaea 2`. Add `$env:GAEA_ROOT='D:\Tools\Gaea 2'` in Gate02 process.
+- Run: `& 'D:\Tools\Python311\Scripts\gaea-doctor.exe'`; project self-tests `& 'D:\Tools\Python311\python.exe' 'D:\UnrealProjects\NW_Blender_ReferenceReview_20261015\external_sources\gaea-mcp\selftest.py'` -> **ALL 8 offline test groups passed**: valid .terrain graph, 76 unique ids/refs, Export path guard, Erosion2 Version 2 guard, 16bit masks, unsafe node refusal. A real `SelfTest.terrain` source graph was written.
+- **Native Gaea Build Swarm remains failing** (`System.IO.IOException: The handle is invalid` on multiple attempts incl. visible CMD). Gaea GUI not active in Doctor report. No native terrain heightmap emitted; no native UE Landscape proven. Tool's GUI helper requires **.NET 8 SDK**, missing; do not conflate passing offline structural tests with Gaea native builds. Recommend dedicated Gaea mastery conversation take over environment/licence/build profile diagnosis.
+- Official native bridge: https://github.com/QuadSpinner/Gaea2Unreal . Use only after Gaea exports heightmap+weights+scale JSON metadata; keep original geography governed by Gate02 and material/runtime by Gate12.
+
+## D. What Gates can actually use immediately without user clicking
+1. `CLI/master_router.py` : nine unattended operations including `architecture`, `morphology`, `weapon`, `semantic_motion`, `fight_mocap`, `grease_2d`, `kk_direct`, `blender_batch`, `api_search`. Tested all 7 routes in preflight, and representative individual domain jobs in real Blender/UE.
+2. `ADDONS/noworld_mastery_hub` : installed and native UI tested in Blender 5.2.2; direct Koikatsu Studio BepInEx DLL installed and actual imports verified.
+3. `MASTER_API/search_methods.py` : 2,755 Blender installed operator introspection and 28 curated workflow crosswalk; does not confer visual expertise.
+4. Existing import probes on Git (verified sandbox Unreal 5.8.3). Never merge into frozen game Foundation or overwrite another Gate's sources.
+5. **Quality acceptance** must remain an explicit downstream review, not auto-set true when file imports.
+
+**Actual conclusion:** This 25-minute pass delivered substantial corrections to shader/detail automation, retargeted animation motion and a Gaea automation package with offline validation. It DID NOT reach the above-Wuthering-Waves creative acceptance standard, nor complete the 25 premium demonstrations. Evidence must remain honest. Prior unsuccessful importer and rig scripts remain labeled test-only.
