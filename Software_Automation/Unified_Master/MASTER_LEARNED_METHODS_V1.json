@@ -1,0 +1,276 @@
+{
+  "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
+  "revision": "2026-10-16T0148",
+  "authority": "Gate00/user; each specialist Gate owns only commissioned content",
+  "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
+  "branch": "software/mastery-integrated",
+  "mission": "A reusable, fast, regression-resistant software-mastery and automation pipeline so Gates 01–12 directly execute user's commissioned requests using Koikatsu, Blender, Gaea, Unreal and future software. Disposable reference characters are benchmarks, not products.",
+  "startup_contract": {
+    "method": "Call mastery_preflight.ensure_master() during dispatcher validation and pipeline validation before any effects",
+    "mandatory": [
+      "Load this ledger before selecting a tool or authoring a recipe",
+      "Retrieve existing proven route/asset/recipe rather than discover again",
+      "Match task to owning Gate and user quality threshold",
+      "Apply relevant lessons and regression checks before execution",
+      "Preserve sources, report actual native/effective/visual parity separately"
+    ],
+    "gate_execution_supported_now": [
+      "Gate00",
+      "Gate01",
+      "Gate02",
+      "Gate09",
+      "Gate12"
+    ],
+    "gate03_to_gate11": "Knowledge applies to all Gates; full native gatectl dispatch routes for Gates03–08,10,11 have NOT been built. Do not falsely claim otherwise."
+  },
+  "gates": {
+    "Gate01": "Characters/models: reference-to-neutral-KK recipe; silhouette/face/body first; native materials/accessories/wardrobe; KKBP -> Blender -> Gate12",
+    "Gate02": "Worlds/environments/architecture: Gaea graph and terrain, Blender real geometry, Gate12 world integration",
+    "Gate03": "Music/score: authored compositions, MIDI, stems, lossless rendered files, adaptive parameters; Gate12 playback",
+    "Gate04": "Combat/stats/skills: typed mechanical data and kits; Gate12 runtime",
+    "Gate05": "Narrative/lore/quests: branching authored text/graphs and causality; Gate11 registry Gate12 quest integration",
+    "Gate06": "NPCs/factions/civilizations: simulation schemas and identities, Gate12 persistence",
+    "Gate07": "Items/equipment/economy: typed items and loot/balance data, Gate11 registry Gate12 integration",
+    "Gate08": "Encounters/dungeons/events: persistent encounter and boss data, Gate12 execution",
+    "Gate09": "Animation/VFX/cinematics/SFX/voice: source clips, rigged movements, editable authored motions; Gate12 native movement and retarget",
+    "Gate10": "UI/UX/visual assets: approved designs and sources; Gate12 UI integration",
+    "Gate11": "Master registry and integration: read-only Registry v2 authority; acceptance discipline",
+    "Gate12": "UE5.8.3 native authoring, Android integration, retarget/material fidelity, tests; do not mutate frozen Foundation"
+  },
+  "rules": [
+    {
+      "id": "K001",
+      "topic": "user_intent",
+      "applies_to": "all",
+      "requirement": "All character images in current software-mastery series are disposable capability benchmarks, NOT commissioned canonical characters. Optimize reusable automations, execution speed, user-defined tolerances, and learning.",
+      "procedure": "At task start classify evaluation versus production; leave Gate00/11 canonical assets untouched. User decides when a software study is complete.",
+      "evidence": "Confirmed instruction 2026-10-16",
+      "status": "verified"
+    },
+    {
+      "id": "K002",
+      "topic": "retain_learnings",
+      "applies_to": "all",
+      "requirement": "Every user correction and repeatable discovery must become an explicit executable procedure, source code or parameter map, and a regression check before moving to the next test.",
+      "procedure": "Read knowledge manifest at start, reuse proven technique without rediscovery; log new finding plus evidence and add regression coverage.",
+      "evidence": "Explicit user requirement 2026-10-16",
+      "status": "verified"
+    },
+    {
+      "id": "K003",
+      "topic": "speed",
+      "applies_to": "all",
+      "requirement": "Use previously indexed APIs; prioritize batched direct native edits, cached asset lookup and short visual evaluation. Do not perform idle exploratory operations, unnecessary restarts, screenshots or image transfers.",
+      "procedure": "Plan one pass: parse desired traits, shortlist indexed assets, build with native calls, evaluate, repair only large differences. Record timed stages; stop at user-sufficient quality.",
+      "evidence": "SM01 subsecond calls; Test3 25-31s batches; user's manual benchmark approximately 5min",
+      "status": "verified"
+    },
+    {
+      "id": "K004",
+      "topic": "neutral_start",
+      "applies_to": "gate01",
+      "requirement": "Default Chika Haruno must NOT be the implicit creative template; neutralize and explicitly author required face/body/hair/makeup/clothing/accessory fields.",
+      "procedure": "Use explicit neutral recipe and clean active coordinate. Do not hide unused parts as substitute for removal. Native coordinate tests must show intended saved IDs.",
+      "evidence": "User correction 2026-10-16",
+      "status": "method_required_not_yet_end_to_end_verified"
+    },
+    {
+      "id": "K005",
+      "topic": "wardrobe_states",
+      "applies_to": "gate01",
+      "requirement": "CLOTHED, UNDERWEAR and NUDE are actual separate character appearance/source configurations for Gate01; privacy/SFW representation never mutates real wardrobe or ownership.",
+      "procedure": "Build and validate each actual clothing state with material, meshes and saved coordinate; no forced modesty or synthetic hiding. Gate00/Gate11 approve semantics.",
+      "evidence": "Gate00 adult-scope directive; user 2026-10-16",
+      "status": "contract_verified_not_production_tested"
+    },
+    {
+      "id": "K006",
+      "topic": "asset_matching",
+      "applies_to": "gate01",
+      "requirement": "Use installed assets first (27,849 indexed SM01 items); candidate matches by silhouettes and components; test potentially useful existing assets in small fast batches, never blindly start modeling.",
+      "procedure": "Rank front/back/side hair, top, sleeves, socks, accessories separately; match IDs/category/GUID and visually compare. No multiminute inventory rediscovery.",
+      "evidence": "Test2 user improved using SAME selected setup; Test3 oversize tee found after wrong shirt-dress",
+      "status": "verified_method_partial_auto_match"
+    },
+    {
+      "id": "K007",
+      "topic": "face_body_anchors",
+      "applies_to": "gate01",
+      "requirement": "Face, eye shape/color, mature/soft expression, body silhouette and BREAST/BUST SIZE must be explicit first-class targets, not gloss or afterthoughts.",
+      "procedure": "Apply semantic slider map; compare proportions before clothes. Test3 drastically underestimated bust and user fixed; do not silently use default or assume clothes imply anatomy.",
+      "evidence": "User test2 face6/body11 differences; Test3 user correction bust",
+      "status": "verified_problem_method_requires_visual_qa"
+    },
+    {
+      "id": "K008",
+      "topic": "morph_mapping",
+      "applies_to": "gate01",
+      "requirement": "Koikatsu UI exposes 47 body and 52 face named sliders, but prior runtime wrapper only accepted 44 body and 52 face indices. Wrapper 0..1 range is not evidence of all game's allowed UI ranges.",
+      "procedure": "Use kk_semantic_slider_catalog.json, verify actual native index/value per operation. Do not clamp arbitrary larger values or claim full capability from wrapper limits. Treat extra controls as a gap.",
+      "evidence": "Test3 wrapper rejected body indices >=44 and >1; user notes additional control",
+      "status": "partially_verified"
+    },
+    {
+      "id": "K009",
+      "topic": "hair_layering",
+      "applies_to": "gate01",
+      "requirement": "Complex hair uses front/back/side plus attached hair components; all translations/rotations/scales and anchor bones are available. Do not leave hair floating.",
+      "procedure": "Select layered pieces before custom mesh; place by X/Y/Z, rotation, scale; compare from front/side. Transform-first, shader-color-last if renderer recreates.",
+      "evidence": "Test2 user manually corrected; Test3 thick braid misplaced then recolored",
+      "status": "partially_verified"
+    },
+    {
+      "id": "K010",
+      "topic": "accessory_transforms",
+      "applies_to": "gate01",
+      "requirement": "Support six native vector fields pos,rot,scale,pos2,rot2,scale2; scale 1=100%, allow 360-degree rotations and 0.01 secondary scale, correct parent bones.",
+      "procedure": "Use SM01Placement.cs and native card readback, including both coordinate correction sets. Skip no-op setters. Use direct native item IDs or resolved mod GUIDs.",
+      "evidence": "User Test2 ears position .6,-2.4,-1.7 rotation25,5,359 scale .83,.77,1.75 secondary .84,1.4,1",
+      "status": "source_compiled_native_example_verified"
+    },
+    {
+      "id": "K011",
+      "topic": "materials_stable",
+      "applies_to": "gate01",
+      "requirement": "Appearance edits must SURVIVE later asset replacement, accessory transforms, save and export: no white/grey braid, no navy sleeve regression.",
+      "procedure": "Order geometry/asset/pose mutations first; recolor palette and shader _Color/_Color2/_Color3/_ShadowColor/_LineColor LAST; compare expected palette in final render and native saved state.",
+      "evidence": "Test3 braid turned white then grey after transform, navy returned; user explicitly flags regression",
+      "status": "known_regression_not_fully_guarded"
+    },
+    {
+      "id": "K012",
+      "topic": "native_card_persistence",
+      "applies_to": "gate01",
+      "requirement": "Native successful setter != saved character; call AssignCoordinate(currentType, nowCoordinate) before SaveCharaFile; independently reload and compare all 9 clothing IDs, 20 accessory identity/parent plus two correction matrices.",
+      "procedure": "Use corrected SM01RuntimeController source; reject 'card saved' receipts lacking native_coordinate_roundtrip PASS and fresh visual review.",
+      "evidence": "Test2 user's saved had 6 accessories; automated card 0. Test3 new save 9/9+20/20 roundtrip PASS",
+      "status": "verified_native_test03"
+    },
+    {
+      "id": "K013",
+      "topic": "identity_cosmetics",
+      "applies_to": "gate01",
+      "requirement": "Blush/makeup is reference-dependent, never inherited. Eye color AND iris/eyeshadow asset ID must be authored, not just an RGB change.",
+      "procedure": "Use native set_face_makeup to clear cheeks where absent; set_iris_asset, set_eye_iris, eye shapes, shadow and expression; inspect saved card.",
+      "evidence": "Test2 cheek ID0 alpha0; iris10->6 and eyeshadow2->9; Test3 blue iris",
+      "status": "verified_api_partial_fidelity"
+    },
+    {
+      "id": "K014",
+      "topic": "wet_context",
+      "applies_to": "gate01",
+      "requirement": "Scene-dependent wetness, droplets, temporary lighting or pose is not inherent character design. Do not spend production time implementing it in reusable character assets unless user requests that state.",
+      "procedure": "Ignore contextual wet effect by default; prioritize appearance anchors, clothes silhouette, hair and proportions. Optional world/scene variants are separate.",
+      "evidence": "Test3 user explicit correction",
+      "status": "verified"
+    },
+    {
+      "id": "K015",
+      "topic": "kk_to_blender",
+      "applies_to": "gate01|gate09|gate12",
+      "requirement": "Use KK for nearly all available design; Blender only for unmatched geometry, source rig or real material polish. Correct exporter dependency profile and verify actual PMX output.",
+      "procedure": "KKBP 5.6 in isolated sandbox, plugins KK_Accessory_States and KK_Pushup; export, require source PMX meshes+textures; import editable armatures, shape keys; diagnose parity not just file existence.",
+      "evidence": "Test3 KKBP PMX exported, Blender import 2 armatures 454 shapekeys 237845 vertices",
+      "status": "verified_import_unfinished_materials"
+    },
+    {
+      "id": "K016",
+      "topic": "blender_texture_parity",
+      "applies_to": "gate01|gate09|gate12",
+      "requirement": "No replacement with flat Blender shader masks. Blender import with zero images is NOT polished render; KKBP exports CM/DM/MT/NMP etc textures which must be mapped to material inputs.",
+      "procedure": "Verify imported image count >0, diffuse/albedo texture present on visible face/hair/shirt materials, UVs, transparency, normals, contact/reference renders, shape key/rig preservation. Avoid using *_DM (normal-like data) as base color.",
+      "evidence": "Test3 original MMD shader group had 0 loaded images while KKBP export textures existed. Flat underwhelming preview was not accepted.",
+      "status": "UNRESOLVED_HIGH_PRIORITY"
+    },
+    {
+      "id": "K017",
+      "topic": "acceptance_limits",
+      "applies_to": "all",
+      "requirement": "Success means requested capability and acceptable result, NOT just tools called, files present, render produced or API 200. User tolerates non-pixel-exact likeness in capability tests and can declare a benchmark sufficiently assessed.",
+      "procedure": "Stage native validity separately from appearance quality; stop once user-defined threshold attained. Never over-polish disposable test or claim canonical acceptance.",
+      "evidence": "User Test3 says present version good enough despite bust corrections; no approval for Test1/2 as faithful characters",
+      "status": "verified"
+    },
+    {
+      "id": "K018",
+      "topic": "source_preservation",
+      "applies_to": "all",
+      "requirement": "Master branch software/mastery-integrated only; private QA dirs; never alter frozen foundation/production Gate branches or original Steam install. Do not close user's apps or rebuild without request.",
+      "procedure": "Keep original sources and user cards hash-preserved, QA unique IDs. Avoid giant repeated PMX/blend intermediate copies, reclaim only clearly disposable test outputs with scoped consent.",
+      "evidence": "User directives; Test3 ~67.85MB redundant files cleaned; worktree frozen foundation",
+      "status": "verified"
+    },
+    {
+      "id": "K019",
+      "topic": "reference_viewer",
+      "applies_to": "gate01|gate02|gate09|gate10",
+      "requirement": "Use actual high resolution reference if already accessible; viewer should remain persistent with crops/zoom; do not waste minutes transferring to Windows via text/base64 or use 144p substitutes.",
+      "procedure": "Prefer mounted original asset or already-PC image; only use overlay when image bytes genuinely available; if unavailable do not invent image or present 144p as full source. Overlay never masks Maker controls.",
+      "evidence": "Test1+2 low-res transfer failures; overlay code exists, Test2 full-res PC transfer NOT verified",
+      "status": "partial"
+    },
+    {
+      "id": "K020",
+      "topic": "test1_baseline",
+      "applies_to": "gate01",
+      "requirement": "Test1 silver-haired lilac-eyed high collar woman failed: default face, weak hair layering, wrong clothing, no faithful editable 3D acceptance.",
+      "procedure": "Do not treat failure as approved; apply lessons to asset matching, face/body and card save. Avoid continuing old disposable card.",
+      "evidence": "Test1 user and assistant visual feedback",
+      "status": "failed_test"
+    },
+    {
+      "id": "K021",
+      "topic": "test2_benchmark",
+      "applies_to": "gate01",
+      "requirement": "Test2 ivory bunny user card demonstrates existing setup could deliver better via transforms/colors/proportions/fishnets; reference has large bust/hair, amber eyes and white outfit.",
+      "procedure": "Compare user card native values rather than assume better assets. User card 6 accessories, automated saved card 0 due AssignCoordinate bug; replay both transform matrices.",
+      "evidence": "TEST02_CARD_LEARNING_20261016.md and TEST02_USER_VS_AUTOMATION_DIFF_20261016.json",
+      "status": "verified_user_comparison"
+    },
+    {
+      "id": "K022",
+      "topic": "test3_benchmark",
+      "applies_to": "gate01",
+      "requirement": "Test3 orange braided blue-eyed woman in white tee and thigh-highs: user's verdict 'current version good enough' for capability assessment, but missed bust size significantly; wetness unnecessary.",
+      "procedure": "Record benchmark as sufficiently assessed, not accurate production character. Retain native morph correction and color override order, discard extra texture polishing unless needed for pipeline.",
+      "evidence": "User 2026-10-16; saved Test3 native roundtrip PASS",
+      "status": "bench_sufficient_not_canonical"
+    },
+    {
+      "id": "K023",
+      "topic": "gaea_truth",
+      "applies_to": "gate02|gate12",
+      "requirement": "Gaea 2.3.1 has a verified native project/build, 16-bit terrain/tiled export and 4 UE StaticMeshes; arbitrary Gaea graph GUI automation and UE native Landscape/World Partition not proven.",
+      "procedure": "Use installed nodes/doctor UTF-8 env and checked layouts; preserve graph source and height units; distinguish StaticMesh terrain from Landscape acceptance.",
+      "evidence": "Gaea VALIDATION reports and UE QA fixture",
+      "status": "partial"
+    },
+    {
+      "id": "K024",
+      "topic": "animation_truth",
+      "applies_to": "gate09|gate12",
+      "requirement": "Native animation evidence includes skeletal Actions/export and sample motion, but facial expression/locomotion with foot slide, X/Y travel facing, natural transitions, sustained swim and flight remain inadequate.",
+      "procedure": "Check actual authored clips before procedural; per-skeleton rig anatomy and genuine bone deltas, IK foot contacts, root travel, loop sustain, retarget, Android native observation.",
+      "evidence": "Gate09/12 physical quality issue report",
+      "status": "UNRESOLVED_HIGH_PRIORITY"
+    },
+    {
+      "id": "K025",
+      "topic": "unreal_truth",
+      "applies_to": "gate12",
+      "requirement": "Unreal 5.8.3 isolated Blueprint native compile passed, some PCG/material/Sequencer/StaticMesh fixtures exist, but gameplay/Android visual parity, emitter functionality, Landscape and full retarget not verified.",
+      "procedure": "Require fresh native receipts, saved/reloaded assets, real scene visual QA, on-device Android test, asset ID/Registry compliance; never equate importer return code with pass.",
+      "evidence": "Blueprint compile native proof; Gate12 QA limitations",
+      "status": "partial"
+    },
+    {
+      "id": "K026",
+      "topic": "gate_boundaries",
+      "applies_to": "gate01|gate02|gate03|gate04|gate05|gate06|gate07|gate08|gate09|gate10|gate11|gate12",
+      "requirement": "Software mastery is shared infrastructure; Gates 01-12 remain owners of their production source and must use the pipeline without treating software tests as approval.",
+      "procedure": "Gate00 creative authority; Gate11 Registry2 intake; Gate12 UE runtime; share capabilities through manifest/handoff; do not create canonical assets uncommissioned.",
+      "evidence": "Original Gate commission scopes",
+      "status": "verified_contract"
+    }
+  ]
+}

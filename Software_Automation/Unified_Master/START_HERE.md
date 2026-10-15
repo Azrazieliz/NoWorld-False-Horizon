@@ -1,5 +1,7 @@
 # START HERE — NoWorld shared production-tool automation
 
+> **MANDATORY NEW STARTUP (2026-10-16):** All future specialist Gates must load `MASTER_LEARNED_METHODS_V1.json` and `MASTER_EXECUTION_DOCTRINE_20261016.md`. Run `gate_start.py --gate NN` before action. Existing `gatectl.py` and `pipeline_runner.py` call `mastery_preflight.ensure_master()` automatically, preventing known methodology loss. Run `mastery_regression_tests.py` after learning or changing native-source paths. New knowledge is recorded with `record_learning.py`, not just mentioned in chat. All sample characters are disposable QA benchmarks, not accepted canonical assets. **Do not continue Test3 character refinement without a new user instruction.** The important return is robust Gates01–12 automation, speed and preservation of lessons. Older handoffs below may describe superseded capabilities and must not override the 2026-10-16 doctrine.
+
 **Branch:** `software/mastery-integrated` — do not merge into frozen production Foundation.
 **Scope:** executable production *tools*, not creation of canonical characters/worlds or artistic approval.
 **Windows host:** `LAPTOP-1LI4VRCJ`.

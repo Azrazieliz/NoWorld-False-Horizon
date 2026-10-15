@@ -2,9 +2,12 @@
 No gameplay implementation and no canonical content edits.
 Calls existing tested SM01, SM02, Gaea and UE scripts. FAIL-CLOSED receipts.
 """
-import pathlib,subprocess,json,sys,hashlib,datetime,time,argparse,re,os,uuid
+import pathlib,subprocess,json,sys,hashlib,datetime,time,argparse,re,os,uuid,importlib.util
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 HERE=pathlib.Path(__file__).resolve().parent
+_master_spec=importlib.util.spec_from_file_location('nw_mastery_preflight', HERE/'mastery_preflight.py')
+_mastery=importlib.util.module_from_spec(_master_spec)
+_master_spec.loader.exec_module(_mastery)
 BLENDER=ROOT/"Blender_5.2.2"
 UE=ROOT/"Unreal_5.8.3_Master"
 GAEA=ROOT/"Gaea_2.3.1_Master"
@@ -30,6 +33,7 @@ def safe_id(x):
  if not re.fullmatch("[A-Za-z0-9_-]{3,90}",x):raise ValueError("Invalid job id")
  return x
 def validate(job):
+ _mastery.ensure_master()  # <0.1s read-only learned-methodology/regression gate
  if job.get("schema")!="NOWORLD_SOFTWARE_JOB_V1":raise ValueError("Unknown schema")
  safe_id(job["job_id"])
  if job.get("owner_gate") not in GATES:raise ValueError("Unrecognized Gate")
@@ -140,7 +144,8 @@ def run(job,preflight=False):
    "owner_gate":job["owner_gate"],"software":job["software"],
    "operation":job["operation"],"start_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
    "source_hashes":src_hashes,"command":cmd,"status":"PREFLIGHT_PASS" if preflight else "RUNNING",
-   "artist_acceptance":False,"canonical_content_modified":False}
+   "artist_acceptance":False,"canonical_content_modified":False,
+   "learned_methods":_mastery.ensure_master()}
  if not preflight:
   (out/"submitted_job.json").write_text(json.dumps(job,indent=2))
  if not preflight:
