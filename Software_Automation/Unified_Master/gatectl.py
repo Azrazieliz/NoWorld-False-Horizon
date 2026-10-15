@@ -15,11 +15,11 @@ UEPROJECT=pathlib.Path(r"D:\UnrealProjects\NW_BlenderInterop_Sandbox_20261015\NW
 SM01=pathlib.Path(r"D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\MASTER_PACKAGES\KoikatsuParty_Steam6436979_HF4.2_SM01_v0.4.0_RUNTIME")
 SM01_SANDBOX=pathlib.Path(r"D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\SANDBOXES\SM01_KKParty_6436979_20261014")
 GATES={"Gate01","Gate02","Gate09","Gate12","Gate00"}
-LOOKUP_ONLY={('blender','api_search'),('gaea','node_search'),('unreal','api_search'),('koikatsu','mod_lookup')}
+LOOKUP_ONLY={('blender','api_search'),('gaea','node_search'),('unreal','api_search'),('koikatsu','mod_lookup'),('gaea','doctor')}
 ALLOWED={
  "blender":{"api_search","architecture","morphology","weapon","semantic_motion","fight_mocap","grease_2d","kk_obj"},
  "gaea":{"graph","native_build","doctor","blender_tiles","node_search"},
- "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture","asset_author","paper2d","api_search"},
+ "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture","asset_author","paper2d","api_search","blueprint_compile"},
  "koikatsu":{"recipe_dry_run","joint_wing_offline","mod_lookup","native_wing_test"}}
 def sha(p):
  h=hashlib.sha256()
@@ -93,7 +93,7 @@ def command(job):
   scripts={"capabilities":"probe_unreal_master_subsystems.py",
     "asset_import":"qa_batch_import.py",
     "animation_validate":"qa_animation_validate.py",
-    "pcg_fixture":"qa_pcg_procedural.py","asset_author":"native_asset_author.py","paper2d":"qa_paper2d_flipbook.py"}
+    "pcg_fixture":"qa_pcg_procedural.py","asset_author":"native_asset_author.py","paper2d":"qa_paper2d_flipbook.py","blueprint_compile":"qa_blueprint_compile_proof.py"}
   script=UE/scripts[o]
   return [str(UEEXE),str(UEPROJECT),"-run=pythonscript","-script="+str(script),
      "-nullrhi","-unattended","-nosplash","-nop4","-NoSound"]
@@ -135,18 +135,20 @@ def run(job,preflight=False):
   for cond in job.get("postconditions",[]):
    if not isinstance(cond.get("path"),str) or not cond.get("field") or not any(k in cond for k in ("equals","minimum","is_true")):
     raise ValueError("Malformed postcondition")
- out.mkdir(parents=True)
+ if not preflight:out.mkdir(parents=True)
  provenance={"schema":"NOWORLD_SOFTWARE_JOB_RECEIPT_V1","job_id":job["job_id"],
    "owner_gate":job["owner_gate"],"software":job["software"],
    "operation":job["operation"],"start_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
    "source_hashes":src_hashes,"command":cmd,"status":"PREFLIGHT_PASS" if preflight else "RUNNING",
    "artist_acceptance":False,"canonical_content_modified":False}
- (out/"submitted_job.json").write_text(json.dumps(job,indent=2))
+ if not preflight:
+  (out/"submitted_job.json").write_text(json.dumps(job,indent=2))
  if not preflight:
   env=os.environ.copy()
   sdk=r"D:\Tools\DotNet8SDK_NoWorld_Portable"
   env["DOTNET_ROOT"]=sdk;env["PATH"]=sdk+os.pathsep+env.get("PATH","")
   env["GAEA_ROOT"]=r"D:\Tools\Gaea 2"
+  env["PYTHONIOENCODING"]="utf-8"
   env["NW_KK_GAME_ROOT"]=str(SM01_SANDBOX)
   env["NW_UNREAL_JOB_PARAMS"]=json.dumps(job.get("params",{}))
   env["NW_PAPER2D_JOB_PARAMS"]=json.dumps(job.get("params",{}))
@@ -174,8 +176,8 @@ def run(job,preflight=False):
   provenance["status"]="SOURCE_MODIFIED"
   provenance["source_protection_violations"]=bad
  provenance["ended_utc"]=datetime.datetime.now(datetime.timezone.utc).isoformat()
- (out/"receipt.json").write_text(json.dumps(provenance,indent=2))
- print("NW_UNIFIED_GATE="+json.dumps({"job":job["job_id"],"status":provenance["status"],"receipt":str(out/"receipt.json")}))
+ if not preflight:(out/"receipt.json").write_text(json.dumps(provenance,indent=2))
+ print("NW_UNIFIED_GATE="+json.dumps({"job":job["job_id"],"status":provenance["status"],"receipt":str(out/"receipt.json") if not preflight else None}))
  return provenance
 def main():
  p=argparse.ArgumentParser();p.add_argument("--job",required=True);p.add_argument("--preflight",action="store_true")

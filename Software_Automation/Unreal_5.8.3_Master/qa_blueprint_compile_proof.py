@@ -1,7 +1,12 @@
 """Unreal native isolated Blueprint compiler proof; no game branch writes."""
-import unreal,json,pathlib,traceback
-out=pathlib.Path(r"D:\UnrealProjects\NW_BlenderGateHandoff_QA_20261015\BlueprintCompileProof_20261015_2120.json")
-folder="/Game/NW_MasterHub_QA/BlueprintCompileProof_20261015_2120"
+import unreal,json,pathlib,traceback,os,re
+params=json.loads(os.environ.get('NW_UNREAL_JOB_PARAMS','{}'))
+job_id=str(params.get('job_id','BlueprintCompileProof_20261015_2120'))
+if not re.fullmatch('[A-Za-z0-9_]{4,75}',job_id):raise ValueError('Unsafe Blueprint QA job id')
+qa=pathlib.Path(r'D:\UnrealProjects\NW_BlenderGateHandoff_QA_20261015').resolve()
+out=pathlib.Path(params.get('receipt',str(qa/(job_id+'.json')))).resolve()
+if not out.is_relative_to(qa):raise ValueError('Receipt outside private QA folder')
+folder='/Game/NW_MasterHub_QA/'+job_id
 result={"schema":"NW_UE_BP_COMPILE_PROOF_V1","sandbox":True,"production_modified":False}
 try:
  if out.exists():raise FileExistsError(str(out))

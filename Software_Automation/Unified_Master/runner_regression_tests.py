@@ -33,6 +33,10 @@ with tempfile.TemporaryDirectory(prefix="nw_master_safety_") as t:
     reject("empty_receipt",lambda j:j["outputs"].update(receipt_directory=""))
     reject("non_test_job",lambda j:j.update(test_only=False))
     reject("non_preserving_job",lambda j:j["requirements"].update(preserve_originals=False))
+    pre=copy.deepcopy(baseline)
+    pre['outputs']['receipt_directory']=str(temp/'only_preflight')
+    out=gate.run(pre,preflight=True)
+    cases.append(('preflight_does_not_consume_destination',out['status']=='PREFLIGHT_PASS' and not (temp/'only_preflight').exists()))
     missing=copy.deepcopy(baseline)
     missing["source_paths"]=[str(temp/"missing_source.blend")]
     try:gate.run(missing)
