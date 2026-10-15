@@ -80,7 +80,7 @@
       "number": 11,
       "name": "Multi-layer procedural material",
       "status": "ENGINEERING_VALIDATED",
-      "description": "Earlier reusable asymmetric color gradient; no full layered texture baking to Unreal",
+      "description": "Editable same-mesh local/global asymmetric material gradients across textured hair and skirt; no Unreal parity",
       "professional_accepted": false
     },
     {
@@ -156,8 +156,8 @@
     {
       "number": 22,
       "name": "Koikatsu reconstruction",
-      "status": "AUDIT_EXECUTED",
-      "description": "Six preexisting GLB shards imported read-only; no complete character/material identity reconstruct",
+      "status": "PARTIAL_PRIVATE_ASSEMBLY",
+      "description": "Six original source GLBs assembled into one 121-bone rig with facial shape keys and textures; KK shader parity still fails review",
       "professional_accepted": false
     },
     {

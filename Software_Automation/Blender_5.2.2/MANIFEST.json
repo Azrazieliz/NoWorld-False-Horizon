@@ -1,0 +1,75 @@
+{
+  "project": "NoWorld False Horizon",
+  "software": "Blender",
+  "version": "5.2.2 LTS",
+  "cloudrig_version": "2.2.31",
+  "ue_version": "5.8.3",
+  "gaea_version": "2.3.1.0",
+  "branch": "software/mastery-blender",
+  "date": "2026-10-15",
+  "professional_demonstrations_accepted": 0,
+  "quality_target": "Studio-exceeding aspirational goal, not achieved",
+  "file_count": 12,
+  "files": [
+    {
+      "relative_path": ".gitignore",
+      "bytes": 166,
+      "sha256": "bb89332403f34b7c2b1363ea4b66cedf523177dae96802a71dbcc5a8b4c5958d"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UE583/inspect_anim_api.py",
+      "bytes": 1182,
+      "sha256": "c07a684d0d0f0afc3213cb4dd40da074fccb253765a67b3edcf6b3276bc63aae"
+    },
+    {
+      "relative_path": "INTEGRATIONS/UE583/test_notify_authoring.py",
+      "bytes": 2213,
+      "sha256": "445687c2a445a33146ed97c5dab0d76e68d5d2946f06403a57c2100496069282"
+    },
+    {
+      "relative_path": "START_HERE.md",
+      "bytes": 8177,
+      "sha256": "4c6dfd172122ec5b6c93fc2a375f0db06b66db9d52ca7678e8926159a6cc0869"
+    },
+    {
+      "relative_path": "VALIDATION/blender522_compatibility_results.json",
+      "bytes": 3465,
+      "sha256": "5814dc375ecb197f3dc6c57f20b90d1ebe7c05d02d48229f89a7e61f2530ced3"
+    },
+    {
+      "relative_path": "VALIDATION/cloudrig_522_inventory.json",
+      "bytes": 429,
+      "sha256": "ae9e10aee8143429807b4bbd0b84d5207fbf8df2a36179f400803854e9179540"
+    },
+    {
+      "relative_path": "VALIDATION/gaea_native_cli_blocker.json",
+      "bytes": 927,
+      "sha256": "9f0bdb4589b6e00f9e2fed0f13c57c5c899195db0962d4de5be3a2478fa119a6"
+    },
+    {
+      "relative_path": "VALIDATION/refresh_verify_522.py",
+      "bytes": 1906,
+      "sha256": "bf0e90c778405e0b945ec1f9a4bd668d356357b0084a1b5877302ef48fb4c14e"
+    },
+    {
+      "relative_path": "VALIDATION/ue_anim_api_inventory.json",
+      "bytes": 3464,
+      "sha256": "9703efdf1497d990c7ec32d9868790d8925d1e6ae0aa64954db6b4fd420179c0"
+    },
+    {
+      "relative_path": "VALIDATION/ue_notify_authoring_results.json",
+      "bytes": 642,
+      "sha256": "d5e712664389e3ae33f02912711e31b4021d6359d6afef4273453e2ac8718a51"
+    },
+    {
+      "relative_path": "VALIDATION/validate_compatibility.py",
+      "bytes": 2996,
+      "sha256": "c084157bfda5d579b5aff3008bb98015ad6fedc53d612b780f0fa771394dae7f"
+    },
+    {
+      "relative_path": "VALIDATION/verify_cloudrig.py",
+      "bytes": 1432,
+      "sha256": "1c0cbef53de86679fc95371407678bec14b105d2008ca215314dde847c6317fc"
+    }
+  ]
+}

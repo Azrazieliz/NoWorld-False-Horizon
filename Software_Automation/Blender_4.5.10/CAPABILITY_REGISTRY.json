@@ -178,6 +178,30 @@
       "script": "VALIDATION/animation_contact_audit.py",
       "evidence": "VALIDATION/phase2/mount_contact_metrics.json",
       "limitation": "Detection only, failed quality gate; no corrective algorithm authored"
+    },
+    {
+      "id": "Koikatsu_ReadOnlyFullShardAssembly",
+      "status": "VALIDATED",
+      "script": "INTEGRATIONS/koikatsu_private_assembly.py",
+      "evidence": "VALIDATION/phase3_sanitized_evidence.json",
+      "limitation": "Six actual GLB shards, 1x121-bone character and original textures; no likeness/artistic approval",
+      "production_ready": false
+    },
+    {
+      "id": "KK_TexturePreservingLocalWorldGradient",
+      "status": "VALIDATED",
+      "script": "MATERIALS/adaptive_texture_gradient.py",
+      "evidence": "VALIDATION/phase3_sanitized_evidence.json",
+      "limitation": "Three real materials, no mesh rebuild, gradient visibly demonstrated in strong variant; no in-game KK or UE materials acceptance",
+      "production_ready": false
+    },
+    {
+      "id": "KK_CyclesTextureVisualAudit",
+      "status": "VALIDATED",
+      "script": "INTEGRATIONS/koikatsu_material_diagnostic.py",
+      "evidence": "VALIDATION/phase3_sanitized_evidence.json",
+      "limitation": "Actual Cycles material diagnostic with texture/shading defects; do not call equivalent to game",
+      "production_ready": false
     }
   ],
   "phase2_milestone": "2026-10-15"

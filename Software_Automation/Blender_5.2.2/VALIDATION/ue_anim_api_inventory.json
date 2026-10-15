@@ -1,0 +1,114 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "script": "inspect_available_anim_api",
+  "status": "SUCCESS",
+  "AnimationLibrary": {
+    "exists": true,
+    "methods": [
+      "add_animation_notify_event",
+      "add_animation_notify_event_from_source",
+      "add_animation_notify_event_object",
+      "add_animation_notify_state_event",
+      "add_animation_notify_state_event_object",
+      "add_animation_notify_track",
+      "get_anim_notify_event_duration",
+      "get_anim_notify_event_trigger_time",
+      "get_animation_notify_event_names",
+      "get_animation_notify_events",
+      "get_animation_notify_events_for_track",
+      "get_animation_notify_track_names",
+      "is_valid_anim_notify_track_name",
+      "remove_all_animation_notify_tracks",
+      "remove_animation_notify_events_by_name",
+      "remove_animation_notify_events_by_track",
+      "remove_animation_notify_track",
+      "replace_anim_notify_states"
+    ]
+  },
+  "AnimNotify": {
+    "exists": true,
+    "methods": [
+      "get_notify_name",
+      "notify_color",
+      "received_notify"
+    ]
+  },
+  "AnimNotify_PlaySound": {
+    "exists": true,
+    "methods": [
+      "get_notify_name",
+      "notify_color",
+      "received_notify"
+    ]
+  },
+  "AnimNotify_PlayParticleEffect": {
+    "exists": true,
+    "methods": [
+      "get_notify_name",
+      "notify_color",
+      "received_notify"
+    ]
+  },
+  "AnimNotifyState_TimedParticleEffect": {
+    "exists": true,
+    "methods": [
+      "get_notify_name",
+      "notify_color",
+      "notify_state_behavior_flags",
+      "received_notify_begin",
+      "received_notify_end",
+      "received_notify_tick"
+    ]
+  },
+  "ControlRigBlueprint": {
+    "exists": true,
+    "methods": []
+  },
+  "IKRigDefinition": {
+    "exists": true,
+    "methods": []
+  },
+  "IKRetargeter": {
+    "exists": true,
+    "methods": [
+      "current_retarget_pose",
+      "get_chain_settings_from_retarget_asset",
+      "get_chain_settings_from_retarget_profile",
+      "get_chain_using_goal_from_retarget_asset",
+      "get_global_settings_from_retarget_asset",
+      "get_global_settings_from_retarget_profile",
+      "get_root_settings_from_retarget_asset",
+      "get_root_settings_from_retarget_profile",
+      "retarget_fk",
+      "retarget_ik",
+      "retarget_poses",
+      "retarget_root",
+      "set_chain_fk_settings_in_retarget_profile",
+      "set_chain_ik_settings_in_retarget_profile",
+      "set_chain_settings_in_retarget_profile",
+      "set_chain_speed_plant_settings_in_retarget_profile",
+      "set_global_settings_in_retarget_profile",
+      "set_root_settings_in_retarget_profile"
+    ]
+  },
+  "AssetToolsHelpers": {
+    "exists": true,
+    "methods": []
+  },
+  "AnimSequenceFactory": {
+    "exists": true,
+    "methods": []
+  },
+  "AnimSeqExportOption": {
+    "exists": true,
+    "methods": [
+      "set_retarget_source_asset"
+    ]
+  },
+  "assets": [
+    "/Game/NW_BlenderImportTests/Mount_IK_Baked_AnimOnly/NW_ContactIK_Baked_AnimOnly.NW_ContactIK_Baked_AnimOnly",
+    "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal.NW_ArticulatedMount_Skeletal",
+    "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal_Skeleton.NW_ArticulatedMount_Skeletal_Skeleton",
+    "/Game/NW_BlenderImportTests/Mount_Walk_AnimOnly/NW_Mount_Walk_Test_AnimOnly.NW_Mount_Walk_Test_AnimOnly"
+  ]
+}

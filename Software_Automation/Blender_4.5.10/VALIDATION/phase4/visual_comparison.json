@@ -1,0 +1,9 @@
+{
+  "old_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ParametricSanctuary.png",
+  "new_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_Beauty.png",
+  "comparison_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_Sanctuary_RenderComparison.png",
+  "same_subject_same_legacy_base_mesh": true,
+  "identical_camera": false,
+  "identical_render_engine": false,
+  "artist_accepted": false
+}

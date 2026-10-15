@@ -1,0 +1,180 @@
+{
+  "version": "4.5.10 LTS",
+  "input_objects": 1007,
+  "input_static": 991,
+  "retained_dynamic_objects": 16,
+  "static_material_groups": 18,
+  "object_reduction_ratio": 55.06,
+  "groups": [
+    {
+      "mat": "NW_Arcane_Cyan",
+      "source_count": 3,
+      "mesh_name": "NW_StaticBatch_NW_Arcane_Cyan",
+      "triangles": 38,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_Champagne_Gold",
+      "source_count": 108,
+      "mesh_name": "NW_StaticBatch_NW_Art_Champagne_Gold",
+      "triangles": 14780,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_ClimbingIvy",
+      "source_count": 68,
+      "mesh_name": "NW_StaticBatch_NW_Art_ClimbingIvy",
+      "triangles": 3832,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_Gilded_Brass",
+      "source_count": 188,
+      "mesh_name": "NW_StaticBatch_NW_Art_Gilded_Brass",
+      "triangles": 16376,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_GoldIvyTip",
+      "source_count": 22,
+      "mesh_name": "NW_StaticBatch_NW_Art_GoldIvyTip",
+      "triangles": 440,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_Gravel",
+      "source_count": 61,
+      "mesh_name": "NW_StaticBatch_NW_Art_Gravel",
+      "triangles": 1220,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_Lapis_Glass",
+      "source_count": 202,
+      "mesh_name": "NW_StaticBatch_NW_Art_Lapis_Glass",
+      "triangles": 21816,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_Ocean_Opal",
+      "source_count": 106,
+      "mesh_name": "NW_StaticBatch_NW_Art_Ocean_Opal",
+      "triangles": 2120,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_PaleStone",
+      "source_count": 4,
+      "mesh_name": "NW_StaticBatch_NW_Art_PaleStone",
+      "triangles": 368,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Art_Turquoise_Mosaic",
+      "source_count": 32,
+      "mesh_name": "NW_StaticBatch_NW_Art_Turquoise_Mosaic",
+      "triangles": 3456,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Basalt",
+      "source_count": 25,
+      "mesh_name": "NW_StaticBatch_NW_Basalt",
+      "triangles": 2700,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Dark_Recess",
+      "source_count": 5,
+      "mesh_name": "NW_StaticBatch_NW_Dark_Recess",
+      "triangles": 540,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Deep_Azure",
+      "source_count": 4,
+      "mesh_name": "NW_StaticBatch_NW_Deep_Azure",
+      "triangles": 336,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Ember_Gold",
+      "source_count": 39,
+      "mesh_name": "NW_StaticBatch_NW_Ember_Gold",
+      "triangles": 4548,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Foliage_Emerald",
+      "source_count": 22,
+      "mesh_name": "NW_StaticBatch_NW_Foliage_Emerald",
+      "triangles": 704,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Foliage_Silver",
+      "source_count": 11,
+      "mesh_name": "NW_StaticBatch_NW_Foliage_Silver",
+      "triangles": 352,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Frosted_Masonry",
+      "source_count": 70,
+      "mesh_name": "NW_StaticBatch_NW_Frosted_Masonry",
+      "triangles": 7816,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "mat": "NW_Slate_Stone",
+      "source_count": 21,
+      "mesh_name": "NW_StaticBatch_NW_Slate_Stone",
+      "triangles": 1868,
+      "uv_layers": [
+        "UVMap"
+      ]
+    }
+  ],
+  "optimized_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_OptimizedStatic.fbx",
+  "blend_derivative": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_OptimizedStaticDerivative.blend",
+  "seconds": 2.509,
+  "source_unchanged": true,
+  "all_grouped_meshes_have_uv": true,
+  "animation_exported_in_static_fbx": false,
+  "blender_procedural_PBR_equal_in_unreal": false,
+  "artist_quality_approved": false
+}

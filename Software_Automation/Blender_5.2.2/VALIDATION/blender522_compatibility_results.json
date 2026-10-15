@@ -1,0 +1,109 @@
+{
+  "runtime_blender": "5.2.2 LTS",
+  "runtime_version": [
+    5,
+    2,
+    2
+  ],
+  "source_version": "4.5.10",
+  "no_source_files_modified": true,
+  "tests": [
+    {
+      "name": "sanctuary",
+      "source_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_ArtDirected.blend",
+      "exists": true,
+      "pass": true,
+      "pass_": true,
+      "mesh_count": 906,
+      "rig_bone_counts": [],
+      "gp_count": 0,
+      "actions": [
+        "NW_ArchitecturalAuditCameraAction",
+        "NW_Detail_CompassGem_00Action",
+        "NW_Detail_CompassGem_01Action",
+        "NW_Detail_CompassGem_02Action",
+        "NW_Detail_CompassGem_03Action",
+        "NW_Detail_CompassGem_04Action",
+        "NW_Detail_CompassGem_05Action",
+        "NW_Detail_CompassGem_06Action",
+        "NW_Detail_CompassGem_07Action",
+        "NW_Detail_CompassGem_08Action",
+        "NW_Detail_CompassGem_09Action",
+        "NW_Detail_CompassGem_10Action",
+        "NW_Detail_CompassGem_11Action",
+        "NW_Detail_FinialAura_-1Action",
+        "NW_Detail_FinialAura_1Action",
+        "NW_Detail_RoyalBanner_-1Action",
+        "NW_Detail_RoyalBanner_1Action"
+      ],
+      "assigned_slots": [],
+      "material_count": 19,
+      "procedural_node_material_count": 19,
+      "seconds": 0.2
+    },
+    {
+      "name": "mount_skeletal",
+      "source_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ArticulatedMount_IK_Baked.blend",
+      "exists": true,
+      "pass": true,
+      "pass_": true,
+      "mesh_count": 37,
+      "rig_bone_counts": [
+        16
+      ],
+      "gp_count": 0,
+      "actions": [
+        "Action",
+        "Mesh_HeadAction",
+        "NW_IK_TARGET_FrontLAction",
+        "NW_IK_TARGET_FrontRAction",
+        "NW_IK_TARGET_HindLAction",
+        "NW_IK_TARGET_HindRAction"
+      ],
+      "assigned_slots": [
+        "NW_Skyrunner_Mount_Rig"
+      ],
+      "material_count": 7,
+      "procedural_node_material_count": 7,
+      "seconds": 0.039
+    },
+    {
+      "name": "hybrid_gp",
+      "source_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_Hybrid_Strike.blend",
+      "exists": true,
+      "pass": true,
+      "pass_": true,
+      "mesh_count": 5,
+      "rig_bone_counts": [],
+      "gp_count": 2,
+      "actions": [
+        "NW_SwordRig_PivotAction"
+      ],
+      "assigned_slots": [],
+      "material_count": 7,
+      "procedural_node_material_count": 7,
+      "seconds": 0.015
+    },
+    {
+      "name": "spin_profiles",
+      "source_file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\reference_20261015\\NW_SpinMultiProfile_Tooling.blend",
+      "exists": true,
+      "pass": true,
+      "pass_": true,
+      "mesh_count": 3,
+      "rig_bone_counts": [],
+      "gp_count": 0,
+      "actions": [],
+      "assigned_slots": [],
+      "material_count": 4,
+      "procedural_node_material_count": 4,
+      "seconds": 0.012
+    }
+  ],
+  "passed": 4,
+  "total": 4,
+  "structural_compatibility_success": true,
+  "artistic_compatibility_accepted": false,
+  "cycles_or_eevee_render_equivalence_proven": false,
+  "FBX_gameplay_parity_proven": false
+}

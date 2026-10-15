@@ -1,0 +1,27 @@
+{
+  "gaea_version": "2.3.1.0",
+  "installed_bin": "D:\\Tools\\Gaea 2\\Gaea.Swarm.exe",
+  "input_example": "Detailed Snow Peak.terrain (bundled example, unmodified)",
+  "native_cli_help_verified": true,
+  "cli_arguments": [
+    "--Filename",
+    "--buildpath",
+    "--resolution",
+    "--seed",
+    "--silent",
+    "--vars"
+  ],
+  "native_engine_device": "11th Gen Intel Core i3-1115G4",
+  "attempts": 2,
+  "observed_stdout": [
+    "Preparing Gaea Build Swarm 2.3.1.0",
+    "Loading devices",
+    "Opening Detailed Snow Peak.terrain"
+  ],
+  "observed_error": "System.IO.IOException: The handle is invalid",
+  "source_mutated": false,
+  "output_terrain_created": false,
+  "unreal_landscape_tested": false,
+  "status": "BLOCKED_NATIVE_GAEA_SWARM_REMOTE_CONSOLE_HANDLE",
+  "next_diagnostic": "Run in an ordinary interactive Windows console or controlled Gaea GUI before assuming actual software incompatibility; preserve source."
+}

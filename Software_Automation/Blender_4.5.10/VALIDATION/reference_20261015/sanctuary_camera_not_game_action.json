@@ -1,0 +1,32 @@
+{
+  "blender": "4.5.10 LTS",
+  "source": "NW_StarfallSanctum_ArtDirected.blend",
+  "source_read_only": true,
+  "frames_sampled": [
+    1,
+    12,
+    22,
+    36,
+    51,
+    61,
+    72
+  ],
+  "camera_motion_not_counted_as_skeletal_animation": true,
+  "rigs": [],
+  "camera_action_count": 1,
+  "mesh_shape_key_animated_count": 0,
+  "game_animation_accepted": false,
+  "unreal_native_animation_import_verified_by_this_test": false,
+  "motion_quality_review_completed": false,
+  "any_skeletal_action": false,
+  "any_evaluated_skeletal_motion": false,
+  "any_structurally_valid": false,
+  "explicit_outstanding": [
+    "Animation must be compatible with intended target Unreal Skeleton and retarget policy",
+    "Independent motion/audio-visual artistic review remains required",
+    "Attack/contact/recovery markers and AnimNotifies must be authored and validated as game events",
+    "Frame-by-frame bone-world comparison with imported Unreal AnimSequence not performed",
+    "Root motion/in-place variant and contact/physics behavior not audited by this probe",
+    "An animated camera never counts as reusable character animation"
+  ]
+}

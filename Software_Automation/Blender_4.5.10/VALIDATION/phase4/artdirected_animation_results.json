@@ -1,0 +1,16 @@
+{
+  "blender": "4.5.10 LTS",
+  "source": "NW_StarfallSanctum_ArtDirected.blend",
+  "video": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_CameraTour.mp4",
+  "bytes": 325865,
+  "frames": 72,
+  "fps": 24,
+  "resolution": [
+    640,
+    404
+  ],
+  "cycles_samples": 5,
+  "duration_seconds": 3,
+  "seconds_elapsed": 850.42,
+  "art_quality_accepted": false
+}

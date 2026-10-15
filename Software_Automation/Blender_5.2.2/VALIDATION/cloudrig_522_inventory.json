@@ -1,0 +1,17 @@
+{
+  "blender": "5.2.2 LTS",
+  "cloudrig_found": true,
+  "enabled": true,
+  "path": "%APPDATA%\\Blender Foundation\\Blender\\5.2\\extensions\\blender_org\\cloudrig\\__init__.py",
+  "manifest_exists": true,
+  "version": "2.2.31",
+  "license": [
+    "SPDX:GPL-3.0-or-later"
+  ],
+  "blender_version_min": "5.0.0",
+  "operators": [],
+  "registered_addon_keys": [
+    "bl_ext.blender_org.cloudrig"
+  ],
+  "pass": true
+}

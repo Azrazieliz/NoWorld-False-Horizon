@@ -4,6 +4,7 @@ root=pathlib.Path(__file__).resolve().parents[1]
 items=[]
 for p in sorted(root.rglob("*")):
  if not p.is_file() or p.name=="MANIFEST.json" or p.suffix in (".pyc",".blend1",".blend2") or "__pycache__" in p.parts:continue
+ if "RESEARCH_TOOLS" in p.parts or "PolyHaven_CC0_1k" in p.parts or p.name=="private_character_sanitized_structural_test.json":continue
  items.append({"relative_path":p.relative_to(root).as_posix(),"bytes":p.stat().st_size,
                "sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
 manifest={"project":"NoWorld False Horizon","blender":"4.5.10 LTS","unreal":"5.8.3",

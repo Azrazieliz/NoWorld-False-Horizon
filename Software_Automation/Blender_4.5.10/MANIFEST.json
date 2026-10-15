@@ -6,12 +6,12 @@
   "date": "2026-10-15",
   "acceptance": "TECHNICAL_VALIDATION_ONLY_PROFESSIONAL_ART_NOT_APPROVED",
   "professional_demonstrations_accepted": 0,
-  "file_count": 94,
+  "file_count": 136,
   "files": [
     {
       "relative_path": ".gitignore",
-      "bytes": 37,
-      "sha256": "489eb7b3acd7562ca8f9bd4d9b0461b6cecc4ec52b23c2eb8571c848db382e92"
+      "bytes": 351,
+      "sha256": "028d0f1012958e96eb23bc71a036142019f2c53fe225a4092c9a1cee810ea47d"
     },
     {
       "relative_path": "ANIMATION_2D/hybrid_strike.py",
@@ -32,6 +32,26 @@
       "relative_path": "ANIMATION_3D/export_contact_ik_clip.py",
       "bytes": 2903,
       "sha256": "92bedb12d5993296ffa66fb1e4650dd68d6d1c5c01f9f06d410adea225295cca"
+    },
+    {
+      "relative_path": "ANIMATION_3D/game_action_audit.py",
+      "bytes": 4214,
+      "sha256": "2565702738d7aabcf1b4558c9f35da2fa1212949ef2d13177b3047ce822e0cae"
+    },
+    {
+      "relative_path": "ANIMATION_3D/koikatsu_private_expression_film.py",
+      "bytes": 5057,
+      "sha256": "8cc6877b5dfac480eb7e2af5cc196bbf54681a06108f2543433e660d91b7e3f7"
+    },
+    {
+      "relative_path": "ANIMATION_3D/render_private_character_film.py",
+      "bytes": 1381,
+      "sha256": "39e5765e8dbf522abb81a7ef6bf769016a9b17f1e55c52184d30e953d993d20a"
+    },
+    {
+      "relative_path": "ANIMATION_3D/render_starfall_cinematic.py",
+      "bytes": 1387,
+      "sha256": "c5de775ba4d73dc0cd17555d344334cbf58ca700c75e56146cb7bc9a0825b81d"
     },
     {
       "relative_path": "ARTISTIC_PRODUCTION_ACCEPTANCE.md",
@@ -60,13 +80,13 @@
     },
     {
       "relative_path": "CAPABILITY_REGISTRY.json",
-      "bytes": 6550,
-      "sha256": "6703e89e8d3f4f029a02753970c06cf6fe8493fcc30d72544210cb3755f16387"
+      "bytes": 7705,
+      "sha256": "e767715dd37ce135d5b74ed6ff256b61825ea3c530d06742c9cfa80d7a866f8f"
     },
     {
       "relative_path": "CONTINUATION.md",
-      "bytes": 7253,
-      "sha256": "513842519806589f660f0867a7fd6a23cb0353f7f38cd91cbdec72f0e45e928f"
+      "bytes": 8137,
+      "sha256": "00271c9d13fb23e2b200ad47f4219a5cce3e01cc2a09d14dac2853ae9a26152d"
     },
     {
       "relative_path": "CREATURES/rigged_beast.py",
@@ -79,6 +99,16 @@
       "sha256": "eccac662d397c07d34ec6be6ad5205a2dcdf68d06d8ea983eea3ff0622d72162"
     },
     {
+      "relative_path": "ENVIRONMENTS/sanctuary_artdirected.py",
+      "bytes": 16468,
+      "sha256": "283902805e8389d5db04d01e631dbfdfd8836179b8256f410cec95c062314317"
+    },
+    {
+      "relative_path": "INTEGRATIONS/batch_artdirected_environment.py",
+      "bytes": 3052,
+      "sha256": "7c48946548b7cfc17c267ed12c5f5168b0a4319da30a4d76816654ba8bf9cfcc"
+    },
+    {
       "relative_path": "INTEGRATIONS/export_mount_animation.py",
       "bytes": 1521,
       "sha256": "f099a03a9ca33e057d9ccc5feb96b6158f87fea6b7b4b5de00e1a4cf81505ea2"
@@ -87,6 +117,16 @@
       "relative_path": "INTEGRATIONS/koikatsu_glb_audit.py",
       "bytes": 2845,
       "sha256": "4de26d5488b1618b068dc965bae47088272240cc37a24a88999f1cb94f0bcbdd"
+    },
+    {
+      "relative_path": "INTEGRATIONS/koikatsu_material_diagnostic.py",
+      "bytes": 2424,
+      "sha256": "1c8906a1451887bc057eb4d8e331307149a7466b20e4e03c6c518f507c358f1f"
+    },
+    {
+      "relative_path": "INTEGRATIONS/koikatsu_private_assembly.py",
+      "bytes": 6622,
+      "sha256": "86c95b6151319dcf585a52dfd27987edd9332ea26431a5202078384fac8c69ac"
     },
     {
       "relative_path": "INTEGRATIONS/optimized_static_export.py",
@@ -124,6 +164,46 @@
       "sha256": "4a187d3061de9dbd1dca3859609a7af7479bb98ea3f4e837fad91c049c2686f4"
     },
     {
+      "relative_path": "MATERIALS/adaptive_texture_gradient.py",
+      "bytes": 8334,
+      "sha256": "bcea9fb33611fcf682c9f8718cce4d37250a37809ad3997c2fb23c8fea0417a7"
+    },
+    {
+      "relative_path": "MATERIALS/download_polyhaven_cc0.ps1",
+      "bytes": 1712,
+      "sha256": "dc35c6dd4cf5d9b5ac9ea20015262b78562ae3d844264f281ca8e07270408a2e"
+    },
+    {
+      "relative_path": "MATERIALS/download_polyhaven_cc0.py",
+      "bytes": 1573,
+      "sha256": "7547db3fc303267037f24f62fbdfd800b608f351d26b58326f8cf4286a952396"
+    },
+    {
+      "relative_path": "MATERIALS/global_gradient_variant.py",
+      "bytes": 2052,
+      "sha256": "4a641b0dead015e1fd7840994a6b7684b33b7680d38cefc636c91d790a7637d4"
+    },
+    {
+      "relative_path": "MATERIALS/kk_facial_alpha_repair_trial.py",
+      "bytes": 2782,
+      "sha256": "ffee38cba0afaf2d5a3b063010256caad70d42fc367b37e64dba6c5b10549587"
+    },
+    {
+      "relative_path": "MATERIALS/strong_gradient_diagnostic.py",
+      "bytes": 2123,
+      "sha256": "1a6b013115b87d68f64fac8fc5ee847dfd4540e665c83f98ad038c23debb6da2"
+    },
+    {
+      "relative_path": "MODELING/spin_profile_generator.py",
+      "bytes": 3925,
+      "sha256": "6315385585d64a31b7a32ad66a998640f755311c3e495c33838224ad0adf6c25"
+    },
+    {
+      "relative_path": "NEXTGEN_WUWA_BENCHMARK_PIPELINE.md",
+      "bytes": 13004,
+      "sha256": "818adcef141ab4076989ceced81c9267ccf248a14443c6b7305c5d8a6cca97cb"
+    },
+    {
       "relative_path": "PARAMETER_REFERENCE.json",
       "bytes": 566996,
       "sha256": "b0fcf96a84e8772cb898988daa2c0f7cf3267ebd4c1a2e6965e8767fa27b146a"
@@ -134,9 +214,24 @@
       "sha256": "22af4ef09726d178e307fab6c84a50287d10cd7ed5cc7f659555f484f28b09da"
     },
     {
+      "relative_path": "PHASE3_CHARACTER_AND_GRADIENT_EXECUTION.md",
+      "bytes": 6682,
+      "sha256": "e0e55a47b3de2637e2338ee26795b460c2a4a3d6ef716442d73bfbcea4e75d07"
+    },
+    {
+      "relative_path": "PHASE4_EXECUTED_VISUAL_REVIEW.md",
+      "bytes": 4834,
+      "sha256": "2eab6f3fca60ed2b1d16e30fe775f7b4cb34f1b936c1b3f544623f278b46e31f"
+    },
+    {
       "relative_path": "RECOVERY.md",
       "bytes": 1559,
       "sha256": "93f2a9a1e71b33443e607be878e93a832ecfbca33b098d9e994e37b022e92fb0"
+    },
+    {
+      "relative_path": "RESEARCH_APPLICATION_TRANCHE_20261015.md",
+      "bytes": 8425,
+      "sha256": "500eb2653d734026de94f5ae6eec78cdbbb0abdb6813bf5d834c23ab89bc6069"
     },
     {
       "relative_path": "RESEARCH_COVERAGE_MATRIX.json",
@@ -145,13 +240,13 @@
     },
     {
       "relative_path": "SOURCE_ATLAS.md",
-      "bytes": 15051,
-      "sha256": "ca98e51173d8f9c0c6026c390b8a1eb13e7eb21fefd7e2af49928ad5ecb0cb51"
+      "bytes": 24489,
+      "sha256": "afdc33302bd804db3494a46a260b7a552ef0311004c2d15ebb1212e03cda36f1"
     },
     {
       "relative_path": "START_HERE.md",
-      "bytes": 4347,
-      "sha256": "9a7c78ff38911c853aab22403fb8c25b3502b66dfdf67699e4585ece96e49c12"
+      "bytes": 5231,
+      "sha256": "c135a654de81eceb09aff3eb3882ab08865d9efb60266c36904aec96dd6341b7"
     },
     {
       "relative_path": "UI_CONTROL_MAP.json",
@@ -174,9 +269,24 @@
       "sha256": "516f0620546ce2ec3dd8839fbfce8a657a04c9c6b0d67c6a237490b5bac252f8"
     },
     {
+      "relative_path": "VALIDATION/compare_gradient_variants.py",
+      "bytes": 1308,
+      "sha256": "0d478e3b3e8b7d3c10802cf657e917c56d35c9ad0e8598663988a196b0a0a1f2"
+    },
+    {
       "relative_path": "VALIDATION/image_compare.py",
       "bytes": 873,
       "sha256": "8d716a102815d4ffdbd982bbb1318a2691774e1dd8998cbc4269cde04ea9a508"
+    },
+    {
+      "relative_path": "VALIDATION/inspect_private_character.py",
+      "bytes": 976,
+      "sha256": "7b6fd5ea2c4150c661fa308ebaf542e3caa2fc5bf0bc5b5a461226caabd79cf0"
+    },
+    {
+      "relative_path": "VALIDATION/inspect_private_eye_shading.py",
+      "bytes": 1530,
+      "sha256": "15bcab90df135cb13632560a84801a545b42d776be14429d80c323df6ea5eeec"
     },
     {
       "relative_path": "VALIDATION/local/engineering_results.json",
@@ -265,8 +375,8 @@
     },
     {
       "relative_path": "VALIDATION/phase2/DEMONSTRATION_STATUS.json",
-      "bytes": 6675,
-      "sha256": "c8f12d21f57bee4184126aba930be6960c6772877d00862c36dd2a5bcf41b9e5"
+      "bytes": 6927,
+      "sha256": "69e59472c92433eeb0ac74f86c25f36f5010b5d06630618ec3e433cd42584671"
     },
     {
       "relative_path": "VALIDATION/phase2/hybrid_results.json",
@@ -449,9 +559,109 @@
       "sha256": "3737c4a61606189c0c6e8a1749758b2549a02831e1269b36e36905455b5b8be1"
     },
     {
+      "relative_path": "VALIDATION/phase3_sanitized_evidence.json",
+      "bytes": 1117,
+      "sha256": "ac71b1ee8cb2d96d0b16ee1ba0bdb6f9a17a4ce97e67a0e93ebb546a8b2123f9"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/art_directed_results.json",
+      "bytes": 954,
+      "sha256": "af6abb090ac2b98a6082c437d972fa3df5717507b91ee8e02de979ca81e64157"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/artdirected_animation_results.json",
+      "bytes": 456,
+      "sha256": "00a2ef704eb0d472efefae69437253c6272e538b9ba4d308c7512bd558f63214"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/NW_Sanctuary_RenderComparison.png",
+      "bytes": 668638,
+      "sha256": "6ede25eedd98f54e1a7228a9e35d773b04ed8af93dcb0526f3c6d4bfa0a3a02f"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/NW_StarfallSanctum_ArchDetail.png",
+      "bytes": 973382,
+      "sha256": "09df3937e56842f0fe02faa919e482c37ac66238f2fc459aed26b87f524ccf48"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/NW_StarfallSanctum_ArtDirected.blend",
+      "bytes": 391423,
+      "sha256": "3713efc399e4eed30137252eb099abbf19a7e035a95847d6201abc6ab89dbeec"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/NW_StarfallSanctum_Beauty.png",
+      "bytes": 1292731,
+      "sha256": "d725ffa78a3155564ee502cdc3d7b4cdf499fe2889955a40467c0cec50baed0b"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/NW_StarfallSanctum_CameraTour.mp4",
+      "bytes": 325865,
+      "sha256": "887115dd544db3e3c7db99cb2773059b118cba32190426cd7ff518e3a6525e15"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/NW_StarfallSanctum_OptimizedStatic.fbx",
+      "bytes": 2087356,
+      "sha256": "6dcb1f7ad51e8696b2d3fb35814135bab67fa64d0206d2469cd5af3afd22c3ba"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/NW_StarfallSanctum_OptimizedStaticDerivative.blend",
+      "bytes": 1125142,
+      "sha256": "196b2c8f3a47db9c73b8c7c52df1a75baa1e00f79d7f43f94e8459b47efc4598"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/optimized_static_results.json",
+      "bytes": 4490,
+      "sha256": "d9a0ac6f5c0bed76f1bf6f9b8260f89b4ee9d1fd523524a71e4ebb61269152fb"
+    },
+    {
+      "relative_path": "VALIDATION/phase4/visual_comparison.json",
+      "bytes": 640,
+      "sha256": "eff59a436f47b4938eb9314f5ae4bd2b146b0cd1235bd8d494ca0c002d924e0c"
+    },
+    {
+      "relative_path": "VALIDATION/phase4_compare.py",
+      "bytes": 1252,
+      "sha256": "b540394112b791016b7283b565ff825fae96f2b7a7c50c7ce5bcf127d450027a"
+    },
+    {
+      "relative_path": "VALIDATION/reference_20261015/noncanonical_mount_animation.json",
+      "bytes": 3963,
+      "sha256": "891faaa0d3c36d8b9f182ae7bb5858c2bac3538ffe45bda1ce0664c80f91f630"
+    },
+    {
+      "relative_path": "VALIDATION/reference_20261015/NW_SpinMultiProfile_Tooling.blend",
+      "bytes": 151698,
+      "sha256": "ec1b7b18fd673c355ccc20a770126d0dd4614e8a730ebf5eb9f16f0106bfaa5a"
+    },
+    {
+      "relative_path": "VALIDATION/reference_20261015/NW_SpinMultiProfile_Tooling.fbx",
+      "bytes": 332332,
+      "sha256": "3dffc71ba61e2c0d9e5af6a4d44f56705053a4ba4c974d0909ae5f7783247465"
+    },
+    {
+      "relative_path": "VALIDATION/reference_20261015/NW_SpinMultiProfile_Tooling.png",
+      "bytes": 291401,
+      "sha256": "2287dbb170b1eeeda768ed9eb01aef2dcc1ff312c6944e14c3101f91d5a9029d"
+    },
+    {
+      "relative_path": "VALIDATION/reference_20261015/sanctuary_camera_not_game_action.json",
+      "bytes": 1167,
+      "sha256": "33700eb1f75900d6458fc509ca8e87cf17812171900dee5a46a3f5a5b1cc5a45"
+    },
+    {
+      "relative_path": "VALIDATION/reference_20261015/spin_tooling_result.json",
+      "bytes": 1161,
+      "sha256": "1fa60122a1b79a6d80942ab3f3ac5e60c568204e6badaf0859782586d8cd9b6a"
+    },
+    {
       "relative_path": "VALIDATION/refresh_manifest.py",
-      "bytes": 911,
-      "sha256": "be530d1c954f97d604aa3dde3e1e919f1125888635d91152d4ac144ecf59368d"
+      "bytes": 1047,
+      "sha256": "2175344b74bf9d606639016b426c61e0b9bc7d6d50f1b37648c1f54e4e487ecc"
+    },
+    {
+      "relative_path": "VALIDATION/register_phase3_evidence.py",
+      "bytes": 3926,
+      "sha256": "d344e007a77c707da57c9212b396a612174fe41cddd5b858025c43a012a06cb6"
     },
     {
       "relative_path": "VALIDATION/roundtrip.py",
@@ -470,8 +680,8 @@
     },
     {
       "relative_path": "VALIDATION/verify_package.py",
-      "bytes": 1563,
-      "sha256": "ba4ce8964ffe4b88de95ceb08fd6ad4394cc6584622838be486ba427d71b0f62"
+      "bytes": 1804,
+      "sha256": "04958bf95ef61b504559abbf736355c4c7b1c49efa5219279d52b034c38f25ec"
     },
     {
       "relative_path": "WORKFLOW_LIBRARY.md",

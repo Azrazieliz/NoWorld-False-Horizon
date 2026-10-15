@@ -1,0 +1,28 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "status": "PASS_TECHNICAL_TEST_ONLY",
+  "track_names": [
+    "1",
+    "NW_Action_Cues"
+  ],
+  "event_count": 2,
+  "events": [
+    {
+      "label": "strike_windup_audio_hook",
+      "seconds": 0.22,
+      "notify_type": "AnimNotify_PlaySound"
+    },
+    {
+      "label": "impact_audio_hook",
+      "seconds": 0.72,
+      "notify_type": "AnimNotify_PlaySound"
+    }
+  ],
+  "notify_names": [
+    "PlaySound",
+    "PlaySound"
+  ],
+  "asset_path": "/Game/NW_BlenderLearning/NW_AnimActionWithTimedEvents",
+  "asset_class": "AnimSequence",
+  "native_asset_saved": true
+}

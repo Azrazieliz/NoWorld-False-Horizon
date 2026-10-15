@@ -1,0 +1,20 @@
+{
+  "blender": "4.5.10 LTS",
+  "base_sanctuary_object_count": 200,
+  "new_detailed_objects": 807,
+  "all_mesh_uv_layers_existing": 904,
+  "all_meshes": 906,
+  "source_preserved": true,
+  "cycles_beauty": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_Beauty.png",
+  "cycles_detail": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_ArchDetail.png",
+  "editable_blend": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase4\\NW_StarfallSanctum_ArtDirected.blend",
+  "frames": 72,
+  "fps": 24,
+  "camera_keyframes": 5,
+  "render_engine": "CYCLES_CPU",
+  "object_animation_present": true,
+  "seconds": 154.25,
+  "artist_accepted": false,
+  "scene_game_ready": false,
+  "native_unreal_asset_import": false
+}

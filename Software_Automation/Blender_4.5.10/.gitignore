@@ -2,3 +2,10 @@
 *.blend2
 __pycache__/
 *.pyc
+
+# Research downloader dependencies and third-party source assets are not versioned.
+RESEARCH_TOOLS/
+MATERIALS/PolyHaven_CC0_1k/
+# User-supplied video clips and private Koikatsu source must remain local, outside repository.
+*.mp4.part
+VALIDATION/reference_20261015/private_character_sanitized_structural_test.json

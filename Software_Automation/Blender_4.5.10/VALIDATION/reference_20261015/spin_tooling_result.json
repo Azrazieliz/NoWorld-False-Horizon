@@ -1,0 +1,38 @@
+{
+  "blender": "4.5.10 LTS",
+  "method": "bmesh.ops.spin",
+  "technique": "2\u03c0 lathe profile, 64 radial steps, source profile in custom property, UV",
+  "assets": [
+    {
+      "asset": "Baluster",
+      "points": 13,
+      "verts": 832,
+      "quads": 768,
+      "faces": 768,
+      "uv_layers": 1,
+      "source_profile_editable": true
+    },
+    {
+      "asset": "Vase",
+      "points": 9,
+      "verts": 576,
+      "quads": 512,
+      "faces": 512,
+      "uv_layers": 1,
+      "source_profile_editable": true
+    },
+    {
+      "asset": "Finial",
+      "points": 11,
+      "verts": 704,
+      "quads": 640,
+      "faces": 640,
+      "uv_layers": 1,
+      "source_profile_editable": true
+    }
+  ],
+  "blend": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\reference_20261015\\NW_SpinMultiProfile_Tooling.blend",
+  "fbx": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\reference_20261015\\NW_SpinMultiProfile_Tooling.fbx",
+  "professional_art_accepted": false,
+  "unreal_import_validated": false
+}

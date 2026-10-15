@@ -10,9 +10,13 @@ for entry in manifest['files']:
  path=base/entry['relative_path']
  if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=entry['sha256']:
   results['hash_failures'].append(entry['relative_path'])
+def include(path):
+ return not any(x in path.parts for x in ('RESEARCH_TOOLS','PolyHaven_CC0_1k','__pycache__')) and path.name!='private_character_sanitized_structural_test.json'
 for path in base.rglob('*.json'):
+ if not include(path):continue
  json.loads(path.read_text(encoding='utf-8-sig'));results['json_checked']+=1
 for path in base.rglob('*.py'):
+ if not include(path):continue
  py_compile.compile(str(path),doraise=True);results['scripts_compiled']+=1
 needed=['VALIDATION/phase2/sanctuary_results.json','VALIDATION/phase2/beast_results.json',
  'VALIDATION/phase2/hybrid_results.json','VALIDATION/phase2/koikatsu_shards_summary.json',

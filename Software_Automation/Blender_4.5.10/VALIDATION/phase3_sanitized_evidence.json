@@ -1,0 +1,33 @@
+{
+  "blender": "4.5.10 LTS",
+  "review_privacy": "PRIVATE local source and .blend excluded from public repository",
+  "current_demo_acceptance": "TECHNICAL_PROTOTYPES_ONLY",
+  "koikatsu": {
+    "source_shards": 6,
+    "merged_meshes": 6,
+    "rigs_remaining": 1,
+    "bones": 121,
+    "uniform_bone_names_and_rest_matrices": true,
+    "vertices": 33755,
+    "polygons": 53190,
+    "uv_missing": 0,
+    "per_part_morph_channels": 1797,
+    "material_slots": 25,
+    "source_modified": false,
+    "original_game_fidelity_verified": false
+  },
+  "materials": {
+    "editable_group": "NW_AsymMultiObject_Gradient_v1",
+    "material_slots_modified": 3,
+    "original_image_base_links_preserved": true,
+    "topology_rebuilt": 0,
+    "global_and_local_coordinates_executed": true,
+    "strong_variant_max_pixel_difference": 68,
+    "strong_variant_hair_mean_abs_red": 7.337,
+    "strong_variant_skirt_mean_abs_red": 13.728,
+    "in_game_koikatsu_editing": false,
+    "unreal_material_equivalence": false,
+    "visual_artist_approved": false
+  },
+  "professional_demonstrations_accepted": 0
+}

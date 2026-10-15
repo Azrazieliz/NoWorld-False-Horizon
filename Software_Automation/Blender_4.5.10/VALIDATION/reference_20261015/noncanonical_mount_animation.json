@@ -1,0 +1,127 @@
+{
+  "blender": "4.5.10 LTS",
+  "source": "NW_ArticulatedMount_IK_Baked.blend",
+  "source_read_only": true,
+  "frames_sampled": [
+    1,
+    8,
+    15,
+    24,
+    34,
+    41,
+    48
+  ],
+  "camera_motion_not_counted_as_skeletal_animation": true,
+  "rigs": [
+    {
+      "name": "NW_Skyrunner_Mount_Rig",
+      "bones": 16,
+      "animation_action": "Action",
+      "animation_slot_identifier": "OBNW_Skyrunner_Mount_Rig",
+      "deformed_mesh_count": 36,
+      "animated_pose_bones_count": 15,
+      "animated_pose_bones": [
+        {
+          "bone": "Body",
+          "max_relative_translation": 0.0,
+          "max_rotation_radians": 0.024993
+        },
+        {
+          "bone": "Neck",
+          "max_relative_translation": 0.030516,
+          "max_rotation_radians": 0.070722
+        },
+        {
+          "bone": "Jaw",
+          "max_relative_translation": 0.083467,
+          "max_rotation_radians": 0.070725
+        },
+        {
+          "bone": "TailA",
+          "max_relative_translation": 0.033018,
+          "max_rotation_radians": 0.174135
+        },
+        {
+          "bone": "TailB",
+          "max_relative_translation": 0.145415,
+          "max_rotation_radians": 0.455871
+        },
+        {
+          "bone": "WingL",
+          "max_relative_translation": 0.024683,
+          "max_rotation_radians": 0.126858
+        },
+        {
+          "bone": "WingR",
+          "max_relative_translation": 0.024683,
+          "max_rotation_radians": 0.126858
+        },
+        {
+          "bone": "FrontL_Upper",
+          "max_relative_translation": 0.026419,
+          "max_rotation_radians": 0.611077
+        },
+        {
+          "bone": "FrontL_Lower",
+          "max_relative_translation": 0.522372,
+          "max_rotation_radians": 1.235498
+        },
+        {
+          "bone": "HindL_Upper",
+          "max_relative_translation": 0.026419,
+          "max_rotation_radians": 0.796161
+        },
+        {
+          "bone": "HindL_Lower",
+          "max_relative_translation": 0.645769,
+          "max_rotation_radians": 1.200741
+        },
+        {
+          "bone": "FrontR_Upper",
+          "max_relative_translation": 0.026419,
+          "max_rotation_radians": 0.750367
+        },
+        {
+          "bone": "FrontR_Lower",
+          "max_relative_translation": 0.627628,
+          "max_rotation_radians": 1.16236
+        },
+        {
+          "bone": "HindR_Upper",
+          "max_relative_translation": 0.026419,
+          "max_rotation_radians": 0.641649
+        },
+        {
+          "bone": "HindR_Lower",
+          "max_relative_translation": 0.549912,
+          "max_rotation_radians": 1.164068
+        }
+      ],
+      "pose_constraints": 0,
+      "structural_checks": {
+        "assigned_action": true,
+        "valid_45_action_slot": true,
+        "skeletal_motion_present": true,
+        "deforms_actual_mesh": true,
+        "no_unbaked_pose_constraints": true
+      },
+      "structural_acceptance": true
+    }
+  ],
+  "camera_action_count": 0,
+  "mesh_shape_key_animated_count": 1,
+  "game_animation_accepted": false,
+  "unreal_native_animation_import_verified_by_this_test": false,
+  "motion_quality_review_completed": false,
+  "any_skeletal_action": true,
+  "any_evaluated_skeletal_motion": true,
+  "any_structurally_valid": true,
+  "explicit_outstanding": [
+    "Animation must be compatible with intended target Unreal Skeleton and retarget policy",
+    "Independent motion/audio-visual artistic review remains required",
+    "Attack/contact/recovery markers and AnimNotifies must be authored and validated as game events",
+    "Frame-by-frame bone-world comparison with imported Unreal AnimSequence not performed",
+    "Root motion/in-place variant and contact/physics behavior not audited by this probe",
+    "An animated camera never counts as reusable character animation"
+  ]
+}
