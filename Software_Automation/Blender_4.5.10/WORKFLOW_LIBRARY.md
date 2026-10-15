@@ -8,6 +8,7 @@
 | Cross-object gradient | Geometry Position to group's Vector input | Shader Editor > Geometry > Position | Test authored |
 | Create GN modifier controls | `GeometryNodeTree` interface sockets and `obj.modifiers.new(...,'NODES')` | Geometry Nodes workspace | Bay Count 5->7->9 test |
 | Force depsgraph refresh | `obj.update_tag(); bpy.context.view_layer.update()` | Re-enter scene or edit modifier | Needed to avoid stale evaluation |
+| Store Geometry Nodes cube UV | Mesh Cube UV Map -> Store Named Attribute (FLOAT2 / CORNER) -> mesh | Geometry Nodes > Attribute > Store Named Attribute | Source missing UV was corrected; 14/14 UV present |
 | Query evaluated mesh | `obj.evaluated_get(depsgraph).to_mesh()` followed by `to_mesh_clear()` | Spreadsheet editor | 40 / 56 / 72 vertices observed |
 | Build armature | Data API edit bones after setting Edit Mode; add mesh ARMATURE modifier | Armature Edit Mode; Object > Modifiers | Root + two wings tested |
 | Key poses | pose bone `keyframe_insert('rotation_euler', frame)` | Pose Mode > Insert Keyframe | five keyed poses, frame 7 0.48rad |

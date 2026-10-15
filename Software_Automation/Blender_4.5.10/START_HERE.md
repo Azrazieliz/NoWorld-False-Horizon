@@ -18,7 +18,7 @@ $blender = 'D:\Tools\Blender\blender.exe'
 ```
 
 ## What is real
-- In `VALIDATION/local/engineering_results.json`, 10/10 initial checks passed; run 4.797 seconds inside Blender; 320x240 preview image exists; editable .blend and static FBX produced.
+- In `VALIDATION/local/engineering_results.json`, 11/11 latest checks passed including Geometry Nodes UV storage; first measured run 4.797 seconds, post-correction run 0.967 seconds inside Blender; 320x240 preview image exists; editable .blend and static FBX produced.
 - In `VALIDATION/local/roundtrip_results.json`, 8/8 checks passed: reloaded native source, geometry control changed evaluated vertices 40 -> 56, shader parameter edit, Action Slot persisted, wing pose persisted, Grease Pencil survived, preview pixel dimensions valid, and 14 meshes reimported from FBX (732 polygons).
 - In `VALIDATION/local/variant_results.json`, changing 5 to 9 architectural bays and asymmetric color parameters generated 72 evaluated vertices in 0.029 seconds after loading the source. This count excludes Blender startup.
 - In `VALIDATION/local/rna_catalog_results.json`, Blender introspected 30 operators, 31 RNA types, 1657 property descriptions. Two requested types were not found, recorded explicitly.

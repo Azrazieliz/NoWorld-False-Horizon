@@ -4,8 +4,13 @@
     "date":  "2026-10-15",
     "branch":  "software/mastery-blender",
     "acceptance":  "ENGINEERING_PROTOTYPE_ONLY",
-    "file_count":  23,
+    "file_count":  26,
     "files":  [
+                  {
+                      "relative_path":  ".gitignore",
+                      "bytes":  37,
+                      "sha256":  "489eb7b3acd7562ca8f9bd4d9b0461b6cecc4ec52b23c2eb8571c848db382e92"
+                  },
                   {
                       "relative_path":  "ARTISTIC_STANDARDS.md",
                       "bytes":  2841,
@@ -18,13 +23,13 @@
                   },
                   {
                       "relative_path":  "CONTINUATION.md",
-                      "bytes":  4808,
-                      "sha256":  "0d9211855b2cc56010d98dda45292df8e1fa8dc807f4cea08a702b223baa6cd2"
+                      "bytes":  5013,
+                      "sha256":  "2bd22f2a1b96cd1fb401d7d9b2f0f9e3c4174d50b8941e3cf0f4ad5fc0bcdeee"
                   },
                   {
                       "relative_path":  "MASTER_SOFTWARE_SPEC.md",
-                      "bytes":  3923,
-                      "sha256":  "d45d0a8b18ad358e1fab79dc313cc917b4df3fd6dd3488fbf23e1ef8070cc2f3"
+                      "bytes":  4389,
+                      "sha256":  "4a187d3061de9dbd1dca3859609a7af7479bb98ea3f4e837fad91c049c2686f4"
                   },
                   {
                       "relative_path":  "PARAMETER_REFERENCE.json",
@@ -43,13 +48,13 @@
                   },
                   {
                       "relative_path":  "SOURCE_ATLAS.md",
-                      "bytes":  6605,
-                      "sha256":  "0663a78aa220e413dca478323cf819351e5f38072718020a48146a6b76aa5858"
+                      "bytes":  7231,
+                      "sha256":  "10982ad0ba811fa7919c066bb1f3451892e385ae114529156fa48f6c4f4bd6c7"
                   },
                   {
                       "relative_path":  "START_HERE.md",
-                      "bytes":  3139,
-                      "sha256":  "a66b3d9a2ba5604b617d2bb654820621363eaf0a0424d3aa470507a6ed16228a"
+                      "bytes":  3224,
+                      "sha256":  "099cd490f3b09158ca8a8f52d7595d2b6cfabc7835bac23694cade8ca730809b"
                   },
                   {
                       "relative_path":  "UI_CONTROL_MAP.json",
@@ -58,8 +63,8 @@
                   },
                   {
                       "relative_path":  "WORKFLOW_LIBRARY.md",
-                      "bytes":  2967,
-                      "sha256":  "ff02f619b6ed6e8317e3998944091f63357ec2736177c5833bc5ed981aa0c74a"
+                      "bytes":  3175,
+                      "sha256":  "9ad1b23744bdeaa2c47594178c9a1b00a29beec34344ab41a7bcb7054fb0ccce"
                   },
                   {
                       "relative_path":  "AUTOMATION/batch_variants.py",
@@ -68,13 +73,18 @@
                   },
                   {
                       "relative_path":  "AUTOMATION/prototype_batch.py",
-                      "bytes":  14420,
-                      "sha256":  "749fe8014e044c4002b1cb6517612a2c05e9dc3cd0ab6441360883fc7fd96210"
+                      "bytes":  14784,
+                      "sha256":  "49d39f1da429160aae2c8a42626398854b03ec6bfe3c29ca49fdbd5ea6ce9659"
                   },
                   {
                       "relative_path":  "AUTOMATION/rna_catalog.py",
                       "bytes":  3763,
                       "sha256":  "0f4b0c0c7a8eb26bef47862cca445a92e531ce068ff7a76d1a4cbf50fcc6b135"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/mesh_qc.py",
+                      "bytes":  939,
+                      "sha256":  "66f2797fded85e255ba5a27c4f31c7500516774a6a8b679938749f225e6eb62e"
                   },
                   {
                       "relative_path":  "VALIDATION/roundtrip.py",
@@ -83,28 +93,33 @@
                   },
                   {
                       "relative_path":  "VALIDATION/local/engineering_results.json",
-                      "bytes":  1525,
-                      "sha256":  "ec8d8abee956cb5838b1e867c2a2cf7f10b9bb3f5afc7cdd264965cbf7a0c99f"
+                      "bytes":  1627,
+                      "sha256":  "462c8519f260e316a1fbed6cc13d17147c3cae2098e280c04e4e3dc7bb5dbfcc"
+                  },
+                  {
+                      "relative_path":  "VALIDATION/local/mesh_qc.json",
+                      "bytes":  2365,
+                      "sha256":  "2997d9975071ad9bfafef70c55b4e91ba7b0290cd33eda33c0ad068fa9793456"
                   },
                   {
                       "relative_path":  "VALIDATION/local/NW_Architecture_Test.fbx",
-                      "bytes":  91868,
-                      "sha256":  "f6b80b7ae3a7320862303e29efd78a77cede769dc7dfb3f13aba1b491050ac9c"
+                      "bytes":  92540,
+                      "sha256":  "dc05d45aec96734f65352da8dbd8a9c1d726bcaaa4a13a0096130b5f596c7a6f"
                   },
                   {
                       "relative_path":  "VALIDATION/local/NW_EditableVariant.blend",
-                      "bytes":  103595,
-                      "sha256":  "c44c51001d3db942314fd391717578f3cd430e3c24890f1a01afc37d7aeb4504"
+                      "bytes":  103924,
+                      "sha256":  "b6119fff5c52bc1f8aa9f6d1c6634add26a1f409e91e9d6ff5008d135c648554"
                   },
                   {
                       "relative_path":  "VALIDATION/local/NW_EngineeringPreview.png",
                       "bytes":  69473,
-                      "sha256":  "509f230ccb76a430ccccea12a4f887efc01b8e5c7e91590e09eecd5fefde36e1"
+                      "sha256":  "be2418b98aea8d1bf5c698c602a558a38df88e6fe52481783a6322756667c54d"
                   },
                   {
                       "relative_path":  "VALIDATION/local/NW_EngineeringTests.blend",
-                      "bytes":  108199,
-                      "sha256":  "8bf6c60b23c321071130ed1a60ccec5b101940e1941b747e73ca3dcf586ae42a"
+                      "bytes":  108774,
+                      "sha256":  "8c87fefceb3a52f6081d6164e595b85eaa672e6174dd2e56382ff745497feab0"
                   },
                   {
                       "relative_path":  "VALIDATION/local/rna_catalog_results.json",
@@ -114,12 +129,12 @@
                   {
                       "relative_path":  "VALIDATION/local/roundtrip_results.json",
                       "bytes":  1119,
-                      "sha256":  "137253cee0ad81e762797aceeafdb2fed20008e10eb83723c24f1ee15bc20522"
+                      "sha256":  "cce03ecf4aa6188c53595f7561c87052ba6d407361d22ec7179a1ed1a786f7a0"
                   },
                   {
                       "relative_path":  "VALIDATION/local/variant_results.json",
                       "bytes":  351,
-                      "sha256":  "993fa93b65f040358780d8f2494f4708b19be7343234317689b0f25e5c6cce7d"
+                      "sha256":  "186f7c0d3c8032dbf9823e1f5043d7eeeae70b2aefd0d9a3faaee34bb54ee4eb"
                   }
               ]
 }

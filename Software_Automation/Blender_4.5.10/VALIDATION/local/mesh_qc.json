@@ -1,0 +1,132 @@
+{
+  "count": 14,
+  "meshes": [
+    {
+      "name": "NW_Anchor_Deck",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_Parametric_Pillars",
+      "verts": 40,
+      "polygons": 30,
+      "triangles": 60,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_Upper_Crown",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_Wall_Backdrop",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowBase_-2.25",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowBase_-4.5",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowBase_0",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowBase_2.25",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowBase_4.5",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowTop_-2.25",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowTop_-4.5",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowTop_0",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowTop_2.25",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_WindowTop_4.5",
+      "verts": 56,
+      "polygons": 54,
+      "triangles": 108,
+      "uv_sets": [
+        "UVMap"
+      ]
+    }
+  ],
+  "missing_uv": []
+}

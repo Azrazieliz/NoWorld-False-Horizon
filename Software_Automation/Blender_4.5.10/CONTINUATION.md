@@ -12,9 +12,10 @@ Repository `Azrazieliz/Offline-Game`. Branch `software/mastery-blender` created 
 ## Engineering discoveries
 1. Blender 4.5.10 can run Python headlessly on host in 2-thread budget.
 2. RNA-created Geometry Nodes/Shader groups, armatures, slotted Actions, GP v3 frame data persist.
-3. Geometry Nodes modifier settings require an explicit object tag and view-layer update for reliable immediate evaluated-mesh measurement. Fixed and tested.
-4. Action Slot field is `.identifier`; `.name` is not valid here. Fixed and tested.
-5. Export to FBX and native Blender reimport does not establish Blender shader parity or native Unreal correctness.
+3. A new UV audit first detected missing UVs on Geometry Nodes columns; after storing Cube UV Map as FLOAT2 CORNER attribute, 14/14 evaluated static meshes have a UVMap. See VALIDATION/local/mesh_qc.json.
+4. Geometry Nodes modifier settings require an explicit object tag and view-layer update for reliable immediate evaluated-mesh measurement. Fixed and tested.
+5. Action Slot field is `.identifier`; `.name` is not valid here. Fixed and tested.
+6. Export to FBX and native Blender reimport does not establish Blender shader parity or native Unreal correctness.
 
 ## First next work items by priority
 1. **Technically validate the current fixture more deeply:** collect per-object topology, manifoldness, UVs, winding, consistent normals, mesh vs material integrity and static FBX importer property diffs. Fix deficiencies in the automation, not just via docs. Create a general quality analyzer with machine-readable thresholds.

@@ -103,7 +103,11 @@ def geometry_nodes_pillars(mat):
     cube.inputs["Size"].default_value=(0.27,0.32,3.8)
     transform=nodes.new("GeometryNodeTransform");transform.location=(-80,-50)
     transform.inputs["Translation"].default_value=(0,0,2.0)
-    links.new(cube.outputs["Mesh"],transform.inputs["Geometry"])
+    uv=nodes.new("GeometryNodeStoreNamedAttribute");uv.data_type="FLOAT2";uv.domain="CORNER"
+    uv.inputs["Name"].default_value="UVMap";uv.location=(-220,-310)
+    links.new(cube.outputs["Mesh"],uv.inputs["Geometry"])
+    links.new(cube.outputs["UV Map"],uv.inputs["Value"])
+    links.new(uv.outputs["Geometry"],transform.inputs["Geometry"])
     setmat=nodes.new("GeometryNodeSetMaterial");setmat.location=(105,-50);setmat.inputs["Material"].default_value=mat
     links.new(transform.outputs["Geometry"],setmat.inputs["Geometry"])
     inst=nodes.new("GeometryNodeInstanceOnPoints");inst.location=(300,170)
@@ -189,6 +193,7 @@ def run():
     deps=bpy.context.evaluated_depsgraph_get()
     mesh=ob.evaluated_get(deps).to_mesh()
     check("evaluated_geometry_nodes",len(mesh.vertices)>=40,{"vertices":len(mesh.vertices),"faces":len(mesh.polygons)})
+    check("gn_face_corner_uv",len(mesh.uv_layers)>0,[u.name for u in mesh.uv_layers])
     ob.evaluated_get(deps).to_mesh_clear()
     check("skeletal_animation",len(rig.pose.bones)>=3 and rig.animation_data is not None)
     scene.frame_set(7);val7=float(rig.pose.bones["Wing_R"].rotation_euler[1])

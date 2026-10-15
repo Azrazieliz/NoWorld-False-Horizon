@@ -9,7 +9,7 @@
 
 ## Implemented primitives
 - `AUTOMATION/prototype_batch.py`: isolated procedural architectural deck, backdrop, crown, window trims, parametric pillar array. Reusable shader group `NW_Adaptive_Asymmetric_Color_v1` has sockets Vector, Primary, Secondary, Skew, Noise Warp; its output feeds Principled BSDF Base Color. Source selection between Generated and Geometry Position changes gradient scope.
-- GN `NW_ArchitecturalBayArray_v1`: exposed Bay Count and Bay Spacing. Mesh Line -> generated Cube -> Transform Geometry -> Set Material -> Instance on Points -> Realize Instances -> Join Geometry. Evaluated topology proven to change with modifier parameters.
+- GN `NW_ArchitecturalBayArray_v1`: exposed Bay Count and Bay Spacing. Mesh Line -> generated Cube -> Transform Geometry -> Set Material -> Instance on Points -> Realize Instances -> Join Geometry. Evaluated topology proven to change with modifier parameters. GN Mesh Cube UV Map output is stored using Store Named Attribute with FLOAT2 on the CORNER domain (UVMap), verified by direct mesh inspection.
 - Animation proof: three-bone root/wing armature, two weighted mesh surfaces, Euler keyframes at frames 1,7,13,19,25; Blender 4.5 slotted action persists on re-open.
 - Grease Pencil v3 proof: one layer, four drawing frames with 3 five-point strokes each. This does not provide interpolation or cinematic quality.
 - `AUTOMATION/rna_catalog.py`: introspects installed RNA metadata, writes `PARAMETER_REFERENCE.json`. Property metadata is *not* substitute for actual useful parameter range testing.
@@ -17,6 +17,9 @@
 ## Operational pitfalls discovered and corrected
 - Blender 4.5 Action Slot supports `slot.identifier`, not `slot.name`; roundtrip proof initially failed on the incorrect attribute, corrected and passed.
 - Changing Geometry Nodes modifier custom socket values alone can leave a stale evaluated result. Call `object.update_tag()` and `bpy.context.view_layer.update()` before depsgraph/evaluated mesh QC. A batch test initially observed the old 40 vertices after setting Bay Count=9; correction produced 72.
+
+## UV regression and repair
+First UV audit found the generated pillars had no UV data, unlike the other 13 meshes. The Geometry Nodes graph was corrected with a face-corner FLOAT2 UVMap attribute; rerun now finds no missing UV layers across all 14 static meshes. This checks presence, not layout quality or Unreal import.
 
 ## Shader/export non-equivalence
 Blender shader node graphs and procedural coordinate-dependent gradients are **source designs**, not portable Unreal materials. Unreal requires reconstructed material functions/instances or texture-baked and packed channels. For runtime parameterized edits, implement matching controls in Unreal, test on device, and never infer parity from FBX existence. Specific KK/KKS material preservation remains unverified.

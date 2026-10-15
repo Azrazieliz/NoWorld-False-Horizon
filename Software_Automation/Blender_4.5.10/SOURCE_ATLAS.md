@@ -109,3 +109,8 @@
 ## Open source hygiene
 
 Do not vendor KKBP, Send2UE, CloudRig, community generators, textures, models, training videos or paid content without verifying their licences and asset-use permissions. Cite sources and their commit/version in any future adoption. Data extracted from Koikatsu is provenance-sensitive and must retain original usage rights.
+
+## UV regression investigation (2026-10-15)
+
+27. **Cube Node UV Map output** — https://docs.blender.org/UATEST/manual/en/4.5/modeling/geometry_nodes/mesh/primitives/cube.html — The procedural cube provides a UV field, but output geometry does not automatically retain it as a named UV layer. Confirmed by runtime before/after inspection.
+28. **Store Named Attribute** — https://docs.blender.org/manual/id/4.5/modeling/geometry_nodes/attribute/store_named_attribute.html — Store FLOAT2 on face-corner domain with name UVMap to preserve generated mesh UVs. Validated in Blender 4.5.10; native Unreal still outstanding.
