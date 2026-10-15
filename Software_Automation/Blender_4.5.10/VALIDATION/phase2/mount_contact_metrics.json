@@ -1,0 +1,55 @@
+{
+  "blender": "4.5.10 LTS",
+  "frames": 48,
+  "fps": 24,
+  "method": "relative lowest point foot-contact heuristic; manually evaluate actual soles, collision, slip and physical plausibility before approval",
+  "legs": [
+    {
+      "bone": "FrontL_Lower",
+      "zmin": 0.185,
+      "zmax": 0.239,
+      "root_motion_mode": "IN_PLACE",
+      "grounded_samples": 48,
+      "consecutive_grounded_steps": 47,
+      "max_grounded_xy_translation_per_frame": 0.11025,
+      "mean_grounded_xy_translation_per_frame": 0.05505,
+      "max_total_step_translation": 0.11034
+    },
+    {
+      "bone": "HindL_Lower",
+      "zmin": 0.185,
+      "zmax": 0.2799,
+      "root_motion_mode": "IN_PLACE",
+      "grounded_samples": 42,
+      "consecutive_grounded_steps": 39,
+      "max_grounded_xy_translation_per_frame": 0.11041,
+      "mean_grounded_xy_translation_per_frame": 0.06155,
+      "max_total_step_translation": 0.11044
+    },
+    {
+      "bone": "FrontR_Lower",
+      "zmin": 0.185,
+      "zmax": 0.239,
+      "root_motion_mode": "IN_PLACE",
+      "grounded_samples": 48,
+      "consecutive_grounded_steps": 47,
+      "max_grounded_xy_translation_per_frame": 0.11025,
+      "mean_grounded_xy_translation_per_frame": 0.05755,
+      "max_total_step_translation": 0.11034
+    },
+    {
+      "bone": "HindR_Lower",
+      "zmin": 0.185,
+      "zmax": 0.2799,
+      "root_motion_mode": "IN_PLACE",
+      "grounded_samples": 43,
+      "consecutive_grounded_steps": 40,
+      "max_grounded_xy_translation_per_frame": 0.11041,
+      "mean_grounded_xy_translation_per_frame": 0.05815,
+      "max_total_step_translation": 0.11044
+    }
+  ],
+  "contact_quality_approved": false,
+  "motion_pipeline_status": "MEASURED_NOT_REPAIRED",
+  "source_modified": false
+}

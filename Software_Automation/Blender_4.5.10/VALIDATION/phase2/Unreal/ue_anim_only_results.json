@@ -1,0 +1,12 @@
+{
+  "source": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_Mount_Walk_Test_AnimOnly.fbx",
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "status": "PASS",
+  "paths": [
+    "/Game/NW_BlenderImportTests/Mount_Walk_AnimOnly/NW_Mount_Walk_Test_AnimOnly.NW_Mount_Walk_Test_AnimOnly"
+  ],
+  "classes": [
+    "AnimSequence"
+  ],
+  "anim_sequence_count": 1
+}

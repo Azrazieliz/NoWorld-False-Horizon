@@ -1,0 +1,97 @@
+{
+  "source": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\full_fidelity_shards\\FullMesh_04.glb",
+  "source_bytes": 3714520,
+  "blender": "4.5.10 LTS",
+  "status": "EXECUTED",
+  "provenance": "Read-only preexisting Koikatsu-derived shard. No rights to redistribute inferred.",
+  "object_count": 8,
+  "mesh_objects": 2,
+  "armatures": 1,
+  "armature_bones": {
+    "Armature ChikaHaruno": 121
+  },
+  "mesh_vertices_total": 7325,
+  "mesh_polygons_total": 9726,
+  "mesh_metrics": [
+    {
+      "name": "Hair Outfit 00 ChikaHaruno",
+      "vertices": 7283,
+      "faces": 9646,
+      "uv": [
+        "UVMap",
+        "UVMap.001",
+        "UVMap.002",
+        "UVMap.003"
+      ],
+      "shape_keys": [
+        "Basis",
+        "Basis.001"
+      ],
+      "material_slots": [
+        "KK cf_m_hair_f_14_00_i 4000",
+        "KK cf_m_hair_b_08_00 3840"
+      ]
+    },
+    {
+      "name": "Icosphere",
+      "vertices": 42,
+      "faces": 80,
+      "uv": [
+        "UVMap"
+      ],
+      "shape_keys": [],
+      "material_slots": []
+    }
+  ],
+  "material_count": 4,
+  "image_count": 4,
+  "image_details": [
+    {
+      "name": "cf_m_hair_b_08_00 3840_light",
+      "size": [
+        2048,
+        2048
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_hair_f_14_00_i 4000_light",
+      "size": [
+        2048,
+        2048
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "Render Result",
+      "size": [
+        0,
+        0
+      ],
+      "colorspace": "",
+      "packed": false
+    },
+    {
+      "name": "Viewer Node",
+      "size": [
+        256,
+        256
+      ],
+      "colorspace": "",
+      "packed": false
+    }
+  ],
+  "missing_uv_on_meshes": [],
+  "blend_shapes_total": 1,
+  "materials_in_node_graphs": 3,
+  "empty_images": [
+    "Render Result"
+  ],
+  "quality_accepted": false,
+  "original_KK_materials_preserved": "UNVERIFIED",
+  "identity_fidelity": "UNVERIFIED",
+  "character_reconstructed": false,
+  "seconds": 0.334
+}

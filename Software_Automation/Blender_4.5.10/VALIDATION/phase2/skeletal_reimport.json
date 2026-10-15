@@ -1,0 +1,76 @@
+{
+  "blender": "4.5.10 LTS",
+  "source_rig_bones": 16,
+  "reimported_rigs": 1,
+  "reimported_bones": [
+    16
+  ],
+  "source_mesh_parts": 36,
+  "reimported_mesh_objects": 36,
+  "source_shape_keys": [
+    "Basis",
+    "NW_Facial_Expressive_Squeeze"
+  ],
+  "reimported_shape_keys": [
+    "Basis",
+    "NW_Facial_Expressive_Squeeze"
+  ],
+  "reimported_rigs_with_actions": [],
+  "all_actions": [
+    "Mesh_HeadAction",
+    "NW_Skyrunner_Mount_RigAction"
+  ],
+  "import_armature_animation_data": [
+    [
+      "NW_Skyrunner_Mount_Rig",
+      "<bpy_struct, AnimData at 0x000001A31DF07008>",
+      []
+    ]
+  ],
+  "reassigned_action_motion_check": {
+    "attempted": true,
+    "pass": true,
+    "angles": [
+      0.0,
+      0.19,
+      0.0,
+      -0.19
+    ],
+    "action": "NW_Skyrunner_Mount_RigAction",
+    "slots": [
+      "OBNW_Skyrunner_Mount_Rig"
+    ]
+  },
+  "foot_tracks": {
+    "FrontL_Lower": {
+      "min_z": 1.93116,
+      "max_z": 2.027378,
+      "max_frame_to_frame_xy": 0.06921,
+      "near_ground_frames": 0
+    },
+    "FrontR_Lower": {
+      "min_z": 1.93002,
+      "max_z": 2.027378,
+      "max_frame_to_frame_xy": 0.06805,
+      "near_ground_frames": 0
+    },
+    "HindL_Lower": {
+      "min_z": 0.121218,
+      "max_z": 0.287721,
+      "max_frame_to_frame_xy": 0.11472,
+      "near_ground_frames": 0
+    },
+    "HindR_Lower": {
+      "min_z": 0.121218,
+      "max_z": 0.287721,
+      "max_frame_to_frame_xy": 0.11472,
+      "near_ground_frames": 0
+    }
+  },
+  "source_to_blender_reimport_bones_ok": true,
+  "source_to_blender_reimport_mesh_count_ok": true,
+  "source_to_blender_reimport_morph_ok": true,
+  "locomotion_quality_approved": false,
+  "native_unreal_import_approved": false,
+  "seconds": 0.344
+}

@@ -33,3 +33,12 @@ Operate Remote Desktop Commander via connected device `LAPTOP-1LI4VRCJ`; first c
 
 ## Remaining completion status
 **NOT COMPLETE.** Exhaustive coverage, 25 professional demos, comprehensive parameter docs, GUI calibration, production Koikatsu preservation, native Unreal import, artistic QC, measured full pipeline speedups, fresh-conversation independent reuse test remain outstanding.
+
+## Phase 2 recovery (2026-10-15)
+- Inspect `PHASE2_EXECUTED_EVIDENCE.md`; `VALIDATION/phase2/DEMONSTRATION_STATUS.json` enumerates every still-unaccepted professional target.
+- Scripts: `ENVIRONMENTS/parametric_sanctuary.py`, `CREATURES/rigged_beast.py`, `ANIMATION_2D/hybrid_strike.py`, `INTEGRATIONS/optimized_static_export.py`, `INTEGRATIONS/export_mount_animation.py`, `INTEGRATIONS/koikatsu_glb_audit.py`.
+- The isolated Unreal sandbox was `D:\UnrealProjects\NW_BlenderInterop_Sandbox_20261015`; corresponding importer scripts and JSON validation reports are versioned under `INTEGRATIONS/UNREAL_5_8_3/` and `VALIDATION/phase2/Unreal/`. These are reproduction recipes, not permission to run against production.
+- **Key correction:** Unreal animation only initially FAILED using combined skeletal FBX; separate ARMATURE-only FBX created a real native AnimSequence. Morph target `NW_Facial_Expressive_Squeeze` imported into SkeletalMesh.
+- **Quality blocker:** 48-frame mount locomotion has measured leg-endpoint slide. Current animal mesh parts are rough blocks; do not hand off as professional creature model/animation.
+- **Koikatsu:** six preexisting Gate12 character shards read-only audit only, no canonical reconstruction or shading likeness accepted; do not vendor their mesh or textures without provenance approval.
+- **Next:** build contact-locked IK gait and root-motion validation, native animation playback/retarget test, material baking & Unreal equivalence, full rig-driven Grease Pencil anime quality, real character-source repair, topology/UV and LOD optimization, domain-by-domain research from community code and studio cases. Only promote with technical and artistic evidence.

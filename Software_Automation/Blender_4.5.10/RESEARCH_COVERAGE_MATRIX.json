@@ -116,7 +116,7 @@
     {
       "name": "animation_skeletal",
       "status": "VALIDATED",
-      "evidence": "3-bone wing rig with keyframed motion persists through reload; no biomechanics, retargeting or game import",
+      "evidence": "3-bone wing rig with keyframed motion persists through reload; no biomechanics, retargeting or game import; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -139,7 +139,7 @@
     {
       "name": "grease_pencil_2d",
       "status": "VALIDATED",
-      "evidence": "4-frame, 3 strokes per frame Grease Pencil v3 datablock; no artistic 2D sequence validation",
+      "evidence": "4-frame, 3 strokes per frame Grease Pencil v3 datablock; no artistic 2D sequence validation; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -276,8 +276,8 @@
     },
     {
       "name": "creatures",
-      "status": "DISCOVERED",
-      "evidence": "Rig design requirements established; no creature source asset",
+      "status": "EXECUTED",
+      "evidence": "Rig design requirements established; no creature source asset; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -299,8 +299,8 @@
     },
     {
       "name": "mounts",
-      "status": "DISCOVERED",
-      "evidence": "Rider and mount interoperability requires original implementation",
+      "status": "EXECUTED",
+      "evidence": "Rider and mount interoperability requires original implementation; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -346,7 +346,7 @@
     {
       "name": "architecture_landmarks",
       "status": "EXECUTED",
-      "evidence": "Prototype modular deck, bays, backdrop and crown; no complex building family",
+      "evidence": "Prototype modular deck, bays, backdrop and crown; no complex building family; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -529,8 +529,8 @@
     },
     {
       "name": "2d_3d_hybrid",
-      "status": "RESEARCHED",
-      "evidence": "Grease Pencil v3 API and hybrid render passes studied; no hybrid short",
+      "status": "EXECUTED",
+      "evidence": "Grease Pencil v3 API and hybrid render passes studied; no hybrid short; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -575,8 +575,8 @@
     },
     {
       "name": "koikatsu_interop",
-      "status": "RESEARCHED",
-      "evidence": "KKBP v6 workflow studied from maintained project; no actual modded character imported",
+      "status": "EXECUTED",
+      "evidence": "KKBP v6 workflow studied from maintained project; no actual modded character imported; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -621,8 +621,8 @@
     },
     {
       "name": "unreal_interop",
-      "status": "RESEARCHED",
-      "evidence": "UE5.8 skeletal/static import and morph docs checked; no isolated UE native import",
+      "status": "VALIDATED",
+      "evidence": "UE5.8 skeletal/static import and morph docs checked; no isolated UE native import; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -644,8 +644,8 @@
     },
     {
       "name": "automated_visual_qc",
-      "status": "DISCOVERED",
-      "evidence": "Preview exists but still lacks external image inspection / render compare",
+      "status": "EXECUTED",
+      "evidence": "Preview exists but still lacks external image inspection / render compare; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",
@@ -690,8 +690,8 @@
     },
     {
       "name": "production_asset_pipeline",
-      "status": "RESEARCHED",
-      "evidence": "Blender Studio task-layer publish/pull model studied; no package merge workflow",
+      "status": "EXECUTED",
+      "evidence": "Blender Studio task-layer publish/pull model studied; no package merge workflow; phase2 independent execution in PHASE2_EXECUTED_EVIDENCE.md",
       "coverage": {
         "principles": "PARTIAL",
         "complete_functionality": "OPEN",

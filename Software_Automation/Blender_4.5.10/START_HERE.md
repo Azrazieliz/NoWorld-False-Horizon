@@ -29,3 +29,6 @@ These are engineering fixtures, not 25 professional demonstrations. FBX reimport
 
 ## Go next
 Read `MASTER_SOFTWARE_SPEC.md`, `SOURCE_ATLAS.md`, `RESEARCH_COVERAGE_MATRIX.json`, `WORKFLOW_LIBRARY.md`, then `CONTINUATION.md`. Continue researching underserved domains, create realistic production tests, verify on Blender and import into an isolated UE sandbox when resource budgets permit. All canonical game content remains under its established Gate ownership.
+
+## Second executed milestone (2026-10-15)
+Read `PHASE2_EXECUTED_EVIDENCE.md` and `VALIDATION/phase2/DEMONSTRATION_STATUS.json` before commissioning new assets. Native Unreal 5.8.3 imported **200 unbatched static assets**, **9 optimized static assets**, a **skeletal mesh + skeleton + facial morph**, and (after the separate armature-only export correction) **1 actual AnimSequence** in an isolated sandbox. An editable 200-object stylized sanctuary, 16-bone articulated mount, and 48-frame 2D/3D hybrid MP4 have been generated. Six Koikatsu source-derived GLB shards imported read-only with UV, 121-bone rigs and several hundred blend shape names. **None of the 25 professionally judged demonstration families has passed final artistic validation.** This remains open-ended engineering mastery, not complete.

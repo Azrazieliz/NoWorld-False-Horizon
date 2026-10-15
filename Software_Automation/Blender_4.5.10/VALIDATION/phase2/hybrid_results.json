@@ -1,0 +1,13 @@
+{
+  "blender": "4.5.10 LTS",
+  "grease_pencil_objects": 2,
+  "distinct_drawings": 14,
+  "frames_rendered": 48,
+  "fps": 24,
+  "animated_3d_pivot": true,
+  "blend_bytes": 104488,
+  "still_bytes": 241205,
+  "video_bytes": 43609,
+  "total_seconds": 2.975,
+  "artistic_accepted": false
+}

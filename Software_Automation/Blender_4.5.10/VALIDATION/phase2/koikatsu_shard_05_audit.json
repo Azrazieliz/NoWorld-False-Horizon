@@ -1,0 +1,134 @@
+{
+  "source": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\full_fidelity_shards\\FullMesh_05.glb",
+  "source_bytes": 3377756,
+  "blender": "4.5.10 LTS",
+  "status": "EXECUTED",
+  "provenance": "Read-only preexisting Koikatsu-derived shard. No rights to redistribute inferred.",
+  "object_count": 8,
+  "mesh_objects": 2,
+  "armatures": 1,
+  "armature_bones": {
+    "Armature ChikaHaruno": 121
+  },
+  "mesh_vertices_total": 12106,
+  "mesh_polygons_total": 19398,
+  "mesh_metrics": [
+    {
+      "name": "Icosphere",
+      "vertices": 42,
+      "faces": 80,
+      "uv": [
+        "UVMap"
+      ],
+      "shape_keys": [],
+      "material_slots": []
+    },
+    {
+      "name": "Outfit 00 ChikaHaruno",
+      "vertices": 12064,
+      "faces": 19318,
+      "uv": [
+        "UVMap",
+        "UVMap.001",
+        "UVMap.002",
+        "UVMap.003"
+      ],
+      "shape_keys": [],
+      "material_slots": [
+        "KK cf_m_top_ofcard 7660",
+        "KK cf_m_bot_skirt08 7750",
+        "KK cf_m_bra_01 7860",
+        "KK cf_m_shorts_01 7960",
+        "KK cf_m_socks_knee01 8080",
+        "KK cf_m_shoes_roafer01 8150"
+      ]
+    }
+  ],
+  "material_count": 8,
+  "image_count": 8,
+  "image_details": [
+    {
+      "name": "cf_m_bot_skirt08 7750_light",
+      "size": [
+        1024,
+        1024
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_bra_01 7860_light",
+      "size": [
+        1024,
+        1024
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_shoes_roafer01 8150_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_shorts_01 7960_light",
+      "size": [
+        1024,
+        1024
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_socks_knee01 8080_light",
+      "size": [
+        1024,
+        1024
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_top_ofcard 7660_light",
+      "size": [
+        1024,
+        1024
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "Render Result",
+      "size": [
+        0,
+        0
+      ],
+      "colorspace": "",
+      "packed": false
+    },
+    {
+      "name": "Viewer Node",
+      "size": [
+        256,
+        256
+      ],
+      "colorspace": "",
+      "packed": false
+    }
+  ],
+  "missing_uv_on_meshes": [],
+  "blend_shapes_total": 0,
+  "materials_in_node_graphs": 7,
+  "empty_images": [
+    "Render Result"
+  ],
+  "quality_accepted": false,
+  "original_KK_materials_preserved": "UNVERIFIED",
+  "identity_fidelity": "UNVERIFIED",
+  "character_reconstructed": false,
+  "seconds": 0.319
+}

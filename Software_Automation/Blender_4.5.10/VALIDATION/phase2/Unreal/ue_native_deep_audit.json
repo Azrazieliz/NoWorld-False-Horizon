@@ -1,0 +1,15 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "status": "PARTIAL",
+  "skeletal_asset": "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal.NW_ArticulatedMount_Skeletal",
+  "skeleton_asset": "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal_Skeleton.NW_ArticulatedMount_Skeletal_Skeleton",
+  "native_morphs": [
+    "NW_Facial_Expressive_Squeeze"
+  ],
+  "has_facial_morph": true,
+  "native_lod0_vertices": 6244,
+  "native_lod0_sections": 6,
+  "animation_import_paths": [],
+  "animation_assets": [],
+  "has_native_anim_sequence": false
+}

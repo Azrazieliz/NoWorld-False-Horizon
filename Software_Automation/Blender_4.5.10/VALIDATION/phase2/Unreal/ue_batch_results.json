@@ -1,0 +1,28 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "source": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ParametricSanctuary_Batched.fbx",
+  "status": "PASS",
+  "asset_paths": [
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Arcane_Cyan.NW_ExportBatch_NW_Arcane_Cyan",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Basalt.NW_ExportBatch_NW_Basalt",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Dark_Recess.NW_ExportBatch_NW_Dark_Recess",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Deep_Azure.NW_ExportBatch_NW_Deep_Azure",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Ember_Gold.NW_ExportBatch_NW_Ember_Gold",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Foliage_Emerald.NW_ExportBatch_NW_Foliage_Emerald",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Foliage_Silver.NW_ExportBatch_NW_Foliage_Silver",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Frosted_Masonry.NW_ExportBatch_NW_Frosted_Masonry",
+    "/Game/NW_BlenderImportTests/Sanctuary_Batched/NW_ExportBatch_NW_Slate_Stone.NW_ExportBatch_NW_Slate_Stone"
+  ],
+  "classes": [
+    "StaticMesh",
+    "StaticMesh",
+    "StaticMesh",
+    "StaticMesh",
+    "StaticMesh",
+    "StaticMesh",
+    "StaticMesh",
+    "StaticMesh",
+    "StaticMesh"
+  ],
+  "num_native_static_meshes": 9
+}

@@ -114,6 +114,71 @@
       "evidence": "RESEARCH_COVERAGE_MATRIX.json",
       "limitation": "Foot sliding validator pending",
       "production_ready": false
+    },
+    {
+      "id": "Environment_Sanctuary",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "ENVIRONMENTS/parametric_sanctuary.py",
+      "evidence": "VALIDATION/phase2/sanctuary_results.json",
+      "limitation": "200-object stylized source and FBX; no professional level architecture acceptance"
+    },
+    {
+      "id": "Mount_16BoneRig",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "CREATURES/rigged_beast.py",
+      "evidence": "VALIDATION/phase2/beast_results.json",
+      "limitation": "36 mesh parts, 16 bones, 48 frames; contact slippage and artistic issues"
+    },
+    {
+      "id": "Hybrid_GP_3D_48Frames",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "ANIMATION_2D/hybrid_strike.py",
+      "evidence": "VALIDATION/phase2/hybrid_results.json",
+      "limitation": "14 GP drawings and actual 2second MP4; not professional anime quality"
+    },
+    {
+      "id": "Static_MaterialBatch_UV",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "INTEGRATIONS/optimized_static_export.py",
+      "evidence": "VALIDATION/phase2/Unreal/ue_batch_results.json",
+      "limitation": "200\u21929 UE native StaticMesh assets; no Unreal material equivalence or Android testing"
+    },
+    {
+      "id": "Native_Unreal_Morph",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "INTEGRATIONS/UNREAL_5_8_3/audit_and_anim.py",
+      "evidence": "VALIDATION/phase2/Unreal/ue_native_deep_audit.json",
+      "limitation": "Morph imported into UE SkeletalMesh; actual facial expressive fidelity unverified"
+    },
+    {
+      "id": "Native_Unreal_AnimSequence",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "INTEGRATIONS/export_mount_animation.py",
+      "evidence": "VALIDATION/phase2/Unreal/ue_anim_only_results.json",
+      "limitation": "One ARMATURE-only FBX imported AnimSequence; gameplay and retarget quality unverified"
+    },
+    {
+      "id": "Koikatsu_Shard_ReadOnly_Import",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "INTEGRATIONS/koikatsu_glb_audit.py",
+      "evidence": "VALIDATION/phase2/koikatsu_shards_summary.json",
+      "limitation": "6 shards, 121 bones per shard, 602 distinct key names, no complete reconstruct"
+    },
+    {
+      "id": "FootContact_QuantMetrics",
+      "production_ready": false,
+      "status": "VALIDATED",
+      "script": "VALIDATION/animation_contact_audit.py",
+      "evidence": "VALIDATION/phase2/mount_contact_metrics.json",
+      "limitation": "Detection only, failed quality gate; no corrective algorithm authored"
     }
-  ]
+  ],
+  "phase2_milestone": "2026-10-15"
 }

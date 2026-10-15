@@ -1,0 +1,87 @@
+{
+  "blender": "4.5.10 LTS",
+  "source_mesh_count": 200,
+  "batched_mesh_count": 9,
+  "reduction_ratio": 22.22,
+  "total_polygons": 8940,
+  "all_batches_have_uv": true,
+  "source_unchanged": true,
+  "batches": [
+    {
+      "name": "NW_ExportBatch_NW_Arcane_Cyan",
+      "count_original": 3,
+      "faces": 25,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Basalt",
+      "count_original": 25,
+      "faces": 1350,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Dark_Recess",
+      "count_original": 5,
+      "faces": 270,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Deep_Azure",
+      "count_original": 4,
+      "faces": 144,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Ember_Gold",
+      "count_original": 39,
+      "faces": 2118,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Foliage_Emerald",
+      "count_original": 22,
+      "faces": 242,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Foliage_Silver",
+      "count_original": 11,
+      "faces": 121,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Frosted_Masonry",
+      "count_original": 70,
+      "faces": 3852,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    {
+      "name": "NW_ExportBatch_NW_Slate_Stone",
+      "count_original": 21,
+      "faces": 818,
+      "uv_layers": [
+        "UVMap"
+      ]
+    }
+  ],
+  "file": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ParametricSanctuary_Batched.fbx",
+  "seconds": 1.591,
+  "unreal_materials_equivalent": false,
+  "native_unreal_import_tested": false
+}

@@ -1,0 +1,27 @@
+{
+  "blender": "4.5.10 LTS",
+  "generator": "NW_ParametricSanctuary_0.2",
+  "parameters": {
+    "width": 15.0,
+    "depth": 5.8,
+    "height": 5.4,
+    "bays": 5,
+    "tower_radius": 1.25,
+    "tower_height": 9.2,
+    "arch_radius": 2.1,
+    "arch_stones": 15,
+    "roof_pitch": 1.05,
+    "trees": 11,
+    "seed": 3207,
+    "erosion": 0.08
+  },
+  "object_count": 200,
+  "editable_source": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ParametricSanctuary.blend",
+  "preview": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ParametricSanctuary.png",
+  "fbx": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ParametricSanctuary.fbx",
+  "polygon_count": 1724,
+  "all_source_meshes_have_uv": true,
+  "seconds": 2.421,
+  "artistic_accepted": false,
+  "unreal_accepted": false
+}

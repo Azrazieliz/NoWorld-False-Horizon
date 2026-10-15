@@ -1,0 +1,42 @@
+{
+  "shards": 6,
+  "all_executed": true,
+  "mesh_parts_total": 12,
+  "individual_shard_armature_bones": [
+    [
+      121
+    ],
+    [
+      121
+    ],
+    [
+      121
+    ],
+    [
+      121
+    ],
+    [
+      121
+    ],
+    [
+      121
+    ]
+  ],
+  "every_shard_has_121_bones": true,
+  "meshes_lacking_uv": 0,
+  "vertices_total": 34007,
+  "polygons_total": 53670,
+  "blend_shapes_per_shard": [
+    598,
+    598,
+    453,
+    147,
+    1,
+    0
+  ],
+  "distinct_shape_key_names": 602,
+  "source_redistribution": "NOT_INCLUDED",
+  "original_color_fidelity": "NOT_VALIDATED",
+  "character_reconstruction": "NOT_DONE",
+  "note": "Names can repeat between GLB shards; shape keys are not independent canonical character manifestations. Shards have their own armature copies, not a combined production rig."
+}

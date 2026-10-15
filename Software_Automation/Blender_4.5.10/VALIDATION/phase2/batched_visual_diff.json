@@ -1,0 +1,20 @@
+{
+  "resolution": [
+    1000,
+    620
+  ],
+  "mean_abs_rgb": [
+    0.04737,
+    0.04447,
+    0.04444
+  ],
+  "max_abs_difference": 49,
+  "pixel_identical": false,
+  "changed_bounding_box": [
+    84,
+    57,
+    997,
+    577
+  ],
+  "artistic_equality_accepted": false
+}

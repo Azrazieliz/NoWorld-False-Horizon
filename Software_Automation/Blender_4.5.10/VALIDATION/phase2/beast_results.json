@@ -1,0 +1,14 @@
+{
+  "blender": "4.5.10 LTS",
+  "mesh_parts": 36,
+  "bones": 16,
+  "frames": 48,
+  "shape_keys": 2,
+  "animated": true,
+  "saved_blend_bytes": 192646,
+  "fbx_bytes": 906540,
+  "seconds": 0.906,
+  "foot_contact_validated": false,
+  "native_unreal_import_validated": false,
+  "artistic_accepted": false
+}

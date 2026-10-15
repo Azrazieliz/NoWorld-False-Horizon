@@ -1,0 +1,33 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "tests": [
+    {
+      "name": "Sanctuary_Static",
+      "ok": true,
+      "validated_in_prior_run": true,
+      "imported_static_meshes": 200
+    },
+    {
+      "name": "Mount_Skeletal",
+      "source": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ArticulatedMount_Skeletal.fbx",
+      "skeletal": true,
+      "morph_import_requested": true,
+      "paths": [
+        "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal_Skeleton.NW_ArticulatedMount_Skeletal_Skeleton",
+        "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal.NW_ArticulatedMount_Skeletal"
+      ],
+      "actual": [
+        {
+          "path": "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal_Skeleton.NW_ArticulatedMount_Skeletal_Skeleton",
+          "class": "Skeleton"
+        },
+        {
+          "path": "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal.NW_ArticulatedMount_Skeletal",
+          "class": "SkeletalMesh"
+        }
+      ],
+      "ok": true
+    }
+  ],
+  "status": "PASS"
+}

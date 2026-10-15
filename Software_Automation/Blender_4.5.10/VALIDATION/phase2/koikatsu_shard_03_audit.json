@@ -1,0 +1,343 @@
+{
+  "source": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\full_fidelity_shards\\FullMesh_03.glb",
+  "source_bytes": 15858184,
+  "blender": "4.5.10 LTS",
+  "status": "EXECUTED",
+  "provenance": "Read-only preexisting Koikatsu-derived shard. No rights to redistribute inferred.",
+  "object_count": 9,
+  "mesh_objects": 2,
+  "armatures": 1,
+  "armature_bones": {
+    "Armature ChikaHaruno": 121
+  },
+  "mesh_vertices_total": 12321,
+  "mesh_polygons_total": 20660,
+  "mesh_metrics": [
+    {
+      "name": "Icosphere",
+      "vertices": 42,
+      "faces": 80,
+      "uv": [
+        "UVMap"
+      ],
+      "shape_keys": [],
+      "material_slots": []
+    },
+    {
+      "name": "model",
+      "vertices": 12279,
+      "faces": 20580,
+      "uv": [
+        "UVMap",
+        "UVMap.001",
+        "UVMap.002",
+        "UVMap.003"
+      ],
+      "shape_keys": [
+        "Basis",
+        "Eye \u30c7\u30d5\u30a9\u30eb\u30e1\u6ce3\u304d",
+        "Eye \u30c7\u30d5\u30a9\u30eb\u30e1\u30a6\u30a3\u30f3\u30af",
+        "Eye \u76ee\u306b\u708e",
+        "Eye \u76ee\u304c\u30cf\u30fc\u30c8",
+        "Eye \u3050\u308b\u3050\u308b\u76ee\uff13",
+        "Eye \u6a2a\u4e00\u6587\u5b57",
+        "Eye \u30c7\u30a3\u30d5\u30a9\u30eb\u30e1\u3064\u3080\u308a",
+        "Eye \u7e26\u4e00\u6587\u5b57",
+        "Eye \u3050\u308b\u3050\u308b\u76ee\uff12",
+        "Eye \u3050\u308b\u3050\u308b\u76ee\uff11",
+        "Tears small",
+        "Tears med",
+        "Tears big",
+        "Eye Default",
+        "Eye \u3064\u307e\u3089\u306a\u3044",
+        "Eye \u30a6\u30a3\u30f3\u30af\u53f3",
+        "Eye \u30a6\u30a3\u30f3\u30af\u5de6",
+        "Eye \u30c9\u30e4",
+        "Eye \u4e21\u76ee\u304e\u3085\u3063\u3068\u9589\u3058",
+        "Eye \u4e21\u76ee\u304e\u3085\u3063\u3068\u9589\u305802",
+        "Eye \u4e21\u76ee\u9589\u3058",
+        "Eye \u5207\u306a\u3044",
+        "Eye \u53f3\u76ee\u304e\u3085\u3063\u3068\u9589\u3058",
+        "Eye \u53f3\u76ee\u304e\u3085\u3063\u3068\u9589\u305802",
+        "Eye \u56f0\u308b",
+        "Eye \u5acc\u60aa",
+        "Eye \u5de6\u76ee\u304e\u3085\u3063\u3068\u9589\u3058",
+        "Eye \u5de6\u76ee\u304e\u3085\u3063\u3068\u9589\u305802",
+        "Eye \u5fae\u7b11",
+        "Eye \u6012\u308a",
+        "Eye \u601d\u6848",
+        "Eye \u60b2\u3057\u3044",
+        "Eye \u6ce3\u304d",
+        "Eye \u7126\u308a",
+        "Eye \u7167\u308c",
+        "Eye \u771f\u5263",
+        "Eye \u77b3\u306b\u30cf\u30fc\u30c8",
+        "Eye \u77b3\u306b\u661f",
+        "Eye \u7b11\u9854",
+        "Eye \u7b11\u9854\u3000\u4e21\u76ee\u9589\u3058",
+        "Eye \u82e6\u3057\u3044",
+        "Eye \u843d\u80c6",
+        "Mouth \"Ah\" Sound (L)",
+        "Mouth \"Ah\" Sound (L), Closed",
+        "Mouth \"Ah\" Sound (S)",
+        "Mouth \"Ah\" Sound (S), Closed",
+        "Mouth \"Ee\" Sound (L)",
+        "Mouth \"Ee\" Sound (L), Closed",
+        "Mouth \"Ee\" Sound (S)",
+        "Mouth \"Ee\" Sound (S), Closed",
+        "Mouth \"Eh\" Sound (L)",
+        "Mouth \"Eh\" Sound (L), Closed",
+        "Mouth \"Eh\" Sound (S)",
+        "Mouth \"Eh\" Sound (S), Closed",
+        "Mouth \"Nn\" Sound (L)",
+        "Mouth \"Nn\" Sound (L), Closed",
+        "Mouth \"Nn\" Sound (S)",
+        "Mouth \"Nn\" Sound (S), Closed",
+        "Mouth \"Oh\" Sound (L)",
+        "Mouth \"Oh\" Sound (L), Closed",
+        "Mouth \"Oh\" Sound (S)",
+        "Mouth \"Oh\" Sound (S), Closed",
+        "Mouth \"Oo\" Sound (L)",
+        "Mouth \"Oo\" Sound (L), Closed",
+        "Mouth \"Oo\" Sound (S)",
+        "Mouth \"Oo\" Sound (S), Closed",
+        "Mouth Angry",
+        "Mouth Angry 2",
+        "Mouth Angry 2, Closed",
+        "Mouth Angry, Closed",
+        "Mouth Chewing",
+        "Mouth Chewing, Closed",
+        "Mouth Closed Cat Mouth",
+        "Mouth Closed Cat Mouth, Closed",
+        "Mouth Default",
+        "Mouth Default, Closed",
+        "Mouth Disgust",
+        "Mouth Disgust, Closed",
+        "Mouth Distorted Smile",
+        "Mouth Distorted Smile, Closed",
+        "Mouth Eating 2",
+        "Mouth Exasperated",
+        "Mouth Exasperated, Closed",
+        "Mouth Flustered",
+        "Mouth Flustered, Closed",
+        "Mouth Grumbling",
+        "Mouth Grumbling, Closed",
+        "Mouth Happy",
+        "Mouth Happy S",
+        "Mouth Happy S, Closed",
+        "Mouth Happy SS",
+        "Mouth Happy SS, Closed",
+        "Mouth Happy, Closed",
+        "Mouth Kiss",
+        "Mouth Kiss, Closed",
+        "Mouth Licking",
+        "Mouth Licking, Closed",
+        "Mouth Lonely",
+        "Mouth Lonely, Closed",
+        "Mouth Nervous",
+        "Mouth Nervous S",
+        "Mouth Nervous S, Closed",
+        "Mouth Nervous SS",
+        "Mouth Nervous SS, Closed",
+        "Mouth Nervous, Closed",
+        "Mouth Open",
+        "Mouth Open, Closed",
+        "Mouth Serious 1",
+        "Mouth Serious 1, Closed",
+        "Mouth Serious 2",
+        "Mouth Serious 2, Closed",
+        "Mouth Smiling",
+        "Mouth Smiling, Closed",
+        "Mouth Smug",
+        "Mouth Smug, Closed",
+        "Mouth Sucking",
+        "Mouth Sucking, Closed",
+        "Mouth Surprised",
+        "Mouth Surprised S",
+        "Mouth Surprised S, Closed",
+        "Mouth Surprised, Closed",
+        "Mouth Tongue Out",
+        "Mouth Tongue Out, Closed",
+        "Mouth Tongue Out, Closed.001",
+        "Mouth Tongue Out.001",
+        "Mouth Triangle",
+        "Mouth Triangle, Closed",
+        "Eyebrow Angry",
+        "Eyebrow Angry 2 L",
+        "Eyebrow Angry 2 R",
+        "Eyebrow Bored",
+        "Eyebrow Concerned",
+        "Eyebrow Default",
+        "Eyebrow Questioning L",
+        "Eyebrow Questioning R",
+        "Eyebrow Serious",
+        "Eyebrow Smug",
+        "Eyebrow Surprised",
+        "Eyebrow Thoughtful L",
+        "Eyebrow Thoughtful R",
+        "Eyebrow Upset",
+        "Eyebrow Wink L",
+        "Eyebrow Wink R",
+        "Eyebrow Worried",
+        "Gag eye 00",
+        "Gag eye 01",
+        "Gag eye 02"
+      ],
+      "material_slots": [
+        "KK cf_m_face_00",
+        "KK cf_m_mayuge_00",
+        "KK cf_m_noseline_00",
+        "KK cf_m_tooth",
+        "KK cf_m_eyeline_down",
+        "KK cf_m_eyeline_00_up",
+        "KK cf_m_eyeline_kage",
+        "KK cf_m_sirome_00",
+        "KK cf_m_hitomi_00_cf_Ohitomi_L02",
+        "KK cf_m_hitomi_00_cf_Ohitomi_R02",
+        "KK cf_m_tang",
+        "KK cf_m_body"
+      ]
+    }
+  ],
+  "material_count": 14,
+  "image_count": 14,
+  "image_details": [
+    {
+      "name": "cf_m_body_light",
+      "size": [
+        4096,
+        4096
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_eyeline_00_up_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_eyeline_down_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_eyeline_kage_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_face_00_light",
+      "size": [
+        4096,
+        4096
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_hitomi_00_cf_Ohitomi_L02_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_hitomi_00_cf_Ohitomi_R02_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_mayuge_00_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_noseline_00_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_sirome_00_light",
+      "size": [
+        512,
+        512
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_tang_light",
+      "size": [
+        2048,
+        2048
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "cf_m_tooth_light",
+      "size": [
+        256,
+        256
+      ],
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "Render Result",
+      "size": [
+        0,
+        0
+      ],
+      "colorspace": "",
+      "packed": false
+    },
+    {
+      "name": "Viewer Node",
+      "size": [
+        256,
+        256
+      ],
+      "colorspace": "",
+      "packed": false
+    }
+  ],
+  "missing_uv_on_meshes": [],
+  "blend_shapes_total": 147,
+  "materials_in_node_graphs": 13,
+  "empty_images": [
+    "Render Result"
+  ],
+  "quality_accepted": false,
+  "original_KK_materials_preserved": "UNVERIFIED",
+  "identity_fidelity": "UNVERIFIED",
+  "character_reconstructed": false,
+  "seconds": 1.078
+}
