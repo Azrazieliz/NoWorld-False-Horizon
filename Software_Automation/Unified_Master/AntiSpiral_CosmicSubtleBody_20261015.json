@@ -1,0 +1,28 @@
+{
+  "schema": "SM01_LIVE_MATERIAL_STYLE_V1",
+  "layers": [
+    {
+      "direction": "v",
+      "opacity": 0.28,
+      "detail": 0.45,
+      "stops": [
+        {
+          "at": 0,
+          "color": "#070414"
+        },
+        {
+          "at": 0.35,
+          "color": "#241034"
+        },
+        {
+          "at": 0.7,
+          "color": "#0A081A"
+        },
+        {
+          "at": 1,
+          "color": "#161032"
+        }
+      ]
+    }
+  ]
+}

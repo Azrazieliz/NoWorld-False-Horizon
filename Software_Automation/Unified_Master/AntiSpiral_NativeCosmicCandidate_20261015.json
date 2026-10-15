@@ -1,0 +1,14 @@
+{
+  "schema": "SM01_UNIVERSAL_SURFACE_BATCH_V1",
+  "test_only": true,
+  "targets": [
+    {
+      "kind": "character",
+      "slot": 0,
+      "renderer": "o_body_a",
+      "material": "cf_m_body",
+      "style_recipe": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\AntiSpiral_CosmicSubtleBody_20261015.json"
+    }
+  ],
+  "capture": false
+}
