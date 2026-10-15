@@ -38,7 +38,9 @@ specs={
   "pcg_fixture":{},
   "asset_author":{"spec":str(U/"native_author_job_runner_v2.json")},
   "paper2d":{"source":"D:/UnrealProjects/NW_BlenderGateHandoff_QA_20261015/NW_GP_Game_2D_SpriteAtlas.png"},
-  "api_search":{"query":"PCG Landscape", "limit":3}}
+  "api_search":{"query":"PCG Landscape", "limit":3},
+  "blueprint_compile":{"job_id":"Preflight_BP_Only"},
+  "kk_material":{"job_id":"Preflight_KKMat_Only"}}
 }
 out=[]
 for software,ops in specs.items():

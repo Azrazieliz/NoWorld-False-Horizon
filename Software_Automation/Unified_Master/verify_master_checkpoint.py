@@ -15,8 +15,8 @@ def inspect(name,path,predicate,detail):
   record={"name":name,"passed":passed,"evidence_path":str(path),"detail":detail(value)}
  except Exception as e:record={"name":name,"passed":False,"evidence_path":str(path),"error":repr(e)}
  checks.append(record)
-inspect("24_supported_routes",HERE/"ROUTE_PREFLIGHT_CHECKS.json",
- lambda x:x["routes_total"]==24 and x["routes_passed"]==24,
+inspect("supported_routes",HERE/"ROUTE_PREFLIGHT_CHECKS.json",
+ lambda x:x["routes_total"]>=26 and x["routes_passed"]==x["routes_total"],
  lambda x:{"total":x["routes_total"],"passed":x["routes_passed"]})
 inspect("four_software_live_bridge",HERE/"LIVE_FOUR_SOFTWARE_ROUTER_SMOKE.json",
  lambda x:x["status"]=="PASS_FOUR_NATIVE_CATALOG_ROUTE_LINKS" and len(x["checks"])==4,
