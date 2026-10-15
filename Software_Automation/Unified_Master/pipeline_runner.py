@@ -75,8 +75,7 @@ def main():
    try:
     res=gate.run(job)
     receipt=pathlib.Path(job["outputs"]["receipt_directory"])/"receipt.json"
-    success=res["status"] in ("NATIVE_VALIDATED","PROCESS_EXIT_ZERO")
-    if "postconditions" in job and res["status"]!="NATIVE_VALIDATED":success=False
+    success=res["status"]=="NATIVE_VALIDATED" or (res["status"]=="PROCESS_EXIT_ZERO" and (job["software"],job["operation"]) in gate.LOOKUP_ONLY)
     entry={"step":i,"job_id":job["job_id"],"software":job["software"],
      "status":res["status"],"ok":success,"receipt":str(receipt),
      "receipt_hash":sha(receipt.read_bytes()) if receipt.exists() else None,

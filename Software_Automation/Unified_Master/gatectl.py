@@ -15,6 +15,7 @@ UEPROJECT=pathlib.Path(r"D:\UnrealProjects\NW_BlenderInterop_Sandbox_20261015\NW
 SM01=pathlib.Path(r"D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\MASTER_PACKAGES\KoikatsuParty_Steam6436979_HF4.2_SM01_v0.4.0_RUNTIME")
 SM01_SANDBOX=pathlib.Path(r"D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\SANDBOXES\SM01_KKParty_6436979_20261014")
 GATES={"Gate01","Gate02","Gate09","Gate12","Gate00"}
+LOOKUP_ONLY={('blender','api_search'),('gaea','node_search'),('unreal','api_search'),('koikatsu','mod_lookup')}
 ALLOWED={
  "blender":{"api_search","architecture","morphology","weapon","semantic_motion","fight_mocap","grease_2d","kk_obj"},
  "gaea":{"graph","native_build","doctor","blender_tiles","node_search"},
@@ -180,5 +181,6 @@ def main():
  p=argparse.ArgumentParser();p.add_argument("--job",required=True);p.add_argument("--preflight",action="store_true")
  a=p.parse_args()
  row=run(json.loads(pathlib.Path(a.job).read_text(encoding="utf-8-sig")),a.preflight)
+ if row['status']=='PROCESS_EXIT_ZERO' and (row['software'],row['operation']) not in LOOKUP_ONLY:sys.exit(2)
  if row["status"] not in ("PREFLIGHT_PASS","PROCESS_EXIT_ZERO","NATIVE_VALIDATED"):sys.exit(2)
 if __name__=="__main__":main()
