@@ -1,0 +1,24 @@
+﻿{
+    "schema":  "NOWORLD_SOFTWARE_JOB_V1",
+    "job_id":  "Master_Offline_Index_Check_02",
+    "owner_gate":  "Gate09",
+    "test_only":  true,
+    "software":  "blender",
+    "operation":  "api_search",
+    "source_paths":  [
+
+                     ],
+    "requirements":  {
+                         "preserve_originals":  true,
+                         "max_walltime_seconds":  120,
+                         "max_ram_gb":  6,
+                         "quality_acceptance_required":  false
+                     },
+    "params":  {
+                   "query":  "IK armature action retarget",
+                   "limit":  4
+               },
+    "outputs":  {
+                    "receipt_directory":  "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_Master_Index_02"
+                }
+}

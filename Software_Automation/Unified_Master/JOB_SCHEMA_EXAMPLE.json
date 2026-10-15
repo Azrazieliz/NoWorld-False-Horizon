@@ -1,0 +1,22 @@
+{
+  "schema": "NOWORLD_SOFTWARE_JOB_V1",
+  "job_id": "Example_Integrated_Sanity",
+  "owner_gate": "Gate00",
+  "test_only": true,
+  "software": "blender",
+  "operation": "api_search",
+  "source_paths": [],
+  "requirements": {
+    "preserve_originals": true,
+    "max_walltime_seconds": 180,
+    "max_ram_gb": 6,
+    "quality_acceptance_required": false
+  },
+  "params": {
+    "query": "rig retarget import",
+    "limit": 5
+  },
+  "outputs": {
+    "receipt_directory": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_Job_Example"
+  }
+}
