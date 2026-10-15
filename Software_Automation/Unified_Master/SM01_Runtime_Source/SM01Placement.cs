@@ -10,11 +10,11 @@ namespace SM01Runtime {
  public static class SM01Placement {
    private static string F(float x) {return x.ToString("R",System.Globalization.CultureInfo.InvariantCulture);}
    private static float Axis(Vector3 v,int i){return i==0?v.x:i==1?v.y:v.z;}
-   private static bool Set(ChaControl c,int slot,int row,int axis,float value) {
+   private static bool Set(ChaControl c,int slot,int correction,int row,int axis,float value) {
       int flags=(1<<axis);
-      return row==0?c.SetAccessoryPos(slot,0,value,false,flags):
-             row==1?c.SetAccessoryRot(slot,0,value,false,flags):
-                    c.SetAccessoryScl(slot,0,value,false,flags);
+      return row==0?c.SetAccessoryPos(slot,correction,value,false,flags):
+             row==1?c.SetAccessoryRot(slot,correction,value,false,flags):
+                    c.SetAccessoryScl(slot,correction,value,false,flags);
    }
    private static void Validate(ChaControl c,int slot){
       if(c.nowCoordinate==null||c.nowCoordinate.accessory==null||c.nowCoordinate.accessory.parts==null)
@@ -32,9 +32,9 @@ namespace SM01Runtime {
       if(cmd.op=="inspect_accessory_pose"){
          s.AppendLine("slot\t"+slot);
          s.AppendLine("parent_key\t"+parts[slot].parentKey);
-         for(int i=0;i<3;i++){
-            var v=parts[slot].addMove[0,i];
-            s.AppendLine((i==0?"position":i==1?"rotation":"scale")+"\t"+F(v.x)+"\t"+F(v.y)+"\t"+F(v.z));
+         for(int secondPass=0;secondPass<2;secondPass++)for(int i=0;i<3;i++){
+            var v=parts[slot].addMove[secondPass,i];
+            s.AppendLine((i==0?"position":i==1?"rotation":"scale")+(secondPass==1?"2":"")+"\t"+F(v.x)+"\t"+F(v.y)+"\t"+F(v.z));
          }
          GameObject go=c.objAccessory[slot];
          s.AppendLine("world_position\t"+go.transform.position);
@@ -59,22 +59,25 @@ namespace SM01Runtime {
          s.AppendLine("status\tPARENT_REATTACHED_NATIVE_CARD");
          return true;
       }
-      int row=cmd.group=="pos"?0:cmd.group=="rot"?1:cmd.group=="scale"?2:-1;
+      int correction=cmd.group.EndsWith("2")?1:0;
+      string operation=correction==1?cmd.group.Substring(0,cmd.group.Length-1):cmd.group;
+      int row=operation=="pos"?0:operation=="rot"?1:operation=="scale"?2:-1;
       if(row<0)throw new IOException("Expected pos/rot/scale");
       float[] desired={cmd.value,cmd.value2,cmd.value3};
-      float min=row==2?.1f:row==1?-180f:-300f;
-      float max=row==2?3f:row==1?180f:300f;
+      float min=row==2?0.001f:row==1?-360f:-300f;
+      float max=row==2?10f:row==1?360f:300f;
       foreach(float val in desired){
          if(float.IsInfinity(val)||float.IsNaN(val)||val<min||val>max)
             throw new IOException("Requested accessory axis outside guarded native range");
       }
-      Vector3 previousVec=parts[slot].addMove[0,row];
+      Vector3 previousVec=parts[slot].addMove[correction,row];
       float[] before={previousVec.x,previousVec.y,previousVec.z};
       try {
          for(int i=0;i<3;i++){
-           if(!Set(c,slot,row,i,desired[i]))throw new IOException("Native vector axis setter failed "+i);
+           if(Math.Abs(before[i]-desired[i])<0.0001f)continue;
+           if(!Set(c,slot,correction,row,i,desired[i]))throw new IOException("Native vector axis setter failed "+i);
          }
-         Vector3 actual=parts[slot].addMove[0,row];
+         Vector3 actual=parts[slot].addMove[correction,row];
          float[] got={actual.x,actual.y,actual.z};
          for(int i=0;i<3;i++)if(Math.Abs(got[i]-desired[i])>.051f)throw new IOException("Axis "+i+" native readback mismatch");
          s.AppendLine("slot\t"+slot);
@@ -83,7 +86,7 @@ namespace SM01Runtime {
          s.AppendLine("after\t"+F(got[0])+"\t"+F(got[1])+"\t"+F(got[2]));
          s.AppendLine("status\tVECTOR_APPLIED_AND_SAVED_IN_NATIVE_COORDINATE_DATA");
       }catch{
-         for(int i=0;i<3;i++)Set(c,slot,row,i,before[i]);
+         for(int i=0;i<3;i++)Set(c,slot,correction,row,i,before[i]);
          throw;
       }
       return true;

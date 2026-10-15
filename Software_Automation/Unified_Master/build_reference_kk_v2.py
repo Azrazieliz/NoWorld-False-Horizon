@@ -34,11 +34,14 @@ def run(recipe,out):
    if result:success+=1
   return success
  call("inspect_appearance")
- m=out/"morphs_for_reference.json";m.write_text(json.dumps(recipe["morphs"]))
- call("apply_morph_batch",morphs=str(m))
+ morphs=recipe.get("morphs")
+ if morphs is None:
+  morphs=[{"group":g,"index":i,"value":v} for g,values in (("face",recipe.get("face_shape",[])),("body",recipe.get("body_shape",[]))) for i,v in enumerate(values)]
+ m=out/"morphs_for_reference.json";m.write_text(json.dumps(morphs))
+ if morphs:call("apply_morph_batch",morphs=str(m))
  call("set_face_makeup")
  if "eye_iris" in recipe:call("set_eye_iris",value=recipe["eye_iris"][0],v2=recipe["eye_iris"][1],v3=recipe["eye_iris"][2])
- for h in recipe.get("hair",[]):call("set_hair",index=h["slot"],effective_id=h["runtime_id"])
+ for h in recipe.get("hair",[]):call("set_hair",index=h["slot"],effective_id=h.get("runtime_id",h.get("native_id",0)))
  for h in recipe.get("hair",[]):
   if h.get("color"):recolor("hair",h["slot"],h["color"])
  for cl in recipe.get("clothing",[]):
@@ -46,10 +49,15 @@ def run(recipe,out):
   else:call("set_clothes",optional=True,index=cl["slot"],effective_id=cl.get("runtime_id",0) if "runtime_id" in cl else 0,guid=cl.get("guid",""),category=cl.get("category",0),original_id=cl.get("original_id",0))
   if cl.get("color"):recolor("clothing",cl["slot"],cl["color"])
  for a in recipe.get("accessories",[]):
-  call("apply_accessory",optional=a.get("optional",False),guid=a["guid"],category=a["category"],original_id=a["original_id"],slot=a["slot"],parent=a["parent"])
+  if "effective_id" in a:
+   call("apply_accessory_native",optional=a.get("optional",False),effective_id=a["effective_id"],category=a["category"],slot=a["slot"],parent=a["parent"])
+  else:
+   call("apply_accessory",optional=a.get("optional",False),guid=a["guid"],category=a["category"],original_id=a["original_id"],slot=a["slot"],parent=a["parent"])
   if a.get("color"):recolor("accessory",a["slot"],a["color"])
-  for group,v in a.get("transforms",{}).items():
-   call("set_accessory_vector",optional=True,slot=a["slot"],group=group,value=v[0],v2=v[1],v3=v[2])
+  transforms=a.get("transforms") or {k:a[k] for k in ("pos","rot","scale","pos2","rot2","scale2") if k in a}
+  for group,v in transforms.items():
+   if (group.startswith("scale") and all(abs(x-1)<.0001 for x in v)) or (not group.startswith("scale") and all(abs(x)<.0001 for x in v)):continue
+   call("set_accessory_vector",optional=False,slot=a["slot"],group=group,value=v[0],v2=v[1],v3=v[2])
  call("render_views")
  saved,nonce=call("save_derived_card")
  fname="SM01_AUTOTEST_"+nonce+".png"
