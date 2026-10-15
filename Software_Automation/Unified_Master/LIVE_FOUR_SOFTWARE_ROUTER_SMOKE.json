@@ -1,0 +1,38 @@
+{
+  "status": "PASS_FOUR_NATIVE_CATALOG_ROUTE_LINKS",
+  "checks": [
+    {
+      "software": "blender",
+      "operation": "api_search",
+      "actual_link_executed": true,
+      "results_returned": 6,
+      "receipt": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_SearchSmoke_20261015_200026\\blender\\receipt.json",
+      "status": "PROCESS_EXIT_ZERO"
+    },
+    {
+      "software": "koikatsu",
+      "operation": "mod_lookup",
+      "actual_link_executed": true,
+      "results_returned": 6,
+      "receipt": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_SearchSmoke_20261015_200026\\koikatsu\\receipt.json",
+      "status": "PROCESS_EXIT_ZERO"
+    },
+    {
+      "software": "gaea",
+      "operation": "node_search",
+      "actual_link_executed": true,
+      "results_returned": 1,
+      "receipt": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_SearchSmoke_20261015_200026\\gaea\\receipt.json",
+      "status": "PROCESS_EXIT_ZERO"
+    },
+    {
+      "software": "unreal",
+      "operation": "api_search",
+      "actual_link_executed": true,
+      "results_returned": 6,
+      "receipt": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_SearchSmoke_20261015_200026\\unreal\\receipt.json",
+      "status": "PROCESS_EXIT_ZERO"
+    }
+  ],
+  "native_asset_writes": false
+}

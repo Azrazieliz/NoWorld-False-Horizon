@@ -1,0 +1,427 @@
+{
+  "schema": "NOWORLD_SOFTWARE_CAPABILITY_MAPPING_V1",
+  "created_utc": "2026-10-15T17:59:26.903924+00:00",
+  "purpose": "Four-software discoverability and Gate-operable routes; not claims of unlimited software mastery",
+  "software": {
+    "blender": {
+      "version": "5.2.2 LTS",
+      "installed_operator_count": 2755,
+      "RNA_type_count": 37,
+      "user_facing_index": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\MASTER_API\\BLENDER_5_2_RNA_CATALOG.json",
+      "status": "NATIVE_IMPLEMENTED_TECHNICAL"
+    },
+    "unreal": {
+      "engine": "5.8.3-58210709+++UE5+Release-5.8",
+      "exposed_python_api_count": 11174,
+      "domains": {
+        "Other": 3352,
+        "Blueprint_Cpp": 198,
+        "Gameplay_AI": 1278,
+        "Asset_Engineering": 865,
+        "Rendering_VFX": 1130,
+        "Animation": 2327,
+        "Cinematics": 503,
+        "Sound_UI": 441,
+        "World_Procedural": 1080
+      },
+      "user_facing_index": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\MASTER_API\\UE58_ExposedAPIs_Installed.json",
+      "status": "NATIVE_EDITOR_SANDBOX_VALIDATION"
+    },
+    "koikatsu": {
+      "packages_indexed": 4524,
+      "assets_indexed": 27849,
+      "indexed_readonly": true,
+      "source_db": "D:\\Tools\\GameAssetPipeline\\ProductionAutomation\\Software_Automation\\MASTER_PACKAGES\\KoikatsuParty_Steam6436979_HF4.2_SM01_v0.4.0_RUNTIME\\CATALOG\\FULL_INSTALLED_MOD_LIBRARY.sqlite",
+      "status": "SM01_NATIVE_MAKER_SKINNED_ACCESSORY_VERIFIED"
+    },
+    "gaea": {
+      "native_node_types_mapped": 10,
+      "node_ids": [
+        "Adjust",
+        "Blur",
+        "Combine",
+        "Constant",
+        "Erosion2",
+        "Export",
+        "File",
+        "Height",
+        "Mesher",
+        "Tint"
+      ],
+      "unsafe_known_node_ids": [
+        "Lake",
+        "Rivers",
+        "SatMap",
+        "Sea",
+        "Thermal",
+        "Thermal2",
+        "WaterColor"
+      ],
+      "node_parameters": {
+        "File": {
+          "RelativePath": true
+        },
+        "Adjust": {
+          "NodeSize": "Small"
+        },
+        "Erosion2": {
+          "Duration": 40.0,
+          "Downcutting": 0.2,
+          "Seed": 12345,
+          "Enable": true,
+          "Version": 2
+        },
+        "Height": {
+          "Falloff": 0.05,
+          "NodeSize": "Standard"
+        },
+        "Tint": {
+          "RenderIntentOverride": "Color"
+        },
+        "Combine": {
+          "PortCount": 2,
+          "Ratio": 1.0,
+          "Mode": "Max"
+        },
+        "Export": {
+          "Location": "Explicit",
+          "Format": "PNG16"
+        },
+        "Mesher": {
+          "Format": "GLB",
+          "Scale": "Meter",
+          "Topology": "Quads",
+          "VerticesPerSide": 512,
+          "ArtifactReduction": "Med",
+          "CreateNormals": true,
+          "CreateUVs": true
+        },
+        "Constant": {
+          "Height": 0.5,
+          "NodeSize": "Standard"
+        },
+        "Blur": {}
+      },
+      "node_ports": {
+        "File": [
+          [
+            "In",
+            "PrimaryIn"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ]
+        ],
+        "Adjust": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ],
+          [
+            "Mask",
+            "In"
+          ]
+        ],
+        "Erosion2": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ],
+          [
+            "Mask",
+            "In"
+          ],
+          [
+            "Flow",
+            "Out"
+          ],
+          [
+            "Wear",
+            "Out"
+          ],
+          [
+            "Deposits",
+            "Out"
+          ],
+          [
+            "Precipitation",
+            "In"
+          ]
+        ],
+        "Height": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ],
+          [
+            "Mask",
+            "In"
+          ]
+        ],
+        "Tint": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ]
+        ],
+        "Combine": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ],
+          [
+            "Input2",
+            "In"
+          ],
+          [
+            "Mask",
+            "In"
+          ],
+          [
+            "Input3",
+            "In"
+          ],
+          [
+            "Input4",
+            "In"
+          ]
+        ],
+        "Export": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ]
+        ],
+        "Mesher": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ]
+        ],
+        "Constant": [
+          [
+            "In",
+            "PrimaryIn"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ]
+        ],
+        "Blur": [
+          [
+            "In",
+            "PrimaryIn, Required"
+          ],
+          [
+            "Out",
+            "PrimaryOut"
+          ],
+          [
+            "Mask",
+            "In"
+          ]
+        ]
+      },
+      "status": "NATIVE_GRAPH_EROSION_BUILD_AND_EXPORT_VERIFIED_FOR_FIXTURE"
+    }
+  },
+  "routes": {
+    "blender": {
+      "api_search": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\MASTER_API\\search_methods.py",
+        "script_exists": true
+      },
+      "architecture": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE02\\architecture_job.py",
+        "script_exists": true
+      },
+      "morphology": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\morphology_job.py",
+        "script_exists": true
+      },
+      "weapon": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\weapon_job.py",
+        "script_exists": true
+      },
+      "semantic_motion": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\semantic_motion_job.py",
+        "script_exists": true
+      },
+      "fight_mocap": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\combat_capture_job.py",
+        "script_exists": true
+      },
+      "grease_2d": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\grease_game2d_job.py",
+        "script_exists": true
+      },
+      "kk_obj": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\INTEGRATIONS\\KK_BRIDGE\\submit_kk_job.py",
+        "script_exists": true
+      }
+    },
+    "koikatsu": {
+      "recipe_dry_run": {
+        "path": "D:\\Tools\\GameAssetPipeline\\ProductionAutomation\\Software_Automation\\MASTER_PACKAGES\\KoikatsuParty_Steam6436979_HF4.2_SM01_v0.4.0_RUNTIME\\AUTOMATION\\produce_from_reference_recipe.py",
+        "script_exists": true
+      },
+      "joint_wing_offline": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\INTEGRATIONS\\SM01_SM02\\sm01_pack_native_8bone.py",
+        "script_exists": true
+      },
+      "native_wing_test": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\INTEGRATIONS\\SM01_SM02\\sm01_native_wing_accept.py",
+        "script_exists": true
+      },
+      "mod_lookup": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\software_catalog.py",
+        "script_exists": true
+      }
+    },
+    "gaea": {
+      "graph": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\gaea_graph_job.py",
+        "script_exists": true
+      },
+      "native_build": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\gaea_native_unattended_build.py",
+        "script_exists": true
+      },
+      "doctor": {
+        "path": "D:\\UnrealProjects\\NW_Blender_ReferenceReview_20261015\\external_sources\\gaea-mcp\\src\\gaea_mcp\\doctor.py",
+        "script_exists": true
+      },
+      "blender_tiles": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\gaea_blender_tiled_mesh.py",
+        "script_exists": true
+      },
+      "node_search": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\software_catalog.py",
+        "script_exists": true
+      }
+    },
+    "unreal": {
+      "api_search": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\MASTER_API\\search_unreal.py",
+        "script_exists": true
+      },
+      "capabilities": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\probe_unreal_master_subsystems.py",
+        "script_exists": true
+      },
+      "asset_import": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_batch_import.py",
+        "script_exists": true
+      },
+      "asset_author": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\native_asset_author.py",
+        "script_exists": true
+      },
+      "pcg_fixture": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_pcg_procedural.py",
+        "script_exists": true
+      },
+      "paper2d": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_paper2d_flipbook.py",
+        "script_exists": true
+      },
+      "animation_validate": {
+        "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_animation_validate.py",
+        "script_exists": true
+      }
+    }
+  },
+  "native_evidence": {
+    "koikatsu_joint_wing": {
+      "path": "D:\\Tools\\GameAssetPipeline\\ProductionAutomation\\Software_Automation\\INTEGRATION_FIXTURES\\SM01_SM02\\wing_v12_20261015\\NW_Wing_Maker_NativeAcceptance.json",
+      "exists": true
+    },
+    "gaea_native": {
+      "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\VALIDATION\\GAEA_NATIVE_512_OFFICIAL_REPORT.json",
+      "exists": true
+    },
+    "gaea_blender": {
+      "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\VALIDATION\\BLENDER_NATIVE_EROSION_TILES.json",
+      "exists": true
+    },
+    "gaea_unreal": {
+      "path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\VALIDATION\\UNREAL_NATIVE_EROSION_IMPORT.json",
+      "exists": true
+    },
+    "unreal_native_assets": {
+      "path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_DeclarativeAssetAuthor_5Systems_v2.json",
+      "exists": true
+    },
+    "unreal_paper2d": {
+      "path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_Paper2D_GP_NativeFlipbook_v2.json",
+      "exists": true
+    },
+    "unreal_sequencer": {
+      "path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_Sequencer_CameraKeys_V3.json",
+      "exists": true
+    },
+    "unreal_pcg": {
+      "path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_PCG_WiredGraph_v3.json",
+      "exists": true
+    }
+  },
+  "gate_ownership": {
+    "Gate01": [
+      "koikatsu",
+      "blender"
+    ],
+    "Gate02": [
+      "gaea",
+      "blender",
+      "unreal"
+    ],
+    "Gate09": [
+      "blender",
+      "unreal"
+    ],
+    "Gate12": [
+      "unreal",
+      "blender",
+      "gaea",
+      "koikatsu"
+    ]
+  },
+  "restrictions": [
+    "Never overwrite original Steam installation, mod archive or character card",
+    "Never alter frozen Foundation, Registry v2, active Gate assets or production Unreal map",
+    "Sandbox QA remains separate from canonical production acceptance",
+    "Native asset imported does not imply functional gameplay or visual fidelity",
+    "Gaea native GUI automation is graph- and geometry-specific, not universal",
+    "Do not execute a route based only on a catalog entry without its native postcondition"
+  ]
+}

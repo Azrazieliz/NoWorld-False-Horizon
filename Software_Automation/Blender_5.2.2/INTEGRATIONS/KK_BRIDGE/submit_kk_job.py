@@ -2,10 +2,12 @@
 No user clicking. Submits a source-preserving Blender job and an atomic import request.
 Koikatsu BepInEx NoWorldBridge watches queue on Studio main thread.
 """
-import pathlib,subprocess,hashlib,json,argparse,re,sys,datetime
+import pathlib,subprocess,hashlib,json,argparse,re,sys,datetime,os
 BLENDER=pathlib.Path(r"D:\Tools\Blender-5.2.2-LTS\blender-5.2.2-windows-x64\blender.exe")
 RUNNER=pathlib.Path(__file__).resolve().parents[2]/"CLI"/"gate_runner.py"
-GAME=pathlib.Path(r"D:\Tools\Steam\steamapps\common\Koikatsu Party")
+SANDBOX=pathlib.Path(r"D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\SANDBOXES\SM01_KKParty_6436979_20261014").resolve()
+ROOT_ENV=os.environ.get("NW_KK_GAME_ROOT","")
+GAME=pathlib.Path(ROOT_ENV).resolve() if ROOT_ENV else None
 def sha(p):
  h=hashlib.sha256()
  with p.open("rb") as f:
@@ -16,6 +18,7 @@ def submit(src,job_id,objects=None):
  if not source.is_file() or source.suffix.lower()!=".blend":raise FileNotFoundError("Missing native .blend source: "+str(source))
  if not re.fullmatch(r"[A-Za-z0-9_-]{1,70}",job_id):raise ValueError("Use safe alphanumeric job id")
  if not BLENDER.is_file() or not RUNNER.is_file():raise FileNotFoundError("Missing Blender or master runner")
+ if GAME is None or GAME!=SANDBOX:raise RuntimeError("Studio OBJ bridge requires exact authorized SM01 sandbox path via NW_KK_GAME_ROOT; original Steam is forbidden")
  root=GAME/"BepInEx"/"NoWorldBridge"
  assets=root/"assets";inbox=root/"inbox";events=root/"events"
  for p in (assets,inbox,events):p.mkdir(parents=True,exist_ok=True)

@@ -1,0 +1,54 @@
+{
+  "$id": "1",
+  "Resolution": 512,
+  "NodeCount": 7,
+  "Result": "AlreadyBuilt",
+  "StartTime": "2026-10-15T19:18:20.6387591+02:00",
+  "EndTime": "2026-10-15T19:18:21.367283+02:00",
+  "Duration": "00:00:00.7285239",
+  "SecondsTaken": {
+    "$id": "2",
+    "$values": [
+      {
+        "$id": "3",
+        "Item1": "Native16bitHeight",
+        "Item2": "00:00:00.0520000"
+      },
+      {
+        "$id": "4",
+        "Item1": "PreErosionHeightControl",
+        "Item2": "00:00:00.0010000"
+      },
+      {
+        "$id": "5",
+        "Item1": "NaturalHydraulicErosion",
+        "Item2": "00:00:00.1520000"
+      },
+      {
+        "$id": "6",
+        "Item1": "SettlementProtectedMask",
+        "Item2": "00:00:00.0070000"
+      },
+      {
+        "$id": "7",
+        "Item1": "TerrainHeight16"
+      },
+      {
+        "$id": "8",
+        "Item1": "HighLowTint",
+        "Item2": "00:00:00.0330000"
+      },
+      {
+        "$id": "9",
+        "Item1": "TerrainAlbedo",
+        "Item2": "00:00:00.0020000"
+      }
+    ]
+  },
+  "FastestNode": {
+    "$ref": "7"
+  },
+  "SlowestNode": {
+    "$ref": "5"
+  }
+}

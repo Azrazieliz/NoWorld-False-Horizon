@@ -1,0 +1,35 @@
+{
+  "status": "PASS_NATIVE_IMPORT",
+  "source": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_4TileLandscape.fbx",
+  "destination": "/Game/NW_MasterHub_QA/GaeaNativeErosionTile_20261015",
+  "kind": "static",
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "asset_paths": [
+    {
+      "path": "/Game/NW_MasterHub_QA/GaeaNativeErosionTile_20261015/NW_TerrainTile_X0_Y0.NW_TerrainTile_X0_Y0",
+      "class": "StaticMesh",
+      "lod_count": 1
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/GaeaNativeErosionTile_20261015/NW_TerrainTile_X0_Y1.NW_TerrainTile_X0_Y1",
+      "class": "StaticMesh",
+      "lod_count": 1
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/GaeaNativeErosionTile_20261015/NW_TerrainTile_X1_Y0.NW_TerrainTile_X1_Y0",
+      "class": "StaticMesh",
+      "lod_count": 1
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/GaeaNativeErosionTile_20261015/NW_TerrainTile_X1_Y1.NW_TerrainTile_X1_Y1",
+      "class": "StaticMesh",
+      "lod_count": 1
+    }
+  ],
+  "production_game_modified": false,
+  "source_sha256": "455129f4f071eb98459f3844f3afe734ab049ffe17ab2f1c829a771f71cf4a64",
+  "source_untouched": true,
+  "native_reloaded_count": 4,
+  "artist_accepted": false,
+  "android_runtime_tested": false
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "NOWORLD_SOFTWARE_JOB_V1",
+  "job_id": "GaeaNativeErosion_4Tile_UE58",
+  "owner_gate": "Gate12",
+  "test_only": true,
+  "software": "unreal",
+  "operation": "asset_import",
+  "source_paths": [
+    "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\exports\\NW_Height.png",
+    "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_4TileLandscape.fbx"
+  ],
+  "requirements": {
+    "preserve_originals": true,
+    "max_walltime_seconds": 220,
+    "max_ram_gb": 6,
+    "quality_acceptance_required": false
+  },
+  "params": {
+    "source": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_4TileLandscape.fbx",
+    "destination": "/Game/NW_MasterHub_QA/GaeaNativeErosionTile_20261015",
+    "kind": "static",
+    "minimum_assets": 4,
+    "receipt": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_UE58_StaticMesh_Receipt.json"
+  },
+  "postconditions": [
+    {
+      "path": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_UE58_StaticMesh_Receipt.json",
+      "field": "status",
+      "equals": "PASS_NATIVE_IMPORT"
+    },
+    {
+      "path": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_UE58_StaticMesh_Receipt.json",
+      "field": "native_reloaded_count",
+      "minimum": 4
+    },
+    {
+      "path": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_UE58_StaticMesh_Receipt.json",
+      "field": "source_untouched",
+      "is_true": true
+    }
+  ],
+  "outputs": {
+    "receipt_directory": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeErodedUE58_Job"
+  }
+}

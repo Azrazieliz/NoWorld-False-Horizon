@@ -1,0 +1,177 @@
+{
+  "schema": "NOWORLD_ALL_GATE_ROUTES_PREFLIGHT_V1",
+  "time_utc": "2026-10-15T18:03:45.779498+00:00",
+  "routes_total": 24,
+  "routes_passed": 24,
+  "native_execution_claimed": false,
+  "checks": [
+    {
+      "software": "blender",
+      "operation": "api_search",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\MASTER_API\\search_methods.py"
+    },
+    {
+      "software": "blender",
+      "operation": "architecture",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE02\\architecture_job.py"
+    },
+    {
+      "software": "blender",
+      "operation": "morphology",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\morphology_job.py"
+    },
+    {
+      "software": "blender",
+      "operation": "weapon",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\weapon_job.py"
+    },
+    {
+      "software": "blender",
+      "operation": "semantic_motion",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\semantic_motion_job.py"
+    },
+    {
+      "software": "blender",
+      "operation": "fight_mocap",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\combat_capture_job.py"
+    },
+    {
+      "software": "blender",
+      "operation": "grease_2d",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\grease_game2d_job.py"
+    },
+    {
+      "software": "blender",
+      "operation": "kk_obj",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\INTEGRATIONS\\KK_BRIDGE\\submit_kk_job.py"
+    },
+    {
+      "software": "koikatsu",
+      "operation": "recipe_dry_run",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\Tools\\GameAssetPipeline\\ProductionAutomation\\Software_Automation\\MASTER_PACKAGES\\KoikatsuParty_Steam6436979_HF4.2_SM01_v0.4.0_RUNTIME\\AUTOMATION\\produce_from_reference_recipe.py"
+    },
+    {
+      "software": "koikatsu",
+      "operation": "joint_wing_offline",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\INTEGRATIONS\\SM01_SM02\\sm01_pack_native_8bone.py"
+    },
+    {
+      "software": "koikatsu",
+      "operation": "mod_lookup",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\software_catalog.py"
+    },
+    {
+      "software": "koikatsu",
+      "operation": "native_wing_test",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\INTEGRATIONS\\SM01_SM02\\sm01_native_wing_accept.py"
+    },
+    {
+      "software": "gaea",
+      "operation": "graph",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\gaea_graph_job.py"
+    },
+    {
+      "software": "gaea",
+      "operation": "native_build",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\gaea_native_unattended_build.py"
+    },
+    {
+      "software": "gaea",
+      "operation": "doctor",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": null
+    },
+    {
+      "software": "gaea",
+      "operation": "blender_tiles",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\gaea_blender_tiled_mesh.py"
+    },
+    {
+      "software": "gaea",
+      "operation": "node_search",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\software_catalog.py"
+    },
+    {
+      "software": "unreal",
+      "operation": "capabilities",
+      "preflight_passed": true,
+      "executable": "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "script": "-script=D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\probe_unreal_master_subsystems.py"
+    },
+    {
+      "software": "unreal",
+      "operation": "asset_import",
+      "preflight_passed": true,
+      "executable": "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "script": "-script=D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_batch_import.py"
+    },
+    {
+      "software": "unreal",
+      "operation": "animation_validate",
+      "preflight_passed": true,
+      "executable": "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "script": "-script=D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_animation_validate.py"
+    },
+    {
+      "software": "unreal",
+      "operation": "pcg_fixture",
+      "preflight_passed": true,
+      "executable": "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "script": "-script=D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_pcg_procedural.py"
+    },
+    {
+      "software": "unreal",
+      "operation": "asset_author",
+      "preflight_passed": true,
+      "executable": "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "script": "-script=D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\native_asset_author.py"
+    },
+    {
+      "software": "unreal",
+      "operation": "paper2d",
+      "preflight_passed": true,
+      "executable": "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "script": "-script=D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_paper2d_flipbook.py"
+    },
+    {
+      "software": "unreal",
+      "operation": "api_search",
+      "preflight_passed": true,
+      "executable": "D:\\Tools\\Python311\\python.exe",
+      "script": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\MASTER_API\\search_unreal.py"
+    }
+  ]
+}

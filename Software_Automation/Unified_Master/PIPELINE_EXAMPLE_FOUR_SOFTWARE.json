@@ -1,0 +1,86 @@
+{
+  "schema": "NOWORLD_SOFTWARE_PIPELINE_V1",
+  "checkpoint": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_PipelineSmoke_20261015_2006\\checkpoint.json",
+  "steps": [
+    {
+      "schema": "NOWORLD_SOFTWARE_JOB_V1",
+      "job_id": "Connected_blender_20261015_Test1",
+      "owner_gate": "Gate09",
+      "test_only": true,
+      "software": "blender",
+      "operation": "api_search",
+      "source_paths": [],
+      "requirements": {
+        "preserve_originals": true,
+        "max_walltime_seconds": 45
+      },
+      "params": {
+        "query": "armature",
+        "limit": 3
+      },
+      "outputs": {
+        "receipt_directory": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_PipelineSmoke_20261015_2006\\blender"
+      }
+    },
+    {
+      "schema": "NOWORLD_SOFTWARE_JOB_V1",
+      "job_id": "Connected_koikatsu_20261015_Test1",
+      "owner_gate": "Gate01",
+      "test_only": true,
+      "software": "koikatsu",
+      "operation": "mod_lookup",
+      "source_paths": [],
+      "requirements": {
+        "preserve_originals": true,
+        "max_walltime_seconds": 45
+      },
+      "params": {
+        "query": "wing",
+        "limit": 3
+      },
+      "outputs": {
+        "receipt_directory": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_PipelineSmoke_20261015_2006\\koikatsu"
+      }
+    },
+    {
+      "schema": "NOWORLD_SOFTWARE_JOB_V1",
+      "job_id": "Connected_gaea_20261015_Test1",
+      "owner_gate": "Gate02",
+      "test_only": true,
+      "software": "gaea",
+      "operation": "node_search",
+      "source_paths": [],
+      "requirements": {
+        "preserve_originals": true,
+        "max_walltime_seconds": 45
+      },
+      "params": {
+        "query": "erosion",
+        "limit": 3
+      },
+      "outputs": {
+        "receipt_directory": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_PipelineSmoke_20261015_2006\\gaea"
+      }
+    },
+    {
+      "schema": "NOWORLD_SOFTWARE_JOB_V1",
+      "job_id": "Connected_unreal_20261015_Test1",
+      "owner_gate": "Gate12",
+      "test_only": true,
+      "software": "unreal",
+      "operation": "api_search",
+      "source_paths": [],
+      "requirements": {
+        "preserve_originals": true,
+        "max_walltime_seconds": 45
+      },
+      "params": {
+        "query": "PCG",
+        "limit": 3
+      },
+      "outputs": {
+        "receipt_directory": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_PipelineSmoke_20261015_2006\\unreal"
+      }
+    }
+  ]
+}

@@ -98,7 +98,11 @@ class NW_OT_gate_send_kk(Operator):
     bl_description="Export selected mesh assets into the installed KK ObjImport bridge and enqueue automatic import"
     def execute(self,context):
         try:
-            root=pathlib.Path(r"D:\Tools\Steam\steamapps\common\Koikatsu Party\BepInEx\NoWorldBridge")
+            game=pathlib.Path(r"D:\Tools\GameAssetPipeline\ProductionAutomation\Software_Automation\SANDBOXES\SM01_KKParty_6436979_20261014")
+            plugin=game/"BepInEx"/"plugins"/"NoWorldBlenderBridge"/"NoWorld.BlenderBridge.dll"
+            if not plugin.is_file():
+                raise RuntimeError("Optional Studio OBJ bridge not installed in isolated SM01 sandbox; native Maker skinned import remains available")
+            root=game/"BepInEx"/"NoWorldBridge"
             assets=root/"assets";inbox=root/"inbox";events=root/"events"
             for p in (assets,inbox,events):p.mkdir(parents=True,exist_ok=True)
             selected=[o.name for o in context.selected_objects if o.type=="MESH"]

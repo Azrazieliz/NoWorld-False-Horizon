@@ -17,9 +17,9 @@ SM01_SANDBOX=pathlib.Path(r"D:\Tools\GameAssetPipeline\ProductionAutomation\Soft
 GATES={"Gate01","Gate02","Gate09","Gate12","Gate00"}
 ALLOWED={
  "blender":{"api_search","architecture","morphology","weapon","semantic_motion","fight_mocap","grease_2d","kk_obj"},
- "gaea":{"graph","native_build","doctor"},
- "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture","asset_author","paper2d"},
- "koikatsu":{"recipe_dry_run","joint_wing_offline"}}
+ "gaea":{"graph","native_build","doctor","blender_tiles","node_search"},
+ "unreal":{"capabilities","asset_import","animation_validate","pcg_fixture","asset_author","paper2d","api_search"},
+ "koikatsu":{"recipe_dry_run","joint_wing_offline","mod_lookup","native_wing_test"}}
 def sha(p):
  h=hashlib.sha256()
  with open(p,"rb") as f:
@@ -38,6 +38,10 @@ def validate(job):
  req=job.get("requirements",{})
  if not req.get("preserve_originals",False):raise ValueError("Source preservation required")
  if int(req.get("max_walltime_seconds",0))<10:raise ValueError("Time limit required")
+ if s=="gaea" and op=="native_build" and req.get("dedicated_gui") is not True:
+  raise ValueError("Gaea native build requires dedicated_gui:true to prevent interfering with active Gate02 session")
+ if s=="koikatsu" and op=="native_wing_test" and req.get("dedicated_gui") is not True:
+  raise ValueError("Maker native test requires dedicated_gui:true to preserve ongoing SM01 work")
  return job
 def command(job):
  o=job["operation"];s=job["software"];p=job.get("params",{})
@@ -57,6 +61,11 @@ def command(job):
    return [str(BX),"--background","--threads","2","--python",str(BLENDER/scripts[o]),
      "--",str(p["spec"])]
  if s=="koikatsu":
+  if o=="mod_lookup":
+   return [str(PY),str(HERE/"software_catalog.py"),"--search",str(p["query"]),
+       "--software","koikatsu","--limit",str(p.get("limit",10))]
+  if o=="native_wing_test":
+   return [str(PY),str(BLENDER/"INTEGRATIONS"/"SM01_SM02"/"sm01_native_wing_accept.py"),str(p["workdir"])]
   if o=="recipe_dry_run":
    return [str(PY),str(SM01/"AUTOMATION"/"produce_from_reference_recipe.py"),
        "--recipe",str(p["recipe"])]
@@ -64,10 +73,20 @@ def command(job):
    return [str(PY),str(BLENDER/"INTEGRATIONS"/"SM01_SM02"/"sm01_pack_native_8bone.py"),
        str(p["workdir"])]
  if s=="gaea":
+  if o=="node_search":
+   return [str(PY),str(HERE/"software_catalog.py"),"--search",str(p["query"]),
+       "--software","gaea","--limit",str(p.get("limit",10))]
+  if o=="blender_tiles":
+   return [str(BX),"--background","--threads","2","--python",
+       str(GAEA/"gaea_blender_tiled_mesh.py"),"--",str(p["spec"])]
   if o=="graph":return [str(PY),str(GAEA/"gaea_graph_job.py"),str(p["spec"])]
-  if o=="native_build":return [str(PY),str(GAEA/"test_real_native_build.py")]
+  if o=="native_build":
+   return [str(PY),str(GAEA/"gaea_native_unattended_build.py"),str(p["project_dir"])]
   if o=="doctor":return [str(PY),"-m","gaea_mcp.doctor"]
  if s=="unreal":
+  if o=="api_search":
+   return [str(PY),str(UE/"MASTER_API"/"search_unreal.py"),
+        "--query",str(p["query"]),"--limit",str(p.get("limit",10))]
   scripts={"capabilities":"probe_unreal_master_subsystems.py",
     "asset_import":"qa_batch_import.py",
     "animation_validate":"qa_animation_validate.py",
@@ -119,6 +138,7 @@ def run(job,preflight=False):
   sdk=r"D:\Tools\DotNet8SDK_NoWorld_Portable"
   env["DOTNET_ROOT"]=sdk;env["PATH"]=sdk+os.pathsep+env.get("PATH","")
   env["GAEA_ROOT"]=r"D:\Tools\Gaea 2"
+  env["NW_KK_GAME_ROOT"]=str(SM01_SANDBOX)
   env["NW_UNREAL_JOB_PARAMS"]=json.dumps(job.get("params",{}))
   env["NW_PAPER2D_JOB_PARAMS"]=json.dumps(job.get("params",{}))
   if job["software"]=="unreal" and job["operation"]=="asset_author":

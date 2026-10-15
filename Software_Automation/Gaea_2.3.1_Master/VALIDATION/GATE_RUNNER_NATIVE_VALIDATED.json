@@ -1,0 +1,49 @@
+{
+  "schema": "NOWORLD_SOFTWARE_JOB_RECEIPT_V1",
+  "job_id": "GaeaNativeErosion_4Tile_UE58",
+  "owner_gate": "Gate12",
+  "software": "unreal",
+  "operation": "asset_import",
+  "start_utc": "2026-10-15T17:21:18.748492+00:00",
+  "source_hashes": {
+    "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\exports\\NW_Height.png": "d29327ba6706b4126423b3f27bedbe699abf38b54ce1d2cb5d9a1a90e61dc3ac",
+    "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_4TileLandscape.fbx": "455129f4f071eb98459f3844f3afe734ab049ffe17ab2f1c829a771f71cf4a64"
+  },
+  "command": [
+    "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+    "D:\\UnrealProjects\\NW_BlenderInterop_Sandbox_20261015\\NW_BlenderInterop.uproject",
+    "-run=pythonscript",
+    "-script=D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unreal_5.8.3_Master\\qa_batch_import.py",
+    "-nullrhi",
+    "-unattended",
+    "-nosplash",
+    "-nop4",
+    "-NoSound"
+  ],
+  "status": "NATIVE_VALIDATED",
+  "artist_acceptance": false,
+  "canonical_content_modified": false,
+  "returncode": 0,
+  "execution_seconds": 19.962,
+  "postconditions": [
+    {
+      "path": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_UE58_StaticMesh_Receipt.json",
+      "field": "status",
+      "passed": true,
+      "observed": "PASS_NATIVE_IMPORT"
+    },
+    {
+      "path": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_UE58_StaticMesh_Receipt.json",
+      "field": "native_reloaded_count",
+      "passed": true,
+      "observed": 4
+    },
+    {
+      "path": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_UE58_StaticMesh_Receipt.json",
+      "field": "source_untouched",
+      "passed": true,
+      "observed": true
+    }
+  ],
+  "ended_utc": "2026-10-15T17:21:38.724577+00:00"
+}

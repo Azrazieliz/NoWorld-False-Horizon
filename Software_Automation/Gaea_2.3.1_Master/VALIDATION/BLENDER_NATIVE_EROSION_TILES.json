@@ -1,0 +1,33 @@
+{
+  "status": "BLENDER_TILED_TERRAIN_PASS",
+  "blender": "5.2.2 LTS",
+  "source_hashes": {
+    "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\exports\\NW_Height.png": "d29327ba6706b4126423b3f27bedbe699abf38b54ce1d2cb5d9a1a90e61dc3ac",
+    "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_Gaea_ErosionProtectMask16.png": "bfddf86b8c86f8c3d1392ef627869e64909b2d7e51c9e60cabfdcadc3e5cd4de"
+  },
+  "source_unchanged": true,
+  "editable_blend": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_4TileLandscape.blend",
+  "fbx": "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_NativeEroded_4TileLandscape.fbx",
+  "fbx_sha256": "455129f4f071eb98459f3844f3afe734ab049ffe17ab2f1c829a771f71cf4a64",
+  "tile_count": 4,
+  "vertices_per_tile": 16641,
+  "polygons_per_tile": 32768,
+  "total_vertices": 66564,
+  "world_size_m": 6000.0,
+  "relief_m": 650.0,
+  "source_height_resolution": [
+    512,
+    512
+  ],
+  "mask_resolution": [
+    512,
+    512
+  ],
+  "world_uvs": true,
+  "mask_as_vertex_colors": true,
+  "maximum_seam_error_m": 0.0,
+  "unreal_import_verified": false,
+  "native_gaea_erosion_build_verified": false,
+  "game_geography_accepted": false,
+  "android_performance_accepted": false
+}

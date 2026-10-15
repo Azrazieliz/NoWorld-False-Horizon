@@ -1,0 +1,119 @@
+{
+  "schema": "NOWORLD_MASTER_TECHNICAL_ACCEPTANCE_V1",
+  "verified_at_utc": "2026-10-15T18:10:58.567301+00:00",
+  "status": "PASS_TECHNICAL_PROOFS",
+  "checks_passed": 10,
+  "checks_total": 10,
+  "checks": [
+    {
+      "name": "24_supported_routes",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\ROUTE_PREFLIGHT_CHECKS.json",
+      "detail": {
+        "total": 24,
+        "passed": 24
+      }
+    },
+    {
+      "name": "four_software_live_bridge",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\LIVE_FOUR_SOFTWARE_ROUTER_SMOKE.json",
+      "detail": {
+        "links": [
+          "blender",
+          "koikatsu",
+          "gaea",
+          "unreal"
+        ]
+      }
+    },
+    {
+      "name": "resumable_sequential_pipeline",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\Unified_PipelineSmoke_20261015_2006\\checkpoint.json",
+      "detail": {
+        "completed": 4,
+        "status": "PASS_ALL_STAGES"
+      }
+    },
+    {
+      "name": "KK_Maker_native_skinned_wing",
+      "passed": true,
+      "evidence_path": "D:\\Tools\\GameAssetPipeline\\ProductionAutomation\\Software_Automation\\INTEGRATION_FIXTURES\\SM01_SM02\\wing_v12_20261015\\NW_Wing_Maker_NativeAcceptance.json",
+      "detail": {
+        "status": "KK_NATIVE_CARD_AND_SKIN_PASS",
+        "deformation": 0.5139087,
+        "undo": 0.0
+      }
+    },
+    {
+      "name": "Gaea_official_native_erosion",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\VALIDATION\\GAEA_NATIVE_512_OFFICIAL_REPORT.json",
+      "detail": {
+        "resolution": 512,
+        "nodes": 7,
+        "native_result": "AlreadyBuilt"
+      }
+    },
+    {
+      "name": "Blender_Gaea_tiled_UVs_0_seams",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\VALIDATION\\BLENDER_NATIVE_EROSION_TILES.json",
+      "detail": {
+        "tiles": 4,
+        "seam_m": 0.0
+      }
+    },
+    {
+      "name": "Unreal_Gaea_four_native_meshes",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Gaea_2.3.1_Master\\VALIDATION\\UNREAL_NATIVE_EROSION_IMPORT.json",
+      "detail": {
+        "count": 4,
+        "status": "PASS_NATIVE_IMPORT"
+      }
+    },
+    {
+      "name": "Unreal_native_editor_five_domains",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_DeclarativeAssetAuthor_5Systems_v2.json",
+      "detail": {
+        "native_assets": 5,
+        "types": [
+          "material",
+          "pcg",
+          "sequence",
+          "niagara",
+          "blueprint"
+        ],
+        "niagara_emitter_functional": false
+      }
+    },
+    {
+      "name": "Unreal_Paper2D_flipbook",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_Paper2D_GP_NativeFlipbook_v2.json",
+      "detail": {
+        "sprites": 7,
+        "flipbook": "/Game/NW_MasterHub_QA/NativeGP2D_20261015/NW_GP_2D_KeyframeFlipbook.NW_GP_2D_KeyframeFlipbook"
+      }
+    },
+    {
+      "name": "Unreal_real_anim_pose_motion",
+      "passed": true,
+      "evidence_path": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\UE58_Gate09_MotionFidelity_v2.json",
+      "detail": {
+        "moving_bones": [
+          7,
+          15
+        ]
+      }
+    }
+  ],
+  "artist_quality_accepted": false,
+  "Rakabi_2D_to_3D_accepted": false,
+  "production_Android_integration_accepted": false,
+  "native_Unreal_Landscape_WorldPartition_accepted": false,
+  "universal_Gaea_nodes_or_GUI_automation_accepted": false
+}
