@@ -1,0 +1,7 @@
+﻿RESULT=LOAD_MESH_INVOKED
+UTC=2026-10-15T12:44:23.3966549Z
+SOURCE=D:\Tools\Steam\steamapps\common\Koikatsu Party\BepInEx\NoWorldBridge\assets\NW_GUI_Baluster_Studio_AUTO_20261015124422552041.obj
+SHA256=7d4110d0890a96cff20915af3562b247c3cb46f2495793d6e75c845203ba35e8
+OBJECT_REPLACEMENTS_BEFORE=0
+OBJECT_REPLACEMENTS_AFTER=1
+NOTE=Importer method returns void; inspect scene/log for final art confirmation

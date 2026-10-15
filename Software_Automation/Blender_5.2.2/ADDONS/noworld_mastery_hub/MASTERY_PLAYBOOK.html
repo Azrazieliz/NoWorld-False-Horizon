@@ -1,0 +1,219 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NoWorld | Blender 5.2.2 Software Mastery</title>
+<style>
+:root{color-scheme:dark;--bg:#101419;--line:#334351;--panel:#1b222b;--ink:#edf1f5;--muted:#b9cad6;--accent:#75c4ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,Arial}
+main{max-width:1340px;margin:auto;padding:28px 22px 60px}h1{font-size:32px;letter-spacing:-.02em;margin:12px 0}h2{font-size:23px;margin-top:36px}
+p{max-width:1040px}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+strong{color:#fff}.tag{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);padding:3px 6px;border-radius:6px;color:var(--muted)}
+.hero{border-bottom:1px solid var(--line);padding-bottom:18px}
+.status{font-size:13px;color:#ffd59e;background:#392c1f;padding:7px 10px;display:inline-block;border-radius:6px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0 12px}
+input{border:1px solid var(--line);border-radius:7px;background:#232c34;color:#fff;padding:10px 13px;min-width:300px;flex:1;font-size:15px}
+button{border:1px solid var(--line);background:#253340;color:#fff;padding:9px 11px;border-radius:7px;cursor:pointer}
+button.active{background:#11618c;border-color:#64b7e6}button:hover{border-color:#b2dafa}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(370px,1fr));gap:14px}
+.item{border:1px solid var(--line);background:var(--panel);border-radius:12px;overflow:hidden}
+.item header{padding:15px 17px 12px;border-bottom:1px solid var(--line)}
+.item header h3{margin:7px 0;font-size:18px;line-height:1.25}.item header small{color:var(--muted)}
+.body{padding:2px 17px 15px}.body h4{font-size:12px;color:#a9c6d8;margin:14px 0 3px;text-transform:uppercase;letter-spacing:.05em}
+.body p{margin:2px 0 10px}.body code{display:block;border-radius:7px;background:#111820;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;color:#aee4c9;font-size:12px}
+.route{font-weight:600}.src{font-size:13px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}.notes section{border:1px solid var(--line);padding:10px 15px;border-radius:8px}
+.meta{font-size:13px;color:var(--muted)}.hidden{display:none!important}footer{margin-top:40px;border-top:1px solid var(--line);padding:20px;color:var(--muted)}
+</style></head><body><main>
+<section class="hero"><span class="tag">BLENDER 5.2.2 LTS • WORKING PC</span>
+<h1>NoWorld: software mastery & automation control</h1>
+<p>This is the <strong>software operation handbook</strong>—not a completed game asset library. It documents real UI paths, high-leverage automation methods, native controls and their current validation states. Use the Blender <strong>N</strong> sidebar → <strong>NoWorld</strong> for the matching live control panel.</p>
+<div class="status">Professional art demonstrations accepted: 0 / 25. Software automation is not artistic sign-off.</div>
+<p class="meta">Designed for 8 GB RAM / i3-1115G4 with Blender 5.2.2, Unreal 5.8.3, Gaea 2.3.1, and Koikatsu input. All production asset generation requires a distinct commission.</p></section>
+<h2>Fastest reliable automation principles</h2>
+<div class="notes">
+<section><h3>1. Work from high-quality sources</h3><p>Use licensed mocap, scanned PBR, curated shapes, dedicated add-ons and asset libraries; automate import and adaptation rather than drawing every key or rebuilding each character.</p></section>
+<section><h3>2. Maintain source parameter systems</h3><p>Use modifier stack, Geometry Nodes group interfaces, material mask node groups, reusable corrective shape keys and Asset Browser catalogs. No destructive edits to canonical source.</p></section>
+<section><h3>3. Let the right engine do the job</h3><p>Blender authors and bakes; Unreal does Control Rig, retarget, gameplay notifies, Niagara and Android quality. Gaea provides eroded terrain; Koikatsu preserves identity and original face assets.</p></section>
+<section><h3>4. Remove meaningless manual clicking</h3><p>Native bpy/RNA, background batch, reusable CLI manifests, named controls and validated add-ons take precedence over fragile pixel-coordinate clicks.</p></section>
+<section><h3>5. Check final fidelity</h3><p>Automated topology/action checks are necessary but cannot evaluate expressive performance, refined design, toon shaders or native game playback. Artistic comparison remains a separate gate.</p></section>
+<section><h3>6. Safe by default</h3><p>The installed hub is read-only. It doesn't create meshes, play animations into canonical files, retarget into Gate 12 or overwrite frozen project assets.</p></section>
+</div>
+<h2>Workflow finder</h2>
+<div class="controls"><input id="search" type="search" placeholder="Search control, command, software, method…"><button class="filter active" data-filter="ALL">All</button><button class="filter" data-filter="2D">2D</button><button class="filter" data-filter="Animation">Animation</button><button class="filter" data-filter="Cinematics">Cinematics</button><button class="filter" data-filter="Core">Core</button><button class="filter" data-filter="Integration">Integration</button><button class="filter" data-filter="Materials">Materials</button><button class="filter" data-filter="Model">Model</button><button class="filter" data-filter="Physics">Physics</button><button class="filter" data-filter="Rig">Rig</button><button class="filter" data-filter="Sculpt">Sculpt</button><button class="filter" data-filter="VFX">VFX</button></div>
+<p id="result" class="meta"></p>
+<div class="cards"><article class="item" data-search="asset library &amp; batch reuse core mark reusable data-block as asset, assign catalog, choose link/append/reuse; not a duplicate project. bpy.data.objects / node_groups; asset_mark(); bpy.context.preferences.filepaths.asset_libraries" data-domain="Core" data-status="IMPLEMENTED">
+<header><span class="tag">Core</span><h3>Asset Library &amp; batch reuse</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">File &gt; Asset Browser; Edit &gt; Preferences &gt; File Paths &gt; Asset Libraries</p>
+<h4>Production-efficient method</h4><p>Mark reusable data-block as Asset, assign catalog, choose Link/Append/Reuse; not a duplicate project.</p><h4>Automatable native route</h4>
+<code>bpy.data.objects / node_groups; asset_mark(); bpy.context.preferences.filepaths.asset_libraries</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/editors/asset_browser.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="reusable procedural geometry systems model seeded generation, geometry fields, named attributes, variation without rebuilding topology. bpy.data.node_groups.new(...,&#x27;geometrynodetree&#x27;); obj.modifiers.new(...,&#x27;nodes&#x27;); modifier[identifier]=value" data-domain="Model" data-status="IMPLEMENTED">
+<header><span class="tag">Model</span><h3>Reusable procedural geometry systems</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Select object &gt; Properties &gt; Modifiers &gt; Add Modifier &gt; Geometry Nodes; expose parameters in Group Interface</p>
+<h4>Production-efficient method</h4><p>Seeded generation, geometry fields, named attributes, variation without rebuilding topology.</p><h4>Automatable native route</h4>
+<code>bpy.data.node_groups.new(...,&#x27;GeometryNodeTree&#x27;); obj.modifiers.new(...,&#x27;NODES&#x27;); modifier[identifier]=value</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/modeling/modifiers/geometry_nodes.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="profile-based lathe &amp; architectural turned shapes model one accurate profile becomes column, vase, baluster, finial; parameterize revolution and add bevel/subdivision. bmesh.ops.spin(geom=..., axis=(0,0,1), angle=6.283185, steps=64)" data-domain="Model" data-status="IMPLEMENTED">
+<header><span class="tag">Model</span><h3>Profile-based lathe &amp; architectural turned shapes</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Edit Mode &gt; select profile edges &gt; Toolbar (T) Spin; adjust Steps &amp; Angle in operator panel F9</p>
+<h4>Production-efficient method</h4><p>One accurate profile becomes column, vase, baluster, finial; parameterize revolution and add bevel/subdivision.</p><h4>Automatable native route</h4>
+<code>bmesh.ops.spin(geom=..., axis=(0,0,1), angle=6.283185, steps=64)</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/modeling/meshes/tools/spin.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="high-end organic sculpting &amp; proportion polish sculpt anatomy silhouette first, secondary folds next, tertiary pores last; retopo/high-to-low normal bake; no generic blob acceptance. bpy.ops.sculpt.* context-dependent; bpy.ops.object.modifier_add(type=&#x27;multires&#x27;)" data-domain="Sculpt" data-status="RESEARCHED">
+<header><span class="tag">Sculpt</span><h3>High-end organic sculpting &amp; proportion polish</h3><small>RESEARCHED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Sculpting workspace; brush selector &gt; Clay Strips/Crease/Draw Sharp; use Multires or remesh before detailing</p>
+<h4>Production-efficient method</h4><p>Anatomy silhouette first, secondary folds next, tertiary pores last; retopo/high-to-low normal bake; no generic blob acceptance.</p><h4>Automatable native route</h4>
+<code>bpy.ops.sculpt.* context-dependent; bpy.ops.object.modifier_add(type=&#x27;MULTIRES&#x27;)</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/sculpt_paint/sculpting/index.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="production retopology and deformation loops sculpt topology loops around joints, eyes and mouth, optimize high/low lod preserving silhouette. modifier type shrinkwrap; bpy.data.meshes; bpy.ops.object.modifier_add" data-domain="Sculpt" data-status="RESEARCHED">
+<header><span class="tag">Sculpt</span><h3>Production retopology and deformation loops</h3><small>RESEARCHED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Modeling &gt; mesh Edit Mode; Retopology Overlay, snapping Face, Shrinkwrap modifier</p>
+<h4>Production-efficient method</h4><p>Topology loops around joints, eyes and mouth, optimize high/low LOD preserving silhouette.</p><h4>Automatable native route</h4>
+<code>modifier type SHRINKWRAP; bpy.data.meshes; bpy.ops.object.modifier_add</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/modeling/modifiers/deform/shrinkwrap.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="automated uv unwrapping &amp; diagnostics materials demand no missing uvs and explicit seam strategy; do not assume generated geometry nodes cube uv named uvmap. bpy.ops.uv.smart_project(); mesh.uv_layers; evaluated mesh audit" data-domain="Materials" data-status="IMPLEMENTED">
+<header><span class="tag">Materials</span><h3>Automated UV unwrapping &amp; diagnostics</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">UV Editing workspace; Edit Mode select faces &gt; U &gt; Unwrap / Smart UV Project</p>
+<h4>Production-efficient method</h4><p>Demand no missing UVs and explicit seam strategy; do not assume generated Geometry Nodes cube UV named UVMap.</p><h4>Automatable native route</h4>
+<code>bpy.ops.uv.smart_project(); mesh.uv_layers; evaluated mesh audit</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/modeling/meshes/uv/unwrapping/index.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="high-fidelity authored pbr layers materials reuse scanned legal texture sets, make artist masks for painted edges, dirt, color zones; exact roughness/normal management. bpy.data.materials; shadernodeteximage; shadernodenormalmap; shadernodebump" data-domain="Materials" data-status="RESEARCHED">
+<header><span class="tag">Materials</span><h3>High-fidelity authored PBR layers</h3><small>RESEARCHED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Shading workspace &gt; Principled BSDF; image color space: Base Color sRGB, Roughness/Normal Non-Color</p>
+<h4>Production-efficient method</h4><p>Reuse scanned legal texture sets, make artist masks for painted edges, dirt, color zones; exact roughness/normal management.</p><h4>Automatable native route</h4>
+<code>bpy.data.materials; ShaderNodeTexImage; ShaderNodeNormalMap; ShaderNodeBump</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/render/shader_nodes/shader/principled.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="per-region asymmetric same-mesh color gradients materials two independent artist colors + strength + axis/offset + asymmetry + noise; local/object/world coordinate variant, preserves base texture. material node group shadernodegroup; texturecoordinate / vectormath dot_product" data-domain="Materials" data-status="IMPLEMENTED">
+<header><span class="tag">Materials</span><h3>Per-region asymmetric same-mesh color gradients</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Shading &gt; select Material &gt; NW_AsymMultiObject_Gradient group inputs</p>
+<h4>Production-efficient method</h4><p>Two independent artist colors + strength + axis/offset + asymmetry + noise; local/object/world coordinate variant, preserves base texture.</p><h4>Automatable native route</h4>
+<code>Material node group ShaderNodeGroup; TextureCoordinate / VectorMath DOT_PRODUCT</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/render/shader_nodes/index.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="highpoly-&gt;lowpoly image texture baking materials export real maps (normal, ao, roughness and opacity/cutout where relevant) for unreal; choose cage clearance. bpy.context.scene.render.bake; bpy.ops.object.bake(type=&#x27;normal&#x27;)" data-domain="Materials" data-status="RESEARCHED">
+<header><span class="tag">Materials</span><h3>Highpoly-&gt;lowpoly image texture baking</h3><small>RESEARCHED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Render Properties &gt; Cycles &gt; Bake; select high and low; enable Selected to Active, set Cage/Extrusion</p>
+<h4>Production-efficient method</h4><p>Export real maps (normal, AO, roughness and opacity/cutout where relevant) for Unreal; choose cage clearance.</p><h4>Automatable native route</h4>
+<code>bpy.context.scene.render.bake; bpy.ops.object.bake(type=&#x27;NORMAL&#x27;)</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/render/cycles/baking.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="blender studio cloudrig character rigging rig cloudrig 2.2.31 installed. avoid replacing canonical kk skeleton; use control rig, bake onto actual deform bones. bl_ext.blender_org.cloudrig (installed &amp; enabled blender 5.2.2)" data-domain="Rig" data-status="EXT_INSTALLED">
+<header><span class="tag">Rig</span><h3>Blender Studio CloudRig character rigging</h3><small>EXT_INSTALLED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Armature / Object Mode &gt; CloudRig metarig controls; generate and test IK/FK in Pose Mode</p>
+<h4>Production-efficient method</h4><p>CloudRig 2.2.31 installed. Avoid replacing canonical KK skeleton; use control rig, bake onto actual deform bones.</p><h4>Automatable native route</h4>
+<code>bl_ext.blender_org.cloudrig (installed &amp; enabled Blender 5.2.2)</code><p class="src"><a target="_blank" href="https://extensions.blender.org/add-ons/cloudrig/">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="koikatsu original identity and morph preservation rig do not treat import as reproduction: 121-bone count, 1,797 part-wise morph channels, but eye/stocking shader fidelity unresolved. gltf/fbx imported bones, shape_keys, armature + original texture links" data-domain="Rig" data-status="PARTIAL">
+<header><span class="tag">Rig</span><h3>Koikatsu original identity and morph preservation</h3><small>PARTIAL</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Import source GLB/FBX into isolated project; Outliner &gt; armature &gt; Shape Keys; compare base/rest pose and materials</p>
+<h4>Production-efficient method</h4><p>Do not treat import as reproduction: 121-bone count, 1,797 part-wise morph channels, but eye/stocking shader fidelity unresolved.</p><h4>Automatable native route</h4>
+<code>glTF/FBX imported bones, shape_keys, armature + original texture links</code><p class="src"><a target="_blank" href="https://github.com/MediaMoots/KK-Blender-Porter-Pack">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="facial expression shape-key library rig author smile/blink/speech/strong attack poses + corrective shape keys; preserve noncanonical privacy source. mesh.shape_keys.key_blocks[name].value, keyframe_insert()" data-domain="Rig" data-status="PARTIAL">
+<header><span class="tag">Rig</span><h3>Facial expression shape-key library</h3><small>PARTIAL</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Object Data Properties &gt; Shape Keys; Timeline &gt; key value, isolate mouth and eyelid controls</p>
+<h4>Production-efficient method</h4><p>Author smile/blink/speech/strong attack poses + corrective shape keys; preserve noncanonical privacy source.</p><h4>Automatable native route</h4>
+<code>mesh.shape_keys.key_blocks[name].value, keyframe_insert()</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/animation/shape_keys/index.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="automated mocap retarget with rest-pose alignment animation extension installed and automated bind tested. cmu source bent kk character badly; must correct rest pose/foot targets before accept. bl_ext.blender_org.retarget; armature.retarget_constrain_to_armature; ik retargeter" data-domain="Animation" data-status="BLOCKED_QUALITY">
+<header><span class="tag">Animation</span><h3>Automated mocap retarget with rest-pose alignment</h3><small>BLOCKED_QUALITY</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Pose Mode; Retarget extension 5.2.0 &gt; Bind, align source/target rest pose, Bake Constrained Actions</p>
+<h4>Production-efficient method</h4><p>Extension installed and automated bind tested. CMU source bent KK character badly; MUST correct rest pose/foot targets before accept.</p><h4>Automatable native route</h4>
+<code>bl_ext.blender_org.retarget; armature.retarget_constrain_to_armature; IK Retargeter</code><p class="src"><a target="_blank" href="https://github.com/KBSBAUDRICE/Retarget">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="reusable actions and action slots animation native 5.2 actions can contain multiple slots; bake real skeletal transformations and export actual animation not camera video. obj.animation_data.action; obj.animation_data.action_slot.identifier; action.layers[].strips[].channelbag" data-domain="Animation" data-status="IMPLEMENTED">
+<header><span class="tag">Animation</span><h3>Reusable Actions and Action Slots</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Dope Sheet &gt; Action Editor, choose Action + Slot; NLA push down for reuse; Asset Browser pose assets</p>
+<h4>Production-efficient method</h4><p>Native 5.2 Actions can contain multiple Slots; bake real skeletal transformations and export actual animation not camera video.</p><h4>Automatable native route</h4>
+<code>obj.animation_data.action; obj.animation_data.action_slot.identifier; action.layers[].strips[].channelbag</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/animation/actions.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="combat choreography from licensed performed motion animation cmu female punch captured/sliced; unreal native 44 frames and 3 notify markers saved, motion visual quality not accepted. cmu bvh -&gt; blender f-curves -&gt; ue ik rig/retargeter -&gt; animsequence" data-domain="Animation" data-status="PARTIAL">
+<header><span class="tag">Animation</span><h3>Combat choreography from licensed performed motion</h3><small>PARTIAL</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Use reference/mocap library; bake adapted animation to deform skeleton; IK feet/hands and event phases</p>
+<h4>Production-efficient method</h4><p>CMU female punch captured/sliced; Unreal native 44 frames and 3 notify markers saved, motion visual quality not accepted.</p><h4>Automatable native route</h4>
+<code>CMU BVH -&gt; Blender F-curves -&gt; UE IK Rig/Retargeter -&gt; AnimSequence</code><p class="src"><a target="_blank" href="https://dev.epicgames.com/documentation/unreal-engine/ik-rig-animation-retargeting-in-unreal-engine">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="foot/hand planted ik contact correction animation keep supports stationary, prevent sliding; character height and pelvis compensation must be verified per rig. bpy.ops.pose.*; ik constraint; unreal ik retarget and control rig" data-domain="Animation" data-status="BLOCKED_QUALITY">
+<header><span class="tag">Animation</span><h3>Foot/hand planted IK contact correction</h3><small>BLOCKED_QUALITY</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Pose Mode &gt; bone constraints &gt; IK and Copy Location; Unreal Control Rig/Full Body IK for planted contacts</p>
+<h4>Production-efficient method</h4><p>Keep supports stationary, prevent sliding; character height and pelvis compensation must be verified per rig.</p><h4>Automatable native route</h4>
+<code>bpy.ops.pose.*; IK Constraint; Unreal IK Retarget and Control Rig</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/animation/constraints/tracking/ik_solver.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="automatic impact dynamics with rigid bodies physics physics response not a hand-animated stack; export state events or simulate in unreal chaos for gameplay. bpy.ops.rigidbody.object_add(); scene.rigidbody_world.point_cache" data-domain="Physics" data-status="RESEARCHED">
+<header><span class="tag">Physics</span><h3>Automatic impact dynamics with rigid bodies</h3><small>RESEARCHED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Object &gt; Rigid Body &gt; Add Active/Passive; Scene &gt; Rigid Body World &gt; Cache Bake</p>
+<h4>Production-efficient method</h4><p>Physics response not a hand-animated stack; export state events or simulate in Unreal Chaos for gameplay.</p><h4>Automatable native route</h4>
+<code>bpy.ops.rigidbody.object_add(); scene.rigidbody_world.point_cache</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/physics/rigid_body/index.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="node-powered cloth stretch, tear and pinned controls physics 5.2 node-powered cloth/hair is new and experimental. source can tear, but kk in-game edit/ui and unreal cloth fidelity remain unimplemented. geometry nodes physics groups; cache bake, no claim of game runtime parity" data-domain="Physics" data-status="VERSION_AVAILABLE">
+<header><span class="tag">Physics</span><h3>Node-powered cloth stretch, tear and pinned controls</h3><small>VERSION_AVAILABLE</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Add Modifier &gt; Hair or Cloth node-based setup (5.2); expose pin/tear/stiffness parameters</p>
+<h4>Production-efficient method</h4><p>5.2 node-powered cloth/hair is new and experimental. Source can tear, but KK in-game edit/UI and Unreal cloth fidelity remain unimplemented.</p><h4>Automatable native route</h4>
+<code>Geometry Nodes physics groups; cache bake, no claim of game runtime parity</code><p class="src"><a target="_blank" href="https://www.blender.org/releases/5-2/">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="hair grooms, curves and dynamics physics use clumps, guide strips and follow strands, limited 8gb pc preview settings; runtime hair cards or ue groom lod. curve geometry, hair nodes, simulated attributes" data-domain="Physics" data-status="VERSION_AVAILABLE">
+<header><span class="tag">Physics</span><h3>Hair grooms, curves and dynamics</h3><small>VERSION_AVAILABLE</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Sculpting &gt; Hair curves; Geometry Nodes hair groups; modifiers &amp; physics 5.2</p>
+<h4>Production-efficient method</h4><p>Use clumps, guide strips and follow strands, limited 8GB PC preview settings; runtime hair cards or UE Groom LOD.</p><h4>Automatable native route</h4>
+<code>Curve Geometry, hair nodes, simulated attributes</code><p class="src"><a target="_blank" href="https://www.blender.org/releases/5-2/">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="high-quality grease pencil v3 2d animation 2d native 4.5 tested 14 drawings, 48-frame output. artistic 2d quality not accepted; use held drawings and vector tweaks not 24 independent images/s. bpy.data.grease_pencils_v3; grease pencil frames and drawing.strokes" data-domain="2D" data-status="IMPLEMENTED">
+<header><span class="tag">2D</span><h3>High-quality Grease Pencil v3 2D animation</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">2D Animation workspace; Draw Mode, Dope Sheet &gt; Grease Pencil, onion skin, keyed drawings</p>
+<h4>Production-efficient method</h4><p>Native 4.5 tested 14 drawings, 48-frame output. Artistic 2D quality not accepted; use held drawings and vector tweaks not 24 independent images/s.</p><h4>Automatable native route</h4>
+<code>bpy.data.grease_pencils_v3; Grease Pencil Frames and Drawing.strokes</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/grease_pencil/animation/introduction.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="grease pencil 5.2 precise fill and cels 2d 5.2 accelerated precise delaunay fill; draw key poses, use masks and material palette, author smears only where needed. grease pencil v3 layers/materials; svg export/ffmpeg previews not engine clips" data-domain="2D" data-status="VERSION_AVAILABLE">
+<header><span class="tag">2D</span><h3>Grease Pencil 5.2 precise fill and cels</h3><small>VERSION_AVAILABLE</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Grease Pencil Draw Mode &gt; Fill tool; material fill; multiframe onion skins</p>
+<h4>Production-efficient method</h4><p>5.2 accelerated precise Delaunay fill; draw key poses, use masks and material palette, author smears only where needed.</p><h4>Automatable native route</h4>
+<code>Grease Pencil v3 layers/materials; SVG export/FFmpeg previews not engine clips</code><p class="src"><a target="_blank" href="https://www.blender.org/releases/5-2/">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="anime-style beam, rings and procedural hit effects vfx animate source beam+shockwave+debris layers; drive niagara spawn by actual attack notify; no mp4 as deliverable. gn meshes + material masks -&gt; ue niagara system + animnotify" data-domain="VFX" data-status="PARTIAL">
+<header><span class="tag">VFX</span><h3>Anime-style beam, rings and procedural hit effects</h3><small>PARTIAL</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Geometry Nodes/Shading for source effect mesh, then Unreal Niagara for runtime</p>
+<h4>Production-efficient method</h4><p>Animate source beam+shockwave+debris layers; drive Niagara spawn by actual attack notify; no MP4 as deliverable.</p><h4>Automatable native route</h4>
+<code>GN meshes + material masks -&gt; UE Niagara System + AnimNotify</code><p class="src"><a target="_blank" href="https://dev.epicgames.com/documentation/unreal-engine/overview-of-niagara-effects-for-unreal-engine">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="film lighting and shot controls cinematics camera moves are cinematic previews only, never game character action. cycles lookdev != unreal toon shader parity. bpy.data.cameras; area lights; view_settings; render.engine" data-domain="Cinematics" data-status="IMPLEMENTED">
+<header><span class="tag">Cinematics</span><h3>Film lighting and shot controls</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Shading &gt; World and Lights; Layout &gt; Camera; Rendering &gt; Cycles/Eevee settings</p>
+<h4>Production-efficient method</h4><p>Camera moves are cinematic previews only, never game character action. Cycles lookdev != Unreal toon shader parity.</p><h4>Automatable native route</h4>
+<code>bpy.data.cameras; area lights; view_settings; render.engine</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/render/index.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="reusable parametric preset libraries core version-matched source nodes and presets rather than one-off code; import as linked/append, keep asset origins. id.asset_mark, node_group.asset_data; bpy.data.libraries.load()" data-domain="Core" data-status="PARTIAL">
+<header><span class="tag">Core</span><h3>Reusable parametric preset libraries</h3><small>PARTIAL</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Asset Browser &gt; New Asset Catalog; select Geometry Nodes groups and Mark as Asset</p>
+<h4>Production-efficient method</h4><p>Version-matched source nodes and presets rather than one-off code; import as Linked/Append, keep asset origins.</p><h4>Automatable native route</h4>
+<code>ID.asset_mark, node_group.asset_data; bpy.data.libraries.load()</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/files/asset_libraries/catalogs.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="blender to unreal model/material export preflight integration verified native ue imported meshes and animsequences, shader parity/android quality still pending. bpy.ops.export_scene.fbx / gltf; ue assetimporttask / ik retargeter" data-domain="Integration" data-status="PARTIAL">
+<header><span class="tag">Integration</span><h3>Blender to Unreal model/material export preflight</h3><small>PARTIAL</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">File &gt; Export &gt; FBX or glTF; preserve scale, axis, FBX armature root and texture packages</p>
+<h4>Production-efficient method</h4><p>Verified native UE imported meshes and AnimSequences, shader parity/Android quality still pending.</p><h4>Automatable native route</h4>
+<code>bpy.ops.export_scene.fbx / gltf; UE AssetImportTask / IK Retargeter</code><p class="src"><a target="_blank" href="https://dev.epicgames.com/documentation/unreal-engine/importing-skeletal-meshes-using-fbx-in-unreal-engine">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="gaea terrain graph to unreal landscape integration gaea 2.3.1 installed, swarm had remote-console invalid handle: no accepted terrain output or bridge import. gaea build swarm -&gt; heightmap masks json -&gt; unreal landscape" data-domain="Integration" data-status="BLOCKED_NATIVE">
+<header><span class="tag">Integration</span><h3>Gaea terrain graph to Unreal Landscape</h3><small>BLOCKED_NATIVE</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Gaea Swarm --Filename --buildpath --resolution --seed; Gaea2Unreal bridge; Unreal Landscape weightmaps</p>
+<h4>Production-efficient method</h4><p>Gaea 2.3.1 installed, Swarm had remote-console invalid handle: no accepted terrain output or bridge import.</p><h4>Automatable native route</h4>
+<code>Gaea Build Swarm -&gt; heightmap masks JSON -&gt; Unreal Landscape</code><p class="src"><a target="_blank" href="https://docs.gaea.app/guides/use-in/bridges/gaea2unreal/index.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="headless native scene auditing and export core safe batch runs. prefer fresh process isolated worktree, explicit input/output and zero writes to foundation; dry-run before production. blender --background --factory-startup --python; bpy.context + asset manifest sha256" data-domain="Core" data-status="IMPLEMENTED">
+<header><span class="tag">Core</span><h3>Headless native scene auditing and export</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">Scripting workspace &gt; Python Console/Text Editor; command line blender --background --python script.py</p>
+<h4>Production-efficient method</h4><p>Safe batch runs. Prefer fresh process isolated worktree, explicit input/output and zero writes to foundation; dry-run before production.</p><h4>Automatable native route</h4>
+<code>Blender --background --factory-startup --python; bpy.context + asset manifest SHA256</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/advanced/command_line/arguments.html">Primary documentation / source →</a></p></div>
+</article>
+<article class="item" data-search="mesh uv/material/rig/action audit core one click reports object/mesh/uv/material/action/shape keys/rig and missing asset source; cannot judge aesthetics automatically. nw_mastery.audit_scene / cli noworld_cli.py --audit" data-domain="Core" data-status="IMPLEMENTED">
+<header><span class="tag">Core</span><h3>Mesh UV/material/rig/action audit</h3><small>IMPLEMENTED</small></header>
+<div class="body"><h4>Exact Blender UI route</h4><p class="route">3D View N sidebar &gt; NoWorld Mastery &gt; Run Read-only Audit</p>
+<h4>Production-efficient method</h4><p>One click reports object/mesh/UV/material/action/shape keys/rig and missing asset source; cannot judge aesthetics automatically.</p><h4>Automatable native route</h4>
+<code>nw_mastery.audit_scene / CLI noworld_cli.py --audit</code><p class="src"><a target="_blank" href="https://docs.blender.org/manual/en/5.2/advanced/scripting/introduction.html">Primary documentation / source →</a></p></div>
+</article></div>
+<h2>Known limitations</h2><p>Installed native Blender, CloudRig and Retarget extensions do not automatically guarantee high-end rigging. Experimental cloth/hair physics are not equivalent to Unreal or KK runtime. CMU mocap retarget to the Koikatsu sample failed visual pose inspection even though native UE assets were generated. Gaea 2.3.1 Swarm failed in the remote process console. Mastery is not certified until those workflows become reproducible, context-correct and artistically accepted.</p>
+<h2>Operational links</h2><p><a href="https://docs.blender.org/manual/en/5.2/">Version-matched Blender 5.2 manual</a> · <a href="https://docs.blender.org/api/5.2/">Blender 5.2 Python API</a> · <a href="https://studio.blender.org/training/">Blender Studio training</a> · <a href="https://developer.blender.org/docs/release_notes/5.2/">5.2 exact release notes</a> · <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/">Unreal 5.8 docs</a> · <a href="https://docs.gaea.app/">Gaea manual</a>.</p>
+<footer>Generated locally from WORKFLOWS.json. No videos, models, source characters, paid content or binary add-ons redistributed.</footer>
+</main><script>
+const cards=[...document.querySelectorAll('.item')];const search=document.querySelector('#search');
+let current='ALL';const result=document.querySelector('#result');
+function refresh(){const q=search.value.trim().toLowerCase();let n=0;for(const c of cards){const ok=(current==='ALL'||c.dataset.domain===current)&&c.dataset.search.includes(q);c.classList.toggle('hidden',!ok);if(ok)n++}result.textContent=n+' workflows shown / '+cards.length+' total';}
+for(const button of document.querySelectorAll('.filter'))button.addEventListener('click',()=>{current=button.dataset.filter;for(const x of document.querySelectorAll('.filter'))x.classList.toggle('active',x===button);refresh()});
+search.addEventListener('input',refresh);refresh();
+</script></body></html>

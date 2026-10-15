@@ -1,0 +1,12 @@
+{
+  "source": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_Hybrid_Strike.blend",
+  "blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGameSource.blend",
+  "report": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGameSource.json",
+  "frames_dir": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames",
+  "speed": 1.2,
+  "scale": 1,
+  "x_amplitude": 0.12,
+  "z_amplitude": 0.09,
+  "frame_width": 384,
+  "frame_height": 384
+}

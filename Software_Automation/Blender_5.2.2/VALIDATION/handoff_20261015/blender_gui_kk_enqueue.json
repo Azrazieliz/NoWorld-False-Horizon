@@ -1,0 +1,9 @@
+{
+  "status": "BLENDER_GUI_OPERATOR_PASS",
+  "operator": "bpy.ops.nw_gate.send_kk",
+  "blender": "5.2.2 LTS",
+  "source_unchanged": true,
+  "import_job": "NW_GUI_Baluster_Studio_AUTO_20261015124422552041",
+  "queued_request": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\BepInEx\\NoWorldBridge\\inbox\\NW_GUI_Baluster_Studio_AUTO_20261015124422552041.ready",
+  "needs_koikatsu_runtime_receipt": true
+}

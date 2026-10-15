@@ -1,0 +1,120 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "status": "PASS_NATIVE_MULTI_DOMAIN",
+  "motions": [
+    {
+      "name": "Kick",
+      "source": "/Game/NW_MasterHub_QA/Gate09_FightSource/NW_Combat_Kick.NW_Combat_Kick",
+      "native_retarged": "/Game/NW_KK_Kick_NW_Combat_Kick_AutoIK.NW_KK_Kick_NW_Combat_Kick_AutoIK",
+      "frames": 44,
+      "native_notify_count": 3,
+      "skeleton": "/Game/NW_StudioMocap/Target/NW_KK_121Bone_TargetSkeletal_Private_Skeleton.NW_KK_121Bone_TargetSkeletal_Private_Skeleton"
+    },
+    {
+      "name": "Sword",
+      "source": "/Game/NW_MasterHub_QA/Gate09_FightSource/NW_Combat_Sword.NW_Combat_Sword",
+      "native_retarged": "/Game/NW_KK_Sword_NW_Combat_Sword_AutoIK.NW_KK_Sword_NW_Combat_Sword_AutoIK",
+      "frames": 44,
+      "native_notify_count": 3,
+      "skeleton": "/Game/NW_StudioMocap/Target/NW_KK_121Bone_TargetSkeletal_Private_Skeleton.NW_KK_121Bone_TargetSkeletal_Private_Skeleton"
+    }
+  ],
+  "weapon_assets": [
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Blade_RuneSlot_00.NW_Blade_RuneSlot_00",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Blade_RuneSlot_01.NW_Blade_RuneSlot_01",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Blade_RuneSlot_02.NW_Blade_RuneSlot_02",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Forge_Blade.NW_Forge_Blade",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_00.NW_Grip_RaisedWrap_00",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_01.NW_Grip_RaisedWrap_01",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_02.NW_Grip_RaisedWrap_02",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_03.NW_Grip_RaisedWrap_03",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_04.NW_Grip_RaisedWrap_04",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_05.NW_Grip_RaisedWrap_05",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_06.NW_Grip_RaisedWrap_06",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_07.NW_Grip_RaisedWrap_07",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_08.NW_Grip_RaisedWrap_08",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_09.NW_Grip_RaisedWrap_09",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_10.NW_Grip_RaisedWrap_10",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_11.NW_Grip_RaisedWrap_11",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_12.NW_Grip_RaisedWrap_12",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_13.NW_Grip_RaisedWrap_13",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_14.NW_Grip_RaisedWrap_14",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_RaisedWrap_15.NW_Grip_RaisedWrap_15",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Grip_Shaft.NW_Grip_Shaft",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Hilt_Crossguard.NW_Hilt_Crossguard",
+      "class": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Gate01_Weapons/NW_Hilt_Pommel.NW_Hilt_Pommel",
+      "class": "StaticMesh"
+    }
+  ],
+  "weapon_static_mesh_count": 23,
+  "original_game_assets_modified": false,
+  "professional_motion_accepted": false,
+  "runtime_playback_accepted": false
+}

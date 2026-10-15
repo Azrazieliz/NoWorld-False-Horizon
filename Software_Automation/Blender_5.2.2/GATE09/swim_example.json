@@ -1,0 +1,16 @@
+{
+  "source_blend": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ArticulatedMount_IK_Baked.blend",
+  "rig": "NW_Skyrunner_Mount_Rig",
+  "motion": "swim",
+  "anatomy": "winged_quadruped",
+  "fps": 24,
+  "frames": 48,
+  "speed": 1,
+  "intensity": 0.6,
+  "root_travel_per_cycle": 0,
+  "outputs": {
+    "blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Gate09_swim_Semantic.blend",
+    "fbx": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Gate09_swim_Semantic.fbx",
+    "report": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Gate09_swim_Semantic.json"
+  }
+}

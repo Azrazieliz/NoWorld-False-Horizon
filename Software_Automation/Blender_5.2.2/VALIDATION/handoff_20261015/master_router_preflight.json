@@ -1,0 +1,138 @@
+{
+  "system": "NoWorld production command dispatcher",
+  "package": "Blender_5.2.2",
+  "from_commit_required": false,
+  "mode": "dry_run",
+  "timestamp_utc": "2026-10-15T13:06:33.995777+00:00",
+  "requested": 7,
+  "completed": 7,
+  "passed": 7,
+  "success": true,
+  "results": [
+    {
+      "index": 0,
+      "operation": "architecture",
+      "task_id": "0",
+      "command": [
+        "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+        "--background",
+        "--threads",
+        "2",
+        "--python",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE02\\architecture_job.py",
+        "--",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE02\\architecture_example.json"
+      ],
+      "passed": true,
+      "status": "PREFLIGHT_PASS",
+      "seconds": 0.0
+    },
+    {
+      "index": 1,
+      "operation": "morphology",
+      "task_id": "1",
+      "command": [
+        "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+        "--background",
+        "--threads",
+        "2",
+        "--python",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\morphology_job.py",
+        "--",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\morphology_example.json"
+      ],
+      "passed": true,
+      "status": "PREFLIGHT_PASS",
+      "seconds": 0.0
+    },
+    {
+      "index": 2,
+      "operation": "weapon",
+      "task_id": "2",
+      "command": [
+        "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+        "--background",
+        "--threads",
+        "2",
+        "--python",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\weapon_job.py",
+        "--",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\weapon_example.json"
+      ],
+      "passed": true,
+      "status": "PREFLIGHT_PASS",
+      "seconds": 0.0
+    },
+    {
+      "index": 3,
+      "operation": "semantic_motion",
+      "task_id": "3",
+      "command": [
+        "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+        "--background",
+        "--threads",
+        "2",
+        "--python",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\semantic_motion_job.py",
+        "--",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\flight_example.json"
+      ],
+      "passed": true,
+      "status": "PREFLIGHT_PASS",
+      "seconds": 0.0
+    },
+    {
+      "index": 4,
+      "operation": "fight_mocap",
+      "task_id": "4",
+      "command": [
+        "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+        "--background",
+        "--threads",
+        "2",
+        "--python",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\combat_capture_job.py",
+        "--",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\combat_kick.json"
+      ],
+      "passed": true,
+      "status": "PREFLIGHT_PASS",
+      "seconds": 0.0
+    },
+    {
+      "index": 5,
+      "operation": "grease_2d",
+      "task_id": "5",
+      "command": [
+        "D:\\Tools\\Blender-5.2.2-LTS\\blender-5.2.2-windows-x64\\blender.exe",
+        "--background",
+        "--threads",
+        "2",
+        "--python",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\grease_game2d_job.py",
+        "--",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\2d_transparent.json"
+      ],
+      "passed": true,
+      "status": "PREFLIGHT_PASS",
+      "seconds": 0.0
+    },
+    {
+      "index": 6,
+      "operation": "api_search",
+      "task_id": "6",
+      "command": [
+        "D:\\Tools\\Python311\\python.exe",
+        "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\MASTER_API\\search_methods.py",
+        "--query",
+        "armature action slots retargeting",
+        "--limit",
+        "3"
+      ],
+      "passed": true,
+      "status": "PREFLIGHT_PASS",
+      "seconds": 0.0
+    }
+  ],
+  "certified_artist_quality": false
+}

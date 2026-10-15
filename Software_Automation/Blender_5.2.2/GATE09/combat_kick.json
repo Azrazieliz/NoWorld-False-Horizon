@@ -1,0 +1,10 @@
+{
+  "id": "Kick",
+  "limb": "RightFoot",
+  "bvh": "D:\\UnrealProjects\\NW_Blender_Mocap_Interop_20261015\\144_05.bvh",
+  "blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Kick.blend",
+  "fbx": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Kick.fbx",
+  "report": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Kick.json",
+  "before_frames": 18,
+  "after_frames": 26
+}

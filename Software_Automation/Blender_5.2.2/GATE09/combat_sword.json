@@ -1,0 +1,10 @@
+{
+  "id": "Sword",
+  "limb": "RightHand",
+  "bvh": "D:\\UnrealProjects\\NW_Blender_Mocap_Interop_20261015\\143_23.bvh",
+  "blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Sword.blend",
+  "fbx": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Sword.fbx",
+  "report": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Sword.json",
+  "before_frames": 18,
+  "after_frames": 26
+}

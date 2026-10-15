@@ -1,0 +1,57 @@
+{
+  "blender": "5.2.2 LTS",
+  "grease_pencil_source_objects": 2,
+  "native_gp_drawings": 14,
+  "native_animation_editable": true,
+  "animated_GP_objects": 2,
+  "static_camera": true,
+  "sample_frames": [
+    {
+      "index": 0,
+      "source_frame": 1,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames\\NW_2D_00.png",
+      "sha256": "a79c3ddb6c570dd9a2c69ac024436c67d3ce7de527e0b709dd4fc74b7f82d1c2"
+    },
+    {
+      "index": 1,
+      "source_frame": 8,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames\\NW_2D_01.png",
+      "sha256": "67a40ae0c500966fce040930b7e1048b3d7a058f63b020055784282c772c9705"
+    },
+    {
+      "index": 2,
+      "source_frame": 16,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames\\NW_2D_02.png",
+      "sha256": "7a8d8e13a7e3338a192c319765c31d16e75f5c55d208e5b597d68e079c0696e8"
+    },
+    {
+      "index": 3,
+      "source_frame": 24,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames\\NW_2D_03.png",
+      "sha256": "44acfa056339b8d15192b90f9efa6438f0375896431726c683ba2153add98d1a"
+    },
+    {
+      "index": 4,
+      "source_frame": 32,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames\\NW_2D_04.png",
+      "sha256": "e3e42454370084dccf1b95f52c976a1c267e5056634887a60da083c868a80f95"
+    },
+    {
+      "index": 5,
+      "source_frame": 40,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames\\NW_2D_05.png",
+      "sha256": "29007700d9a4e9a5408f5f69c83abf26a0aebc3ab4aa511988373e8596420131"
+    },
+    {
+      "index": 6,
+      "source_frame": 48,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGame_Frames\\NW_2D_06.png",
+      "sha256": "a2c28774efb83fbd623307d75f7681d97a5a3a316d26c435bc89798c95b6df5d"
+    }
+  ],
+  "frames_per_second": 24,
+  "source_blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_2DGameSource.blend",
+  "source_preserved": true,
+  "art_quality_accepted": false,
+  "unreal_paper2d_imported": false
+}

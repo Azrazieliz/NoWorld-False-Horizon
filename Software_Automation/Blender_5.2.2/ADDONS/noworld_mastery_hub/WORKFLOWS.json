@@ -1,0 +1,296 @@
+{
+  "blender": "5.2.2 LTS",
+  "source_date": "2026-10-15",
+  "production_demo_accepted": 0,
+  "legend": {
+    "IMPLEMENTED": "Executed native test (not artistic acceptance)",
+    "EXT_INSTALLED": "Installed and enabled addon; production use unverified",
+    "PARTIAL": "Some tech proven, larger workflow not complete",
+    "RESEARCHED": "Reference and control route documented, native production not validated",
+    "VERSION_AVAILABLE": "Available in current Blender release, integration unvalidated",
+    "BLOCKED_QUALITY": "Automated output fails artistic or motion review",
+    "BLOCKED_NATIVE": "Execution failed"
+  },
+  "entries": [
+    {
+      "id": "library",
+      "name": "Asset Library & batch reuse",
+      "domain": "Core",
+      "status": "IMPLEMENTED",
+      "ui": "File > Asset Browser; Edit > Preferences > File Paths > Asset Libraries",
+      "method": "Mark reusable data-block as Asset, assign catalog, choose Link/Append/Reuse; not a duplicate project.",
+      "api": "bpy.data.objects / node_groups; asset_mark(); bpy.context.preferences.filepaths.asset_libraries",
+      "url": "https://docs.blender.org/manual/en/5.2/editors/asset_browser.html"
+    },
+    {
+      "id": "geonodes",
+      "name": "Reusable procedural geometry systems",
+      "domain": "Model",
+      "status": "IMPLEMENTED",
+      "ui": "Select object > Properties > Modifiers > Add Modifier > Geometry Nodes; expose parameters in Group Interface",
+      "method": "Seeded generation, geometry fields, named attributes, variation without rebuilding topology.",
+      "api": "bpy.data.node_groups.new(...,'GeometryNodeTree'); obj.modifiers.new(...,'NODES'); modifier[identifier]=value",
+      "url": "https://docs.blender.org/manual/en/5.2/modeling/modifiers/geometry_nodes.html"
+    },
+    {
+      "id": "spin",
+      "name": "Profile-based lathe & architectural turned shapes",
+      "domain": "Model",
+      "status": "IMPLEMENTED",
+      "ui": "Edit Mode > select profile edges > Toolbar (T) Spin; adjust Steps & Angle in operator panel F9",
+      "method": "One accurate profile becomes column, vase, baluster, finial; parameterize revolution and add bevel/subdivision.",
+      "api": "bmesh.ops.spin(geom=..., axis=(0,0,1), angle=6.283185, steps=64)",
+      "url": "https://docs.blender.org/manual/en/5.2/modeling/meshes/tools/spin.html"
+    },
+    {
+      "id": "sculpt",
+      "name": "High-end organic sculpting & proportion polish",
+      "domain": "Sculpt",
+      "status": "RESEARCHED",
+      "ui": "Sculpting workspace; brush selector > Clay Strips/Crease/Draw Sharp; use Multires or remesh before detailing",
+      "method": "Anatomy silhouette first, secondary folds next, tertiary pores last; retopo/high-to-low normal bake; no generic blob acceptance.",
+      "api": "bpy.ops.sculpt.* context-dependent; bpy.ops.object.modifier_add(type='MULTIRES')",
+      "url": "https://docs.blender.org/manual/en/5.2/sculpt_paint/sculpting/index.html"
+    },
+    {
+      "id": "retopo",
+      "name": "Production retopology and deformation loops",
+      "domain": "Sculpt",
+      "status": "RESEARCHED",
+      "ui": "Modeling > mesh Edit Mode; Retopology Overlay, snapping Face, Shrinkwrap modifier",
+      "method": "Topology loops around joints, eyes and mouth, optimize high/low LOD preserving silhouette.",
+      "api": "modifier type SHRINKWRAP; bpy.data.meshes; bpy.ops.object.modifier_add",
+      "url": "https://docs.blender.org/manual/en/5.2/modeling/modifiers/deform/shrinkwrap.html"
+    },
+    {
+      "id": "uv",
+      "name": "Automated UV unwrapping & diagnostics",
+      "domain": "Materials",
+      "status": "IMPLEMENTED",
+      "ui": "UV Editing workspace; Edit Mode select faces > U > Unwrap / Smart UV Project",
+      "method": "Demand no missing UVs and explicit seam strategy; do not assume generated Geometry Nodes cube UV named UVMap.",
+      "api": "bpy.ops.uv.smart_project(); mesh.uv_layers; evaluated mesh audit",
+      "url": "https://docs.blender.org/manual/en/5.2/modeling/meshes/uv/unwrapping/index.html"
+    },
+    {
+      "id": "pbr",
+      "name": "High-fidelity authored PBR layers",
+      "domain": "Materials",
+      "status": "RESEARCHED",
+      "ui": "Shading workspace > Principled BSDF; image color space: Base Color sRGB, Roughness/Normal Non-Color",
+      "method": "Reuse scanned legal texture sets, make artist masks for painted edges, dirt, color zones; exact roughness/normal management.",
+      "api": "bpy.data.materials; ShaderNodeTexImage; ShaderNodeNormalMap; ShaderNodeBump",
+      "url": "https://docs.blender.org/manual/en/5.2/render/shader_nodes/shader/principled.html"
+    },
+    {
+      "id": "gradient",
+      "name": "Per-region asymmetric same-mesh color gradients",
+      "domain": "Materials",
+      "status": "IMPLEMENTED",
+      "ui": "Shading > select Material > NW_AsymMultiObject_Gradient group inputs",
+      "method": "Two independent artist colors + strength + axis/offset + asymmetry + noise; local/object/world coordinate variant, preserves base texture.",
+      "api": "Material node group ShaderNodeGroup; TextureCoordinate / VectorMath DOT_PRODUCT",
+      "url": "https://docs.blender.org/manual/en/5.2/render/shader_nodes/index.html"
+    },
+    {
+      "id": "bake",
+      "name": "Highpoly->lowpoly image texture baking",
+      "domain": "Materials",
+      "status": "RESEARCHED",
+      "ui": "Render Properties > Cycles > Bake; select high and low; enable Selected to Active, set Cage/Extrusion",
+      "method": "Export real maps (normal, AO, roughness and opacity/cutout where relevant) for Unreal; choose cage clearance.",
+      "api": "bpy.context.scene.render.bake; bpy.ops.object.bake(type='NORMAL')",
+      "url": "https://docs.blender.org/manual/en/5.2/render/cycles/baking.html"
+    },
+    {
+      "id": "cloudrig",
+      "name": "Blender Studio CloudRig character rigging",
+      "domain": "Rig",
+      "status": "EXT_INSTALLED",
+      "ui": "Armature / Object Mode > CloudRig metarig controls; generate and test IK/FK in Pose Mode",
+      "method": "CloudRig 2.2.31 installed. Avoid replacing canonical KK skeleton; use control rig, bake onto actual deform bones.",
+      "api": "bl_ext.blender_org.cloudrig (installed & enabled Blender 5.2.2)",
+      "url": "https://extensions.blender.org/add-ons/cloudrig/"
+    },
+    {
+      "id": "kk",
+      "name": "Koikatsu original identity and morph preservation",
+      "domain": "Rig",
+      "status": "PARTIAL",
+      "ui": "Import source GLB/FBX into isolated project; Outliner > armature > Shape Keys; compare base/rest pose and materials",
+      "method": "Do not treat import as reproduction: 121-bone count, 1,797 part-wise morph channels, but eye/stocking shader fidelity unresolved.",
+      "api": "glTF/FBX imported bones, shape_keys, armature + original texture links",
+      "url": "https://github.com/MediaMoots/KK-Blender-Porter-Pack"
+    },
+    {
+      "id": "face",
+      "name": "Facial expression shape-key library",
+      "domain": "Rig",
+      "status": "PARTIAL",
+      "ui": "Object Data Properties > Shape Keys; Timeline > key value, isolate mouth and eyelid controls",
+      "method": "Author smile/blink/speech/strong attack poses + corrective shape keys; preserve noncanonical privacy source.",
+      "api": "mesh.shape_keys.key_blocks[name].value, keyframe_insert()",
+      "url": "https://docs.blender.org/manual/en/5.2/animation/shape_keys/index.html"
+    },
+    {
+      "id": "retarget",
+      "name": "Automated mocap retarget with rest-pose alignment",
+      "domain": "Animation",
+      "status": "BLOCKED_QUALITY",
+      "ui": "Pose Mode; Retarget extension 5.2.0 > Bind, align source/target rest pose, Bake Constrained Actions",
+      "method": "Extension installed and automated bind tested. CMU source bent KK character badly; MUST correct rest pose/foot targets before accept.",
+      "api": "bl_ext.blender_org.retarget; armature.retarget_constrain_to_armature; IK Retargeter",
+      "url": "https://github.com/KBSBAUDRICE/Retarget"
+    },
+    {
+      "id": "actions",
+      "name": "Reusable Actions and Action Slots",
+      "domain": "Animation",
+      "status": "IMPLEMENTED",
+      "ui": "Dope Sheet > Action Editor, choose Action + Slot; NLA push down for reuse; Asset Browser pose assets",
+      "method": "Native 5.2 Actions can contain multiple Slots; bake real skeletal transformations and export actual animation not camera video.",
+      "api": "obj.animation_data.action; obj.animation_data.action_slot.identifier; action.layers[].strips[].channelbag",
+      "url": "https://docs.blender.org/manual/en/5.2/animation/actions.html"
+    },
+    {
+      "id": "combat",
+      "name": "Combat choreography from licensed performed motion",
+      "domain": "Animation",
+      "status": "PARTIAL",
+      "ui": "Use reference/mocap library; bake adapted animation to deform skeleton; IK feet/hands and event phases",
+      "method": "CMU female punch captured/sliced; Unreal native 44 frames and 3 notify markers saved, motion visual quality not accepted.",
+      "api": "CMU BVH -> Blender F-curves -> UE IK Rig/Retargeter -> AnimSequence",
+      "url": "https://dev.epicgames.com/documentation/unreal-engine/ik-rig-animation-retargeting-in-unreal-engine"
+    },
+    {
+      "id": "ik",
+      "name": "Foot/hand planted IK contact correction",
+      "domain": "Animation",
+      "status": "BLOCKED_QUALITY",
+      "ui": "Pose Mode > bone constraints > IK and Copy Location; Unreal Control Rig/Full Body IK for planted contacts",
+      "method": "Keep supports stationary, prevent sliding; character height and pelvis compensation must be verified per rig.",
+      "api": "bpy.ops.pose.*; IK Constraint; Unreal IK Retarget and Control Rig",
+      "url": "https://docs.blender.org/manual/en/5.2/animation/constraints/tracking/ik_solver.html"
+    },
+    {
+      "id": "rigid",
+      "name": "Automatic impact dynamics with rigid bodies",
+      "domain": "Physics",
+      "status": "RESEARCHED",
+      "ui": "Object > Rigid Body > Add Active/Passive; Scene > Rigid Body World > Cache Bake",
+      "method": "Physics response not a hand-animated stack; export state events or simulate in Unreal Chaos for gameplay.",
+      "api": "bpy.ops.rigidbody.object_add(); scene.rigidbody_world.point_cache",
+      "url": "https://docs.blender.org/manual/en/5.2/physics/rigid_body/index.html"
+    },
+    {
+      "id": "cloth",
+      "name": "Node-powered cloth stretch, tear and pinned controls",
+      "domain": "Physics",
+      "status": "VERSION_AVAILABLE",
+      "ui": "Add Modifier > Hair or Cloth node-based setup (5.2); expose pin/tear/stiffness parameters",
+      "method": "5.2 node-powered cloth/hair is new and experimental. Source can tear, but KK in-game edit/UI and Unreal cloth fidelity remain unimplemented.",
+      "api": "Geometry Nodes physics groups; cache bake, no claim of game runtime parity",
+      "url": "https://www.blender.org/releases/5-2/"
+    },
+    {
+      "id": "hair",
+      "name": "Hair grooms, curves and dynamics",
+      "domain": "Physics",
+      "status": "VERSION_AVAILABLE",
+      "ui": "Sculpting > Hair curves; Geometry Nodes hair groups; modifiers & physics 5.2",
+      "method": "Use clumps, guide strips and follow strands, limited 8GB PC preview settings; runtime hair cards or UE Groom LOD.",
+      "api": "Curve Geometry, hair nodes, simulated attributes",
+      "url": "https://www.blender.org/releases/5-2/"
+    },
+    {
+      "id": "grease",
+      "name": "High-quality Grease Pencil v3 2D animation",
+      "domain": "2D",
+      "status": "IMPLEMENTED",
+      "ui": "2D Animation workspace; Draw Mode, Dope Sheet > Grease Pencil, onion skin, keyed drawings",
+      "method": "Native 4.5 tested 14 drawings, 48-frame output. Artistic 2D quality not accepted; use held drawings and vector tweaks not 24 independent images/s.",
+      "api": "bpy.data.grease_pencils_v3; Grease Pencil Frames and Drawing.strokes",
+      "url": "https://docs.blender.org/manual/en/5.2/grease_pencil/animation/introduction.html"
+    },
+    {
+      "id": "grease_fill",
+      "name": "Grease Pencil 5.2 precise fill and cels",
+      "domain": "2D",
+      "status": "VERSION_AVAILABLE",
+      "ui": "Grease Pencil Draw Mode > Fill tool; material fill; multiframe onion skins",
+      "method": "5.2 accelerated precise Delaunay fill; draw key poses, use masks and material palette, author smears only where needed.",
+      "api": "Grease Pencil v3 layers/materials; SVG export/FFmpeg previews not engine clips",
+      "url": "https://www.blender.org/releases/5-2/"
+    },
+    {
+      "id": "vfx",
+      "name": "Anime-style beam, rings and procedural hit effects",
+      "domain": "VFX",
+      "status": "PARTIAL",
+      "ui": "Geometry Nodes/Shading for source effect mesh, then Unreal Niagara for runtime",
+      "method": "Animate source beam+shockwave+debris layers; drive Niagara spawn by actual attack notify; no MP4 as deliverable.",
+      "api": "GN meshes + material masks -> UE Niagara System + AnimNotify",
+      "url": "https://dev.epicgames.com/documentation/unreal-engine/overview-of-niagara-effects-for-unreal-engine"
+    },
+    {
+      "id": "camera",
+      "name": "Film lighting and shot controls",
+      "domain": "Cinematics",
+      "status": "IMPLEMENTED",
+      "ui": "Shading > World and Lights; Layout > Camera; Rendering > Cycles/Eevee settings",
+      "method": "Camera moves are cinematic previews only, never game character action. Cycles lookdev != Unreal toon shader parity.",
+      "api": "bpy.data.cameras; area lights; view_settings; render.engine",
+      "url": "https://docs.blender.org/manual/en/5.2/render/index.html"
+    },
+    {
+      "id": "blendkit",
+      "name": "Reusable parametric preset libraries",
+      "domain": "Core",
+      "status": "PARTIAL",
+      "ui": "Asset Browser > New Asset Catalog; select Geometry Nodes groups and Mark as Asset",
+      "method": "Version-matched source nodes and presets rather than one-off code; import as Linked/Append, keep asset origins.",
+      "api": "ID.asset_mark, node_group.asset_data; bpy.data.libraries.load()",
+      "url": "https://docs.blender.org/manual/en/5.2/files/asset_libraries/catalogs.html"
+    },
+    {
+      "id": "ue",
+      "name": "Blender to Unreal model/material export preflight",
+      "domain": "Integration",
+      "status": "PARTIAL",
+      "ui": "File > Export > FBX or glTF; preserve scale, axis, FBX armature root and texture packages",
+      "method": "Verified native UE imported meshes and AnimSequences, shader parity/Android quality still pending.",
+      "api": "bpy.ops.export_scene.fbx / gltf; UE AssetImportTask / IK Retargeter",
+      "url": "https://dev.epicgames.com/documentation/unreal-engine/importing-skeletal-meshes-using-fbx-in-unreal-engine"
+    },
+    {
+      "id": "terrain",
+      "name": "Gaea terrain graph to Unreal Landscape",
+      "domain": "Integration",
+      "status": "BLOCKED_NATIVE",
+      "ui": "Gaea Swarm --Filename --buildpath --resolution --seed; Gaea2Unreal bridge; Unreal Landscape weightmaps",
+      "method": "Gaea 2.3.1 installed, Swarm had remote-console invalid handle: no accepted terrain output or bridge import.",
+      "api": "Gaea Build Swarm -> heightmap masks JSON -> Unreal Landscape",
+      "url": "https://docs.gaea.app/guides/use-in/bridges/gaea2unreal/index.html"
+    },
+    {
+      "id": "batch",
+      "name": "Headless native scene auditing and export",
+      "domain": "Core",
+      "status": "IMPLEMENTED",
+      "ui": "Scripting workspace > Python Console/Text Editor; command line blender --background --python script.py",
+      "method": "Safe batch runs. Prefer fresh process isolated worktree, explicit input/output and zero writes to foundation; dry-run before production.",
+      "api": "Blender --background --factory-startup --python; bpy.context + asset manifest SHA256",
+      "url": "https://docs.blender.org/manual/en/5.2/advanced/command_line/arguments.html"
+    },
+    {
+      "id": "assetstats",
+      "name": "Mesh UV/material/rig/action audit",
+      "domain": "Core",
+      "status": "IMPLEMENTED",
+      "ui": "3D View N sidebar > NoWorld Mastery > Run Read-only Audit",
+      "method": "One click reports object/mesh/UV/material/action/shape keys/rig and missing asset source; cannot judge aesthetics automatically.",
+      "api": "nw_mastery.audit_scene / CLI noworld_cli.py --audit",
+      "url": "https://docs.blender.org/manual/en/5.2/advanced/scripting/introduction.html"
+    }
+  ]
+}

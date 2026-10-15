@@ -1,0 +1,9 @@
+﻿{
+    "style":  "glaive",
+    "blade_length":  2.6,
+    "blade_width":  0.32,
+    "grip_length":  1.35,
+    "blend":  "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_ModularWeapon_V2.blend",
+    "fbx":  "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_ModularWeapon_V2.fbx",
+    "report":  "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_ModularWeapon_V2.json"
+}

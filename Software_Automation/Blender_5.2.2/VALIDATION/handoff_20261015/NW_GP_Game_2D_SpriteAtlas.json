@@ -1,0 +1,106 @@
+{
+  "format": "RGBA PNG",
+  "source": "Grease Pencil v3 editable .blend",
+  "atlas": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_Game_2D_SpriteAtlas.png",
+  "width": 1536,
+  "height": 768,
+  "sprite_width": 384,
+  "sprite_height": 384,
+  "keyframes": [
+    {
+      "i": 0,
+      "source_frame": 1,
+      "rect": [
+        0,
+        0,
+        384,
+        384
+      ],
+      "offset_seconds": 0.0,
+      "key_pose_source": "NW_2D_00.png"
+    },
+    {
+      "i": 1,
+      "source_frame": 8,
+      "rect": [
+        384,
+        0,
+        384,
+        384
+      ],
+      "offset_seconds": 0.2916666666666667,
+      "key_pose_source": "NW_2D_01.png"
+    },
+    {
+      "i": 2,
+      "source_frame": 16,
+      "rect": [
+        768,
+        0,
+        384,
+        384
+      ],
+      "offset_seconds": 0.625,
+      "key_pose_source": "NW_2D_02.png"
+    },
+    {
+      "i": 3,
+      "source_frame": 24,
+      "rect": [
+        1152,
+        0,
+        384,
+        384
+      ],
+      "offset_seconds": 0.9583333333333334,
+      "key_pose_source": "NW_2D_03.png"
+    },
+    {
+      "i": 4,
+      "source_frame": 32,
+      "rect": [
+        0,
+        384,
+        384,
+        384
+      ],
+      "offset_seconds": 1.2916666666666667,
+      "key_pose_source": "NW_2D_04.png"
+    },
+    {
+      "i": 5,
+      "source_frame": 40,
+      "rect": [
+        384,
+        384,
+        384,
+        384
+      ],
+      "offset_seconds": 1.625,
+      "key_pose_source": "NW_2D_05.png"
+    },
+    {
+      "i": 6,
+      "source_frame": 48,
+      "rect": [
+        768,
+        384,
+        384,
+        384
+      ],
+      "offset_seconds": 1.9583333333333333,
+      "key_pose_source": "NW_2D_06.png"
+    }
+  ],
+  "sampled_frames": 7,
+  "source_duration_seconds": 2.0,
+  "no_manually_painted_intermediate_frames": true,
+  "runtime_target": "Unreal Paper2D flipbook / Niagara sprite subimages",
+  "pixel_alpha_range": [
+    0,
+    255
+  ],
+  "hash_sha256": "7fd9894ddc3ec7ca018a50f9f1908189cf85bd70471b1ca35f6015185a5264c1",
+  "native_unreal_imported": false,
+  "art_quality_accepted": false
+}

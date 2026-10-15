@@ -1,0 +1,9 @@
+{
+  "blender": "5.2.2 LTS",
+  "addon": "C:\\Users\\mimim\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\noworld_mastery_hub",
+  "enabled": true,
+  "persistent_userpref": true,
+  "workflows": 28,
+  "production_gate_modified": false,
+  "installed_utc": "2026-10-15T11:51:08.639399+00:00"
+}

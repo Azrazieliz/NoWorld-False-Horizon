@@ -1,0 +1,43 @@
+{
+  "tool": "NoWorld Blender/Gate02 Architecture",
+  "version": "5.2.2 LTS",
+  "addon": "bl_ext.blender_org.arch_generator",
+  "modules": 3,
+  "source_spec": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE02\\architecture_example.json",
+  "source_spec_sha256": "64a7ce21a76b8441aafec46da8d2e5e5030e07799399f18fb5cd2f8a840f7995",
+  "blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_ArchGenerator3Styles.blend",
+  "blend_sha256": "7d4dceed9e3faf93c2136f981c0f5df48462cb226c827579ca71097392ce65dd",
+  "fbx": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_ArchGenerator3Styles.fbx",
+  "fbx_sha256": "3f268c948b4c408a4c88acd842fcaf40a93048b5115679aff28da748b3f24a81",
+  "all_uv": true,
+  "modules_detail": [
+    {
+      "name": "NW_Gothic_CastleGate",
+      "vertices": 572,
+      "polygons": 404,
+      "style": "GOTHIC",
+      "pillar": "COMPOUND",
+      "editable_parameters": true
+    },
+    {
+      "name": "NW_Moorish_Courtyard",
+      "vertices": 816,
+      "polygons": 656,
+      "style": "HORSESHOE",
+      "pillar": "ALHAMBRA",
+      "editable_parameters": true
+    },
+    {
+      "name": "NW_Roman_Colonnade",
+      "vertices": 1648,
+      "polygons": 1544,
+      "style": "ROMAN",
+      "pillar": "TUSCAN",
+      "editable_parameters": true
+    }
+  ],
+  "source_design_identity_created": false,
+  "art_quality_accepted": false,
+  "gaea_terrain_parity": false,
+  "native_unreal_tested": false
+}

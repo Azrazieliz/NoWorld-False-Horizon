@@ -1,0 +1,24 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "source": "Gate09 Blender 5.2 Action Slots",
+  "animations": [
+    {
+      "kind": "flight",
+      "path": "/Game/NW_MasterHub_QA/Gate09_Motion/NW_Gate09_flight_Semantic.NW_Gate09_flight_Semantic",
+      "frames": 48,
+      "skeleton": "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal_Skeleton.NW_ArticulatedMount_Skeletal_Skeleton",
+      "type": "AnimSequence"
+    },
+    {
+      "kind": "swim",
+      "path": "/Game/NW_MasterHub_QA/Gate09_Motion/NW_Gate09_swim_Semantic.NW_Gate09_swim_Semantic",
+      "frames": 48,
+      "skeleton": "/Game/NW_BlenderImportTests/Mount_Skeletal/NW_ArticulatedMount_Skeletal_Skeleton.NW_ArticulatedMount_Skeletal_Skeleton",
+      "type": "AnimSequence"
+    }
+  ],
+  "status": "PASS_NATIVE_TWO_ANIMSEQUENCES",
+  "art_quality_accepted": false,
+  "pose_delta_verified_in_ue": false,
+  "gameplay_runtime_tested": false
+}

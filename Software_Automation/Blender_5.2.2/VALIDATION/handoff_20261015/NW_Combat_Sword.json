@@ -1,0 +1,23 @@
+{
+  "blender": "5.2.2 LTS",
+  "performance_source": "D:\\UnrealProjects\\NW_Blender_Mocap_Interop_20261015\\143_23.bvh",
+  "bvh_sha256": "718db7ec0e356968b8581c79c015b99eba0cd6a53020d8c8b51f1fcbe033416e",
+  "source_preserved": true,
+  "actual_mocap_bones": 31,
+  "automatically_detected_peak": 63,
+  "limb": "RightHand",
+  "score": 7.338267174797323,
+  "original_frames": 163,
+  "cropped_range": [
+    45,
+    89
+  ],
+  "generated_game_frames": 45,
+  "keyframes_of_authored_performance": 21120,
+  "edited_per_bone_manually": false,
+  "editable_blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Sword.blend",
+  "animation_only_fbx": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Sword.fbx",
+  "fbx_sha256": "4d64b19ff3e93f37136372c664aa8372650bc598c05be8e10284f302d565cf6a",
+  "artist_quality_accepted": false,
+  "unreal_ik_retarget_verified": false
+}

@@ -1,0 +1,81 @@
+{
+  "blender": "5.2.2 LTS",
+  "source_unchanged": true,
+  "source_sha256": "c39309bb85072c7824cc6e7eecbe78411ce0251d0d991274c3e3229809cb4cb0",
+  "skeleton_bones_preserved": 16,
+  "controlled_shape_keys": [
+    {
+      "object": "NW_Muzzle",
+      "shape_key": "NW_Muzzle_Shape",
+      "vertices": 178,
+      "value": 0.6000000238418579,
+      "preserves_basis": true
+    },
+    {
+      "object": "NW_MembraneWing_L",
+      "shape_key": "NW_Wing_Span_Left",
+      "vertices": 6,
+      "value": 0.6000000238418579,
+      "preserves_basis": true
+    },
+    {
+      "object": "NW_WingTip_L",
+      "shape_key": "NW_Wing_Span_Left",
+      "vertices": 9,
+      "value": 0.6000000238418579,
+      "preserves_basis": true
+    },
+    {
+      "object": "NW_MembraneWing_R",
+      "shape_key": "NW_Wing_Span_Right",
+      "vertices": 6,
+      "value": 0.6000000238418579,
+      "preserves_basis": true
+    },
+    {
+      "object": "NW_WingTip_R",
+      "shape_key": "NW_Wing_Span_Right",
+      "vertices": 9,
+      "value": 0.6000000238418579,
+      "preserves_basis": true
+    },
+    {
+      "object": "NW_TailSegment_1",
+      "shape_key": "NW_TailTwist",
+      "vertices": 178,
+      "value": 0.6000000238418579,
+      "preserves_basis": true
+    },
+    {
+      "object": "NW_TailSegment_2",
+      "shape_key": "NW_TailTwist",
+      "vertices": 178,
+      "value": 0.6000000238418579,
+      "preserves_basis": true
+    }
+  ],
+  "new_anatomical_additions": [
+    {
+      "name": "NW_CustomAnatomy_LeftHorn",
+      "vertex_count": 252,
+      "faces": 224,
+      "anchor_bone": "Neck",
+      "user_editable": true,
+      "existing_skeleton_preserved": true
+    },
+    {
+      "name": "NW_CustomAnatomy_RightHorn",
+      "vertex_count": 252,
+      "faces": 224,
+      "anchor_bone": "Neck",
+      "user_editable": true,
+      "existing_skeleton_preserved": true
+    }
+  ],
+  "derived_blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Beast_MorphControls.blend",
+  "derived_sha256": "fa9bbbdf883737d3b11f2c3110e93ca0b6e6e84fe87163260330d255eddfadda",
+  "creation_method": "bone-weighted spatial procedural morphology, zero manual sculpt clicks",
+  "professional_organic_sculpt_accepted": false,
+  "unreal_imported": false,
+  "original_kk_character_unchanged": true
+}

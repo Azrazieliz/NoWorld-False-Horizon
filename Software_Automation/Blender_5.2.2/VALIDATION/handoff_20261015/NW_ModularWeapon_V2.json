@@ -1,0 +1,18 @@
+{
+  "blender": "5.2.2 LTS",
+  "style": "glaive",
+  "length": 2.6,
+  "editable_source": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_ModularWeapon_V2.blend",
+  "fbx": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_ModularWeapon_V2.fbx",
+  "sha256": "c49681513e5a775ef698c1a579529dc39af91a41a6995c64101a2a8da178e197",
+  "mesh_objects": 23,
+  "semantic_sockets": [
+    "Socket_Grip",
+    "Socket_BladeTip",
+    "Socket_Trail"
+  ],
+  "material_count": 3,
+  "UV_status": "Requires engine UV inspection",
+  "native_unreal_tested": false,
+  "artist_accepted": false
+}

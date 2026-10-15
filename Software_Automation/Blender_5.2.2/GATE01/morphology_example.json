@@ -1,0 +1,48 @@
+{
+  "source": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_4.5.10\\VALIDATION\\phase2\\NW_ArticulatedMount_IK_Baked.blend",
+  "rig": "NW_Skyrunner_Mount_Rig",
+  "output_blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Beast_MorphControls.blend",
+  "report": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Beast_MorphControls.json",
+  "morphs": [
+    {
+      "id": "Muzzle_Shape",
+      "bone": "Jaw",
+      "mode": "elongate",
+      "strength": 0.27
+    },
+    {
+      "id": "Wing_Span_Left",
+      "bone": "WingL",
+      "mode": "inflate",
+      "strength": 0.39
+    },
+    {
+      "id": "Wing_Span_Right",
+      "bone": "WingR",
+      "mode": "inflate",
+      "strength": 0.39
+    },
+    {
+      "id": "TailTwist",
+      "bone": "TailB",
+      "mode": "twist",
+      "strength": 0.24
+    }
+  ],
+  "anatomy": [
+    {
+      "id": "LeftHorn",
+      "bone": "Neck",
+      "side": -1,
+      "length": 0.95,
+      "radius": 0.12
+    },
+    {
+      "id": "RightHorn",
+      "bone": "Neck",
+      "side": 1,
+      "length": 0.95,
+      "radius": 0.12
+    }
+  ]
+}

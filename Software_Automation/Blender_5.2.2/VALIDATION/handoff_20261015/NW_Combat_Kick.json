@@ -1,0 +1,23 @@
+{
+  "blender": "5.2.2 LTS",
+  "performance_source": "D:\\UnrealProjects\\NW_Blender_Mocap_Interop_20261015\\144_05.bvh",
+  "bvh_sha256": "ff4cd70ec26ae9214d32874a1b6de353be94b20d832b965da76e819d8f0601f5",
+  "source_preserved": true,
+  "actual_mocap_bones": 31,
+  "automatically_detected_peak": 453,
+  "limb": "RightFoot",
+  "score": 7.382876796543353,
+  "original_frames": 558,
+  "cropped_range": [
+    435,
+    479
+  ],
+  "generated_game_frames": 45,
+  "keyframes_of_authored_performance": 21120,
+  "edited_per_bone_manually": false,
+  "editable_blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Kick.blend",
+  "animation_only_fbx": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_Combat_Kick.fbx",
+  "fbx_sha256": "ecce49ac56f2210e1127224a6945b1e57e62c97128e897779d78e2e576c73292",
+  "artist_quality_accepted": false,
+  "unreal_ik_retarget_verified": false
+}

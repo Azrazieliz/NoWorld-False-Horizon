@@ -1,0 +1,57 @@
+{
+  "blender": "5.2.2 LTS",
+  "grease_pencil_source_objects": 2,
+  "native_gp_drawings": 14,
+  "native_animation_editable": true,
+  "animated_GP_objects": 2,
+  "static_camera": true,
+  "sample_frames": [
+    {
+      "index": 0,
+      "source_frame": 1,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames\\NW_2D_00.png",
+      "sha256": "c95c4b23ec71548c0b27c0fae15f050f63719a0696590cff697ed98e29f3ee88"
+    },
+    {
+      "index": 1,
+      "source_frame": 8,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames\\NW_2D_01.png",
+      "sha256": "8e0983c52b6177a1f9f5b269e768c3192b488300c95146849429d29ba5a3ced9"
+    },
+    {
+      "index": 2,
+      "source_frame": 16,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames\\NW_2D_02.png",
+      "sha256": "1ff2ab6a9e55341723fcf41e69c78758ce58490d99b03da2da791e88367b2b42"
+    },
+    {
+      "index": 3,
+      "source_frame": 24,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames\\NW_2D_03.png",
+      "sha256": "357386eec3245becf1ca92d2c6e1518826e79bd80d8e51faa6643f7e10fafc56"
+    },
+    {
+      "index": 4,
+      "source_frame": 32,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames\\NW_2D_04.png",
+      "sha256": "589f3211a58dfa8cfa33c8f1c6d0ddb336e4b233a65bd87bde6a5505344b0260"
+    },
+    {
+      "index": 5,
+      "source_frame": 40,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames\\NW_2D_05.png",
+      "sha256": "64074725a3d21061265291da1f09b355761f0761c8468b31ea944f36e764893e"
+    },
+    {
+      "index": 6,
+      "source_frame": 48,
+      "file": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_TransparentFrames\\NW_2D_06.png",
+      "sha256": "1607a3caed964fb137fa75c163d8f330bb3f6bf628106f76d2a3e0e4e90d2e5d"
+    }
+  ],
+  "frames_per_second": 24,
+  "source_blend": "D:\\UnrealProjects\\NW_BlenderGateHandoff_QA_20261015\\NW_GP_2D_Transparent.blend",
+  "source_preserved": true,
+  "art_quality_accepted": false,
+  "unreal_paper2d_imported": false
+}

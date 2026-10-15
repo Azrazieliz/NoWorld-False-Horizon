@@ -1,0 +1,33 @@
+{
+  "jobs": [
+    {
+      "operation": "architecture",
+      "spec": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE02\\architecture_example.json"
+    },
+    {
+      "operation": "morphology",
+      "spec": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\morphology_example.json"
+    },
+    {
+      "operation": "weapon",
+      "spec": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE01\\weapon_example.json"
+    },
+    {
+      "operation": "semantic_motion",
+      "spec": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\flight_example.json"
+    },
+    {
+      "operation": "fight_mocap",
+      "spec": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\combat_kick.json"
+    },
+    {
+      "operation": "grease_2d",
+      "spec": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Blender_5.2.2\\GATE09\\2d_transparent.json"
+    },
+    {
+      "operation": "api_search",
+      "query": "armature action slots retargeting",
+      "limit": 3
+    }
+  ]
+}

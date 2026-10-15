@@ -1,0 +1,21 @@
+{
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "status": "PASS_UNREAL_NATIVE",
+  "assets": [
+    {
+      "path": "/Game/NW_MasterHub_QA/Architecture_Gate02/NW_Gothic_CastleGate.NW_Gothic_CastleGate",
+      "type": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Architecture_Gate02/NW_Moorish_Courtyard.NW_Moorish_Courtyard",
+      "type": "StaticMesh"
+    },
+    {
+      "path": "/Game/NW_MasterHub_QA/Architecture_Gate02/NW_Roman_Colonnade.NW_Roman_Colonnade",
+      "type": "StaticMesh"
+    }
+  ],
+  "native_static_meshes": 3,
+  "real_production_game_import": false,
+  "artistic_quality_accepted": false
+}
