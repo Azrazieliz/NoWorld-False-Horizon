@@ -76,6 +76,24 @@ def command(job):
   return [str(UEEXE),str(UEPROJECT),"-run=pythonscript","-script="+str(script),
      "-nullrhi","-unattended","-nosplash","-nop4","-NoSound"]
  raise ValueError("Unhandled job")
+def verify_postconditions(job):
+ checks=[]
+ for cond in job.get("postconditions",[]):
+  path=pathlib.Path(cond["path"]).resolve()
+  c={"path":str(path),"field":cond.get("field"),"passed":False}
+  try:
+   data=json.loads(path.read_text(encoding="utf-8"))
+   val=data
+   for field in str(cond["field"]).split("."):
+    val=val[field]
+   if "equals" in cond:c["passed"]=val==cond["equals"]
+   elif "minimum" in cond:c["passed"]=isinstance(val,(int,float)) and val>=cond["minimum"]
+   elif "is_true" in cond:c["passed"]=val is True
+   else:raise ValueError("Postcondition must specify equals/minimum/is_true")
+   c["observed"]=val
+  except Exception as e:c["error"]=repr(e)
+  checks.append(c)
+ return checks
 def run(job,preflight=False):
  validate(job)
  out=pathlib.Path(job["outputs"]["receipt_directory"]).resolve()
@@ -88,7 +106,7 @@ def run(job,preflight=False):
   src_hashes[str(path)]=sha(path)
  cmd=command(job)
  if not pathlib.Path(cmd[0]).is_file():raise FileNotFoundError(cmd[0])
- missing=[x for x in cmd if x.endswith(".py") and not pathlib.Path(x).is_file()]
+ missing=[x for x in cmd if x.endswith(".py") and not pathlib.Path(x.split("=",1)[-1]).is_file()]
  if missing:raise FileNotFoundError(str(missing))
  provenance={"schema":"NOWORLD_SOFTWARE_JOB_RECEIPT_V1","job_id":job["job_id"],
    "owner_gate":job["owner_gate"],"software":job["software"],
@@ -101,6 +119,7 @@ def run(job,preflight=False):
   sdk=r"D:\Tools\DotNet8SDK_NoWorld_Portable"
   env["DOTNET_ROOT"]=sdk;env["PATH"]=sdk+os.pathsep+env.get("PATH","")
   env["GAEA_ROOT"]=r"D:\Tools\Gaea 2"
+  env["NW_UNREAL_JOB_PARAMS"]=json.dumps(job.get("params",{}))
   t=time.perf_counter()
   try:
    p=subprocess.run(cmd,capture_output=True,text=True,encoding="utf-8",errors="replace",
@@ -113,6 +132,10 @@ def run(job,preflight=False):
    provenance["status"]="TIMED_OUT"
    (out/"timeout.json").write_text(json.dumps({"seconds":e.timeout}))
   provenance["execution_seconds"]=round(time.perf_counter()-t,3)
+ if not preflight and provenance["status"]=="PROCESS_EXIT_ZERO" and job.get("postconditions"):
+  passed=verify_postconditions(job)
+  provenance["postconditions"]=passed
+  provenance["status"]="NATIVE_VALIDATED" if all(c["passed"] for c in passed) else "NATIVE_VALIDATION_FAILED"
  bad=[name for name,old in src_hashes.items() if sha(name)!=old]
  if bad:
   provenance["status"]="SOURCE_MODIFIED"
@@ -125,5 +148,5 @@ def main():
  p=argparse.ArgumentParser();p.add_argument("--job",required=True);p.add_argument("--preflight",action="store_true")
  a=p.parse_args()
  row=run(json.loads(pathlib.Path(a.job).read_text(encoding="utf-8-sig")),a.preflight)
- if row["status"] not in ("PREFLIGHT_PASS","PROCESS_EXIT_ZERO"):sys.exit(2)
+ if row["status"] not in ("PREFLIGHT_PASS","PROCESS_EXIT_ZERO","NATIVE_VALIDATED"):sys.exit(2)
 if __name__=="__main__":main()

@@ -1,0 +1,29 @@
+﻿{
+    "schema":  "NOWORLD_SOFTWARE_JOB_V1",
+    "job_id":  "Terrain_GaeaBlenderUE_Acceptance_v2",
+    "owner_gate":  "Gate12",
+    "test_only":  true,
+    "software":  "unreal",
+    "operation":  "asset_import",
+    "source_paths":  [
+                         "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_Gaea_Input_Height16.png",
+                         "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_Gaea_ErosionProtectMask16.png",
+                         "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_Gaea_TiledTerrain_Unreal.fbx"
+                     ],
+    "requirements":  {
+                         "preserve_originals":  true,
+                         "max_walltime_seconds":  240,
+                         "max_ram_gb":  6,
+                         "quality_acceptance_required":  false
+                     },
+    "params":  {
+                   "source":  "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_Gaea_TiledTerrain_Unreal.fbx",
+                   "destination":  "/Game/NW_MasterHub_QA/Unified_TerrainTiles_20261015",
+                   "kind":  "static",
+                   "minimum_assets":  4,
+                   "receipt":  "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\NW_Gaea_TiledTerrain_UE583_Import.json"
+               },
+    "outputs":  {
+                    "receipt_directory":  "D:\\UnrealProjects\\NW_Gaea_Terrain_Sandbox_20261015\\Unified_Master_Run_20261015\\Unified_UE_Terrain_JobReceipt_v2"
+                }
+}
