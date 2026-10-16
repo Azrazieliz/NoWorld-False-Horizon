@@ -33,4 +33,4 @@ Protected local recovery files:
 `...\GATE12_LOCAL_RECOVERY_SOURCE_20261016.zip`
 `...\gate00_recovery_audit_20261016.py`
 
-Saved before deleting only two generated `__pycache__` directories (621728 + 9535 bytes). **Untracked .uasset/.umap native assets are still in the original worktree and must be committed/archived appropriately before any further cleanup.** This backup contains scripts/patch, NOT all generated Unreal binaries; never claim it is a complete restorable project snapshot.
+Saved before deleting only two generated `__pycache__` directories (621728 + 9535 bytes). **Untracked UE binaries have ALSO been copied into a separate verified protected recovery archive**: `GATE12_UNTRACKED_BINARY_RECOVERY_20261016.zip` (724 files; 248,944,219 bytes; SHA-256 `97525c80318bf64f651b93e4972650a4b9f59fe046dcb6601d4d321ae95acff6`; ZIP CRC PASS). The original worktree remains unchanged. A recovery archive is not a tested Git commit: Gate12 must still push intended source and asset changes. This backup contains scripts/patch, NOT all generated Unreal binaries; never claim it is a complete restorable project snapshot.
