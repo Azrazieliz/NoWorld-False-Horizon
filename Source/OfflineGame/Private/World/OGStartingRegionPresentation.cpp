@@ -10230,8 +10230,13 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         }
         Character->SetFoundationSettingsOpen(false);
         Character->SetFoundationPauseMenuOpen(false);
-        SetFoundationSurface(FName(TEXT("world")));
-        FoundationStatusMessage.Reset();
+        // The legacy Canvas control must use the SAME owned-Manifestation
+        // validation and real pawn binding as the native UMG World button.
+        // On failure this handler restores Ruler presentation and preserves
+        // the previous pawn; never clear the real error afterwards.
+        OnGate12NativeWorldRequested();
+        if (FoundationSurface == FName(TEXT("world")))
+            FoundationStatusMessage.Reset();
         return;
     }
 

@@ -6,6 +6,9 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 
 AOGGate12CharacterPreviewStage::AOGGate12CharacterPreviewStage()
 {
@@ -73,6 +76,79 @@ bool AOGGate12CharacterPreviewStage::InitializeApprovedPreview(
     Capture->ShowOnlyActorComponents(PreviewActor, true);
     Capture->CaptureScene();
     return true;
+}
+
+bool AOGGate12CharacterPreviewStage::IsDevelopmentQaClassAllowed(
+    const UClass* SourceQaClass)
+{
+#if UE_BUILD_SHIPPING
+    return false;
+#else
+    // Explicit fixture allowlist: no arbitrary Pawn, no fake canonical IDs,
+    // and no unaccepted Alter identity/appearance substitution.
+    return SourceQaClass &&
+        SourceQaClass->IsChildOf(AOGLuminousV3PlayableCharacter::StaticClass()) &&
+        SourceQaClass->GetPathName() ==
+        TEXT("/Game/Experimental/LuminousValentineV3/RuntimeQA_20261011/"
+             "BP_LuminousValentineV3_CLOTHED_RuntimeQA."
+             "BP_LuminousValentineV3_CLOTHED_RuntimeQA_C");
+#endif
+}
+
+bool AOGGate12CharacterPreviewStage::InitializeDevelopmentQaPreview(
+    UClass* SourceQaClass)
+{
+#if UE_BUILD_SHIPPING
+    return false;
+#else
+    ReleasePreview();
+    UWorld* World = GetWorld();
+    if (!World || !World->IsGameWorld() ||
+        !IsDevelopmentQaClassAllowed(SourceQaClass) ||
+        !Capture)
+        return false;
+
+    RenderTarget = NewObject<UTextureRenderTarget2D>(this, NAME_None, RF_Transient);
+    if (!RenderTarget) return false;
+    RenderTarget->ClearColor = FLinearColor(0.f, 0.f, 0.f, 0.f);
+    RenderTarget->InitAutoFormat(512, 768);
+    RenderTarget->UpdateResourceImmediate(true);
+    Capture->TextureTarget = RenderTarget;
+
+    const FTransform SpawnTransform(FRotator(0.f, 180.f, 0.f), GetActorLocation());
+    TSubclassOf<AOGLuminousV3PlayableCharacter> QaClass(SourceQaClass);
+    AOGLuminousV3PlayableCharacter* QA =
+        World->SpawnActorDeferred<AOGLuminousV3PlayableCharacter>(
+            QaClass, SpawnTransform, this, nullptr,
+            ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+    if (!QA)
+    {
+        ReleasePreview();
+        return false;
+    }
+    // Suppress every isolated-playable QA cycle and UI/input side effect
+    // BEFORE BeginPlay. This is a passive display of the real imported mesh.
+    QA->InitialWardrobe = EOGLuminousV3Wardrobe::Clothed;
+    QA->bRunNonPersistentWardrobeQACycle = false;
+    QA->bRunNativeMotionQACycle = false;
+    QA->bEnableNativeWardrobeQATouchPanel = false;
+    QA->bEnterWorldModeOnIsolatedQAStartup = false;
+    PreviewActor = QA;
+    UGameplayStatics::FinishSpawningActor(QA, SpawnTransform);
+    if (!IsValid(QA) || QA->GetActiveLuminousPartCount() != 45 ||
+        QA->CurrentWardrobe != EOGLuminousV3Wardrobe::Clothed)
+    {
+        ReleasePreview();
+        return false;
+    }
+    QA->SetActorEnableCollision(false);
+    if (UCharacterMovementComponent* Movement = QA->GetCharacterMovement())
+        Movement->DisableMovement();
+    QA->SetActorTickEnabled(false);
+    Capture->ShowOnlyActorComponents(QA, true);
+    Capture->CaptureScene();
+    return true;
+#endif
 }
 
 void AOGGate12CharacterPreviewStage::SetLiveCapture(bool bLive)

@@ -373,6 +373,15 @@ void UOGGate12NativeRulerWidget::BuildRoster()
     if (!Session || Session->OwnedRoster.IsEmpty())
     {
         AddMessage(Content, TEXT("No owned character Manifestations."), 18, TextMuted);
+#if !UE_BUILD_SHIPPING
+        AddAction(Content,
+            bDevelopmentQaViewerOpen
+                ? TEXT("CLOSE DEVELOPMENT 3D SOURCE VIEWER")
+                : TEXT("VIEW EXISTING LUMINOUS 3D QA SOURCE (NOT OWNED)"),
+            bDevelopmentQaViewerOpen ? TEXT("qa/close") : TEXT("qa/open"));
+        if (bDevelopmentQaViewerOpen)
+            BuildDevelopmentQaCharacterViewer();
+#endif
         return;
     }
     UEditableTextBox* Search = WidgetTree->ConstructWidget<UEditableTextBox>(
@@ -396,6 +405,67 @@ void UOGGate12NativeRulerWidget::BuildRoster()
     Responsive->AddChild(RosterGrid);
     Content->AddChildToVerticalBox(Responsive);
     RebuildRosterGrid();
+}
+
+void UOGGate12NativeRulerWidget::BuildDevelopmentQaCharacterViewer()
+{
+#if !UE_BUILD_SHIPPING
+    if (!Content || !WidgetTree || !GetWorld() ||
+        !GetWorld()->IsGameWorld())
+        return;
+
+    AddMessage(Content,
+        TEXT("DEVELOPMENT QA — real imported CLOTHED Luminous V3. "
+             "This is NOT a character you own, NOT a Registry package, "
+             "NOT a canonical Identity or a gameplay acquisition."),
+        16, Gate12RulerGold);
+
+    UClass* QaClass = LoadClass<AActor>(nullptr,
+        TEXT("/Game/Experimental/LuminousValentineV3/RuntimeQA_20261011/"
+             "BP_LuminousValentineV3_CLOTHED_RuntimeQA."
+             "BP_LuminousValentineV3_CLOTHED_RuntimeQA_C"));
+    if (!AOGGate12CharacterPreviewStage::IsDevelopmentQaClassAllowed(QaClass))
+    {
+        AddMessage(Content, TEXT("Real QA source actor not installed."), 16, TextMuted);
+        return;
+    }
+
+    ReleasePreviewStage();
+    FActorSpawnParameters Spawn;
+    Spawn.SpawnCollisionHandlingOverride =
+        ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    PreviewStage = GetWorld()->SpawnActor<AOGGate12CharacterPreviewStage>(
+        AOGGate12CharacterPreviewStage::StaticClass(),
+        FVector(0.f, 0.f, -200000.f), FRotator::ZeroRotator, Spawn);
+    if (!IsValid(PreviewStage) ||
+        !PreviewStage->InitializeDevelopmentQaPreview(QaClass))
+    {
+        ReleasePreviewStage();
+        AddMessage(Content,
+            TEXT("The actual 45-part source could not initialize. "
+                 "No substitute model was displayed."),
+            16, TextMuted);
+        return;
+    }
+    // A single capture avoids permanent mobile scene-capture frame cost.
+    PreviewStage->SetLiveCapture(false);
+    FSlateBrush Brush;
+    Brush.SetResourceObject(PreviewStage->GetLiveRenderTarget());
+    Brush.ImageSize = FVector2D(512.f, 768.f);
+    UImage* Image = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+    Image->SetBrush(Brush);
+    UScaleBox* Fit = WidgetTree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass());
+    Fit->SetStretch(EStretch::ScaleToFit);
+    Fit->AddChild(Image);
+    USizeBox* View = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+    View->SetHeightOverride(500.f);
+    View->AddChild(Fit);
+    Content->AddChildToVerticalBox(View);
+    AddMessage(Content,
+        TEXT("Existing experimental source, not an accepted production "
+             "visual binding. No canonical save data is changed."),
+        14, TextMuted);
+#endif
 }
 
 void UOGGate12NativeRulerWidget::RebuildRosterGrid()
@@ -1034,6 +1104,14 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
             }
         }
     }
+#if !UE_BUILD_SHIPPING
+    else if (Action == TEXT("qa/open") ||
+             Action == TEXT("qa/close"))
+    {
+        // A diagnostic viewer is not a Manifestation or canonical owner.
+        bDevelopmentQaViewerOpen = (Action == TEXT("qa/open"));
+    }
+#endif
     else if (Action == TEXT("roster/sort"))
     {
         RosterSortMode = (RosterSortMode + 1) % 3;

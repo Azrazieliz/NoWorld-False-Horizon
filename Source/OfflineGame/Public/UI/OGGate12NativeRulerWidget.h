@@ -103,6 +103,8 @@ private:
     int32 OpenIdentityIndex = INDEX_NONE;
     // UI preference only: never changes wardrobe, ownership, or world state.
     bool bPrefer3DCharacterPresentation = false;
+    // Diagnostic artwork viewer only; not a real owned Manifestation.
+    bool bDevelopmentQaViewerOpen = false;
     int32 RecordsSection = 0;
     bool bGachaHistoryExpanded = false;
     FOGEntityId SelectedTerritoryId;
@@ -113,6 +115,7 @@ private:
     void BuildCurrentPage();
     void BuildRoster();
     void RebuildRosterGrid();
+    void BuildDevelopmentQaCharacterViewer();
 
     UFUNCTION()
     void HandleRosterSearchChanged(const FText& NewText);
