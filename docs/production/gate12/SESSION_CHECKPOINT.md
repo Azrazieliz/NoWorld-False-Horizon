@@ -4,7 +4,7 @@ Updated: 2026-10-16 Europe/Paris
 Work item: P0-APP / Issue #25, with independent P0-FIDELITY hold
 Status: ACTIVE — new native integration under Win64 build, not yet accepted
 Working branch: production/gate12-koikatsu-ue583-fixture-20261010
-Last durable source commit before the startup fix: 94afec32d49f32c30322cddcc18555a09ff4556c
+Latest independently VERIFIED Win64 real-game startup commit: 55c1a1e64621f4267cb3ed0a224ac2d7e00a6b16
 Passive 45-part QA viewer source revision: compiled and targeted/full native regression PASS. Not yet verified in the actual Ruler UI or accepted as production content.
 
 ## Recovery FIRST ACTION (mandatory after conversation failure)
@@ -47,7 +47,11 @@ Passive 45-part QA viewer source revision: compiled and targeted/full native reg
 - Historical P0 visual/export fidelity and Gate09 animation blockers remain separate from startup/Ruler engineering; never mark those fixed solely because 150 native tests pass.
 
 ## Next SINGLE executable action
-**From latest HEAD and this checkpoint, implement and run an opt-in isolated Win64 game runtime Ruler→World→Ruler journey using actual event handlers with screenshot/projection evidence; the normal opening game launch is already VERIFIED. Preserve protected files and do not cook Android.** Do not launch parallel Unreal builds on 8 GB RAM.
+**From latest HEAD, READ `Saved/Logs/Gate12_Issue25_RealGameJourneyBuild_20261016.log` and fix any actual compilation errors. Next run opt-in `Scripts/Gate12Koikatsu/run_isolated_nocook_desktop_smoke.ps1 -Journey -RunSeconds 300`, examine `Saved/Gate12Readiness/Isolated_NoCook_Win64_Game/Saved/Gate12Readiness/runtime_ruler_world_journey.json`. Do not claim pass without exact finished=true/passed=true. Then rerun native targeted/full, commit/push verified corrections. No Android cooking.**
+
+## Unverified current runtime-journey source addition
+- Added `Public|Private/Runtime/OGGate12IsolatedRuntimeJourneyProbe.*`: opt-in `-Gate12RuntimeJourney` ONLY in isolated sandbox project (fails closed in Shipping or original source ProjectDir); uses genuine Canvas opening/create/World/return click handlers, real canonical isolated Ruler, same Pawn, and captures real game frame requests with crash-safe per-step JSON. **NOT COMPILED OR TESTED at this checkpoint**; compile log is the next authority.
+- Extended disposable Win64 smoke runner `-Journey` to hold game open for receipt completion instead of stopping on initial screenshot. Original saved files/Registry never touched, no fake character/Manifestation ownership.
 
 ## Blocked on
 - Production character binding and genuine accepted Manifestations: Gate11, separate from engineering QA viewer.

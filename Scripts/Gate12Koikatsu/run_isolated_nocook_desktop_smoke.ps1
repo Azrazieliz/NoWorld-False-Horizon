@@ -8,7 +8,8 @@ Results are observations of actual game launch, not automatic gameplay acceptanc
 param(
   [ValidateRange(20,720)]
   [int]$RunSeconds = 180,
-  [switch]$SkipScreenshot
+  [switch]$SkipScreenshot,
+  [switch]$Journey
 )
 $ErrorActionPreference='Stop'
 $Root=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -58,6 +59,9 @@ $Args=@(
  '-NoSplash','-NoP4','-NoSound','-RenderOffscreen',
  "-ABSLOG=$Log"
 )
+if ($Journey) {
+ $Args += '-Gate12RuntimeJourney'
+}
 if (!$SkipScreenshot) {
  $Args += '-ExecCmds="HighResShot 1"'
 }
@@ -66,13 +70,21 @@ $Process=Start-Process -FilePath $Exe -ArgumentList $Args -PassThru
 $Timeout=(Get-Date).AddSeconds($RunSeconds)
 $ScreenshotDir=Join-Path $IsolatedSaved 'Screenshots'
 $ObservedShot=$null
+$JourneyPath=Join-Path $IsolatedSaved 'Gate12Readiness\runtime_ruler_world_journey.json'
+$JourneyResult=$null
 try {
   while ((Get-Date) -lt $Timeout -and !$Process.HasExited) {
     Start-Sleep -Seconds 3
     if (Test-Path $ScreenshotDir) {
       $ObservedShot=Get-ChildItem $ScreenshotDir -Recurse -File -Filter '*.png' -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
-      if ($ObservedShot) { break }
+      if ($ObservedShot -and !$Journey) { break }
+    }
+    if ($Journey -and (Test-Path $JourneyPath)) {
+      try {
+        $JourneyResult=Get-Content $JourneyPath -Raw | ConvertFrom-Json
+        if ($JourneyResult.complete) {break}
+      } catch { $JourneyResult=$null }
     }
   }
   $LogContainsStarted=$false
@@ -98,9 +110,14 @@ try {
     fatal_error_seen_in_log=$LogContainsError
     screenshot=if($ObservedShot){$ObservedShot.FullName}else{$null}
     screenshot_bytes=if($ObservedShot){$ObservedShot.Length}else{0}
+    journey_enabled=[bool]$Journey
+    journey_path=if($Journey){$JourneyPath}else{$null}
+    journey_finished=if($JourneyResult){[bool]$JourneyResult.complete}else{$false}
+    journey_passed=if($JourneyResult){[bool]$JourneyResult.passed}else{$false}
+    programmatic_existing_ui_handlers_tested=[bool]($JourneyResult -and $JourneyResult.complete)
     proven_interactive_navigation=$false
     proven_android_device=$false
-    outcome=if ($LogContainsError){'CRASH_OR_FATAL'}elseif($ObservedShot){'WIN64_GAME_BOOT_SCREENSHOT_CAPTURED'}elseif($LogContainsMap){'MAP_BOOT_LOG_ONLY'}else{'BOOT_UNVERIFIED'}
+    outcome=if ($LogContainsError){'CRASH_OR_FATAL'}elseif($Journey -and $JourneyResult -and $JourneyResult.complete -and $JourneyResult.passed){'PROGRAMMATIC_NATIVE_RULER_WORLD_RULER_PASS'}elseif($Journey -and $JourneyResult -and $JourneyResult.complete){'NATIVE_RULER_WORLD_RULER_FAILED'}elseif($Journey){'NATIVE_JOURNEY_UNVERIFIED'}elseif($ObservedShot){'WIN64_GAME_BOOT_SCREENSHOT_CAPTURED'}elseif($LogContainsMap){'MAP_BOOT_LOG_ONLY'}else{'BOOT_UNVERIFIED'}
   }
   $Report | ConvertTo-Json -Depth 5 |Set-Content $Result -Encoding UTF8
   Write-Host ($Report | ConvertTo-Json -Depth 5)
