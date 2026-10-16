@@ -74,6 +74,8 @@ private:
     TObjectPtr<UHorizontalBox> NavigationBar;
 
     int32 OpenIdentityIndex = INDEX_NONE;
+    // UI preference only: never changes wardrobe, ownership, or world state.
+    bool bPrefer3DCharacterPresentation = false;
     int32 RecordsSection = 0;
     bool bGachaHistoryExpanded = false;
     FOGEntityId SelectedTerritoryId;

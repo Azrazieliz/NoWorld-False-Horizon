@@ -561,6 +561,8 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
     AddMessage(Content,
         FString::Printf(TEXT("%d separately owned Manifestations"),
             Identity.ManifestationCount), 17, TextMuted);
+    AddAction(Content, bPrefer3DCharacterPresentation ? TEXT("PRESENTATION: 3D (switch to 2D)") : TEXT("PRESENTATION: 2D (switch to 3D)"), TEXT("presentation/toggle"));
+    AddMessage(Content, bPrefer3DCharacterPresentation ? TEXT("3D preview awaits approved live render-target binding; no substitute model displayed.") : TEXT("2D portrait awaits canonical artwork asset; no substitute art displayed."), 15, TextMuted);
     for (int32 Index = 0; Index < Identity.Manifestations.Num(); ++Index)
     {
         const FOGRosterManifestationViewModel& Manifestation =
@@ -613,7 +615,11 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         RefreshFromCanonical();
         return;
     }
-    if (Action == TEXT("gacha-history-toggle"))
+    if (Action == TEXT("presentation/toggle"))
+    {
+        bPrefer3DCharacterPresentation = !bPrefer3DCharacterPresentation;
+    }
+    else if (Action == TEXT("gacha-history-toggle"))
     {
         bGachaHistoryExpanded = !bGachaHistoryExpanded;
     }
