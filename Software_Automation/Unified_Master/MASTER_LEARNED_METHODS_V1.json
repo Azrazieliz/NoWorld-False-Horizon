@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-16T1349Z",
+  "revision": "2026-10-16T1440Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -341,6 +341,16 @@
       "evidence": "2026-10-16 P0_BLENDER_GLB_REIMPORT_EFFECTIVE_MORPHS.json: effective nonzero Blender keyblocks after fresh GLB import exactly 247 CLOTHED 242 UNDERWEAR 242 NUDE; source Blender 247/242/242, GLB accessor decoded 247/242/242.",
       "status": "verified_blender_roundtrip_unreal_pending",
       "regression_test": "p0_targeted_regressions.py clean_blender_import_effective CLOTHED UNDERWEAR NUDE require exact effective counts matching source and decoded GLB."
+    },
+    {
+      "id": "K034",
+      "topic": "luminous_source_rig_animation_skin_proof",
+      "applies_to": "gate09|gate12",
+      "requirement": "GLB joint count equality never proves shared animation compatibility; compare path-local and global rest, inverse bind matrices, per-joint real skin weights, original source hashes and time-varying motion on actual character meshes.",
+      "procedure": "Run Gate09 Scripts/Gate09/audit_luminous_rig.py against immutable original three BLENDER_FRESH GLBs, save reports to protected local location, classify only the terminal bone segment, run bake_existing_bvh_motion.py on source CMU BVH and real GLB, verify deforming skin samples and imported FBX action, perform three-angle Blender QA; accept visuals, foot contacts and runtime separately.",
+      "evidence": "Gate09 2026-10-16 actual hashes c1efbc9d/bdf8a59f/a5800ca3, 975 joints each, 782 shared paths, weighted 324/297/295, BVH 144_20 retarget mapped 22 bones with 0.113m evaluated vertex motion, genuine .blend/FBX reimport, 3 PNG captures, 10/10 Gate09 source QA tests.",
+      "status": "verified_readonly_source_deformation_only",
+      "regression_test": "Gate09 Scripts/Gate09/test_gate09_source_qa.py enforces three real GLB hashes, joint and weight counts, 782 shared paths with fail-closed compatibility, 22 retargeted bones, actual skin displacement, artifact hashes, three captures and animation-only FBX native reload; Gate09 visual/Unreal acceptance stays false."
     }
   ]
 }
