@@ -19,6 +19,8 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
+#include "Runtime/OGPlayerProfileSettings.h"
+#include "Interaction/OGFoundationInteractionHost.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "UI/OGGate12CharacterPreviewStage.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -439,6 +441,155 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
         // Ruler. Previously, immediate same-tick return captured Ruler Home
         // and falsely looked like a bad World camera/material.
         RequestActualGameScreenshot(TEXT("world"));
+        Phase = 12;
+        ScheduleNext(3.f);
+        return;
+    }
+
+    if (Phase == 12)
+    {
+        AOGWorldPrototypeCharacter* Player =
+            Cast<AOGWorldPrototypeCharacter>(PC->GetPawn());
+        if (!Player)
+        {
+            Record(TEXT("world_privacy_settings_available"), false,
+                TEXT("No authentic local World prototype Pawn"));
+            SaveReceipt(true);
+            return;
+        }
+        const bool bPreviousSfw = Player->GetSfwPresentation();
+        HUD->NotifyHitBoxClick(TEXT("OG.Settings.SFW"));
+        const bool bToggled = Player->GetSfwPresentation() != bPreviousSfw;
+        FString ProfileError;
+        FOGPlayerProfileSettings ReopenedProfile;
+        const bool bLoaded = FOGPlayerProfileSettingsService::Load(
+            FOGPlayerProfileSettingsService::DefaultProfilePath(),
+            ReopenedProfile, ProfileError);
+        const bool bPersisted = bLoaded &&
+            ReopenedProfile.bSfwPresentation == !bPreviousSfw;
+        Record(TEXT("world_privacy_toggle_saved_in_isolated_profile"),
+            bToggled && bPersisted && Mode->GetMode() == EOGPresentationMode::World,
+            FString::Printf(TEXT("PawnToggle=%d persisted=%d modeWorld=%d error=%s"),
+                bToggled, bPersisted,
+                Mode->GetMode() == EOGPresentationMode::World, *ProfileError));
+        HUD->NotifyHitBoxClick(TEXT("OG.Settings.SFW"));
+        FOGPlayerProfileSettings RestoredProfile;
+        FString RestoreError;
+        const bool bRestored =
+            Player->GetSfwPresentation() == bPreviousSfw &&
+            FOGPlayerProfileSettingsService::Load(
+                FOGPlayerProfileSettingsService::DefaultProfilePath(),
+                RestoredProfile, RestoreError) &&
+            RestoredProfile.bSfwPresentation == bPreviousSfw;
+        Record(TEXT("world_privacy_setting_restored_without_ownership_changes"),
+            bRestored && Session->OwnedRoster.IsEmpty(),
+            FString::Printf(TEXT("restored=%d original=%d owned=%d"),
+                bRestored, bPreviousSfw, Session->OwnedRoster.Num()));
+        if (!bToggled || !bPersisted || !bRestored)
+        {
+            SaveReceipt(true);
+            return;
+        }
+        Phase = 13;
+        ScheduleNext(3.f);
+        return;
+    }
+
+    if (Phase == 13)
+    {
+        AOGWorldPrototypeCharacter* Player =
+            Cast<AOGWorldPrototypeCharacter>(PC->GetPawn());
+        UOGFoundationInteractionHost* Host = Player
+            ? Player->FindComponentByClass<UOGFoundationInteractionHost>() : nullptr;
+        HUD->NotifyHitBoxClick(TEXT("OG.InteractionMenu.Open"));
+        const TArray<FOGFoundationInteractionRow> Rows =
+            Host ? Host->GetRows() : TArray<FOGFoundationInteractionRow>();
+        const FOGFoundationInteractionRow* WorldRow = Rows.FindByPredicate(
+            [](const FOGFoundationInteractionRow& Row) {
+                return Row.Id == TEXT("world");
+            });
+        const FOGFoundationInteractionRow* SelectRow = Rows.FindByPredicate(
+            [](const FOGFoundationInteractionRow& Row) {
+                return Row.Id == TEXT("select_all");
+            });
+        const bool bMenuAvailable = Host && WorldRow && SelectRow &&
+            Mode->GetMode() == EOGPresentationMode::World;
+        Record(TEXT("world_interaction_menu_real_native_controls"),
+            bMenuAvailable,
+            FString::Printf(TEXT("Host=%d rows=%d worldEnabled=%d selectEnabled=%d"),
+                Host != nullptr, Rows.Num(),
+                WorldRow && WorldRow->bEnabled,
+                SelectRow && SelectRow->bEnabled));
+        RequestActualGameScreenshot(TEXT("world_interaction_menu"));
+        if (!bMenuAvailable)
+        {
+            SaveReceipt(true);
+            return;
+        }
+        Phase = 14;
+        ScheduleNext(3.f);
+        return;
+    }
+
+    if (Phase == 14)
+    {
+        AOGWorldPrototypeCharacter* Player =
+            Cast<AOGWorldPrototypeCharacter>(PC->GetPawn());
+        UOGFoundationInteractionHost* Host = Player
+            ? Player->FindComponentByClass<UOGFoundationInteractionHost>() : nullptr;
+        const bool bCanEnter = Host && Host->GetRows().ContainsByPredicate(
+            [](const FOGFoundationInteractionRow& Row) {
+                return Row.Id == TEXT("world") && Row.bEnabled;
+            });
+        // Never fake an authored action or fabricate participants. The
+        // neutral native context only starts if the canonical world/actor
+        // is truly ready; otherwise the diagnostic records this blocker.
+        const bool bEntered = bCanEnter && Host->ActivateRow(TEXT("world")) &&
+            Host->IsActive();
+        Record(TEXT("real_neutral_world_interaction_entry"),
+            bEntered,
+            FString::Printf(TEXT("canEnter=%d active=%d status=%s"),
+                bCanEnter, Host && Host->IsActive(),
+                Host ? *Host->GetStatus() : TEXT("Missing host")));
+        if (!bEntered)
+        {
+            SaveReceipt(true);
+            return;
+        }
+        RequestActualGameScreenshot(TEXT("world_neutral_interaction_active"));
+        Phase = 15;
+        ScheduleNext(3.f);
+        return;
+    }
+
+    if (Phase == 15)
+    {
+        AOGWorldPrototypeCharacter* Player =
+            Cast<AOGWorldPrototypeCharacter>(PC->GetPawn());
+        UOGFoundationInteractionHost* Host = Player
+            ? Player->FindComponentByClass<UOGFoundationInteractionHost>() : nullptr;
+        const bool bPrivacyOption = Host &&
+            Host->GetRows().ContainsByPredicate(
+                [](const FOGFoundationInteractionRow& Row) {
+                    return Row.Id == TEXT("privacy") && Row.bEnabled;
+                });
+        const bool bPrivacyToggled = bPrivacyOption &&
+            Host->ActivateRow(TEXT("privacy"));
+        const bool bExited = Host && Host->ActivateRow(TEXT("exit")) &&
+            !Host->IsActive();
+        Record(TEXT("interaction_privacy_and_exit_restore_world"),
+            bPrivacyToggled && bExited &&
+                Mode->GetMode() == EOGPresentationMode::World &&
+                Session->OwnedRoster.IsEmpty(),
+            FString::Printf(TEXT("privacy=%d exit=%d world=%d owned=%d"),
+                bPrivacyToggled, bExited,
+                Mode->GetMode() == EOGPresentationMode::World,
+                Session->OwnedRoster.Num()));
+        if (!bPrivacyToggled || !bExited)
+        {
+            SaveReceipt(true);
+            return;
+        }
         Phase = 9;
         ScheduleNext(3.f);
         return;
