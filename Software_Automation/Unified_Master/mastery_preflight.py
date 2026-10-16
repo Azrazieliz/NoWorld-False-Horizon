@@ -1,6 +1,6 @@
 """Read-only, subsecond master-method guard for every software-mastery job.
 
-All 26 learned controls must be present. This checks the stored doctrine and known
+All 33 recorded learned controls must be present. This checks the stored doctrine and known
 native source fixes before an automated Gate task is dispatched; it does not claim
 to verify visual likeness, active game DLL state, texture parity or Android quality.
 """
@@ -12,7 +12,7 @@ import re
 
 HERE = pathlib.Path(__file__).resolve().parent
 LEDGER = HERE / "MASTER_LEARNED_METHODS_V1.json"
-REQUIRED = {"K%03d" % i for i in range(1, 27)}
+REQUIRED = {"K%03d" % i for i in range(1, 34)}
 GATES = {"Gate%02d" % i for i in range(1, 13)}
 SOURCE_SNIPPETS = {
     "SM01_Runtime_Source/SM01RuntimeController.cs": [
@@ -43,6 +43,10 @@ SOURCE_SNIPPETS = {
     "native_3d_material_scale_guard.py": [
         "FAIL_SOURCE_NORMAL_MAPS_NOT_BOUND", "visual_fidelity_accepted", "PASS_RELATIVE_BOUNDING_DIMENSIONS",
     ],
+    "p0_effective_glb_morph_deltas.py": ["get_accessor", "sparse", "nonzero_deltas", "max_delta"],
+    "p0_morph_source_to_glb_parity.py": ["source_effective_shape_keys", "missing_effective_keys", "delta_ratio_median"],
+    "p0_eyeline_embedded_alpha.py": ["partial_alpha_fraction", "alphaMode", "bufferView"],
+    "p0_targeted_regressions.py": ["no_effective_morph_loss_", "source_glb_upper_eyeline_blend_", "native_capture_sandbox_original_untouched"],
 }
 def ensure_master(ledger_path=LEDGER, source_dir=HERE):
     """Fail closed on missing contract, missing scope, or known regressed sources.

@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-16T1220Z",
+  "revision": "2026-10-16T1349Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -301,6 +301,46 @@
       "evidence": "2026-10-16 Luminous V3 CLOTHED 299 raw KKBP source PNGs with 29 NMP-named maps, Blender imported 126 images and 71 materials, but final GLB has 40 baseColor images, 45 materials, zero normalTexture bindings, 41 blend alpha materials. PMX outfit-to-GLB bounds match 1.2383x1.5217x0.6701. Gate11 visual acceptance not granted.",
       "status": "verified",
       "regression_test": "mastery_regression_tests asserts 29 source normals with 0 target normal bindings returns P0_HOLD_MATERIAL_PARITY even when PMX-to-GLB scale is exact; change in X/Y/Z bounds triggers separate scale failure; visual_fidelity_accepted always false absent render review."
+    },
+    {
+      "id": "K030",
+      "topic": "effective_sparse_morph_fidelity",
+      "applies_to": "gate01|gate09|gate12",
+      "requirement": "Measure actual nonzero morph-target vertex displacement at each export boundary, not only shape-key names or import thresholds.",
+      "procedure": "For each exact source state and hashed GLB parse dense and sparse POSITION accessors, compare mesh names, exact target names and indices, nonzero vertex counts and max displacement; check matched-state Blender/GLB; fail on lost effective morphs and report Unreal stage separately.",
+      "evidence": "2026-10-16 P0_BLEND_SOURCE_EFFECTIVE_MORPHS all states and P0_GLB_EFFECTIVE_SPARSE_MORPH_DELTAS matched effective 247 CLOTHED 242 UNDERWEAR 242 NUDE with no missing morphs and median maximum delta ratio 1.0.",
+      "status": "verified_blender_to_glb_unreal_pending",
+      "regression_test": "p0_targeted_regressions.py requires exact effective counts and names index stability across all three states."
+    },
+    {
+      "id": "K031",
+      "topic": "eyeline_native_source_alpha_semantics",
+      "applies_to": "gate01|gate12",
+      "requirement": "Opaque Unreal upper-eyeline shader is incompatible with original GLB BLEND and embedded partial-alpha gradient; preserve authentic material opacity and source texture channels.",
+      "procedure": "Inspect source exported alpha atlases and decoded embedded GLB image; derive per-material Unreal Translucent source contract and validate actual opacity render under matched camera/light, retaining separate eye/eyeline/hair materials and normals.",
+      "evidence": "2026-10-16 P0_NATIVE_GLB_EYELINE_ALPHA_AUDIT and EMBEDDED_COMPARISON: upper eyeline BLEND for all three states; partial-alpha embedded fraction 0.15737 CLOTHED and 0.178778 UNDERWEAR NUDE; native MT_CT upper atlas has gradient.",
+      "status": "verified_source_semantics_unreal_pending",
+      "regression_test": "p0_targeted_regressions.py fails if source eye gradient absent or BLEND replaced with OPAQUE and requires Gate12 unresolved native status."
+    },
+    {
+      "id": "K032",
+      "topic": "native_assembled_clone_capture_authority",
+      "applies_to": "gate01|gate12",
+      "requirement": "A compiled Unity assembled-renderer capture prototype is not a verified native capture; never touch the original Steam Koikatsu process or cards to bypass a blocked sandbox test.",
+      "procedure": "Validate source SHA and immutable protected Party card clone, original sandbox DLL backup and live source resolvers; only run separate isolated sandbox when no conflicting user Koikatsu session exists; restore runtime in finally and require real measured SkinnedMeshRenderer mesh/bone/morph/material readbacks for both Base and Alter.",
+      "evidence": "2026-10-16 p0_protected_native_live_try.ps1 aborted before deployment because original Steam Koikatsu Party PID 17728 was running; sandbox runtime original hash verified; no native assembled renderer capture accepted.",
+      "status": "guard_verified_live_capture_unresolved",
+      "regression_test": "p0_targeted_regressions.py asserts restored sandbox DLL and source card hashes; runtime acceptance remains blocked until authentic clone capture receipts."
+    },
+    {
+      "id": "K033",
+      "topic": "blender_clean_gltf_sparse_morph_roundtrip",
+      "applies_to": "gate01|gate09|gate12",
+      "requirement": "An actually reimported GLB must preserve effective shape-key deltas, not just stored sparse accessors; distinguish source-level dummy morph names from effective face and body deformers.",
+      "procedure": "On each matching original CLOTHED UNDERWEAR NUDE source GLB, run clean Blender 5.2.2 GLTF import, inspect actual keyblocks and measure nonzero vertex deltas versus Basis; compare exact source counts and target name/index mapping and require downstream Gate12 Unreal evidence separately.",
+      "evidence": "2026-10-16 P0_BLENDER_GLB_REIMPORT_EFFECTIVE_MORPHS.json: effective nonzero Blender keyblocks after fresh GLB import exactly 247 CLOTHED 242 UNDERWEAR 242 NUDE; source Blender 247/242/242, GLB accessor decoded 247/242/242.",
+      "status": "verified_blender_roundtrip_unreal_pending",
+      "regression_test": "p0_targeted_regressions.py clean_blender_import_effective CLOTHED UNDERWEAR NUDE require exact effective counts matching source and decoded GLB."
     }
   ]
 }
