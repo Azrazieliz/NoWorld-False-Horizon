@@ -3,6 +3,7 @@
 **Date:** 2026-10-16
 **Owner:** Gate 12 — Unreal Engine 5.8.3 native runtime / Android engineering
 **State:** ACTIVE / PARTIAL. **The complete game is NOT DONE.**
+**Latest verification:** native opening shell 4/4 Win64 build actions PASS; current source targeted 11/11 PASS; full 150/150 PASS (132 clean + 18 warnings), editor exit 0. Full machine-readable receipts and exact Win64 build log are versioned at `docs/production/gate12/evidence/20261016_replacement_handoff/`. Native opening has NOT been visually or Android accepted.
 **Reason:** User is reaching the chat context limit and may delete this conversation. All actionable state MUST be recoverable from GitHub, not from ChatGPT conversational history.
 
 ## 0. NEW GATE 12: READ FIRST, IN THIS ORDER
@@ -16,7 +17,7 @@
 7. `docs/production/gate12/ISSUE25_NATIVE_RULER_FIVE_PAGES_20261016.md`
 8. `docs/production/gate12/SESSION_CHECKPOINT.md` (long history, contains older superseded notes).
 9. Gate00 permanent rules: https://github.com/Azrazieliz/Offline-Game/issues/25 and four linked operating/progress/recovery/machine-state files.
-10. Original Gate10 final asset handoff `Gate10_FINAL_Gate00_Handoff_2026-10-13.zip`, SHA256 `b92074ca762d4db3228ef237747e664ea3abc9c2da48941a20716ae84c2e7f49`; do not use superseded image mockups. User selected opening 04 `Vacant Throne` and froze portrait+landscape animated/Privacy/reduced-motion behavior.
+10. Original Gate10 final asset handoff `Gate10_FINAL_Gate00_Handoff_2026-10-13.zip`, SHA256 `b92074ca762d4db3228ef237747e664ea3abc9c2da48941a20716ae84c2e7f49`; do not use superseded image mockups. **Caution: the exact ZIP path on the current PC was NOT verified by the latest Downloads/Desktop/UnrealProjects filename search; obtain authentic archive from Gate00/Gate10 before promising reference-accurate imported assets.** User selected opening 04 `Vacant Throne` and froze portrait+landscape animated/Privacy/reduced-motion behavior.
 
 **Do NOT restart the project from zero; the current Gate12 branch is a descendant of frozen Foundation.**
 **Do NOT merge PR#16, mutate Foundation, cook Android, install an APK, clean or stash protected user files.**
@@ -25,7 +26,7 @@
 
 - Repository: https://github.com/Azrazieliz/Offline-Game
 - Engineering branch: `production/gate12-koikatsu-ue583-fixture-20261010`
-- Latest known fully committed base before this checkpoint: `ee14947004d6125248a2f3eebee33860dd677125` (`production: fail-closed Gate DONE ledger and CI; sword combat icon and Ruler tokens`). **On next start, always use actual `git rev-parse HEAD` and remote HEAD, not this potentially outdated base hash.**
+- Native opening source+checkpoint was committed and pushed at `ed3ffef1f63e3264cdadb3370a018a20ff03b5e5` (after governance checkpoint `ee14947004d6125248a2f3eebee33860dd677125`). **Always use actual `git rev-parse HEAD` on restart; a later proof commit can supersede this.**
 - Worktree: `D:\UnrealProjects\OfflineGame_Gate12_Koikatsu_20261010`
 - Frozen FOUNDATION worktree: `D:\UnrealProjects\Offline-Game`, HEAD `3f54f07cacbf193e160d0be15a7be5a7bc730c3b`, clean in last check.
 - UE install: `D:\Epic Games\UE_5.8`.
@@ -49,7 +50,7 @@
 
 ## 3. URGENT NEW native opening source, compiled but NOT visual-approved
 
-Files staged for deliberate checkpoint:
+Native opening source files already committed/pushed:
 - `Source/OfflineGame/Public/UI/OGGate12NativeOpeningWidget.h`
 - `Source/OfflineGame/Private/UI/OGGate12NativeOpeningWidget.cpp`
 - `Source/OfflineGame/Public/World/OGStartingRegionPresentation.h`
@@ -59,7 +60,7 @@ What source actually does:
 - Adds genuine native editable `UOGGate12NativeOpeningWidget` with authentic `CONTINUE`, `NEW GAME`, `SETTINGS`, `DATA RECOVERY` actions; no fictional save data or fake input. `NEW GAME` enters existing recovery-first world clear confirmation if user has a stored Ruler.
 - HUD dispatches native UMG actions into the existing canonical Canvas handlers, so preservation of original SQLite save semantics is designed in. Opening page receives real Ruler-owned/save/recovery/import state and reduced-motion profile; portrait/landscape anchors are adapted at runtime.
 - Flat/generic Opening prototype was previously shown and rejected. New dark UMG shell **still lacks the actual user-approved atmospheric gothic Vacant Throne scene and bespoke animated art**; NEVER report Gate10 opening DONE or visually accepted.
-- One compile error `C4458` on local variable `Slot` was fixed to `AddedButtonSlot`. `Saved/Logs/Gate12_ReplacementHandoff_NativeOpening_Fixed_20261016.log` reports **4/4 SUCCESS**, source compiled, no cook. Fresh current-source Gate12 targeted regression `Saved/Gate12Readiness/Native_Gate12_20261016_234504/verification_summary.json` reports **10 clean + 1 warning + 0 failed, editor exit 0**. Full no-cook suite `Saved/Gate12Readiness/Native_Full_20261016_234625/verification_summary.json` was still running at this checkpoint; verify receipt before claiming full green. **Current native opening has NOT yet been runtime/screenshot matched to frozen Gate10 art.**
+- One compile error `C4458` on local variable `Slot` was fixed to `AddedButtonSlot`. `Saved/Logs/Gate12_ReplacementHandoff_NativeOpening_Fixed_20261016.log` reports **4/4 SUCCESS**, source compiled, no cook. Fresh current-source Gate12 targeted regression reports **10 clean + 1 warning + 0 failed, editor exit 0**; full regression reports **132 clean + 18 warnings + 0 failed, editor exit 0 (150/150 PASS)**. Exact original indices, summaries and build log are preserved at `docs/production/gate12/evidence/20261016_replacement_handoff/`. **Current native opening has NOT yet been runtime/screenshot matched to frozen Gate10 art.**
 - Real runtime UMG opening is not visually inspected yet. Must capture a **genuine Slate-inclusive** (not bare HighResShot) current build screenshot and compare to approved direction 04. This remains BLOCKED for exact art match.
 
 ## 4. Critical upstream requirements NOT implemented, no guesses
@@ -86,7 +87,7 @@ No `DONE` unless exact upstream frozen contract/requirements all delivered, no b
 ## 6. NEXT EXECUTABLE ACTION for new Gate12 (mandatory, no questions)
 
 1. Verify `git rev-parse HEAD`, branch, staged/untracked source; verify original Foundation worktree unchanged and protected Koikatsu local edits remain untouched.
-2. Verify build log `Saved/Logs/Gate12_ReplacementHandoff_NativeOpening_Fixed_20261016.log`: **4/4 SUCCESS**. Inspect results of latest targeted and full no-cook native suite initiated 2026-10-16 after this source; if failed, repair actual error and rerun before reporting pass.
+2. Verify committed evidence `docs/production/gate12/evidence/20261016_replacement_handoff/`: **4/4 Win64 source build PASS; current-source 11/11 targeted PASS and 150/150 full PASS** (18 nonfatal warnings remain). Run again only after source changes, not as endless repeated diagnostics.
 3. Commit/push only intended Gate12 native opening source, tracked World HUD bridge, this handoff and current verified test evidence; never stage the two Koikatsu files or bulk experimental assets.
 4. Real isolated UMG opening screenshot/click/restore test on compiled source; note active real default menu vs approved still incomplete. No using unverified ZIP image mockup to create fake stage.
 5. Continue reconstructing Gate10 exact approved artwork/layout/animations using original Gate10 handoff, not inventing a fresh design. Integrate sword equip/render authored from Gate01/Gate07/Gate09, no firearms.
