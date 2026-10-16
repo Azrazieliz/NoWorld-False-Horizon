@@ -96,6 +96,7 @@ $JourneyResult=$null
 $DesktopCaptureFailures=@()
 $DesktopCapturePaths=@()
 $LastCapturedStep=-1
+$OpeningWindowAttempted=$false
 if ($Onscreen) {
   Add-Type -AssemblyName System.Windows.Forms
   Add-Type -AssemblyName System.Drawing
@@ -127,7 +128,16 @@ try {
         }
       } catch { $JourneyResult=$null }
     }
-    if ($Onscreen -and $JourneyResult -and $JourneyResult.steps.Count -gt $LastCapturedStep) {
+    # Capture the actual startup window once even if the native journey
+    # receipt is late or cannot be written. This is diagnostic evidence, NOT
+    # proof that the opening UMG or user-approved Gate10 art is present.
+    $ElapsedSeconds=((Get-Date)-$Process.StartTime).TotalSeconds
+    $ShouldCaptureInitial=$Onscreen -and !$OpeningWindowAttempted -and
+      !$JourneyResult -and $ElapsedSeconds -ge 30
+    $ShouldCaptureStep=$Onscreen -and $JourneyResult -and
+      $JourneyResult.steps.Count -gt $LastCapturedStep
+    if ($ShouldCaptureInitial) { $OpeningWindowAttempted=$true }
+    if ($ShouldCaptureInitial -or $ShouldCaptureStep) {
       try {
         $Live=Get-Process -Id $Process.Id -ErrorAction Stop
         $Hwnd=$Live.MainWindowHandle
@@ -143,8 +153,10 @@ try {
         $Canvas=[System.Drawing.Graphics]::FromImage($Image)
         try {
           $Canvas.CopyFromScreen($Left,$Top,0,0,$Image.Size)
-          $Idx=$JourneyResult.steps.Count
-          $StepName=($JourneyResult.steps[-1].name -replace '[^a-zA-Z0-9_-]','_')
+          $Idx=if ($ShouldCaptureStep) { $JourneyResult.steps.Count } else { 0 }
+          $StepName=if ($ShouldCaptureStep) {
+            ($JourneyResult.steps[-1].name -replace '[^a-zA-Z0-9_-]','_')
+          } else { 'opening_unverified_window_only' }
           $Shot=Join-Path $VisibleEvidence ("Step_{0:D2}_{1}.png" -f $Idx,$StepName)
           $Image.Save($Shot,[System.Drawing.Imaging.ImageFormat]::Png)
           $DesktopCapturePaths += $Shot
