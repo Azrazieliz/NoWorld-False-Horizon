@@ -9,6 +9,8 @@
 class USceneComponent;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
+class USkeletalMeshComponent;
+class UPointLightComponent;
 
 /** Off-map isolated presentation stage. Its input must be an authored
  * non-Pawn actor containing the real imported modular skeletal meshes.
@@ -57,4 +59,12 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<AActor> PreviewActor;
+
+    /** Passive imported geometry in development viewer; never a gameplay Pawn
+     * or a new canonical Manifestation. Cleared when viewer closes. */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<USkeletalMeshComponent>> DevelopmentQaMeshParts;
+
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UPointLightComponent>> DevelopmentQaLights;
 };

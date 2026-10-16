@@ -6,9 +6,10 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/PointLightComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "World/OGStartingRegionPresentation.h"
 
 AOGGate12CharacterPreviewStage::AOGGate12CharacterPreviewStage()
 {
@@ -87,7 +88,7 @@ bool AOGGate12CharacterPreviewStage::IsDevelopmentQaClassAllowed(
     // Explicit fixture allowlist: no arbitrary Pawn, no fake canonical IDs,
     // and no unaccepted Alter identity/appearance substitution.
     return SourceQaClass &&
-        SourceQaClass->IsChildOf(AOGLuminousV3PlayableCharacter::StaticClass()) &&
+        SourceQaClass->IsChildOf(AOGWorldPrototypeCharacter::StaticClass()) &&
         SourceQaClass->GetPathName() ==
         TEXT("/Game/Experimental/LuminousValentineV3/RuntimeQA_20261011/"
              "BP_LuminousValentineV3_CLOTHED_RuntimeQA."
@@ -115,37 +116,92 @@ bool AOGGate12CharacterPreviewStage::InitializeDevelopmentQaPreview(
     RenderTarget->UpdateResourceImmediate(true);
     Capture->TextureTarget = RenderTarget;
 
-    const FTransform SpawnTransform(FRotator(0.f, 180.f, 0.f), GetActorLocation());
-    TSubclassOf<AOGLuminousV3PlayableCharacter> QaClass(SourceQaClass);
-    AOGLuminousV3PlayableCharacter* QA =
-        World->SpawnActorDeferred<AOGLuminousV3PlayableCharacter>(
-            QaClass, SpawnTransform, this, nullptr,
-            ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-    if (!QA)
+    // Assemble only the exact 45 authentic source skeletal mesh components
+    // used by the verified experimental QA Blueprint. DO NOT spawn that Pawn:
+    // its BeginPlay would register World runtime, create input and touch UI.
+    struct FSourcePart { int32 Mesh; int32 Primitive; };
+    static constexpr FSourcePart SourceParts[] =
+    {
+        {0,0},{0,1},{0,2},{1,0},{2,0},
+        {3,0},{3,1},{3,2},{3,3},{3,4},{3,5},
+        {3,6},{3,7},{3,8},{3,9},{3,10},{3,11},
+        {4,0},{4,1},{4,2},{4,3},{4,4},{4,5},
+        {4,6},{4,7},{4,8},{4,9},{4,10},{4,11},
+        {5,0},{5,1},{5,2},{5,3},{5,4},{5,5},
+        {5,6},{5,7},{5,8},{5,9},{5,10},{5,11},
+        {5,12},{5,13},{5,14},{5,15}
+    };
+
+    TArray<USkeletalMesh*> SourceMeshes;
+    SourceMeshes.Reserve(UE_ARRAY_COUNT(SourceParts));
+    for (const FSourcePart& Part : SourceParts)
+    {
+        const FString MeshName = FString::Printf(
+            TEXT("Mesh_%02d_Prim_%02d"), Part.Mesh, Part.Primitive);
+        const FString Package = FString::Printf(
+            TEXT("/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/"
+                 "Mesh%03dPrim%03d/%s/SkeletalMeshes/%s"),
+            Part.Mesh, Part.Primitive, *MeshName, *MeshName);
+        USkeletalMesh* Skeletal = LoadObject<USkeletalMesh>(nullptr, *Package);
+        if (!Skeletal || !Skeletal->GetSkeleton() ||
+            Skeletal->GetRefSkeleton().GetNum() != 975)
+        {
+            ReleasePreview();
+            return false;
+        }
+        SourceMeshes.Add(Skeletal);
+    }
+    if (SourceMeshes.Num() != 45)
     {
         ReleasePreview();
         return false;
     }
-    // Suppress every isolated-playable QA cycle and UI/input side effect
-    // BEFORE BeginPlay. This is a passive display of the real imported mesh.
-    QA->InitialWardrobe = EOGLuminousV3Wardrobe::Clothed;
-    QA->bRunNonPersistentWardrobeQACycle = false;
-    QA->bRunNativeMotionQACycle = false;
-    QA->bEnableNativeWardrobeQATouchPanel = false;
-    QA->bEnterWorldModeOnIsolatedQAStartup = false;
-    PreviewActor = QA;
-    UGameplayStatics::FinishSpawningActor(QA, SpawnTransform);
-    if (!IsValid(QA) || QA->GetActiveLuminousPartCount() != 45 ||
-        QA->CurrentWardrobe != EOGLuminousV3Wardrobe::Clothed)
+
+    for (USkeletalMesh* Mesh : SourceMeshes)
     {
-        ReleasePreview();
-        return false;
+        USkeletalMeshComponent* Part = NewObject<USkeletalMeshComponent>(
+            this, NAME_None, RF_Transient);
+        if (!Part)
+        {
+            ReleasePreview();
+            return false;
+        }
+        DevelopmentQaMeshParts.Add(Part);
+        Part->SetupAttachment(StageRoot);
+        Part->SetSkeletalMeshAsset(Mesh);
+        // Exact original 45 QA Blueprint part placement, not an inferred resize.
+        Part->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
+        Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Part->RegisterComponent();
+        Part->SetComponentTickEnabled(false);
     }
-    QA->SetActorEnableCollision(false);
-    if (UCharacterMovementComponent* Movement = QA->GetCharacterMovement())
-        Movement->DisableMovement();
-    QA->SetActorTickEnabled(false);
-    Capture->ShowOnlyActorComponents(QA, true);
+
+    // Low-intensity test lighting previously measured in GPU studio sweep.
+    // QA-only stage lights never edit the actual kingdom's map lighting.
+    for (const TPair<FVector, float>& LightSpec :
+         { TPair<FVector, float>(FVector(-185.f,-110.f,150.f),300.f),
+           TPair<FVector, float>(FVector(-170.f,200.f,120.f),145.f) })
+    {
+        UPointLightComponent* Light = NewObject<UPointLightComponent>(
+            this, NAME_None, RF_Transient);
+        if (!Light)
+        {
+            ReleasePreview();
+            return false;
+        }
+        DevelopmentQaLights.Add(Light);
+        Light->SetupAttachment(StageRoot);
+        Light->SetRelativeLocation(LightSpec.Key);
+        Light->SetIntensity(LightSpec.Value);
+        Light->SetAttenuationRadius(900.f);
+        Light->RegisterComponent();
+    }
+
+    // Only the diagnostic camera moves closer. Production capture defaults,
+    // the character mesh, original materials and World camera remain frozen.
+    Capture->SetRelativeLocation(FVector(-260.f, 0.f, -18.f));
+    Capture->SetRelativeRotation(FRotator::ZeroRotator);
+    Capture->ShowOnlyActorComponents(this, true);
     Capture->CaptureScene();
     return true;
 #endif
@@ -165,6 +221,19 @@ void AOGGate12CharacterPreviewStage::ReleasePreview()
         Capture->ShowOnlyActors.Empty();
         Capture->ShowOnlyComponents.Empty();
         Capture->TextureTarget = nullptr;
+    }
+    for (USkeletalMeshComponent* Part : DevelopmentQaMeshParts)
+        if (IsValid(Part)) Part->DestroyComponent();
+    DevelopmentQaMeshParts.Reset();
+    for (UPointLightComponent* Light : DevelopmentQaLights)
+        if (IsValid(Light)) Light->DestroyComponent();
+    DevelopmentQaLights.Reset();
+
+    // Restore the accepted preview defaults for any later approved presentation.
+    if (Capture)
+    {
+        Capture->SetRelativeLocation(FVector(-360.f, 0.f, 145.f));
+        Capture->SetRelativeRotation(FRotator(-5.f, 0.f, 0.f));
     }
     if (IsValid(PreviewActor)) PreviewActor->Destroy();
     PreviewActor = nullptr;
