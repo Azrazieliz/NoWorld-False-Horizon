@@ -20,6 +20,14 @@ Important transfer state: source ZIP is NOT YET on the connected Unreal Windows 
 - Gacha user_approved_reference.png (864x1536): featured art, real rates/history controls, ticket one/ten controls, banner selection and bottom five destinations; mockup banner is not eligible content.
 - Records approved_visual_with_placeholder_text.png: mockup has placeholder data only, do not import into canonical records.
 
+## Exact original approved image hashes (direct image-byte verification)
+- opening variants/04_vacant_throne.png: 63b824ccb8740983961d79f59bb7809fa1565ad8e22b0f7d9f4ffaa273594d71 (335x470)
+- 01_FROZEN/WorldHUD/world_hud_freeze.png: 6d7691507ce3792e8e75289496d20c946c148ee83a188d720960a876bab2616e (1672x941)
+- 01_FROZEN/RulerHome/approved_visual.png: ad44793fbb1e9edcc09a03249cc213b3d9c6df000957dbdb2388754c3ecc4d1e (941x1672)
+- 01_FROZEN/Records/approved_visual_with_placeholder_text.png: 4fb28851a622ad8cad93f63232cfa9c43b41dbcfb49bae2f80edf95ad783115b (941x1672)
+- 01_FROZEN/Gacha/user_approved_reference.png: a8978a82348d9c719d2bde754564bded7959b38fc6ba6226c3b8507881baeeb6 (864x1536)
+- All seven master manifest-member hashes were verified against extracted original ZIP bytes with zero mismatches.
+
 ## Source priority and remaining implementation
 - User approved selected concept 04 and the later written animation spec; other nine concepts are superseded for production opening direction.
 - R/SR/SSR/UR/LR/MR: yellow/pink/red/blue/white-gray-gold-insignia/matte-black-platinum-insignia. Angular narrow ribs, metallic ONLY on small badge, no rarity frame VFX, character-specific Absolute.
