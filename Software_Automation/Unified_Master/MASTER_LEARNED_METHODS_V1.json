@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-16T0951Z",
+  "revision": "2026-10-16T1051Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -281,6 +281,16 @@
       "evidence": "2026-10-16 three genuine Luminous V3-to-Alter candidate native card diffs: only coordinate index 0 changed, indices 1 to 6 retain former base clothing presets; source SHA and copies staged read-only.",
       "status": "verified",
       "regression_test": "mastery_regression_tests coordinate_inheritance_guard fixture: only coordinate 0 changed returns REVIEW_INHERITED_COORDINATES, baseline matching indices 1..6, no_auto_promotion true; all seven changed does not falsely report inherited presets."
+    },
+    {
+      "id": "K028",
+      "topic": "overwrite_native_source_revision_capture",
+      "applies_to": "gate01|gate11|gate12",
+      "requirement": "When a user overwrites an already ingested native character card, hash the current original again and preserve it as a new immutable source revision; never overwrite previous staged copies or silently keep the previous card active.",
+      "procedure": "Run native_kk_card_diff_v1.py against the original prior intake and overwritten live source, then intake_native_kk_card.py to a unique revision-tagged output directory. Rehash copied bytes, update authoritative handoff source manifest/current SHA and retain superseded source as audit-only. Keep user-authored visual edits unchanged and do not reset extras/materials.",
+      "evidence": "Luminous Alter user overwrite verified 2026-10-16, previous hash fccab219... preserved, new current hash 15d51bce... captured; one accessory slot and MaterialEditor payload changed.",
+      "status": "verified",
+      "regression_test": "mastery_regression_tests should assert two separate immutable intake directories retain different source hashes and refuse overwrites of either previously captured revision."
     }
   ]
 }

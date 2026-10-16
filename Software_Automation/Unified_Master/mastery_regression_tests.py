@@ -3,6 +3,8 @@ import json, pathlib, tempfile, shutil
 from mastery_preflight import ensure_master, LEDGER, HERE, SOURCE_SNIPPETS
 from gate_start import gate_start
 from coordinate_inheritance_guard import evaluate as check_inherited_coordinates
+from intake_native_kk_card import ingest as ingest_native_card, hash_file as hash_native_card
+from PIL import Image
 cases={}
 def test(name,callback):
     try:cases[name]=bool(callback())
@@ -20,6 +22,17 @@ for i in range(1,13):
     test('gate%02d_startup'%i,lambda t=tag:gate_start(t)['gate']==t and bool(gate_start(t)['known_methods']))
 with tempfile.TemporaryDirectory(prefix='nw_method_reg_') as td:
     tmp=pathlib.Path(td)
+    test('new_K028_revision_rule_persisted',lambda:any(r['id']=='K028' and r.get('regression_test') for r in json.loads(LEDGER.read_text(encoding='utf-8-sig'))['rules']))
+    def revision_capture_guard():
+        old=tmp/'old.png'; new=tmp/'new.png'
+        Image.new('RGB',(256,352),(17,28,39)).save(old)
+        Image.new('RGB',(256,352),(93,47,15)).save(new)
+        first=ingest_native_card(old,tmp/'revision_previous')
+        second=ingest_native_card(new,tmp/'revision_current')
+        try:ingest_native_card(new,tmp/'revision_previous'); refused=False
+        except FileExistsError:refused=True
+        return refused and first['sha256_original']!=second['sha256_original'] and hash_native_card(tmp/'revision_previous'/'SOURCE_CARD_UNMODIFIED.png')==first['sha256_original'] and hash_native_card(tmp/'revision_current'/'SOURCE_CARD_UNMODIFIED.png')==second['sha256_original']
+    test('source_revisions_immutable_and_no_overwrite',revision_capture_guard)
     original=json.loads(LEDGER.read_text(encoding='utf-8-sig'))
     def altered(name,edit):
         x=json.loads(json.dumps(original));edit(x)
