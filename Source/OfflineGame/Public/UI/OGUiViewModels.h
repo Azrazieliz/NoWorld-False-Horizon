@@ -58,6 +58,10 @@ struct OFFLINEGAME_API FOGRosterManifestationViewModel
     UPROPERTY(BlueprintReadOnly)
     FOGEntityId ManifestationId;
 
+    /** Exact canonical active Version of this owned Manifestation; used for art/3D asset lookup. */
+    UPROPERTY(BlueprintReadOnly)
+    FOGContentId ActiveVersionId;
+
     UPROPERTY(BlueprintReadOnly)
     FString BuildLabel;
 

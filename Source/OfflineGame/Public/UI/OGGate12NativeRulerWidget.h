@@ -8,6 +8,8 @@
 
 class UVerticalBox;
 class UHorizontalBox;
+class UOGGate12CharacterVisualCatalog;
+class AOGGate12CharacterPreviewStage;
 class UOGGate12NativeRulerWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOGGate12WorldPresentationRequested);
@@ -47,6 +49,13 @@ public:
     UPROPERTY(BlueprintAssignable, Category="OfflineGame|Ruler|Native")
     FOGGate12WorldPresentationRequested OnWorldPresentationRequested;
 
+    /** Authored asset manifest; missing 2D art is allowed. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Ruler|Visuals")
+    TObjectPtr<UOGGate12CharacterVisualCatalog> VisualCatalog;
+
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Visuals")
+    void SetVisualCatalog(UOGGate12CharacterVisualCatalog* InCatalog);
+
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Native")
     void RefreshFromCanonical();
 
@@ -62,6 +71,7 @@ public:
 protected:
     virtual void NativeOnInitialized() override;
     virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
 
 private:
     UPROPERTY(Transient)
@@ -72,6 +82,9 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UHorizontalBox> NavigationBar;
+
+    UPROPERTY(Transient)
+    TObjectPtr<AOGGate12CharacterPreviewStage> PreviewStage;
 
     int32 OpenIdentityIndex = INDEX_NONE;
     // UI preference only: never changes wardrobe, ownership, or world state.
@@ -86,6 +99,8 @@ private:
     void BuildCurrentPage();
     void BuildRoster();
     void BuildCharacterDetail();
+    void AddCharacterVisual(UVerticalBox* Parent, const FOGRosterIdentityViewModel& Identity, bool bThreeDimensional);
+    void ReleasePreviewStage();
     void BuildRecords();
     void BuildTerritory();
     void BuildNav();

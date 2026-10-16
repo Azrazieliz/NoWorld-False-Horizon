@@ -1,6 +1,12 @@
 #include "UI/OGGate12NativeRulerWidget.h"
 
 #include "Blueprint/WidgetTree.h"
+#include "UI/OGGate12CharacterVisualCatalog.h"
+#include "UI/OGGate12CharacterPreviewStage.h"
+#include "Components/Image.h"
+#include "Engine/Texture2D.h"
+#include "Engine/TextureRenderTarget2D.h"
+#include "Engine/World.h"
 #include "Components/Border.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
@@ -71,6 +77,25 @@ void UOGGate12NativeRulerWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     RefreshFromCanonical();
+}
+
+void UOGGate12NativeRulerWidget::NativeDestruct()
+{
+    ReleasePreviewStage();
+    Super::NativeDestruct();
+}
+
+void UOGGate12NativeRulerWidget::SetVisualCatalog(UOGGate12CharacterVisualCatalog* InCatalog)
+{
+    ReleasePreviewStage();
+    VisualCatalog = InCatalog;
+    RefreshFromCanonical();
+}
+
+void UOGGate12NativeRulerWidget::ReleasePreviewStage()
+{
+    if (IsValid(PreviewStage)) PreviewStage->Destroy();
+    PreviewStage = nullptr;
 }
 
 void UOGGate12NativeRulerWidget::BuildRoot()
@@ -221,6 +246,8 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
 {
     if (!Content) return;
     Content->ClearChildren();
+    if (OpenIdentityIndex == INDEX_NONE || !bPrefer3DCharacterPresentation)
+        ReleasePreviewStage();
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
@@ -368,11 +395,32 @@ void UOGGate12NativeRulerWidget::BuildRoster()
             UVerticalBox::StaticClass());
         if (RarityColors.bKnown)
             AddMessage(CardBody, Rarity.ToString(), 16, RarityColors.Badge);
-        UVerticalBoxSlot* Spacer = CardBody->AddChildToVerticalBox(
-            WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass()));
-        Spacer->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-        // Artwork is deliberately not invented or substituted with a generic character.
-        AddMessage(CardBody, TEXT("ART NOT INSTALLED"), 12, TextMuted);
+        UTexture2D* OriginalArt = nullptr;
+        if (Selected && VisualCatalog)
+        {
+            const FOGGate12CharacterVisualEntry* Entry =
+                VisualCatalog->FindExact(Identity.IdentityId, Selected->ActiveVersionId);
+            if (Entry && !Entry->OriginalArtwork2D.IsNull())
+                OriginalArt = Entry->OriginalArtwork2D.LoadSynchronous();
+        }
+        if (OriginalArt)
+        {
+            UImage* Portrait = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+            Portrait->SetBrushFromTexture(OriginalArt, true);
+            UScaleBox* FitArt = WidgetTree->ConstructWidget<UScaleBox>(
+                UScaleBox::StaticClass());
+            FitArt->SetStretch(EStretch::ScaleToFit);
+            FitArt->AddChild(Portrait);
+            UVerticalBoxSlot* PictureSlot = CardBody->AddChildToVerticalBox(FitArt);
+            PictureSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        }
+        else
+        {
+            UVerticalBoxSlot* Spacer = CardBody->AddChildToVerticalBox(
+                WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass()));
+            Spacer->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+            AddMessage(CardBody, TEXT("ORIGINAL ART NOT INSTALLED"), 12, TextMuted);
+        }
         AddMessage(CardBody,
             Identity.DisplayNameKey.IsEmpty()
                 ? Identity.IdentityId.ToString() : Identity.DisplayNameKey,
@@ -541,6 +589,96 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     }
 }
 
+void UOGGate12NativeRulerWidget::AddCharacterVisual(
+    UVerticalBox* Parent, const FOGRosterIdentityViewModel& Identity,
+    bool bThreeDimensional)
+{
+    ReleasePreviewStage();
+    if (!Parent || !VisualCatalog || !GetWorld())
+    {
+        AddMessage(Parent, TEXT("Character visual package is not installed."), 15, TextMuted);
+        return;
+    }
+
+    const FOGRosterManifestationViewModel* Selected =
+        Identity.Manifestations.FindByPredicate(
+            [&Identity](const FOGRosterManifestationViewModel& Item)
+            {
+                return Item.ManifestationId == Identity.SelectedManifestationId;
+            });
+    if (!Selected)
+    {
+        AddMessage(Parent, TEXT("No verified selected Manifestation."), 15, TextMuted);
+        return;
+    }
+
+    const FOGGate12CharacterVisualEntry* Entry =
+        VisualCatalog->FindExact(Identity.IdentityId, Selected->ActiveVersionId);
+    if (!Entry)
+    {
+        AddMessage(Parent, TEXT("No unambiguous approved visual package for this version."), 15, TextMuted);
+        return;
+    }
+
+    FSlateBrush Brush;
+    if (bThreeDimensional)
+    {
+        if (Entry->GenuineCharacterPreviewClass.IsNull())
+        {
+            AddMessage(Parent, TEXT("Genuine 3D character preview not yet installed."), 15, TextMuted);
+            return;
+        }
+        TSubclassOf<AActor> PreviewClass = Entry->GenuineCharacterPreviewClass.LoadSynchronous();
+        if (!PreviewClass)
+        {
+            AddMessage(Parent, TEXT("Approved character 3D preview failed to load."), 15, TextMuted);
+            return;
+        }
+        FActorSpawnParameters Spawn;
+        Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        PreviewStage = GetWorld()->SpawnActor<AOGGate12CharacterPreviewStage>(
+            AOGGate12CharacterPreviewStage::StaticClass(),
+            FVector(0.0f, 0.0f, -200000.0f), FRotator::ZeroRotator, Spawn);
+        if (!IsValid(PreviewStage) || !PreviewStage->InitializeApprovedPreview(PreviewClass))
+        {
+            ReleasePreviewStage();
+            AddMessage(Parent, TEXT("Live skeletal 3D preview unavailable."), 15, TextMuted);
+            return;
+        }
+        Brush.SetResourceObject(PreviewStage->GetLiveRenderTarget());
+        Brush.ImageSize = FVector2D(512.0f, 768.0f);
+    }
+    else
+    {
+        if (Entry->OriginalArtwork2D.IsNull())
+        {
+            AddMessage(Parent, TEXT("Original 2D artwork not yet supplied."), 15, TextMuted);
+            return;
+        }
+        UTexture2D* OriginalArt = Entry->OriginalArtwork2D.LoadSynchronous();
+        if (!OriginalArt)
+        {
+            AddMessage(Parent, TEXT("Original 2D artwork failed to load."), 15, TextMuted);
+            return;
+        }
+        Brush.SetResourceObject(OriginalArt);
+        Brush.ImageSize = FVector2D(
+            static_cast<float>(OriginalArt->GetSizeX()),
+            static_cast<float>(OriginalArt->GetSizeY()));
+    }
+
+    // ScaleToFit displays the complete artwork/model without cropping or bars.
+    UImage* Image = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+    Image->SetBrush(Brush);
+    UScaleBox* Fit = WidgetTree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass());
+    Fit->SetStretch(EStretch::ScaleToFit);
+    Fit->AddChild(Image);
+    USizeBox* Height = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+    Height->SetHeightOverride(500.0f);
+    Height->AddChild(Fit);
+    Parent->AddChildToVerticalBox(Height);
+}
+
 void UOGGate12NativeRulerWidget::BuildCharacterDetail()
 {
     UGameInstance* GI = GetGameInstance();
@@ -562,7 +700,7 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
         FString::Printf(TEXT("%d separately owned Manifestations"),
             Identity.ManifestationCount), 17, TextMuted);
     AddAction(Content, bPrefer3DCharacterPresentation ? TEXT("PRESENTATION: 3D (switch to 2D)") : TEXT("PRESENTATION: 2D (switch to 3D)"), TEXT("presentation/toggle"));
-    AddMessage(Content, bPrefer3DCharacterPresentation ? TEXT("3D preview awaits approved live render-target binding; no substitute model displayed.") : TEXT("2D portrait awaits canonical artwork asset; no substitute art displayed."), 15, TextMuted);
+    AddCharacterVisual(Content, Identity, bPrefer3DCharacterPresentation);
     for (int32 Index = 0; Index < Identity.Manifestations.Num(); ++Index)
     {
         const FOGRosterManifestationViewModel& Manifestation =

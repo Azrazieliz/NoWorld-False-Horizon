@@ -441,6 +441,8 @@ bool FOGUiViewModelService::BuildRoster(
             FOGRosterManifestationViewModel ManifestationView;
             ManifestationView.ManifestationId =
                 Manifestation.ManifestationId;
+            ManifestationView.ActiveVersionId =
+                Manifestation.ActiveVersionId;
             ManifestationView.BuildLabel =
                 Manifestation.BuildLabel;
             ManifestationView.Level =
