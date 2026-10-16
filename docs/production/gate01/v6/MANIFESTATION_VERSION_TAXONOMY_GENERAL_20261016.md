@@ -1,5 +1,5 @@
 # Gate 01 — Version Authoring Taxonomy (restricted, 2026-10-16)
-**Status:** Working Gate 01 authoring methodology, aligned with the existing Character Identity architecture. **Only the three types explicitly identified by the user are enumerated.** This document is not a Registry v2 approval or a change to frozen game architecture, fixed rarity, combat kit, owner data, or Foundation.
+**Status:** Working Gate 01 authoring methodology, aligned with the existing Character Identity architecture. **Four named Version families are user-defined (including Base); a fifth category slot is reserved, not invented.** This document is not a Registry v2 approval or a change to frozen game architecture, fixed rarity, combat kit, owner data, or Foundation.
 
 ## Existing architecture — authoritative
 
@@ -12,15 +12,16 @@
 
 These existing layers must not be renamed, merged or reinterpreted even if a conversation informally calls a Version a “manifestation.” Preserve existing Registry v2 and approval boundaries.
 
-## Currently user-specified Version design types
+## User-defined Version categories (up to five, counting Base)
 
 | Type | Operational definition | Evidence that distinguishes it from a skin |
 |---|---|---|
 | **Base** | The primary / identity-anchor Version of a character. | Carries the agreed canonical starting depiction, powers and role. |
 | **Alter** | An **inverted, darker, or fundamentally altered expression of the same Identity**, using *Fate* Alter Servants and *Date A Live* Inverse Spirits (Sephira inversion) as the user's intended reference family. A defining aspect of the character is inverted, distorted, suppressed or re-expressed: disposition, instincts, allegiance, values, emotional state, power aspect, symbolism, or an alternative interpretation of their essential nature. | The alteration must be **character-specific, substantive, and legible** in behavior and power identity as well as visual language, not merely clothing/hair/palette. It may be a distinct persona or a recognizably continuous self; not every Alter is evil, mindless, corrupted or stronger. |
 | **Awakened** | The character's original identity, motifs and powers are **drastically amplified** into a distinctive evolved design, without requiring holiness, a divine theme or bodily mutation. | The character herself is visibly redesigned through a meaningful combination of hair color gradient/new-colored strands, hairstyle/volume, eyes and expressions, facial/body markings, clothing cut and silhouette, character-specific equipment, and optionally anatomy or integrated power features. Effects and background are supporting elements, never the main transformation. |
+| **Berserker** | A distinct Version where the character enters an overwhelmingly unleashed, feral, frenzy-driven, unstable or destructively overpowered state. **Milim Stampede** is the user's reference example for this family—not for Awakened. | Distinctly transformed expressions, hair, silhouette, garments, markings, anatomy when appropriate, motion/posture and combat presentation embody loss of restraint or overwhelming aggression. Mere rage effects, particles or another costume are insufficient. A fixed level of consciousness or evil alignment is not assumed; define each character's control and trigger. |
 
-**No additional Version-type names are authorized by this document.** Existing independently approved content rules elsewhere in the game remain untouched. New category proposals stay OUT of the source taxonomy unless the user approves them.
+**Category count:** 4 named categories = Base + Alter + Awakened + Berserker. **Up to 5 total categories including Base**, so **1 optional category remains undefined** pending explicit user approval. This is a limit on the *design taxonomy list*, **not** a new engine limit on the number of actual Versions per Identity, owned Manifestations or character copies. Do not enforce a gameplay/database cap from this document. Existing independently approved content rules elsewhere in the game remain untouched; unapproved category proposals stay outside the source taxonomy.
 
 ## Alter — reference-based creative standard (corrected 2026-10-16)
 
@@ -49,7 +50,7 @@ An Alter **often** shifts toward a darker, bolder, more forceful visual interpre
 
 ## Awakened — substantial character redesign standard (refined after visual review 2026-10-16)
 
-**User-provided reference:** Milim's Base appearance compared with her Stampede/berserker-like form exemplifies an extreme escalation of recognizable character traits. Awakened does **not** mean automatically angelic, holy, lighter, divinely armored or regal.
+**Important distinction:** Milim's Stampede form, previously provided by the user, belongs to the **Berserker** Version category and **must not be used as an Awakened classification**. It can illustrate the magnitude of character-centric visual redesign across form types, but its premise is different. Awakened does **not** mean automatically angelic, holy, lighter, divinely armored or regal.
 
 **User correction:** A drastic transformation can be accomplished through **hair color gradients, contrasting strands, new hairstyle, hair length and volume, changed clothes, altered silhouette, eyes, expression, markings, proportions, ornamentation and power-specific body traits**. Physical anatomy mutations are **optional**, not required. Do not impose wings, horns, claws, tattoos, excessive armor or any other generic trope.
 
@@ -67,11 +68,25 @@ An Alter **often** shifts toward a darker, bolder, more forceful visual interpre
 
 **Current visual review status:** prior officer-mage Awakened renderings are unapproved; they overrelied on decorative effects or inadequately distinguished the character. Future art must be judged against the full redesigned subject, not just VFX. This rule applies across all three Gate 01 character workflows and changes no existing Registry record.
 
+## Berserker — separate character Version family
+
+**Core premise:** the character is driven into a power-overflow, frenzy, feral, rage, loss-of-restraint or otherwise destructively unleashed condition. The original person remains recognizable; the transformation expresses uncontrolled or extreme instinct/power rather than ordinary mastery.
+
+**Authoritative visual reference supplied by the user:** Milim's Stampede/berserker form relative to her Base. The example belongs **here**, not under Awakened.
+
+**Character-led visual evolution:** dramatically change facial intensity and expressions, hairstyle/wildness and color patterns, body language, stance, costume structure/damage or integrated armor, power-linked body markings, aggressive silhouette, and character-specific anatomy if justified. No mandatory horns, claws, wings, darkness, gendered styling, color, or moral alignment; do not treat generic external fire/aura as a sufficient design.
+
+**Difference from Awakened:** Awakened shows amplified/developed potential that may remain deliberate, refined or controlled. Berserker conveys **loss of restraint or runaway destructive escalation**; any regained control or stable Berserker form requires explicit character-specific lore. Both can have extreme visual redesigns, but their transformation causes and behavior are different.
+
+**Difference from Alter:** Alter changes/inverts/reinterprets a character's fundamental nature or identity expression, often with darker/bolder presentation. Berserker centers on the character's **unleashed frenzy or overwhelming power state**. Do not conflate just because both look intimidating.
+
+**Acceptance test:** On a neutral background, with background effects hidden, the actual character's hair, face, clothing, posture, silhouette and characteristic traits should communicate the berserker transformation. Define control state, transformation trigger, reversibility and combat behavior before registration. No automatic rarity or power ranking.
+
 ## Reusable Gate 01 creation protocol (all characters)
 
 1. **Locate authentic source.** For existing characters inspect user-supplied 2D art or original 3D with live Koikatsu capture, original native card, textures/rig and hashes. Preserve the original; never replace by approximation.
 2. **Compare against Base.** Log deliberate and accidental differences: face/eyes/hair/body proportions, anatomy, skin/materials, outfit, accessories, silhouette, power themes and character recognizability.
-3. **Classify accurately.** Different costume/hair/palette alone => Skin. Meaningful independent change => propose a Version and choose an explicitly authorized type (Base, Alter, Awakened). Temporary mechanics may be state changes; don't invent automatic Version ownership.
+3. **Classify accurately.** Different costume/hair/palette alone => Skin. Meaningful independent change => propose a Version and choose an explicitly authorized type (Base, Alter, Awakened, Berserker). Temporary mechanics may be state changes; don't invent automatic Version ownership.
 4. **Specify creative cause** in plain language: what changed, why, how the new form still relates to the Identity, permanence/reversibility and intended playstyle distinction.
 5. **Produce accurate, editable visual reference.** Exact 2D turnaround (front/side/back), expression sheet, palette/annotations, outfit/accessory details and finished standalone artworks, consistent with premium hand-drawn anime style and the game's existing art direction.
 6. **3D-first exception.** If the user has already made the Version in Koikatsu, derive 2D material FROM observed real 3D first; distinguish faithful reproduction from proposed repairs; ask for approval before modifying user 3D or freezing the 2D target.
@@ -82,8 +97,8 @@ An Alter **often** shifts toward a darker, bolder, more forceful visual interpre
 ## Minimal proposal fields
 
 - Verified Identity / Base source references and hashes
-- Version type (Base, Alter or Awakened); avoid assuming user meant runtime owned Manifestation
-- Cause of divergence / awakening and Identity continuity invariants
+- Version type (Base, Alter, Awakened or Berserker); avoid assuming user meant runtime owned Manifestation
+- Cause of divergence / awakening / berserker escalation and Identity continuity invariants
 - Diff table: psychology, anatomy, face, outfit, power, presentation, gameplay role
 - Confirmed user-authored source versus artist-suggested correction
 - Actual 2D exact-design approval and 3D fidelity approval, each independently recorded
