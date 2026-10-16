@@ -920,6 +920,21 @@ public:
 #endif
 
 private:
+    /** Native editable opening: preserves existing Canvas events/saves. */
+    void SynchronizeGate12NativeOpeningUMG(bool bShouldShow);
+
+    UFUNCTION()
+    void OnGate12NativeOpeningAction(FName Action);
+
+    UPROPERTY(EditDefaultsOnly, Category="OfflineGame|Opening|UMG")
+    bool bGate12NativeOpeningUMGEnabled = true;
+
+    UPROPERTY(Transient)
+    TObjectPtr<class UOGGate12NativeOpeningWidget> Gate12NativeOpeningWidget;
+
+    // Avoid filesystem/SQLite reads once per DrawHUD frame on Android.
+    double LastNativeOpeningRefreshAtSeconds = -1000.0;
+
     void SynchronizeGate12NativeRulerUMG(bool bShouldShow);
 
     UPROPERTY(EditDefaultsOnly, Category="OfflineGame|Ruler|UMG")

@@ -46,6 +46,7 @@
 #include "OfflineGame.h"
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "UI/OGGate12NativeOpeningWidget.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
 #include "UI/OGGate12OwnedWorldCharacterBinding.h"
 #include "Runtime/OGPlayerProfileSettings.h"
@@ -5864,10 +5865,88 @@ void AOGWorldPresentationHud::SynchronizeGate12NativeRulerUMG(bool bShouldShow)
     }
 }
 
+void AOGWorldPresentationHud::OnGate12NativeOpeningAction(FName Action)
+{
+    // Keep ONE authoritative action implementation: native Slate controls
+    // dispatch to the existing canonical Canvas/World handler, including
+    // the two-phase recovery-first world reset.
+    NotifyHitBoxClick(Action);
+    LastNativeOpeningRefreshAtSeconds = -1000.0;
+}
+
+void AOGWorldPresentationHud::SynchronizeGate12NativeOpeningUMG(
+    bool bShouldShow)
+{
+    if (!bShouldShow)
+    {
+        if (Gate12NativeOpeningWidget &&
+            Gate12NativeOpeningWidget->IsInViewport())
+            Gate12NativeOpeningWidget->RemoveFromParent();
+        return;
+    }
+    if (!PlayerOwner || !PlayerOwner->IsLocalController() ||
+        !PlayerOwner->GetLocalPlayer() || !GetWorld())
+        return;
+
+    if (!Gate12NativeOpeningWidget)
+    {
+        // This native editable UMG shell does not claim the frozen Gate10
+        // throne background/character cinematics until their source assets
+        // and user-accepted visual match genuinely exist.
+        Gate12NativeOpeningWidget = CreateWidget<UOGGate12NativeOpeningWidget>(
+            PlayerOwner, UOGGate12NativeOpeningWidget::StaticClass());
+        if (!Gate12NativeOpeningWidget) return;
+        Gate12NativeOpeningWidget->OnOpeningAction.AddDynamic(
+            this, &AOGWorldPresentationHud::OnGate12NativeOpeningAction);
+    }
+
+    const double Now = GetWorld()->GetRealTimeSeconds();
+    if (Gate12NativeOpeningWidget->IsInViewport() &&
+        Now - LastNativeOpeningRefreshAtSeconds < 0.75)
+        return;
+    LastNativeOpeningRefreshAtSeconds = Now;
+
+    UGameInstance* GI = GetGameInstance();
+    UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    FString RestoreError;
+    if (Session && !Session->IsBoundToStoredRuler())
+        Session->TryRestoreLocalRuler(RestoreError);
+    const bool bActualRuler = Session && Session->IsBoundToStoredRuler();
+
+    const FString SaveRoot = FPaths::Combine(
+        FPaths::ProjectSavedDir(), TEXT("OfflineGame"));
+    const bool bHasWorld = IFileManager::Get().FileExists(
+        *FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
+    TArray<FString> RecoveryFiles;
+    IFileManager::Get().FindFilesRecursive(
+        RecoveryFiles, *FPaths::Combine(SaveRoot, TEXT("Snapshots")),
+        TEXT("*.db"), true, false);
+    IFileManager::Get().FindFilesRecursive(
+        RecoveryFiles, *FPaths::Combine(SaveRoot, TEXT("MigrationRecovery")),
+        TEXT("*.db"), true, false);
+    TArray<FString> Imports;
+    IFileManager::Get().FindFilesRecursive(
+        Imports, *FPaths::Combine(SaveRoot, TEXT("Import")),
+        TEXT("*"), true, false);
+    FOGPlayerProfileSettings Profile;
+    FString ProfileError;
+    FOGPlayerProfileSettingsService::Load(
+        FOGPlayerProfileSettingsService::DefaultProfilePath(),
+        Profile, ProfileError);
+    Gate12NativeOpeningWidget->RefreshOpening(
+        bActualRuler, bHasWorld, !RecoveryFiles.IsEmpty(),
+        !Imports.IsEmpty(), Profile.bReducedMotion, OpeningPage);
+    if (!Gate12NativeOpeningWidget->IsInViewport())
+        Gate12NativeOpeningWidget->AddToViewport(50);
+}
+
 void AOGWorldPresentationHud::SetFoundationSurface(FName Surface)
 {
     if (Surface != FName(TEXT("ruler")))
         SynchronizeGate12NativeRulerUMG(false);
+    if (Surface != FName(TEXT("opening")))
+        SynchronizeGate12NativeOpeningUMG(false);
     FoundationSurface = Surface;
     GachaOverlay = NAME_None;
     PressedWorldControls.Reset();
@@ -8161,6 +8240,14 @@ void AOGWorldPresentationHud::DrawHUD()
         Character && Character->IsFoundationSettingsOpen();
     const bool bPauseOpen =
         Character && Character->IsFoundationPauseMenuOpen();
+
+    const bool bNativeOpeningVisible =
+        bGate12NativeOpeningUMGEnabled && !bSettingsOpen && !bPauseOpen &&
+        FoundationSurface == FName(TEXT("opening"));
+    SynchronizeGate12NativeOpeningUMG(bNativeOpeningVisible);
+    if (bNativeOpeningVisible && Gate12NativeOpeningWidget &&
+        Gate12NativeOpeningWidget->IsInViewport())
+        return;
 
     const bool bNativeRulerVisible =
         bGate12NativeRulerUMGEnabled && !bSettingsOpen && !bPauseOpen &&
