@@ -10,7 +10,7 @@ Protected local recovery on authorized PC:
 `D:\Tools\GameAssetPipeline\ProductionAutomation\checkpoint\migration_20261016\GATE00_RECOVERY_AND_CLEANUP_AUDIT_20261016.json`,
 `...\GATE12_UNCOMMITTED_TRACKED_20261016.patch`,
 `...\GATE12_LOCAL_RECOVERY_SOURCE_20261016.zip`.
-The local ZIP includes a tracked binary diff + untracked *small code/text*; it **does not include untracked binary Unreal assets**, which must be separately preserved/committed or backed up before any cleanup. Two generated `__pycache__` dirs were safely deleted, nothing else.
+The first local ZIP includes the tracked diff + untracked code/text. A second **verified protected binary archive** now contains the untracked UE binaries: `D:\\Tools\\GameAssetPipeline\\ProductionAutomation\\checkpoint\\migration_20261016\\GATE12_UNTRACKED_BINARY_RECOVERY_20261016.zip`, 724 files, 248,944,219 bytes, SHA256 `97525c80318bf64f651b93e4972650a4b9f59fe046dcb6601d4d321ae95acff6`, full ZIP CRC PASS. Its receipt is `GATE12_BINARY_RECOVERY_RECEIPT_20261016.json`. Source originals remain untouched. **Still commit/push actual tested code/assets rather than treating these local backups as a replacement for Git.** Two generated `__pycache__` dirs were safely deleted, nothing else.
 
 ## Highest-priority FIRST ACTION IN REPLACEMENT
 
