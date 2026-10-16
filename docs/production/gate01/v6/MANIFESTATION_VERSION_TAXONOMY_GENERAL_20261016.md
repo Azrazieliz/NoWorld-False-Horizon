@@ -1,4 +1,4 @@
-# Gate 01 — Version Authoring Taxon| **Awakened** | The original character's nature and capabilities reach a drastically amplified or unleashed state, with the transformation expressed **on the character's actual body and intrinsic design** rather than merely by clothing, equipment, surrounding VFX or decorations. | Major, recognizable changes to inherent anatomy, physical features, hair structure/volume, eyes, characteristic markings, limbs, creature traits where justified, posture, and/or physically integrated power structures. Not automatically divine, holy, angelic, lighter-colored, benevolent or stronger by a fixed formula. |
+# Gate 01 — Version Authoring Taxonomy (restricted, 2026-10-16)
 **Status:** Working Gate 01 authoring methodology, aligned with the existing Character Identity architecture. **Only the three types explicitly identified by the user are enumerated.** This document is not a Registry v2 approval or a change to frozen game architecture, fixed rarity, combat kit, owner data, or Foundation.
 
 ## Existing architecture — authoritative
@@ -18,7 +18,7 @@ These existing layers must not be renamed, merged or reinterpreted even if a con
 |---|---|---|
 | **Base** | The primary / identity-anchor Version of a character. | Carries the agreed canonical starting depiction, powers and role. |
 | **Alter** | An **inverted, darker, or fundamentally altered expression of the same Identity**, using *Fate* Alter Servants and *Date A Live* Inverse Spirits (Sephira inversion) as the user's intended reference family. A defining aspect of the character is inverted, distorted, suppressed or re-expressed: disposition, instincts, allegiance, values, emotional state, power aspect, symbolism, or an alternative interpretation of their essential nature. | The alteration must be **character-specific, substantive, and legible** in behavior and power identity as well as visual language, not merely clothing/hair/palette. It may be a distinct persona or a recognizably continuous self; not every Alter is evil, mindless, corrupted or stronger. |
-| **Awakened** | A character who realizes previously latent potential, abilities, state or understanding through a defined trigger and progression. | Cause and resulting power/physical/behavioral changes are specified; not simply brighter effects or recoloring. |
+| **Awakened** | The character's original identity, motifs and powers are **drastically amplified** into a distinctive evolved design, without requiring holiness, a divine theme or bodily mutation. | The character herself is visibly redesigned through a meaningful combination of hair color gradient/new-colored strands, hairstyle/volume, eyes and expressions, facial/body markings, clothing cut and silhouette, character-specific equipment, and optionally anatomy or integrated power features. Effects and background are supporting elements, never the main transformation. |
 
 **No additional Version-type names are authorized by this document.** Existing independently approved content rules elsewhere in the game remain untouched. New category proposals stay OUT of the source taxonomy unless the user approves them.
 
@@ -47,24 +47,25 @@ An Alter **often** shifts toward a darker, bolder, more forceful visual interpre
 ### Distinguish Alter from Awakened
 **Alter:** a shift/inversion/contrary interpretation of a character's *nature or expression*. **Awakened:** realization/extension of the character's *latent potential*. A dramatic visual change can happen in either; the story/psychology and power premise decide, not hair color.
 
-## Awakened — intrinsic-transformation acceptance gate (corrected after visual test 2026-10-16)
+## Awakened — substantial character redesign standard (refined after visual review 2026-10-16)
 
-**Visual reference specified by the user:** Milim's normal look versus her Stampede / berserker-like appearance is an example of drastic *character transformation*, not just adding special effects. The project term “Awakened” covers substantial intensification of the original character and is **not constrained to light, holy, regal or divine styling**.
+**User-provided reference:** Milim's Base appearance compared with her Stampede/berserker-like form exemplifies an extreme escalation of recognizable character traits. Awakened does **not** mean automatically angelic, holy, lighter, divinely armored or regal.
 
-**Failed visual experiment to avoid:** producing essentially the Base face, body and silhouette, then adding a more elaborate outfit, staff, crown, magic circles, surrounding banners, bright particles and glows. Such artwork **does not pass** the Awakened test even if spectacularly rendered.
+**User correction:** A drastic transformation can be accomplished through **hair color gradients, contrasting strands, new hairstyle, hair length and volume, changed clothes, altered silhouette, eyes, expression, markings, proportions, ornamentation and power-specific body traits**. Physical anatomy mutations are **optional**, not required. Do not impose wings, horns, claws, tattoos, excessive armor or any other generic trope.
 
-### Required design order (before VFX, outfit or accessories)
+### Practical design sequence
 
-1. **Lock the recognition anchors:** what must stay identifiable (distinctive face, some original hair/color cues, unusual anatomy, power motif, attitude) and what may drastically evolve.
-2. **Change the subject herself first:** implement a substantial, character-specific combination of new physical structure, silhouette, hair mass and movement, eyes/face, body markings or skin patterns, altered limbs or extremities, morphology related to established power, transformed body language/stance; only add wings/horns/tails/claws when the character's actual nature makes them meaningful. Do not append generic fantasy accessories.
-3. **Validate stripped-back presentation:** inspect a clean neutral-background character-only full-body silhouette and a head/upper-body close-up with **all exterior magic effects hidden**. If the transformed appearance reads merely like Base wearing a costume, FAIL and redesign.
-4. **Then evolve clothing/armor/equipment:** these may respond to or integrate with bodily transformation, but must not be the primary difference. Avoid treating revealing clothing or sexualization as a proxy for Awakening.
-5. **Lastly add supplementary VFX:** powers, particles, sigils, energy and dynamic composition may accentuate but never substitute for genuine changes to the character.
-6. **Demand a substantive Base -> Awakened change audit:** document intrinsic face/eyes, hair, anatomy/body structure, integrated powers, emotion/posture, base motif continuity, clean silhouette and costume/VFX as separately scored axes. No arbitrary “light”, “dark”, “divine” or “monster” template.
+1. **Identify the original recognition anchors.** Decide what must remain unmistakably the same character: face, hair motifs, distinctive palette cues, silhouette themes, emotional signature, powers, weapon, etc.
+2. **Choose a character-specific amplification premise.** Intensify the existing identity rather than shift its underlying nature (that is the conceptual difference from Alter). The awakened form should be unmistakably distinct even without flashy surroundings.
+3. **Redesign the subject across several visible axes:** e.g., add dramatic gradient or colored streaks to signature hair; change its shape, parting, length and motion; develop iris and eye expression; change body language and markings; evolve garment architecture, outfit shape, layering and accessories; change weapon form; optionally alter anatomy where motivated. These are **all valid and potentially central design changes**.
+4. **Balance recognizability and transformation.** Preservation of visual anchors does not imply identical hairstyle, clothing or body shape. Keep a coherent through-line while making the evolved form strikingly different at a glance.
+5. **Validate with a neutral-background, character-only image.** No effects required; the face, hair, clothing, silhouette and signature design should already communicate a distinct Awakened form. Do not strip the clothing out of the comparison: **clothing is part of the character design**, not mere background. Optionally check an isolated silhouette and head/upper-body detail.
+6. **Add VFX/composition after the core redesign.** Auras, particles, magic circles, banners and glowing geometry may strengthen the result but must not substitute for changing the character herself.
+7. **Evaluate meaningful difference against Base.** Compare hair palette/shape, eyes/face, outfit and clothing shape, silhouette, body/posture, motifs, character-specific equipment and power presentation. No minimum anatomy mutation count or mandatory color palette.
 
-**Gate 01 visual QA rejection rule:** if all or most of the perceived change vanishes when VFX and outfit are ignored, the concept does **not** count as an approved Awakened Version. A spectacular background is irrelevant to this acceptance test.
+**Gate 01 visual QA:** REJECT when the awakened character is essentially the original face, hair and clothes plus a new staff, halo, background or particle effects. DO NOT reject simply because a legitimate character-specific transformation uses hairstyle, gradient/colored strands, wardrobe or silhouette changes rather than transformed anatomy. A single trivial recolor or costume swap without any broader awakened rationale may still be a Skin.
 
-**Current artwork status:** previous generated officer-mage Awakened attempts were user-rejected for being costume/VFX-dominant; subsequent image experiments are **unapproved** until the user explicitly accepts an intrinsic transformation. This rule is reusable across Original Creation, Feminisation and Existing Character Adaptation, and does not change approved Registry entries.
+**Current visual review status:** prior officer-mage Awakened renderings are unapproved; they overrelied on decorative effects or inadequately distinguished the character. Future art must be judged against the full redesigned subject, not just VFX. This rule applies across all three Gate 01 character workflows and changes no existing Registry record.
 
 ## Reusable Gate 01 creation protocol (all characters)
 
