@@ -25,7 +25,8 @@ public:
         const FOGEntityId& RulerId,
         const FOGContentId& IdentityId,
         const FOGContentId& VersionId,
-        const FOGEntityId& ManifestationId);
+        const FOGEntityId& ManifestationId,
+        bool bSfwPresentation);
     UTextureRenderTarget2D* GetLiveRenderTarget() const { return RenderTarget; }
     /** Freeze a roster thumbnail to cap Android scene-capture frame cost. */
     void SetLiveCapture(bool bLive);

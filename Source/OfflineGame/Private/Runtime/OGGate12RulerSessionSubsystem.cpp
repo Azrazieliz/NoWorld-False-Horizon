@@ -5,6 +5,12 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12LocalRulerBootstrap.h"
 #include "Runtime/OGReportService.h"
+#include "Runtime/OGFoundationCharacterRuntime.h"
+#include "UI/OGGate12CharacterVisualCatalog.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "Runtime/OGPackageReportManagementRecords.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "UI/OGUiViewModelService.h"
@@ -523,6 +529,122 @@ bool UOGGate12RulerSessionSubsystem::SelectOwnedManifestation(
     SelectedIdentityId = IdentityId;
     SelectedManifestationId = ManifestationId;
     CurrentDestination = EOGRulerPrimaryDestination::Characters;
+    return RefreshCanonicalProjections(OutError);
+}
+
+bool UOGGate12RulerSessionSubsystem::SelectOwnedWardrobeChoice(
+    const FOGContentId& IdentityId,
+    const FOGEntityId& ManifestationId,
+    const UOGGate12CharacterVisualCatalog* VisualCatalog,
+    FName WardrobeChoice,
+    FString& OutError)
+{
+    OutError.Reset();
+    if (!bRulerValidated || !BoundRulerId.IsValid() ||
+        !IdentityId.IsValid() || !ManifestationId.IsValid() ||
+        !VisualCatalog || WardrobeChoice.IsNone())
+    {
+        OutError = TEXT("A verified owned Manifestation and authored wardrobe are required.");
+        return false;
+    }
+    // Recheck that this Ruler still exists in the current world after imports.
+    if (!RefreshCanonicalProjections(OutError)) return false;
+
+    const FOGRosterIdentityViewModel* Identity = OwnedRoster.FindByPredicate(
+        [&IdentityId](const FOGRosterIdentityViewModel& Entry)
+        {
+            return Entry.IdentityId == IdentityId;
+        });
+    const FOGRosterManifestationViewModel* Owned = Identity
+        ? Identity->Manifestations.FindByPredicate(
+            [&ManifestationId](const FOGRosterManifestationViewModel& Entry)
+            {
+                return Entry.ManifestationId == ManifestationId;
+            })
+        : nullptr;
+    if (!Owned || Owned->bLocked)
+    {
+        OutError = TEXT("Only unlocked owned Manifestations can change wardrobe.");
+        return false;
+    }
+
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError)) return false;
+    bool bFound = false;
+    FOGCharacterManifestationRecord Record;
+    if (!Store->TryReadCharacterManifestation(
+            ManifestationId, bFound, Record, OutError))
+        return false;
+    if (!bFound || Record.OwningRulerId != BoundRulerId ||
+        Record.IdentityId != IdentityId || !Record.ActiveVersionId.IsValid() ||
+        Record.LifecycleState != FName(TEXT("active")))
+    {
+        OutError = TEXT("Canonical ownership/Version has changed; wardrobe not modified.");
+        return false;
+    }
+
+    const FOGGate12CharacterVisualEntry* Entry =
+        VisualCatalog->FindExact(IdentityId, Record.ActiveVersionId);
+    if (!Entry || Entry->WardrobeStateJsonField.IsNone() ||
+        !Entry->ApprovedWardrobeChoices.Contains(WardrobeChoice))
+    {
+        OutError = TEXT("Wardrobe value was not authored for this exact character Version.");
+        return false;
+    }
+
+    const int64 Tick = Core->GetCanonicalWorldTick();
+    if (Tick < 0)
+    {
+        OutError = TEXT("Canonical time unavailable for wardrobe change.");
+        return false;
+    }
+    FOGFoundationCharacterContext Context;
+    Context.EntityId = ManifestationId;
+    Context.ManifestationId = ManifestationId;
+    Context.OwnerEntityId = BoundRulerId;
+    FOGFoundationCharacterRuntime Runtime(*Store);
+    FOGFoundationCharacterProjection Projection;
+    if (!Runtime.Project(Context, Projection, OutError))
+        return false;
+    if (!Projection.bHasManifestation ||
+        Projection.Manifestation.IdentityId != IdentityId ||
+        Projection.Manifestation.ActiveVersionId != Record.ActiveVersionId)
+    {
+        OutError = TEXT("Appearance projection no longer matches the owned Manifestation.");
+        return false;
+    }
+
+    const FString Existing = Projection.bHasPresentation
+        ? Projection.Presentation.OutfitStateJson : TEXT("{}");
+    TSharedPtr<FJsonObject> Outfit;
+    if (!FJsonSerializer::Deserialize(
+            TJsonReaderFactory<>::Create(
+                Existing.IsEmpty() ? TEXT("{}") : Existing), Outfit) ||
+        !Outfit.IsValid())
+    {
+        OutError = TEXT("Existing canonical wardrobe JSON invalid; refusing overwrite.");
+        return false;
+    }
+    // Preserve all other JSON fields. Neither Privacy nor clothing equipment is touched.
+    Outfit->SetStringField(
+        Entry->WardrobeStateJsonField.ToString(), WardrobeChoice.ToString());
+    FString Updated;
+    if (!FJsonSerializer::Serialize(
+            Outfit.ToSharedRef(), TJsonWriterFactory<>::Create(&Updated)))
+    {
+        OutError = TEXT("Canonical outfit serialization failed.");
+        return false;
+    }
+    FOGManifestationPresentationStateRecord Presentation =
+        Projection.bHasPresentation
+            ? Projection.Presentation : FOGManifestationPresentationStateRecord();
+    Presentation.OutfitStateJson = Updated;
+    if (Presentation.PresentationVariantStateJson.IsEmpty())
+        Presentation.PresentationVariantStateJson = TEXT("{}");
+
+    if (!Runtime.SetPresentation(Context, Presentation, Tick, OutError))
+        return false;
     return RefreshCanonicalProjections(OutError);
 }
 

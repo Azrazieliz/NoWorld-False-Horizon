@@ -26,6 +26,17 @@ struct OFFLINEGAME_API FOGGate12CharacterVisualEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Presentation")
     TSoftObjectPtr<UTexture2D> OriginalArtwork2D;
 
+    /** Optional SFW-approved artwork, no unsafe fallback when Privacy is on. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Presentation")
+    TSoftObjectPtr<UTexture2D> ApprovedSfwArtwork2D;
+
+    /** Optional typed wardrobe choices authored per Version by Gate01/11. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Presentation")
+    FName WardrobeStateJsonField = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Presentation")
+    TArray<FName> ApprovedWardrobeChoices;
+
     /** Authored actor containing the full real skeletal character and outfit,
      * including any modular parts. Never substitute a generic mannequin. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Presentation")

@@ -27,5 +27,6 @@ public:
         const FOGEntityId& RulerId,
         const FOGContentId& IdentityId,
         const FOGContentId& VersionId,
-        const FOGEntityId& ManifestationId);
+        const FOGEntityId& ManifestationId,
+        bool bSfwPresentation);
 };

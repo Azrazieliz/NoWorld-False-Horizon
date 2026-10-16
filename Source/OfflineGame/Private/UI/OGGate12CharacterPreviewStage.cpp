@@ -29,7 +29,8 @@ bool AOGGate12CharacterPreviewStage::InitializeApprovedPreview(
     const FOGEntityId& RulerId,
     const FOGContentId& IdentityId,
     const FOGContentId& VersionId,
-    const FOGEntityId& ManifestationId)
+    const FOGEntityId& ManifestationId,
+    bool bSfwPresentation)
 {
     ReleasePreview();
     UWorld* World = GetWorld();
@@ -63,7 +64,8 @@ bool AOGGate12CharacterPreviewStage::InitializeApprovedPreview(
     // A blueprint must bind actual owned appearance and Privacy before
     // anything is captured, or we refuse to render an incorrect outfit.
     if (!IOGGate12CharacterPreviewConfiguration::Execute_ConfigureOwnedPreview(
-            PreviewActor, RulerId, IdentityId, VersionId, ManifestationId))
+            PreviewActor, RulerId, IdentityId, VersionId, ManifestationId,
+            bSfwPresentation))
     {
         ReleasePreview();
         return false;

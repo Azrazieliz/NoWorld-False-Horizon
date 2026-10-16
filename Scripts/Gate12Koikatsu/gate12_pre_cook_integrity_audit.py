@@ -88,10 +88,17 @@ def main() -> None:
         state: len(list((native_content / state).rglob("*.uasset")))
         for state in ("CLOTHED", "UNDERWEAR", "NUDE")
     }
+    report["checks"]["editable_native_umg_assets"] = {
+        "ruler_widget_blueprint": check_file(
+            "Content/NoWorld/UI/WBP_NoWorld_RulerShell.uasset"),
+        "character_visual_catalog": check_file(
+            "Content/NoWorld/UI/DA_NoWorld_CharacterVisuals.uasset"),
+    }
     report["checks"]["approved_native_visual_catalog_assets"] = [
         str(x.relative_to(ROOT))
         for x in (ROOT / "Content").rglob("*CharacterVisualCatalog*.uasset")
     ]
+    report["checks"]["visual_catalog_contents"] = "NO_GATE11_ACCEPTED_RECORDS_ASSUMED"
     report["dependencies"]["gate11_accepted_identity_version_and_owned_packages"] = "NOT_ESTABLISHED"
     report["dependencies"]["gate09_authored_motion_import"] = "PENDING_GATE09"
     report["dependencies"]["gate02_first_authored_world"] = "NOT_ESTABLISHED"

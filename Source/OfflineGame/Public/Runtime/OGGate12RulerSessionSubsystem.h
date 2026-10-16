@@ -10,6 +10,7 @@
 
 class UOGGameCoreSubsystem;
 class IOGWorldStore;
+class UOGGate12CharacterVisualCatalog;
 
 /**
  * Post-Android P0: live Ruler navigation and authoritative service projections.
@@ -66,6 +67,17 @@ public:
     bool SelectOwnedManifestation(
         const FOGContentId& IdentityId,
         const FOGEntityId& ManifestationId,
+        FString& OutError);
+
+    /** Writes only an authored, version-exact real wardrobe value in canonical
+     * presentation JSON, preserving other physical outfit/equipment/world data.
+     * Privacy is NEVER changed by this command. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Characters")
+    bool SelectOwnedWardrobeChoice(
+        const FOGContentId& IdentityId,
+        const FOGEntityId& ManifestationId,
+        const UOGGate12CharacterVisualCatalog* VisualCatalog,
+        FName WardrobeChoice,
         FString& OutError);
 
     /** Calls the existing presentation/orientation subsystem, no level reset. */

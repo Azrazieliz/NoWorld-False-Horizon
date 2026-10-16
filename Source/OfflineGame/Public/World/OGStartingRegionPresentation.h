@@ -923,7 +923,7 @@ private:
     void SynchronizeGate12NativeRulerUMG(bool bShouldShow);
 
     UPROPERTY(EditDefaultsOnly, Category="OfflineGame|Ruler|UMG")
-    bool bGate12NativeRulerUMGEnabled = false;
+    bool bGate12NativeRulerUMGEnabled = true;
 
     UPROPERTY(Transient)
     TObjectPtr<class UOGGate12NativeRulerWidget> Gate12NativeRulerWidget;

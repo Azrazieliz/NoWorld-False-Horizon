@@ -41,6 +41,11 @@ bool FOGGate12CharacterVisualExactVersionTest::RunTest(const FString&)
     {
         bPassed &= TestTrue(TEXT("Original 2D art may be absent safely"),
             Found->OriginalArtwork2D.IsNull());
+        bPassed &= TestTrue(TEXT("No arbitrary original art used in Privacy"),
+            Found->ApprovedSfwArtwork2D.IsNull());
+        bPassed &= TestTrue(TEXT("Wardrobe cannot be written without authored options"),
+            Found->WardrobeStateJsonField.IsNone() &&
+            Found->ApprovedWardrobeChoices.IsEmpty());
         bPassed &= TestTrue(TEXT("Missing 3D asset never substitutes a mannequin"),
             Found->GenuineCharacterPreviewClass.IsNull());
     }

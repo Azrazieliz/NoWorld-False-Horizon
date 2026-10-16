@@ -46,6 +46,7 @@
 #include "OfflineGame.h"
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "UI/OGGate12CharacterVisualCatalog.h"
 #include "Persistence/OGWorldStore.h"
 #include "ProceduralMeshComponent.h"
 #include "Runtime/OGAndroidBackupDocumentBridge.h"
@@ -5739,10 +5740,22 @@ void AOGWorldPresentationHud::SynchronizeGate12NativeRulerUMG(bool bShouldShow)
 
     if (!Gate12NativeRulerWidget)
     {
+        // Production screen is a native UMG Widget Blueprint, not a
+        // screenshot. The generated native class remains the safe fallback.
+        TSubclassOf<UOGGate12NativeRulerWidget> ScreenClass =
+            LoadClass<UOGGate12NativeRulerWidget>(nullptr,
+                TEXT("/Game/NoWorld/UI/WBP_NoWorld_RulerShell.WBP_NoWorld_RulerShell_C"));
+        if (!ScreenClass) ScreenClass = UOGGate12NativeRulerWidget::StaticClass();
         Gate12NativeRulerWidget = CreateWidget<UOGGate12NativeRulerWidget>(
-            PlayerOwner, UOGGate12NativeRulerWidget::StaticClass());
+            PlayerOwner, ScreenClass);
         if (!Gate12NativeRulerWidget)
             return;
+        if (UOGGate12CharacterVisualCatalog* Catalog =
+            LoadObject<UOGGate12CharacterVisualCatalog>(nullptr,
+                TEXT("/Game/NoWorld/UI/DA_NoWorld_CharacterVisuals.DA_NoWorld_CharacterVisuals")))
+        {
+            Gate12NativeRulerWidget->SetVisualCatalog(Catalog);
+        }
         Gate12NativeRulerWidget->OnWorldPresentationRequested.AddDynamic(
             this, &AOGWorldPresentationHud::OnGate12NativeWorldRequested);
     }

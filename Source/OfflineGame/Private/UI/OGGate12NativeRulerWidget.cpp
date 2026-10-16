@@ -408,6 +408,17 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
     // A search changes the grid contents only; the keyboard never loses focus.
     TMap<FString, bool> Cached3DPreferences;
     FString PreferenceError;
+    FOGPlayerProfileSettings CardProfile;
+    if (!FOGPlayerProfileSettingsService::Load(
+            FOGPlayerProfileSettingsService::DefaultProfilePath(),
+            CardProfile, PreferenceError))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Character card privacy profile unavailable: %s"),
+            *PreferenceError);
+        // A corrupt/unknown Privacy state must not expose unapproved artwork.
+        CardProfile.bSfwPresentation = true;
+    }
+    const bool bCardSfwPresentation = CardProfile.bSfwPresentation;
     if (!FOGGate12CharacterPresentationPreferences::LoadAll(
             FOGPlayerProfileSettingsService::DefaultProfilePath(),
             Cached3DPreferences, PreferenceError))
@@ -526,7 +537,8 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
                 if (IsValid(Stage) &&
                     Stage->InitializeApprovedPreview(PreviewClass,
                         Session->BoundRulerId, Identity.IdentityId,
-                        Selected->ActiveVersionId, Selected->ManifestationId))
+                        Selected->ActiveVersionId, Selected->ManifestationId,
+                        bCardSfwPresentation))
                 {
                     Stage->SetLiveCapture(false);
                     RosterPreviewStages.Add(Stage);
@@ -536,9 +548,12 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
                     Stage->Destroy();
             }
         }
-        else if (!bCard3D && Entry && !Entry->OriginalArtwork2D.IsNull())
+        else if (!bCard3D && Entry)
         {
-            if (UTexture2D* OriginalArt = Entry->OriginalArtwork2D.LoadSynchronous())
+            const TSoftObjectPtr<UTexture2D>& Artwork =
+                bCardSfwPresentation ? Entry->ApprovedSfwArtwork2D
+                                     : Entry->OriginalArtwork2D;
+            if (UTexture2D* OriginalArt = Artwork.LoadSynchronous())
             {
                 CardTexture = OriginalArt;
                 CardImageSize = FVector2D(
@@ -566,7 +581,9 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
             Spacer->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
             AddMessage(CardBody,
                 bCard3D ? TEXT("3D PREVIEW UNAVAILABLE - OPEN CARD")
-                        : TEXT("ORIGINAL ART NOT INSTALLED"), 12, TextMuted);
+                : bCardSfwPresentation ? TEXT("SFW ART NOT INSTALLED")
+                                       : TEXT("ORIGINAL ART NOT INSTALLED"),
+                12, TextMuted);
         }
         AddMessage(CardBody,
             Identity.DisplayNameKey.IsEmpty()
@@ -811,6 +828,14 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
         return;
     }
 
+    FOGPlayerProfileSettings DetailProfile;
+    FString ProfileError;
+    if (!FOGPlayerProfileSettingsService::Load(
+            FOGPlayerProfileSettingsService::DefaultProfilePath(),
+            DetailProfile, ProfileError))
+        DetailProfile.bSfwPresentation = true;
+    const bool bDetailSfwPresentation = DetailProfile.bSfwPresentation;
+
     FSlateBrush Brush;
     if (bThreeDimensional)
     {
@@ -832,7 +857,8 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
             FVector(0.0f, 0.0f, -200000.0f), FRotator::ZeroRotator, Spawn);
         if (!IsValid(PreviewStage) || !PreviewStage->InitializeApprovedPreview(
                 PreviewClass, Session->BoundRulerId, Identity.IdentityId,
-                Selected->ActiveVersionId, Selected->ManifestationId))
+                Selected->ActiveVersionId, Selected->ManifestationId,
+                bDetailSfwPresentation))
         {
             ReleasePreviewStage();
             AddMessage(Parent, TEXT("Live skeletal 3D preview unavailable."), 15, TextMuted);
@@ -843,12 +869,18 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
     }
     else
     {
-        if (Entry->OriginalArtwork2D.IsNull())
+        const TSoftObjectPtr<UTexture2D>& Artwork =
+            bDetailSfwPresentation ? Entry->ApprovedSfwArtwork2D
+                                   : Entry->OriginalArtwork2D;
+        if (Artwork.IsNull())
         {
-            AddMessage(Parent, TEXT("Original 2D artwork not yet supplied."), 15, TextMuted);
+            AddMessage(Parent,
+                bDetailSfwPresentation
+                ? TEXT("Privacy-safe original illustration not yet supplied.")
+                : TEXT("Original 2D artwork not yet supplied."), 15, TextMuted);
             return;
         }
-        UTexture2D* OriginalArt = Entry->OriginalArtwork2D.LoadSynchronous();
+        UTexture2D* OriginalArt = Artwork.LoadSynchronous();
         if (!OriginalArt)
         {
             AddMessage(Parent, TEXT("Original 2D artwork failed to load."), 15, TextMuted);
@@ -907,9 +939,30 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
         AddAction(Content, Label, FString::Printf(TEXT("select/%d"), Index),
             !Manifestation.bLocked);
     }
+    const FOGRosterManifestationViewModel* Selected =
+        Identity.Manifestations.FindByPredicate(
+            [&Identity](const FOGRosterManifestationViewModel& M)
+            {
+                return M.ManifestationId == Identity.SelectedManifestationId;
+            });
+    if (VisualCatalog && Selected)
+    {
+        const FOGGate12CharacterVisualEntry* Art =
+            VisualCatalog->FindExact(Identity.IdentityId,
+                Selected->ActiveVersionId);
+        if (Art && !Art->WardrobeStateJsonField.IsNone() &&
+            !Art->ApprovedWardrobeChoices.IsEmpty())
+        {
+            AddMessage(Content, TEXT("APPROVED WARDROBE"), 18, Gate12RulerGold);
+            for (int32 Index = 0; Index < Art->ApprovedWardrobeChoices.Num(); ++Index)
+                AddAction(Content, Art->ApprovedWardrobeChoices[Index].ToString(),
+                    FString::Printf(TEXT("wardrobe/%d"), Index),
+                    !Selected->bLocked);
+        }
+    }
     AddMessage(Content,
-        TEXT("Appearance choices use the real character detail and canonical state. "
-             "Privacy only changes the effective render, never actual clothing."),
+        TEXT("Wardrobe choices write only the selected owned character's "
+             "canonical outfit. Privacy is a separate render-only setting."),
         15, TextMuted);
 }
 
@@ -994,6 +1047,34 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         const int32 Index = FCString::Atoi(*Action.Mid(8));
         if (Session->TerritoryProjection.AnalyticalOverlays.IsValidIndex(Index))
             SelectedTerritoryOverlayIndex = Index;
+    }
+    else if (Action.StartsWith(TEXT("wardrobe/")))
+    {
+        const int32 Index = FCString::Atoi(*Action.Mid(9));
+        if (VisualCatalog && Session->OwnedRoster.IsValidIndex(OpenIdentityIndex))
+        {
+            const FOGRosterIdentityViewModel& Identity =
+                Session->OwnedRoster[OpenIdentityIndex];
+            const FOGRosterManifestationViewModel* Selected =
+                Identity.Manifestations.FindByPredicate(
+                    [&Identity](const FOGRosterManifestationViewModel& M)
+                    {
+                        return M.ManifestationId == Identity.SelectedManifestationId;
+                    });
+            if (Selected)
+            {
+                const FOGGate12CharacterVisualEntry* Art =
+                    VisualCatalog->FindExact(Identity.IdentityId,
+                        Selected->ActiveVersionId);
+                if (Art && Art->ApprovedWardrobeChoices.IsValidIndex(Index))
+                    Session->SelectOwnedWardrobeChoice(
+                        Identity.IdentityId, Selected->ManifestationId,
+                        VisualCatalog, Art->ApprovedWardrobeChoices[Index], Error);
+                else Error = TEXT("Unrecognized wardrobe choice.");
+            }
+            else Error = TEXT("No verified selected Manifestation.");
+        }
+        else Error = TEXT("A verified character visual catalog is required.");
     }
     else if (Action.StartsWith(TEXT("report/ack/")))
     {
