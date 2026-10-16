@@ -48,6 +48,8 @@ bool FOGGate12CharacterVisualExactVersionTest::RunTest(const FString&)
             Found->ApprovedWardrobeChoices.IsEmpty());
         bPassed &= TestTrue(TEXT("Missing 3D asset never substitutes a mannequin"),
             Found->GenuineCharacterPreviewClass.IsNull());
+        bPassed &= TestTrue(TEXT("Missing owned World actor never substitutes generic pawn"),
+            Found->ApprovedWorldPlayableClass.IsNull());
     }
 
     // Identical keys from two packages must not silently select the first.

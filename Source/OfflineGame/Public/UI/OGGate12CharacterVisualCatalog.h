@@ -7,6 +7,7 @@
 
 class UTexture2D;
 class AActor;
+class AOGWorldPrototypeCharacter;
 
 /** Verified presentation assets from an installed, Gate11-approved version.
  * Records contain no invented ownership or automatic Identity aliases.
@@ -41,6 +42,13 @@ struct OFFLINEGAME_API FOGGate12CharacterVisualEntry
      * including any modular parts. Never substitute a generic mannequin. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Presentation")
     TSoftClassPtr<AActor> GenuineCharacterPreviewClass;
+
+    /** Canonical World pawn for this exact Version, not a generic replacement.
+     * Must be a real AOGWorldPrototypeCharacter-derived authored pawn and
+     * implement IOGGate12OwnedWorldCharacterBinding. Optional until Gate11
+     * accepts the installed character package. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Presentation")
+    TSoftClassPtr<AOGWorldPrototypeCharacter> ApprovedWorldPlayableClass;
 };
 
 /** Per-version asset manifest. Edited in Unreal; never changes the save database. */

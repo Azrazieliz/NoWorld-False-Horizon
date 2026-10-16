@@ -47,12 +47,13 @@
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
+#include "UI/OGGate12OwnedWorldCharacterBinding.h"
+#include "Runtime/OGPlayerProfileSettings.h"
 #include "Persistence/OGWorldStore.h"
 #include "ProceduralMeshComponent.h"
 #include "Runtime/OGAndroidBackupDocumentBridge.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
-#include "Runtime/OGPlayerProfileSettings.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "Runtime/OGReportService.h"
 #include "Runtime/OGPackageManagerService.h"
@@ -5724,6 +5725,99 @@ void AOGWorldPresentationHud::SetGate12NativeRulerUMGEnabled(bool bEnabled)
 
 void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
 {
+    UGameInstance* GI = GetGameInstance();
+    UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+
+    auto FailAndReturnToRuler = [this, Session](const FString& Reason)
+    {
+        if (Session)
+        {
+            FString RestoreError;
+            Session->ReturnToRuler(RestoreError);
+        }
+        FoundationStatusMessage = Reason;
+        SetFoundationSurface(FName(TEXT("ruler")));
+        if (IsValid(Gate12NativeRulerWidget))
+            Gate12NativeRulerWidget->ShowWorldTransitionError(Reason);
+    };
+
+    if (!Session || !Session->IsBoundToStoredRuler() ||
+        !PlayerOwner || !PlayerOwner->IsLocalController() ||
+        !PlayerOwner->GetLocalPlayer() || !GetWorld())
+    {
+        FailAndReturnToRuler(TEXT("A local player and verified Ruler are required."));
+        return;
+    }
+
+    if (Session->SelectedManifestationId.IsValid())
+    {
+        UOGGate12CharacterVisualCatalog* Catalog = Gate12NativeRulerWidget
+            ? Gate12NativeRulerWidget->GetVisualCatalog() : nullptr;
+        TSubclassOf<AOGWorldPrototypeCharacter> Class;
+        FOGContentId VersionId;
+        FString Error;
+        if (!Session->ResolveSelectedOwnedWorldPawn(
+                Catalog, Class, VersionId, Error) || !Class)
+        {
+            FailAndReturnToRuler(
+                Error.IsEmpty() ? TEXT("Approved owned World character not installed.") : Error);
+            return;
+        }
+        AOGWorldPrototypeCharacter* Previous =
+            Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn());
+        if (!Previous)
+        {
+            FailAndReturnToRuler(
+                TEXT("World cannot switch an owned character without a valid current pawn."));
+            return;
+        }
+
+        // A failed import/bind must never replace the existing playable pawn.
+        FActorSpawnParameters Spawn;
+        Spawn.Owner = PlayerOwner;
+        Spawn.Instigator = Previous;
+        Spawn.SpawnCollisionHandlingOverride =
+            ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        AOGWorldPrototypeCharacter* Replacement =
+            GetWorld()->SpawnActor<AOGWorldPrototypeCharacter>(
+                Class, Previous->GetActorTransform(), Spawn);
+        if (!IsValid(Replacement))
+        {
+            FailAndReturnToRuler(
+                TEXT("Approved owned-character World actor failed to spawn."));
+            return;
+        }
+        FOGPlayerProfileSettings Profile;
+        const bool bProfileLoaded = FOGPlayerProfileSettingsService::Load(
+            FOGPlayerProfileSettingsService::DefaultProfilePath(),
+            Profile, Error);
+        // Fail-safe visual state if the Privacy profile is unreadable.
+        const bool bSafePresentation = !bProfileLoaded || Profile.bSfwPresentation;
+        const bool bBound =
+            IOGGate12OwnedWorldCharacterBinding::Execute_BindOwnedWorldCharacter(
+                Replacement, Session->BoundRulerId,
+                Session->SelectedIdentityId, VersionId,
+                Session->SelectedManifestationId, bSafePresentation);
+        if (!bBound)
+        {
+            Replacement->Destroy();
+            FailAndReturnToRuler(TEXT(
+                "Approved World actor failed canonical owned-character/wardrobe binding."));
+            return;
+        }
+        PlayerOwner->Possess(Replacement);
+        if (PlayerOwner->GetPawn() != Replacement)
+        {
+            Replacement->Destroy();
+            if (IsValid(Previous)) PlayerOwner->Possess(Previous);
+            FailAndReturnToRuler(
+                TEXT("Player possession failed; old playable character restored."));
+            return;
+        }
+        Previous->Destroy();
+    }
+
     SetFoundationSurface(FName(TEXT("world")));
 }
 

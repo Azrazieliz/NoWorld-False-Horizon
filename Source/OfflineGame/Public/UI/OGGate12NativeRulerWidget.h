@@ -58,6 +58,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Visuals")
     void SetVisualCatalog(UOGGate12CharacterVisualCatalog* InCatalog);
 
+    UOGGate12CharacterVisualCatalog* GetVisualCatalog() const { return VisualCatalog; }
+
+    void ShowWorldTransitionError(const FString& Error);
+
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Native")
     void RefreshFromCanonical();
 

@@ -7,6 +7,8 @@
 #include "Runtime/OGReportService.h"
 #include "Runtime/OGFoundationCharacterRuntime.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
+#include "UI/OGGate12OwnedWorldCharacterBinding.h"
+#include "World/OGStartingRegionPresentation.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -646,6 +648,75 @@ bool UOGGate12RulerSessionSubsystem::SelectOwnedWardrobeChoice(
     if (!Runtime.SetPresentation(Context, Presentation, Tick, OutError))
         return false;
     return RefreshCanonicalProjections(OutError);
+}
+
+bool UOGGate12RulerSessionSubsystem::ResolveSelectedOwnedWorldPawn(
+    const UOGGate12CharacterVisualCatalog* VisualCatalog,
+    TSubclassOf<AOGWorldPrototypeCharacter>& OutWorldClass,
+    FOGContentId& OutVersionId,
+    FString& OutError)
+{
+    OutWorldClass = nullptr;
+    OutVersionId = FOGContentId();
+    OutError.Reset();
+
+    if (!bRulerValidated || !BoundRulerId.IsValid())
+    {
+        OutError = TEXT("A verified active Ruler is required for World selection.");
+        return false;
+    }
+    if (!RefreshCanonicalProjections(OutError))
+        return false;
+    // A Ruler can enter World in their baseline form without acquiring
+    // a playable character. This is NOT a substitute for an owned character.
+    if (!SelectedManifestationId.IsValid() && SelectedIdentityId.IsEmpty())
+        return true;
+    if (!SelectedManifestationId.IsValid() || !SelectedIdentityId.IsValid())
+    {
+        OutError = TEXT("Incomplete Identity/owned Manifestation world selection.");
+        return false;
+    }
+
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError))
+        return false;
+
+    FOGCharacterManifestationRecord Owned;
+    bool bFound = false;
+    if (!Store->TryReadCharacterManifestation(
+            SelectedManifestationId, bFound, Owned, OutError))
+        return false;
+    if (!bFound || Owned.OwningRulerId != BoundRulerId ||
+        Owned.IdentityId != SelectedIdentityId ||
+        Owned.LifecycleState != FName(TEXT("active")) ||
+        !Owned.ActiveVersionId.IsValid())
+    {
+        OutError = TEXT("Selected playable character is no longer an active owned Manifestation.");
+        return false;
+    }
+
+    const FOGGate12CharacterVisualEntry* Assets = VisualCatalog
+        ? VisualCatalog->FindExact(SelectedIdentityId, Owned.ActiveVersionId)
+        : nullptr;
+    if (!Assets || Assets->ApprovedWorldPlayableClass.IsNull())
+    {
+        OutError = TEXT("Installed character Version has no approved playable World pawn.");
+        return false;
+    }
+
+    UClass* PawnClass = Assets->ApprovedWorldPlayableClass.LoadSynchronous();
+    if (!PawnClass || !PawnClass->IsChildOf(AOGWorldPrototypeCharacter::StaticClass()) ||
+        !PawnClass->ImplementsInterface(
+            UOGGate12OwnedWorldCharacterBinding::StaticClass()))
+    {
+        OutError = TEXT("Approved World pawn does not support canonical owned-character binding.");
+        return false;
+    }
+
+    OutWorldClass = PawnClass;
+    OutVersionId = Owned.ActiveVersionId;
+    return true;
 }
 
 bool UOGGate12RulerSessionSubsystem::EnterWorld(FString& OutError)

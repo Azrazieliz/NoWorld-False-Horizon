@@ -11,6 +11,7 @@
 class UOGGameCoreSubsystem;
 class IOGWorldStore;
 class UOGGate12CharacterVisualCatalog;
+class AOGWorldPrototypeCharacter;
 
 /**
  * Post-Android P0: live Ruler navigation and authoritative service projections.
@@ -78,6 +79,15 @@ public:
         const FOGEntityId& ManifestationId,
         const UOGGate12CharacterVisualCatalog* VisualCatalog,
         FName WardrobeChoice,
+        FString& OutError);
+
+    /** Resolve a strictly approved playable actor for selected owned
+     * Manifestation, or return null if none is selected. Never assigns IDs,
+     * installs a package or grants ownership. Fail closed on missing assets. */
+    bool ResolveSelectedOwnedWorldPawn(
+        const UOGGate12CharacterVisualCatalog* VisualCatalog,
+        TSubclassOf<AOGWorldPrototypeCharacter>& OutWorldClass,
+        FOGContentId& OutVersionId,
         FString& OutError);
 
     /** Calls the existing presentation/orientation subsystem, no level reset. */

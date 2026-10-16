@@ -23,6 +23,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/GameInstance.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "World/OGStartingRegionPresentation.h"
 
 namespace
 {
@@ -86,6 +87,12 @@ void UOGGate12NativeRulerWidget::NativeDestruct()
 {
     ReleasePreviewStage();
     Super::NativeDestruct();
+}
+
+void UOGGate12NativeRulerWidget::ShowWorldTransitionError(const FString& Error)
+{
+    LastUiError = Error;
+    BuildCurrentPage();
 }
 
 void UOGGate12NativeRulerWidget::SetVisualCatalog(UOGGate12CharacterVisualCatalog* InCatalog)
@@ -1123,7 +1130,11 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     }
     else if (Action == TEXT("world"))
     {
-        if (Session->EnterWorld(Error))
+        TSubclassOf<AOGWorldPrototypeCharacter> ApprovedPlayable;
+        FOGContentId ApprovedVersion;
+        if (Session->ResolveSelectedOwnedWorldPawn(
+                VisualCatalog, ApprovedPlayable, ApprovedVersion, Error) &&
+            Session->EnterWorld(Error))
         {
             OnWorldPresentationRequested.Broadcast();
             return;
