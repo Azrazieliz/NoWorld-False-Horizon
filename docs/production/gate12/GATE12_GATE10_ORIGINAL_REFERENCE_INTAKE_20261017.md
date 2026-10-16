@@ -36,5 +36,10 @@ Important transfer state: source ZIP is NOT YET on the connected Unreal Windows 
 - The reference screenshots must NEVER be used as baked fullscreen widgets, fake characters, or fabricated persistent state. Actual Slate/UMG and real services required.
 - No Android cooking or installation per current user instruction. No alterations to frozen Foundation, original saves or Registry.
 
+## Windows archive transfer and safe one-shot intake
+- Source-aware, non-destructive importer implemented at Scripts/Gate12Koikatsu/intake_frozen_gate10_reference.py. It verifies the original 38.46MB master SHA plus all seven manifest members, then stages only selected original read-only visual references and approved icon under Saved/Gate12Readiness/Gate10FrozenReferenceOnly. No Content, Registry, original save or Foundation mutation.
+- Invoking the importer requires that the exact source ZIP becomes accessible on the Windows PC. For example (after it is available): python Scripts/Gate12Koikatsu/intake_frozen_gate10_reference.py --archive <absolute_path_to_original_zip> --verify-only. Omit --verify-only only after integrity succeeds.
+- Python syntax and CLI argument checks on Windows PASS; the original archive verification and staging has NOT YET EXECUTED ON WINDOWS because the ZIP bytes reside in the assistant inspection container/Library, not on that PC.
+
 ## Remaining Gate12 action
 Use the exact selected originals as visual layout authority, build independent native UMG controls and dynamic scene layers, obtain approved actual source art (or specialist assets) and perform side-by-side native image acceptance for portrait/landscape. Full original ZIP binary transfer into the Windows worktree is NOT VERIFIED.
