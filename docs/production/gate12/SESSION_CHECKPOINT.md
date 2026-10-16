@@ -4,8 +4,8 @@ Updated: 2026-10-16 Europe/Paris
 Work item: P0-APP / Issue #25, with independent P0-FIDELITY hold
 Status: ACTIVE — new native integration under Win64 build, not yet accepted
 Working branch: production/gate12-koikatsu-ue583-fixture-20261010
-Last durable source commit: 82257d299e32a1fa66d998114d4514534d7bee54
-New passive-viewer source revision: IN PROGRESS, compile/test verification pending, do not claim DONE.
+Last durable source commit before the startup fix: 94afec32d49f32c30322cddcc18555a09ff4556c
+Passive 45-part QA viewer source revision: compiled and targeted/full native regression PASS. Not yet verified in the actual Ruler UI or accepted as production content.
 
 ## Recovery FIRST ACTION (mandatory after conversation failure)
 1. Read https://github.com/Azrazieliz/Offline-Game/issues/25 and its four linked documents on coordination/gate00-live-ops-20261016; obey later explicit direct user instruction over older board text.
@@ -30,13 +30,24 @@ New passive-viewer source revision: IN PROGRESS, compile/test verification pendi
 
 ## Actual local advancement, not yet accepted
 - `Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp`: legacy Canvas World-entry now delegates to exact same validated native UMG World-pawn binding/rollback handler. Prior Canvas path bypassed selected-owned-pawn binding.
-- `Source/OfflineGame/Public|Private/UI/OGGate12CharacterPreviewStage.*`: exact allowlisted existing CLOTHED Luminous QA Blueprint path is validated but MUST NOT spawn that Blueprint as a gameplay Pawn (Unreal revealed its parent is WorldPrototypeCharacter, not native Luminous); follow-up assembles the 45 existing authentic imported skeletal meshes as transient Stage components. It has no Pawn BeginPlay/touch/World registration and no canonical side effects. Passive QA camera 260cm and local ~300-lumen lights only; production camera/materials are untouched. The *follow-up compile/test remains pending*.
+- `Source/OfflineGame/Public|Private/UI/OGGate12CharacterPreviewStage.*`: exact allowlisted existing CLOTHED Luminous QA Blueprint path is validated but MUST NOT spawn that Blueprint as a gameplay Pawn (Unreal revealed its parent is WorldPrototypeCharacter, not native Luminous); follow-up assembles the 45 existing authentic imported skeletal meshes as transient Stage components. It has no Pawn BeginPlay/touch/World registration and no canonical side effects. Passive QA camera 260cm and local ~300-lumen lights only; production camera/materials are untouched. Follow-up native Win64 compilation and 150/150 full tests PASSED; real viewer image/render QA still pending.
 - `Source/OfflineGame/Public|Private/UI/OGGate12NativeRulerWidget.*`: empty honest character roster now offers explicitly labeled `DEVELOPMENT QA — NOT OWNED` genuine 45-part model viewer; clean close, one-shot render target, retains canonical ownership exactly.
-- `Source/OfflineGame/Private/Tests/OGGate12DevelopmentQaViewerTests.cpp`: regression rejects null/arbitrary/native classes and verifies real allowlisted QA asset exists; not compiled/verified when initial checkpoint written.
+- `Source/OfflineGame/Private/Tests/OGGate12DevelopmentQaViewerTests.cpp`: exact allowlisted source test compiled and PASSED in targeted/full native suites.
 - Protected two Koikatsu C++ files remain untouched and unstaged. Old large unrelated untracked P0 materials/artifacts must not be mass staged.
 
+## Latest verified source/runtimes (Issue 25 continued, 2026-10-16)
+- Gate 12 passive QA preview Win64 Editor build `Saved/Logs/Gate12_Issue25_PassiveQaPreview_Build.log`: **7/7 compiled, linked, PASS**, protected originals unchanged.
+- Gate12 targeted native suite `Saved/Gate12Readiness/Native_Gate12_20261016_172323/verification_summary.json`: **10 clean, 1 warning, 0 failed**, editor exit 0. 45-source-part integrity and exact noncanonical preview class test passed.
+- Full native suite `Saved/Gate12Readiness/Native_Full_20261016_172503/verification_summary.json`: **132 clean, 18 warning, 0 failed**, total 150 tests; editor exit 0.
+- No-cook Editor Python asset preflight `Saved/Gate12Readiness/issue25_native_vertical_slice.json`: **PASS**. Authored native UMG loaded, Ruler session, systemic host, passive preview, 45 genuine CLOTHED skeletal meshes present; **zero** falsely registered approved visual catalog entries.
+- Actual `/Game/Maps/StartingWorld` editor-map inspection `Saved/Gate12Readiness/starting_world_runtime_contract.json` showed PlayerStart, native `/Script/OfflineGame.OGWorldPresentationGameMode` override, World lighting, no fabricated placed character actors.
+- **New startup fix:** `Config/DefaultEngine.ini` `GameDefaultMap` switched from experimental Koikatsu PlayableQA to `/Game/Maps/StartingWorld`. `EditorStartupMap` retains QA map; no source assets or exported character visuals changed.
+- Added fail-closed `Scripts/Gate12Koikatsu/validate_starting_world_runtime_map.py` requiring correct game boot map, GameMode, PlayerStart and lighting. Re-run after config change: PASS, four boot-contract assertions true.
+- Isolated no-cook Win64 launcher: `Scripts/Gate12Koikatsu/run_isolated_nocook_desktop_smoke.ps1`; project/save path isolated from original. First smoke correctly marked UNVERIFIED (bad screenshot/log flags); corrected second smoke PASS for real StartingWorld game boot, no fatal error, genuine opening screenshot SHA256 B67EB0B019DD3C32786DD5122F02B81F39DF0FE05DDFFE47FC30A507C318AF06 at `docs/production/gate12/evidence/issue25/Win64_StartingWorld_Opening_NoCook_20261016.png`. This is NOT gameplay navigation approval.
+- Historical P0 visual/export fidelity and Gate09 animation blockers remain separate from startup/Ruler engineering; never mark those fixed solely because 150 native tests pass.
+
 ## Next SINGLE executable action
-**Inspect `Saved/Logs/Gate12_Issue25_PassiveQaPreview_Build.log`, repair first real compile error if any; then run targeted/full no-cook native suite and the editor Python asset preflight. Update this checkpoint with actual counts/sha and commit/push this source.** Do not launch parallel Unreal builds on 8 GB RAM.
+**From latest HEAD and this checkpoint, implement and run an opt-in isolated Win64 game runtime Ruler→World→Ruler journey using actual event handlers with screenshot/projection evidence; the normal opening game launch is already VERIFIED. Preserve protected files and do not cook Android.** Do not launch parallel Unreal builds on 8 GB RAM.
 
 ## Blocked on
 - Production character binding and genuine accepted Manifestations: Gate11, separate from engineering QA viewer.
