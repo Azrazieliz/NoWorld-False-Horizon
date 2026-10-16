@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-16T0148",
+  "revision": "2026-10-16T0951Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -271,6 +271,16 @@
       "procedure": "Gate00 creative authority; Gate11 Registry2 intake; Gate12 UE runtime; share capabilities through manifest/handoff; do not create canonical assets uncommissioned.",
       "evidence": "Original Gate commission scopes",
       "status": "verified_contract"
+    },
+    {
+      "id": "K027",
+      "topic": "coordinate_preset_inheritance_guard",
+      "applies_to": "gate01|gate12",
+      "requirement": "A newly edited character form or wardrobe card may update coordinate zero while retaining six previous form presets; never auto-promote untouched inherited presets as accepted states.",
+      "procedure": "Before staging any KK form or CLOTHED/UNDERWEAR/NUDE cards, run coordinate_inheritance_guard.py with the approved base and candidate card; review changed coordinate indices, explicitly map the intended saved state, and perform native AssignCoordinate SaveCharaFile reload validation for chosen state. Do not silently use unchanged presets as Alter source.",
+      "evidence": "2026-10-16 three genuine Luminous V3-to-Alter candidate native card diffs: only coordinate index 0 changed, indices 1 to 6 retain former base clothing presets; source SHA and copies staged read-only.",
+      "status": "verified",
+      "regression_test": "mastery_regression_tests coordinate_inheritance_guard fixture: only coordinate 0 changed returns REVIEW_INHERITED_COORDINATES, baseline matching indices 1..6, no_auto_promotion true; all seven changed does not falsely report inherited presets."
     }
   ]
 }

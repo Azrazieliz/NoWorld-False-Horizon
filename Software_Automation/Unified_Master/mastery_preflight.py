@@ -37,6 +37,9 @@ SOURCE_SNIPPETS = {
     "learn_native_kk_character_recipe.py": [
         "face_shape", "body_shape", "accessories", "pos2", "rot2", "scale2",
     ],
+    "coordinate_inheritance_guard.py": [
+        "REVIEW_INHERITED_COORDINATES", "no_auto_promotion", "baseline_matching_indices",
+    ],
 }
 def ensure_master(ledger_path=LEDGER, source_dir=HERE):
     """Fail closed on missing contract, missing scope, or known regressed sources.

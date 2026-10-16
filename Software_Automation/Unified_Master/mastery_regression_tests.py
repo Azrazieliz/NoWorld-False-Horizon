@@ -2,6 +2,7 @@
 import json, pathlib, tempfile, shutil
 from mastery_preflight import ensure_master, LEDGER, HERE, SOURCE_SNIPPETS
 from gate_start import gate_start
+from coordinate_inheritance_guard import evaluate as check_inherited_coordinates
 cases={}
 def test(name,callback):
     try:cases[name]=bool(callback())
@@ -10,7 +11,10 @@ def rejects(fn):
     try:fn()
     except (ValueError,FileNotFoundError,RuntimeError,json.JSONDecodeError):return True
     return False
-test('original_master_26_rules_12_gates',lambda:ensure_master()['rules']==26 and ensure_master()['gates']==12)
+test('original_master_26_rules_12_gates',lambda:ensure_master()['rules']>=26 and ensure_master()['gates']==12)
+test('new_K027_guard_persisted',lambda:any(r['id']=='K027' and r.get('regression_test') for r in json.loads(LEDGER.read_text(encoding='utf-8-sig'))['rules']))
+test('inherited_six_presets_blocked',lambda:(lambda r:r['status']=='REVIEW_INHERITED_COORDINATES' and r['no_auto_promotion'] and r['baseline_matching_indices']==[1,2,3,4,5,6])(check_inherited_coordinates({'coordinates':{'0':{'clothes':[{'part':0}]}}})))
+test('all_seven_changed_no_false_inheritance',lambda:not check_inherited_coordinates({'coordinates':{str(i):{'clothes':[{'part':0}]} for i in range(7)}})['no_auto_promotion'])
 for i in range(1,13):
     tag='Gate%02d'%i
     test('gate%02d_startup'%i,lambda t=tag:gate_start(t)['gate']==t and bool(gate_start(t)['known_methods']))
