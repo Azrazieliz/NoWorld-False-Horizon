@@ -15,7 +15,7 @@ namespace
 const FLinearColor GothicVoid(.006f,.006f,.011f,1.0f);
 const FLinearColor DarkSlate(.019f,.018f,.026f,.98f);
 const FLinearColor OrnamentGold(.71f,.56f,.33f,1.0f);
-const FLinearColor Text(.91f,.89f,.85f,1.0f);
+const FLinearColor OpeningTextColor(.91f,.89f,.85f,1.0f);
 const FLinearColor Muted(.51f,.50f,.53f,1.0f);
 }
 
@@ -123,7 +123,7 @@ void UOGGate12NativeOpeningWidget::AddAction(
     TextLabel->SetJustification(ETextJustify::Center);
     TextLabel->SetAutoWrapText(true);
     TextLabel->SetColorAndOpacity(FSlateColor(
-        bEnabled ? (bPrimary ? OrnamentGold : Text) : Muted));
+        bEnabled ? (bPrimary ? OrnamentGold : OpeningTextColor) : Muted));
     FSlateFontInfo Font = TextLabel->GetFont();
     Font.Size = bPrimary ? 23 : 18;
     TextLabel->SetFont(Font);
@@ -154,7 +154,7 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
         Notice->SetText(FText::FromString(
             TEXT("Start a new world? Your existing world is replaced only AFTER a recovery copy is preserved.")));
         Notice->SetAutoWrapText(true);
-        Notice->SetColorAndOpacity(FSlateColor(Text));
+        Notice->SetColorAndOpacity(FSlateColor(OpeningTextColor));
         Menu->AddChildToVerticalBox(Notice)->SetPadding(FMargin(8.f,9.f));
         AddAction(TEXT("KEEP CURRENT WORLD"), TEXT("OG.Opening.ClearCancel"),true);
         AddAction(TEXT("CREATE RECOVERY COPY AND START NEW"),
