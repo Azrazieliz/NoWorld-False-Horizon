@@ -27,7 +27,7 @@ The user explicitly requests removal of superseded tests, irrelevant versions an
 - `D:\Tools\GameAssetPipeline\ProductionAutomation\Gate01\LuminousAlterCandidates_20261016\__pycache__`: 9535 bytes.
 - **Total 631263 bytes**. All other files untouched.
 
-**Audit manifest/recovery files preserved**:
+**Additional binary recovery COMPLETE (2026-10-16):** 724 untracked UE binary files preserved in local protected ZIP `D:\\Tools\\GameAssetPipeline\\ProductionAutomation\\checkpoint\\migration_20261016\\GATE12_UNTRACKED_BINARY_RECOVERY_20261016.zip`, 248,944,219 bytes, SHA256 `97525c80318bf64f651b93e4972650a4b9f59fe046dcb6601d4d321ae95acff6`, CRC PASS. No source working asset moved or deleted.\n\n**Audit manifest/recovery files preserved**:
 `D:\Tools\GameAssetPipeline\ProductionAutomation\checkpoint\migration_20261016\GATE00_RECOVERY_AND_CLEANUP_AUDIT_20261016.json`
 `...\GATE12_UNCOMMITTED_TRACKED_20261016.patch`
 `...\GATE12_LOCAL_RECOVERY_SOURCE_20261016.zip`.
