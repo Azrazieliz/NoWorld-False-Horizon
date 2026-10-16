@@ -1,0 +1,39 @@
+{
+  "schema": "GATE12_NATIVE_RENDERED_JOURNEY_QA_EVIDENCE_V1",
+  "source_commit": "969ca0478bc22e85cb24f690b1b21799d02ff624",
+  "source": "isolated_no_cook_win64_unreal5.8.3",
+  "opening_and_ruler_world": "PROGRAMMATIC_NATIVE_JOURNEY_PASS",
+  "journey_steps_total": 23,
+  "journey_steps_passed": 23,
+  "journey_receipt_sha256": "09c13120a64ff29ac2f5596bbc3967b592074b94ba901e006c675be4881acde2",
+  "native_slate_ui_screenshot_count": 13,
+  "onscreen_window_capture_failures": 0,
+  "fatal_error_seen_in_log": false,
+  "original_project_saves_untouched": true,
+  "android_cooked_or_installed": false,
+  "physical_touch_verified": false,
+  "user_visual_acceptance": false,
+  "gate10_exact_art_and_animations_integrated": false,
+  "production_sword_equipped": false,
+  "note": "QA-only current native placeholder screens, not the frozen Gate10 opening/HUD; no visual or Android acceptance.",
+  "images": {
+    "OpeningPortrait_QA_NOT_GATE10.png": {
+      "sha256": "30139b5b6dfcaf2839df05c2db7fcc638588d39018a81457fe0cc88590966b8c",
+      "bytes": 15587,
+      "renderer": "real_unreal_slate_in_game",
+      "approved_gate10_visual": false
+    },
+    "RulerHome_QA_NOT_GATE10.png": {
+      "sha256": "34c98bfd0caea21a8e425c7c8b28a43a0d631ec982f9f3a790f703fc4fe6f225",
+      "bytes": 20589,
+      "renderer": "real_unreal_slate_in_game",
+      "approved_gate10_visual": false
+    },
+    "WorldHUD_QA_NOT_GATE10.png": {
+      "sha256": "cba6ec37f20a60043540382c35c3f3de692bd3dff79d71663ab90fd3b8206255",
+      "bytes": 267100,
+      "renderer": "real_unreal_slate_in_game",
+      "approved_gate10_visual": false
+    }
+  }
+}
