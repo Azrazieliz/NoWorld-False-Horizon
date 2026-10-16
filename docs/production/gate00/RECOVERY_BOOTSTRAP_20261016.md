@@ -29,7 +29,7 @@ Next SINGLE executable action: <command or action, exact input and output>
 Blocked on: <owner, exact missing evidence and why> | NONE
 Quality/canonical acceptance: <specific creative/native/device/Registry status>
 Source preservation: <protected source and backup hash where needed>
-Device/Unreal cook authorization: NO (unless user has explicitly approved a specific later cook)
+Device/Unreal cook authorization: YES — ongoing isolated development cook/package/test-sign/install/device QA (user approved 2026-10-16); never claim production release permission
 Replacement-conversation prompt:
 "Continue Gate NN from this exact GitHub checkpoint and latest worktree; begin with the Next SINGLE executable action. Do not restart."
 ```
@@ -48,4 +48,4 @@ For the brand-new Gate01-3D conversation, additionally state "You are Gate 01-3D
 - `DONE` has verifiable link+hash, test/evidence receipt, exact acceptance authority and no unaddressed material blocker for that *particular* task. It can be DONE at 2D while downstream 3D or Registry stays OPEN.
 - Only truly blocking external dependencies surface to Gate00; gate can continue separate owned production work.
 - User receives no long relay instructions when one shared repo reference suffices.
-- Physical APK authorization remains separate. Prior Android feasibility from earlier days is not proof that today's source is built, cooked or physically tested.
+- Routine isolated **development APK and device testing is already authorized** by the user (2026-10-16). Previous test APKs are not a finished app. Gate12 should compile/cook/install/test new dev builds without permission ping-pong, preserve actual user data/unrelated packages, and report evidence. Public release or destructive action still requires specific approval. Prior Android feasibility from earlier days is not proof that today's source is tested.
