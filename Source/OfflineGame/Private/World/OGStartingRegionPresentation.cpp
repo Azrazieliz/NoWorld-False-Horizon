@@ -11278,7 +11278,21 @@ bool AOGWorldPresentationHud::HandleFoundationDiagnosticClick(FName Name, AOGWor
         if (bInteractionMenuOpen || Host->IsActive())
         {
             for (const auto& Row : Host->GetRows())
-                if (Row.Id == Name) { Host->ActivateRow(Name); return true; }
+            {
+                if (Row.Id != Name) continue;
+                const bool bAccepted = Host->ActivateRow(Name);
+                // "Return to ordinary gameplay" must really release the
+                // Interaction modal. Keeping it open intercepted the next
+                // World/Ruler HUD action even after the canonical interaction
+                // itself had already exited successfully.
+                if (bAccepted && Name == TEXT("exit") && !Host->IsActive())
+                {
+                    bInteractionMenuOpen = false;
+                    bDiagnosticMenuOpen = false;
+                    DiagnosticMenuPage = 0;
+                }
+                return true;
+            }
         }
     }
     return false;

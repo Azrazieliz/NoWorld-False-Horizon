@@ -573,10 +573,15 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
                 [](const FOGFoundationInteractionRow& Row) {
                     return Row.Id == TEXT("privacy") && Row.bEnabled;
                 });
-        const bool bPrivacyToggled = bPrivacyOption &&
-            Host->ActivateRow(TEXT("privacy"));
-        const bool bExited = Host && Host->ActivateRow(TEXT("exit")) &&
-            !Host->IsActive();
+        // Dispatch the actual World HUD hit controls so this test also
+        // detects a modal overlay that fails to dismiss after "exit".
+        if (bPrivacyOption)
+            HUD->NotifyHitBoxClick(TEXT("privacy"));
+        const bool bPrivacyToggled = bPrivacyOption && Host &&
+            Host->IsActive();
+        if (bPrivacyToggled)
+            HUD->NotifyHitBoxClick(TEXT("exit"));
+        const bool bExited = Host && !Host->IsActive();
         Record(TEXT("interaction_privacy_and_exit_restore_world"),
             bPrivacyToggled && bExited &&
                 Mode->GetMode() == EOGPresentationMode::World &&

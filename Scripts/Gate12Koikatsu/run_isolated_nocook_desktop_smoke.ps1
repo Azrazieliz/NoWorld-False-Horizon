@@ -35,8 +35,25 @@ if (!(Test-Path $Project)) {
 }
 $Config=Join-Path $Destination 'Config'
 if (!(Test-Path $Config)) {New-Item -ItemType Directory -Path $Config -Force | Out-Null}
-Get-ChildItem (Join-Path $Root 'Config') -File | ForEach-Object {
-  Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $Config $_.Name) -Force
+# Preserve the complete authored configuration hierarchy. Earlier copies
+# excluded Config/Foundation/CharacterVisualDiagnostic.json, causing the
+# *isolated* diagnostic interaction entry to fail despite authentic source.
+$SourceConfig=Join-Path $Root 'Config'
+Get-ChildItem $SourceConfig -Recurse -File | ForEach-Object {
+  $Relative=$_.FullName.Substring($SourceConfig.Length).TrimStart([char]'\')
+  $Target=Join-Path $Config $Relative
+  $TargetDirectory=Split-Path $Target -Parent
+  if (!(Test-Path $TargetDirectory)) {
+    New-Item -ItemType Directory -Path $TargetDirectory -Force | Out-Null
+  }
+  Copy-Item -LiteralPath $_.FullName -Destination $Target -Force
+}
+$NeutralVisualTemplate=Join-Path $Config 'Foundation\CharacterVisualDiagnostic.json'
+$OriginalNeutralTemplate=Join-Path $SourceConfig 'Foundation\CharacterVisualDiagnostic.json'
+if (!(Test-Path $NeutralVisualTemplate) -or
+    (Get-FileHash -LiteralPath $NeutralVisualTemplate -Algorithm SHA256).Hash -ne
+        (Get-FileHash -LiteralPath $OriginalNeutralTemplate -Algorithm SHA256).Hash) {
+  throw 'Isolated neutral character visual template absent or source hash mismatch.'
 }
 foreach ($Name in @('Binaries','Content')) {
   $To=Join-Path $Destination $Name
