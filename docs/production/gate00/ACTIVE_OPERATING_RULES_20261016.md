@@ -1,0 +1,48 @@
+# Gate 00 — Production-first operating protocol (ACTIVE 2026-10-16)
+
+**Authority:** latest direct user instruction. **One purpose:** advance the playable offline game, preserve work, prevent duplicated specialist handoffs. This supersedes earlier routine multi-gate relay habits; it does **not** supersede frozen mechanics/Registry/art approvals or grant Android cook permission.
+
+## The rules each active Gate must apply immediately
+
+1. **Show work in progress without exposing private scratchpad:** before a multi-step task state the current objective and next 2–3 concrete operations. During execution send brief *observable* progress at meaningful stages (file examined, real test performed, commit written, defect discovered), not hidden reasoning or filler; never require the user to repeatedly ask "what are you doing?"
+2. **Persist work DURING execution:** Every meaningful, reproducible step that changes a source, test, diagnostic conclusion, model recipe, asset manifest or dependency must be committed to the Gate's authorized isolated branch before switching tasks. Update `SESSION_CHECKPOINT.md` or `SESSION_CHECKPOINT.json` with exact source SHA, objective, done, current state, next executable action, blockers, file paths and latest evidence. Batch atomic edits; do not make one meaningless Git commit per keystroke, chat thought, click or temporary screenshot.
+3. **No loss after conversation failure:** Within the first action of any resumed Gate, read this runbook, the live board and that Gate's latest checkpoint; inspect its current branch HEAD and local uncommitted files. Reconstruct precise state from source, not chat history. All recovery information must already exist *before* chat breaks. Private binary assets and card/mod files stay in protected authorized local storage; commit their exact paths, hashes and provenance, **never private raw assets** to a public repo.
+4. **Single owner per work item:** Gate00 assigns it; other Gates share read-only source/issue links. Work can be parallel only for independent concrete outputs. Do not copy a multi-gate order or demand user carry messages between chats. When input is missing, write one bounded dependency to the shared issue and carry on with executable independent work.
+5. **Done means STOP:** When a deliverable meets its explicit acceptance and has stored evidence, set it `DONE`, mark source commit and record the next owner once; stop editing it. Do not reopen approved character visuals or fixed UI merely due to separate technical acceptance. Failed tests become bounded `BLOCKED` with objective reproduction, not circular discussion.
+6. **Active production first:** Each Gate's next response must produce an actual file/test/clip/geometry/kit/integration advancement when it has the necessary data. No plan-only handoffs. Never block Gate12's isolated no-cook vertical-slice engineering on a pending unrelated animation, registry or full-quality export study.
+7. **Minimal user involvement:** Gate00 owns the unified board (GitHub issue #25 and this branch). Ask the user only for irreversible/action-required decisions, genuine design choices or separate device authorization. Do not require thirty pasted messages.
+8. **Source transparency:** Every completion report must distinguish `CREATIVE_APPROVED`, `SOURCE_VALIDATED`, `NATIVE_TESTED`, `GATE11_ARTIFACT_READY`, and `DEVICE_TESTED`. Never equate them.
+
+## 2D / 3D character split — effective now
+
+- **Gate 01-2D (one dedicated conversation):** concept design, source analysis, original character/feminisation/existing character 2D workflows, original detailed v6 methodologies, immutable 2D references, appearance design revisions and Gate00 creative signoff. Outputs a concise `CHARACTER_ART_CONTRACT.md` (identity/form description, reference/art hashes, approved visuals, art direction, exact 3D constraints). Finishes and stops at approved art contract, except user-requested revisions.
+- **Gate 01-3D (a separate dedicated conversation):** original native Party card work, 3D reproduction, wardrobe states, rig/morph/material preservation, Blender/KK native automation, technical export source and Gate11/Gate12 handoff. It consumes the 2D approved art contract *when one exists*. Uses the shared Software Mastery preflight, `gate_start.py --gate 01`, relevant tests; no re-invented Koikatsu tooling. Outputs hash-locked `CHARACTER_3D_CONTRACT.md` + actual editable source, QA and manifests. No self-issued creative reapproval or Registry ID.
+- **Sync:** One source contract, one source hash manifest, one approval status. 2D and 3D read each other's latest committed hashes; no independent duplicate catalog or prolonged gate-to-gate negotiations. Gate00 only resolves new artistic disputes, Gate11 controls Registry, Gate12 runtime.
+- **Already-approved exception:** Luminous V3 Base is `CREATIVE_APPROVED` and existing Gate01-approved 3D baseline is accepted for further integration; **do not reopen its art review**. Alter is user-authored native **3D-only**; 2D is optional and is not a prerequisite. Preserve its newest original overwritten card revision. Gate11's incomplete production registration is not a rejection of visual design.
+
+No renumbering of core Gates 00–12 is required. Existing former Gate01 conversation can serve as Gate01-2D if recoverable; the new 3D conversation uses the Gate01-3D label while its software preflight owner remains Gate01.
+
+## Git and recoverability contract
+
+- Immutable frozen Foundation commit `3f54f07cacbf193e160d0be15a7be5a7bc730c3b` must not be modified, reset or merged. PR #16 remains draft/unmerged.
+- This governance lives on isolated `coordination/gate00-live-ops-20261016`. Actual art, clips, scripts, tests, game/native source live on their own isolated and attributable Gate branches; every substantive update must be pushed.
+- **Do not push binary Koikatsu Party cards, unreleased private assets/mods, personal material or huge intermediates to the public repository.** Use a protected local hash-locked manifest, reference path and backup; if available, use permitted private artifact storage.
+- Immediately after a successful step: save work, write accurate state, commit to working branch, push, record the SHA and short next action; if push is unavailable, mark `LOCAL_ONLY_UNPUSHED` prominently and retain backups. Never claim repo preservation without a real remote commit.
+- At conversation cutoff: latest `SESSION_CHECKPOINT` already contains an executable replacement prompt and pointers; migration does not depend on the user saying "migration required." Do not spawn another migration ZIP unless the user actually needs offline transfer.
+- A source or UI screen creative freeze is terminal for that design task. **Next stage is implementation**, not more visual approval rounds.
+
+## Output per specialist progress checkpoint (concise)
+
+`ACTIVE [specific single task]` → `Observed: [real operation/result]` → `Saved: [branch @ SHA and protected private data hash]` → `Next: [one concrete action] ` → `Status: IN_PROGRESS | BLOCKED | DONE`.
+
+No invented test PASS, deadlines, background processing or implicit actions across separate chats.
+
+## Device/build boundary and execution priority
+
+**Primary product milestone:** one usable, independently testable Android vertical slice (portrait Ruler home → character viewer/test-only honest fixture → landscape World movement/camera → return/save), using existing Gate12 SOURCE_ACCEPTED native code. Develop and test no-cook UI/gameplay paths now; do not wait for full world, 13-character interactions, all movement packs, or final 4-family exporter parity. Report missing production assets honestly.
+
+Actual Android cooking, signing, installing or uninstalling requires a **single explicit authorization from the user** at the point it is needed; the current statement of frustration is *not* permission to cook. Preserve previous user/device APKs and saves.
+
+## Frozen exclusions
+
+No chips/duplicate conversion; no E03/E04 resurrection; no fake canonical IDs/owned UUIDs; independent persistent owned Manifestations and Grand Convergence; true CLOTHED/UNDERWEAR/NUDE separate from Privacy; Gate11 exclusive ARTIFACT_READY; Gate10 nine scopes frozen; NoWorld: False Horizon; no unapproved mass character exports or production exporter switch. 
