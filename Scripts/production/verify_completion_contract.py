@@ -96,8 +96,16 @@ def validate(repo, ledger, require_tracked=True):
                 problems.append(f"{key}: evidence missing: {name}")
             elif not isinstance(expected, str) or not re.fullmatch("[0-9a-f]{64}", expected):
                 problems.append(f"{key}: missing exact SHA256")
-            elif hashlib.sha256(source.read_bytes()).hexdigest() != expected:
-                problems.append(f"{key}: evidence HASH MISMATCH: {name}")
+            else:
+                # Git stores text evidence with LF line endings, while a
+                # Windows checkout may materialize identical JSON as CRLF.
+                # Keep JSON proofs byte-stable across platforms without
+                # relaxing any semantic content or binary/image hashes.
+                payload = source.read_bytes()
+                if source.suffix.lower() == ".json":
+                    payload = payload.replace(b"\r\n", b"\n")
+                if hashlib.sha256(payload).hexdigest() != expected:
+                    problems.append(f"{key}: evidence HASH MISMATCH: {name}")
             if require_tracked and not tracked(repo, name):
                 problems.append(f"{key}: evidence not committed to Git: {name}")
         if status in {"RUNTIME_VERIFIED", "VISUAL_VERIFIED", "ACCEPTED", "DONE"}:

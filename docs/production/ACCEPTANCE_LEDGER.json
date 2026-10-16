@@ -74,7 +74,7 @@
                       "evidence":  [
                                        {
                                            "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
-                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "sha256":  "bb6a19c942fd5ebddac3995fc33e4ce6b0ea9e3a48432c963aa47d1d262b43b5",
                                            "kind":  "native_test"
                                        },
                                        {
@@ -107,7 +107,7 @@
                       "evidence":  [
                                        {
                                            "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
-                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "sha256":  "bb6a19c942fd5ebddac3995fc33e4ce6b0ea9e3a48432c963aa47d1d262b43b5",
                                            "kind":  "native_test"
                                        },
                                        {
@@ -175,12 +175,12 @@
                       "evidence":  [
                                        {
                                            "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Native_full_verification_summary.json",
-                                           "sha256":  "489b1c9775b47554a99e1c68245f9027dfe2bd23514dea3faff0deb4fb8d1d8d",
+                                           "sha256":  "15802ab9f53a834fc0f1ac7c89868baa55ec9fd5108491e114e0e77b47906f2b",
                                            "kind":  "native_test"
                                        },
                                        {
                                            "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
-                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "sha256":  "bb6a19c942fd5ebddac3995fc33e4ce6b0ea9e3a48432c963aa47d1d262b43b5",
                                            "kind":  "native_test"
                                        },
                                        {
@@ -212,12 +212,12 @@
                       "evidence":  [
                                        {
                                            "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
-                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "sha256":  "bb6a19c942fd5ebddac3995fc33e4ce6b0ea9e3a48432c963aa47d1d262b43b5",
                                            "kind":  "native_test"
                                        },
                                        {
                                            "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Native_targeted_verification_summary.json",
-                                           "sha256":  "3b45875926d1c231eefeb55f5f2ceb1f07c243e6e53cfbd787d327a581fe3ba9",
+                                           "sha256":  "95710ca1f817d4738c94ee6d5d0bc49844834d2280341220e6108fa8e053483b",
                                            "kind":  "native_test"
                                        },
                                        {

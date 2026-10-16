@@ -51,7 +51,7 @@ private:
     bool bHasRecovery = false;
     bool bHasImport = false;
     bool bReducedMotion = false;
-    FName Page = TEXT("main");
+    FName Page = FName(TEXT("main"));
 
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> Menu;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> MenuSlot;

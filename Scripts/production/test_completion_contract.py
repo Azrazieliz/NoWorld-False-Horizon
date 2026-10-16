@@ -78,6 +78,28 @@ class CompletionContractTests(unittest.TestCase):
             ]
             self.assertTrue(any("HASH MISMATCH" in e for e in mod.validate(root, doc, False)))
 
+    def test_json_evidence_hash_is_platform_newline_stable_but_fail_closed(self):
+        with tempfile.TemporaryDirectory() as path:
+            repo = Path(path)
+            source = repo / "actual_runtime.json"
+            source.write_bytes(b'{\r\n  "step": "passed"\r\n}\r\n')
+            expected_lf = b'{\n  "step": "passed"\n}\n'
+            row = {
+                "id": "gate12.fixture_test", "type": "runtime",
+                "status": "BLOCKED", "frozen_source": "QA regression",
+                "requirements": ["real source result"],
+                "delivered": [], "remaining": ["independent acceptance"],
+                "evidence": [{"path": "actual_runtime.json",
+                              "kind": "native_test",
+                              "sha256": hashlib.sha256(expected_lf).hexdigest()}],
+            }
+            doc = {"schema": "NOWORLD_COMPLETION_V1",
+                   "frozen_foundation": mod.FROZEN, "items": [row]}
+            self.assertEqual(mod.validate(repo, doc, require_tracked=False), [])
+            source.write_bytes(b'{\n  "step": "failed"\n}\n')
+            self.assertTrue(any("HASH MISMATCH" in error
+                                for error in mod.validate(repo, doc, require_tracked=False)))
+
     def test_production_report_cannot_claim_done_without_ledger(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)

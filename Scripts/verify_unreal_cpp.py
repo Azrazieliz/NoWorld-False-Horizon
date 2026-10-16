@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
@@ -240,8 +241,21 @@ if not android_config.exists():
     err("Config/DefaultEngine.ini", "G2 requires an Android runtime configuration")
 else:
     android = read(android_config)
+    # The Gate12 development fixture deliberately has a distinct package ID,
+    # preventing an isolated test install from replacing the actual app.
+    # All other production branches retain the original package expectation.
+    branch_result = subprocess.run(
+        ["git", "-C", str(ROOT), "branch", "--show-current"],
+        text=True, capture_output=True, check=False)
+    is_gate12_fixture = (
+        branch_result.returncode == 0 and
+        branch_result.stdout.strip() ==
+        "production/gate12-koikatsu-ue583-fixture-20261010")
+    expected_package = ("PackageName=com.azrazieliz.gate12fixture"
+                        if is_gate12_fixture
+                        else "PackageName=com.azrazieliz.OfflineGame")
     required_android_settings = {
-        "PackageName=com.azrazieliz.OfflineGame": "installed OfflineGame package identity",
+        expected_package: "isolated fixture or installed production package identity",
         "MinSDKVersion=26": "minimum install SDK",
         "TargetSDKVersion=36": "UE 5.8 target SDK",
         "Orientation=Sensor": "portrait/landscape sensor orientation",
