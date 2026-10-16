@@ -40,6 +40,9 @@ SOURCE_SNIPPETS = {
     "coordinate_inheritance_guard.py": [
         "REVIEW_INHERITED_COORDINATES", "no_auto_promotion", "baseline_matching_indices",
     ],
+    "native_3d_material_scale_guard.py": [
+        "FAIL_SOURCE_NORMAL_MAPS_NOT_BOUND", "visual_fidelity_accepted", "PASS_RELATIVE_BOUNDING_DIMENSIONS",
+    ],
 }
 def ensure_master(ledger_path=LEDGER, source_dir=HERE):
     """Fail closed on missing contract, missing scope, or known regressed sources.

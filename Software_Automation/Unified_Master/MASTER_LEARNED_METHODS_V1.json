@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-16T1051Z",
+  "revision": "2026-10-16T1220Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -291,6 +291,16 @@
       "evidence": "Luminous Alter user overwrite verified 2026-10-16, previous hash fccab219... preserved, new current hash 15d51bce... captured; one accessory slot and MaterialEditor payload changed.",
       "status": "verified",
       "regression_test": "mastery_regression_tests should assert two separate immutable intake directories retain different source hashes and refuse overwrites of either previously captured revision."
+    },
+    {
+      "id": "K029",
+      "topic": "native_3d_toon_material_parity_and_scale_evidence",
+      "applies_to": "gate01|gate12",
+      "requirement": "Reject character export visual acceptance when original KKBP normal-map assets or toon material channels disappear during Blender GLB FBX or Unreal translation. Distinguish true model scaling from material or camera changes.",
+      "procedure": "Read hash-locked native source and KKBP source texture inventories. Audit target GLB PBR normalTexture alpha and baseColor bindings using p0_glb_shader_audit.py or the reusable native_3d_material_scale_guard.py. Compare source PMX and GLB bounding dimensions along XYZ with relative tolerance, then separately measure actual Unreal asset and rendered actor size. Never declare acceptance from equal mesh vertex counts, generic import success, or camera-unmatched images.",
+      "evidence": "2026-10-16 Luminous V3 CLOTHED 299 raw KKBP source PNGs with 29 NMP-named maps, Blender imported 126 images and 71 materials, but final GLB has 40 baseColor images, 45 materials, zero normalTexture bindings, 41 blend alpha materials. PMX outfit-to-GLB bounds match 1.2383x1.5217x0.6701. Gate11 visual acceptance not granted.",
+      "status": "verified",
+      "regression_test": "mastery_regression_tests asserts 29 source normals with 0 target normal bindings returns P0_HOLD_MATERIAL_PARITY even when PMX-to-GLB scale is exact; change in X/Y/Z bounds triggers separate scale failure; visual_fidelity_accepted always false absent render review."
     }
   ]
 }
