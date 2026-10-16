@@ -42,6 +42,9 @@ An Alter is **not** a broad alternate-outfit fashion redesign. The fundamental c
 6. **Test recognizability and distinctness:** The player should identify both the original character and the radical difference in nature or expression. Document exact before/after design rationale, not just an adjective like 'edgy'.
 7. **Approval and implementation:** Freeze the exact art (or reverse-reference an existing user-authored Koikatsu model first); send proposed combat differences to Gate 04, animations/acting to Gate 09, visual/rarity authority to Gate 10, Registry to Gate 11, and Unreal integration to Gate 12. Keep these independently unapproved until their actual review.
 
+### Common Alter visual tendency — darker and bolder (user clarification, 2026-10-16)
+An Alter **often** shifts toward a darker, bolder, more forceful visual interpretation. In art direction, test deepened value ranges, stronger black/dark-color massing, sharper and higher-contrast palette separation, stronger silhouettes and sharper costume geometry, more commanding/intense expressions, and more imposing armament or power presentation. Treat these as **strong reference tendencies**, not mandatory fixed requirements. A character-specific inversion may use other colors or contrasting directions. Do not apply automatic black hair, red eyes, black-and-red costume, sexualization, evil alignment or a universal template. The key is that the bold/dark choices visibly express the Alter's transformed inner nature and still preserve recognizable identity cues.
+
 ### Distinguish Alter from Awakened
 **Alter:** a shift/inversion/contrary interpretation of a character's *nature or expression*. **Awakened:** realization/extension of the character's *latent potential*. A dramatic visual change can happen in either; the story/psychology and power premise decide, not hair color.
 
