@@ -1,4 +1,5 @@
 #include "UI/OGGate12CharacterPreviewStage.h"
+#include "UI/OGGate12CharacterPreviewConfiguration.h"
 
 #include "Components/SceneComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
@@ -24,12 +25,20 @@ AOGGate12CharacterPreviewStage::AOGGate12CharacterPreviewStage()
 }
 
 bool AOGGate12CharacterPreviewStage::InitializeApprovedPreview(
-    TSubclassOf<AActor> PreviewClass)
+    TSubclassOf<AActor> PreviewClass,
+    const FOGEntityId& RulerId,
+    const FOGContentId& IdentityId,
+    const FOGContentId& VersionId,
+    const FOGEntityId& ManifestationId)
 {
     ReleasePreview();
     UWorld* World = GetWorld();
     // Never spawn a second playable Pawn, controller, or production gameplay actor.
-    if (!World || !PreviewClass || PreviewClass->IsChildOf(APawn::StaticClass()))
+    if (!World || !PreviewClass || PreviewClass->IsChildOf(APawn::StaticClass()) ||
+        !RulerId.IsValid() || !IdentityId.IsValid() ||
+        !VersionId.IsValid() || !ManifestationId.IsValid() ||
+        !PreviewClass->ImplementsInterface(
+            UOGGate12CharacterPreviewConfiguration::StaticClass()))
         return false;
 
     RenderTarget = NewObject<UTextureRenderTarget2D>(this, NAME_None, RF_Transient);
@@ -51,9 +60,24 @@ bool AOGGate12CharacterPreviewStage::InitializeApprovedPreview(
         return false;
     }
     PreviewActor->SetActorEnableCollision(false);
+    // A blueprint must bind actual owned appearance and Privacy before
+    // anything is captured, or we refuse to render an incorrect outfit.
+    if (!IOGGate12CharacterPreviewConfiguration::Execute_ConfigureOwnedPreview(
+            PreviewActor, RulerId, IdentityId, VersionId, ManifestationId))
+    {
+        ReleasePreview();
+        return false;
+    }
     Capture->ShowOnlyActorComponents(PreviewActor, true);
     Capture->CaptureScene();
     return true;
+}
+
+void AOGGate12CharacterPreviewStage::SetLiveCapture(bool bLive)
+{
+    if (!Capture || !RenderTarget) return;
+    Capture->bCaptureEveryFrame = bLive;
+    if (!bLive) Capture->CaptureScene();
 }
 
 void AOGGate12CharacterPreviewStage::ReleasePreview()

@@ -366,6 +366,8 @@ bool FOGPlayerProfileSettingsService::Load(
             Root,
             TEXT("auto_combat_preset_json"),
             TEXT("{}"));
+    OutSettings.CharacterPresentationPreferencesJson =
+        JsonOrDefault(Root, TEXT("character_presentation_preferences_json"), TEXT("{}"));
 
     if (OutSettings.OrientationLock.IsNone())
     {
@@ -543,6 +545,9 @@ bool FOGPlayerProfileSettingsService::Save(
     Root->SetStringField(
         TEXT("auto_combat_preset_json"),
         Settings.AutoCombatPresetJson);
+    Root->SetStringField(
+        TEXT("character_presentation_preferences_json"),
+        Settings.CharacterPresentationPreferencesJson);
 
     FString Json;
     const TSharedRef<TJsonWriter<>> Writer =

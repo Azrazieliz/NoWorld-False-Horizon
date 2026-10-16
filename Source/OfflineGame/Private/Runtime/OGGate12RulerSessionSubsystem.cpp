@@ -4,6 +4,7 @@
 #include "Persistence/OGWorldStore.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12LocalRulerBootstrap.h"
+#include "Runtime/OGReportService.h"
 #include "Runtime/OGPackageReportManagementRecords.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "UI/OGUiViewModelService.h"
@@ -94,6 +95,7 @@ void UOGGate12RulerSessionSubsystem::ClearProjectionAndSelection()
     OwnedRoster.Reset();
     TerritoryProjection = FOGTerritoryViewModel();
     RecordsProjection = FOGRecordsHubViewModel();
+    ReportProjection.Reset();
     GachaHistoryProjection.Reset();
     ChronicleProjection.Reset();
     IntelligenceProjection.Reset();
@@ -348,15 +350,70 @@ bool UOGGate12RulerSessionSubsystem::RefreshRecordsDetail(FString& OutError)
         return false;
 
     FOGUiViewModelService Ui(*Store);
+    TArray<FOGReportRecord> ActualReports;
     TArray<FOGChronicleEntryViewModel> ActualChronicle;
     TArray<FOGIntelligenceEntryViewModel> ActualIntelligence;
-    if (!Ui.BuildChronicle(BoundRulerId, 25, ActualChronicle, OutError) ||
+    if (!Store->ListReportsByOwner(BoundRulerId, ActualReports, OutError) ||
+        !Ui.BuildChronicle(BoundRulerId, 25, ActualChronicle, OutError) ||
         !Ui.BuildIntelligence(BoundRulerId, ActualIntelligence, OutError))
         return false;
 
+    ActualReports.Sort([](const FOGReportRecord& A, const FOGReportRecord& B)
+    {
+        if (A.bAcknowledged != B.bAcknowledged) return !A.bAcknowledged;
+        if (A.Priority != B.Priority) return A.Priority > B.Priority;
+        if (A.CreatedWorldTick != B.CreatedWorldTick)
+            return A.CreatedWorldTick > B.CreatedWorldTick;
+        return A.ReportId.ToString().Compare(
+            B.ReportId.ToString(), ESearchCase::CaseSensitive) < 0;
+    });
+    ReportProjection = MoveTemp(ActualReports);
     ChronicleProjection = MoveTemp(ActualChronicle);
     IntelligenceProjection = MoveTemp(ActualIntelligence);
     return true;
+}
+
+bool UOGGate12RulerSessionSubsystem::AcknowledgeOwnedReport(
+    const FOGEntityId& ReportId, FString& OutError)
+{
+    OutError.Reset();
+    if (!bRulerValidated || !BoundRulerId.IsValid() || !ReportId.IsValid())
+    {
+        OutError = TEXT("Acknowledging Reports requires a verified Ruler and Report.");
+        return false;
+    }
+
+    // Revalidate the owner against the current world after a restore/import.
+    if (!RefreshCanonicalProjections(OutError)) return false;
+
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError)) return false;
+
+    bool bFound = false;
+    FOGReportRecord Report;
+    if (!Store->TryReadReport(ReportId, bFound, Report, OutError))
+        return false;
+    if (!bFound || Report.OwnerEntityId != BoundRulerId)
+    {
+        OutError = TEXT("This Report does not belong to the selected Ruler.");
+        return false;
+    }
+    if (Report.bAcknowledged)
+        return RefreshRecordsDetail(OutError);
+
+    const int64 Tick = Core->GetCanonicalWorldTick();
+    if (Tick < Report.CreatedWorldTick)
+    {
+        OutError = TEXT("Canonical world time is unavailable for Report acknowledgement.");
+        return false;
+    }
+    FOGReportService Reports(*Store);
+    if (!Reports.AcknowledgeReport(ReportId, Tick, OutError))
+        return false;
+    if (!RefreshCanonicalProjections(OutError))
+        return false;
+    return RefreshRecordsDetail(OutError);
 }
 
 bool UOGGate12RulerSessionSubsystem::Navigate(

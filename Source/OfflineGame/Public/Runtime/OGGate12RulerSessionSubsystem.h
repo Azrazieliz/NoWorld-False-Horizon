@@ -5,6 +5,7 @@
 #include "Content/OGContentId.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/OGUiViewModels.h"
+#include "Runtime/OGPackageReportManagementRecords.h"
 #include "OGGate12RulerSessionSubsystem.generated.h"
 
 class UOGGameCoreSubsystem;
@@ -51,6 +52,10 @@ public:
     /** Native Records detail is strictly read-only and never invents history. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Records")
     bool RefreshRecordsDetail(FString& OutError);
+
+    /** Persist acknowledgement of an actual report belonging to this Ruler. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Records")
+    bool AcknowledgeOwnedReport(const FOGEntityId& ReportId, FString& OutError);
 
     /** Historical results only; never synthesizes a banner or transaction. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Gacha")
@@ -100,6 +105,9 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Records")
     TArray<FOGChronicleEntryViewModel> ChronicleProjection;
+
+    UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Records")
+    TArray<FOGReportRecord> ReportProjection;
 
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Ruler|Records")
     TArray<FOGIntelligenceEntryViewModel> IntelligenceProjection;

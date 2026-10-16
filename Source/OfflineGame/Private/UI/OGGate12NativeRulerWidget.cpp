@@ -3,11 +3,14 @@
 #include "Blueprint/WidgetTree.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
 #include "UI/OGGate12CharacterPreviewStage.h"
+#include "UI/OGGate12CharacterPresentationPreferences.h"
+#include "Runtime/OGPlayerProfileSettings.h"
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "Components/Border.h"
+#include "Components/EditableTextBox.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/SafeZone.h"
@@ -92,8 +95,16 @@ void UOGGate12NativeRulerWidget::SetVisualCatalog(UOGGate12CharacterVisualCatalo
     RefreshFromCanonical();
 }
 
+void UOGGate12NativeRulerWidget::ReleaseRosterPreviewStages()
+{
+    for (AOGGate12CharacterPreviewStage* Stage : RosterPreviewStages)
+        if (IsValid(Stage)) Stage->Destroy();
+    RosterPreviewStages.Reset();
+}
+
 void UOGGate12NativeRulerWidget::ReleasePreviewStage()
 {
+    ReleaseRosterPreviewStages();
     if (IsValid(PreviewStage)) PreviewStage->Destroy();
     PreviewStage = nullptr;
 }
@@ -245,6 +256,7 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
 void UOGGate12NativeRulerWidget::BuildCurrentPage()
 {
     if (!Content) return;
+    RosterGrid = nullptr;
     Content->ClearChildren();
     if (OpenIdentityIndex == INDEX_NONE || !bPrefer3DCharacterPresentation)
         ReleasePreviewStage();
@@ -339,6 +351,13 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     BuildNav();
 }
 
+void UOGGate12NativeRulerWidget::HandleRosterSearchChanged(
+    const FText& NewText)
+{
+    RosterSearchQuery = NewText.ToString();
+    RebuildRosterGrid();
+}
+
 void UOGGate12NativeRulerWidget::BuildRoster()
 {
     UGameInstance* GI = GetGameInstance();
@@ -349,22 +368,106 @@ void UOGGate12NativeRulerWidget::BuildRoster()
         AddMessage(Content, TEXT("No owned character Manifestations."), 18, TextMuted);
         return;
     }
+    UEditableTextBox* Search = WidgetTree->ConstructWidget<UEditableTextBox>(
+        UEditableTextBox::StaticClass());
+    Search->SetHintText(FText::FromString(TEXT("Search owned characters")));
+    Search->SetText(FText::FromString(RosterSearchQuery));
+    Search->OnTextChanged.AddDynamic(
+        this, &UOGGate12NativeRulerWidget::HandleRosterSearchChanged);
+    Content->AddChildToVerticalBox(Search);
+    const TCHAR* SortModeName = RosterSortMode == 1 ? TEXT("LEVEL")
+        : RosterSortMode == 2 ? TEXT("OWNED COPIES") : TEXT("NAME");
+    AddAction(Content,
+        FString::Printf(TEXT("SORT: %s"), SortModeName), TEXT("roster/sort"));
 
-    // Fixed 3-column equal-size grid; never a chip/reward tile. Scale the
-    // entire grid for narrow portrait devices rather than resizing one card.
-    constexpr float CardWidth = 144.0f;
-    const float CardHeight = CardWidth / GetApprovedRosterCardRatio();
-    UUniformGridPanel* Grid = WidgetTree->ConstructWidget<UUniformGridPanel>(
+    RosterGrid = WidgetTree->ConstructWidget<UUniformGridPanel>(
         UUniformGridPanel::StaticClass());
-    Grid->SetSlotPadding(FMargin(3.0f));
+    RosterGrid->SetSlotPadding(FMargin(3.0f));
     UScaleBox* Responsive = WidgetTree->ConstructWidget<UScaleBox>(
         UScaleBox::StaticClass());
     Responsive->SetStretch(EStretch::ScaleToFit);
-    Responsive->AddChild(Grid);
+    Responsive->AddChild(RosterGrid);
     Content->AddChildToVerticalBox(Responsive);
+    RebuildRosterGrid();
+}
 
+void UOGGate12NativeRulerWidget::RebuildRosterGrid()
+{
+    UGameInstance* GI = GetGameInstance();
+    UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session || Session->OwnedRoster.IsEmpty())
+    {
+        AddMessage(Content, TEXT("No owned character Manifestations."), 18, TextMuted);
+        return;
+    }
+
+    if (!RosterGrid) return;
+    ReleaseRosterPreviewStages();
+    RosterGrid->ClearChildren();
+    // A search changes the grid contents only; the keyboard never loses focus.
+    TMap<FString, bool> Cached3DPreferences;
+    FString PreferenceError;
+    if (!FOGGate12CharacterPresentationPreferences::LoadAll(
+            FOGPlayerProfileSettingsService::DefaultProfilePath(),
+            Cached3DPreferences, PreferenceError))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Character card preferences unavailable: %s"),
+            *PreferenceError);
+    }
+    TArray<int32> VisibleIndices;
     for (int32 Index = 0; Index < Session->OwnedRoster.Num(); ++Index)
     {
+        const FOGRosterIdentityViewModel& Identity = Session->OwnedRoster[Index];
+        bool bMatches = RosterSearchQuery.IsEmpty() ||
+            Identity.DisplayNameKey.Contains(RosterSearchQuery,
+                ESearchCase::IgnoreCase) ||
+            Identity.IdentityId.ToString().Contains(RosterSearchQuery,
+                ESearchCase::IgnoreCase);
+        for (const FOGRosterManifestationViewModel& M : Identity.Manifestations)
+        {
+            bMatches |= M.BuildLabel.Contains(RosterSearchQuery,
+                ESearchCase::IgnoreCase);
+        }
+        if (bMatches) VisibleIndices.Add(Index);
+    }
+    auto LevelOf = [Session](int32 Index) -> int32
+    {
+        const FOGRosterIdentityViewModel& Identity = Session->OwnedRoster[Index];
+        const FOGRosterManifestationViewModel* Selected =
+            Identity.Manifestations.FindByPredicate(
+                [&Identity](const FOGRosterManifestationViewModel& M)
+                {
+                    return M.ManifestationId == Identity.SelectedManifestationId;
+                });
+        return Selected ? Selected->Level : 0;
+    };
+    VisibleIndices.Sort([this, Session, &LevelOf](int32 A, int32 B)
+    {
+        const FOGRosterIdentityViewModel& Left = Session->OwnedRoster[A];
+        const FOGRosterIdentityViewModel& Right = Session->OwnedRoster[B];
+        if (RosterSortMode == 1 && LevelOf(A) != LevelOf(B))
+            return LevelOf(A) > LevelOf(B);
+        if (RosterSortMode == 2 &&
+            Left.ManifestationCount != Right.ManifestationCount)
+            return Left.ManifestationCount > Right.ManifestationCount;
+        const FString L = Left.DisplayNameKey.IsEmpty()
+            ? Left.IdentityId.ToString() : Left.DisplayNameKey;
+        const FString R = Right.DisplayNameKey.IsEmpty()
+            ? Right.IdentityId.ToString() : Right.DisplayNameKey;
+        const int32 Compared = L.Compare(R, ESearchCase::IgnoreCase);
+        return Compared == 0
+            ? Left.IdentityId.ToString().Compare(
+                Right.IdentityId.ToString(), ESearchCase::CaseSensitive) < 0
+            : Compared < 0;
+    });
+
+    // Exactly three uniform portrait cards in original approved proportions.
+    constexpr float CardWidth = 144.0f;
+    const float CardHeight = CardWidth / GetApprovedRosterCardRatio();
+    for (int32 Position = 0; Position < VisibleIndices.Num(); ++Position)
+    {
+        const int32 Index = VisibleIndices[Position];
         const FOGRosterIdentityViewModel& Identity = Session->OwnedRoster[Index];
         USizeBox* Fixed = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
         Fixed->SetWidthOverride(CardWidth);
@@ -395,18 +498,60 @@ void UOGGate12NativeRulerWidget::BuildRoster()
             UVerticalBox::StaticClass());
         if (RarityColors.bKnown)
             AddMessage(CardBody, Rarity.ToString(), 16, RarityColors.Badge);
-        UTexture2D* OriginalArt = nullptr;
-        if (Selected && VisualCatalog)
+        const FOGGate12CharacterVisualEntry* Entry = Selected && VisualCatalog
+            ? VisualCatalog->FindExact(Identity.IdentityId,
+                Selected->ActiveVersionId) : nullptr;
+        const bool bCard3D = Selected && Cached3DPreferences.FindRef(
+            FOGGate12CharacterPresentationPreferences::MakeKey(
+                Session->BoundRulerId, Identity.IdentityId,
+                Selected->ManifestationId));
+        UTexture* CardTexture = nullptr;
+        FVector2D CardImageSize(512.0f, 768.0f);
+        if (bCard3D && Entry && !Entry->GenuineCharacterPreviewClass.IsNull()
+            && RosterPreviewStages.Num() < 6 && GetWorld())
         {
-            const FOGGate12CharacterVisualEntry* Entry =
-                VisualCatalog->FindExact(Identity.IdentityId, Selected->ActiveVersionId);
-            if (Entry && !Entry->OriginalArtwork2D.IsNull())
-                OriginalArt = Entry->OriginalArtwork2D.LoadSynchronous();
+            TSubclassOf<AActor> PreviewClass =
+                Entry->GenuineCharacterPreviewClass.LoadSynchronous();
+            if (PreviewClass)
+            {
+                FActorSpawnParameters Spawn;
+                Spawn.SpawnCollisionHandlingOverride =
+                    ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+                AOGGate12CharacterPreviewStage* Stage =
+                    GetWorld()->SpawnActor<AOGGate12CharacterPreviewStage>(
+                        AOGGate12CharacterPreviewStage::StaticClass(),
+                        FVector(static_cast<float>(Position * 400),
+                                0.0f, -200000.0f),
+                        FRotator::ZeroRotator, Spawn);
+                if (IsValid(Stage) &&
+                    Stage->InitializeApprovedPreview(PreviewClass,
+                        Session->BoundRulerId, Identity.IdentityId,
+                        Selected->ActiveVersionId, Selected->ManifestationId))
+                {
+                    Stage->SetLiveCapture(false);
+                    RosterPreviewStages.Add(Stage);
+                    CardTexture = Stage->GetLiveRenderTarget();
+                }
+                else if (IsValid(Stage))
+                    Stage->Destroy();
+            }
         }
-        if (OriginalArt)
+        else if (!bCard3D && Entry && !Entry->OriginalArtwork2D.IsNull())
+        {
+            if (UTexture2D* OriginalArt = Entry->OriginalArtwork2D.LoadSynchronous())
+            {
+                CardTexture = OriginalArt;
+                CardImageSize = FVector2D(
+                    OriginalArt->GetSizeX(), OriginalArt->GetSizeY());
+            }
+        }
+        if (CardTexture)
         {
             UImage* Portrait = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
-            Portrait->SetBrushFromTexture(OriginalArt, true);
+            FSlateBrush ArtBrush;
+            ArtBrush.SetResourceObject(CardTexture);
+            ArtBrush.ImageSize = CardImageSize;
+            Portrait->SetBrush(ArtBrush);
             UScaleBox* FitArt = WidgetTree->ConstructWidget<UScaleBox>(
                 UScaleBox::StaticClass());
             FitArt->SetStretch(EStretch::ScaleToFit);
@@ -419,7 +564,9 @@ void UOGGate12NativeRulerWidget::BuildRoster()
             UVerticalBoxSlot* Spacer = CardBody->AddChildToVerticalBox(
                 WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass()));
             Spacer->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-            AddMessage(CardBody, TEXT("ORIGINAL ART NOT INSTALLED"), 12, TextMuted);
+            AddMessage(CardBody,
+                bCard3D ? TEXT("3D PREVIEW UNAVAILABLE - OPEN CARD")
+                        : TEXT("ORIGINAL ART NOT INSTALLED"), 12, TextMuted);
         }
         AddMessage(CardBody,
             Identity.DisplayNameKey.IsEmpty()
@@ -431,7 +578,7 @@ void UOGGate12NativeRulerWidget::BuildRoster()
         Button->AddChild(CardBody);
         AngularFrameBase->AddChild(Button);
         Fixed->AddChild(AngularFrameBase);
-        Grid->AddChildToUniformGrid(Fixed, Index / 3, Index % 3);
+        RosterGrid->AddChildToUniformGrid(Fixed, Position / 3, Position % 3);
     }
 }
 
@@ -532,7 +679,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
             FString::Printf(TEXT("records/%d"), Index));
 
     FString Error;
-    if ((RecordsSection == 1 || RecordsSection == 3) &&
+    if ((RecordsSection == 0 || RecordsSection == 1 || RecordsSection == 3) &&
         !Session->RefreshRecordsDetail(Error))
     {
         AddMessage(Content, Error.IsEmpty()
@@ -547,13 +694,23 @@ void UOGGate12NativeRulerWidget::BuildRecords()
                 Session->RecordsProjection.ReportCount,
                 Session->RecordsProjection.UnacknowledgedReportCount),
             18, TextMain);
-        if (Session->RecordsProjection.ReportCount <= 0)
+        if (Session->ReportProjection.IsEmpty())
+        {
             AddMessage(Content, TEXT("No reports in this world."), 16, TextMuted);
-        else
+        }
+        for (int32 Index = 0; Index < Session->ReportProjection.Num(); ++Index)
+        {
+            const FOGReportRecord& Report = Session->ReportProjection[Index];
             AddMessage(Content,
-                TEXT("Report count is authoritative. Detailed report browser "
-                     "requires installed report projection; no invented reports."),
-                16, TextMuted);
+                FString::Printf(TEXT("%s | priority %d | world tick %lld | %s"),
+                    *Report.Category.ToString(), Report.Priority,
+                    Report.CreatedWorldTick,
+                    Report.bAcknowledged ? TEXT("READ") : TEXT("UNREAD")),
+                16, Report.bAcknowledged ? TextMuted : TextMain);
+            if (!Report.bAcknowledged)
+                AddAction(Content, TEXT("ACKNOWLEDGE REPORT"),
+                    FString::Printf(TEXT("report/ack/%d"), Index));
+        }
         break;
     case 1:
         if (Session->ChronicleProjection.IsEmpty())
@@ -589,6 +746,31 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     }
 }
 
+void UOGGate12NativeRulerWidget::LoadSelectedPresentationPreference(
+    const UOGGate12RulerSessionSubsystem* Session, FString& OutError)
+{
+    OutError.Reset();
+    bPrefer3DCharacterPresentation = false;
+    if (!Session || !Session->IsBoundToStoredRuler() ||
+        !Session->OwnedRoster.IsValidIndex(OpenIdentityIndex))
+        return;
+
+    const FOGRosterIdentityViewModel& Identity =
+        Session->OwnedRoster[OpenIdentityIndex];
+    const FOGRosterManifestationViewModel* Owned =
+        Identity.Manifestations.FindByPredicate(
+            [&Identity](const FOGRosterManifestationViewModel& M)
+            {
+                return M.ManifestationId == Identity.SelectedManifestationId;
+            });
+    if (!Owned || Owned->bLocked) return;
+
+    FOGGate12CharacterPresentationPreferences::Load(
+        FOGPlayerProfileSettingsService::DefaultProfilePath(),
+        Session->BoundRulerId, Identity.IdentityId,
+        Owned->ManifestationId, bPrefer3DCharacterPresentation, OutError);
+}
+
 void UOGGate12NativeRulerWidget::AddCharacterVisual(
     UVerticalBox* Parent, const FOGRosterIdentityViewModel& Identity,
     bool bThreeDimensional)
@@ -597,6 +779,15 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
     if (!Parent || !VisualCatalog || !GetWorld())
     {
         AddMessage(Parent, TEXT("Character visual package is not installed."), 15, TextMuted);
+        return;
+    }
+
+    const UGameInstance* GI = GetGameInstance();
+    const UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session || !Session->IsBoundToStoredRuler())
+    {
+        AddMessage(Parent, TEXT("No verified Ruler for character preview."), 15, TextMuted);
         return;
     }
 
@@ -639,7 +830,9 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
         PreviewStage = GetWorld()->SpawnActor<AOGGate12CharacterPreviewStage>(
             AOGGate12CharacterPreviewStage::StaticClass(),
             FVector(0.0f, 0.0f, -200000.0f), FRotator::ZeroRotator, Spawn);
-        if (!IsValid(PreviewStage) || !PreviewStage->InitializeApprovedPreview(PreviewClass))
+        if (!IsValid(PreviewStage) || !PreviewStage->InitializeApprovedPreview(
+                PreviewClass, Session->BoundRulerId, Identity.IdentityId,
+                Selected->ActiveVersionId, Selected->ManifestationId))
         {
             ReleasePreviewStage();
             AddMessage(Parent, TEXT("Live skeletal 3D preview unavailable."), 15, TextMuted);
@@ -755,7 +948,35 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     }
     if (Action == TEXT("presentation/toggle"))
     {
-        bPrefer3DCharacterPresentation = !bPrefer3DCharacterPresentation;
+        if (!Session->IsBoundToStoredRuler() ||
+            !Session->OwnedRoster.IsValidIndex(OpenIdentityIndex))
+            Error = TEXT("Select an actually owned character before changing presentation.");
+        else
+        {
+            const FOGRosterIdentityViewModel& Identity =
+                Session->OwnedRoster[OpenIdentityIndex];
+            const FOGRosterManifestationViewModel* Owned =
+                Identity.Manifestations.FindByPredicate(
+                    [&Identity](const FOGRosterManifestationViewModel& M)
+                    {
+                        return M.ManifestationId == Identity.SelectedManifestationId;
+                    });
+            if (!Owned || Owned->bLocked)
+                Error = TEXT("A verified unlocked Manifestation is required.");
+            else
+            {
+                const bool bNext = !bPrefer3DCharacterPresentation;
+                if (FOGGate12CharacterPresentationPreferences::Save(
+                    FOGPlayerProfileSettingsService::DefaultProfilePath(),
+                    Session->BoundRulerId, Identity.IdentityId,
+                    Owned->ManifestationId, bNext, Error))
+                    bPrefer3DCharacterPresentation = bNext;
+            }
+        }
+    }
+    else if (Action == TEXT("roster/sort"))
+    {
+        RosterSortMode = (RosterSortMode + 1) % 3;
     }
     else if (Action == TEXT("gacha-history-toggle"))
     {
@@ -774,6 +995,13 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         if (Session->TerritoryProjection.AnalyticalOverlays.IsValidIndex(Index))
             SelectedTerritoryOverlayIndex = Index;
     }
+    else if (Action.StartsWith(TEXT("report/ack/")))
+    {
+        const int32 Index = FCString::Atoi(*Action.Mid(11));
+        if (Session->ReportProjection.IsValidIndex(Index))
+            Session->AcknowledgeOwnedReport(
+                Session->ReportProjection[Index].ReportId, Error);
+    }
     else if (Action.StartsWith(TEXT("records/")))
     {
         const int32 Index = FCString::Atoi(*Action.Mid(8));
@@ -790,7 +1018,11 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     else if (Action.StartsWith(TEXT("identity/")))
     {
         const int32 Index = FCString::Atoi(*Action.Mid(9));
-        if (Session->OwnedRoster.IsValidIndex(Index)) OpenIdentityIndex = Index;
+        if (Session->OwnedRoster.IsValidIndex(Index))
+        {
+            OpenIdentityIndex = Index;
+            LoadSelectedPresentationPreference(Session, Error);
+        }
     }
     else if (Action.StartsWith(TEXT("select/")))
     {
@@ -798,9 +1030,10 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         if (Session->OwnedRoster.IsValidIndex(OpenIdentityIndex))
         {
             const FOGRosterIdentityViewModel& Identity = Session->OwnedRoster[OpenIdentityIndex];
-            if (Identity.Manifestations.IsValidIndex(Index))
+            if (Identity.Manifestations.IsValidIndex(Index) &&
                 Session->SelectOwnedManifestation(Identity.IdentityId,
-                    Identity.Manifestations[Index].ManifestationId, Error);
+                    Identity.Manifestations[Index].ManifestationId, Error))
+                LoadSelectedPresentationPreference(Session, Error);
         }
     }
     else if (Action == TEXT("back"))
@@ -817,5 +1050,6 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     }
 
     LastUiError = Error;
-    RefreshFromCanonical();
+    if (Error.IsEmpty()) RefreshFromCanonical();
+    else BuildCurrentPage();
 }

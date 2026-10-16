@@ -57,6 +57,9 @@ struct OFFLINEGAME_API FOGPlayerProfileSettings
 
     /** Non-authoritative rule/team preference. Committed actions store resolved commands. */
     FString AutoCombatPresetJson = TEXT("{}");
+
+    /** Purely local 2D/3D preferences by verified Ruler/owned Manifestation. */
+    FString CharacterPresentationPreferencesJson = TEXT("{}");
 };
 
 class OFFLINEGAME_API FOGPlayerProfileSettingsService

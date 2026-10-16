@@ -8,8 +8,10 @@
 
 class UVerticalBox;
 class UHorizontalBox;
+class UUniformGridPanel;
 class UOGGate12CharacterVisualCatalog;
 class AOGGate12CharacterPreviewStage;
+class UOGGate12RulerSessionSubsystem;
 class UOGGate12NativeRulerWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOGGate12WorldPresentationRequested);
@@ -84,8 +86,16 @@ private:
     TObjectPtr<UHorizontalBox> NavigationBar;
 
     UPROPERTY(Transient)
+    TObjectPtr<UUniformGridPanel> RosterGrid;
+
+    UPROPERTY(Transient)
     TObjectPtr<AOGGate12CharacterPreviewStage> PreviewStage;
 
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<AOGGate12CharacterPreviewStage>> RosterPreviewStages;
+
+    FString RosterSearchQuery;
+    int32 RosterSortMode = 0; // 0 name, 1 selected level, 2 owned copies
     int32 OpenIdentityIndex = INDEX_NONE;
     // UI preference only: never changes wardrobe, ownership, or world state.
     bool bPrefer3DCharacterPresentation = false;
@@ -98,9 +108,15 @@ private:
     void BuildRoot();
     void BuildCurrentPage();
     void BuildRoster();
+    void RebuildRosterGrid();
+
+    UFUNCTION()
+    void HandleRosterSearchChanged(const FText& NewText);
     void BuildCharacterDetail();
     void AddCharacterVisual(UVerticalBox* Parent, const FOGRosterIdentityViewModel& Identity, bool bThreeDimensional);
     void ReleasePreviewStage();
+    void ReleaseRosterPreviewStages();
+    void LoadSelectedPresentationPreference(const UOGGate12RulerSessionSubsystem* Session, FString& OutError);
     void BuildRecords();
     void BuildTerritory();
     void BuildNav();

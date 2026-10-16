@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Core/OGEntityId.h"
+#include "Content/OGContentId.h"
 #include "OGGate12CharacterPreviewStage.generated.h"
 
 class USceneComponent;
@@ -19,8 +21,14 @@ class OFFLINEGAME_API AOGGate12CharacterPreviewStage : public AActor
 public:
     AOGGate12CharacterPreviewStage();
 
-    bool InitializeApprovedPreview(TSubclassOf<AActor> PreviewClass);
+    bool InitializeApprovedPreview(TSubclassOf<AActor> PreviewClass,
+        const FOGEntityId& RulerId,
+        const FOGContentId& IdentityId,
+        const FOGContentId& VersionId,
+        const FOGEntityId& ManifestationId);
     UTextureRenderTarget2D* GetLiveRenderTarget() const { return RenderTarget; }
+    /** Freeze a roster thumbnail to cap Android scene-capture frame cost. */
+    void SetLiveCapture(bool bLive);
     void ReleasePreview();
 
 protected:
