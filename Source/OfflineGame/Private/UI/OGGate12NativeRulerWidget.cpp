@@ -213,12 +213,24 @@ void UOGGate12NativeRulerWidget::BuildNav()
                 UOGGate12RulerActionButton::StaticClass());
         Button->RulerWidget = this;
         Button->ActionId = FString::Printf(TEXT("nav/%d"), Index);
-        Button->SetBackgroundColor(FLinearColor(0.07f, 0.07f, 0.075f, 1.0f));
+        // Gate 10 frozen Ruler navigation is bottom-anchored, dark and
+        // precise, with the active destination distinguished in violet/gold.
+        // This is only the native token layer; final illustrated bar artwork
+        // remains a separate visual acceptance requirement.
+        UGameInstance* Instance = GetGameInstance();
+        const UOGGate12RulerSessionSubsystem* Session = Instance
+            ? Instance->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+        const bool bSelected = Session &&
+            static_cast<int32>(Session->CurrentDestination) == Index;
+        Button->SetBackgroundColor(
+            bSelected ? FLinearColor(.14f,.065f,.20f,1.0f)
+                      : FLinearColor(.018f,.017f,.026f,1.0f));
         Button->OnClicked.AddDynamic(Button, &UOGGate12RulerActionButton::InvokeAction);
         UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
         Label->SetText(FText::FromString(Titles[Index]));
         Label->SetJustification(ETextJustify::Center);
-        Label->SetColorAndOpacity(FSlateColor(TextMain));
+        Label->SetColorAndOpacity(FSlateColor(
+            bSelected ? FLinearColor(.91f,.79f,.98f,1.0f) : Gate12RulerGold));
         FSlateFontInfo Font = Label->GetFont();
         Font.Size = 13;
         Label->SetFont(Font);

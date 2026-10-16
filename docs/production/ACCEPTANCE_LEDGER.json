@@ -1,0 +1,343 @@
+{
+    "schema":  "NOWORLD_COMPLETION_V1",
+    "frozen_foundation":  "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+    "policy":  "Only DONE means every upstream frozen requirement has verifiable source, tested runtime, genuine visual/user approval where appropriate, approved production assets, pinned tests and cross-gate acceptance. RUNTIME_VERIFIED is not visual acceptance. Missing content remains BLOCKED.",
+    "items":  [
+                  {
+                      "id":  "gate10.opening",
+                      "type":  "opening",
+                      "status":  "BLOCKED",
+                      "frozen_source":  "Gate10_FINAL_Gate00_Handoff_2026-10-13.zip / user-approved 04 Vacant Throne",
+                      "requirements":  [
+                                           "animated authored gothic throne menu (not baked reference screenshot)",
+                                           "editable Unreal UMG true title/buttons",
+                                           "truthful Continue/New Game/Settings/recovery/loading",
+                                           "separate portrait and landscape UI",
+                                           "privacy and reduced-motion variants",
+                                           "real Gate10 visual match and mobile proof"
+                                       ],
+                      "delivered":  [
+
+                                    ],
+                      "remaining":  [
+                                        "Current flat blue Canvas opening is incorrect",
+                                        "Gothic throne scene, approved backgrounds/animations and responsive UMG not authored",
+                                        "No user-accepted matched visual nor device run"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  "gate10.world_hud",
+                      "type":  "hud",
+                      "status":  "BLOCKED",
+                      "frozen_source":  "Gate10_Continuation_Validated_2026-10-12.zip 01_FROZEN/WorldHUD/world_hud_freeze.png",
+                      "requirements":  [
+                                           "ornate native World UMG tied to real world state",
+                                           "sword/melee primary attack presentation with correct real animation/weapon",
+                                           "HUD compass/map/party/player resources/touch regions match frozen layout",
+                                           "portrait and landscape acceptance on real device"
+                                       ],
+                      "delivered":  [
+
+                                    ],
+                      "remaining":  [
+                                        "Current orange test Pawn and unstyled Canvas HUD",
+                                        "No approved sword mesh/animation",
+                                        "No frozen HUD screenshot visual match"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  "gate10.ruler_home",
+                      "type":  "ui",
+                      "status":  "RUNTIME_VERIFIED",
+                      "frozen_source":  "Gate10_Continuation_Validated_2026-10-12.zip 01_FROZEN/RulerHome/approved_visual.png",
+                      "requirements":  [
+                                           "dark premium approved visual layout",
+                                           "authoritative canonical Ruler data only",
+                                           "all five destinations work",
+                                           "actual responsive artworks and character visuals",
+                                           "matched genuine screenshot approval"
+                                       ],
+                      "delivered":  [
+                                        "authoritative canonical Ruler data only",
+                                        "all five destinations work"
+                                    ],
+                      "remaining":  [
+                                        "Existing native shell differs from frozen artwork",
+                                        "No complete reference-matched visual proof"
+                                    ],
+                      "evidence":  [
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
+                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "kind":  "native_test"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/NativeRulerFivePages_20261016/ruler_nav_home.png",
+                                           "sha256":  "d33507179dd825ec73f9f67f11dc665668f0cb2157977842f16f8e2afe23308f",
+                                           "kind":  "visual"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  "gate10.gacha_records_territory",
+                      "type":  "ui",
+                      "status":  "RUNTIME_VERIFIED",
+                      "frozen_source":  "Gate10_Continuation_Validated_2026-10-12.zip 01_FROZEN/Records,Gacha and three equivalent Territory references",
+                      "requirements":  [
+                                           "genuine navigation and canonical empty-state semantics",
+                                           "frozen visual layouts and live progression state",
+                                           "interactive map/persistent real territories",
+                                           "eligible banner/ticket and data-backed records",
+                                           "visual acceptance on device"
+                                       ],
+                      "delivered":  [
+                                        "genuine navigation and canonical empty-state semantics"
+                                    ],
+                      "remaining":  [
+                                        "Current pages are functional placeholders",
+                                        "No authored Territory production world/map or Gate07 eligible banners",
+                                        "No final visual acceptance"
+                                    ],
+                      "evidence":  [
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
+                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "kind":  "native_test"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/NativeRulerFivePages_20261016/ruler_nav_gacha.png",
+                                           "sha256":  "8b63d9e872ea022d717dc98f40d6f5b8aac69a34c2659b4e4eadef5ee453d3cb",
+                                           "kind":  "visual"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/NativeRulerFivePages_20261016/ruler_nav_records.png",
+                                           "sha256":  "54a0240fcce3678f231eaa2fc058fd903fa6d086b71e029c15fcbdf6e59380bc",
+                                           "kind":  "visual"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/NativeRulerFivePages_20261016/ruler_nav_territory.png",
+                                           "sha256":  "d92d9bc9745ff189b10a044e43cb0a1c8ffecc0ac37d7e1a9f44220437520e6f",
+                                           "kind":  "visual"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  "gate10.roster_and_rarity",
+                      "type":  "ui",
+                      "status":  "BLOCKED",
+                      "frozen_source":  "Gate10_Roster_Approved_Freeze_2026-10-12.zip and Gate10 final 6-tier thin-rib rarity spec",
+                      "requirements":  [
+                                           "identical tall angular 3-column cards",
+                                           "real Registry Identity/Version/owned Manifestation grouping",
+                                           "art-dominant roster full-sized details",
+                                           "R SR SSR UR LR MR badge/material/perimeter rules",
+                                           "character-specific Absolute after MR",
+                                           "native matched portrait and landscape proof"
+                                       ],
+                      "delivered":  [
+
+                                    ],
+                      "remaining":  [
+                                        "Accepted Registry character catalog empty",
+                                        "Missing approved artwork and final refined frame assets",
+                                        "UI only source shell"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  "gate12.world_ruler_navigation",
+                      "type":  "runtime",
+                      "status":  "RUNTIME_VERIFIED",
+                      "frozen_source":  "Gate00 Issue #25 source plus frozen Foundation World/Ruler requirement",
+                      "requirements":  [
+                                           "real local Ruler with canonical persistence",
+                                           "Ruler Home Characters Gacha Territory Records navigation",
+                                           "valid Ruler-\u003eWorld-\u003eRuler with preserved owner and Pawn",
+                                           "genuine World screenshot and actual game boot"
+                                       ],
+                      "delivered":  [
+                                        "real local Ruler with canonical persistence",
+                                        "Ruler Home Characters Gacha Territory Records navigation",
+                                        "valid Ruler-\u003eWorld-\u003eRuler with preserved owner and Pawn",
+                                        "genuine World screenshot and actual game boot"
+                                    ],
+                      "remaining":  [
+                                        "User-visible Android/device route not yet authorized/tested"
+                                    ],
+                      "evidence":  [
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Native_full_verification_summary.json",
+                                           "sha256":  "489b1c9775b47554a99e1c68245f9027dfe2bd23514dea3faff0deb4fb8d1d8d",
+                                           "kind":  "native_test"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
+                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "kind":  "native_test"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/world.png",
+                                           "sha256":  "57808ad3fc35f652a47aefb1ae86440abfde827896d34813af5bb5b1c9466bb8",
+                                           "kind":  "visual"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  "gate12.luminous_3d",
+                      "type":  "character_art",
+                      "status":  "RUNTIME_VERIFIED",
+                      "frozen_source":  "Gate01 Luminous V3 approved source / Gate11 Registry v2 intake / Gate12 P0",
+                      "requirements":  [
+                                           "real 45-part authentic development-only source preview",
+                                           "preserve intended proportions/shaders/morphs/alpha/rig",
+                                           "Gate11 approved production catalog bindings",
+                                           "real final World/roster 3D presentation acceptance"
+                                       ],
+                      "delivered":  [
+                                        "real 45-part authentic development-only source preview"
+                                    ],
+                      "remaining":  [
+                                        "Known 15-\u003e9 body morph loss and face morph deficit",
+                                        "Eyeline transparency/material mismatch; 975-joint rest mismatch",
+                                        "No Registry-bound production visuals"
+                                    ],
+                      "evidence":  [
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Runtime16of16.json",
+                                           "sha256":  "f9aadb8fdc5aa5223df175f4871bafb1fdd06498845691377b80f07c4aea95e7",
+                                           "kind":  "native_test"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/Native_targeted_verification_summary.json",
+                                           "sha256":  "3b45875926d1c231eefeb55f5f2ceb1f07c243e6e53cfbd787d327a581fe3ba9",
+                                           "kind":  "native_test"
+                                       },
+                                       {
+                                           "path":  "docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/ruler_characters_real_source_qa_warm.png",
+                                           "sha256":  "3ded4bb3167f93486ccaa0ff0d87121d793b899978e3c43134dd088c4cbfe098",
+                                           "kind":  "visual"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  "gate12.privacy_and_adult",
+                      "type":  "runtime",
+                      "status":  "IN_PROGRESS",
+                      "frozen_source":  "MATURE_CONTENT_V041_PRODUCTION_FREEZE.md and Gate00 removal of E03/E04",
+                      "requirements":  [
+                                           "canonical independent privacy render substitution",
+                                           "real SFW toggles and persistence",
+                                           "actual player-facing authored adult interaction entry/action controls",
+                                           "authentic simultaneous 13-participant visible gameplay demonstration",
+                                           "approved Gate09 animation clips, adaptive staging and perf"
+                                       ],
+                      "delivered":  [
+                                        "canonical independent privacy render substitution",
+                                        "real SFW toggles and persistence"
+                                    ],
+                      "remaining":  [
+                                        "Current isolated neutral interaction final roundtrip unverified",
+                                        "13 actors never rendered simultaneously",
+                                        "No authored mature clips/assets in accepted packages"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  "gate09.sword_animation",
+                      "type":  "asset",
+                      "status":  "BLOCKED",
+                      "frozen_source":  "User sword-not-firearm requirement plus Gate09 motion work order",
+                      "requirements":  [
+                                           "source sword meshes and per-character legit equip state",
+                                           "retargeted locomotion and sword actions on approved rigs",
+                                           "full hit contact, cancel windows and effects validated",
+                                           "Android GPU/CPU animation budgets"
+                                       ],
+                      "delivered":  [
+
+                                    ],
+                      "remaining":  [
+                                        "No accepted sword character asset or animation package from Gate01/Gate09"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  "gate02.kingdom_world",
+                      "type":  "asset",
+                      "status":  "BLOCKED",
+                      "frozen_source":  "Gate02 selected plains-dominated Three-Valley Confluence direction and frozen world foundation",
+                      "requirements":  [
+                                           "real Gaea+Blender+Unreal editable kingdom source and reproducible map",
+                                           "all approved region dimensions/geography and points of interest",
+                                           "environmental states/water/settlements and persistence",
+                                           "actual performant Android playable region"
+                                       ],
+                      "delivered":  [
+
+                                    ],
+                      "remaining":  [
+                                        "Running StartingWorld is prototype not approved large kingdom"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  "gate12.android_release",
+                      "type":  "android",
+                      "status":  "BLOCKED",
+                      "frozen_source":  "Gate00 current explicit STOP BEFORE ANDROID COOK, Gate10 freeze, Gate11 acceptance",
+                      "requirements":  [
+                                           "all release-required source gates accepted",
+                                           "production artwork/audio/characters/camera/menus available",
+                                           "real S26 Ultra installed gameplay test and 13-participant perf",
+                                           "APK receipt, save regression and user acceptance"
+                                       ],
+                      "delivered":  [
+
+                                    ],
+                      "remaining":  [
+                                        "Explicit no Android cook/install authorization",
+                                        "Other source/visual gate assets unavailable",
+                                        "No release acceptance"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  "gate00.full_game",
+                      "type":  "release",
+                      "status":  "BLOCKED",
+                      "frozen_source":  "NoWorld Foundation, Gate00 issue #25, all frozen Gates 01â€“12",
+                      "requirements":  [
+                                           "all source and specialist gates completed and integrated",
+                                           "actual full playable production game with all user-approved capabilities",
+                                           "approved source and visual/provenance/persistence",
+                                           "device release acceptance"
+                                       ],
+                      "delivered":  [
+
+                                    ],
+                      "remaining":  [
+                                        "Upstream Gate10/Gate01/Gate02/Gate09/Gate11 blockers",
+                                        "No final device acceptance"
+                                    ],
+                      "evidence":  [
+
+                                   ]
+                  }
+              ]
+}

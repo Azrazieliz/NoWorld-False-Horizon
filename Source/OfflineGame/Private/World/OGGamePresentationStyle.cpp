@@ -98,8 +98,19 @@ void AOGWorldPresentationHud::DrawGameIcon(FName Id,float X,float Y,float Size,F
     const float R=Size*.43f,CX=X+Size*.5f,CY=Y+Size*.5f;
     const float T=FMath::Max(2.f,Size*.045f);
     auto L=[&](float A,float B,float C,float D){DrawLine(CX+A*R,CY+B*R,CX+C*R,CY+D*R,Color,T);};
-    if(Name.Contains(TEXT("attack")) || Name==TEXT("basic"))
-    { L(-.65f,.7f,.62f,-.7f); L(.62f,-.7f,.55f,-.1f);L(.62f,-.7f,.02f,-.6f);L(-.65f,.0f,.0f,.6f); }
+    if(Name.Contains(TEXT("attack")) || Name.Contains(TEXT("sword")) ||
+       Name==TEXT("basic"))
+    {
+        // Gate 10's frozen main World action is an actual BLADE symbol.
+        // Source-authorized melee iconography only: never imply gunfire or
+        // mount a fictitious weapon on the unarmed diagnostic test Pawn.
+        auto P=[&](float U,float V){return FVector2D(CX+U*R,CY+V*R);};
+        DrawGamePolygon({P(-.23f,.25f),P(.42f,-.68f),P(.91f,-.97f),
+                         P(.66f,-.44f),P(-.12f,.37f)},Color);
+        L(-.64f,.20f,.12f,.77f); // angular quillon/guard
+        L(-.10f,.53f,-.59f,.98f); // grip
+        L(-.73f,.91f,-.49f,1.05f); // compact pommel
+    }
     else if(Name.Contains(TEXT("jump")) || Name.Contains(TEXT("rise")) || Name.Contains(TEXT("ascend")))
     { L(0,.75f,0,-.75f);L(-.55f,-.15f,0,-.75f);L(.55f,-.15f,0,-.75f);L(-.65f,.8f,.65f,.8f); }
     else if(Name.Contains(TEXT("descend")) || Name.Contains(TEXT("dive")) || Name.Contains(TEXT("let go")))
