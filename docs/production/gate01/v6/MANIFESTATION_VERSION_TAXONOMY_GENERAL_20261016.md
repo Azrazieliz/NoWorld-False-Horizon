@@ -1,5 +1,4 @@
-# Gate 01 — Version Authoring Taxonomy (restricted, 2026-10-16)
-
+# Gate 01 — Version Authoring Taxon| **Awakened** | The original character's nature and capabilities reach a drastically amplified or unleashed state, with the transformation expressed **on the character's actual body and intrinsic design** rather than merely by clothing, equipment, surrounding VFX or decorations. | Major, recognizable changes to inherent anatomy, physical features, hair structure/volume, eyes, characteristic markings, limbs, creature traits where justified, posture, and/or physically integrated power structures. Not automatically divine, holy, angelic, lighter-colored, benevolent or stronger by a fixed formula. |
 **Status:** Working Gate 01 authoring methodology, aligned with the existing Character Identity architecture. **Only the three types explicitly identified by the user are enumerated.** This document is not a Registry v2 approval or a change to frozen game architecture, fixed rarity, combat kit, owner data, or Foundation.
 
 ## Existing architecture — authoritative
@@ -47,6 +46,25 @@ An Alter **often** shifts toward a darker, bolder, more forceful visual interpre
 
 ### Distinguish Alter from Awakened
 **Alter:** a shift/inversion/contrary interpretation of a character's *nature or expression*. **Awakened:** realization/extension of the character's *latent potential*. A dramatic visual change can happen in either; the story/psychology and power premise decide, not hair color.
+
+## Awakened — intrinsic-transformation acceptance gate (corrected after visual test 2026-10-16)
+
+**Visual reference specified by the user:** Milim's normal look versus her Stampede / berserker-like appearance is an example of drastic *character transformation*, not just adding special effects. The project term “Awakened” covers substantial intensification of the original character and is **not constrained to light, holy, regal or divine styling**.
+
+**Failed visual experiment to avoid:** producing essentially the Base face, body and silhouette, then adding a more elaborate outfit, staff, crown, magic circles, surrounding banners, bright particles and glows. Such artwork **does not pass** the Awakened test even if spectacularly rendered.
+
+### Required design order (before VFX, outfit or accessories)
+
+1. **Lock the recognition anchors:** what must stay identifiable (distinctive face, some original hair/color cues, unusual anatomy, power motif, attitude) and what may drastically evolve.
+2. **Change the subject herself first:** implement a substantial, character-specific combination of new physical structure, silhouette, hair mass and movement, eyes/face, body markings or skin patterns, altered limbs or extremities, morphology related to established power, transformed body language/stance; only add wings/horns/tails/claws when the character's actual nature makes them meaningful. Do not append generic fantasy accessories.
+3. **Validate stripped-back presentation:** inspect a clean neutral-background character-only full-body silhouette and a head/upper-body close-up with **all exterior magic effects hidden**. If the transformed appearance reads merely like Base wearing a costume, FAIL and redesign.
+4. **Then evolve clothing/armor/equipment:** these may respond to or integrate with bodily transformation, but must not be the primary difference. Avoid treating revealing clothing or sexualization as a proxy for Awakening.
+5. **Lastly add supplementary VFX:** powers, particles, sigils, energy and dynamic composition may accentuate but never substitute for genuine changes to the character.
+6. **Demand a substantive Base -> Awakened change audit:** document intrinsic face/eyes, hair, anatomy/body structure, integrated powers, emotion/posture, base motif continuity, clean silhouette and costume/VFX as separately scored axes. No arbitrary “light”, “dark”, “divine” or “monster” template.
+
+**Gate 01 visual QA rejection rule:** if all or most of the perceived change vanishes when VFX and outfit are ignored, the concept does **not** count as an approved Awakened Version. A spectacular background is irrelevant to this acceptance test.
+
+**Current artwork status:** previous generated officer-mage Awakened attempts were user-rejected for being costume/VFX-dominant; subsequent image experiments are **unapproved** until the user explicitly accepts an intrinsic transformation. This rule is reusable across Original Creation, Feminisation and Existing Character Adaptation, and does not change approved Registry entries.
 
 ## Reusable Gate 01 creation protocol (all characters)
 
