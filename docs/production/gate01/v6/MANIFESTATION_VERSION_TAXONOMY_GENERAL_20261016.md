@@ -83,21 +83,19 @@ An Alter **often** shifts toward a darker, bolder, more forceful visual interpre
 
 **Acceptance test:** On a neutral background, with background effects hidden, the actual character's hair, face, clothing, posture, silhouette and characteristic traits should communicate the berserker transformation. Define control state, transformation trigger, reversibility and combat behavior before registration. No automatic rarity or power ranking.
 
-## Production breadth decision — Version ceiling, no subversions (2026-10-16)
+## Production ceiling — final user direction (2026-10-16)
 
-The Base is the **single origin/identity anchor**. The frozen runtime still models Character Identity and its immutable Base Version distinctly; do not merge their data records. For the author's creative branching count, **Base does not occupy a derivative slot**.
+**Hard maximum: three direct derivative Versions per canonical Character Identity, plus the immutable Base anchor/Base Version.** The three authorized derivative families are **Alter, Awakened and Berserker**. Base is the origin and does not consume a derivative slot. **There are no fourth/fifth reserved slots and no Version-of-Version subversions.** This supersedes every earlier 5-slot or 5-by-3 proposal.
 
-**Current production target:** up to **three** direct derivative Versions per Identity: **Alter, Awakened, Berserker**. **Maximum reserved ceiling:** up to **five** first-generation derivative Versions; remaining two families have no names and are **not approved to author**. A character may have only those Versions for which meaningful, independently authored source assets and content exist.
+A character can have **fewer** than three derivatives. No auto-generation of missing forms and no obligation to make all families for all characters. Every Version needs genuinely distinct, approved 2D reference/artwork and appropriately validated 3D, wardrobe, kit and motion assets where applicable; do not treat recolors or particle effects as full new forms.
 
-**No second-generation subversions:** Do not build Alter -> Chaotic Alter, Alter -> Demon Lord Alter or comparable Version-of-Version trees in this production plan. Distinct development-route modifiers may be recorded in the existing Manifestation progression graph without automatically spawning new Version definitions or extra asset bundles. Nothing here deletes the frozen general-purpose branching progression engine or its historical records.
+**Scaling:** with 1,000 Identities, at absolute maximum this means 1,000 Base Versions + 3,000 derivative Versions = **4,000 distinct Version asset sets**. This figure is a worst-case bound, not a production quota. Optimize via reusable, fidelity-verified rigs/animations/material infrastructure without reducing approved character specificity.
 
-### Scaling requirements
+**Grand Convergence:** retain the frozen character-specific major-lineage requirements and completed owned Manifestation histories. Not all possible Versions are mandatory for every character; never multiply convergence requirements by speculative extra branches.
 
-- Assets, animation and compatible wardrobe are produced for **actually commissioned Versions**, never every unused theoretical slot. Each commissioned Variant needs accurate unique 2D and appropriate actual 3D, not a palette-only approximation.
-- Shared rig/skeleton, animation source, compatible materials and reusable base geometry may reduce duplication, but character-specific visual differences must remain substantial. Independently validate each Version's export quality.
-- At 1,000 Identities: Base + 3 derivatives = up to 4,000 distinct forms; Base + 5 derivatives = up to 6,000 distinct forms. This is worst-case capacity, **not a creation quota**. Source wardrobe cards may require separate CLOTHED/UNDERWEAR/NUDE states where applicable.
-- Grand Convergence continues using **Identity-specific required major lineages** and completed Manifestations. Do not mandate that every possible Version or unfinished reserved slot be developed or collected. Preserve source histories, compatibility and non-additive synthesis.
-- Final authoring cap versus optional future slots is subject to Gate 00 approval. This file is a **Gate 01 production working rule**, not a Registry v2 or frozen-runtime schema migration.
+**Ontology separation:** Character Identity remains canonical; Base is its primary Version anchor; Alter/Awakened/Berserker are additional immutable definitions; each Ruler-owned Manifestation is an independent instance of an existing Version. The cap applies to **authored derivative Versions, not the number of independently owned Manifestations**. Progression route nodes are not extra Versions by default.
+
+This is Gate 01's authoring ceiling; do not silently rewrite frozen runtime schemas, approvals or existing character asset packages.
 
 ## Reusable Gate 01 creation protocol (all characters)
 
