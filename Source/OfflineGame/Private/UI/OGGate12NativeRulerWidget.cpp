@@ -1208,15 +1208,28 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     }
     else if (Action == TEXT("world"))
     {
-        TSubclassOf<AOGWorldPrototypeCharacter> ApprovedPlayable;
-        FOGContentId ApprovedVersion;
-        if (Session->ResolveSelectedOwnedWorldPawn(
+        // A verified local Ruler can explore the world using the existing
+        // prototype Pawn even before acquiring any character. Requiring an
+        // owned Manifestation here made the visible ENTER WORLD button inert
+        // in new empty worlds, although the legacy Canvas path worked.
+        // If a real owned Manifestation IS selected, fail closed unless its
+        // exact approved class/version binding is available.
+        bool bApprovedWorldPawn = !Session->SelectedManifestationId.IsValid();
+        if (!bApprovedWorldPawn)
+        {
+            TSubclassOf<AOGWorldPrototypeCharacter> ApprovedPlayable;
+            FOGContentId ApprovedVersion;
+            bApprovedWorldPawn = Session->ResolveSelectedOwnedWorldPawn(
                 VisualCatalog, ApprovedPlayable, ApprovedVersion, Error) &&
-            Session->EnterWorld(Error))
+                ApprovedPlayable != nullptr;
+        }
+        if (bApprovedWorldPawn && Session->EnterWorld(Error))
         {
             OnWorldPresentationRequested.Broadcast();
             return;
         }
+        if (!bApprovedWorldPawn && Error.IsEmpty())
+            Error = TEXT("Selected character has no approved World actor.");
     }
 
     LastUiError = Error;

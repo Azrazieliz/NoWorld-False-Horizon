@@ -9,7 +9,8 @@ param(
   [ValidateRange(20,720)]
   [int]$RunSeconds = 180,
   [switch]$SkipScreenshot,
-  [switch]$Journey
+  [switch]$Journey,
+  [switch]$Onscreen
 )
 $ErrorActionPreference='Stop'
 $Root=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -55,10 +56,13 @@ $Result=Join-Path $Destination 'runtime_smoke_observation.json'
 $Args=@(
  $Project,
  '/Game/Maps/StartingWorld',
- '-game','-windowed','-ResX=540','-ResY=960',
- '-NoSplash','-NoP4','-NoSound','-RenderOffscreen',
+ '-game','-windowed','-ResX=432','-ResY=700',
+ '-NoSplash','-NoP4','-NoSound',
  "-ABSLOG=$Log"
 )
+if (!$Onscreen) {
+ $Args += '-RenderOffscreen'
+}
 if ($Journey) {
  $Args += '-Gate12RuntimeJourney'
 }
@@ -72,6 +76,24 @@ $ScreenshotDir=Join-Path $IsolatedSaved 'Screenshots'
 $ObservedShot=$null
 $JourneyPath=Join-Path $IsolatedSaved 'Gate12Readiness\runtime_ruler_world_journey.json'
 $JourneyResult=$null
+$DesktopCaptureFailures=@()
+$DesktopCapturePaths=@()
+$LastCapturedStep=-1
+if ($Onscreen) {
+  Add-Type -AssemblyName System.Windows.Forms
+  Add-Type -AssemblyName System.Drawing
+  Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class Gate12VisibleWindow {
+ [StructLayout(LayoutKind.Sequential)]
+ public struct RECT { public int Left, Top, Right, Bottom; }
+ [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr handle, out RECT rect);
+}
+'@
+  $VisibleEvidence=Join-Path $IsolatedSaved 'Gate12Readiness\OnscreenFrames'
+  New-Item -ItemType Directory -Path $VisibleEvidence -Force | Out-Null
+}
 try {
   while ((Get-Date) -lt $Timeout -and !$Process.HasExited) {
     Start-Sleep -Seconds 3
@@ -83,11 +105,48 @@ try {
     }
     if ($Journey -and (Test-Path $JourneyPath)) {
       try {
-        $JourneyResult=Get-Content $JourneyPath -Raw | ConvertFrom-Json
-        if ($JourneyResult.complete) {break}
+        if ((Get-Item $JourneyPath).LastWriteTime -ge $Process.StartTime) {
+          $JourneyResult=Get-Content $JourneyPath -Raw | ConvertFrom-Json
+        }
       } catch { $JourneyResult=$null }
     }
+    if ($Onscreen -and $JourneyResult -and $JourneyResult.steps.Count -gt $LastCapturedStep) {
+      try {
+        $Live=Get-Process -Id $Process.Id -ErrorAction Stop
+        $Hwnd=$Live.MainWindowHandle
+        if ($Hwnd -eq [IntPtr]::Zero) {throw 'Game native window not created or not visible'}
+        $Rect=New-Object Gate12VisibleWindow+RECT
+        if (![Gate12VisibleWindow]::GetWindowRect($Hwnd,[ref]$Rect)) {throw 'GetWindowRect failed'}
+        $Left=[Math]::Max(0,$Rect.Left)
+        $Top=[Math]::Max(0,$Rect.Top)
+        $Width=[Math]::Min($Rect.Right-$Left,[System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width-$Left)
+        $Height=[Math]::Min($Rect.Bottom-$Top,[System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height-$Top)
+        if ($Width -le 0 -or $Height -le 0) {throw 'Game window outside visible monitor'}
+        $Image=New-Object System.Drawing.Bitmap($Width,$Height)
+        $Canvas=[System.Drawing.Graphics]::FromImage($Image)
+        try {
+          $Canvas.CopyFromScreen($Left,$Top,0,0,$Image.Size)
+          $Idx=$JourneyResult.steps.Count
+          $StepName=($JourneyResult.steps[-1].name -replace '[^a-zA-Z0-9_-]','_')
+          $Shot=Join-Path $VisibleEvidence ("Step_{0:D2}_{1}.png" -f $Idx,$StepName)
+          $Image.Save($Shot,[System.Drawing.Imaging.ImageFormat]::Png)
+          $DesktopCapturePaths += $Shot
+          $LastCapturedStep=$Idx
+        } finally { $Canvas.Dispose();$Image.Dispose() }
+      } catch {
+        $DesktopCaptureFailures += [string]$_
+      }
+    }
+    if ($JourneyResult -and $JourneyResult.complete) { break }
   }
+  if ($JourneyResult -and $JourneyResult.complete) {
+    # Screenshot requests flush on the following real Slate frame.
+    Start-Sleep -Seconds 3
+  }
+  $GameUiShots=@(Get-ChildItem (Join-Path $IsolatedSaved 'Gate12Readiness\JourneyScreenshots') -File -Filter '*.png' -ErrorAction SilentlyContinue |
+      Where-Object { $_.LastWriteTime -ge $Process.StartTime } |
+      Sort-Object Name |
+      Select-Object -ExpandProperty FullName)
   $LogContainsStarted=$false
   $LogContainsMap=$false
   $LogContainsError=$false
@@ -111,6 +170,11 @@ try {
     fatal_error_seen_in_log=$LogContainsError
     screenshot=if($ObservedShot){$ObservedShot.FullName}else{$null}
     screenshot_bytes=if($ObservedShot){$ObservedShot.Length}else{0}
+    onscreen_window_capture_requested=[bool]$Onscreen
+    onscreen_game_window_frames=$DesktopCapturePaths
+    onscreen_capture_failures=$DesktopCaptureFailures
+    native_slate_ui_screenshots=$GameUiShots
+    native_slate_ui_screenshot_count=$GameUiShots.Count
     journey_enabled=[bool]$Journey
     journey_path=if($Journey){$JourneyPath}else{$null}
     journey_finished=if($JourneyResult){[bool]$JourneyResult.complete}else{$false}

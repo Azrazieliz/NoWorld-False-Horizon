@@ -12,6 +12,8 @@
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
+#include "UnrealClient.h"
+#include "Components/Widget.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -140,18 +142,25 @@ void UOGGate12IsolatedRuntimeJourneyProbe::Record(
 void UOGGate12IsolatedRuntimeJourneyProbe::RequestActualGameScreenshot(
     const FString& Label)
 {
-    if (UWorld* World = GetWorld())
-    {
-        if (APlayerController* PC = World->GetFirstPlayerController())
-        {
-            // Screenshot takes the NEXT actual game frame, not a synthetic
-            // image or offline projection. Captured paths are verified after
-            // this sandboxed process exits.
-            PC->ConsoleCommand(TEXT("HighResShot 1"), true);
-            UE_LOG(LogTemp, Display,
-                TEXT("GATE12_JOURNEY screenshot requested for %s"), *Label);
-        }
-    }
+    // HighResShot excludes Slate/UMG by default, so it created false
+    // negative black Ruler images despite a live full-screen native widget.
+    // Request a genuine composed frame WITH Slate from the real viewport.
+    if (!GetWorld() || !GetWorld()->GetFirstPlayerController())
+        return;
+    const FString ScreenshotDirectory = FPaths::Combine(
+        FPaths::ProjectSavedDir(), TEXT("Gate12Readiness"),
+        TEXT("JourneyScreenshots"));
+    IFileManager::Get().MakeDirectory(*ScreenshotDirectory, true);
+    const FString Screenshot = FPaths::Combine(
+        ScreenshotDirectory, Label + TEXT(".png"));
+    FScreenshotRequest::RequestScreenshot(
+        Screenshot, /*bInShowUI=*/true,
+        /*bAddFilenameSuffix=*/false,
+        /*bHdrScreenshot=*/false, FIntRect(),
+        /*bInRestrictToGameViewport=*/true);
+    UE_LOG(LogTemp, Display,
+        TEXT("GATE12_JOURNEY Slate-inclusive screenshot requested: %s"),
+        *Screenshot);
 }
 
 void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
@@ -211,12 +220,44 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
     {
         const bool bRulerMode =
             Mode->GetMode() == EOGPresentationMode::Ruler;
-        Record(TEXT("ruler_ui_presented"), bRulerMode &&
-            HasNativeRulerWidgetInViewport(World),
-            FString::Printf(TEXT("RulerMode=%d UMGVisible=%d"),
-                bRulerMode,
-                HasNativeRulerWidgetInViewport(World)));
-        if (!bRulerMode) {SaveReceipt(true);return;}
+        UOGGate12NativeRulerWidget* LiveWidget = nullptr;
+        for (TObjectIterator<UOGGate12NativeRulerWidget> It; It; ++It)
+        {
+            if (It->GetWorld() == World && It->IsInViewport())
+            {
+                LiveWidget = *It;
+                break;
+            }
+        }
+        const bool bRoot = LiveWidget &&
+            LiveWidget->GetRootWidget() != nullptr;
+        const bool bTitle = LiveWidget &&
+            LiveWidget->GetWidgetFromName(TEXT("GameTitle")) != nullptr;
+        const bool bPage = LiveWidget &&
+            LiveWidget->GetWidgetFromName(TEXT("CanonicalPageBody")) != nullptr;
+        const bool bNavigation = LiveWidget &&
+            LiveWidget->GetWidgetFromName(TEXT("RulerFiveDestinations")) != nullptr;
+        // SelfHitTestInvisible renders its own surface and permits child
+        // buttons to receive input. It is not the same as Hidden, Collapsed
+        // or HitTestInvisible (which blocks every child hit target).
+        const ESlateVisibility Visibility = LiveWidget
+            ? LiveWidget->GetVisibility() : ESlateVisibility::Collapsed;
+        const bool bChildInteractive =
+            Visibility == ESlateVisibility::Visible ||
+            Visibility == ESlateVisibility::SelfHitTestInvisible;
+        const bool bValidWidget = bRoot && bTitle && bPage &&
+            bNavigation && bChildInteractive;
+        Record(TEXT("ruler_ui_presented"), bRulerMode && bValidWidget,
+            FString::Printf(
+                TEXT("RulerMode=%d Root=%d Title=%d Page=%d Nav=%d Interactive=%d VisibilityEnum=%d Blueprint=%s"),
+                bRulerMode, bRoot, bTitle, bPage, bNavigation,
+                bChildInteractive, static_cast<int32>(Visibility),
+                LiveWidget ? *LiveWidget->GetClass()->GetName() : TEXT("None")));
+        if (!bRulerMode || !bValidWidget)
+        {
+            SaveReceipt(true);
+            return;
+        }
 
         // This legitimate new-local-Ruler user action writes ONLY to the
         // sandbox project's independent SQLite world, not user saves.
@@ -243,12 +284,64 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
         return;
     }
 
-    if (Phase == 2)
+    if (Phase >= 2 && Phase <= 6)
     {
-        // Dispatch precisely the same legacy Canvas handler fixed to call
-        // native owned-pawn binding/rollback. No owned character exists in
-        // this empty test world, so it must preserve the real prototype Pawn.
-        HUD->NotifyHitBoxClick(FName(TEXT("OG.Ruler.World")));
+        static const TCHAR* DestinationNames[] =
+        {
+            TEXT("home"), TEXT("characters"), TEXT("gacha"),
+            TEXT("territory"), TEXT("records")
+        };
+        const int32 Index = Phase - 2;
+        UOGGate12NativeRulerWidget* LiveWidget = nullptr;
+        for (TObjectIterator<UOGGate12NativeRulerWidget> It; It; ++It)
+        {
+            if (It->GetWorld() == World && It->IsInViewport())
+            {
+                LiveWidget = *It;
+                break;
+            }
+        }
+        if (LiveWidget)
+            LiveWidget->InvokeAction(
+                FString::Printf(TEXT("nav/%d"), Index));
+        const bool bNavigated = LiveWidget &&
+            Session->CurrentDestination ==
+                static_cast<EOGRulerPrimaryDestination>(Index) &&
+            LiveWidget->GetWidgetFromName(TEXT("CanonicalPageBody")) != nullptr &&
+            Session->OwnedRoster.IsEmpty();
+        Record(FString::Printf(TEXT("native_ruler_navigation_%s"),
+                   DestinationNames[Index]),
+            bNavigated, FString::Printf(
+                TEXT("ActualPage=%d Selected=%d, AuthenticOwner=%s"),
+                static_cast<int32>(Session->CurrentDestination), Index,
+                *RulerIdAtCreation));
+        if (!bNavigated) {SaveReceipt(true);return;}
+        RequestActualGameScreenshot(
+            FString::Printf(TEXT("ruler_nav_%s"), DestinationNames[Index]));
+        ++Phase;
+        ScheduleNext(3.f);
+        return;
+    }
+
+    if (Phase == 7)
+    {
+        // Exercise the actual native UMG ENTER WORLD action, not only the
+        // legacy Canvas fallback. Empty-roster worlds legitimately explore
+        // with the existing prototype Pawn, with no made-up Manifestation.
+        UOGGate12NativeRulerWidget* LiveWidget = nullptr;
+        for (TObjectIterator<UOGGate12NativeRulerWidget> It; It; ++It)
+        {
+            if (It->GetWorld() == World && It->IsInViewport())
+            {
+                LiveWidget = *It;
+                break;
+            }
+        }
+        if (LiveWidget)
+        {
+            LiveWidget->InvokeAction(TEXT("nav/0"));
+            LiveWidget->InvokeAction(TEXT("world"));
+        }
         const bool bWorld = Mode->GetMode() == EOGPresentationMode::World;
         Record(TEXT("ruler_to_world_validated_native_transition"),
             bWorld && InitialPawn.IsValid() &&
@@ -256,12 +349,13 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
             FString::Printf(TEXT("WorldMode=%d, PawnUnchanged=%d, owner=%s"),
                 bWorld, InitialPawn.Get() == PC->GetPawn(),
                 *RulerIdAtCreation));
-        Phase = 3;
+        if (!bWorld) {SaveReceipt(true);return;}
+        Phase = 8;
         ScheduleNext(3.f);
         return;
     }
 
-    if (Phase == 3)
+    if (Phase == 8)
     {
         const bool bWorld = Mode->GetMode() == EOGPresentationMode::World;
         Record(TEXT("live_world_still_active"), bWorld &&
@@ -272,7 +366,7 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
         Record(TEXT("world_to_ruler_via_real_canvas_action"),
             Mode->GetMode() == EOGPresentationMode::Ruler,
             TEXT("Called existing OG.World.Ruler click handler"));
-        Phase = 4;
+        Phase = 9;
         ScheduleNext(3.f);
         return;
     }
