@@ -4,6 +4,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/SafeZone.h"
+#include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
@@ -65,7 +66,14 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     Menu = WidgetTree->ConstructWidget<UVerticalBox>(
         UVerticalBox::StaticClass(), TEXT("OpeningRealButtons"));
     MenuFrame->AddChild(Menu);
-    MenuSlot = Canvas->AddChildToCanvas(MenuFrame);
+    // Constrain actual Slate desired size before Canvas auto-layout. Long
+    // recovery/clear-confirmation captions otherwise push real buttons past
+    // portrait edges, or off the right side of the landscape safe area.
+    MenuWidthConstraint = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), TEXT("OpeningViewportWidthConstraint"));
+    MenuWidthConstraint->AddChild(MenuFrame);
+    MenuWidthConstraint->SetWidthOverride(320.f);
+    MenuSlot = Canvas->AddChildToCanvas(MenuWidthConstraint);
     MenuSlot->SetAutoSize(true);
     MenuSlot->SetAlignment(FVector2D(.5f,1.0f));
     MenuSlot->SetAnchors(FAnchors(.5f,.94f));
@@ -182,8 +190,16 @@ void UOGGate12NativeOpeningWidget::NativeTick(
     {
         // Separate portrait and landscape placement, same canonical actions.
         const bool bWide = Size.X > Size.Y;
+        // SafeZone dimensions are authoritative here; neither a hard-coded
+        // screen size nor a frozen reference screenshot drives touch layout.
+        if (MenuWidthConstraint)
+        {
+            const float DesiredWidth = FMath::Min(
+                Size.X - 24.f, bWide ? Size.X * .39f : Size.X * .90f);
+            MenuWidthConstraint->SetWidthOverride(FMath::Max(150.f, DesiredWidth));
+        }
         MenuSlot->SetAnchors(
-            bWide ? FAnchors(.81f,.72f) : FAnchors(.5f,.94f));
+            bWide ? FAnchors(.77f,.78f) : FAnchors(.5f,.94f));
         MenuSlot->SetAlignment(FVector2D(.5f,1.f));
     }
     if (AtmosphericAccent)

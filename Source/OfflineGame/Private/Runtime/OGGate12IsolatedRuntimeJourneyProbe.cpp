@@ -22,6 +22,7 @@
 #include "Runtime/OGPlayerProfileSettings.h"
 #include "Interaction/OGFoundationInteractionHost.h"
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "UI/OGGate12NativeOpeningWidget.h"
 #include "UI/OGGate12CharacterPreviewStage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -212,6 +213,34 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
                 *PC->GetPawn()->GetClass()->GetName(),
                 *HUD->GetClass()->GetName(), Core->IsCoreReady()));
         if (!bReady) {SaveReceipt(true);return;}
+        if (!bOpeningCaptured)
+        {
+            // Inspect the actual Slate-created opening before the journey
+            // navigates away. Older receipts accidentally skipped it entirely.
+            UOGGate12NativeOpeningWidget* Opening = nullptr;
+            for (TObjectIterator<UOGGate12NativeOpeningWidget> It; It; ++It)
+            {
+                if (It->GetWorld() == World && It->IsInViewport())
+                {
+                    Opening = *It;
+                    break;
+                }
+            }
+            const bool bControls = Opening && Opening->GetRootWidget() &&
+                Opening->GetWidgetFromName(TEXT("OpeningRealButtons")) &&
+                Opening->GetWidgetFromName(TEXT("OpeningViewportWidthConstraint")) &&
+                Opening->GetWidgetFromName(TEXT("ActualGameTitle"));
+            Record(TEXT("native_opening_umg_controls_present"), bControls,
+                FString::Printf(TEXT("Viewport=%d Buttons=%d WidthConstraint=%d"),
+                    Opening != nullptr,
+                    Opening && Opening->GetWidgetFromName(TEXT("OpeningRealButtons")) != nullptr,
+                    Opening && Opening->GetWidgetFromName(TEXT("OpeningViewportWidthConstraint")) != nullptr));
+            if (!bControls) {SaveReceipt(true);return;}
+            RequestActualGameScreenshot(TEXT("opening_native_portrait"));
+            bOpeningCaptured = true;
+            ScheduleNext(2.f);
+            return;
+        }
         HUD->NotifyHitBoxClick(FName(TEXT("OG.Opening.Ruler")));
         Record(TEXT("opening_to_ruler_via_real_canvas_action"),
             Mode->GetMode() == EOGPresentationMode::Ruler,

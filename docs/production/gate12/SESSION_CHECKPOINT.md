@@ -1,5 +1,16 @@
 # Gate 12 — Crash-safe executable checkpoint
 
+## LATEST — 2026-10-17 / Native opening viewport safety and renderer test (IN PROGRESS)
+
+- **Repository/worktree verified:** production/gate12-koikatsu-ue583-fixture-20261010 at starting HEAD `cb4ff6317cb030c66f5d62fbbd70d6f91837e4aa`; original frozen Foundation worktree still clean at `3f54f07cacbf193e160d0be15a7be5a7bc730c3b`.
+- **Focused source changed:** `Source/OfflineGame/{Public,Private}/UI/OGGate12NativeOpeningWidget.{h,cpp}` now constrains the real native Slate opening menu to SafeZone-based portrait/landscape widths. The long confirm/recovery buttons no longer depend on uncontrolled Canvas auto-width.
+- **Actual native game proof added:** `Source/OfflineGame/{Public,Private}/Runtime/OGGate12IsolatedRuntimeJourneyProbe.{h,cpp}` explicitly checks the live opening UMG tree and requests a Slate-inclusive `opening_native_portrait.png` before routing into the canonical Ruler flow. No fake screenshot or fixture-owned character.
+- **Checks already run:** production completion ledger checker PASS (7 BLOCKED, 1 IN_PROGRESS, 4 RUNTIME_VERIFIED) and 11/11 Python production tests PASS. `git diff --check` PASS.
+- **Old compiled source runtime baseline:** isolated no-cook Win64 `-Journey -Onscreen` launched authentic Ruler and 45-part development character preview, but **did not finish before 240 seconds**, therefore `NATIVE_JOURNEY_UNVERIFIED`, not new runtime acceptance. Early frame was black and cannot count as opening visual evidence.
+- **Current verification:** UE5.8.3 Win64 no-cook UBT compile of four changed source files is in progress. On success, rerun targeted native checks and genuine opening capture with a sufficiently long isolation window; inspect original screenshot before visual claims. On failure, record exact error and fix; do not count the old 150/150 as current-source proof.
+- **Protected state:** DO NOT stage/reset/clean/stash `OGKoikatsuPlayableCharacter.{h,cpp}` local edits, 724+ untracked original/experimental Unreal assets, original Party cards, saves, prior APKs or draft PR#16. No Android cook, package, sign or install per direct user request. Gate10 frozen Vacant Throne original archive remains unverified locally; no invented image/animation or Gate10 visual DONE.
+- **Single next action:** finish source build, obtain actual opening frame and native tests, commit/push only the four scoped source files and this checkpoint with exact truthful status. Retain Gate10 opening/UI, sword-equipped combat, Registry-bound characters, authored 13-actor animation and production kingdom as BLOCKED where acceptance is absent.
+
 Updated: 2026-10-16 Europe/Paris
 Work item: P0-APP / Issue #25, with independent P0-FIDELITY hold
 Status: ACTIVE — 16/16 real Win64 journey and 150/150 current native tests verified; whole game/art/content not complete

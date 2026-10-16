@@ -43,6 +43,7 @@ private:
     FString ReceiptPath;
     int32 Phase = 0;
     int32 ReadinessRetries = 0;
+    bool bOpeningCaptured = false;
     bool bFailed = false;
     FGuid InitialPawnGuid;
     TWeakObjectPtr<APawn> InitialPawn;

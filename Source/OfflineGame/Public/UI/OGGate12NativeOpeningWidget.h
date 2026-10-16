@@ -8,6 +8,7 @@
 class UCanvasPanel;
 class UCanvasPanelSlot;
 class UVerticalBox;
+class USizeBox;
 class UTextBlock;
 class UBorder;
 
@@ -54,6 +55,7 @@ private:
 
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> Menu;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> MenuSlot;
+    UPROPERTY(Transient) TObjectPtr<USizeBox> MenuWidthConstraint;
     UPROPERTY(Transient) TObjectPtr<UBorder> AtmosphericAccent;
 };
 
