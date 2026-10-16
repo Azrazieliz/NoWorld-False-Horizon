@@ -60,7 +60,7 @@ bool FOGGate12CharacterPresentationPreferences::LoadAll(
     for (const auto& Entry : Root->Values)
     {
         if (Entry.Value.IsValid() && Entry.Value->Type == EJson::Boolean)
-            OutPreferences.Add(Entry.Key, Entry.Value->AsBool());
+            OutPreferences.Add(FString(Entry.Key.ToView()), Entry.Value->AsBool());
     }
     return true;
 }

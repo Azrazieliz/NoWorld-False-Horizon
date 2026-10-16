@@ -5735,7 +5735,11 @@ void AOGWorldPresentationHud::SynchronizeGate12NativeRulerUMG(bool bShouldShow)
             Gate12NativeRulerWidget->RemoveFromParent();
         return;
     }
-    if (!PlayerOwner || !GetWorld())
+    // Engine automation/isolated worlds can own synthetic controllers without
+    // a local player. Creating a UMG widget for those raises PIE errors.
+    // Native Ruler screens belong only to a genuine local player viewport.
+    if (!PlayerOwner || !PlayerOwner->IsLocalController() ||
+        !PlayerOwner->GetLocalPlayer() || !GetWorld())
         return;
 
     if (!Gate12NativeRulerWidget)
