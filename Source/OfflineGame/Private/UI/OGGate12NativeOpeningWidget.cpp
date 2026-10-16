@@ -162,7 +162,10 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
         return;
     }
 
-    AddAction(TEXT("CONTINUE"), TEXT("OG.Opening.Continue"), bHasRuler, true);
+    // Canonical opening resume requires both a stored local Ruler and an
+    // existing world save; a Ruler profile alone is not a resumable world.
+    AddAction(TEXT("CONTINUE"), TEXT("OG.Opening.Continue"),
+              bHasRuler && bHasSave, true);
     AddAction(TEXT("NEW GAME"), TEXT("new-game"), true);
     AddAction(TEXT("SETTINGS"), TEXT("OG.Settings.Toggle"), true);
     AddAction(TEXT("DATA RECOVERY"), TEXT("OG.Opening.Recover"),

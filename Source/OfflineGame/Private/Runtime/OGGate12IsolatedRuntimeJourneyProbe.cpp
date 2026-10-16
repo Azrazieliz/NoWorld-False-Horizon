@@ -66,8 +66,12 @@ void UOGGate12IsolatedRuntimeJourneyProbe::OnWorldBeginPlay(
     UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
-    const FString Directory = FPaths::Combine(
-        FPaths::ProjectSavedDir(), TEXT("Gate12Readiness"));
+    // Normalize the isolated saved directory before writing. Relative
+    // ProjectSavedDir values depend on process working directory in -game
+    // sessions and previously produced an unwritable diagnostic receipt.
+    const FString Directory = FPaths::ConvertRelativePathToFull(
+        FPaths::Combine(FPaths::ProjectSavedDir(),
+                        TEXT("Gate12Readiness")));
     IFileManager::Get().MakeDirectory(*Directory, true);
     ReceiptPath = FPaths::Combine(Directory,
         TEXT("runtime_ruler_world_journey.json"));
@@ -131,7 +135,11 @@ void UOGGate12IsolatedRuntimeJourneyProbe::SaveReceipt(
     if (!FFileHelper::SaveStringToFile(Payload, *ReceiptPath,
             FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
     {
-        UE_LOG(LogTemp, Error, TEXT("GATE12_JOURNEY receipt write failed"));
+        UE_LOG(LogTemp, Error,
+            TEXT("GATE12_JOURNEY receipt write failed path=%s parent_exists=%d"),
+            *ReceiptPath,
+            IFileManager::Get().DirectoryExists(
+                *FPaths::GetPath(ReceiptPath)));
     }
 }
 
