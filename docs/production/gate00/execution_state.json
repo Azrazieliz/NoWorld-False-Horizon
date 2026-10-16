@@ -11,9 +11,13 @@
     "status": "draft_open_unmerged"
   },
   "device": {
-    "cook_authorized": false,
+    "cook_authorized": true,
     "next_app_visible_adult_mode_requirement": true,
-    "last_current_build_device_verification": "NOT_TESTED"
+    "last_current_build_device_verification": "NOT_TESTED",
+    "authorization_scope": "Standing approval for routine non-destructive Android development compilation, cook, packaging, test signing, isolated APK install/update and physical QA; no repeated approval required.",
+    "production_app_exists": false,
+    "production_release_authorized": false,
+    "destructive_uninstall_or_data_wipe_authorized": false
   },
   "verified_git_heads": {
     "Gate12": "cdcb22bf3f4541e7334b27768d9f43bcfc4a18df",
@@ -24,8 +28,8 @@
       "id": "P0-APP",
       "owner": "Gate12",
       "status": "ACTIVE",
-      "acceptance": "reproducible native Ruler/World/roster/persistence/Adult-mode pre-cook tests; cook requires explicit user go",
-      "next": "Finish runnable isolated no-cook vertical slice and report concrete blockers",
+      "acceptance": "Actual iterative dev APK built/cooked/installed and physically tested with evidence for Ruler/World/roster/persistence/Adult Mode; no production release authorization",
+      "next": "Create next isolated Android QA build and install/test on authorized device, then iterate on tangible failures.",
       "source_sha": "cdcb22bf3f4541e7334b27768d9f43bcfc4a18df"
     },
     {
@@ -92,5 +96,5 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "At most one bounded Android QA-build authorization request after Gate12 reports pre-cook readiness; otherwise no recurring copying."
+  "next_user_action": "No build/test permission roundtrip; Gate12 should make an actual development APK. Ask only before public release, destructive actions or irreversibly changing user data."
 }
