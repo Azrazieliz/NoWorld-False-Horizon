@@ -178,8 +178,10 @@ void UOGGate12NativeOpeningWidget::DispatchNativeAction(FName Action)
     {
         // Existing worlds are NEVER silently cleared. The only destructive
         // path delegates to the already-tested real Core backup+confirm flow.
-        Action = bHasRuler ? TEXT("OG.Opening.Clear")
-                           : TEXT("OG.Opening.Ruler");
+        // An orphaned world database also requires the confirmed backup path;
+        // absence of a local Ruler must not silently bypass recovery safety.
+        Action = (bHasRuler || bHasSave) ? TEXT("OG.Opening.Clear")
+                                         : TEXT("OG.Opening.Ruler");
     }
     OnOpeningAction.Broadcast(Action);
 }

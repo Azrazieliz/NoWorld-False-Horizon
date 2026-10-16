@@ -47,6 +47,7 @@
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
+#include "UI/OGOpeningResumeValidation.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
 #include "UI/OGGate12OwnedWorldCharacterBinding.h"
 #include "Runtime/OGPlayerProfileSettings.h"
@@ -5916,8 +5917,8 @@ void AOGWorldPresentationHud::SynchronizeGate12NativeOpeningUMG(
 
     const FString SaveRoot = FPaths::Combine(
         FPaths::ProjectSavedDir(), TEXT("OfflineGame"));
-    const bool bHasWorld = IFileManager::Get().FileExists(
-        *FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
+    const bool bHasWorld = FOGOpeningResumeValidation::HasReadableWorld(
+        FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
     TArray<FString> RecoveryFiles;
     IFileManager::Get().FindFilesRecursive(
         RecoveryFiles, *FPaths::Combine(SaveRoot, TEXT("Snapshots")),
@@ -6025,7 +6026,7 @@ void AOGWorldPresentationHud::DrawFoundationOpening(
             TEXT("Import"));
 
     const bool bWorldExists =
-        IFileManager::Get().FileExists(*DatabasePath);
+        FOGOpeningResumeValidation::HasReadableWorld(DatabasePath);
 
     TArray<FString> SnapshotFiles;
     IFileManager::Get().FindFilesRecursive(
