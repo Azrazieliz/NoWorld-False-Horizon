@@ -77,6 +77,7 @@ try {
     Start-Sleep -Seconds 3
     if (Test-Path $ScreenshotDir) {
       $ObservedShot=Get-ChildItem $ScreenshotDir -Recurse -File -Filter '*.png' -ErrorAction SilentlyContinue |
+        Where-Object { $_.LastWriteTime -ge $Process.StartTime } |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
       if ($ObservedShot -and !$Journey) { break }
     }

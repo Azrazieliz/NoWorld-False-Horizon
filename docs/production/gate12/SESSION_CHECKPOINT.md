@@ -47,11 +47,18 @@ Passive 45-part QA viewer source revision: compiled and targeted/full native reg
 - Historical P0 visual/export fidelity and Gate09 animation blockers remain separate from startup/Ruler engineering; never mark those fixed solely because 150 native tests pass.
 
 ## Next SINGLE executable action
-**From latest HEAD, READ `Saved/Logs/Gate12_Issue25_RealGameJourneyBuild_20261016.log` and fix any actual compilation errors. Next run opt-in `Scripts/Gate12Koikatsu/run_isolated_nocook_desktop_smoke.ps1 -Journey -RunSeconds 300`, examine `Saved/Gate12Readiness/Isolated_NoCook_Win64_Game/Saved/Gate12Readiness/runtime_ruler_world_journey.json`. Do not claim pass without exact finished=true/passed=true. Then rerun native targeted/full, commit/push verified corrections. No Android cooking.**
+**The 9/9 native runtime journey PASSED and is documented below. NEXT do one separate isolated ONSCREEN (not RenderOffscreen) Win64 visual capture of native Ruler and World, diagnose black post-opening HighResShot frames, preserve evidence. No Android cooking/install.**
 
 ## Unverified current runtime-journey source addition
-- Added `Public|Private/Runtime/OGGate12IsolatedRuntimeJourneyProbe.*`: opt-in `-Gate12RuntimeJourney` ONLY in isolated sandbox project (fails closed in Shipping or original source ProjectDir); uses genuine Canvas opening/create/World/return click handlers, real canonical isolated Ruler, same Pawn, and captures real game frame requests with crash-safe per-step JSON. **NOT COMPILED OR TESTED at this checkpoint**; compile log is the next authority.
+- Added `Public|Private/Runtime/OGGate12IsolatedRuntimeJourneyProbe.*`: opt-in `-Gate12RuntimeJourney` ONLY in isolated sandbox project (fails closed in Shipping or original source ProjectDir); uses genuine Canvas opening/create/World/return click handlers, real canonical isolated Ruler, same Pawn, and captures real game frame requests with crash-safe per-step JSON. **Compiled and executed: 9/9 runtime journey PASS**; evidence and remaining visual limitation documented below.
 - Extended disposable Win64 smoke runner `-Journey` to hold game open for receipt completion instead of stopping on initial screenshot. Original saved files/Registry never touched, no fake character/Manifestation ownership.
+
+## New verified runtime journey (2026-10-16, after commit 61eb49c)
+- Real isolated Win64 GAME boot Ruler->World->Ruler fixture compiled **9/9** in `Saved/Logs/Gate12_Issue25_RealGameJourneyBuild_20261016.log`; opt-in `-Gate12RuntimeJourney` only inside isolated `Isolated_NoCook_Win64_Game` project, disallowed in Shipping.
+- `Saved/Gate12Readiness/Isolated_NoCook_Win64_Game/Saved/Gate12Readiness/runtime_ruler_world_journey.json`: **complete=true, passed=true, 9/9 checks**. Verified local actual Pawn/HUD, Ruler UMG `IsInViewport()`, genuine canonical Ruler (isolated SQLite), validated World entry, World return, same Pawn + Ruler, no fabricated ownership/territory. Process outcome `PROGRAMMATIC_NATIVE_RULER_WORLD_RULER_PASS`.
+- Latest code/test/data and black-screenshot caveat: `docs/production/gate12/ISSUE25_20261016_REAL_GAME_JOURNEY_VERIFIED.md`; receipt/image committed under `docs/production/gate12/evidence/issue25`.
+- **Important visual blocker:** `HighResShot` while running `-RenderOffscreen` yielded black frames after opening. Real Slate/UMG visible rendering is NOT verified; determine capture-only versus rendering defect. No Android device/cook/install. Protected original saved SQLite database remains unchanged.
+- **Next action:** Stop repeated compiler loops. A single separate isolated onscreen rendering check with screenshots and UI overlay evidence; do not claim visual acceptance from the programmatic checks.
 
 ## Blocked on
 - Production character binding and genuine accepted Manifestations: Gate11, separate from engineering QA viewer.
