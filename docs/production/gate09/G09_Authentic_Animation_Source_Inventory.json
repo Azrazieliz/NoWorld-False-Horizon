@@ -1,0 +1,60 @@
+{
+  "schema": "GATE09_SOURCE_ANIM_INVENTORY_V1",
+  "generated_date": "2026-10-16",
+  "sources": [
+    {
+      "name": "Koikatsu Party animator 14",
+      "path_hint": "Steam Koikatsu Party/abdata/action/animator/14.unity3d",
+      "hash": "42e61bda9efbaf443b8ba5577f44be0ab7bdf85c87b5a2af1adc1a19c35473d3",
+      "authentic_clip_count": 299,
+      "compatible_named_rig_binding": "UNRESOLVED",
+      "selected_clips": [
+        {
+          "name": "f_tachi_00_18_L",
+          "purpose": "STAND_IDLE",
+          "fps": 30,
+          "duration_s": 4.7,
+          "extracted_gzip_sha256": "0f2d71d79f3695854e4441c59859328a80a046e53d2df1b3b3fddf64eb023cdd"
+        },
+        {
+          "name": "f_suiei_00_02_03_S",
+          "purpose": "SWIM_SHORT",
+          "fps": 30,
+          "duration_s": 0.667,
+          "extracted_gzip_sha256": "3a63d06d502caeeb987f4aed37a47ab252fe93c40668b3aa153b4aa7be1826b2"
+        }
+      ]
+    },
+    {
+      "name": "Koikatsu Studio anime 02",
+      "authentic_clip_count": 10,
+      "observed_clips": [
+        "cf_cm_W_dance_31",
+        "cf_cm_W_dance_58",
+        "cf_cm_W_dance_05",
+        "cf_Dance_01_t1",
+        "cf_Dance_03_t1"
+      ],
+      "compatibility": "UNVERIFIED"
+    },
+    {
+      "name": "Koikatsu Studio anime 07",
+      "authentic_clip_count": 1,
+      "compatibility": "UNVERIFIED"
+    },
+    {
+      "name": "Koikatsu Studio anime 12",
+      "authentic_clip_count": 4,
+      "compatibility": "UNVERIFIED"
+    },
+    {
+      "name": "CMU BVH 144_20",
+      "hash": "d8e4025891f8ffc94ff53839525b0e71cfacd2cbec30a181bd738ec8220cbfce",
+      "source_bones": 31,
+      "target_mapped_bones": 22,
+      "authored_diagnostic": true,
+      "creative_approved": false
+    }
+  ],
+  "production_ready": []
+}

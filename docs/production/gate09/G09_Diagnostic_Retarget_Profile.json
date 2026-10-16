@@ -1,0 +1,55 @@
+{
+  "schema": "GATE09_DIAGNOSTIC_SOURCE_RETARGET_V1",
+  "rig_source": "LUMINOUS_V3_CLOTHED_skinned.glb",
+  "rig_source_sha256": "c1efbc9d1e0a09d840201922de9634147b359828cdfc59e5a79c7f723891c441",
+  "motion_source": "CMU 144_20.bvh",
+  "motion_source_sha256": "d8e4025891f8ffc94ff53839525b0e71cfacd2cbec30a181bd738ec8220cbfce",
+  "blender_version": "4.5.10",
+  "import_bvh": {
+    "axis_forward": "-Z",
+    "axis_up": "Y"
+  },
+  "fps": 24,
+  "frames": [
+    1,
+    240
+  ],
+  "root_motion": "in_place_root_translation_not_copied",
+  "pair_map": {
+    "Hips": "Hips",
+    "LowerBack": "Spine",
+    "Spine": "Chest",
+    "Spine1": "Upper Chest",
+    "Neck": "Neck",
+    "Head": "Head",
+    "LeftShoulder": "Left shoulder",
+    "LeftArm": "Left arm",
+    "LeftForeArm": "Left elbow",
+    "LeftHand": "Left wrist",
+    "RightShoulder": "Right shoulder",
+    "RightArm": "Right arm",
+    "RightForeArm": "Right elbow",
+    "RightHand": "Right wrist",
+    "LeftUpLeg": "Left leg",
+    "LeftLeg": "Left knee",
+    "LeftFoot": "Left ankle",
+    "LeftToeBase": "Left toe",
+    "RightUpLeg": "Right leg",
+    "RightLeg": "Right knee",
+    "RightFoot": "Right ankle",
+    "RightToeBase": "Right toe"
+  },
+  "fbx_sha256": "edd0b78a9725ef8f6fbd252889b1a579e3557a91459a563d26cb6ecb809397bb",
+  "edit_ready_blend_sha256": "c5801fbbf6c9ffe94cb3bdd2422f7302e06de07fd8f02953eae8c0f7d6ceca1a",
+  "observed_deformation_m": {
+    "start_middle": 0.11347260786295998,
+    "start_end": 0.12020894457568979
+  },
+  "foot_contacts": "UNVERIFIED",
+  "morph_curves": "NOT_BAKED",
+  "secondary_physics": "NOT_BAKED",
+  "visual_quality": "DIAGNOSTIC_ONLY",
+  "cross_state_shared_rig": "NOT_ACCEPTED",
+  "unreal": "NOT_TESTED",
+  "android": "NOT_TESTED"
+}
