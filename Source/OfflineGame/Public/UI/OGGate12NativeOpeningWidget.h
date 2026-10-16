@@ -56,6 +56,8 @@ private:
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> Menu;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> MenuSlot;
     UPROPERTY(Transient) TObjectPtr<USizeBox> MenuWidthConstraint;
+    UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> TitleSlot;
+    UPROPERTY(Transient) TObjectPtr<USizeBox> TitleWidthConstraint;
     UPROPERTY(Transient) TObjectPtr<UBorder> AtmosphericAccent;
 };
 

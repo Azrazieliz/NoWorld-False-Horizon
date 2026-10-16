@@ -9,6 +9,8 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/World.h"
+#include "HAL/FileManager.h"
+#include "Misc/Paths.h"
 
 namespace
 {
@@ -58,6 +60,27 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     UCanvasPanelSlot* AccentSlot = Canvas->AddChildToCanvas(AtmosphericAccent);
     AccentSlot->SetAnchors(FAnchors(.48f,.08f,.52f,.63f));
     AccentSlot->SetOffsets(FMargin(0.f,0.f,0.f,0.f));
+
+    // The frozen Gate10 04 composition separates the central title from the
+    // lower interactive controls. Keep actual game title editable UMG text;
+    // the approved reference screenshot is never baked into the UI layer.
+    UTextBlock* NativeTitle = WidgetTree->ConstructWidget<UTextBlock>(
+        UTextBlock::StaticClass(), TEXT("ActualGameTitle"));
+    NativeTitle->SetText(FText::FromString(TEXT("NoWorld: False Horizon")));
+    NativeTitle->SetJustification(ETextJustify::Center);
+    NativeTitle->SetAutoWrapText(true);
+    NativeTitle->SetColorAndOpacity(FSlateColor(OrnamentGold));
+    FSlateFontInfo TitleFont = NativeTitle->GetFont();
+    TitleFont.Size = 32;
+    NativeTitle->SetFont(TitleFont);
+    TitleWidthConstraint = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), TEXT("OpeningTitleWidthConstraint"));
+    TitleWidthConstraint->SetWidthOverride(320.f);
+    TitleWidthConstraint->AddChild(NativeTitle);
+    TitleSlot = Canvas->AddChildToCanvas(TitleWidthConstraint);
+    TitleSlot->SetAutoSize(true);
+    TitleSlot->SetAnchors(FAnchors(.5f,.60f));
+    TitleSlot->SetAlignment(FVector2D(.5f,.5f));
 
     UBorder* MenuFrame = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("OpeningControlsFrame"));
@@ -136,16 +159,6 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
 {
     if (!Menu || !WidgetTree) return;
     Menu->ClearChildren();
-    UTextBlock* Title =
-        WidgetTree->ConstructWidget<UTextBlock>(
-            UTextBlock::StaticClass(), TEXT("ActualGameTitle"));
-    Title->SetText(FText::FromString(TEXT("NoWorld: False Horizon")));
-    Title->SetJustification(ETextJustify::Center);
-    Title->SetColorAndOpacity(FSlateColor(OrnamentGold));
-    FSlateFontInfo Font = Title->GetFont();
-    Font.Size = 27;
-    Title->SetFont(Font);
-    Menu->AddChildToVerticalBox(Title)->SetPadding(FMargin(9.f,14.f,9.f,18.f));
 
     if (Page == TEXT("confirm_clear"))
     {
@@ -164,12 +177,27 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
 
     // Canonical opening resume requires both a stored local Ruler and an
     // existing world save; a Ruler profile alone is not a resumable world.
+    const bool bWorldFilePresent = IFileManager::Get().FileExists(
+        *FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("OfflineGame"),
+                         TEXT("WorldState.db")));
+    // A corrupt or outdated file is still user data and cannot be silently
+    // discarded simply because read-only validation rejected Continue.
+    if (bWorldFilePresent && !bHasSave)
+    {
+        UTextBlock* Notice = WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass(), TEXT("UnverifiedWorldSaveNotice"));
+        Notice->SetText(FText::FromString(
+            TEXT("Existing world data could not be verified. Continue is unavailable; preserve or recover it before starting a replacement.")));
+        Notice->SetAutoWrapText(true);
+        Notice->SetColorAndOpacity(FSlateColor(OpeningTextColor));
+        Menu->AddChildToVerticalBox(Notice)->SetPadding(FMargin(7.f,9.f));
+    }
     AddAction(TEXT("CONTINUE"), TEXT("OG.Opening.Continue"),
               bHasRuler && bHasSave, true);
     AddAction(TEXT("NEW GAME"), TEXT("new-game"), true);
     AddAction(TEXT("SETTINGS"), TEXT("OG.Settings.Toggle"), true);
     AddAction(TEXT("DATA RECOVERY"), TEXT("OG.Opening.Recover"),
-              bHasRecovery || bHasImport || bHasSave);
+              bHasRecovery || bHasImport || bHasSave || bWorldFilePresent);
 }
 
 void UOGGate12NativeOpeningWidget::DispatchNativeAction(FName Action)
@@ -180,8 +208,11 @@ void UOGGate12NativeOpeningWidget::DispatchNativeAction(FName Action)
         // path delegates to the already-tested real Core backup+confirm flow.
         // An orphaned world database also requires the confirmed backup path;
         // absence of a local Ruler must not silently bypass recovery safety.
-        Action = (bHasRuler || bHasSave) ? TEXT("OG.Opening.Clear")
-                                         : TEXT("OG.Opening.Ruler");
+        const bool bWorldFilePresent = IFileManager::Get().FileExists(
+            *FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("OfflineGame"),
+                             TEXT("WorldState.db")));
+        Action = (bHasRuler || bHasSave || bWorldFilePresent)
+            ? TEXT("OG.Opening.Clear") : TEXT("OG.Opening.Ruler");
     }
     OnOpeningAction.Broadcast(Action);
 }
@@ -204,8 +235,16 @@ void UOGGate12NativeOpeningWidget::NativeTick(
             MenuWidthConstraint->SetWidthOverride(FMath::Max(150.f, DesiredWidth));
         }
         MenuSlot->SetAnchors(
-            bWide ? FAnchors(.77f,.78f) : FAnchors(.5f,.94f));
+            bWide ? FAnchors(.77f,.83f) : FAnchors(.5f,.94f));
         MenuSlot->SetAlignment(FVector2D(.5f,1.f));
+        if (TitleSlot && TitleWidthConstraint)
+        {
+            const float Width = FMath::Max(150.f, FMath::Min(
+                Size.X - 24.f, bWide ? Size.X * .40f : Size.X * .92f));
+            TitleWidthConstraint->SetWidthOverride(Width);
+            TitleSlot->SetAnchors(
+                bWide ? FAnchors(.76f,.27f) : FAnchors(.5f,.57f));
+        }
     }
     if (AtmosphericAccent)
     {

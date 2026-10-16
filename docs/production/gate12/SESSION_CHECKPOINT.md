@@ -1,5 +1,13 @@
 # Gate 12 — Crash-safe executable checkpoint
 
+## 2026-10-17 / EXACT GATE 10 SOURCE RESOLVED — original ZIP verified / native layout adjustment (CURRENT WORK)
+
+- Exact `Gate10_FINAL_Gate00_Handoff_2026-10-13.zip` **located in user Library**, 38,462,397 bytes, SHA256 `b92074ca762d4db3228ef237747e664ea3abc9c2da48941a20716ae84c2e7f49` matches P0 authoritative. Nested original reference ZIPs + freeze manifest and original pixels examined. Authentic reference layout observations recorded in `docs/production/gate12/GATE12_GATE10_ORIGINAL_REFERENCE_INTAKE_20261017.md`. The original ZIP bytes are **not yet on the remote Windows computer**, so exact source images have NOT been imported into Unreal `.uasset` files; DO NOT mark Gate10 art/animation visually accepted.
+- Native opening source layout now puts an independent editable UMG `ActualGameTitle` over the scene, separate from the lower real action buttons, with separate portrait/landscape responsive anchors and width limits. It is NOT a replacement for approved original gothic throne art or authentic animation: these visual assets still await import/production. Retain original title `NoWorld: False Horizon`; never burn concept screenshot or invented save data into widget tree.
+- Native Continue preflights actual SQLite Foundation schema and integrity rather than only file existence. An invalid or orphaned actual world file remains recoverable and cannot be silently bypassed via New Game; user-facing warning and recovery remain accessible. Added in-game read-only validation step to the isolated genuine Win64 journey.
+- Prior UE5.8.3 10/10 source compile succeeded on `7d37d96` save-validator source. A targeted UnrealEditor-Cmd `-nullrhi` editor automation attempt **FAILED DURING ENGINE EDITOR INITIALIZATION** with `Null assigned to TNotNull` before any test began; this is not a test pass and not evidence of save logic failure. A new Win64 compile for the current native opening and journey code is underway; next execute real isolated no-cook runtime and verify continued World/Ruler traversal. No Android cook/install.
+- Last pushed tested-baseline development commit: `7d37d96f45b236869c40893cce4c0988887acef9` (source-WIP and GitHub static CI PASS); later source and reference intake are **NOT YET PUSHED** as of this checkpoint.
+
 ## 2026-10-17 / NEW BATCH — verified Foundation save integrity before Continue (CURRENT WORK IN PROGRESS)
 
 - **Existing production branch only:** starting source HEAD was `2233dd48ab90f9f2bc3d0d4f8e1984b868aca297`, which carries the completed 23/23 no-cook native Ruler/World receipt. Frozen Foundation, production saves, protected Koikatsu files, Registry and PR #16 remain unchanged.
