@@ -47,6 +47,10 @@ def main() -> None:
         git("rev-parse", "HEAD", root=frozen_worktree) == FROZEN
         if frozen_worktree.is_dir() else None
     )
+    report["checks"]["frozen_foundation_clean"] = (
+        git("status", "--porcelain", root=frozen_worktree) == ""
+        if frozen_worktree.is_dir() else None
+    )
     report["checks"]["production_branch"] = (
         report["branch"] == "production/gate12-koikatsu-ue583-fixture-20261010"
     )
