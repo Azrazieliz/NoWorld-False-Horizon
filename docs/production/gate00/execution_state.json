@@ -1,0 +1,96 @@
+{
+  "schema": "NOWORLD_GATE00_EXECUTION_BOARD_V1",
+  "updated_local_date": "2026-10-16",
+  "timezone": "Europe/Paris",
+  "authority": "Gate00/user; an intent and coordination register, not acceptance of untested game content",
+  "single_issue": "https://github.com/Azrazieliz/Offline-Game/issues/25",
+  "coordination_branch": "coordination/gate00-live-ops-20261016",
+  "frozen_foundation_sha": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+  "pr16": {
+    "number": 16,
+    "status": "draft_open_unmerged"
+  },
+  "device": {
+    "cook_authorized": false,
+    "next_app_visible_adult_mode_requirement": true,
+    "last_current_build_device_verification": "NOT_TESTED"
+  },
+  "verified_git_heads": {
+    "Gate12": "cdcb22bf3f4541e7334b27768d9f43bcfc4a18df",
+    "SoftwareMastery": "b5a0bb3a5a6c99398364982272a2635dca5aae6a"
+  },
+  "tasks": [
+    {
+      "id": "P0-APP",
+      "owner": "Gate12",
+      "status": "ACTIVE",
+      "acceptance": "reproducible native Ruler/World/roster/persistence/Adult-mode pre-cook tests; cook requires explicit user go",
+      "next": "Finish runnable isolated no-cook vertical slice and report concrete blockers",
+      "source_sha": "cdcb22bf3f4541e7334b27768d9f43bcfc4a18df"
+    },
+    {
+      "id": "P0-FIDELITY",
+      "owner": "Gate12",
+      "status": "ACTIVE",
+      "acceptance": "controlled UE raw/roster/World source matching camera/material/morph comparisons",
+      "next": "Capture actual diagnostic renders; fix QA eyeline shader; investigate lost effective morphs"
+    },
+    {
+      "id": "P0-BASE-ART",
+      "owner": "Gate01-2D/Gate00",
+      "status": "DONE",
+      "acceptance": "Previously approved Luminous V3 design; never reopen because of engineering",
+      "next": null
+    },
+    {
+      "id": "P0-BASE-3D",
+      "owner": "Gate01-3D",
+      "status": "CREATIVE_APPROVED_INTAKE_PENDING",
+      "baseline_zip_sha256": "c83d71b687e7760cd4d3f4f2f8b2ec11d3ac28c78c8030367b83723e0dce2456",
+      "next": "Consolidate existing source/engine binding evidence with Gate12; no remake"
+    },
+    {
+      "id": "P0-ALTER",
+      "owner": "Gate01-3D",
+      "status": "USER_SOURCE_PRESERVED_MAPPING_PENDING",
+      "next": "Verify 3 protected Party card latest revisions and exact wardrobe mapping; no 2D prerequisite"
+    },
+    {
+      "id": "P0-MOTION",
+      "owner": "Gate09",
+      "status": "COMMISSION_PREPARED_DELIVERY_UNCONFIRMED",
+      "next": "First actual rig/animation source evidence and clip proof"
+    },
+    {
+      "id": "P1-KIT",
+      "owner": "Gate04",
+      "status": "NOT_ACCEPTED",
+      "next": "Build Base and Alter kit candidates aligned with frozen mechanics"
+    },
+    {
+      "id": "P1-REGISTRY",
+      "owner": "Gate11",
+      "status": "ARTIFACT_READY_NOT_GRANTED",
+      "next": "Validate authentic consolidated package/ID bindings from Gate01-3D/Gate12"
+    },
+    {
+      "id": "P1-WORLD",
+      "owner": "Gate02",
+      "status": "IN_PROGRESS_NOT_ACCEPTED",
+      "next": "Editable Three-Valley Confluence production geography and native Unreal evidence"
+    },
+    {
+      "id": "P1-UI-DESIGN",
+      "owner": "Gate10",
+      "status": "DONE",
+      "next": null
+    }
+  ],
+  "gate_workflows": {
+    "Gate01-2D": "visual concept/approval only",
+    "Gate01-3D": "Party native 3D/rig/materials/export source only"
+  },
+  "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
+  "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
+  "next_user_action": "At most one bounded Android QA-build authorization request after Gate12 reports pre-cook readiness; otherwise no recurring copying."
+}
