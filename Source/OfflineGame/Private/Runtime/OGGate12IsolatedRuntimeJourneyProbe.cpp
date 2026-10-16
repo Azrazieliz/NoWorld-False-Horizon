@@ -20,6 +20,10 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "UI/OGGate12CharacterPreviewStage.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/TextureRenderTarget2D.h"
+#include "EngineUtils.h"
 #include "World/OGStartingRegionPresentation.h"
 #include "UObject/UObjectIterator.h"
 
@@ -318,7 +322,77 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
         if (!bNavigated) {SaveReceipt(true);return;}
         RequestActualGameScreenshot(
             FString::Printf(TEXT("ruler_nav_%s"), DestinationNames[Index]));
+        if (Index == 1 && LiveWidget)
+        {
+            // The visible QA control uses only genuine imported 45-part
+            // Luminous meshes. It is noncanonical and does not own content.
+            LiveWidget->InvokeAction(TEXT("qa/open"));
+            int32 SourceMeshCount = 0;
+            bool bValidTarget = false;
+            for (TActorIterator<AOGGate12CharacterPreviewStage> It(World);
+                 It; ++It)
+            {
+                if (It->IsActorBeingDestroyed() ||
+                    !It->GetLiveRenderTarget())
+                    continue;
+                const int32 FoundMeshes =
+                    It->GetDevelopmentQaSourcePartCount();
+                if (FoundMeshes == 45)
+                {
+                    SourceMeshCount = FoundMeshes;
+                    bValidTarget = true;
+                    break;
+                }
+            }
+            const bool bValidQa = bValidTarget &&
+                Session->OwnedRoster.IsEmpty() &&
+                Session->SelectedManifestationId.IsValid() == false;
+            Record(TEXT("development_45part_preview_noncanonical"),
+                bValidQa,
+                FString::Printf(
+                    TEXT("RealMeshParts=%d RenderTarget=%d FakeOwnership=%d"),
+                    SourceMeshCount, bValidTarget,
+                    Session->OwnedRoster.Num()));
+            RequestActualGameScreenshot(
+                TEXT("ruler_characters_real_source_qa"));
+            if (!bValidQa) {SaveReceipt(true);return;}
+            // The source material first-load shader compilation must not be
+            // mistaken for a character with invisible meshes. Hold the real
+            // development viewer open long enough for GPU texture/shader
+            // streaming before capturing its genuine display again.
+            Phase = 11;
+            ScheduleNext(25.f);
+            return;
+        }
         ++Phase;
+        ScheduleNext(3.f);
+        return;
+    }
+
+    if (Phase == 11)
+    {
+        int32 SourceMeshes = 0;
+        bool bHasTexture = false;
+        for (TActorIterator<AOGGate12CharacterPreviewStage> It(World);
+             It; ++It)
+        {
+            if (It->IsActorBeingDestroyed())
+                continue;
+            SourceMeshes = It->GetDevelopmentQaSourcePartCount();
+            bHasTexture = IsValid(It->GetLiveRenderTarget());
+        }
+        const bool bRemainsValid = SourceMeshes == 45 && bHasTexture &&
+            Session->OwnedRoster.IsEmpty() &&
+            Mode->GetMode() == EOGPresentationMode::Ruler;
+        Record(TEXT("development_45part_preview_survives_shader_warmup"),
+            bRemainsValid,
+            FString::Printf(TEXT("Meshes=%d RT=%d OwnerChanged=%d"),
+                SourceMeshes, bHasTexture,
+                !Session->OwnedRoster.IsEmpty()));
+        RequestActualGameScreenshot(
+            TEXT("ruler_characters_real_source_qa_warm"));
+        if (!bRemainsValid) {SaveReceipt(true);return;}
+        Phase = 4;
         ScheduleNext(3.f);
         return;
     }
@@ -361,12 +435,23 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
         Record(TEXT("live_world_still_active"), bWorld &&
             PC->GetPawn() == InitialPawn.Get(),
             TEXT("Same real World Pawn after three seconds; no cloned ownership"));
+        // Scene screenshot must actually complete BEFORE returning to
+        // Ruler. Previously, immediate same-tick return captured Ruler Home
+        // and falsely looked like a bad World camera/material.
         RequestActualGameScreenshot(TEXT("world"));
-        HUD->NotifyHitBoxClick(FName(TEXT("OG.World.Ruler")));
-        Record(TEXT("world_to_ruler_via_real_canvas_action"),
-            Mode->GetMode() == EOGPresentationMode::Ruler,
-            TEXT("Called existing OG.World.Ruler click handler"));
         Phase = 9;
+        ScheduleNext(3.f);
+        return;
+    }
+
+    if (Phase == 9)
+    {
+        HUD->NotifyHitBoxClick(FName(TEXT("OG.World.Ruler")));
+        const bool bRuler = Mode->GetMode() == EOGPresentationMode::Ruler;
+        Record(TEXT("world_to_ruler_via_real_canvas_action"),
+            bRuler, TEXT("Called existing OG.World.Ruler click handler"));
+        if (!bRuler) {SaveReceipt(true);return;}
+        Phase = 10;
         ScheduleNext(3.f);
         return;
     }

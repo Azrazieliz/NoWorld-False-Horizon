@@ -40,6 +40,8 @@ public:
     static bool IsDevelopmentQaClassAllowed(const UClass* SourceQaClass);
 
     UTextureRenderTarget2D* GetLiveRenderTarget() const { return RenderTarget; }
+    /** Actual transient imported mesh components installed for QA; no synthetic actor. */
+    int32 GetDevelopmentQaSourcePartCount() const { return DevelopmentQaMeshParts.Num(); }
     /** Freeze a roster thumbnail to cap Android scene-capture frame cost. */
     void SetLiveCapture(bool bLive);
     void ReleasePreview();

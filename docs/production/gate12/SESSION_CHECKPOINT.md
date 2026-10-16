@@ -2,12 +2,21 @@
 
 Updated: 2026-10-16 Europe/Paris
 Work item: P0-APP / Issue #25, with independent P0-FIDELITY hold
-Status: ACTIVE — new native integration under Win64 build, not yet accepted
+Status: ACTIVE — 16/16 real Win64 journey and 150/150 current native tests verified; whole game/art/content not complete
 Working branch: production/gate12-koikatsu-ue583-fixture-20261010
-Latest independently VERIFIED Win64 real-game startup commit: 55c1a1e64621f4267cb3ed0a224ac2d7e00a6b16
-Passive 45-part QA viewer source revision: compiled and targeted/full native regression PASS. Not yet verified in the actual Ruler UI or accepted as production content.
+Last pushed source checkpoint before latest 16-step acceptance: 5c6496e0274f5a5878a878a665440d71145db0db. Obtain actual current SHA with git log -1, do not assume new source is pushed until verified.
+Development QA viewer confirmed REAL rendered 45 original CLOTHED imported meshes after warmup; QA only, not Gate11-approved production. Current native Gate12 11/11 and full 150/150 PASSED, 18 warnings not art acceptance.
 
-## Recovery FIRST ACTION (mandatory after conversation failure)
+## LATEST VERIFIED WORK — authoritative before historical notes below
+
+- On 2026-10-16, genuine isolated UE5.8.3 Win64 GAME had **16/16 end-to-end runtime checks PASS**: five Ruler destinations, 45-part imported genuine Luminous QA portrait before and after 25-second shader warmup, World prototype scene screenshot, safe return with identical stored Ruler/Pawn and no fabricated Manifestation. Evidence: `docs/production/gate12/ISSUE25_REAL_3D_PREVIEW_AND_WORLD_20261016.md` and `docs/production/gate12/evidence/issue25/Real3DPreviewAndWorld_20261016/`.
+- **Current source compiled twice successfully**: `Saved/Logs/Gate12_Issue25_Real3DQAWorldFrame_Fixed_20261016.log` (8/8), `Saved/Logs/Gate12_Issue25_LiveQaShaderWarmup_20261016.log` (6/6). GPU first-load black QA preview fixed by DEV-ONLY live stage capture while page open; approved production preview policy unchanged.
+- **Current native regressions PASSED after final source changes:** targeted 10 clean + 1 warning + 0 failed, Full 132 clean + 18 warnings + 0 failed; source `Saved/Gate12Readiness/Native_Gate12_20261016_190628` and `Saved/Gate12Readiness/Native_Full_20261016_190715`; full machine-readable indices copied to same evidence dir.
+- Original Foundation `D:\UnrealProjects\Offline-Game` remains frozen. Protected original two Koikatsu .cpp/.h are pre-existing local modifications and MUST remain unstaged/unmodified. Original `WorldState.db` still length 970752 bytes, mtime 2026-10-10.
+- **NEXT EXECUTABLE ACTION:** Check `git log -1 --oneline` and `git status --short`, commit + push only targeted verified source and 16/16 evidence if not already pushed. Then continue isolated runtime implementation and visual improvements; no Android cook/package/install until user's separate explicit approval.
+- **Still unaccepted:** production character sources/Registry mapping, real multi-state material/morph/skeleton fidelity, 13 embodied simultaneous animated interaction demo, final Gate10 art and 100×100 km Gate02 kingdom assets, Android device operation. Do NOT declare game DONE; do NOT merge PR#16 or edit frozen Foundation.
+
+## Recovery FIRST ACTION (historical workflow; latest section supersedes old next steps)
 1. Read https://github.com/Azrazieliz/Offline-Game/issues/25 and its four linked documents on coordination/gate00-live-ops-20261016; obey later explicit direct user instruction over older board text.
 2. On PC `D:\UnrealProjects\OfflineGame_Gate12_Koikatsu_20261010`, inspect `git log -1 --oneline; git status --short`, then this file. DO NOT git reset/clean/stash/rebase or merge PR#16. Frozen Foundation is a distinct worktree at `D:\UnrealProjects\Offline-Game` / `3f54f07cacbf193e160d0be15a7be5a7bc730c3b`.
 3. Preserve the pre-existing tracked modifications to `Source/OfflineGame/Private/Koikatsu/OGKoikatsuPlayableCharacter.cpp` and `Source/OfflineGame/Public/Koikatsu/OGKoikatsuPlayableCharacter.h` (not this commission). Protect untracked original Koikatsu characters, GLBs, uassets, APKs and user saves.

@@ -447,8 +447,13 @@ void UOGGate12NativeRulerWidget::BuildDevelopmentQaCharacterViewer()
             16, TextMuted);
         return;
     }
-    // A single capture avoids permanent mobile scene-capture frame cost.
-    PreviewStage->SetLiveCapture(false);
+    // This fixture exists only in non-Shipping builds. Newly loaded real
+    // 45-part meshes may have outstanding GPU shader/texture compilation;
+    // freezing the first frame produces an empty black render target.
+    // Keep the development-only preview live while its page is visible.
+    // BuildCurrentPage()/ReleasePreviewStage destroys it on navigation.
+    // Canonical production thumbnails retain their separate frozen policy.
+    PreviewStage->SetLiveCapture(true);
     FSlateBrush Brush;
     Brush.SetResourceObject(PreviewStage->GetLiveRenderTarget());
     Brush.ImageSize = FVector2D(512.f, 768.f);
