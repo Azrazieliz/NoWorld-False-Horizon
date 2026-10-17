@@ -1,3 +1,7 @@
+# 2026-10-17 16:08 — CODE-FIRST AUDIT CONTINUATION
+
+Baseline 5ec44af; protected local source snapshot Saved/CodeFirstAudit/20261017_155932. Read the new code-first audit/matrix/backlog. Audit IN PROGRESS, not exhaustive acceptance. Current build/native 150 pass; current actual journey FAIL at neutral interaction and receipt output. Save validator/test deletion confirmed. Next: scoped save boundary repair and native regression. Android dev testing authorized by latest user; old no-cook text below is historical. Do not revert current UI or protected assets.
+
 # Gate 12 — Crash-safe executable checkpoint
 
 ## 2026-10-17 / EXACT GATE 10 SOURCE RESOLVED — original ZIP verified / native layout adjustment (CURRENT WORK)
