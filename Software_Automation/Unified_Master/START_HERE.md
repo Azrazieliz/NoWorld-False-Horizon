@@ -4,6 +4,8 @@
 
 > **TEST 4 → TEST 5 MANDATORY (2026-10-17):** Read `TEST04_LESSONS_ONE_SESSION_GATE01_20261017.md` and K035–K037. Use `kk_one_session.py` to search the full catalog, stage relevant packages BEFORE one Maker launch, then send native edits as a persistent timed batch without repeated application restarts. The user's 6.7/10 Test4 rating and ~25-minute elapsed/~1-minute active estimate are recorded. Offline checks do not constitute a measured Test5 improvement.
 
+> **P0 VISUAL GATES (2026-10-17):** Before any claim of Koikatsu image-to-3D visual progress, load `KK_FEATURE_GATE_PIPELINE_20261017.md`. Run the reference-first feature manifest, independent hard-gated scores for every visible feature, real native candidate comparison and restored-baseline proof. Unverified semantic boxes, poorly matching faces, hair, outfits or shapes prevent approval irrespective of card saves, mesh counts or whole-image scores. Measured tests are synthetic until user provides a new high-resolution unseen reference; DO NOT claim TRELLIS-equivalent reconstruction or production readiness from these scaffolds.
+
 **Branch:** `software/mastery-integrated` — do not merge into frozen production Foundation.
 **Scope:** executable production *tools*, not creation of canonical characters/worlds or artistic approval.
 **Windows host:** `LAPTOP-1LI4VRCJ`.

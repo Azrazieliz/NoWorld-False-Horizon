@@ -52,6 +52,11 @@ SOURCE_SNIPPETS = {
     "test05_repair_native_body_scale.py": ["FIXED_SOURCE_KK_CHAR_DIMENSIONS", "model_arm", "1<maxz-minz<2.5"],
     "test05_rebind_native_kkbp_v4.py": ["NATIVE_TEST05_IMPORTED", "ACTUAL_TEST05_BODY_HEIGHT", "Authentic Test05 Koikatsu exported texture"],
     "test05_qa_and_regressions.py": ["body_not_double_scaled", "source_native_eye_and_face_texture_nodes", "FAIL_REFERENCE_LIKENESS"],
+    "kk_reference_features.py": ["GEOMETRIC_HUMANOID_PRIOR", "feature_identity_verified", "reference_sha256", "features"],
+    "kk_feature_gates.py": ["score_features", "BLOCK_UNVERIFIED_FEATURE_ROI", "blocked_critical_gates", "artistic_visual_fidelity_accepted"],
+    "kk_gate_native_optimizer.py": ["select_compare", "feature_improvements", "feature_regressions", "native_state_restored"],
+    "test_kk_feature_gates.py": ["floating_hair_affects_hair_gate", "wrong_robe_main_outfit_detected"],
+    "test_kk_gate_native_optimizer.py": ["baseline_restored_after_trials", "wrong_outfit_lower_gate_score"],
 }
 def ensure_master(ledger_path=LEDGER, source_dir=HERE):
     """Fail closed on missing contract, missing scope, or known regressed sources.
