@@ -9013,46 +9013,51 @@ void AOGWorldPresentationHud::DrawHUD()
                     : (CompassYaw < 225.0f)
                         ? TEXT("S")
                         : TEXT("W");
-        DrawRect(
-            FLinearColor(0.04f, 0.05f, 0.06f, 0.76f),
-            28.0f * Scale,
-            24.0f * Scale,
-            112.0f * Scale,
-            38.0f * Scale);
-        DrawFoundationText(
-            FString::Printf(
-                TEXT("%s  %03.0f"),
-                Cardinal,
-                CompassYaw),
-            MainText,
-            42.0f * Scale,
-            34.0f * Scale,
-            nullptr,
-            0.58f * Scale,
-            false);
-
-        // Knowledge-limited minimap: only the player's actually visited trail
-        // is drawn. Hidden locations, enemies and undiscovered structures are
-        // never projected into this map.
-        const float MiniX = 28.0f * Scale;
-        const float MiniY = 70.0f * Scale;
-        const float MiniSize = 146.0f * Scale;
+        // Frozen Gate10 World HUD: circular, user-knowledge-only minimap in
+        // the upper LEFT, no detached square compass box or on-HUD quest.
+        const float MiniX = 25.0f * Scale;
+        const float MiniY = 25.0f * Scale;
+        const float MiniSize = 157.0f * Scale;
         const float MiniCenterX = MiniX + MiniSize * 0.5f;
         const float MiniCenterY = MiniY + MiniSize * 0.5f;
-        DrawRect(
-            FLinearColor(0.025f, 0.035f, 0.045f, 0.80f),
-            MiniX,
-            MiniY,
-            MiniSize,
-            MiniSize);
+        const float MiniRadius = MiniSize * .48f;
+        Canvas->K2_DrawPolygon(nullptr,
+            FVector2D(MiniCenterX, MiniCenterY),
+            FVector2D(MiniRadius, MiniRadius), 64,
+            FLinearColor(.005f,.006f,.012f,.74f));
+        for (int32 Ring = 0; Ring < 2; ++Ring)
+        {
+            const float Radius = MiniRadius - Ring * 5.f * Scale;
+            const FLinearColor Stroke = Ring == 0
+                ? FLinearColor(.77f,.66f,.40f,.87f)
+                : FLinearColor(.38f,.37f,.42f,.67f);
+            for (int32 Step=0; Step<64; ++Step)
+            {
+                const float A=Step*2.f*PI/64.f;
+                const float B=(Step+1)*2.f*PI/64.f;
+                DrawLine(MiniCenterX+FMath::Cos(A)*Radius,
+                    MiniCenterY+FMath::Sin(A)*Radius,
+                    MiniCenterX+FMath::Cos(B)*Radius,
+                    MiniCenterY+FMath::Sin(B)*Radius,
+                    Stroke, Ring==0 ? 1.65f : .9f);
+            }
+        }
+        for (int32 Mark=0; Mark<12; ++Mark)
+        {
+            const float Angle = Mark * 2.f*PI/12.f;
+            const float Outer = MiniRadius-2.f*Scale;
+            const float Inner = Outer-(Mark%3==0 ? 9.f:5.f)*Scale;
+            DrawLine(MiniCenterX+FMath::Cos(Angle)*Inner,
+                MiniCenterY+FMath::Sin(Angle)*Inner,
+                MiniCenterX+FMath::Cos(Angle)*Outer,
+                MiniCenterY+FMath::Sin(Angle)*Outer,
+                FLinearColor(.86f,.75f,.56f,.81f), 1.2f);
+        }
         DrawFoundationText(
-            TEXT("Map"),
-            SubText,
-            MiniX + 8.0f * Scale,
-            MiniY + 6.0f * Scale,
-            nullptr,
-            0.40f * Scale,
-            false);
+            Cardinal, MainText,
+            MiniCenterX-5.0f*Scale,
+            MiniY+8.0f*Scale,
+            nullptr, .6f*Scale, false);
 
         const FVector CharacterLocation =
             Character->GetActorLocation();
@@ -9079,12 +9084,15 @@ void AOGWorldPresentationHud::DrawHUD()
                 MiniCenterY -
                 (Delta.Y / MiniWorldRadius) *
                     (MiniSize * 0.44f);
-            DrawRect(
-                FLinearColor(0.64f, 0.72f, 0.76f, 0.82f),
-                X - 1.5f * Scale,
-                Y - 1.5f * Scale,
-                3.0f * Scale,
-                3.0f * Scale);
+            // No unvisited or out-of-ring points are projected.
+            if (FVector2D(X-MiniCenterX,Y-MiniCenterY).SizeSquared() <
+                FMath::Square(MiniRadius-12.f*Scale))
+            {
+                DrawRect(
+                    FLinearColor(.67f,.68f,.78f,.83f),
+                    X-1.5f*Scale,Y-1.5f*Scale,
+                    3.f*Scale,3.f*Scale);
+            }
         }
 
         DrawRect(
@@ -9218,8 +9226,11 @@ void AOGWorldPresentationHud::DrawHUD()
                 continue;
             }
 
-            const float CardW = FMath::Max(340.0f * Scale, FMath::Min(Canvas->ClipX, Canvas->ClipY) * 0.34f);
-            const float CardH = FMath::Max(92.0f * Scale, 2.0f * FMath::Min(Canvas->ClipX, Canvas->ClipY) / 27.0f + 20.0f);
+            // Approved upper-right: exactly two compact companion/QTE tabs,
+            // not tall character placeholders swallowing world visibility.
+            const float ShortSide = FMath::Min(Canvas->ClipX,Canvas->ClipY);
+            const float CardW = FMath::Min(238.f*Scale,ShortSide*.28f);
+            const float CardH = FMath::Min(64.f*Scale,ShortSide*.085f);
             const float CardX =
                 Canvas->ClipX - CardW - 24.0f * Scale;
             const float CardY =
@@ -9236,14 +9247,29 @@ void AOGWorldPresentationHud::DrawHUD()
                         TEXT("Companion %d"),
                         SlotIndex);
 
-            DrawGamePanel(FLinearColor(.025f,.045f,.075f,.90f),CardX,CardY,CardW,CardH);
-            DrawFoundationCharacterStandIn(CardX,CardY,CardH*.74f,CardH,
-                bAvailable?FLinearColor(.38f,.72f,.75f,1):FLinearColor(.35f,.38f,.4f,1));
-            DrawGameText(SlotLabel,CardX+CardH*.85f,CardY+CardH*.12f,CardH*.26f,
-                MainText,CardW-CardH*.92f);
-            DrawGameText(bAvailable?(bQteReady?TEXT("QTE ready"):TEXT("Switch")):TEXT("Unavailable"),
-                CardX+CardH*.85f,CardY+CardH*.56f,CardH*.22f,
-                bQteReady?FLinearColor(.83f,.72f,.47f,1):SubText,CardW-CardH*.92f);
+            DrawGamePanel(FLinearColor(.008f,.009f,.017f,.91f),
+                CardX,CardY,CardW,CardH);
+            const FLinearColor FineGold(.64f,.57f,.39f,.88f);
+            DrawLine(CardX,CardY,CardX+CardW,CardY,FineGold,1.1f);
+            DrawLine(CardX,CardY+CardH,CardX+CardW,CardY+CardH,
+                FLinearColor(.31f,.30f,.34f,.88f),.9f);
+            // Explicitly blank until the precise Registry-authorized art
+            // exists; never use synthetic illustrated stand-ins as portraits.
+            const float PortraitW=CardH*.73f;
+            DrawRect(FLinearColor(.018f,.018f,.024f,.91f),
+                CardX+1.f*Scale,CardY+2.f*Scale,
+                PortraitW,CardH-4.f*Scale);
+            DrawLine(CardX+PortraitW,CardY,
+                CardX+PortraitW,CardY+CardH,FineGold,1.1f);
+            const float TextX=CardX+PortraitW+6.f*Scale;
+            DrawGameText(SlotLabel,TextX,CardY+CardH*.13f,
+                CardH*.29f,MainText,CardW-PortraitW-8.f*Scale);
+            DrawGameText(bAvailable
+                    ? (bQteReady ? TEXT("QTE READY") : TEXT("SWITCH"))
+                    : TEXT("UNAVAILABLE"),
+                TextX,CardY+CardH*.62f,CardH*.21f,
+                bQteReady ? FineGold : SubText,
+                CardW-PortraitW-8.f*Scale);
 
             if (bAvailable)
             {
@@ -9258,7 +9284,7 @@ void AOGWorldPresentationHud::DrawHUD()
 
                 if (bQteReady)
                 {
-                    const float QteW = 72.0f * Scale;
+                    const float QteW = 42.0f * Scale;
                     DrawRect(
                         FLinearColor(0.20f, 0.23f, 0.28f, 0.96f),
                         CardX - QteW - 8.0f * Scale,
