@@ -75,7 +75,7 @@ $Result=Join-Path $Destination 'runtime_smoke_observation.json'
 $Args=@(
  $Project,
  '/Game/Maps/StartingWorld',
- '-game','-windowed','-ResX=432','-ResY=700',
+ '-game','-windowed',("-ResX=$ResX"),("-ResY=$ResY"),
  '-NoSplash','-NoP4','-NoSound',
  "-ABSLOG=$Log"
 )
@@ -84,6 +84,9 @@ if (!$Onscreen) {
 }
 if ($Journey) {
  $Args += '-Gate12RuntimeJourney'
+}
+if ($ResX -ne 432 -or $ResY -ne 700) {
+ $Args += ('-ExecCmds=r.SetRes {0}x{1}w' -f $ResX,$ResY)
 }
 if (!$SkipScreenshot) {
  $Args += '-ExecCmds="HighResShot 1"'

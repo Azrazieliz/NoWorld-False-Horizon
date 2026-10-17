@@ -9,6 +9,7 @@
 #include "UI/OGGate12CharacterPresentationPreferences.h"
 #include "Runtime/OGPlayerProfileSettings.h"
 #include "Components/Image.h"
+#include "Styling/SlateBrush.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Engine/Texture2D.h"
@@ -78,6 +79,20 @@ FString DestinationTitle(EOGRulerPrimaryDestination Dest)
     }
     return TEXT("UNKNOWN");
 }
+}
+
+// Default Slate button brushes made black art appear as four grey tiles.
+// Keep native mouse/touch, keyboard and action delegates; only omit the
+// builtin filled brush so our native Gothic frames render above them.
+UOGGate12RulerActionButton::UOGGate12RulerActionButton(
+    const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+    FSlateBrush Empty;
+    Empty.DrawAs = ESlateBrushDrawType::NoDrawType;
+    WidgetStyle.SetNormal(Empty);
+    WidgetStyle.SetHovered(Empty);
+    WidgetStyle.SetPressed(Empty);
+    WidgetStyle.SetDisabled(Empty);
 }
 
 void UOGGate12RulerActionButton::InvokeAction()
@@ -354,8 +369,9 @@ void UOGGate12NativeRulerWidget::AddAction(
     Frame->Configure(bEnabled
         ? FLinearColor(.61f,.58f,.64f,1.f)
         : FLinearColor(.30f,.29f,.34f,1.f),INDEX_NONE,false);
-    Layers->AddChildToOverlay(Frame);
     Layers->AddChildToOverlay(Button);
+    Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
+    Layers->AddChildToOverlay(Frame);
     USizeBox* TouchHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass());
     TouchHeight->SetMinDesiredHeight(45.f);
@@ -440,7 +456,7 @@ void UOGGate12NativeRulerWidget::BuildNav()
         Icon->SetColorAndOpacity(FSlateColor(bSelected
             ? ContextAccent : FLinearColor(.57f,.55f,.61f,1.f)));
         FSlateFontInfo IconFont = Icon->GetFont();
-        IconFont.Size = 24;
+        IconFont.Size = 31;
         Icon->SetFont(IconFont);
         NativeInsignia->AddChildToVerticalBox(Icon)
             ->SetPadding(FMargin(0.f,5.f,0.f,0.f));
@@ -452,7 +468,7 @@ void UOGGate12NativeRulerWidget::BuildNav()
             ? FLinearColor(.91f,.90f,.92f,1.f)
             : FLinearColor(.65f,.63f,.68f,1.f)));
         FSlateFontInfo LabelFont = Label->GetFont();
-        LabelFont.Size = 16;
+        LabelFont.Size = 22;
         Label->SetFont(LabelFont);
         Label->SetAutoWrapText(false);
         NativeInsignia->AddChildToVerticalBox(Label)
@@ -465,8 +481,9 @@ void UOGGate12NativeRulerWidget::BuildNav()
                 UOGGate12GothicChromeWidget::StaticClass());
         Gothic->Configure(bSelected ? ContextAccent
             : FLinearColor(.49f,.46f,.54f,1.f),Index,bSelected);
-        Layers->AddChildToOverlay(Gothic);
         Layers->AddChildToOverlay(Button);
+        Gothic->SetVisibility(ESlateVisibility::HitTestInvisible);
+        Layers->AddChildToOverlay(Gothic);
         UHorizontalBoxSlot* NavigationCell =
             NavigationBar->AddChildToHorizontalBox(Layers);
         NavigationCell->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -623,6 +640,14 @@ void UOGGate12NativeRulerWidget::BuildHome()
     Void->SetBrushColor(FLinearColor(.003f,.003f,.007f,
         Session->OwnedRoster.IsEmpty() ? .92f : .17f));
     Position(Void,0.f,0.f,1.f,1.f);
+    UOGGate12GothicChromeWidget* HomeRails =
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass(),
+            TEXT("Gate10HomeSharedGachaOrnamentalRails"));
+    HomeRails->Configure(FLinearColor(.58f,.56f,.63f,1.f),
+        INDEX_NONE,false);
+    HomeRails->SetVisibility(ESlateVisibility::HitTestInvisible);
+    Position(HomeRails,.016f,.011f,.983f,.994f);
 
     // Editable Figma artwork shared with Gate10's accepted Gacha language.
     // It contains ONLY decorative shapes, never mockup characters or data.
@@ -656,15 +681,15 @@ void UOGGate12NativeRulerWidget::BuildHome()
     const FLinearColor Silver(.84f,.81f,.90f,1.f);
     const FLinearColor Dim(.56f,.53f,.64f,1.f);
     TextAt(TEXT("THE RULER"),TEXT("Gate10HomeRulerIdentifierTitle"),
-        .07f,.033f,.63f,.090f,34,Silver);
+        .07f,.033f,.63f,.090f,49,Silver);
     TextAt(FString::Printf(TEXT("ID  %s"),
         *Session->BoundRulerId.ToString().Left(14)),
-        TEXT("HomeActualBoundRulerID"),.10f,.090f,.64f,.13f,12,Dim);
+        TEXT("HomeActualBoundRulerID"),.10f,.090f,.64f,.13f,20,Dim);
     if (Session->OwnedRoster.IsEmpty())
     {
         TextAt(TEXT("NO OWNED MANIFESTATIONS"),
             TEXT("ActualEmptyRosterOnHome"),
-            .12f,.485f,.63f,.55f,16,Dim);
+            .12f,.485f,.63f,.55f,24,Dim);
     }
 
     auto NativeAction=[this,&Position](const TCHAR* Caption,
@@ -698,7 +723,7 @@ void UOGGate12NativeRulerWidget::BuildHome()
         Label->SetColorAndOpacity(FSlateColor(
             FLinearColor(.87f,.84f,.93f,1.f)));
         FSlateFontInfo F=Label->GetFont();
-        F.Size=19;Label->SetFont(F);
+        F.Size=27;Label->SetFont(F);
         Button->AddChild(Label);
         Surface->AddChildToOverlay(Button);
         Position(Surface,.69f,Y,.965f,Y+.103f);
@@ -713,10 +738,10 @@ void UOGGate12NativeRulerWidget::BuildHome()
     Position(Rule,.06f,.917f,.94f,.919f);
     TextAt(FString::Printf(TEXT("%d TERRITORIES"),
         Session->TerritoryProjection.Territories.Num()),
-        TEXT("HomeRealTerritoryCount"),.055f,.933f,.46f,.975f,12,Dim);
+        TEXT("HomeRealTerritoryCount"),.055f,.933f,.46f,.975f,18,Dim);
     TextAt(FString::Printf(TEXT("%d UNREAD REPORTS"),
         Session->HomeProjection.UnacknowledgedReportCount),
-        TEXT("HomeActualReportCount"),.52f,.933f,.96f,.975f,12,Dim);
+        TEXT("HomeActualReportCount"),.52f,.933f,.96f,.975f,18,Dim);
 }
 
 void UOGGate12NativeRulerWidget::HandleRosterSearchChanged(
@@ -1404,6 +1429,21 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
     MapEtch->Configure(FLinearColor(.58f,.54f,.61f,1.f),INDEX_NONE,false);
     MapEtch->SetVisibility(ESlateVisibility::HitTestInvisible);
     MapLayers->AddChildToOverlay(MapEtch);
+    if (!TerritoryMapWidget->HasKnownTrail())
+    {
+        UTextBlock* Unexplored=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass(),TEXT("RealUnknownGeographyState"));
+        Unexplored->SetText(FText::FromString(TEXT("UNDISCOVERED WORLD")));
+        Unexplored->SetJustification(ETextJustify::Center);
+        Unexplored->SetColorAndOpacity(FSlateColor(
+            FLinearColor(.57f,.55f,.63f,.89f)));
+        FSlateFontInfo F=Unexplored->GetFont();
+        F.Size=24;Unexplored->SetFont(F);
+        Unexplored->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UOverlaySlot* Empty=MapLayers->AddChildToOverlay(Unexplored);
+        Empty->SetHorizontalAlignment(HAlign_Center);
+        Empty->SetVerticalAlignment(VAlign_Center);
+    }
     MapFrame->AddChild(MapLayers);
     USizeBox* MapHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(),TEXT("TerritoryMapViewportHeight"));
@@ -1526,7 +1566,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     // the four native sections and push meaningful content offscreen.
     UUniformGridPanel* Board = WidgetTree->ConstructWidget<UUniformGridPanel>(
         UUniformGridPanel::StaticClass(), TEXT("FrozenRecordsFourSectionBoard"));
-    Board->SetSlotPadding(FMargin(7.f));
+    Board->SetSlotPadding(FMargin(7.f,9.f));
     Content->AddChildToVerticalBox(Board);
     for (int32 Index=0; Index<4; ++Index)
     {
@@ -1556,7 +1596,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         Crest->SetColorAndOpacity(FSlateColor(bActive
             ? FLinearColor(.87f,.85f,.91f,1.f)
             : FLinearColor(.55f,.53f,.61f,1.f)));
-        FSlateFontInfo CF = Crest->GetFont(); CF.Size=24; Crest->SetFont(CF);
+        FSlateFontInfo CF = Crest->GetFont(); CF.Size=40; Crest->SetFont(CF);
         Face->AddChildToVerticalBox(Crest)->SetPadding(FMargin(0.f,9.f,0.f,0.f));
         UTextBlock* Title = WidgetTree->ConstructWidget<UTextBlock>(
             UTextBlock::StaticClass());
@@ -1573,6 +1613,28 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         Sub->SetColorAndOpacity(FSlateColor(TextMuted));
         FSlateFontInfo SF = Sub->GetFont(); SF.Size=13; Sub->SetFont(SF);
         Face->AddChildToVerticalBox(Sub)->SetPadding(FMargin(6.f,2.f,6.f,9.f));
+        UTextBlock* RealCount=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        FString RealSummary;
+        if (Index==0)
+            RealSummary=FString::Printf(TEXT("%d VERIFIED"),
+                Session->RecordsProjection.ReportCount);
+        else if (Index==1)
+            RealSummary=FString::Printf(TEXT("%d KNOWN"),
+                Session->ChronicleProjection.Num());
+        else if (Index==2)
+            RealSummary=TEXT("NO VERIFIED CODEX PACKAGE");
+        else
+            RealSummary=FString::Printf(TEXT("%d KNOWN"),
+                Session->IntelligenceProjection.Num());
+        RealCount->SetText(FText::FromString(RealSummary));
+        RealCount->SetJustification(ETextJustify::Center);
+        RealCount->SetColorAndOpacity(FSlateColor(
+            FLinearColor(.68f,.66f,.74f,1.f)));
+        FSlateFontInfo SummaryFont=RealCount->GetFont();
+        SummaryFont.Size=16; RealCount->SetFont(SummaryFont);
+        Face->AddChildToVerticalBox(RealCount)
+            ->SetPadding(FMargin(6.f,18.f,6.f,10.f));
         // Real native text stays interactive, while the Gacha-style black
         // panel prevents the default UButton Slate grey from filling the
         // frozen Records card. The etching must paint ABOVE the hit surface.
@@ -1600,7 +1662,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         Frame->AddChild(OrnamentedRecord);
         USizeBox* Size = WidgetTree->ConstructWidget<USizeBox>(
             USizeBox::StaticClass());
-        Size->SetMinDesiredHeight(255.f);
+        Size->SetMinDesiredHeight(400.f);
         Size->AddChild(Frame);
         Board->AddChildToUniformGrid(Size, Index/2, Index%2);
     }
@@ -1612,13 +1674,23 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         UBorder::StaticClass(), TEXT("RecordsCanonicalDetailBlack"));
     DetailDark->SetBrushColor(FLinearColor(.009f,.009f,.013f,.95f));
     DetailDark->SetPadding(FMargin(8.f,10.f));
-    DetailFrame->AddChild(DetailDark);
+    UOverlay* DetailLayers=WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(),TEXT("RecordsCanonicalDetailGothicLayers"));
+    DetailLayers->AddChildToOverlay(DetailDark);
+    UOGGate12GothicChromeWidget* DetailRails=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    DetailRails->Configure(FLinearColor(.56f,.54f,.65f,1.f),
+        INDEX_NONE,false);
+    DetailRails->SetVisibility(ESlateVisibility::HitTestInvisible);
+    DetailLayers->AddChildToOverlay(DetailRails);
+    DetailFrame->AddChild(DetailLayers);
     UVerticalBox* Detail = WidgetTree->ConstructWidget<UVerticalBox>(
         UVerticalBox::StaticClass(), TEXT("RecordsActualKnowledgeDetail"));
     DetailDark->AddChild(Detail);
     USizeBox* DetailHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("RecordsGachaLanguageDetailedPanel"));
-    DetailHeight->SetMinDesiredHeight(310.f);
+    DetailHeight->SetMinDesiredHeight(440.f);
     DetailHeight->AddChild(DetailFrame);
     Content->AddChildToVerticalBox(DetailHeight)
         ->SetPadding(FMargin(7.f,13.f,7.f,10.f));

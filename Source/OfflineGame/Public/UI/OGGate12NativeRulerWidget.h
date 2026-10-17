@@ -28,6 +28,8 @@ class OFFLINEGAME_API UOGGate12RulerActionButton : public UButton
 {
     GENERATED_BODY()
 public:
+    UOGGate12RulerActionButton(const FObjectInitializer& ObjectInitializer);
+
     UPROPERTY(Transient)
     TObjectPtr<UOGGate12NativeRulerWidget> RulerWidget;
 

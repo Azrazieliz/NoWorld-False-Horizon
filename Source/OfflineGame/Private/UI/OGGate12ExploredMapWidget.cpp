@@ -53,8 +53,8 @@ int32 UOGGate12ExploredMapWidget::NativePaint(
     // Geographic content is unknown until actually discovered. Render only
     // a nonsemantic projected coordinate grid, not fabricated continents,
     // locations, ownership or a baked concept-map screenshot.
-    const float Spacing = FMath::Max(30.f, 84.f * Zoom);
-    const FLinearColor GridInk(.23f,.22f,.29f,.45f);
+    const float Spacing = FMath::Max(36.f, 106.f * Zoom);
+    const FLinearColor GridInk(.42f,.40f,.49f,.67f);
     for (float X = FMath::Fmod(Center.X,Spacing); X <= Size.X; X += Spacing)
     {
         FSlateDrawElement::MakeLines(DrawElements,Base+1,
