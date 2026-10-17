@@ -18,6 +18,7 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "Components/Border.h"
+#include "Components/ButtonSlot.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
 #include "Components/EditableTextBox.h"
@@ -26,6 +27,7 @@
 #include "Components/OverlaySlot.h"
 #include "ImageUtils.h"
 #include "Misc/Paths.h"
+#include "HAL/PlatformFileManager.h"
 #include "HAL/FileManager.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/SafeZone.h"
@@ -45,6 +47,33 @@ namespace
 const FLinearColor TextMain(0.90f, 0.90f, 0.89f, 1.0f);
 const FLinearColor TextMuted(0.55f, 0.58f, 0.61f, 1.0f);
 const FLinearColor Gate12RulerGold(0.72f, 0.62f, 0.44f, 1.0f);
+
+// A single approved-display typography hierarchy across native Ruler pages.
+// The OFL Cinzel faces ship in Content/Slate/Fonts (packaged as UFS), never
+// depend on Windows fonts. Keep paragraphs legible with engine-provided
+// medium sans; Cinzel is reserved for headings, labels and ornamental actions.
+FSlateFontInfo Gate10Type(int32 Size, bool bDisplay = false,
+    bool bEmphasis = false)
+{
+    const FString FontFile = bDisplay
+        ? FPaths::ProjectContentDir() / TEXT("Slate/Fonts/")
+            / (bEmphasis ? TEXT("Cinzel-Bold.ttf") : TEXT("Cinzel-Regular.ttf"))
+        : FPaths::EngineContentDir()
+            / TEXT("Slate/Fonts/")
+            / (bEmphasis ? TEXT("Roboto-Bold.ttf") : TEXT("Roboto-Medium.ttf"));
+    return FSlateFontInfo(FontFile, static_cast<float>(Size));
+}
+
+void CenterNativeButton(UOGGate12RulerActionButton* Button, UWidget* Child)
+{
+    if (!Button || !Child) return;
+    if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->AddChild(Child)))
+    {
+        Slot->SetHorizontalAlignment(HAlign_Fill);
+        Slot->SetVerticalAlignment(VAlign_Center);
+        Slot->SetPadding(FMargin(4.f,3.f));
+    }
+}
 
 struct FNativeRarityColors
 {
@@ -223,9 +252,8 @@ void UOGGate12NativeRulerWidget::BuildRoot()
         UTextBlock::StaticClass(), TEXT("GameTitle"));
     Heading->SetText(FText::FromString(TEXT("NoWorld: False Horizon")));
     Heading->SetColorAndOpacity(FSlateColor(Gate12RulerGold));
-    FSlateFontInfo HeadingFont = Heading->GetFont();
-    HeadingFont.Size = 24;
-    Heading->SetFont(HeadingFont);
+    Heading->SetJustification(ETextJustify::Center);
+    Heading->SetFont(Gate10Type(28,true,true));
     UBorder* StatusBar = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("RulerStatusOrnamentalStrip"));
     StatusBar->SetBrushColor(FLinearColor(.010f,.010f,.013f,.94f));
@@ -349,11 +377,24 @@ void UOGGate12NativeRulerWidget::AddMessage(
     Label->SetText(FText::FromString(Value));
     Label->SetColorAndOpacity(FSlateColor(Tint));
     Label->SetAutoWrapText(true);
-    FSlateFontInfo Font = Label->GetFont();
-    Font.Size = FontSize;
-    Label->SetFont(Font);
+    const bool bChapter = FontSize >= 20 ||
+        Value == TEXT("KNOWN EXPLORATION") ||
+        Value == TEXT("MY TERRITORIES") ||
+        Value == TEXT("ANALYTICAL OVERLAY");
+    const int32 ReadableSize = FontSize < 20
+        ? FMath::Max(23, FMath::RoundToInt(FontSize*1.42f))
+        : FMath::Max(28, FMath::RoundToInt(FontSize*1.20f));
+    Label->SetFont(Gate10Type(ReadableSize,bChapter,bChapter));
+    // Empty-state messages belong in the centered Gothic page composition.
+    // Longer live report text and metadata remain left-aligned for scanning.
+    const bool bEmptyState = Value.StartsWith(TEXT("No ")) ||
+        Value.StartsWith(TEXT("NO ")) ||
+        Value.StartsWith(TEXT("0 "));
+    Label->SetJustification(bChapter || bEmptyState
+        ? ETextJustify::Center : ETextJustify::Left);
     UVerticalBoxSlot* LayoutSlot = Parent->AddChildToVerticalBox(Label);
-    LayoutSlot->SetPadding(FMargin(8.0f, 7.0f));
+    LayoutSlot->SetHorizontalAlignment(HAlign_Fill);
+    LayoutSlot->SetPadding(FMargin(10.f,8.f));
 }
 
 void UOGGate12NativeRulerWidget::AddAction(
@@ -372,10 +413,8 @@ void UOGGate12NativeRulerWidget::AddAction(
     Label->SetText(FText::FromString(Title));
     Label->SetColorAndOpacity(FSlateColor(bEnabled ? TextMain : TextMuted));
     Label->SetJustification(ETextJustify::Center);
-    FSlateFontInfo TouchLabelFont=Label->GetFont();
-    TouchLabelFont.Size=21;
-    Label->SetFont(TouchLabelFont);
-    Button->AddChild(Label);
+    Label->SetFont(Gate10Type(25,true,true));
+    CenterNativeButton(Button,Label);
     // The accepted Gate10 ornament is drawn as native vector Slate chrome,
     // with the actual clickable button independently layered above it.
     UOverlay* Layers = WidgetTree->ConstructWidget<UOverlay>(
@@ -484,13 +523,17 @@ void UOGGate12NativeRulerWidget::BuildNav()
         Label->SetColorAndOpacity(FSlateColor(bSelected
             ? FLinearColor(.91f,.90f,.92f,1.f)
             : FLinearColor(.65f,.63f,.68f,1.f)));
-        FSlateFontInfo LabelFont = Label->GetFont();
-        LabelFont.Size = 22;
-        Label->SetFont(LabelFont);
+        // Long destination captions must stay inside their actual fifth
+        // of the screen; preserve readable point size without clipping.
+        Label->SetFont(Gate10Type(
+            Index==1 || Index==3 ? 20 : 24,true,true));
         Label->SetAutoWrapText(false);
-        NativeInsignia->AddChildToVerticalBox(Label)
-            ->SetPadding(FMargin(0.f,0.f,0.f,5.f));
-        Button->AddChild(NativeInsignia);
+        Label->SetMinDesiredWidth(0.f);
+        UVerticalBoxSlot* InsigniaTitle =
+            NativeInsignia->AddChildToVerticalBox(Label);
+        InsigniaTitle->SetPadding(FMargin(0.f,2.f,0.f,8.f));
+        InsigniaTitle->SetHorizontalAlignment(HAlign_Fill);
+        CenterNativeButton(Button,NativeInsignia);
         UOverlay* Layers = WidgetTree->ConstructWidget<UOverlay>(
             UOverlay::StaticClass());
         UOGGate12GothicChromeWidget* Gothic =
@@ -591,14 +634,13 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     HeadingText->SetJustification(ETextJustify::Center);
     HeadingText->SetColorAndOpacity(FSlateColor(
         FLinearColor(.88f,.83f,.95f,1.f)));
-    FSlateFontInfo HeadingFont=HeadingText->GetFont();
-    HeadingFont.Size=29;HeadingText->SetFont(HeadingFont);
+    HeadingText->SetFont(Gate10Type(42,true,true));
     UOverlaySlot* HeadingTextSlot=HeadingLayers->AddChildToOverlay(HeadingText);
-    HeadingTextSlot->SetHorizontalAlignment(HAlign_Center);
-    HeadingTextSlot->SetVerticalAlignment(VAlign_Bottom);
+    HeadingTextSlot->SetHorizontalAlignment(HAlign_Fill);
+    HeadingTextSlot->SetVerticalAlignment(VAlign_Center);
     USizeBox* HeadingHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass());
-    HeadingHeight->SetMinDesiredHeight(80.f);
+    HeadingHeight->SetMinDesiredHeight(112.f);
     HeadingHeight->AddChild(HeadingLayers);
     if (Session->CurrentDestination != EOGRulerPrimaryDestination::Home)
         Content->AddChildToVerticalBox(HeadingHeight)
@@ -698,8 +740,8 @@ void UOGGate12NativeRulerWidget::BuildHome()
         Text->SetJustification(ETextJustify::Center);
         Text->SetAutoWrapText(true);
         Text->SetColorAndOpacity(FSlateColor(Ink));
-        FSlateFontInfo Font=Text->GetFont();
-        Font.Size=Size;Text->SetFont(Font);
+        Text->SetFont(Gate10Type(Size,
+            Size>=22, Size>=40));
         Position(Text,X,Y,X2,Y2);
     };
     const FLinearColor Silver(.84f,.81f,.90f,1.f);
@@ -746,9 +788,8 @@ void UOGGate12NativeRulerWidget::BuildHome()
         Label->SetAutoWrapText(true);
         Label->SetColorAndOpacity(FSlateColor(
             FLinearColor(.87f,.84f,.93f,1.f)));
-        FSlateFontInfo F=Label->GetFont();
-        F.Size=27;Label->SetFont(F);
-        Button->AddChild(Label);
+        Label->SetFont(Gate10Type(30,true,true));
+        CenterNativeButton(Button,Label);
         Surface->AddChildToOverlay(Button);
         Position(Surface,.69f,Y,.965f,Y+.103f);
     };
@@ -1149,9 +1190,11 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         Label->SetJustification(ETextJustify::Center);
         Label->SetAutoWrapText(true);
         Label->SetColorAndOpacity(FSlateColor(Ink));
-        FSlateFontInfo Font=Label->GetFont();
-        Font.Size=FMath::Max(10,FMath::RoundToInt(Size*.54f));
-        Label->SetFont(Font);
+        // Preserve Figma's exact anchors and decorative chrome; elevate
+        // only real text legibility and the display family.
+        Label->SetFont(Gate10Type(
+            FMath::Max(17,FMath::RoundToInt(Size*.82f)),
+            Size>=24,Size>=38));
         UCanvasPanelSlot* Slot=
             Gate10PortraitGachaCanvas->AddChildToCanvas(Label);
         // Explicit normalized multi-anchor rectangle in the actual viewport.
@@ -1182,10 +1225,10 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         Text->SetColorAndOpacity(FSlateColor(
             Enabled ? FLinearColor(.91f,.87f,.96f,1.f)
                     : FLinearColor(.57f,.54f,.65f,1.f)));
-        FSlateFontInfo Font=Text->GetFont();
-        Font.Size=FMath::Max(10,FMath::RoundToInt(Size*.54f));
-        Text->SetFont(Font);
-        Button->AddChild(Text);
+        Text->SetFont(Gate10Type(
+            FMath::Max(18,FMath::RoundToInt(Size*.86f)),
+            true,Size>=30));
+        CenterNativeButton(Button,Text);
         UCanvasPanelSlot* Slot =
             Gate10PortraitGachaCanvas->AddChildToCanvas(Button);
         Slot->SetAnchors(FAnchors(
@@ -1473,8 +1516,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
         Unexplored->SetJustification(ETextJustify::Center);
         Unexplored->SetColorAndOpacity(FSlateColor(
             FLinearColor(.57f,.55f,.63f,.89f)));
-        FSlateFontInfo F=Unexplored->GetFont();
-        F.Size=24;Unexplored->SetFont(F);
+        Unexplored->SetFont(Gate10Type(29,true,true));
         Unexplored->SetVisibility(ESlateVisibility::HitTestInvisible);
         UOverlaySlot* Empty=MapLayers->AddChildToOverlay(Unexplored);
         Empty->SetHorizontalAlignment(HAlign_Center);
@@ -1634,23 +1676,31 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         Crest->SetColorAndOpacity(FSlateColor(bActive
             ? FLinearColor(.87f,.85f,.91f,1.f)
             : FLinearColor(.55f,.53f,.61f,1.f)));
-        FSlateFontInfo CF = Crest->GetFont(); CF.Size=40; Crest->SetFont(CF);
-        Face->AddChildToVerticalBox(Crest)->SetPadding(FMargin(0.f,9.f,0.f,0.f));
+        Crest->SetFont(Gate10Type(53,false,true));
+        UVerticalBoxSlot* CrestSlot=Face->AddChildToVerticalBox(Crest);
+        CrestSlot->SetPadding(FMargin(0.f,10.f,0.f,2.f));
+        CrestSlot->SetHorizontalAlignment(HAlign_Fill);
         UTextBlock* Title = WidgetTree->ConstructWidget<UTextBlock>(
             UTextBlock::StaticClass());
         Title->SetText(FText::FromString(Titles[Index]));
         Title->SetJustification(ETextJustify::Center);
         Title->SetColorAndOpacity(FSlateColor(TextMain));
-        FSlateFontInfo TF = Title->GetFont(); TF.Size=23; Title->SetFont(TF);
-        Face->AddChildToVerticalBox(Title)->SetPadding(FMargin(0.f,2.f));
+        Title->SetFont(Gate10Type(
+            Index==3 ? 26 : 31,true,true));
+        UVerticalBoxSlot* TitleSlot=Face->AddChildToVerticalBox(Title);
+        TitleSlot->SetPadding(FMargin(0.f,4.f));
+        TitleSlot->SetHorizontalAlignment(HAlign_Fill);
         UTextBlock* Sub = WidgetTree->ConstructWidget<UTextBlock>(
             UTextBlock::StaticClass());
         Sub->SetText(FText::FromString(Subtitles[Index]));
         Sub->SetJustification(ETextJustify::Center);
         Sub->SetAutoWrapText(true);
+        Sub->SetWrapTextAt(212.f);
         Sub->SetColorAndOpacity(FSlateColor(TextMuted));
-        FSlateFontInfo SF = Sub->GetFont(); SF.Size=13; Sub->SetFont(SF);
-        Face->AddChildToVerticalBox(Sub)->SetPadding(FMargin(6.f,2.f,6.f,9.f));
+        Sub->SetFont(Gate10Type(21,false,true));
+        UVerticalBoxSlot* SubtitleSlot=Face->AddChildToVerticalBox(Sub);
+        SubtitleSlot->SetHorizontalAlignment(HAlign_Fill);
+        SubtitleSlot->SetPadding(FMargin(6.f,4.f,6.f,6.f));
         UTextBlock* RealCount=WidgetTree->ConstructWidget<UTextBlock>(
             UTextBlock::StaticClass());
         FString RealSummary;
@@ -1667,12 +1717,14 @@ void UOGGate12NativeRulerWidget::BuildRecords()
                 Session->IntelligenceProjection.Num());
         RealCount->SetText(FText::FromString(RealSummary));
         RealCount->SetJustification(ETextJustify::Center);
+        RealCount->SetAutoWrapText(true);
+        RealCount->SetWrapTextAt(212.f);
         RealCount->SetColorAndOpacity(FSlateColor(
             FLinearColor(.68f,.66f,.74f,1.f)));
-        FSlateFontInfo SummaryFont=RealCount->GetFont();
-        SummaryFont.Size=16; RealCount->SetFont(SummaryFont);
-        Face->AddChildToVerticalBox(RealCount)
-            ->SetPadding(FMargin(6.f,12.f,6.f,9.f));
+        RealCount->SetFont(Gate10Type(22,false,true));
+        UVerticalBoxSlot* CountSlot=Face->AddChildToVerticalBox(RealCount);
+        CountSlot->SetHorizontalAlignment(HAlign_Fill);
+        CountSlot->SetPadding(FMargin(6.f,12.f,6.f,9.f));
         // Real native text stays interactive, while the Gacha-style black
         // panel prevents the default UButton Slate grey from filling the
         // frozen Records card. The etching must paint ABOVE the hit surface.
@@ -1682,9 +1734,10 @@ void UOGGate12NativeRulerWidget::BuildRecords()
             ? FLinearColor(.005f,.003f,.008f,1.f)
             : FLinearColor(.0015f,.0013f,.003f,1.f));
         BlackCard->SetVerticalAlignment(VAlign_Center);
-        BlackCard->SetPadding(FMargin(8.f,14.f,8.f,12.f));
+        BlackCard->SetHorizontalAlignment(HAlign_Fill);
+        BlackCard->SetPadding(FMargin(6.f,10.f,6.f,10.f));
         BlackCard->AddChild(Face);
-        Button->AddChild(BlackCard);
+        CenterNativeButton(Button,BlackCard);
         UOverlay* OrnamentedRecord=WidgetTree->ConstructWidget<UOverlay>(
             UOverlay::StaticClass());
         UOGGate12GothicChromeWidget* Etching=

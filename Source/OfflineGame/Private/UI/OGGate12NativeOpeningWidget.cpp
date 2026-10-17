@@ -6,6 +6,7 @@
 #include "UI/OGGate12VacantThroneSceneWidget.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
+#include "Components/ButtonSlot.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/SafeZone.h"
@@ -26,7 +27,15 @@ const FLinearColor GothicVoid(.006f,.006f,.011f,1.0f);
 const FLinearColor DarkSlate(.019f,.018f,.026f,.98f);
 const FLinearColor OrnamentGold(.71f,.56f,.33f,1.0f);
 const FLinearColor OpeningTextColor(.91f,.89f,.85f,1.0f);
-const FLinearColor Muted(.51f,.50f,.53f,1.0f);
+const FLinearColor Muted(.65f,.62f,.68f,1.0f);
+// One licensed, bundled title face in both Opening and Ruler Mode.
+// Do not use a machine-local Windows font; Android must package this OFL file.
+FSlateFontInfo OpeningDisplay(int32 Size)
+{
+    return FSlateFontInfo(
+        FPaths::ProjectContentDir() / TEXT("Slate/Fonts/Cinzel-Bold.ttf"),
+        static_cast<float>(Size));
+}
 }
 
 void UOGGate12OpeningActionButton::InvokeOpeningAction()
@@ -138,9 +147,7 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     NativeTitle->SetJustification(ETextJustify::Center);
     NativeTitle->SetAutoWrapText(true);
     NativeTitle->SetColorAndOpacity(FSlateColor(OrnamentGold));
-    FSlateFontInfo TitleFont = NativeTitle->GetFont();
-    TitleFont.Size = 38;
-    NativeTitle->SetFont(TitleFont);
+    NativeTitle->SetFont(OpeningDisplay(45));
     TitleWidthConstraint = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("OpeningTitleWidthConstraint"));
     TitleWidthConstraint->SetWidthOverride(320.f);
@@ -259,10 +266,23 @@ void UOGGate12NativeOpeningWidget::AddAction(
     TextLabel->SetAutoWrapText(true);
     TextLabel->SetColorAndOpacity(FSlateColor(
         bEnabled ? (bPrimary ? OrnamentGold : OpeningTextColor) : Muted));
-    FSlateFontInfo Font = TextLabel->GetFont();
-    Font.Size = bPrimary ? 36 : 29;
-    TextLabel->SetFont(Font);
-    Button->AddChild(TextLabel);
+    TextLabel->SetFont(OpeningDisplay(bPrimary ? 39 : 31));
+    if (UButtonSlot* CaptionSlot =
+            Cast<UButtonSlot>(Button->AddChild(TextLabel)))
+    {
+        CaptionSlot->SetHorizontalAlignment(HAlign_Fill);
+        CaptionSlot->SetVerticalAlignment(VAlign_Center);
+        CaptionSlot->SetPadding(FMargin(12.f,4.f));
+    }
+    // The approved angular frame, not Slate's default grey button face.
+    FSlateBrush InvisibleButtonBrush;
+    InvisibleButtonBrush.DrawAs=ESlateBrushDrawType::NoDrawType;
+    FButtonStyle ButtonStyle=Button->GetStyle();
+    ButtonStyle.SetNormal(InvisibleButtonBrush);
+    ButtonStyle.SetHovered(InvisibleButtonBrush);
+    ButtonStyle.SetPressed(InvisibleButtonBrush);
+    ButtonStyle.SetDisabled(InvisibleButtonBrush);
+    Button->SetStyle(ButtonStyle);
     UOverlay* Decorations = WidgetTree->ConstructWidget<UOverlay>(
         UOverlay::StaticClass());
     UBorder* OpaqueBlack = WidgetTree->ConstructWidget<UBorder>(
@@ -278,11 +298,12 @@ void UOGGate12NativeOpeningWidget::AddAction(
             ? FLinearColor(.78f,.68f,.45f,1.f)
             : FLinearColor(.56f,.54f,.61f,1.f),
         INDEX_NONE,bPrimary && bEnabled);
-    Decorations->AddChildToOverlay(LiveFrame);
     Decorations->AddChildToOverlay(Button);
+    LiveFrame->SetVisibility(ESlateVisibility::HitTestInvisible);
+    Decorations->AddChildToOverlay(LiveFrame);
     USizeBox* ControlHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass());
-    ControlHeight->SetMinDesiredHeight(bPrimary ? 69.f : 60.f);
+    ControlHeight->SetMinDesiredHeight(bPrimary ? 80.f : 68.f);
     ControlHeight->AddChild(Decorations);
     UVerticalBoxSlot* AddedButtonSlot =
         Menu->AddChildToVerticalBox(ControlHeight);
@@ -301,6 +322,8 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
         Notice->SetText(FText::FromString(
             TEXT("Start a new world? Your existing world is replaced only AFTER a recovery copy is preserved.")));
         Notice->SetAutoWrapText(true);
+        Notice->SetJustification(ETextJustify::Center);
+        Notice->SetFont(OpeningDisplay(25));
         Notice->SetColorAndOpacity(FSlateColor(OpeningTextColor));
         Menu->AddChildToVerticalBox(Notice)->SetPadding(FMargin(8.f,9.f));
         AddAction(TEXT("KEEP CURRENT WORLD"), TEXT("OG.Opening.ClearCancel"),true);
@@ -325,9 +348,7 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
         Notice->SetAutoWrapText(true);
         Notice->SetColorAndOpacity(FSlateColor(Muted));
         Notice->SetJustification(ETextJustify::Center);
-        FSlateFontInfo WarningFont=Notice->GetFont();
-        WarningFont.Size=13;
-        Notice->SetFont(WarningFont);
+        Notice->SetFont(OpeningDisplay(22));
         Menu->AddChildToVerticalBox(Notice)->SetPadding(FMargin(3.f,1.f));
     }
     // A gacha account is not a disposable single-player slot.
