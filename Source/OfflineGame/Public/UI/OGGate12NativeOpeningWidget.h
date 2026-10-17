@@ -9,6 +9,7 @@ class UCanvasPanel;
 class UCanvasPanelSlot;
 class UVerticalBox;
 class USizeBox;
+class UImage;
 class UTextBlock;
 class UBorder;
 
@@ -51,6 +52,8 @@ private:
     bool bHasRecovery = false;
     bool bHasImport = false;
     bool bReducedMotion = false;
+    bool bStageLayoutInitialized = false;
+    bool bStageWasWide = false;
     FName Page = FName(TEXT("main"));
 
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> Menu;
@@ -59,6 +62,13 @@ private:
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> TitleSlot;
     UPROPERTY(Transient) TObjectPtr<USizeBox> TitleWidthConstraint;
     UPROPERTY(Transient) TObjectPtr<UBorder> AtmosphericAccent;
+    UPROPERTY(Transient) TObjectPtr<UImage> OpeningArtwork;
+    // Actual native animated atmospheric layers, not a screenshot or rarity VFX.
+    UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> StageSlot;
+    UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> ThroneSilhouetteSlot;
+    UPROPERTY(Transient) TObjectPtr<UBorder> AmbientHalo;
+    UPROPERTY(Transient) TArray<TObjectPtr<UCanvasPanelSlot>> EmberSlots;
+    UPROPERTY(Transient) TArray<TObjectPtr<UBorder>> Embers;
 };
 
 UCLASS()

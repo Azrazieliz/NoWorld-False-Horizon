@@ -1,83 +1,87 @@
-"""Verify and stage immutable Gate 10 reference art. Never imports runtime screenshots.
+"""Read-only design-reference intake for corrected Gate10 2026-10-17 ZIP.
 
-Input is the exact user-approved 2026-10-13 archive; stage only design
-references under Saved/Gate12Readiness, NEVER inside Content, Registry or saves.
+NEVER use frozen screenshots or crops as production art. Every depicted
+character/region or example number is noncanonical. The opening is animated
+and has NO approved final static background screenshot.
 """
 import argparse
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
 import tempfile
 import zipfile
 
-EXPECTED_MASTER = "b92074ca762d4db3228ef237747e664ea3abc9c2da48941a20716ae84c2e7f49"
-REFERENCES = {
-    "Gate10_Opening_10_Concepts_2026-10-12.zip": [
-        "variants/04_vacant_throne.png",
-        "IMPLEMENTATION_AND_REVIEW.md",
-    ],
-    "Gate10_Continuation_Validated_2026-10-12.zip": [
-        "01_FROZEN/WorldHUD/world_hud_freeze.png",
-        "01_FROZEN/RulerHome/approved_visual.png",
-        "01_FROZEN/Records/approved_visual_with_placeholder_text.png",
-        "01_FROZEN/Gacha/user_approved_reference.png",
-        "02_TERRITORY_FREEZE_REFERENCE_CANDIDATES/noctis_basin_astral_territory_map.png",
-        "02_TERRITORY_FREEZE_REFERENCE_CANDIDATES/gothic_territory_map_of_astral_prime.png",
-        "02_TERRITORY_FREEZE_REFERENCE_CANDIDATES/gothic_celestial_territory_map.png",
-    ],
-    "Gate10_Roster_Approved_Freeze_2026-10-12.zip": [
-        "APPROVAL_AND_FREEZE.md", "design_tokens.json",
-        "SOURCE_RULES.md",
-    ],
-}
+CORRECTED_SHA256 = "565e66b75d2e3968af6f4894a59305d00e948d74499eb201ae7373a368fd6ad5"
+PREFIX = "01_APPROVED_VISUAL_REFERENCES/"
+ICON = PREFIX + "08_Icon_FINAL_USER_SELECTED_EXACT_818455.png"
+REQUIRED = (
+    "00_START_HERE_READ_FIRST.md",
+    "00_CRITICAL_GLOBAL_INTERPRETATION_RULES.md",
+    PREFIX + "01_World_HUD_LANDSCAPE_APPROVED.png",
+    PREFIX + "02_Ruler_Home_PORTRAIT_APPROVED.png",
+    PREFIX + "03_Records_PORTRAIT_APPROVED_PLACEHOLDER_TEXT.png",
+    PREFIX + "04_Gacha_PORTRAIT_APPROVED.png",
+    PREFIX + "05_Territory_MAP_A_APPROVED.png",
+    PREFIX + "06_Territory_MAP_B_APPROVED.png",
+    PREFIX + "07_Territory_MAP_C_APPROVED.png",
+    ICON,
+    "05_FROZEN_SPECIFICATIONS/OPENING_APPROVED_SPEC.md",
+    "05_FROZEN_SPECIFICATIONS/FINAL_SCREEN_AND_BRANDING_FREEZE.md",
+    "05_FROZEN_SPECIFICATIONS/RARITY_APPROVED_SPEC.md",
+)
 
-def sha256(data):
-    return hashlib.sha256(data).hexdigest()
+def checksum(content):
+    return hashlib.sha256(content).hexdigest()
 
-def intake(archive, destination, verify_only):
+def intake(archive, destination, verify_only=False):
     archive = Path(archive)
     if not archive.is_file():
-        raise ValueError("Original Gate10 handoff ZIP not found on this machine")
-    if sha256(archive.read_bytes()) != EXPECTED_MASTER:
-        raise ValueError("Gate10 original archive SHA256 MISMATCH; refusing source intake")
-    files = {}
+        raise FileNotFoundError("Corrected Gate10 2026-10-17 ZIP not found")
+    if checksum(archive.read_bytes()) != CORRECTED_SHA256:
+        raise ValueError("Wrong/withdrawn Gate10 archive: SHA256 mismatch")
+    selected = {}
     with zipfile.ZipFile(archive, "r") as master:
         manifest = json.loads(master.read("SHA256_MANIFEST.json"))
-        for name, expected in manifest.items():
-            if sha256(master.read(name)) != expected:
-                raise ValueError("Nested Gate10 member checksum mismatch: " + name)
-        for nested, selected in REFERENCES.items():
-            with zipfile.ZipFile(io.BytesIO(master.read(nested))) as child:
-                for member in selected:
-                    content = child.read(member)
-                    key = nested.replace(".zip", "") + "/" + member
-                    files[key] = content
-        files["818455.png"] = master.read("818455.png")
+        if manifest.get("algorithm") != "sha256":
+            raise ValueError("Unexpected Gate10 checksum algorithm")
+        hashes = manifest["files"]
+        for name, expected in hashes.items():
+            content = master.read(name)
+            if checksum(content) != expected:
+                raise ValueError("Incorrect Gate10 member checksum: " + name)
+        for path in REQUIRED:
+            if path not in hashes:
+                raise ValueError("Missing corrected frozen source: " + path)
+        for path in sorted(hashes):
+            selected[path] = master.read(path)
     report = {
-        "schema": "GATE10_ORIGINAL_REFERENCE_ONLY_V1",
-        "master_sha256": EXPECTED_MASTER,
+        "schema": "GATE10_CORRECTED_LAYOUT_REFERENCE_ONLY_V2",
+        "master_sha256": CORRECTED_SHA256,
         "master_bytes": archive.stat().st_size,
-        "not_production_umg": True,
-        "no_actual_asset_approval": True,
-        "selected_opening_direction": "04_vacant_throne",
-        "no_character_chips": True,
-        "files": {k: {"sha256": sha256(v), "bytes": len(v)}
-                  for k, v in sorted(files.items())},
+        "file_count": len(selected),
+        "frozen_screens_are_layout_only": True,
+        "mockup_character_scene_and_artwork_discarded": True,
+        "no_art_style_or_game_data_inferred": True,
+        "no_static_opening_asset_approved": True,
+        "app_icon_only_exception": ICON,
+        "production_actors_or_UMG_installed": False,
+        "files": {p: {"sha256": checksum(v), "bytes": len(v)}
+                  for p, v in sorted(selected.items())},
     }
     if verify_only:
         return report
     destination = Path(destination)
     if destination.exists():
-        raise ValueError("Immutable reference folder already exists; refusing overwrite")
+        raise FileExistsError(
+            "Reference destination already exists; source files cannot be overwritten")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="gate10-stage-", dir=destination.parent) as tmp:
+    with tempfile.TemporaryDirectory(prefix="gate10-corrected-", dir=destination.parent) as tmp:
         stage = Path(tmp)
-        for name, content in files.items():
-            relative = Path(name)
+        for path, content in selected.items():
+            relative = Path(path)
             if relative.is_absolute() or ".." in relative.parts:
-                raise ValueError("Unsafe reference path in original archive")
+                raise ValueError("Unsafe corrected Gate10 path")
             target = stage / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
@@ -87,13 +91,16 @@ def intake(archive, destination, verify_only):
     return report
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--archive", required=True)
-    parser.add_argument("--out", default=str(Path(__file__).resolve().parents[2] /
-        "Saved" / "Gate12Readiness" / "Gate10FrozenReferenceOnly"))
-    parser.add_argument("--verify-only", action="store_true")
-    args = parser.parse_args()
+    cli = argparse.ArgumentParser()
+    cli.add_argument("--archive", required=True)
+    cli.add_argument("--out", default=str(Path(__file__).resolve().parents[2] /
+        "Saved" / "Gate12Readiness" / "Gate10CorrectedReferenceOnly_20261017"))
+    cli.add_argument("--verify-only", action="store_true")
+    args = cli.parse_args()
     result = intake(args.archive, args.out, args.verify_only)
-    print(json.dumps({"status": "GATE10_REFERENCE_HASH_VERIFIED",
-        "references": len(result["files"]), "extracted": not args.verify_only,
-        "target": args.out}))
+    print(json.dumps({
+        "status": "CORRECTED_GATE10_EXACT_LAYOUT_REFERENCE_VERIFIED",
+        "files": result["file_count"],
+        "icon_sha256": result["files"][ICON]["sha256"],
+        "staged": not args.verify_only,
+    }))

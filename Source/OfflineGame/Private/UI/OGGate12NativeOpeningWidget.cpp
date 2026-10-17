@@ -4,6 +4,9 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/SafeZone.h"
+#include "Components/Image.h"
+#include "Engine/Texture2D.h"
+#include "ImageUtils.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
@@ -52,6 +55,80 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     UCanvasPanelSlot* BackdropSlot = Canvas->AddChildToCanvas(Backdrop);
     BackdropSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
     BackdropSlot->SetOffsets(FMargin(0.f,0.f,0.f,0.f));
+
+    // Gate10's approved opening is an ANIMATED interface, not the old ten
+    // exploratory images. Author this real native UMG scene and its independent
+    // moving atmosphere without inserting illustrative mockup art.
+    UCanvasPanel* Stage = WidgetTree->ConstructWidget<UCanvasPanel>(
+        UCanvasPanel::StaticClass(), TEXT("OpeningAnimatedSceneStage"));
+    Stage->SetVisibility(ESlateVisibility::HitTestInvisible);
+    StageSlot = Canvas->AddChildToCanvas(Stage);
+    StageSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
+    StageSlot->SetOffsets(FMargin(0.f));
+    auto Layer = [this, Stage](const TCHAR* Name, FAnchors Anchors,
+                                FLinearColor Tint) -> UCanvasPanelSlot*
+    {
+        UBorder* Shape = WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass(), FName(Name));
+        Shape->SetVisibility(ESlateVisibility::HitTestInvisible);
+        Shape->SetBrushColor(Tint);
+        UCanvasPanelSlot* Slot = Stage->AddChildToCanvas(Shape);
+        Slot->SetAnchors(Anchors);
+        Slot->SetOffsets(FMargin(0.f));
+        return Slot;
+    };
+    // Architectural throne silhouette; visual scene is generated from editable
+    // UMG geometry so neither screenshot text nor characters are embedded.
+    Layer(TEXT("DistantLeftVault"), FAnchors(.05f,.04f,.12f,.83f),
+          FLinearColor(.028f,.026f,.035f,.92f));
+    Layer(TEXT("DistantRightVault"), FAnchors(.88f,.04f,.95f,.83f),
+          FLinearColor(.028f,.026f,.035f,.92f));
+    Layer(TEXT("LeftVaultEtching"), FAnchors(.118f,.04f,.120f,.75f),
+          FLinearColor(.24f,.22f,.25f,.29f));
+    Layer(TEXT("RightVaultEtching"), FAnchors(.880f,.04f,.882f,.75f),
+          FLinearColor(.24f,.22f,.25f,.29f));
+    Layer(TEXT("DeepThroneBack"), FAnchors(.414f,.20f,.586f,.67f),
+          FLinearColor(.017f,.016f,.023f,.98f));
+    Layer(TEXT("ThroneRimLeft"), FAnchors(.411f,.20f,.415f,.66f),
+          FLinearColor(.31f,.29f,.33f,.48f));
+    Layer(TEXT("ThroneRimRight"), FAnchors(.585f,.20f,.589f,.66f),
+          FLinearColor(.31f,.29f,.33f,.48f));
+    Layer(TEXT("VacantThroneSeat"), FAnchors(.393f,.56f,.607f,.63f),
+          FLinearColor(.012f,.012f,.017f,1.f));
+    Layer(TEXT("ThroneArmLeft"), FAnchors(.375f,.49f,.411f,.67f),
+          FLinearColor(.027f,.026f,.035f,1.f));
+    Layer(TEXT("ThroneArmRight"), FAnchors(.589f,.49f,.625f,.67f),
+          FLinearColor(.027f,.026f,.035f,1.f));
+    Layer(TEXT("CathedralFloorRim"), FAnchors(.10f,.81f,.90f,.814f),
+          FLinearColor(.29f,.28f,.34f,.34f));
+    // Animated fog-light volume, authored separately from the throne shape.
+    ThroneSilhouetteSlot = Layer(
+        TEXT("MovingThroneLightColumn"), FAnchors(.49f,.15f,.51f,.67f),
+        FLinearColor(.38f,.36f,.47f,.12f));
+    AmbientHalo = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("AnimatedThroneHalo"));
+    AmbientHalo->SetVisibility(ESlateVisibility::HitTestInvisible);
+    AmbientHalo->SetBrushColor(FLinearColor(.13f,.12f,.17f,.18f));
+    UCanvasPanelSlot* HaloSlot = Stage->AddChildToCanvas(AmbientHalo);
+    HaloSlot->SetAnchors(FAnchors(.35f,.22f,.65f,.52f));
+    HaloSlot->SetOffsets(FMargin(0.f));
+    // Native particles animate deterministically with reduced-motion support.
+    // They are ambient UI effects, NEVER six-tier rarity frame VFX.
+    for (int32 Index = 0; Index < 13; ++Index)
+    {
+        UBorder* Ember = WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass());
+        Ember->SetVisibility(ESlateVisibility::HitTestInvisible);
+        Ember->SetBrushColor(FLinearColor(.64f,.61f,.73f,.30f));
+        UCanvasPanelSlot* EmberSlot = Stage->AddChildToCanvas(Ember);
+        EmberSlot->SetAnchors(FAnchors(.15f + .056f * Index,
+            .40f + .025f * (Index % 4)));
+        EmberSlot->SetAlignment(FVector2D(.5f,.5f));
+        EmberSlot->SetSize(FVector2D(Index % 3 == 0 ? 3.f : 2.f,
+                                     Index % 2 == 0 ? 8.f : 5.f));
+        EmberSlots.Add(EmberSlot);
+        Embers.Add(Ember);
+    }
 
     // Accent is an independent material-ready layer, not text burned into art.
     AtmosphericAccent = WidgetTree->ConstructWidget<UBorder>(
@@ -246,13 +323,55 @@ void UOGGate12NativeOpeningWidget::NativeTick(
                 bWide ? FAnchors(.76f,.27f) : FAnchors(.5f,.57f));
         }
     }
+    // Continuous native ambient animation; no baked PNG or cinematic.
+    // Reduced-motion preferences freeze all moving layers.
+    const bool bWideStage = Size.X > Size.Y;
+    if (StageSlot && Size.X > 0.f && Size.Y > 0.f &&
+        (!bStageLayoutInitialized || bStageWasWide != bWideStage))
+    {
+        bStageWasWide = bWideStage;
+        bStageLayoutInitialized = true;
+        StageSlot->SetAnchors(bWideStage
+            ? FAnchors(0.f,0.f,.56f,1.f)
+            : FAnchors(0.f,0.f,1.f,1.f));
+        StageSlot->SetOffsets(FMargin(0.f));
+    }
+    const float Phase = bReducedMotion || !GetWorld()
+        ? 0.f : static_cast<float>(GetWorld()->GetRealTimeSeconds());
     if (AtmosphericAccent)
     {
-        const float Phase = bReducedMotion || !GetWorld()
-            ? 0.f : static_cast<float>(GetWorld()->GetRealTimeSeconds());
-        const float Alpha = bReducedMotion ? .15f :
-            .14f + .07f * (1.f + FMath::Sin(Phase * .36f));
+        const float Alpha = bReducedMotion ? .08f :
+            .055f + .035f * (1.f + FMath::Sin(Phase * .43f));
         AtmosphericAccent->SetBrushColor(
-            FLinearColor(.34f,.25f,.15f,Alpha));
+            FLinearColor(.46f,.44f,.52f,Alpha));
+    }
+    if (AmbientHalo)
+    {
+        const float Glow = bReducedMotion ? .09f :
+            .065f + .09f * (.5f + .5f * FMath::Sin(Phase * .31f));
+        AmbientHalo->SetBrushColor(
+            FLinearColor(.24f,.22f,.31f,Glow));
+    }
+    if (ThroneSilhouetteSlot)
+    {
+        const float Sway = bReducedMotion ? 0.f :
+            3.f * FMath::Sin(Phase * .21f);
+        ThroneSilhouetteSlot->SetPosition(FVector2D(Sway,0.f));
+    }
+    for (int32 Index = 0; Index < Embers.Num(); ++Index)
+    {
+        if (!Embers[Index]) continue;
+        const float Offset = Index * 1.17f;
+        const float DriftX = bReducedMotion ? 0.f :
+            14.f * FMath::Sin(Phase * .27f + Offset);
+        const float DriftY = bReducedMotion ? 0.f :
+            -FMath::Fmod(Phase * (5.2f + .48f * Index)
+                         + Index * 16.7f, 150.f);
+        Embers[Index]->SetRenderTranslation(FVector2D(DriftX, DriftY));
+        const float Opacity = bReducedMotion ? .09f :
+            .13f + .25f * (.5f + .5f *
+                           FMath::Sin(Phase * .59f + Offset));
+        Embers[Index]->SetBrushColor(
+            FLinearColor(.69f,.67f,.75f,Opacity));
     }
 }

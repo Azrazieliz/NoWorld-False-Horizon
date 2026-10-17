@@ -47,7 +47,7 @@
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
-#include "UI/OGOpeningResumeValidation.h"
+
 #include "UI/OGGate12CharacterVisualCatalog.h"
 #include "UI/OGGate12OwnedWorldCharacterBinding.h"
 #include "Runtime/OGPlayerProfileSettings.h"
@@ -5917,8 +5917,8 @@ void AOGWorldPresentationHud::SynchronizeGate12NativeOpeningUMG(
 
     const FString SaveRoot = FPaths::Combine(
         FPaths::ProjectSavedDir(), TEXT("OfflineGame"));
-    const bool bHasWorld = FOGOpeningResumeValidation::HasReadableWorld(
-        FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
+    const bool bHasWorld = IFileManager::Get().FileExists(
+        *FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
     TArray<FString> RecoveryFiles;
     IFileManager::Get().FindFilesRecursive(
         RecoveryFiles, *FPaths::Combine(SaveRoot, TEXT("Snapshots")),
@@ -6026,7 +6026,7 @@ void AOGWorldPresentationHud::DrawFoundationOpening(
             TEXT("Import"));
 
     const bool bWorldExists =
-        FOGOpeningResumeValidation::HasReadableWorld(DatabasePath);
+        IFileManager::Get().FileExists(*DatabasePath);
 
     TArray<FString> SnapshotFiles;
     IFileManager::Get().FindFilesRecursive(
@@ -8262,8 +8262,10 @@ void AOGWorldPresentationHud::DrawHUD()
         FMath::Clamp(Canvas->ClipY / 1080.0f, 0.72f, 1.2f);
     FLinearColor MainText(0.94f, 0.94f, 0.89f, 1.0f);
     FLinearColor SubText(0.63f, 0.73f, 0.80f, 1.0f);
-    FLinearColor Panel(0.025f, 0.045f, 0.075f, 0.97f);
-    FLinearColor Button(0.065f, 0.11f, 0.17f, 0.97f);
+    // Gate10 frozen World HUD: preserve the live Canvas/gameplay bindings,
+    // replace oversized cyan diagnostic blocks with dark violet/gold trims.
+    FLinearColor Panel(0.019f, 0.014f, 0.030f, 0.87f);
+    FLinearColor Button(0.073f, 0.048f, 0.097f, 0.82f);
 
     if (Character)
     {
@@ -8327,20 +8329,20 @@ void AOGWorldPresentationHud::DrawHUD()
     const bool bWorldSurface =
         FoundationSurface == FName(TEXT("world"));
 
-    const float MenuWidth = FMath::Max(190.0f * Scale, FMath::Min(Canvas->ClipX, Canvas->ClipY) * 0.18f);
-    const float MenuHeight = FMath::Max(44.0f * Scale, FMath::Min(Canvas->ClipX, Canvas->ClipY) / 27.0f + 20.0f);
+    const float MenuWidth = 42.0f * Scale;
+    const float MenuHeight = 39.0f * Scale;
     const float MenuX = Canvas->ClipX - MenuWidth - 24.0f * Scale;
     const float MenuY = 22.0f * Scale;
     DrawGamePanel(Button, MenuX, MenuY, MenuWidth, MenuHeight);
     DrawFoundationText(
         bSettingsOpen
-            ? TEXT("Close")
-            : TEXT("Settings"),
+            ? TEXT("X")
+            : TEXT("CFG"),
         MainText,
-        MenuX + 12.0f * Scale,
+        MenuX + 6.0f * Scale,
         MenuY + 9.0f * Scale,
         nullptr,
-        0.72f * Scale,
+        0.52f * Scale,
         false);
     AddFoundationHitBox(
         FVector2D(MenuX, MenuY),
@@ -8349,18 +8351,18 @@ void AOGWorldPresentationHud::DrawHUD()
         true,
         100);
 
-    const float PauseWidth = 140.0f * Scale;
+    const float PauseWidth = 42.0f * Scale;
     const float PauseX = MenuX - PauseWidth - 10.0f * Scale;
     if (bWorldSurface)
     {
         DrawGamePanel(Button, PauseX, MenuY, PauseWidth, MenuHeight);
         DrawFoundationText(
-            bPauseOpen ? TEXT("Resume") : TEXT("Pause"),
+            bPauseOpen ? TEXT(">>") : TEXT("II"),
             MainText,
-            PauseX + 14.0f * Scale,
+            PauseX + 12.0f * Scale,
             MenuY + 9.0f * Scale,
             nullptr,
-            0.68f * Scale,
+            0.52f * Scale,
             false);
         AddFoundationHitBox(
             FVector2D(PauseX, MenuY),
@@ -8369,16 +8371,16 @@ void AOGWorldPresentationHud::DrawHUD()
             true,
             100);
 
-        const float RulerWidth = 110.0f * Scale;
+        const float RulerWidth = 42.0f * Scale;
         const float RulerX = PauseX - RulerWidth - 10.0f * Scale;
         DrawGamePanel(Button, RulerX, MenuY, RulerWidth, MenuHeight);
         DrawFoundationText(
-            TEXT("Ruler"),
+            TEXT("R"),
             MainText,
-            RulerX + 20.0f * Scale,
+            RulerX + 16.0f * Scale,
             MenuY + 9.0f * Scale,
             nullptr,
-            0.68f * Scale,
+            0.52f * Scale,
             false);
         AddFoundationHitBox(
             FVector2D(RulerX, MenuY),

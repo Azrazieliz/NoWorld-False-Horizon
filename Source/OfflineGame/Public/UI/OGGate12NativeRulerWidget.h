@@ -7,6 +7,8 @@
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
+class UImage;
+class UTexture2D;
 class UHorizontalBox;
 class UUniformGridPanel;
 class UOGGate12CharacterVisualCatalog;
@@ -84,6 +86,14 @@ private:
     TObjectPtr<UVerticalBox> Screen;
 
     UPROPERTY(Transient)
+    TObjectPtr<UImage> FrozenSceneArtwork;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UTexture2D> LoadedSceneTexture;
+
+    FString LoadedSceneSource;
+
+    UPROPERTY(Transient)
     TObjectPtr<UVerticalBox> Content;
 
     UPROPERTY(Transient)
@@ -112,7 +122,9 @@ private:
     FString LastUiError;
 
     void BuildRoot();
+    void RefreshFrozenScene(EOGRulerPrimaryDestination Destination);
     void BuildCurrentPage();
+    void BuildHome();
     void BuildRoster();
     void RebuildRosterGrid();
     void BuildDevelopmentQaCharacterViewer();

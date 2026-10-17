@@ -10,8 +10,15 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "Components/Border.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
 #include "Components/EditableTextBox.h"
 #include "Components/HorizontalBox.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
+#include "ImageUtils.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/SafeZone.h"
 #include "Components/ScaleBox.h"
@@ -130,8 +137,22 @@ void UOGGate12NativeRulerWidget::BuildRoot()
 
     WidgetTree->RootWidget = Safe;
     Safe->AddChild(Background);
-    Background->SetBrushColor(FLinearColor(0.012f, 0.013f, 0.018f, 1.0f));
-    Background->AddChild(Screen);
+    Background->SetBrushColor(FLinearColor(.003f, .003f, .005f, 1.0f));
+    // Frozen Gate10's illustration is a non-interactive scene under a real
+    // session-bound widget tree. No currency, art character or menu label from
+    // the mock-up becomes game state or a fake hotspot.
+    UOverlay* Layers = WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(), TEXT("Gate10RulerLiveLayers"));
+    Background->AddChild(Layers);
+    FrozenSceneArtwork = WidgetTree->ConstructWidget<UImage>(
+        UImage::StaticClass(), TEXT("Gate10RulerSceneArtOnly"));
+    FrozenSceneArtwork->SetVisibility(ESlateVisibility::HitTestInvisible);
+    UOverlaySlot* BackSlot = Layers->AddChildToOverlay(FrozenSceneArtwork);
+    BackSlot->SetHorizontalAlignment(HAlign_Fill);
+    BackSlot->SetVerticalAlignment(VAlign_Fill);
+    UOverlaySlot* UiSlot = Layers->AddChildToOverlay(Screen);
+    UiSlot->SetHorizontalAlignment(HAlign_Fill);
+    UiSlot->SetVerticalAlignment(VAlign_Fill);
 
     UTextBlock* Heading = WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass(), TEXT("GameTitle"));
@@ -140,8 +161,13 @@ void UOGGate12NativeRulerWidget::BuildRoot()
     FSlateFontInfo HeadingFont = Heading->GetFont();
     HeadingFont.Size = 24;
     Heading->SetFont(HeadingFont);
-    UVerticalBoxSlot* HeadingSlot = Screen->AddChildToVerticalBox(Heading);
-    HeadingSlot->SetPadding(FMargin(20.0f, 18.0f, 20.0f, 12.0f));
+    UBorder* StatusBar = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("RulerStatusOrnamentalStrip"));
+    StatusBar->SetBrushColor(FLinearColor(.010f,.010f,.013f,.94f));
+    StatusBar->SetPadding(FMargin(8.f,7.f));
+    StatusBar->AddChild(Heading);
+    UVerticalBoxSlot* HeadingSlot = Screen->AddChildToVerticalBox(StatusBar);
+    HeadingSlot->SetPadding(FMargin(7.0f, 5.0f, 7.0f, 5.0f));
 
     UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>(
         UScrollBox::StaticClass(), TEXT("RulerScrollableContent"));
@@ -154,8 +180,77 @@ void UOGGate12NativeRulerWidget::BuildRoot()
 
     NavigationBar = WidgetTree->ConstructWidget<UHorizontalBox>(
         UHorizontalBox::StaticClass(), TEXT("RulerFiveDestinations"));
-    UVerticalBoxSlot* NavSlot = Screen->AddChildToVerticalBox(NavigationBar);
-    NavSlot->SetPadding(FMargin(6.0f, 8.0f, 6.0f, 18.0f));
+    UBorder* BottomFrame = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("Gate10BottomNavigationOrnament"));
+    BottomFrame->SetBrushColor(FLinearColor(.009f,.009f,.012f,.96f));
+    BottomFrame->SetPadding(FMargin(3.f,5.f));
+    BottomFrame->AddChild(NavigationBar);
+    UVerticalBoxSlot* NavSlot = Screen->AddChildToVerticalBox(BottomFrame);
+    NavSlot->SetPadding(FMargin(5.0f, 5.0f, 5.0f, 6.0f));
+}
+
+void UOGGate12NativeRulerWidget::RefreshFrozenScene(
+    EOGRulerPrimaryDestination Destination)
+{
+    if (!FrozenSceneArtwork) return;
+    // Gate10 corrected 2026-10-17 authority: every character, location and
+    // environment in the frozen mockups is illustrative and MUST be discarded.
+    // Never import cropped or retouched mockup screenshots as game art.
+    FrozenSceneArtwork->SetOpacity(0.f);
+    LoadedSceneTexture = nullptr;
+    LoadedSceneSource.Reset();
+
+    if (Destination != EOGRulerPrimaryDestination::Home || !VisualCatalog)
+        return;
+
+    const UGameInstance* GI = GetGameInstance();
+    const UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session || !Session->IsBoundToStoredRuler())
+        return;
+
+    // Use only exact source/Registry bindings for an actually OWNED unit.
+    // Empty worlds intentionally retain the invariant black background.
+    for (const FOGRosterIdentityViewModel& Identity : Session->OwnedRoster)
+    {
+        const FOGRosterManifestationViewModel* Owned =
+            Identity.Manifestations.FindByPredicate(
+                [&Identity](const FOGRosterManifestationViewModel& Candidate)
+                {
+                    return Candidate.ManifestationId ==
+                        Identity.SelectedManifestationId;
+                });
+        if (!Owned || !Owned->ManifestationId.IsValid())
+            continue;
+
+        const FOGGate12CharacterVisualEntry* Approved =
+            VisualCatalog->FindExact(Identity.IdentityId, Owned->ActiveVersionId);
+        if (!Approved)
+            continue;
+
+        FOGPlayerProfileSettings Profile;
+        FString ProfileError;
+        if (!FOGPlayerProfileSettingsService::Load(
+                FOGPlayerProfileSettingsService::DefaultProfilePath(),
+                Profile, ProfileError))
+        {
+            // Fail closed: unknown privacy profile never exposes adult art.
+            Profile.bSfwPresentation = true;
+        }
+        const TSoftObjectPtr<UTexture2D>& Artwork =
+            Profile.bSfwPresentation ? Approved->ApprovedSfwArtwork2D
+                                     : Approved->OriginalArtwork2D;
+        UTexture2D* Texture = Artwork.IsNull()
+            ? nullptr : Artwork.LoadSynchronous();
+        if (!Texture)
+            continue;
+
+        // Art is purely visual and non-interactive; the approved 5-destination
+        // native UMG navigation and canonical state remain authoritative.
+        FrozenSceneArtwork->SetBrushFromTexture(Texture, true);
+        FrozenSceneArtwork->SetOpacity(.75f);
+        return;
+    }
 }
 
 void UOGGate12NativeRulerWidget::AddMessage(
@@ -200,44 +295,99 @@ void UOGGate12NativeRulerWidget::BuildNav()
 {
     if (!NavigationBar || !WidgetTree) return;
     NavigationBar->ClearChildren();
+    // Approved Gate10 five-column bottom nav: tall insignia, fine top/bottom
+    // rails, actual clickable destinations, invariant black base. Sample
+    // accents in the mockup are NOT a universal hard-coded violet theme.
     static const TCHAR* Titles[5] =
     {
-        TEXT("Home"), TEXT("Characters"), TEXT("Gacha"),
-        TEXT("Territory"), TEXT("Records")
+        TEXT("HOME"), TEXT("CHARACTERS"), TEXT("GACHA"),
+        TEXT("TERRITORY"), TEXT("RECORDS")
     };
-
+    static const TCHAR* Marks[5] =
+    {
+        TEXT("✧"), TEXT("◇"), TEXT("✦"), TEXT("♜"), TEXT("▤")
+    };
+    const UGameInstance* GI = GetGameInstance();
+    const UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    // Contextual UI metal/insignia tint comes only from an actually selected
+    // and owned Manifestation's canonical rarity. Unknown/default is neutral,
+    // never a fabricated player's power, world, location or progression.
+    FLinearColor ContextAccent(.70f,.69f,.74f,1.f);
+    if (Session && Session->SelectedManifestationId.IsValid())
+    {
+        for (const FOGRosterIdentityViewModel& Identity : Session->OwnedRoster)
+        {
+            const FOGRosterManifestationViewModel* Selected =
+                Identity.Manifestations.FindByPredicate(
+                    [Session](const FOGRosterManifestationViewModel& M)
+                    {
+                        return M.ManifestationId == Session->SelectedManifestationId;
+                    });
+            if (Selected)
+            {
+                const FNativeRarityColors Rarity =
+                    ResolveRarity(Selected->CurrentRarity);
+                if (Rarity.bKnown) ContextAccent = Rarity.Frame;
+                break;
+            }
+        }
+    }
     for (int32 Index = 0; Index < 5; ++Index)
     {
         UOGGate12RulerActionButton* Button =
             WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
                 UOGGate12RulerActionButton::StaticClass());
-        Button->RulerWidget = this;
-        Button->ActionId = FString::Printf(TEXT("nav/%d"), Index);
-        // Gate 10 frozen Ruler navigation is bottom-anchored, dark and
-        // precise, with the active destination distinguished in violet/gold.
-        // This is only the native token layer; final illustrated bar artwork
-        // remains a separate visual acceptance requirement.
-        UGameInstance* Instance = GetGameInstance();
-        const UOGGate12RulerSessionSubsystem* Session = Instance
-            ? Instance->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
         const bool bSelected = Session &&
             static_cast<int32>(Session->CurrentDestination) == Index;
+        Button->RulerWidget = this;
+        Button->ActionId = FString::Printf(TEXT("nav/%d"), Index);
         Button->SetBackgroundColor(
-            bSelected ? FLinearColor(.14f,.065f,.20f,1.0f)
-                      : FLinearColor(.018f,.017f,.026f,1.0f));
-        Button->OnClicked.AddDynamic(Button, &UOGGate12RulerActionButton::InvokeAction);
-        UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            bSelected ? FLinearColor(.057f,.052f,.068f,1.f)
+                      : FLinearColor(.006f,.006f,.009f,1.f));
+        Button->OnClicked.AddDynamic(
+            Button, &UOGGate12RulerActionButton::InvokeAction);
+        UVerticalBox* NativeInsignia =
+            WidgetTree->ConstructWidget<UVerticalBox>(
+                UVerticalBox::StaticClass());
+        UBorder* TopRule = WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass());
+        TopRule->SetBrushColor(bSelected
+            ? ContextAccent : FLinearColor(.27f,.26f,.31f,1.f));
+        USizeBox* ThinTopRule = WidgetTree->ConstructWidget<USizeBox>(
+            USizeBox::StaticClass());
+        ThinTopRule->SetHeightOverride(1.f);
+        ThinTopRule->AddChild(TopRule);
+        NativeInsignia->AddChildToVerticalBox(ThinTopRule);
+        UTextBlock* Icon = WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Icon->SetText(FText::FromString(Marks[Index]));
+        Icon->SetJustification(ETextJustify::Center);
+        Icon->SetColorAndOpacity(FSlateColor(bSelected
+            ? ContextAccent : FLinearColor(.57f,.55f,.61f,1.f)));
+        FSlateFontInfo IconFont = Icon->GetFont();
+        IconFont.Size = 24;
+        Icon->SetFont(IconFont);
+        NativeInsignia->AddChildToVerticalBox(Icon)
+            ->SetPadding(FMargin(0.f,5.f,0.f,0.f));
+        UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
         Label->SetText(FText::FromString(Titles[Index]));
         Label->SetJustification(ETextJustify::Center);
-        Label->SetColorAndOpacity(FSlateColor(
-            bSelected ? FLinearColor(.91f,.79f,.98f,1.0f) : Gate12RulerGold));
-        FSlateFontInfo Font = Label->GetFont();
-        Font.Size = 13;
-        Label->SetFont(Font);
-        Button->AddChild(Label);
-        UHorizontalBoxSlot* LayoutSlot = NavigationBar->AddChildToHorizontalBox(Button);
-        LayoutSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-        LayoutSlot->SetPadding(FMargin(2.0f));
+        Label->SetColorAndOpacity(FSlateColor(bSelected
+            ? FLinearColor(.91f,.90f,.92f,1.f)
+            : FLinearColor(.65f,.63f,.68f,1.f)));
+        FSlateFontInfo LabelFont = Label->GetFont();
+        LabelFont.Size = 11;
+        Label->SetFont(LabelFont);
+        Label->SetAutoWrapText(false);
+        NativeInsignia->AddChildToVerticalBox(Label)
+            ->SetPadding(FMargin(0.f,0.f,0.f,5.f));
+        Button->AddChild(NativeInsignia);
+        UHorizontalBoxSlot* NavigationCell =
+            NavigationBar->AddChildToHorizontalBox(Button);
+        NavigationCell->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        NavigationCell->SetPadding(FMargin(1.f,0.f));
     }
 }
 
@@ -282,6 +432,8 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    RefreshFrozenScene(Session ? Session->CurrentDestination
+                              : EOGRulerPrimaryDestination::Home);
 
     if (!Session || !Session->IsBoundToStoredRuler())
     {
@@ -301,17 +453,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     switch (Session->CurrentDestination)
     {
     case EOGRulerPrimaryDestination::Home:
-        AddMessage(Content, TEXT("CANONICAL WORLD"), 20, TextMain);
-        AddMessage(Content,
-            FString::Printf(TEXT("%d owned character identities"),
-                Session->OwnedRoster.Num()), 18, TextMuted);
-        AddMessage(Content,
-            FString::Printf(TEXT("%d persistent territories"),
-                Session->TerritoryProjection.Territories.Num()), 18, TextMuted);
-        AddMessage(Content,
-            FString::Printf(TEXT("%d unread reports"),
-                Session->HomeProjection.UnacknowledgedReportCount), 18, TextMuted);
-        AddAction(Content, TEXT("ENTER WORLD"), TEXT("world"));
+        BuildHome();
         break;
     case EOGRulerPrimaryDestination::Characters:
         if (OpenIdentityIndex == INDEX_NONE) BuildRoster();
@@ -368,6 +510,128 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         break;
     }
     BuildNav();
+}
+
+
+void UOGGate12NativeRulerWidget::BuildHome()
+{
+    if (!Content || !WidgetTree) return;
+    UGameInstance* GI = GetGameInstance();
+    const UOGGate12RulerSessionSubsystem* Session =
+        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session || !Session->IsBoundToStoredRuler()) return;
+
+    // Frozen Gate10 portrait Ruler Home: full-height character-first stage,
+    // narrow left utility rail and three stacked right-side actions.
+    // An actual Registry-approved OWNED character, if any, is already painted
+    // by RefreshFrozenScene BELOW these non-interactive and UI-only layers.
+    // An empty roster remains a correct pure-black stage, never a fake hero.
+    UBorder* HeroOuter = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("Gate10HomeStageFineOuterRail"));
+    HeroOuter->SetBrushColor(FLinearColor(.21f,.20f,.24f,.71f));
+    HeroOuter->SetPadding(FMargin(1.f));
+    UBorder* HeroBlack = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("Gate10HomeStageTransparentBlack"));
+    HeroBlack->SetBrushColor(FLinearColor(.009f,.008f,.014f,.56f));
+    HeroOuter->AddChild(HeroBlack);
+    USizeBox* HeroHeight = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), TEXT("Gate10HomePortraitStageHeight"));
+    HeroHeight->SetMinDesiredHeight(425.f);
+    HeroHeight->AddChild(HeroOuter);
+    Content->AddChildToVerticalBox(HeroHeight)->SetPadding(FMargin(0.f,0.f,0.f,5.f));
+
+    UHorizontalBox* MainStage = WidgetTree->ConstructWidget<UHorizontalBox>(
+        UHorizontalBox::StaticClass(), TEXT("Gate10HomeLeftStageRightLayout"));
+    HeroBlack->SetPadding(FMargin(3.f));
+    HeroBlack->AddChild(MainStage);
+
+    UVerticalBox* LeftRail = WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(), TEXT("Gate10HomeSideNavigation"));
+    UHorizontalBoxSlot* LeftCell = MainStage->AddChildToHorizontalBox(LeftRail);
+    LeftCell->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    static const TCHAR* RailNames[4] = {
+        TEXT("WORLD"), TEXT("CHARACTERS"), TEXT("TERRITORY"), TEXT("RECORDS")
+    };
+    static const TCHAR* RailActions[4] = {
+        TEXT("world"), TEXT("nav/1"), TEXT("nav/3"), TEXT("nav/4")
+    };
+    static const TCHAR* RailMarks[4] = {
+        TEXT("✧"), TEXT("◇"), TEXT("♜"), TEXT("▤")
+    };
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        UOGGate12RulerActionButton* Action =
+            WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
+                UOGGate12RulerActionButton::StaticClass());
+        Action->RulerWidget=this;
+        Action->ActionId=RailActions[Index];
+        Action->OnClicked.AddDynamic(
+            Action, &UOGGate12RulerActionButton::InvokeAction);
+        Action->SetBackgroundColor(FLinearColor(.015f,.014f,.021f,.94f));
+        UVerticalBox* Inner = WidgetTree->ConstructWidget<UVerticalBox>(
+            UVerticalBox::StaticClass());
+        UTextBlock* Mark=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Mark->SetText(FText::FromString(RailMarks[Index]));
+        Mark->SetJustification(ETextJustify::Center);
+        Mark->SetColorAndOpacity(FSlateColor(FLinearColor(.72f,.70f,.77f,1.f)));
+        FSlateFontInfo MF=Mark->GetFont(); MF.Size=24; Mark->SetFont(MF);
+        Inner->AddChildToVerticalBox(Mark)->SetPadding(FMargin(0.f,2.f));
+        UTextBlock* Label=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Label->SetText(FText::FromString(RailNames[Index]));
+        Label->SetJustification(ETextJustify::Center);
+        Label->SetColorAndOpacity(FSlateColor(TextMain));
+        FSlateFontInfo LF=Label->GetFont(); LF.Size=10; Label->SetFont(LF);
+        Inner->AddChildToVerticalBox(Label);
+        Action->AddChild(Inner);
+        LeftRail->AddChildToVerticalBox(Action)
+            ->SetPadding(FMargin(2.f,3.f,2.f,10.f));
+    }
+    // The central stage deliberately has no false silhouette/character art.
+    USizeBox* CharacterStage = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), TEXT("Gate10HomeOnlyActualCharacterStage"));
+    MainStage->AddChildToHorizontalBox(CharacterStage)
+        ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+
+    UVerticalBox* RightRail = WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(), TEXT("Gate10HomeRightActions"));
+    MainStage->AddChildToHorizontalBox(RightRail)
+        ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    // Unlike mocked example quest/banner tiles, these 3 controls map
+    // directly to real existing Foundation functionality.
+    AddMessage(RightRail, TEXT("RULER"), 20,
+        FLinearColor(.88f,.86f,.90f,1.f));
+    AddMessage(RightRail,
+        FString::Printf(TEXT("%d OWNED IDENTITIES"),
+            Session->OwnedRoster.Num()), 12, TextMuted);
+    AddAction(RightRail, TEXT("ENTER WORLD"), TEXT("world"));
+    AddAction(RightRail, TEXT("CHARACTERS"), TEXT("nav/1"));
+    AddAction(RightRail, TEXT("RECORDS"), TEXT("nav/4"));
+
+    UBorder* BottomRibbon=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("Gate10HomeCanonicalStateRibbon"));
+    BottomRibbon->SetBrushColor(FLinearColor(.018f,.016f,.024f,.96f));
+    BottomRibbon->SetPadding(FMargin(6.f,7.f));
+    UHorizontalBox* Facts=WidgetTree->ConstructWidget<UHorizontalBox>(
+        UHorizontalBox::StaticClass());
+    BottomRibbon->AddChild(Facts);
+    auto AddFact=[this,Facts](const FString& Caption)
+    {
+        UTextBlock* Item=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Item->SetText(FText::FromString(Caption));
+        Item->SetColorAndOpacity(FSlateColor(FLinearColor(.74f,.72f,.77f,1.f)));
+        Item->SetAutoWrapText(true);
+        FSlateFontInfo Font=Item->GetFont(); Font.Size=11; Item->SetFont(Font);
+        Facts->AddChildToHorizontalBox(Item)
+            ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    };
+    AddFact(FString::Printf(TEXT("%d TERRITORIES"),
+        Session->TerritoryProjection.Territories.Num()));
+    AddFact(FString::Printf(TEXT("%d UNREAD REPORTS"),
+        Session->HomeProjection.UnacknowledgedReportCount));
+    Content->AddChildToVerticalBox(BottomRibbon);
 }
 
 void UOGGate12NativeRulerWidget::HandleRosterSearchChanged(
@@ -781,71 +1045,166 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session) return;
 
-    static const TCHAR* Sections[4] =
-    {
+    // Frozen Gate10 Records: a 2x2 native UMG section board with independent
+    // real buttons and a canonical detail panel. The illustrated mockup
+    // content is not carried over. Exact black frame/panel geometry is live.
+    static const TCHAR* Titles[4] = {
         TEXT("REPORTS"), TEXT("CHRONICLE"), TEXT("CODEX"), TEXT("INTELLIGENCE")
     };
-    for (int32 Index = 0; Index < 4; ++Index)
-        AddAction(Content, Sections[Index],
-            FString::Printf(TEXT("records/%d"), Index));
+    static const TCHAR* IconMarks[4] = {
+        TEXT("✧"), TEXT("♜"), TEXT("◇"), TEXT("◈")
+    };
+    static const TCHAR* Subtitles[4] = {
+        TEXT("AUTHORITATIVE REPORTS"), TEXT("KNOWN HISTORY"),
+        TEXT("DISCOVERED KNOWLEDGE"), TEXT("KNOWN INTELLIGENCE")
+    };
+    UBorder* HeaderFrame = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("RecordsGothicTitleRail"));
+    HeaderFrame->SetBrushColor(FLinearColor(.18f,.17f,.20f,.78f));
+    HeaderFrame->SetPadding(FMargin(0.f,1.f,0.f,1.f));
+    UBorder* HeaderDark = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("RecordsGothicTitleBlack"));
+    HeaderDark->SetBrushColor(FLinearColor(.008f,.008f,.012f,.98f));
+    HeaderFrame->AddChild(HeaderDark);
+    UTextBlock* Head = WidgetTree->ConstructWidget<UTextBlock>(
+        UTextBlock::StaticClass(), TEXT("RecordsAuthoredTitle"));
+    Head->SetText(FText::FromString(TEXT("R E C O R D S")));
+    Head->SetJustification(ETextJustify::Center);
+    Head->SetColorAndOpacity(FSlateColor(FLinearColor(.87f,.85f,.88f,1.f)));
+    FSlateFontInfo HF = Head->GetFont();
+    HF.Size = 27;
+    Head->SetFont(HF);
+    HeaderDark->SetPadding(FMargin(5.f,16.f,5.f,16.f));
+    HeaderDark->AddChild(Head);
+    Content->AddChildToVerticalBox(HeaderFrame)->SetPadding(FMargin(0.f,4.f,0.f,13.f));
+
+    UUniformGridPanel* Board = WidgetTree->ConstructWidget<UUniformGridPanel>(
+        UUniformGridPanel::StaticClass(), TEXT("FrozenRecordsFourSectionBoard"));
+    Board->SetSlotPadding(FMargin(3.f));
+    Content->AddChildToVerticalBox(Board);
+    for (int32 Index=0; Index<4; ++Index)
+    {
+        const bool bActive = RecordsSection == Index;
+        UBorder* Frame = WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass());
+        Frame->SetBrushColor(bActive
+            ? FLinearColor(.55f,.49f,.57f,1.f)
+            : FLinearColor(.23f,.22f,.27f,1.f));
+        Frame->SetPadding(FMargin(1.f));
+        UOGGate12RulerActionButton* Button =
+            WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
+                UOGGate12RulerActionButton::StaticClass());
+        Button->RulerWidget = this;
+        Button->ActionId = FString::Printf(TEXT("records/%d"), Index);
+        Button->SetBackgroundColor(FLinearColor(.010f,.009f,.014f,.97f));
+        Button->OnClicked.AddDynamic(
+            Button, &UOGGate12RulerActionButton::InvokeAction);
+        UVerticalBox* Face = WidgetTree->ConstructWidget<UVerticalBox>(
+            UVerticalBox::StaticClass());
+        UTextBlock* Crest = WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Crest->SetText(FText::FromString(IconMarks[Index]));
+        Crest->SetJustification(ETextJustify::Center);
+        Crest->SetColorAndOpacity(FSlateColor(bActive
+            ? FLinearColor(.87f,.85f,.91f,1.f)
+            : FLinearColor(.55f,.53f,.61f,1.f)));
+        FSlateFontInfo CF = Crest->GetFont(); CF.Size=24; Crest->SetFont(CF);
+        Face->AddChildToVerticalBox(Crest)->SetPadding(FMargin(0.f,9.f,0.f,0.f));
+        UTextBlock* Title = WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Title->SetText(FText::FromString(Titles[Index]));
+        Title->SetJustification(ETextJustify::Center);
+        Title->SetColorAndOpacity(FSlateColor(TextMain));
+        FSlateFontInfo TF = Title->GetFont(); TF.Size=16; Title->SetFont(TF);
+        Face->AddChildToVerticalBox(Title)->SetPadding(FMargin(0.f,2.f));
+        UTextBlock* Sub = WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Sub->SetText(FText::FromString(Subtitles[Index]));
+        Sub->SetJustification(ETextJustify::Center);
+        Sub->SetAutoWrapText(true);
+        Sub->SetColorAndOpacity(FSlateColor(TextMuted));
+        FSlateFontInfo SF = Sub->GetFont(); SF.Size=9; Sub->SetFont(SF);
+        Face->AddChildToVerticalBox(Sub)->SetPadding(FMargin(6.f,2.f,6.f,9.f));
+        Button->AddChild(Face);
+        Frame->AddChild(Button);
+        USizeBox* Size = WidgetTree->ConstructWidget<USizeBox>(
+            USizeBox::StaticClass());
+        Size->SetMinDesiredHeight(130.f);
+        Size->AddChild(Frame);
+        Board->AddChildToUniformGrid(Size, Index/2, Index%2);
+    }
+    UBorder* DetailFrame = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("RecordsCanonicalDetailFrame"));
+    DetailFrame->SetBrushColor(FLinearColor(.31f,.30f,.34f,1.f));
+    DetailFrame->SetPadding(FMargin(1.f));
+    UBorder* DetailDark = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("RecordsCanonicalDetailBlack"));
+    DetailDark->SetBrushColor(FLinearColor(.009f,.009f,.013f,.95f));
+    DetailDark->SetPadding(FMargin(8.f,10.f));
+    DetailFrame->AddChild(DetailDark);
+    UVerticalBox* Detail = WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(), TEXT("RecordsActualKnowledgeDetail"));
+    DetailDark->AddChild(Detail);
+    Content->AddChildToVerticalBox(DetailFrame)->SetPadding(FMargin(3.f,13.f,3.f,10.f));
+    AddMessage(Detail, Titles[FMath::Clamp(RecordsSection,0,3)], 20, TextMain);
 
     FString Error;
     if ((RecordsSection == 0 || RecordsSection == 1 || RecordsSection == 3) &&
         !Session->RefreshRecordsDetail(Error))
     {
-        AddMessage(Content, Error.IsEmpty()
+        AddMessage(Detail, Error.IsEmpty()
             ? TEXT("Canonical Records unavailable.") : Error, 16, TextMuted);
         return;
     }
     switch (RecordsSection)
     {
     case 0:
-        AddMessage(Content,
+        AddMessage(Detail,
             FString::Printf(TEXT("%d verified reports / %d unacknowledged"),
                 Session->RecordsProjection.ReportCount,
                 Session->RecordsProjection.UnacknowledgedReportCount),
             18, TextMain);
         if (Session->ReportProjection.IsEmpty())
         {
-            AddMessage(Content, TEXT("No reports in this world."), 16, TextMuted);
+            AddMessage(Detail, TEXT("No reports in this world."), 16, TextMuted);
         }
         for (int32 Index = 0; Index < Session->ReportProjection.Num(); ++Index)
         {
             const FOGReportRecord& Report = Session->ReportProjection[Index];
-            AddMessage(Content,
+            AddMessage(Detail,
                 FString::Printf(TEXT("%s | priority %d | world tick %lld | %s"),
                     *Report.Category.ToString(), Report.Priority,
                     Report.CreatedWorldTick,
                     Report.bAcknowledged ? TEXT("READ") : TEXT("UNREAD")),
                 16, Report.bAcknowledged ? TextMuted : TextMain);
             if (!Report.bAcknowledged)
-                AddAction(Content, TEXT("ACKNOWLEDGE REPORT"),
+                AddAction(Detail, TEXT("ACKNOWLEDGE REPORT"),
                     FString::Printf(TEXT("report/ack/%d"), Index));
         }
         break;
     case 1:
         if (Session->ChronicleProjection.IsEmpty())
-            AddMessage(Content, TEXT("No known Chronicle entries."), 16, TextMuted);
+            AddMessage(Detail, TEXT("No known Chronicle entries."), 16, TextMuted);
         for (const FOGChronicleEntryViewModel& Event : Session->ChronicleProjection)
-            AddMessage(Content,
+            AddMessage(Detail,
                 FString::Printf(TEXT("%s  /  world tick %lld"),
                     *Event.EventType.ToString(), Event.WorldTick),
                 16, TextMain);
         break;
     case 2:
-        AddMessage(Content,
+        AddMessage(Detail,
             TEXT("No verified installed Codex entries are available. "
                  "Unknown lore remains unknown."),
             16, TextMuted);
         break;
     case 3:
         if (Session->IntelligenceProjection.IsEmpty())
-            AddMessage(Content, TEXT("No known Intelligence entries."), 16, TextMuted);
+            AddMessage(Detail, TEXT("No known Intelligence entries."), 16, TextMuted);
         for (const FOGIntelligenceEntryViewModel& Entry : Session->IntelligenceProjection)
         {
             // BuildIntelligence applies owner knowledge semantics; do not
             // reveal the value JSON of unknown/outdated intelligence.
-            AddMessage(Content,
+            AddMessage(Detail,
                 FString::Printf(TEXT("%s / %s"),
                     *Entry.FactKey.ToString(),
                     Entry.Knowledge.KnowledgeState ==

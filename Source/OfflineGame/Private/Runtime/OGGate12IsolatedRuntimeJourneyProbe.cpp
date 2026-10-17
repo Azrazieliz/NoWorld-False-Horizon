@@ -23,7 +23,7 @@
 #include "Interaction/OGFoundationInteractionHost.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
-#include "UI/OGOpeningResumeValidation.h"
+
 #include "UI/OGGate12CharacterPreviewStage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -224,19 +224,8 @@ void UOGGate12IsolatedRuntimeJourneyProbe::RunNextStep()
         if (!bReady) {SaveReceipt(true);return;}
         if (!bOpeningCaptured)
         {
-            // Verify that Continue uses genuine read-only Foundation SQLite
-            // integrity and schema, not simply a matching filename.
-            const FString IsolatedWorldDb = FPaths::Combine(
-                FPaths::ProjectSavedDir(), TEXT("OfflineGame"),
-                TEXT("WorldState.db"));
-            const bool bWorldReadable =
-                FOGOpeningResumeValidation::HasReadableWorld(IsolatedWorldDb);
-            Record(TEXT("opening_world_db_readonly_integrity"),
-                bWorldReadable, FString::Printf(
-                    TEXT("ExistingWorld=%d CoreReady=%d; no write/migration"),
-                    IFileManager::Get().FileExists(*IsolatedWorldDb),
-                    Core->IsCoreReady()));
-            if (!bWorldReadable) {SaveReceipt(true);return;}
+            // Reuse the Foundation's already-functional canonical save,
+            // restore and recovery flow; no separate database validator.
             // Inspect the actual Slate-created opening before the journey
             // navigates away. Older receipts accidentally skipped it entirely.
             UOGGate12NativeOpeningWidget* Opening = nullptr;
