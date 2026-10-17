@@ -321,10 +321,14 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
         UTextBlock* Notice = WidgetTree->ConstructWidget<UTextBlock>(
             UTextBlock::StaticClass(), TEXT("UnverifiedWorldSaveNotice"));
         Notice->SetText(FText::FromString(
-            TEXT("Existing world data could not be verified. Continue is unavailable; preserve or recover it before starting a replacement.")));
+            TEXT("WORLD SAVE UNVERIFIED — RECOVERY REQUIRED")));
         Notice->SetAutoWrapText(true);
-        Notice->SetColorAndOpacity(FSlateColor(OpeningTextColor));
-        Menu->AddChildToVerticalBox(Notice)->SetPadding(FMargin(7.f,9.f));
+        Notice->SetColorAndOpacity(FSlateColor(Muted));
+        Notice->SetJustification(ETextJustify::Center);
+        FSlateFontInfo WarningFont=Notice->GetFont();
+        WarningFont.Size=13;
+        Notice->SetFont(WarningFont);
+        Menu->AddChildToVerticalBox(Notice)->SetPadding(FMargin(3.f,1.f));
     }
     // A gacha account is not a disposable single-player slot.
     // Existing worlds resume safely; new Rulers enter the established
@@ -332,7 +336,10 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
     if (bHasRuler && bHasSave)
         AddAction(TEXT("CONTINUE"),TEXT("OG.Opening.Continue"),true,true);
     else
-        AddAction(TEXT("ENTER"),TEXT("OG.Opening.Ruler"),true,true);
+        // Fresh install: enter the already-existing Ruler workflow.
+        // Unverified on-disk world: fail closed until Recovery, never replace.
+        AddAction(TEXT("ENTER"),TEXT("OG.Opening.Ruler"),
+                  !bWorldFilePresent,true);
 }
 
 void UOGGate12NativeOpeningWidget::DispatchNativeAction(FName Action)
@@ -366,7 +373,7 @@ void UOGGate12NativeOpeningWidget::NativeTick(
                 Size.X - 24.f, bWide ? Size.X * .40f : Size.X * .92f));
             TitleWidthConstraint->SetWidthOverride(Width);
             TitleSlot->SetAnchors(
-                bWide ? FAnchors(.76f,.70f) : FAnchors(.5f,.78f));
+                bWide ? FAnchors(.76f,.69f) : FAnchors(.5f,.68f));
         }
     }
     // Continuous native ambient animation; no baked PNG or cinematic.

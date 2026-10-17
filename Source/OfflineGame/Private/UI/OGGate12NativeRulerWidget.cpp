@@ -624,22 +624,20 @@ void UOGGate12NativeRulerWidget::BuildHome()
         Session->OwnedRoster.IsEmpty() ? .92f : .17f));
     Position(Void,0.f,0.f,1.f,1.f);
 
-    // Authentic Registry-approved OWNED artwork, when present, stays behind
-    // the controls via RefreshFrozenScene. Do not create a fake character.
-    UOGGate12GothicChromeWidget* Outline=
-        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
-            UOGGate12GothicChromeWidget::StaticClass(),
-            TEXT("Gate10HomeFullStageAngularFiligree"));
-    Outline->Configure(FLinearColor(.63f,.56f,.72f,1.f),INDEX_NONE,false);
-    Position(Outline,.013f,.014f,.987f,.982f);
-
-    UOGGate12GothicChromeWidget* PortraitOutline=
-        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
-            UOGGate12GothicChromeWidget::StaticClass(),
-            TEXT("Gate10HomeCharacterFirstStageEtch"));
-    PortraitOutline->Configure(FLinearColor(.51f,.45f,.61f,1.f),
-        INDEX_NONE,false);
-    Position(PortraitOutline,.052f,.12f,.71f,.88f);
+    // Editable Figma artwork shared with Gate10's accepted Gacha language.
+    // It contains ONLY decorative shapes, never mockup characters or data.
+    // Native hit targets and canonical labels remain layered independently.
+    if (UTexture2D* HomeArt=LoadObject<UTexture2D>(nullptr,
+        TEXT("/Game/UI/Gate10/Chrome/T_Gate10_HomeChrome_V1."
+             "T_Gate10_HomeChrome_V1")))
+    {
+        UImage* Chrome=WidgetTree->ConstructWidget<UImage>(
+            UImage::StaticClass(),TEXT("Gate10HomeFigmaChromeOnly"));
+        Chrome->SetBrushFromTexture(HomeArt,true);
+        Chrome->SetVisibility(ESlateVisibility::HitTestInvisible);
+        Chrome->SetOpacity(Session->OwnedRoster.IsEmpty()?1.f:.32f);
+        Position(Chrome,0.f,0.f,1.f,1.f);
+    }
 
     auto TextAt=[this,&Position](const FString& String,
         const TCHAR* Key,float X,float Y,float X2,float Y2,

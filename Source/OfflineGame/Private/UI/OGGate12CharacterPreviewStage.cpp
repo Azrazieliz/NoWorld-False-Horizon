@@ -32,6 +32,12 @@ AOGGate12CharacterPreviewStage::AOGGate12CharacterPreviewStage()
     // converts it to ordinary premultiplied opacity, removing the black
     // rectangular scene-capture surface without removing any real geometry.
     Capture->CaptureSource = ESceneCaptureSource::SCS_SceneColorHDR;
+    // The game's World exposure does not control this isolated Ruler
+    // stage; correct dark QA/owned captures at the camera, not by
+    // replacing user-authored textures, material slots, or world lighting.
+    Capture->PostProcessBlendWeight = 1.f;
+    Capture->PostProcessSettings.bOverride_AutoExposureBias = true;
+    Capture->PostProcessSettings.AutoExposureBias = 1.15f;
     SetActorEnableCollision(false);
 }
 
@@ -188,8 +194,8 @@ bool AOGGate12CharacterPreviewStage::InitializeDevelopmentQaPreview(
     // Low-intensity test lighting previously measured in GPU studio sweep.
     // QA-only stage lights never edit the actual kingdom's map lighting.
     for (const TPair<FVector, float>& LightSpec :
-         { TPair<FVector, float>(FVector(-185.f,-110.f,150.f),300.f),
-           TPair<FVector, float>(FVector(-170.f,200.f,120.f),145.f) })
+         { TPair<FVector, float>(FVector(-185.f,-110.f,150.f),1600.f),
+           TPair<FVector, float>(FVector(-170.f,200.f,120.f),780.f) })
     {
         UPointLightComponent* Light = NewObject<UPointLightComponent>(
             this, NAME_None, RF_Transient);
