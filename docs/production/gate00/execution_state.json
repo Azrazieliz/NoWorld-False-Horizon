@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_GATE00_EXECUTION_BOARD_V1",
-  "updated_local_date": "2026-10-16",
+  "updated_local_date": "2026-10-17",
   "timezone": "Europe/Paris",
   "authority": "Gate00/user; an intent and coordination register, not acceptance of untested game content",
   "single_issue": "https://github.com/Azrazieliz/Offline-Game/issues/25",
@@ -20,8 +20,10 @@
     "destructive_uninstall_or_data_wipe_authorized": false
   },
   "verified_git_heads": {
-    "Gate12": "cdcb22bf3f4541e7334b27768d9f43bcfc4a18df",
-    "SoftwareMastery": "b5a0bb3a5a6c99398364982272a2635dca5aae6a"
+    "Gate12": "c0681bb36b1f2266fa33178b431d2ecf00488e89",
+    "SoftwareMastery": "4f636a14098fb63f9b4b31228c53393a5e3702dc",
+    "Gate09": "39b90fd577e184f1c33b63c47c829407ba044333",
+    "Gate00_prior": "1ea882e8e6c655f16be2a8c4e0c24a2d2ae31ffc"
   },
   "tasks": [
     {
@@ -29,8 +31,8 @@
       "owner": "Gate12",
       "status": "ACTIVE",
       "acceptance": "Actual iterative dev APK built/cooked/installed and physically tested with evidence for Ruler/World/roster/persistence/Adult Mode; no production release authorization",
-      "next": "Create next isolated Android QA build and install/test on authorized device, then iterate on tangible failures.",
-      "source_sha": "cdcb22bf3f4541e7334b27768d9f43bcfc4a18df"
+      "next": "Preserve dirty source; finish any active build; complete commissioned full code-first requirements traceability, ranked P0-P3 backlog, and implement/verify first P0 code fix; then perform authorized iterative isolated Android build/device QA with per-feature receipts.",
+      "source_sha": "c0681bb36b1f2266fa33178b431d2ecf00488e89"
     },
     {
       "id": "P0-FIDELITY",
@@ -56,14 +58,15 @@
     {
       "id": "P0-ALTER",
       "owner": "Gate01-3D",
-      "status": "USER_SOURCE_PRESERVED_MAPPING_PENDING",
-      "next": "Verify 3 protected Party card latest revisions and exact wardrobe mapping; no 2D prerequisite"
+      "status": "USER_SOURCE_PRESERVED_WARDROBE_MAPPING_VERIFIED",
+      "next": "Reuse confirmed three-state native source bindings for authentic Gate11/Gate12 intake; do not remap cards or require optional 2D."
     },
     {
       "id": "P0-MOTION",
       "owner": "Gate09",
-      "status": "COMMISSION_PREPARED_DELIVERY_UNCONFIRMED",
-      "next": "First actual rig/animation source evidence and clip proof"
+      "status": "PARTIAL_GENUINE_MOTION_SOURCE_PROOF",
+      "source_sha": "39b90fd577e184f1c33b63c47c829407ba044333",
+      "next": "Prove authentic native animation path-hash bindings and cross-wardrobe deform before locomotion/dance production acceptance."
     },
     {
       "id": "P1-KIT",
@@ -96,5 +99,5 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "No build/test permission roundtrip; Gate12 should make an actual development APK. Ask only before public release, destructive actions or irreversibly changing user data."
+  "next_user_action": "No repeated permission for isolated development builds or tests. Gate12 must finish already commissioned code-first audit and first P0 code implementation while preserving dirty source; Android dev APK/device QA remains active and authorized. Ask only for destructive actions, public release or irreversible user-data changes."
 }
