@@ -1,6 +1,6 @@
 """Read-only, subsecond master-method guard for every software-mastery job.
 
-All 33 recorded learned controls must be present. This checks the stored doctrine and known
+All 37 recorded learned controls must be present. This checks the stored doctrine and known
 native source fixes before an automated Gate task is dispatched; it does not claim
 to verify visual likeness, active game DLL state, texture parity or Android quality.
 """
@@ -12,7 +12,7 @@ import re
 
 HERE = pathlib.Path(__file__).resolve().parent
 LEDGER = HERE / "MASTER_LEARNED_METHODS_V1.json"
-REQUIRED = {"K%03d" % i for i in range(1, 34)}
+REQUIRED = {"K%03d" % i for i in range(1, 38)}
 GATES = {"Gate%02d" % i for i in range(1, 13)}
 SOURCE_SNIPPETS = {
     "SM01_Runtime_Source/SM01RuntimeController.cs": [
@@ -47,6 +47,8 @@ SOURCE_SNIPPETS = {
     "p0_morph_source_to_glb_parity.py": ["source_effective_shape_keys", "missing_effective_keys", "delta_ratio_median"],
     "p0_eyeline_embedded_alpha.py": ["partial_alpha_fraction", "alphaMode", "bufferView"],
     "p0_targeted_regressions.py": ["no_effective_morph_loss_", "source_glb_upper_eyeline_blend_", "native_capture_sandbox_original_untouched"],
+    "kk_one_session.py": ["catalog_plan", "stage_plan", "game_guards", "run_batch", "native_dispatch_seconds", "mid_session_mod_restart_allowed"],
+    "test_kk_one_session.py": ["budget_overshoot_fails_before_launch", "one_process_native_batch_with_telemetry", "morph_batch_native_tsv"],
 }
 def ensure_master(ledger_path=LEDGER, source_dir=HERE):
     """Fail closed on missing contract, missing scope, or known regressed sources.

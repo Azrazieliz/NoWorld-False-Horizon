@@ -37,7 +37,19 @@ def main():
     if temp.exists():raise FileExistsError('Learning draft exists; review it before modifying')
     temp.write_text(json.dumps(doc,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
     ensure_master(temp)
-    temp.replace(LEDGER)
+    try:
+        temp.replace(LEDGER)
+    except PermissionError:
+        # Windows may reject os.replace for an existing JSON watched by other tools.
+        # Use explicit Move-Item -Force, then revalidate the full append-only ledger.
+        import subprocess
+        cmd=['powershell.exe','-NoProfile','-NonInteractive','-Command',
+            'Move-Item -LiteralPath $args[0] -Destination $args[1] -Force -ErrorAction Stop',
+            str(temp),str(LEDGER)]
+        proc=subprocess.run(cmd,capture_output=True,text=True,timeout=12)
+        if proc.returncode or temp.exists():
+            raise RuntimeError('Windows ledger replacement failed: '+proc.stderr[-350:])
+        ensure_master(LEDGER)
     print('NW_LESSON_RECORDED='+json.dumps({'id':args.id,'revision':doc['revision'],
         'status':args.status,'regression':args.regression},ensure_ascii=False))
 if __name__=='__main__':main()

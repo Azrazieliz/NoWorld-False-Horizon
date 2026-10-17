@@ -3,6 +3,8 @@
 **Reference authority:** `MASTER_LEARNED_METHODS_V1.json` (26 initial lessons). All prior older narrative handoffs are subordinate when they conflict.
 **Purpose:** Let the commissioned Gates automate real production requests through repeatable tools. This test series assesses the assistant's capabilities; the sample characters are disposable QA, **not** required canonical game characters.
 
+**2026-10-17 addition:** K035–K037 require one-session Koikatsu operation: recognize Test4's predominantly black fitted military commander outfit and proper XYZ/scale (user rated 6.7/10); plan all plausible matching existing mods before ONE Maker launch, run native edits in a single Python batch, track actual latency, and never repeatedly restart Maker for one new candidate. The 13/13 new batch checks are offline only. See `TEST04_LESSONS_ONE_SESSION_GATE01_20261017.md`.
+
 ## One-time knowledge acquisition; automatic reuse thereafter
 1. At the beginning of EVERY task, run `gate_start.py --gate NN` or use `gatectl.py`/`pipeline_runner.py` (these already load `mastery_preflight.ensure_master()` automatically).
 2. Use the returned `known_methods` to choose the correct already-tested native API, parameters, asset IDs and validation. **Do not rediscover a previously resolved issue or reimplement a verified tool.**

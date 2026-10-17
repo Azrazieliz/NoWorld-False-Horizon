@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-16T1440Z",
+  "revision": "2026-10-17T1522Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -351,6 +351,36 @@
       "evidence": "Gate09 2026-10-16 actual hashes c1efbc9d/bdf8a59f/a5800ca3, 975 joints each, 782 shared paths, weighted 324/297/295, BVH 144_20 retarget mapped 22 bones with 0.113m evaluated vertex motion, genuine .blend/FBX reimport, 3 PNG captures, 10/10 Gate09 source QA tests.",
       "status": "verified_readonly_source_deformation_only",
       "regression_test": "Gate09 Scripts/Gate09/test_gate09_source_qa.py enforces three real GLB hashes, joint and weight counts, 782 shared paths with fail-closed compatibility, 22 retargeted bones, actual skin displacement, artifact hashes, three captures and animation-only FBX native reload; Gate09 visual/Unreal acceptance stays false."
+    },
+    {
+      "id": "K035",
+      "topic": "test04_user_visual_quality_and_identity",
+      "applies_to": "gate01|gate09|gate12",
+      "requirement": "Test4 assessed at 6.7/10 by user: more recognizable than past benchmarks but only barely average; actual reference wears a mostly BLACK fitted Jeanne-Alter-like military commander uniform. Match color dominance, silhouette, face/body size, hair, engraved crest and placements; don't just match franchise and loosely similar armor.",
+      "procedure": "Before modeling, extract source image's prioritized visible anchors and color dominance, rank installed clothing by silhouette and colors, stage alternate matching candidates, then evaluate front/face/hair/cape and corrected XYZ/scale together. Correct the largest visible deviations quickly; stop at user's benchmark sufficiency. Reference-specific outfit color dominance is a required visual gate.",
+      "evidence": "User feedback 2026-10-17: Test4 6.7/10, uniform black commander rather than generic knight; body, hair, size and accessory placement require improvement; stops Test4 and transitions to harder Test5.",
+      "status": "user_assessed_partial_benchmark_not_canonical",
+      "regression_test": "TEST04_LESSONS_ONE_SESSION_GATE01_20261017.md test04 stage identity and color dominance; reject claims of full fidelity or approved art at 6.7/10."
+    },
+    {
+      "id": "K036",
+      "topic": "one_maker_launch_preload_relevant_assets",
+      "applies_to": "gate01",
+      "requirement": "Avoid serial close-reopen cycles per asset or mod during character benchmark. Stage all plausibly relevant indexed mod dependencies before ONE planned sandbox Maker launch; keep full original catalog searchable but never blindly copy all 38GB into RAM.",
+      "procedure": "Run kk_one_session.py plan using multiple reference-feature terms and pinned GUIDs, enforce package budget, then kk_one_session.py stage exactly once while NO Koikatsu game process is active. Run one Maker session; do not change the selected-mod folder mid-run and assume Unity hotloads. If a candidate is absent, select already loaded alternatives or defer it until next planned cold launch.",
+      "evidence": "User 2026-10-17 Test4: approximately 25 minutes elapsed with only about 1 minute actual modifications (4 percent by user estimate), repeated restarts added major delay; current selective sandbox has fully indexed assets but only a subset staged.",
+      "status": "offline_planner_verified_live_latency_pending",
+      "regression_test": "test_kk_one_session.py catalog_plan, disk cap, missing mandatory GUID and no restart guard; do not claim full live speed proof before Test5."
+    },
+    {
+      "id": "K037",
+      "topic": "persistent_native_batch_timing_and_no_idle",
+      "applies_to": "gate01",
+      "requirement": "Minimize dead time: continuous Koikatsu edits in one persistent Python/native session, not separate script startup, arbitrary inspections or prolonged planning for each click. Track true end-to-end wall time vs active modification time.",
+      "procedure": "Use kk_one_session.py batch with validated operation recipe and direct in-process SM01 client.submit; deduplicate adjacent identical ops, stop immediately on native failure, collect per-operation durations, and never auto-start/restart game. Measure image intake/catalog/stage/start/modify/visual checkpoints separately on subsequent real benchmark; use expected durations as targets not established achievements.",
+      "evidence": "User 2026-10-17 Test4 evaluation reports 25 minutes and approximately 1 minute genuine editing; 2026-10-17 new mock transport/regression suite 13/13 demonstrates single-process API batching and timing, real live speed improvement not tested.",
+      "status": "offline_batch_unit_tested_live_speed_unverified",
+      "regression_test": "test_kk_one_session.py validates persistent batch with fake submit, saved telemetry, native morph TSV and no unexpected save; require live latency measurement and restart count on Test5."
     }
   ]
 }
