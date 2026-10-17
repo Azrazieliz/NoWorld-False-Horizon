@@ -7,36 +7,6 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/BlueprintPlatformLibrary.h"
 #include "OfflineGame.h"
-#include "Runtime/OGPlayerProfileSettings.h"
-
-namespace
-{
-EScreenOrientation::Type ToScreenOrientation(FName Name)
-{
-    if (Name == FName(TEXT("portrait")))
-    {
-        return EScreenOrientation::PortraitSensor;
-    }
-    if (Name == FName(TEXT("portrait_upside_down")))
-    {
-        return EScreenOrientation::PortraitUpsideDown;
-    }
-    if (Name == FName(TEXT("landscape_left")))
-    {
-        return EScreenOrientation::LandscapeLeft;
-    }
-    if (Name == FName(TEXT("landscape_right")))
-    {
-        return EScreenOrientation::LandscapeRight;
-    }
-    if (Name == FName(TEXT("sensor")) ||
-        Name == FName(TEXT("full_sensor")))
-    {
-        return EScreenOrientation::FullSensor;
-    }
-    return EScreenOrientation::LandscapeSensor;
-}
-}
 
 void UOGPresentationModeSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
@@ -237,28 +207,13 @@ void UOGPresentationModeSubsystem::RestoreWorldPresentation()
 void UOGPresentationModeSubsystem::ApplyOrientationForMode(
     EOGPresentationMode Mode)
 {
-    FOGPlayerProfileSettings Profile;
-    FString Error;
-    if (!FOGPlayerProfileSettingsService::Load(
-            FOGPlayerProfileSettingsService::DefaultProfilePath(),
-            Profile,
-            Error))
-    {
-        Profile = FOGPlayerProfileSettings();
-    }
-
-    const FName Preferred =
-        Mode == EOGPresentationMode::Ruler
-            ? FName(TEXT("portrait"))
-            : FName(TEXT("landscape"));
-
-    const FName Resolved =
-        FOGPlayerProfileSettingsService::ResolveOrientation(
-            Profile,
-            Preferred);
-
+    // FROZEN GATE12 MODE CONTRACT: Ruler is portrait-only, World is
+    // landscape-only. This is presentation state, not a mutable preference.
+    // Old saved OrientationLock values must NEVER override the game mode.
     UBlueprintPlatformLibrary::SetAllowedDeviceOrientation(
-        ToScreenOrientation(Resolved));
+        Mode == EOGPresentationMode::Ruler
+            ? EScreenOrientation::PortraitSensor
+            : EScreenOrientation::LandscapeSensor);
 }
 
 void UOGPresentationModeSubsystem::SetMode(

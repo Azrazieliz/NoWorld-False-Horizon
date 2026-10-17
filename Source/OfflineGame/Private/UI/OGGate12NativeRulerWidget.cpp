@@ -127,25 +127,21 @@ void UOGGate12NativeRulerWidget::NativeTick(
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     const FVector2D ViewportSize = MyGeometry.GetLocalSize();
-    // Gate10 Gacha chrome is portrait-authoritative, never stretched across
-    // a landscape layout. The original native landscape UI stays functional.
-    const bool bVisible = Session &&
-        Session->CurrentDestination == EOGRulerPrimaryDestination::Gacha &&
-        ViewportSize.Y > ViewportSize.X;
-    if (bVisible != bGachaChromeWasVisible)
-    {
-        bGachaChromeWasVisible = bVisible;
-        if (Gate10PortraitGachaCanvas)
-            Gate10PortraitGachaCanvas->SetVisibility(
-                bVisible ? ESlateVisibility::Visible
-                         : ESlateVisibility::Collapsed);
-        if (Screen)
-            // Hidden preserves its full-viewport desired geometry; Collapsed
-            // shrank the parent Overlay to zero and centered the Gacha stage.
-            Screen->SetVisibility(
-                bVisible ? ESlateVisibility::Hidden
-                         : ESlateVisibility::Visible);
-    }
+    // Ruler has NO landscape presentation. During the device's asynchronous
+    // rotation from World, hide the whole Ruler surface until portrait fits.
+    // In portrait, use the user-approved Gacha canvas or native other pages.
+    const bool bPortrait = ViewportSize.Y > ViewportSize.X;
+    const bool bGachaVisible = bPortrait && Session &&
+        Session->CurrentDestination == EOGRulerPrimaryDestination::Gacha;
+    bGachaChromeWasVisible = bGachaVisible;
+    if (Gate10PortraitGachaCanvas)
+        Gate10PortraitGachaCanvas->SetVisibility(
+            bGachaVisible ? ESlateVisibility::Visible
+                          : ESlateVisibility::Collapsed);
+    if (Screen)
+        Screen->SetVisibility(
+            !bPortrait || bGachaVisible ? ESlateVisibility::Hidden
+                                        : ESlateVisibility::Visible);
 }
 
 void UOGGate12NativeRulerWidget::ShowWorldTransitionError(const FString& Error)
@@ -211,7 +207,7 @@ void UOGGate12NativeRulerWidget::BuildRoot()
 
     // Gate10 native Gacha is anchored DIRECTLY to the live viewport.
     // Normalized Canvas slots remove the zero-desired-size ScaleBox defect.
-    // Landscape continues to use the existing functional Ruler widget.
+    // No landscape Ruler fallback exists: World alone owns landscape.
     Gate10PortraitGachaCanvas = WidgetTree->ConstructWidget<UCanvasPanel>(
         UCanvasPanel::StaticClass(), TEXT("Gate10GachaTrueInteractiveCanvas"));
     Gate10PortraitGachaCanvas->SetVisibility(ESlateVisibility::Collapsed);
@@ -253,7 +249,25 @@ void UOGGate12NativeRulerWidget::BuildRoot()
         UBorder::StaticClass(), TEXT("Gate10BottomNavigationOrnament"));
     BottomFrame->SetBrushColor(FLinearColor(.009f,.009f,.012f,.96f));
     BottomFrame->SetPadding(FMargin(3.f,5.f));
-    BottomFrame->AddChild(NavigationBar);
+    UOverlay* NavLayers=WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(),TEXT("GachaDerivedFiveNativeNavLayer"));
+    static const TCHAR* NavPackage =
+        TEXT("/Game/UI/Gate10/Chrome/T_Gate10_SharedFiveNavChrome_Neutral."
+             "T_Gate10_SharedFiveNavChrome_Neutral");
+    if (UTexture2D* NavTexture=LoadObject<UTexture2D>(nullptr,NavPackage))
+    {
+        UImage* EtchedNav=WidgetTree->ConstructWidget<UImage>(
+            UImage::StaticClass(),TEXT("Gate10FiveNavNeutralFigmaArt"));
+        EtchedNav->SetBrushFromTexture(NavTexture,true);
+        EtchedNav->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UOverlaySlot* ArtSlot=NavLayers->AddChildToOverlay(EtchedNav);
+        ArtSlot->SetHorizontalAlignment(HAlign_Fill);
+        ArtSlot->SetVerticalAlignment(VAlign_Fill);
+    }
+    UOverlaySlot* NativeButtons=NavLayers->AddChildToOverlay(NavigationBar);
+    NativeButtons->SetHorizontalAlignment(HAlign_Fill);
+    NativeButtons->SetVerticalAlignment(VAlign_Fill);
+    BottomFrame->AddChild(NavLayers);
     USizeBox* NativeNavHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(),TEXT("Gate10FiveNativeButtonsFullHeight"));
     NativeNavHeight->SetMinDesiredHeight(146.f);
@@ -482,8 +496,15 @@ void UOGGate12NativeRulerWidget::BuildNav()
         Gothic->Configure(bSelected ? ContextAccent
             : FLinearColor(.49f,.46f,.54f,1.f),Index,bSelected);
         Layers->AddChildToOverlay(Button);
-        Gothic->SetVisibility(ESlateVisibility::HitTestInvisible);
-        Layers->AddChildToOverlay(Gothic);
+        // The exact approved Gacha chrome derivative supplies the ornamental
+        // rails when installed; use native vector chrome as a safe fallback.
+        if (!LoadObject<UTexture2D>(nullptr,
+            TEXT("/Game/UI/Gate10/Chrome/T_Gate10_SharedFiveNavChrome_Neutral."
+                 "T_Gate10_SharedFiveNavChrome_Neutral")))
+        {
+            Gothic->SetVisibility(ESlateVisibility::HitTestInvisible);
+            Layers->AddChildToOverlay(Gothic);
+        }
         UHorizontalBoxSlot* NavigationCell =
             NavigationBar->AddChildToHorizontalBox(Layers);
         NavigationCell->SetSize(FSlateChildSize(ESlateSizeRule::Fill));

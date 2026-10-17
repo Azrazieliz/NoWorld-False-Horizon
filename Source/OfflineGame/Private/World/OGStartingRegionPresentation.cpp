@@ -2362,31 +2362,9 @@ void AOGWorldPrototypeCharacter::ToggleSprintPreference()
 
 void AOGWorldPrototypeCharacter::CycleOrientationOverride()
 {
-    FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
-
-    const FName Current = OrientationOverride.IsNone()
-        ? FName(TEXT("automatic"))
-        : OrientationOverride;
-
-    if (Current == FName(TEXT("automatic")))
-    {
-        Profile.OrientationLock = FName(TEXT("portrait"));
-    }
-    else if (Current == FName(TEXT("portrait")))
-    {
-        Profile.OrientationLock = FName(TEXT("landscape"));
-    }
-    else if (Current == FName(TEXT("landscape")))
-    {
-        Profile.OrientationLock = FName(TEXT("sensor"));
-    }
-    else
-    {
-        Profile.OrientationLock = FName(TEXT("automatic"));
-    }
-
-    SaveMutablePlayerProfileAndApply(Profile);
+    // Legacy control intentionally disabled. The authoritative presentation
+    // subsystem locks World to landscape and Ruler to portrait.
+    // Preserve the saved profile rather than rewriting an unrelated setting.
 }
 
 void AOGWorldPrototypeCharacter::ToggleLeftHandedControls()
@@ -8654,14 +8632,13 @@ void AOGWorldPresentationHud::DrawHUD()
             if (IsSettingsRowVisible(Y))
                 DrawFoundationText(TEXT("Orientation"), MainText, Left,
                     ProjectSettingsY(Y) + 7.0f * Scale, nullptr, 0.54f * Scale, false);
-            DrawHitButton(
-                Character->GetOrientationOverride().ToString(),
-                FName(TEXT("OG.Settings.Orientation")),
-                Left + RowWidth - ValueW,
-                Y,
-                ValueW,
-                ButtonH,
-                0.50f);
+            // Fixed per-mode orientation. Do not offer a selector that can
+            // force portrait World or landscape Ruler.
+            if (IsSettingsRowVisible(Y))
+                DrawFoundationText(TEXT("AUTO BY MODE"), MainText,
+                    Left + RowWidth - ValueW,
+                    ProjectSettingsY(Y) + 7.0f * Scale, nullptr,
+                    0.48f * Scale, false);
             Y += RowStep;
 
             DrawAdjustableRow(
@@ -10843,10 +10820,6 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
     else if (BoxName == FName(TEXT("OG.Settings.Page.Content")))
     {
         Character->SetFoundationSettingsPage(3);
-    }
-    else if (BoxName == FName(TEXT("OG.Settings.Orientation")))
-    {
-        Character->CycleOrientationOverride();
     }
     else if (BoxName == FName(TEXT("OG.Settings.CameraH.Minus")))
     {

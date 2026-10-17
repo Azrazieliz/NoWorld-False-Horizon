@@ -85,9 +85,8 @@ if (!$Onscreen) {
 if ($Journey) {
  $Args += '-Gate12RuntimeJourney'
 }
-if ($ResX -ne 432 -or $ResY -ne 700) {
- $Args += ('-ExecCmds=r.SetRes {0}x{1}w' -f $ResX,$ResY)
-}
+# Use literal Win64 -ResX/-ResY launch parameters only. Running r.SetRes
+# during editor-game initialization can stall Slate before journey actions.
 if (!$SkipScreenshot) {
  $Args += '-ExecCmds="HighResShot 1"'
 }

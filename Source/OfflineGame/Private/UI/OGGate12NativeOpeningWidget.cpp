@@ -352,41 +352,36 @@ void UOGGate12NativeOpeningWidget::NativeTick(
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
     const FVector2D Size = MyGeometry.GetLocalSize();
-    if (MenuSlot && Size.X > 0 && Size.Y > 0)
+    const bool bPortrait = Size.Y > Size.X;
+    // Opening belongs to the portrait-only Ruler presentation family.
+    // During rotation, keep native UI hidden AND non-interactive rather
+    // than reflowing into a prohibited landscape opening.
+    if (UWidget* OpeningContent =
+            GetWidgetFromName(TEXT("OpeningNativeCanvas")))
+        OpeningContent->SetVisibility(
+            bPortrait ? ESlateVisibility::Visible
+                      : ESlateVisibility::Hidden);
+    if (bPortrait && MenuSlot && Size.X > 0 && Size.Y > 0)
     {
-        // Separate portrait and landscape placement, same canonical actions.
-        const bool bWide = Size.X > Size.Y;
-        // SafeZone dimensions are authoritative here; neither a hard-coded
-        // screen size nor a frozen reference screenshot drives touch layout.
         if (MenuWidthConstraint)
         {
-            const float DesiredWidth = FMath::Min(
-                Size.X - 24.f, bWide ? Size.X * .39f : Size.X * .90f);
-            MenuWidthConstraint->SetWidthOverride(FMath::Max(150.f, DesiredWidth));
+            const float Width = FMath::Min(Size.X - 24.f,Size.X * .90f);
+            MenuWidthConstraint->SetWidthOverride(FMath::Max(150.f,Width));
         }
-        MenuSlot->SetAnchors(
-            bWide ? FAnchors(.77f,.89f) : FAnchors(.5f,.92f));
+        MenuSlot->SetAnchors(FAnchors(.5f,.92f));
         MenuSlot->SetAlignment(FVector2D(.5f,1.f));
         if (TitleSlot && TitleWidthConstraint)
         {
-            const float Width = FMath::Max(150.f, FMath::Min(
-                Size.X - 24.f, bWide ? Size.X * .40f : Size.X * .92f));
-            TitleWidthConstraint->SetWidthOverride(Width);
-            TitleSlot->SetAnchors(
-                bWide ? FAnchors(.76f,.69f) : FAnchors(.5f,.68f));
+            TitleWidthConstraint->SetWidthOverride(FMath::Max(
+                150.f,FMath::Min(Size.X - 24.f,Size.X * .92f)));
+            TitleSlot->SetAnchors(FAnchors(.5f,.68f));
         }
     }
-    // Continuous native ambient animation; no baked PNG or cinematic.
-    // Reduced-motion preferences freeze all moving layers.
-    const bool bWideStage = Size.X > Size.Y;
-    if (StageSlot && Size.X > 0.f && Size.Y > 0.f &&
-        (!bStageLayoutInitialized || bStageWasWide != bWideStage))
+    // One portrait opening stage; never render a landscape Ruler scene.
+    if (StageSlot && !bStageLayoutInitialized)
     {
-        bStageWasWide = bWideStage;
         bStageLayoutInitialized = true;
-        StageSlot->SetAnchors(bWideStage
-            ? FAnchors(0.f,0.f,.56f,1.f)
-            : FAnchors(0.f,0.f,1.f,1.f));
+        StageSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
         StageSlot->SetOffsets(FMargin(0.f));
     }
     const float Phase = bReducedMotion || !GetWorld()
