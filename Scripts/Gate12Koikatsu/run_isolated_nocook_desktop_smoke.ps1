@@ -10,7 +10,9 @@ param(
   [int]$RunSeconds = 180,
   [switch]$SkipScreenshot,
   [switch]$Journey,
-  [switch]$Onscreen
+  [switch]$Onscreen,
+  [ValidateRange(320,3840)][int]$ResX = 432,
+  [ValidateRange(320,2160)][int]$ResY = 700
 )
 $ErrorActionPreference='Stop'
 $Root=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent

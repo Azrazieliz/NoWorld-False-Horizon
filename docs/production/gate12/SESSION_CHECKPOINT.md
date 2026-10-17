@@ -1,3 +1,14 @@
+## 2026-10-17 19:27 - CF002 first World verified; UI visual partial
+
+- CF002 P0 first World **WIN64 RUNTIME FIX VERIFIED** in fresh isolated actual GAME. Run UUID ee0bb89e603a4935aaed27e76f6cc255 reports 23/23 passes, no false defeated party (actual world HP100/100), one real stored Ruler in active neutral interaction, user actions/Privacy/exit/return and same owner all verified. First UE5.8.3 Win64 build was 10/10 actions EXIT 0; source host binds actual persisted Ruler ID, not a diagnostic fixture.
+- Latest scoped native Gate12 suite 20261017_191936 12/12 (11 clean, 1 warning, zero failed), exit 0.
+- Separate game UUID 67bdc417ca3b4a069e48026b0c19264c was also 23/23, requested ResX1280/ResY720 but real screenshots are all 432x700, therefore landscape visual QA NOT VERIFIED. Runner updated to explicitly invoke r.SetRes and log unique results; PowerShell parser zero errors. Actual new true-landscape evidence PENDING.
+- All original receipts and requested-landscape screenshot dimensions, source+DLL hash, native JSON indexes, portraits/UI captures preserved in docs/production/gate12/evidence/20261017_CF002_world_and_ui/. No result was reused as new.
+- Gate10 visual parity is NOT DONE. First Record cards remain grey/generic despite native gothic chrome; darker linear-sRGB palette fix now in source, and second 4-action UE5.8.3 build ACTIVE at 19:26 (Saved/Gate12Readiness/Gate12_CF002_UI_RecordsContrast_Build_20261017.log). Validate screenshot after build, not before. Home/Records/Territory improved but still incomplete premium source scenes; World shows diagnostic mannequin and StartingWorld, neither is accepted final character/world. User-approved Gacha native chrome untouched. Do not invent fictional approved maps/characters to fill blanks.
+- Android phone Samsung SM-S948B Android16 was connected earlier but adb devices at 19:25 showed none, blocking actual current device validation; no new APK build/install claimed. Preserve prior APKs and unrelated apps.
+- Latest verified pushed commit before new evidence was c785348fea052e40c28f9472e1460fabde7df035. Current checked-out latest source differs only by scoped C++ Records contrast, runner viewport proof and evidence. Protected dirty Koikatsu tracked/untracked code untouched; frozen Foundation, Registry, PR16 untouched.
+- Next exact action: await active contrast build, inspect exit, run new 1280x720 real UI capture with explicit SetRes and inspect physical pixel dimensions; commit/push scoped accepted results, continue honest visual parity work and only run Android when attached plus sufficient memory. No whole Gate12 DONE claim.
+
 ## 2026-10-17 19:06 P0 CF002 and Gate10 UI implementation WIP (native build pending)
 
 - Authority: direct user commission Complete 1 and 2 on top of source baseline 21bccac (no Foundation reset/creative redesign).

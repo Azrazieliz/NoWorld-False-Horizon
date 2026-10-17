@@ -1,0 +1,29 @@
+{
+  "run_id": "ee0bb89e603a4935aaed27e76f6cc255",
+  "status": "WIN64_GAME_PORTRAIT_REAL_23_PASS",
+  "actual_steps": 23,
+  "all_steps_pass": true,
+  "last_step": "ruler_world_ruler_end_to_end",
+  "note": "Real isolated game, programmatic native handlers, not Android touch. Native gacha preserved. UI visually partial, character/terrain not accepted.",
+  "sha256": {
+    "journey_portrait_23of23_PASS.json": "bab005e021799ce37266a491ec05f73497e51e636e8a1c6037cb9af309866760",
+    "observation_portrait_23of23_PASS.json": "ea18ae973e559623c42e71198f549c5bb49c220c62920ebbf2d26c794e0eddc7",
+    "ruler_nav_home.png": "3037079a01f84e3c93f704ee9f804182a56b8c45115ae84469afc4c688229338",
+    "ruler_nav_records.png": "c252dff9c31449ddbab7c588682847bf42a15b25cabf8f76e2d49d9c637987a2",
+    "ruler_nav_territory.png": "beaf4aadfbbc19650988826c6b743831b1919e36a051b98b3d9c0a99d0d6b088",
+    "ruler_nav_gacha.png": "d9721bd9981595f37f177fa3a3474d08a4bb101bb785747ae107e09841915056",
+    "world.png": "200764c36f61ac2890e6941669536600556e8401af137f2f809159d474bbb2dc",
+    "world_interaction_menu.png": "db540a9d7493541e931cd48ce454d291bfd67bf6f08447c0c35e3b2b79203b77",
+    "world_neutral_interaction_active.png": "4e227009e91dda3ad724f593be868d579c68ce923b79017655a4f98f4b8490d1",
+    "ruler_after_world.png": "3037079a01f84e3c93f704ee9f804182a56b8c45115ae84469afc4c688229338",
+    "latest_native_gate12_index.json": "de9d53a0be7f2aa2c8244794954aa3fbaca9d79b43224e0724507ba9309bfd68",
+    "latest_native_gate12_summary.json": "aaf2237867d7acc401bf14ff7157bcbe76beb9ed34b77783dd7e07b42c294540"
+  },
+  "native_gate12_final_compile": {
+    "result": "PASS",
+    "succeeded": 11,
+    "warnings": 1,
+    "failed": 0,
+    "exit": 0
+  }
+}
