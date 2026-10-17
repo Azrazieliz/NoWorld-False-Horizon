@@ -339,7 +339,7 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
         // Fresh install: enter the already-existing Ruler workflow.
         // Unverified on-disk world: fail closed until Recovery, never replace.
         AddAction(TEXT("ENTER"),TEXT("OG.Opening.Ruler"),
-                  !bWorldFilePresent,true);
+                  !bWorldFilePresent || bHasSave,true);
 }
 
 void UOGGate12NativeOpeningWidget::DispatchNativeAction(FName Action)

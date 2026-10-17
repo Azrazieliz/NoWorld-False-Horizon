@@ -86,12 +86,28 @@ if ($Journey) {
 if (!$SkipScreenshot) {
  $Args += '-ExecCmds="HighResShot 1"'
 }
-Write-Host "NO-COOK isolated Win64 game, project=$Project"
+# Never classify a previous run's receipt as the current run. Preserve it
+# under an immutable run-specific name before the isolated game starts.
+$RunId=[Guid]::NewGuid().ToString('N')
+$JourneyPath=Join-Path $IsolatedSaved 'Gate12Readiness\runtime_ruler_world_journey.json'
+$PreviousReceiptArchive=$null
+if ($Journey -and (Test-Path -LiteralPath $JourneyPath)) {
+  $ArchiveDir=Join-Path $IsolatedSaved 'Gate12Readiness\ReceiptArchive'
+  New-Item -ItemType Directory -Path $ArchiveDir -Force | Out-Null
+  $PreviousReceiptArchive=Join-Path $ArchiveDir ("journey_prior_$RunId.json")
+  Move-Item -LiteralPath $JourneyPath -Destination $PreviousReceiptArchive -ErrorAction Stop
+  if (Test-Path -LiteralPath $JourneyPath) {throw 'Prior journey receipt still at active run path'}
+}
+$ModulePath=Join-Path $Root 'Binaries\Win64\UnrealEditor-OfflineGame.dll'
+$ModuleSha256=if (Test-Path $ModulePath) {
+  (Get-FileHash -LiteralPath $ModulePath -Algorithm SHA256).Hash
+} else {$null}
+$SourceHead=(& git -C $Root rev-parse HEAD).Trim()
+Write-Host "NO-COOK isolated Win64 game, project=$Project run=$RunId"
 $Process=Start-Process -FilePath $Exe -ArgumentList $Args -PassThru
 $Timeout=(Get-Date).AddSeconds($RunSeconds)
 $ScreenshotDir=Join-Path $IsolatedSaved 'Screenshots'
 $ObservedShot=$null
-$JourneyPath=Join-Path $IsolatedSaved 'Gate12Readiness\runtime_ruler_world_journey.json'
 $JourneyResult=$null
 $DesktopCaptureFailures=@()
 $DesktopCapturePaths=@()
@@ -188,6 +204,10 @@ try {
   $Report=[ordered]@{
     schema='GATE12_WIN64_GAME_SMOKE_NOCOOK_V1'
     utc=(Get-Date).ToUniversalTime().ToString('o')
+    run_id=$RunId
+    source_commit=$SourceHead
+    compiled_module_sha256=$ModuleSha256
+    prior_journey_receipt_archive=$PreviousReceiptArchive
     project=$Project
     isolated_saved=$IsolatedSaved
     original_saves_untouched_by_project_path=$true
@@ -213,7 +233,9 @@ try {
     proven_android_device=$false
     outcome=if ($LogContainsError){'CRASH_OR_FATAL'}elseif($Journey -and $JourneyResult -and $JourneyResult.complete -and $JourneyResult.passed){'PROGRAMMATIC_NATIVE_RULER_WORLD_RULER_PASS'}elseif($Journey -and $JourneyResult -and $JourneyResult.complete){'NATIVE_RULER_WORLD_RULER_FAILED'}elseif($Journey){'NATIVE_JOURNEY_UNVERIFIED'}elseif($ObservedShot){'WIN64_GAME_BOOT_SCREENSHOT_CAPTURED'}elseif($LogContainsMap){'MAP_BOOT_LOG_ONLY'}else{'BOOT_UNVERIFIED'}
   }
-  $Report | ConvertTo-Json -Depth 5 |Set-Content $Result -Encoding UTF8
+  $RunReport=Join-Path $Destination ("runtime_smoke_observation_$RunId.json")
+  $Report | ConvertTo-Json -Depth 5 | Set-Content $RunReport -Encoding UTF8
+  Copy-Item -LiteralPath $RunReport -Destination $Result -Force
   Write-Host ($Report | ConvertTo-Json -Depth 5)
 } finally {
   if (!$Process.HasExited) {

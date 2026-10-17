@@ -52,6 +52,7 @@
 #include "UI/OGGate12OwnedWorldCharacterBinding.h"
 #include "Runtime/OGPlayerProfileSettings.h"
 #include "Persistence/OGWorldStore.h"
+#include "Persistence/OGOpeningResumeValidation.h"
 #include "ProceduralMeshComponent.h"
 #include "Runtime/OGAndroidBackupDocumentBridge.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -5917,8 +5918,10 @@ void AOGWorldPresentationHud::SynchronizeGate12NativeOpeningUMG(
 
     const FString SaveRoot = FPaths::Combine(
         FPaths::ProjectSavedDir(), TEXT("OfflineGame"));
-    const bool bHasWorld = IFileManager::Get().FileExists(
-        *FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
+    UOGGameCoreSubsystem* Core = GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    const bool bHasWorld = Core && Core->IsCoreReady() &&
+        FOGOpeningResumeValidation::HasReadableWorld(
+            FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
     TArray<FString> RecoveryFiles;
     IFileManager::Get().FindFilesRecursive(
         RecoveryFiles, *FPaths::Combine(SaveRoot, TEXT("Snapshots")),
@@ -6026,7 +6029,7 @@ void AOGWorldPresentationHud::DrawFoundationOpening(
             TEXT("Import"));
 
     const bool bWorldExists =
-        IFileManager::Get().FileExists(*DatabasePath);
+        FOGOpeningResumeValidation::HasReadableWorld(DatabasePath);
 
     TArray<FString> SnapshotFiles;
     IFileManager::Get().FindFilesRecursive(
@@ -10252,6 +10255,45 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
             }
         }
         return;
+    }
+
+    // Revalidate on activation: a previously painted button or a direct
+    // command cannot bypass a failed canonical store or a changed save.
+    if (BoxName == FName(TEXT("OG.Opening.Continue")) ||
+        BoxName == FName(TEXT("OG.Opening.Ruler")))
+    {
+        UGameInstance* OpeningGI = GetGameInstance();
+        UOGGameCoreSubsystem* OpeningCore = OpeningGI
+            ? OpeningGI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+        const FString OpeningDb = FPaths::Combine(
+            FPaths::ProjectSavedDir(), TEXT("OfflineGame"), TEXT("WorldState.db"));
+        const bool bWorldFilePresent = IFileManager::Get().FileExists(*OpeningDb);
+        const bool bReadableWorld = bWorldFilePresent &&
+            FOGOpeningResumeValidation::HasReadableWorld(OpeningDb, true);
+        const bool bCoreReady = OpeningCore && OpeningCore->IsCoreReady();
+        const bool bMayEnter = BoxName == FName(TEXT("OG.Opening.Continue"))
+            ? bCoreReady && bReadableWorld
+            : FOGOpeningResumeValidation::CanEnterRuler(
+                bCoreReady, bWorldFilePresent, bReadableWorld);
+        if (!bMayEnter)
+        {
+            FoundationStatusMessage = TEXT(
+                "World data could not be verified. Preserve or recover the existing save.");
+            return;
+        }
+        if (BoxName == FName(TEXT("OG.Opening.Continue")))
+        {
+            UOGGate12RulerSessionSubsystem* OpeningSession =
+                OpeningGI->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+            FString OpeningError;
+            if (OpeningSession && !OpeningSession->IsBoundToStoredRuler())
+                OpeningSession->TryRestoreLocalRuler(OpeningError);
+            if (!OpeningSession || !OpeningSession->IsBoundToStoredRuler())
+            {
+                FoundationStatusMessage = TEXT("No stored local Ruler is available to continue.");
+                return;
+            }
+        }
     }
 
     if (BoxName == FName(TEXT("OG.Opening.Continue")))

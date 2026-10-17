@@ -1,3 +1,13 @@
+## 2026-10-17 17:00 - CURRENT Gate12 code-first P0 implementation (pending native verification)
+
+- Authority: issue #25 and Gate00 CODE-FIRST full systems audit commission. Gate12 isolated branch production/gate12-koikatsu-ue583-fixture-20261010; last fetched/pushed HEAD before this change 7dbac546546b964814a5106071a773fef37cecd8. Frozen Foundation 3f54f07 untouched.
+- Real source: restored untracked read-only SQLite opening validator and isolated native regression, without replacing existing UI. Fixed OG.Opening.Ruler first-install/no-file denial and healthy-unowned-world denial; corrupt world still cannot enter or overwrite. The two originally modified Koikatsu C++ files and untracked Unreal/character sources are protected and excluded from commits.
+- Independent P0 receipt repair: Scripts/Gate12Koikatsu/run_isolated_nocook_desktop_smoke.ps1 archives the prior ISOLATED journey receipt before starting a test, creates a per-run report, and records source HEAD/module SHA256; PowerShell syntax parser PASS. Existing test receipts remain preserved in the isolated project.
+- UE5.8.3 Win64 build started 2026-10-17 16:58 +02:00 in an existing remote process, output Saved/Gate12Readiness/Gate12_CodeFirst_SaveEntry_Build_20261017.log. Build/runtime native tests are PENDING; do not claim new runtime pass based on the older 23/23.
+- Current actual Android connection: adb devices -l listed zero attached devices, so physical DEVICE_VALIDATED is blocked pending a connected authorized device. Standing non-destructive Android dev test authorization remains YES.
+- Next exact action: wait for current Win64 build exit; inspect real compiler diagnostics and fix scoped errors if any; run one targeted native Opening test and isolated real journey; commit/push tested P0 files, regression receipts and this checkpoint; proceed with highest remaining source-grounded P0 without rebuilding approved visuals.
+- Not accepted: final Gate10 visual parity, production character/Registry intake, rig motion/fidelity, Android device QA and full code-first audit completion.
+
 # 2026-10-17 16:08 — CODE-FIRST AUDIT CONTINUATION
 
 Baseline 5ec44af; protected local source snapshot Saved/CodeFirstAudit/20261017_155932. Read the new code-first audit/matrix/backlog. Audit IN PROGRESS, not exhaustive acceptance. Current build/native 150 pass; current actual journey FAIL at neutral interaction and receipt output. Save validator/test deletion confirmed. Next: scoped save boundary repair and native regression. Android dev testing authorized by latest user; old no-cook text below is historical. Do not revert current UI or protected assets.
