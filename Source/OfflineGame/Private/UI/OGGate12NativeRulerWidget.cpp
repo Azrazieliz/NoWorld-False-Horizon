@@ -9,6 +9,8 @@
 #include "UI/OGGate12CharacterPresentationPreferences.h"
 #include "Runtime/OGPlayerProfileSettings.h"
 #include "Components/Image.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
 #include "Engine/Texture2D.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
@@ -116,7 +118,16 @@ void UOGGate12NativeRulerWidget::NativeTick(
     if (bVisible != bGachaChromeWasVisible)
     {
         bGachaChromeWasVisible = bVisible;
-        Gate10FigmaGachaChrome->SetOpacity(bVisible ? 0.93f : 0.f);
+        if (Gate10PortraitGachaCanvas)
+            Gate10PortraitGachaCanvas->SetVisibility(
+                bVisible ? ESlateVisibility::Visible
+                         : ESlateVisibility::Collapsed);
+        if (Screen)
+            // Hidden preserves its full-viewport desired geometry; Collapsed
+            // shrank the parent Overlay to zero and centered the Gacha stage.
+            Screen->SetVisibility(
+                bVisible ? ESlateVisibility::Hidden
+                         : ESlateVisibility::Visible);
     }
 }
 
@@ -176,16 +187,23 @@ void UOGGate12NativeRulerWidget::BuildRoot()
     BackSlot->SetVerticalAlignment(VAlign_Fill);
     // The imported Figma layer contains ONLY approved-layout ornaments,
     // with a transparent center and no fictional art, buttons or player data.
-    Gate10FigmaGachaChrome = WidgetTree->ConstructWidget<UImage>(
-        UImage::StaticClass(), TEXT("Gate10FigmaGachaDecorOnly"));
-    Gate10FigmaGachaChrome->SetVisibility(ESlateVisibility::HitTestInvisible);
-    Gate10FigmaGachaChrome->SetOpacity(0.f);
-    UOverlaySlot* ChromeSlot = Layers->AddChildToOverlay(Gate10FigmaGachaChrome);
-    ChromeSlot->SetHorizontalAlignment(HAlign_Fill);
-    ChromeSlot->SetVerticalAlignment(VAlign_Fill);
     UOverlaySlot* UiSlot = Layers->AddChildToOverlay(Screen);
     UiSlot->SetHorizontalAlignment(HAlign_Fill);
     UiSlot->SetVerticalAlignment(VAlign_Fill);
+
+    // Gate10 native Gacha is anchored DIRECTLY to the live viewport.
+    // Normalized Canvas slots remove the zero-desired-size ScaleBox defect.
+    // Landscape continues to use the existing functional Ruler widget.
+    Gate10PortraitGachaCanvas = WidgetTree->ConstructWidget<UCanvasPanel>(
+        UCanvasPanel::StaticClass(), TEXT("Gate10GachaTrueInteractiveCanvas"));
+    Gate10PortraitGachaCanvas->SetVisibility(ESlateVisibility::Collapsed);
+    UOverlaySlot* GachaSlot =
+        Layers->AddChildToOverlay(Gate10PortraitGachaCanvas);
+    GachaSlot->SetHorizontalAlignment(HAlign_Fill);
+    GachaSlot->SetVerticalAlignment(VAlign_Fill);
+    Gate10FigmaGachaChrome = WidgetTree->ConstructWidget<UImage>(
+        UImage::StaticClass(), TEXT("Gate10FigmaGachaDecorOnly"));
+    Gate10FigmaGachaChrome->SetVisibility(ESlateVisibility::HitTestInvisible);
 
     UTextBlock* Heading = WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass(), TEXT("GameTitle"));
@@ -233,21 +251,6 @@ void UOGGate12NativeRulerWidget::RefreshFrozenScene(
     LoadedSceneTexture = nullptr;
     LoadedSceneSource.Reset();
 
-    if (Gate10FigmaGachaChrome)
-    {
-        if (Destination == EOGRulerPrimaryDestination::Gacha)
-        {
-            // Imported through Unreal's native asset pipeline: cooked asset,
-            // never a Saved-folder runtime lookup or an embedded screenshot.
-            static const TCHAR* ChromePath = TEXT(
-                "/Game/UI/Gate10/Chrome/T_Gate10_Gacha_VectorChrome_V2."
-                "T_Gate10_Gacha_VectorChrome_V2");
-            if (UTexture2D* Chrome = LoadObject<UTexture2D>(nullptr, ChromePath))
-                Gate10FigmaGachaChrome->SetBrushFromTexture(Chrome, true);
-        }
-        else
-            Gate10FigmaGachaChrome->SetOpacity(0.f);
-    }
 
     if (Destination != EOGRulerPrimaryDestination::Home || !VisualCatalog)
         return;
@@ -522,7 +525,35 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         return;
     }
 
-    AddMessage(Content, DestinationTitle(Session->CurrentDestination), 26, Gate12RulerGold);
+    // Common Gate10 gothic chapter heading on all five actual Ruler pages.
+    // Same black/silver angular chrome as the approved Gacha screen;
+    // destination symbols are neutral UI navigation, not invented lore.
+    UOverlay* HeadingLayers=WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(), TEXT("Gate10SharedRulerChapterHeader"));
+    UOGGate12GothicChromeWidget* HeadingFrame=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    HeadingFrame->Configure(FLinearColor(.65f,.59f,.75f,1.f),
+        static_cast<int32>(Session->CurrentDestination),true);
+    HeadingLayers->AddChildToOverlay(HeadingFrame);
+    UTextBlock* HeadingText=WidgetTree->ConstructWidget<UTextBlock>(
+        UTextBlock::StaticClass(),TEXT("CanonicalDestinationChapterTitle"));
+    HeadingText->SetText(FText::FromString(
+        DestinationTitle(Session->CurrentDestination)));
+    HeadingText->SetJustification(ETextJustify::Center);
+    HeadingText->SetColorAndOpacity(FSlateColor(
+        FLinearColor(.88f,.83f,.95f,1.f)));
+    FSlateFontInfo HeadingFont=HeadingText->GetFont();
+    HeadingFont.Size=23;HeadingText->SetFont(HeadingFont);
+    UOverlaySlot* HeadingTextSlot=HeadingLayers->AddChildToOverlay(HeadingText);
+    HeadingTextSlot->SetHorizontalAlignment(HAlign_Center);
+    HeadingTextSlot->SetVerticalAlignment(VAlign_Bottom);
+    USizeBox* HeadingHeight=WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass());
+    HeadingHeight->SetMinDesiredHeight(80.f);
+    HeadingHeight->AddChild(HeadingLayers);
+    Content->AddChildToVerticalBox(HeadingHeight)
+        ->SetPadding(FMargin(4.f,0.f,4.f,8.f));
     if (!LastUiError.IsEmpty()) AddMessage(Content, LastUiError, 16, TextMuted);
     switch (Session->CurrentDestination)
     {
@@ -566,7 +597,7 @@ void UOGGate12NativeRulerWidget::BuildHome()
     HeroOuter->SetPadding(FMargin(1.f));
     UBorder* HeroBlack = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("Gate10HomeStageTransparentBlack"));
-    HeroBlack->SetBrushColor(FLinearColor(.004f,.004f,.009f,1.f));
+    HeroBlack->SetBrushColor(FLinearColor(.004f,.004f,.009f,.36f));
     UOverlay* HeroLayers=WidgetTree->ConstructWidget<UOverlay>(
         UOverlay::StaticClass(),TEXT("RulerHomeOrnamentAndLiveStage"));
     HeroLayers->AddChildToOverlay(HeroBlack);
@@ -578,7 +609,7 @@ void UOGGate12NativeRulerWidget::BuildHome()
     HeroOuter->AddChild(HeroLayers);
     USizeBox* HeroHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("Gate10HomePortraitStageHeight"));
-    HeroHeight->SetMinDesiredHeight(880.f);
+    HeroHeight->SetMinDesiredHeight(570.f);
     HeroHeight->AddChild(HeroOuter);
     Content->AddChildToVerticalBox(HeroHeight)->SetPadding(FMargin(0.f,0.f,0.f,5.f));
 
@@ -587,69 +618,39 @@ void UOGGate12NativeRulerWidget::BuildHome()
     HeroBlack->SetPadding(FMargin(3.f));
     HeroBlack->AddChild(MainStage);
 
-    UVerticalBox* LeftRail = WidgetTree->ConstructWidget<UVerticalBox>(
-        UVerticalBox::StaticClass(), TEXT("Gate10HomeSideNavigation"));
-    UHorizontalBoxSlot* LeftCell = MainStage->AddChildToHorizontalBox(LeftRail);
-    LeftCell->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    static const TCHAR* RailNames[4] = {
-        TEXT("WORLD"), TEXT("CHARACTERS"), TEXT("TERRITORY"), TEXT("RECORDS")
-    };
-    static const TCHAR* RailActions[4] = {
-        TEXT("world"), TEXT("nav/1"), TEXT("nav/3"), TEXT("nav/4")
-    };
-    static const TCHAR* RailMarks[4] = {
-        TEXT("✧"), TEXT("◇"), TEXT("♜"), TEXT("▤")
-    };
-    for (int32 Index = 0; Index < 4; ++Index)
-    {
-        UOGGate12RulerActionButton* Action =
-            WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
-                UOGGate12RulerActionButton::StaticClass());
-        Action->RulerWidget=this;
-        Action->ActionId=RailActions[Index];
-        Action->OnClicked.AddDynamic(
-            Action, &UOGGate12RulerActionButton::InvokeAction);
-        Action->SetBackgroundColor(FLinearColor(.015f,.014f,.021f,.94f));
-        UVerticalBox* Inner = WidgetTree->ConstructWidget<UVerticalBox>(
-            UVerticalBox::StaticClass());
-        UTextBlock* Mark=WidgetTree->ConstructWidget<UTextBlock>(
-            UTextBlock::StaticClass());
-        Mark->SetText(FText::FromString(RailMarks[Index]));
-        Mark->SetJustification(ETextJustify::Center);
-        Mark->SetColorAndOpacity(FSlateColor(FLinearColor(.72f,.70f,.77f,1.f)));
-        FSlateFontInfo MF=Mark->GetFont(); MF.Size=24; Mark->SetFont(MF);
-        Inner->AddChildToVerticalBox(Mark)->SetPadding(FMargin(0.f,2.f));
-        UTextBlock* Label=WidgetTree->ConstructWidget<UTextBlock>(
-            UTextBlock::StaticClass());
-        Label->SetText(FText::FromString(RailNames[Index]));
-        Label->SetJustification(ETextJustify::Center);
-        Label->SetColorAndOpacity(FSlateColor(TextMain));
-        FSlateFontInfo LF=Label->GetFont(); LF.Size=10; Label->SetFont(LF);
-        Inner->AddChildToVerticalBox(Label);
-        Action->AddChild(Inner);
-        LeftRail->AddChildToVerticalBox(Action)
-            ->SetPadding(FMargin(2.f,3.f,2.f,10.f));
-    }
+    // Gate10 approved bottom navigation already provides five destinations.
+    // Do not duplicate it in a cramped left rail that steals model space.
     // The central stage deliberately has no false silhouette/character art.
     USizeBox* CharacterStage = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("Gate10HomeOnlyActualCharacterStage"));
-    MainStage->AddChildToHorizontalBox(CharacterStage)
-        ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    UHorizontalBoxSlot* CenterStageSlot =
+        MainStage->AddChildToHorizontalBox(CharacterStage);
+    FSlateChildSize CenterStageWeight(ESlateSizeRule::Fill);
+    CenterStageWeight.Value=.73f;
+    CenterStageSlot->SetSize(CenterStageWeight);
+    UOGGate12GothicChromeWidget* CharacterFrame=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    CharacterFrame->Configure(FLinearColor(.69f,.61f,.78f,1.f),0,false);
+    CharacterStage->AddChild(CharacterFrame);
 
     UVerticalBox* RightRail = WidgetTree->ConstructWidget<UVerticalBox>(
         UVerticalBox::StaticClass(), TEXT("Gate10HomeRightActions"));
-    MainStage->AddChildToHorizontalBox(RightRail)
-        ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    UHorizontalBoxSlot* RightRailSlot =
+        MainStage->AddChildToHorizontalBox(RightRail);
+    FSlateChildSize RightRailWeight(ESlateSizeRule::Fill);
+    RightRailWeight.Value=.27f;
+    RightRailSlot->SetSize(RightRailWeight);
     // Unlike mocked example quest/banner tiles, these 3 controls map
     // directly to real existing Foundation functionality.
-    AddMessage(RightRail, TEXT("RULER"), 20,
+    AddMessage(RightRail, TEXT("RULER"), 16,
         FLinearColor(.88f,.86f,.90f,1.f));
     AddMessage(RightRail,
         FString::Printf(TEXT("%d OWNED IDENTITIES"),
             Session->OwnedRoster.Num()), 12, TextMuted);
     AddAction(RightRail, TEXT("ENTER WORLD"), TEXT("world"));
     AddAction(RightRail, TEXT("CHARACTERS"), TEXT("nav/1"));
-    AddAction(RightRail, TEXT("RECORDS"), TEXT("nav/4"));
+    AddAction(RightRail, TEXT("GACHA"), TEXT("nav/2"));
 
     UBorder* BottomRibbon=WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("Gate10HomeCanonicalStateRibbon"));
@@ -781,7 +782,10 @@ void UOGGate12NativeRulerWidget::BuildDevelopmentQaCharacterViewer()
     Fit->SetStretch(EStretch::ScaleToFit);
     Fit->AddChild(Image);
     USizeBox* View = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-    View->SetHeightOverride(500.f);
+    // Fill the full available screen width; never show a tiny 3D render
+    // inside an otherwise empty black column. Actual mesh remains sourced.
+    View->SetMinDesiredHeight(640.f);
+    Fit->SetStretch(EStretch::ScaleToFill);
     View->AddChild(Fit);
     Content->AddChildToVerticalBox(View);
     AddMessage(Content,
@@ -1000,8 +1004,170 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
 }
 
 
+
+void UOGGate12NativeRulerWidget::BuildGachaPortrait()
+{
+    if (!Gate10PortraitGachaCanvas || !WidgetTree) return;
+    Gate10PortraitGachaCanvas->ClearChildren();
+    UGameInstance* GI = GetGameInstance();
+    UOGGate12RulerSessionSubsystem* Session =
+        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session || !Session->IsBoundToStoredRuler()) return;
+
+    UImage* Chrome = WidgetTree->ConstructWidget<UImage>(
+        UImage::StaticClass(), TEXT("Gate10GachaOrnamentNotControls"));
+    Gate10FigmaGachaChrome = Chrome;
+    Chrome->SetVisibility(ESlateVisibility::HitTestInvisible);
+    // Cooked UTexture2D imported directly from Figma, NOT runtime PNG
+    // downloaded from the network and NOT an entire flattened interactive UI.
+    static const TCHAR* ChromePath =
+        TEXT("/Game/UI/Gate10/Chrome/T_Gate10_Gacha_VectorChrome_V2."
+             "T_Gate10_Gacha_VectorChrome_V2");
+    UTexture2D* Art = LoadObject<UTexture2D>(nullptr, ChromePath);
+    if (Art) Chrome->SetBrushFromTexture(Art, true);
+    UCanvasPanelSlot* ChromeSlot =
+        Gate10PortraitGachaCanvas->AddChildToCanvas(Chrome);
+    ChromeSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
+    ChromeSlot->SetOffsets(FMargin(0.f));
+
+    // Small independent text/button controls exactly track design coordinates.
+    // All app data comes from the stored Ruler; zero banner remains zero.
+    const FLinearColor Main(.94f,.91f,.98f,1.f);
+    const FLinearColor Muted(.73f,.68f,.79f,1.f);
+    auto TextAt = [this](FString Value,FString Name,
+        float X,float Y,float W,float H,int32 Size,
+        FLinearColor Ink) -> UTextBlock*
+    {
+        UTextBlock* Label=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass(),FName(*Name));
+        Label->SetText(FText::FromString(Value));
+        Label->SetJustification(ETextJustify::Center);
+        Label->SetAutoWrapText(true);
+        Label->SetColorAndOpacity(FSlateColor(Ink));
+        FSlateFontInfo Font=Label->GetFont();
+        Font.Size=FMath::Max(10,FMath::RoundToInt(Size*.54f));
+        Label->SetFont(Font);
+        UCanvasPanelSlot* Slot=
+            Gate10PortraitGachaCanvas->AddChildToCanvas(Label);
+        // Explicit normalized multi-anchor rectangle in the actual viewport.
+        // No centered ScaleBox or unscaled pixel offsets can clip the page.
+        Slot->SetAnchors(FAnchors(
+            X/864.f,Y/1536.f,(X+W)/864.f,(Y+H)/1536.f));
+        Slot->SetOffsets(FMargin(0.f));
+        return Label;
+    };
+    auto ActionAt = [this](FString Name,FString Action,
+        float X,float Y,float W,float H,
+        bool Enabled,int32 Size) -> UOGGate12RulerActionButton*
+    {
+        UOGGate12RulerActionButton* Button =
+            WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
+                UOGGate12RulerActionButton::StaticClass());
+        Button->RulerWidget=this;
+        Button->ActionId=Action;
+        Button->SetIsEnabled(Enabled);
+        Button->SetBackgroundColor(FLinearColor(0.f,0.f,0.f,0.f));
+        Button->OnClicked.AddDynamic(
+            Button,&UOGGate12RulerActionButton::InvokeAction);
+        UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Text->SetText(FText::FromString(Name));
+        Text->SetJustification(ETextJustify::Center);
+        Text->SetAutoWrapText(true);
+        Text->SetColorAndOpacity(FSlateColor(
+            Enabled ? FLinearColor(.91f,.87f,.96f,1.f)
+                    : FLinearColor(.57f,.54f,.65f,1.f)));
+        FSlateFontInfo Font=Text->GetFont();
+        Font.Size=FMath::Max(10,FMath::RoundToInt(Size*.54f));
+        Text->SetFont(Font);
+        Button->AddChild(Text);
+        UCanvasPanelSlot* Slot =
+            Gate10PortraitGachaCanvas->AddChildToCanvas(Button);
+        Slot->SetAnchors(FAnchors(
+            X/864.f,Y/1536.f,(X+W)/864.f,(Y+H)/1536.f));
+        Slot->SetOffsets(FMargin(0.f));
+        return Button;
+    };
+    const FString RulerId=Session->BoundRulerId.ToString();
+    TextAt(TEXT("RULER"),TEXT("ActualRulerIdentityLabel"),
+        112.f,55.f,170.f,35.f,25,Main);
+    TextAt(FString::Printf(TEXT("ID %s"),*RulerId.Left(12)),
+        TEXT("ActualStoredRulerID"),112.f,89.f,176.f,26.f,18,Muted);
+    ActionAt(TEXT("RATES"),TEXT("gacha-rates"),686.f,132.f,70.f,88.f,false,18);
+    ActionAt(TEXT("HISTORY"),TEXT("gacha-history-toggle"),
+        761.f,132.f,94.f,88.f,true,18);
+
+    if (!Session->bApprovedBannerProvided)
+        TextAt(TEXT("NO ACTIVE BANNER"),
+            TEXT("AuthoritativeNoActiveBanner"),155.f,830.f,555.f,96.f,48,Main);
+    else
+        TextAt(TEXT("APPROVED BANNER AVAILABLE"),
+            TEXT("AuthoritativeBannerAvailable"),143.f,835.f,574.f,94.f,38,Main);
+
+    ActionAt(TEXT("NO BANNER"),TEXT("gacha/banner/0"),
+             68.f,1038.f,242.f,80.f,false,21);
+    ActionAt(TEXT("UNAVAILABLE"),TEXT("gacha/banner/1"),
+             332.f,1038.f,242.f,80.f,false,19);
+    ActionAt(TEXT("UNAVAILABLE"),TEXT("gacha/banner/2"),
+             595.f,1038.f,243.f,80.f,false,19);
+    // A pull must NEVER fire before Gate07's actual banner/economy transaction
+    // has been bound. No invented pity/tickets/currency are displayed.
+    ActionAt(TEXT("DRAW ×1"),TEXT("gacha-draw-1"),
+             50.f,1170.f,309.f,100.f,false,37);
+    ActionAt(TEXT("DRAW ×10"),TEXT("gacha-draw-10"),
+             511.f,1170.f,311.f,100.f,false,37);
+    ActionAt(TEXT("DETAILS"),TEXT("gacha-details"),
+             151.f,1289.f,223.f,50.f,false,24);
+    ActionAt(TEXT("EXCHANGE"),TEXT("gacha-exchange"),
+             488.f,1289.f,227.f,50.f,false,24);
+
+    static const TCHAR* Destinations[] =
+    {TEXT("HOME"),TEXT("CHARACTERS"),TEXT("GACHA"),
+     TEXT("TERRITORY"),TEXT("RECORDS")};
+    for (int32 Index=0; Index<5; ++Index)
+        ActionAt(Destinations[Index],
+                 FString::Printf(TEXT("nav/%d"),Index),
+                 10.f+171.f*Index,1393.f,167.f,111.f,true,
+                 Index==1 ? 19 : 22);
+
+    if (!bGachaHistoryExpanded) return;
+    // This panel is the existing canonical acquisition history projection.
+    // It never fabricates banner records when there are none.
+    UBorder* HistorySurface=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(),TEXT("ActualCanonicalGachaHistoryPanel"));
+    HistorySurface->SetBrushColor(FLinearColor(.015f,.012f,.022f,.98f));
+    HistorySurface->SetPadding(FMargin(15.f));
+    UCanvasPanelSlot* HistorySlot =
+        Gate10PortraitGachaCanvas->AddChildToCanvas(HistorySurface);
+    HistorySlot->SetAnchors(FAnchors(
+        118.f/864.f,300.f/1536.f,748.f/864.f,890.f/1536.f));
+    HistorySlot->SetOffsets(FMargin(0.f));
+    UScrollBox* Scroll=WidgetTree->ConstructWidget<UScrollBox>(
+        UScrollBox::StaticClass());
+    HistorySurface->AddChild(Scroll);
+    UVerticalBox* Rows=WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass());
+    Scroll->AddChild(Rows);
+    AddMessage(Rows,TEXT("ACQUISITION HISTORY"),30,Main);
+    FString Error;
+    if (!Session->RefreshGachaHistory(Error))
+        AddMessage(Rows,Error.IsEmpty()
+            ? TEXT("Canonical history is unavailable.") : Error,19,Muted);
+    else if (Session->GachaHistoryProjection.IsEmpty())
+        AddMessage(Rows,TEXT("No recorded acquisitions."),21,Muted);
+    else
+        for (const FOGGachaHistoryEntryViewModel& Entry :
+             Session->GachaHistoryProjection)
+            AddMessage(Rows,FString::Printf(TEXT("%s · %s · tick %lld"),
+                *Entry.IdentityId.ToString(),*Entry.Rarity.ToString(),
+                Entry.WorldTick),17,Main);
+    ActionAt(TEXT("CLOSE"),TEXT("gacha-history-toggle"),
+        626.f,304.f,120.f,48.f,true,19);
+}
+
 void UOGGate12NativeRulerWidget::BuildGacha()
 {
+    BuildGachaPortrait();
     if (!Content || !WidgetTree) return;
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session =
@@ -1171,7 +1337,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
     }
     UBorder* MapFrame = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("TerritoryNativeMapFrame"));
-    MapFrame->SetBrushColor(FLinearColor(.37f,.33f,.42f,1.f));
+    MapFrame->SetBrushColor(FLinearColor(.008f,.007f,.014f,1.f));
     MapFrame->SetPadding(FMargin(1.f));
     UOverlay* MapLayers=WidgetTree->ConstructWidget<UOverlay>(
         UOverlay::StaticClass(),TEXT("TerritoryRealMapAndOrnament"));
@@ -1184,7 +1350,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
     MapFrame->AddChild(MapLayers);
     USizeBox* MapHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(),TEXT("TerritoryMapViewportHeight"));
-    MapHeight->SetMinDesiredHeight(830.f);
+    MapHeight->SetMinDesiredHeight(455.f);
     MapHeight->AddChild(MapFrame);
     Content->AddChildToVerticalBox(MapHeight)->SetPadding(FMargin(3.f,4.f,3.f,5.f));
     UHorizontalBox* MapTools=WidgetTree->ConstructWidget<UHorizontalBox>(
@@ -1298,26 +1464,9 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         TEXT("AUTHORITATIVE REPORTS"), TEXT("KNOWN HISTORY"),
         TEXT("DISCOVERED KNOWLEDGE"), TEXT("KNOWN INTELLIGENCE")
     };
-    UBorder* HeaderFrame = WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("RecordsGothicTitleRail"));
-    HeaderFrame->SetBrushColor(FLinearColor(.18f,.17f,.20f,.78f));
-    HeaderFrame->SetPadding(FMargin(0.f,1.f,0.f,1.f));
-    UBorder* HeaderDark = WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("RecordsGothicTitleBlack"));
-    HeaderDark->SetBrushColor(FLinearColor(.008f,.008f,.012f,.98f));
-    HeaderFrame->AddChild(HeaderDark);
-    UTextBlock* Head = WidgetTree->ConstructWidget<UTextBlock>(
-        UTextBlock::StaticClass(), TEXT("RecordsAuthoredTitle"));
-    Head->SetText(FText::FromString(TEXT("R E C O R D S")));
-    Head->SetJustification(ETextJustify::Center);
-    Head->SetColorAndOpacity(FSlateColor(FLinearColor(.87f,.85f,.88f,1.f)));
-    FSlateFontInfo HF = Head->GetFont();
-    HF.Size = 27;
-    Head->SetFont(HF);
-    HeaderDark->SetPadding(FMargin(5.f,16.f,5.f,16.f));
-    HeaderDark->AddChild(Head);
-    Content->AddChildToVerticalBox(HeaderFrame)->SetPadding(FMargin(0.f,4.f,0.f,13.f));
-
+    // The common approved Gate10 page chapter header is already painted
+    // by BuildCurrentPage. Do not duplicate a giant RECORDS title above
+    // the four native sections and push meaningful content offscreen.
     UUniformGridPanel* Board = WidgetTree->ConstructWidget<UUniformGridPanel>(
         UUniformGridPanel::StaticClass(), TEXT("FrozenRecordsFourSectionBoard"));
     Board->SetSlotPadding(FMargin(3.f));
@@ -1567,6 +1716,9 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
             AddMessage(Parent, TEXT("Live skeletal 3D preview unavailable."), 15, TextMuted);
             return;
         }
+        // Detail view remains live; roster thumbnails alone stay frozen for
+        // mobile performance. Source animation/turntable can now advance.
+        PreviewStage->SetLiveCapture(true);
         Brush.SetResourceObject(PreviewStage->GetLiveRenderTarget());
         Brush.ImageSize = FVector2D(512.0f, 768.0f);
     }
@@ -1602,7 +1754,8 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
     Fit->SetStretch(EStretch::ScaleToFit);
     Fit->AddChild(Image);
     USizeBox* Height = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-    Height->SetHeightOverride(500.0f);
+    Height->SetMinDesiredHeight(640.0f);
+    Fit->SetStretch(EStretch::ScaleToFill);
     Height->AddChild(Fit);
     Parent->AddChildToVerticalBox(Height);
 }

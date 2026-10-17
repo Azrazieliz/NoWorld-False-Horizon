@@ -8333,17 +8333,33 @@ void AOGWorldPresentationHud::DrawHUD()
     const float MenuHeight = 39.0f * Scale;
     const float MenuX = Canvas->ClipX - MenuWidth - 24.0f * Scale;
     const float MenuY = 22.0f * Scale;
-    DrawGamePanel(Button, MenuX, MenuY, MenuWidth, MenuHeight);
-    DrawFoundationText(
-        bSettingsOpen
-            ? TEXT("X")
-            : TEXT("CFG"),
-        MainText,
-        MenuX + 6.0f * Scale,
-        MenuY + 9.0f * Scale,
-        nullptr,
-        0.52f * Scale,
-        false);
+    // Gate10-style obsidian/silver circlets, rather than square settings,
+    // pause or Ruler blocks. Keep the Foundation's true touch hitboxes.
+    auto DrawGothicWorldUtility=[&](float X,float Y,float W,float H,
+                                   const FString& Glyph)
+    {
+        const FVector2D Center(X+W*.5f,Y+H*.5f);
+        const float Radius=FMath::Min(W,H)*.49f;
+        Canvas->K2_DrawPolygon(nullptr,Center,FVector2D(Radius,Radius),32,
+            FLinearColor(.007f,.006f,.012f,.94f));
+        for(int32 Step=0;Step<32;++Step)
+        {
+            const float A=Step*2.f*PI/32.f;
+            const float B=(Step+1)*2.f*PI/32.f;
+            DrawLine(Center.X+FMath::Cos(A)*Radius,
+                     Center.Y+FMath::Sin(A)*Radius,
+                     Center.X+FMath::Cos(B)*Radius,
+                     Center.Y+FMath::Sin(B)*Radius,
+                     FLinearColor(.69f,.64f,.77f,.9f),1.45f);
+        }
+        DrawLine(Center.X,Center.Y-Radius*1.17f,
+                 Center.X,Center.Y-Radius*.83f,
+                 FLinearColor(.78f,.68f,.87f,.94f),1.3f);
+        DrawFoundationText(Glyph,MainText,X+W*.34f,Y+H*.21f,
+                           nullptr,.49f*Scale,false);
+    };
+    DrawGothicWorldUtility(MenuX,MenuY,MenuWidth,MenuHeight,
+        bSettingsOpen ? TEXT("X") : TEXT("S"));
     AddFoundationHitBox(
         FVector2D(MenuX, MenuY),
         FVector2D(MenuWidth, MenuHeight),
@@ -8355,15 +8371,8 @@ void AOGWorldPresentationHud::DrawHUD()
     const float PauseX = MenuX - PauseWidth - 10.0f * Scale;
     if (bWorldSurface)
     {
-        DrawGamePanel(Button, PauseX, MenuY, PauseWidth, MenuHeight);
-        DrawFoundationText(
-            bPauseOpen ? TEXT(">>") : TEXT("II"),
-            MainText,
-            PauseX + 12.0f * Scale,
-            MenuY + 9.0f * Scale,
-            nullptr,
-            0.52f * Scale,
-            false);
+        DrawGothicWorldUtility(PauseX,MenuY,PauseWidth,MenuHeight,
+            bPauseOpen ? TEXT(">") : TEXT("II"));
         AddFoundationHitBox(
             FVector2D(PauseX, MenuY),
             FVector2D(PauseWidth, MenuHeight),
@@ -8373,15 +8382,8 @@ void AOGWorldPresentationHud::DrawHUD()
 
         const float RulerWidth = 42.0f * Scale;
         const float RulerX = PauseX - RulerWidth - 10.0f * Scale;
-        DrawGamePanel(Button, RulerX, MenuY, RulerWidth, MenuHeight);
-        DrawFoundationText(
-            TEXT("R"),
-            MainText,
-            RulerX + 16.0f * Scale,
-            MenuY + 9.0f * Scale,
-            nullptr,
-            0.52f * Scale,
-            false);
+        DrawGothicWorldUtility(RulerX,MenuY,RulerWidth,MenuHeight,
+            TEXT("R"));
         AddFoundationHitBox(
             FVector2D(RulerX, MenuY),
             FVector2D(RulerWidth, MenuHeight),
@@ -9363,17 +9365,32 @@ void AOGWorldPresentationHud::DrawHUD()
                     else if (HitBoxName == TEXT("OG.World.Ultimate")) bReady = Combat->IsWorldActionReady(EOGDiagnosticCommand::Ultimate, DisabledReason);
                 }
                 const bool bPressed = PressedWorldControls.Contains(HitBoxName);
-                const FLinearColor Accent = bReady ? FLinearColor(.83f,.72f,.47f,1) : FLinearColor(.4f,.46f,.52f,1);
+                const FLinearColor Accent = bReady ? FLinearColor(.77f,.69f,.86f,1) : FLinearColor(.38f,.37f,.46f,1);
                 Canvas->K2_DrawPolygon(nullptr, FVector2D(CenterX,CenterY),
-                    FVector2D(ButtonSize*.48f,ButtonSize*.48f), 40,
+                    FVector2D(ButtonSize*.48f,ButtonSize*.48f), 8,
                     FLinearColor(bPressed?.14f:.025f,bPressed?.24f:.045f,bPressed?.30f:.075f,Character->GetTouchControlOpacity()));
-                for(int32 I=0; I<32; ++I)
+                for(int32 I=0; I<8; ++I)
                 {
-                    const float A=I*2*PI/32, B=(I+1)*2*PI/32, R=ButtonSize*.46f;
+                    const float A=I*2*PI/8.f, B=(I+1)*2*PI/8.f, R=ButtonSize*.46f;
                     DrawLine(CenterX+FMath::Cos(A)*R,CenterY+FMath::Sin(A)*R,
                         CenterX+FMath::Cos(B)*R,CenterY+FMath::Sin(B)*R,Accent,bPressed?3.f:1.5f);
                 }
-                DrawGameIcon(FName(*Label),X+ButtonSize*.26f,Y+ButtonSize*.10f,ButtonSize*.48f,Accent);
+                if (HitBoxName==TEXT("OG.World.Attack"))
+                {
+                    // No firearm. Minimal melee blade-shaped abstract HUD
+                    // mark; the actual sword mesh/animation still belongs
+                    // to accepted equipment and Gate09 assets.
+                    const float L=ButtonSize*.29f;
+                    DrawLine(CenterX-L,CenterY+L*.70f,
+                        CenterX+L,CenterY-L*.94f,Accent,2.3f);
+                    DrawLine(CenterX-L*.92f,CenterY+L*.28f,
+                        CenterX-L*.38f,CenterY+L*.81f,Accent,2.0f);
+                    DrawLine(CenterX-L,CenterY+L*.70f,
+                        CenterX-L*1.12f,CenterY+L*.97f,Accent,2.1f);
+                }
+                else
+                    DrawGameIcon(FName(*Label),X+ButtonSize*.26f,
+                        Y+ButtonSize*.10f,ButtonSize*.48f,Accent);
                 const FString Caption=Label;
                 DrawGameText(Caption,X+ButtonSize*.15f,Y+ButtonSize*.65f,
                     ButtonSize*.18f,bReady?MainText:SubText,ButtonSize*.70f);

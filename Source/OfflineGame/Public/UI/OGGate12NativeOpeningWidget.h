@@ -13,6 +13,7 @@ class UImage;
 class UTextBlock;
 class UBorder;
 class UOGGate12VacantThroneSceneWidget;
+class UOGGate12OpeningActionButton;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
     FOGGate12NativeOpeningAction, FName, Action);
@@ -46,6 +47,9 @@ protected:
 private:
     void BuildRoot();
     void RebuildMenu();
+    void AddTopUtilityIcon(UCanvasPanel* Canvas, FName Action,
+        const FString& Glyph, const FString& Description, float RightAnchor,
+        TObjectPtr<UOGGate12OpeningActionButton>& OutButton);
     void AddAction(const FString& Caption, FName Action,
                    bool bEnabled, bool bPrimary=false);
     bool bHasRuler = false;
@@ -58,6 +62,8 @@ private:
     FName Page = FName(TEXT("main"));
 
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> Menu;
+    UPROPERTY(Transient) TObjectPtr<UOGGate12OpeningActionButton> RecoveryIcon;
+    UPROPERTY(Transient) TObjectPtr<UOGGate12OpeningActionButton> SettingsIcon;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> MenuSlot;
     UPROPERTY(Transient) TObjectPtr<USizeBox> MenuWidthConstraint;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> TitleSlot;

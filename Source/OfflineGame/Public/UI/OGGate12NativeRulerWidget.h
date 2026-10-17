@@ -7,6 +7,8 @@
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
+class UCanvasPanel;
+class UScaleBox;
 class UOGGate12ExploredMapWidget;
 class UImage;
 class UTexture2D;
@@ -97,6 +99,12 @@ private:
     bool bGachaChromeWasVisible = false;
 
     UPROPERTY(Transient)
+    TObjectPtr<UScaleBox> Gate10PortraitGachaScale;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UCanvasPanel> Gate10PortraitGachaCanvas;
+
+    UPROPERTY(Transient)
     TObjectPtr<UTexture2D> LoadedSceneTexture;
 
     FString LoadedSceneSource;
@@ -137,6 +145,7 @@ private:
     void BuildCurrentPage();
     void BuildHome();
     void BuildGacha();
+    void BuildGachaPortrait();
     void BuildRoster();
     void RebuildRosterGrid();
     void BuildDevelopmentQaCharacterViewer();

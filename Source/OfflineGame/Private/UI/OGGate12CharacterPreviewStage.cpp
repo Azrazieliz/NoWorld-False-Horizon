@@ -13,9 +13,13 @@
 
 AOGGate12CharacterPreviewStage::AOGGate12CharacterPreviewStage()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = false;
+    PrimaryActorTick.TickInterval = 1.f/30.f;
     StageRoot = CreateDefaultSubobject<USceneComponent>(TEXT("PresentationRoot"));
     RootComponent = StageRoot;
+    ModelTurntable = CreateDefaultSubobject<USceneComponent>(TEXT("RealModelTurntable"));
+    ModelTurntable->SetupAttachment(StageRoot);
     Capture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("LiveCharacterCapture"));
     Capture->SetupAttachment(StageRoot);
     Capture->SetRelativeLocation(FVector(-360.f, 0.f, 145.f));
@@ -74,6 +78,8 @@ bool AOGGate12CharacterPreviewStage::InitializeApprovedPreview(
         ReleasePreview();
         return false;
     }
+    PreviewActor->AttachToComponent(ModelTurntable,
+        FAttachmentTransformRules::KeepWorldTransform);
     Capture->ShowOnlyActorComponents(PreviewActor, true);
     Capture->CaptureScene();
     return true;
@@ -167,7 +173,7 @@ bool AOGGate12CharacterPreviewStage::InitializeDevelopmentQaPreview(
             return false;
         }
         DevelopmentQaMeshParts.Add(Part);
-        Part->SetupAttachment(StageRoot);
+        Part->SetupAttachment(ModelTurntable);
         Part->SetSkeletalMeshAsset(Mesh);
         // Exact original 45 QA Blueprint part placement, not an inferred resize.
         Part->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
@@ -199,7 +205,7 @@ bool AOGGate12CharacterPreviewStage::InitializeDevelopmentQaPreview(
 
     // Only the diagnostic camera moves closer. Production capture defaults,
     // the character mesh, original materials and World camera remain frozen.
-    Capture->SetRelativeLocation(FVector(-260.f, 0.f, -18.f));
+    Capture->SetRelativeLocation(FVector(-232.f, 0.f, -18.f));
     Capture->SetRelativeRotation(FRotator::ZeroRotator);
     Capture->ShowOnlyActorComponents(this, true);
     Capture->CaptureScene();
@@ -211,7 +217,21 @@ void AOGGate12CharacterPreviewStage::SetLiveCapture(bool bLive)
 {
     if (!Capture || !RenderTarget) return;
     Capture->bCaptureEveryFrame = bLive;
+    SetActorTickEnabled(bLive);
     if (!bLive) Capture->CaptureScene();
+}
+
+void AOGGate12CharacterPreviewStage::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    if (ModelTurntable && RenderTarget &&
+        (IsValid(PreviewActor) || !DevelopmentQaMeshParts.IsEmpty()))
+    {
+        // Actual source geometry, live 3D turntable. This solves the
+        // frozen display without inventing skeletal motions for Gate09.
+        ModelTurntable->AddLocalRotation(
+            FRotator(0.f,9.f*DeltaSeconds,0.f));
+    }
 }
 
 void AOGGate12CharacterPreviewStage::ReleasePreview()
@@ -225,6 +245,8 @@ void AOGGate12CharacterPreviewStage::ReleasePreview()
     for (USkeletalMeshComponent* Part : DevelopmentQaMeshParts)
         if (IsValid(Part)) Part->DestroyComponent();
     DevelopmentQaMeshParts.Reset();
+    SetActorTickEnabled(false);
+    if (ModelTurntable) ModelTurntable->SetRelativeRotation(FRotator::ZeroRotator);
     for (UPointLightComponent* Light : DevelopmentQaLights)
         if (IsValid(Light)) Light->DestroyComponent();
     DevelopmentQaLights.Reset();

@@ -47,11 +47,15 @@ public:
     void ReleasePreview();
 
 protected:
+    virtual void Tick(float DeltaSeconds) override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<USceneComponent> StageRoot;
+
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<USceneComponent> ModelTurntable;
 
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<USceneCaptureComponent2D> Capture;

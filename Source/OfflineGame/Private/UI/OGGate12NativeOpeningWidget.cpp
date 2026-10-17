@@ -2,6 +2,7 @@
 #include "UI/OGGate12GothicChromeWidget.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "Brushes/SlateRoundedBoxBrush.h"
 #include "UI/OGGate12VacantThroneSceneWidget.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -116,7 +117,7 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     NativeTitle->SetAutoWrapText(true);
     NativeTitle->SetColorAndOpacity(FSlateColor(OrnamentGold));
     FSlateFontInfo TitleFont = NativeTitle->GetFont();
-    TitleFont.Size = 32;
+    TitleFont.Size = 38;
     NativeTitle->SetFont(TitleFont);
     TitleWidthConstraint = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("OpeningTitleWidthConstraint"));
@@ -124,13 +125,13 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     TitleWidthConstraint->AddChild(NativeTitle);
     TitleSlot = Canvas->AddChildToCanvas(TitleWidthConstraint);
     TitleSlot->SetAutoSize(true);
-    TitleSlot->SetAnchors(FAnchors(.5f,.60f));
+    TitleSlot->SetAnchors(FAnchors(.5f,.70f));
     TitleSlot->SetAlignment(FVector2D(.5f,.5f));
 
     UBorder* MenuFrame = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("OpeningControlsFrame"));
-    MenuFrame->SetBrushColor(DarkSlate);
-    MenuFrame->SetPadding(FMargin(14.f,14.f,14.f,16.f));
+    MenuFrame->SetBrushColor(FLinearColor(0.f,0.f,0.f,0.f));
+    MenuFrame->SetPadding(FMargin(4.f,2.f,4.f,2.f));
     Menu = WidgetTree->ConstructWidget<UVerticalBox>(
         UVerticalBox::StaticClass(), TEXT("OpeningRealButtons"));
     MenuFrame->AddChild(Menu);
@@ -144,10 +145,54 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     MenuSlot = Canvas->AddChildToCanvas(MenuWidthConstraint);
     MenuSlot->SetAutoSize(true);
     MenuSlot->SetAlignment(FVector2D(.5f,1.0f));
-    MenuSlot->SetAnchors(FAnchors(.5f,.94f));
+    MenuSlot->SetAnchors(FAnchors(.5f,.88f));
     MenuSlot->SetPosition(FVector2D(0.f,0.f));
 
+    // Actual native utility actions, circular ornamental buttons at upper
+    // right. They never replace Settings/Recovery gameplay handlers.
+    AddTopUtilityIcon(Canvas,TEXT("OG.Settings.Toggle"),TEXT("⚙"),
+        TEXT("Settings"),.965f,SettingsIcon);
+    AddTopUtilityIcon(Canvas,TEXT("OG.Opening.Recover"),TEXT("↺"),
+        TEXT("Data recovery"),.835f,RecoveryIcon);
     RebuildMenu();
+}
+
+void UOGGate12NativeOpeningWidget::AddTopUtilityIcon(
+    UCanvasPanel* Canvas,FName Action,const FString& Glyph,
+    const FString& Description,float RightAnchor,
+    TObjectPtr<UOGGate12OpeningActionButton>& OutButton)
+{
+    if (!Canvas || !WidgetTree) return;
+    UOGGate12OpeningActionButton* Button =
+        WidgetTree->ConstructWidget<UOGGate12OpeningActionButton>(
+            UOGGate12OpeningActionButton::StaticClass());
+    Button->Opening=this;
+    Button->Action=Action;
+    Button->SetToolTipText(FText::FromString(Description));
+    Button->OnClicked.AddDynamic(
+        Button,&UOGGate12OpeningActionButton::InvokeOpeningAction);
+    const FSlateRoundedBoxBrush Normal(
+        FLinearColor(.009f,.007f,.018f,.94f),23.f,
+        FLinearColor(.65f,.60f,.74f,.89f),1.2f);
+    const FSlateRoundedBoxBrush Hover(
+        FLinearColor(.10f,.06f,.15f,.99f),23.f,
+        FLinearColor(.82f,.78f,.91f,1.f),1.6f);
+    FButtonStyle Style=Button->GetStyle();
+    Style.SetNormal(Normal);Style.SetHovered(Hover);
+    Style.SetPressed(Hover);
+    Button->SetStyle(Style);
+    UTextBlock* Mark=WidgetTree->ConstructWidget<UTextBlock>(
+        UTextBlock::StaticClass());
+    Mark->SetText(FText::FromString(Glyph));
+    Mark->SetJustification(ETextJustify::Center);
+    Mark->SetColorAndOpacity(FSlateColor(OpeningTextColor));
+    FSlateFontInfo Font=Mark->GetFont(); Font.Size=23;Mark->SetFont(Font);
+    Button->AddChild(Mark);
+    UCanvasPanelSlot* UtilityCanvasSlot=Canvas->AddChildToCanvas(Button);
+    UtilityCanvasSlot->SetAnchors(FAnchors(RightAnchor,.035f));
+    UtilityCanvasSlot->SetAlignment(FVector2D(1.f,0.f));
+    UtilityCanvasSlot->SetSize(FVector2D(43.f,43.f));
+    OutButton=Button;
 }
 
 void UOGGate12NativeOpeningWidget::RefreshOpening(
@@ -165,6 +210,9 @@ void UOGGate12NativeOpeningWidget::RefreshOpening(
     bHasImport = bImportAvailable;
     bReducedMotion = bInReducedMotion;
     Page = CurrentPage;
+    // Recovery remains available to inspect/import external backups even
+    // before an account has created its first local world.
+    if (RecoveryIcon) RecoveryIcon->SetIsEnabled(true);
     if (bChanged) RebuildMenu();
 }
 
@@ -256,28 +304,17 @@ void UOGGate12NativeOpeningWidget::RebuildMenu()
         Notice->SetColorAndOpacity(FSlateColor(OpeningTextColor));
         Menu->AddChildToVerticalBox(Notice)->SetPadding(FMargin(7.f,9.f));
     }
-    AddAction(TEXT("CONTINUE"), TEXT("OG.Opening.Continue"),
-              bHasRuler && bHasSave, true);
-    AddAction(TEXT("NEW GAME"), TEXT("new-game"), true);
-    AddAction(TEXT("SETTINGS"), TEXT("OG.Settings.Toggle"), true);
-    AddAction(TEXT("DATA RECOVERY"), TEXT("OG.Opening.Recover"),
-              bHasRecovery || bHasImport || bHasSave || bWorldFilePresent);
+    // A gacha account is not a disposable single-player slot.
+    // Existing worlds resume safely; new Rulers enter the established
+    // Ruler flow without inventing a destructive NEW GAME option.
+    if (bHasRuler && bHasSave)
+        AddAction(TEXT("CONTINUE"),TEXT("OG.Opening.Continue"),true,true);
+    else
+        AddAction(TEXT("ENTER"),TEXT("OG.Opening.Ruler"),true,true);
 }
 
 void UOGGate12NativeOpeningWidget::DispatchNativeAction(FName Action)
 {
-    if (Action == TEXT("new-game"))
-    {
-        // Existing worlds are NEVER silently cleared. The only destructive
-        // path delegates to the already-tested real Core backup+confirm flow.
-        // An orphaned world database also requires the confirmed backup path;
-        // absence of a local Ruler must not silently bypass recovery safety.
-        const bool bWorldFilePresent = IFileManager::Get().FileExists(
-            *FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("OfflineGame"),
-                             TEXT("WorldState.db")));
-        Action = (bHasRuler || bHasSave || bWorldFilePresent)
-            ? TEXT("OG.Opening.Clear") : TEXT("OG.Opening.Ruler");
-    }
     OnOpeningAction.Broadcast(Action);
 }
 
@@ -299,7 +336,7 @@ void UOGGate12NativeOpeningWidget::NativeTick(
             MenuWidthConstraint->SetWidthOverride(FMath::Max(150.f, DesiredWidth));
         }
         MenuSlot->SetAnchors(
-            bWide ? FAnchors(.77f,.83f) : FAnchors(.5f,.94f));
+            bWide ? FAnchors(.77f,.84f) : FAnchors(.5f,.88f));
         MenuSlot->SetAlignment(FVector2D(.5f,1.f));
         if (TitleSlot && TitleWidthConstraint)
         {
@@ -307,7 +344,7 @@ void UOGGate12NativeOpeningWidget::NativeTick(
                 Size.X - 24.f, bWide ? Size.X * .40f : Size.X * .92f));
             TitleWidthConstraint->SetWidthOverride(Width);
             TitleSlot->SetAnchors(
-                bWide ? FAnchors(.76f,.27f) : FAnchors(.5f,.57f));
+                bWide ? FAnchors(.76f,.59f) : FAnchors(.5f,.70f));
         }
     }
     // Continuous native ambient animation; no baked PNG or cinematic.
