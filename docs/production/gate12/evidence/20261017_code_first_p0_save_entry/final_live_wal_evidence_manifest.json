@@ -1,0 +1,48 @@
+{
+  "schema": "GATE12_CF001_CF003_20261017_SCOPED_VERIFICATION_V1",
+  "source_baseline_in_real_game": "a50f7c911c8816d8c09827c01f83e15f8eabd37c",
+  "binary_sha256_at_live_run": "E21D126B6B6F2051E1D989C57A5ED3F638DF1E9BBFA10B2FD24A55BE21CF45D6",
+  "live_run_id": "0056e50b34044963aa6c0cd0af95e9e8",
+  "ue583_win64_rebuild": {
+    "actions": 8,
+    "exit": 0,
+    "log": "Saved/Gate12Readiness/Gate12_CodeFirst_LiveWalOpeningFix_Rebuild_20261017.log"
+  },
+  "latest_targeted_native": {
+    "succeeded": 11,
+    "warnings": 1,
+    "failed": 0,
+    "exit": 0
+  },
+  "real_game": {
+    "checks_passed": 19,
+    "checks_failed": 1,
+    "passed_opening_to_ruler": true,
+    "passed_real_ruler_creation": true,
+    "passed_ruler_navigation_5_pages": true,
+    "passed_ruler_to_world": true,
+    "failed_step": "real_neutral_world_interaction_entry",
+    "blocker": "world interaction depends on active diagnostic combat / new unassigned party UI reports Party defeated"
+  },
+  "scope_cf001": "DONE: opening/save preflight native + real game",
+  "scope_cf003": "DONE: prior receipt archived, unique run IDs and observations, binary hashes",
+  "scope_cf002": "OPEN P0: authentic initial-world participant/party binding; no fake roster/canon",
+  "limitations": "Complete Ruler-to-World-to-Ruler 23/23, World interaction, Android/device and visual acceptance NOT claimed",
+  "file_sha256_local": {
+    "evidence_manifest.json": "1972d456e309f5a69e84ff0e051fdc3bffc0faf1a43d4ad8946c2acd8ef54b38",
+    "first_live_journey_FAIL.json": "70d6a79c6a550c337caf35801646d5a4f9ffbebe50016e88386b61ab42f625b1",
+    "first_live_journey_stuck_opening_QA_FAIL.png": "2a54a7f274337317d05281d9b9ca7da2fedc97b4b8deccd647f436de85e72cae",
+    "first_live_smoke_observation_FAIL.json": "ba0f86492b4bfdfe335efa2210b9f789faef05ca597e2460c5e7e462d4486572",
+    "live_fixed_opening_gacha_render.png": "d9721bd9981595f37f177fa3a3474d08a4bb101bb785747ae107e09841915056",
+    "live_fixed_opening_world_journey_19PASS_1BLOCKED.json": "892db56d03f60ea351b89d07644163b7d74eb19e0fda6c9dc74b3bb974124152",
+    "live_fixed_opening_world_observation.json": "b93208e3ff2efdec6ce109bf3b45d9479fd95ee131606a26b3567ec3b5cecdd6",
+    "live_journey_regression_manifest.json": "79b8119aa17ab4d488ee349b33a697e24de24490e8ebbf5e196b970bd358fc52",
+    "live_world_party_defeated_BLOCKED.png": "424745e09c7b3daf792310b84c5bac9ba6ef1e3f96bb7b3c55955a0d79ce6fe2",
+    "native_full_index.json": "7f2ee81cd8d43a5c2bae75591207a7cd5fbe540d4c743e8fc0a7314d24c2a9b7",
+    "native_full_verification_summary.json": "398d83631eef5196014dbffeda5b14b814ba5b109a7e06f63f4a81ef49d4b73a",
+    "native_gate12_index.json": "f2895a6b8edf20995a2e874fb27d0b96fe963e55d27e20c4e961b9f5a74342d7",
+    "native_gate12_live_wal_index.json": "e942f3d53fa24367e5fd17593fc9c4e8dadcba80f6138388b95266ffd76ddb81",
+    "native_gate12_live_wal_verification_summary.json": "d1ffe186e271133e09b496e22060eb85be0756efa9de4e0f6e2c7d709e13645c",
+    "native_gate12_verification_summary.json": "f977be45893854572c001e8fe34ae93d5274ac585462abebd30965aeb6c23da6"
+  }
+}

@@ -1,3 +1,14 @@
+## 2026-10-17 17:30 - CF-001/CF-003 VERIFIED DONE; CF-002 open P0
+
+- Latest native source: live canonical store opening readiness and bounded read-only integrity query; no destructive change to world, approved UI, freeze, Registry or protected local Koikatsu sources. Narrow GachaMuted variable-only C4459 unity-build correction (three uses): no visual behavior/design changes.
+- UE5.8.3 OfflineGameEditor Win64 Development latest rebuild **8/8 actions succeeded, exit 0**, log Saved/Gate12Readiness/Gate12_CodeFirst_LiveWalOpeningFix_Rebuild_20261017.log. Failed previous build exit 6 from C4459 is explicitly preserved.
+- Latest actual new native Gate12 automation: 20261017_172928 **11 clean, 1 warning, 0 failed, exit 0**. Opening.ContinueRequiresReadableCanonicalWorld Success zero errors/warnings, covers valid live WAL, closed store, unrelated path, corruption and read-only controls.
+- Actual isolated Win64 game run UUID 0056e50b34044963aa6c0cd0af95e9e8 uses compiled module SHA256 E21D126B6B6F2051E1D989C57A5ED3F638DF1E9BBFA10B2FD24A55BE21CF45D6. **19 of 20 measured real-game checks PASS** including canonical Ruler creation/no fake ownership, five Ruler tabs, portrait preview, World transition, privacy persistence; **check 20 FAIL** real_neutral_world_interaction_entry. Live World screenshot shows Party defeated / unavailable party; first-world interaction disabled by diagnostic combat dependency. Do not assert end-to-end user playability/23 of 23 PASS.
+- Previous isolated run UUID 90c019da30a346bf89454a22c3a90b88 stopped at ruler_ui_presented due falsely unverified live SQLite WAL world. Its failed screenshot and JSON remain in evidence; latest run corrected that exact failure. Previous receipt archived before each game run, never recycled. New game screenshot native gacha and world blocker preserved separately with hash manifest.
+- CF-001 and CF-003 DONE scoped in docs/production/gate12/GATE12_RANKED_CODE_FIRST_BACKLOG_20261017.md; CF-002 now OPEN P0 next due observed world/party defeat and unavailable production-neutral interaction, requires real canonical protagonist/party context WITHOUT fake identity, auto-summon or compelled first combat.
+- Android SDK valid; adb devices 0 connected; Android device QA not done. Full audit, approved final World UI and production characters still open. This checkpoint only closes these two scoped engineering tasks, NOT Gate12 as a whole.
+- Next exact authorized task upon continuation: code-first CF-002 native World participant binding/interaction and no-first-party-defeat verification, preserving authored identities and combat architecture. No need to repeat completed CF-001/CF-003 or reopen Gacha design.
+
 ## 2026-10-17 17:20 - LIVE runtime failure isolated / WAL-method repair WIP
 
 - Commit a01791b23bd13854eb5754a61ac1d69561ea459a preserves validated original 7/7 Win64 build plus native 12/12 and full 151/151 indices/hashes.

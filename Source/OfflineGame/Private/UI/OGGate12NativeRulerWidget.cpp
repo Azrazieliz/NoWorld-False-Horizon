@@ -1089,7 +1089,7 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     // Small independent text/button controls exactly track design coordinates.
     // All app data comes from the stored Ruler; zero banner remains zero.
     const FLinearColor Main(.94f,.91f,.98f,1.f);
-    const FLinearColor Muted(.73f,.68f,.79f,1.f);
+    const FLinearColor GachaMuted(.73f,.68f,.79f,1.f);
     auto TextAt = [this](FString Value,FString Name,
         float X,float Y,float W,float H,int32 Size,
         FLinearColor Ink) -> UTextBlock*
@@ -1148,7 +1148,7 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     TextAt(TEXT("RULER"),TEXT("ActualRulerIdentityLabel"),
         112.f,55.f,170.f,35.f,25,Main);
     TextAt(FString::Printf(TEXT("ID %s"),*RulerId.Left(12)),
-        TEXT("ActualStoredRulerID"),112.f,89.f,176.f,26.f,18,Muted);
+        TEXT("ActualStoredRulerID"),112.f,89.f,176.f,26.f,18,GachaMuted);
     ActionAt(TEXT("RATES"),TEXT("gacha-rates"),686.f,132.f,70.f,88.f,false,18);
     ActionAt(TEXT("HISTORY"),TEXT("gacha-history-toggle"),
         761.f,132.f,94.f,88.f,true,18);
@@ -1208,9 +1208,9 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     FString Error;
     if (!Session->RefreshGachaHistory(Error))
         AddMessage(Rows,Error.IsEmpty()
-            ? TEXT("Canonical history is unavailable.") : Error,19,Muted);
+            ? TEXT("Canonical history is unavailable.") : Error,19,GachaMuted);
     else if (Session->GachaHistoryProjection.IsEmpty())
-        AddMessage(Rows,TEXT("No recorded acquisitions."),21,Muted);
+        AddMessage(Rows,TEXT("No recorded acquisitions."),21,GachaMuted);
     else
         for (const FOGGachaHistoryEntryViewModel& Entry :
              Session->GachaHistoryProjection)

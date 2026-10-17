@@ -1,0 +1,355 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "LAPTOP-1LI4VRCJ",
+			"instance": "55E9D1484392F6DCBB320497158E6E87",
+			"instanceName": "LAPTOP-1LI4VRCJ-16284",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9711] ",
+			"model": "Default",
+			"gPU": "Intel(R) UHD Graphics",
+			"cPUModel": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+			"rAMInGB": 8,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.17-15.30.08",
+	"succeeded": 11,
+	"succeededWithWarnings": 1,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 7.0647540092468262,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AppearancePrivacyRenderMatrix",
+			"fullTestPath": "OfflineGame.Gate12.Luminous.AppearancePrivacyRenderMatrix",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.015935603529214859,
+			"dateTime": "2026.10.17-15.30.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MeasuredSourceFacingMatchesActor16Directions",
+			"fullTestPath": "OfflineGame.Gate12.Luminous.MeasuredSourceFacingMatchesActor16Directions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.0166734978556633,
+			"dateTime": "2026.10.17-15.30.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PrivacyDoesNotMutateCanonicalOutfitOrOwnership",
+			"fullTestPath": "OfflineGame.Gate12.Luminous.PrivacyDoesNotMutateCanonicalOutfitOrOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.43686249852180481,
+			"dateTime": "2026.10.17-15.30.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ContinueRequiresReadableCanonicalWorld",
+			"fullTestPath": "OfflineGame.Gate12.Opening.ContinueRequiresReadableCanonicalWorld",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.36649590730667114,
+			"dateTime": "2026.10.17-15.30.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AllNativeModularPartsLOD0Integrity",
+			"fullTestPath": "OfflineGame.Gate12.P0.AllNativeModularPartsLOD0Integrity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 4.8224210739135742,
+			"dateTime": "2026.10.17-15.30.02",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_FULL_CLOTHED: SOURCED=45 LOADED=45 SRC_VERTS=58930 UE_LOD0_VERTS=59922 UE_LOD0_TRIS=91933 MISSING_MATERIAL=0 WRONG_BONES=0 NO_UV0=0 NO_LOD0=0 MORPHS_IMPORTED=580",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.03"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_FULL_UNDERWEAR: SOURCED=39 LOADED=39 SRC_VERTS=49309 UE_LOD0_VERTS=50396 UE_LOD0_TRIS=77832 MISSING_MATERIAL=0 WRONG_BONES=0 NO_UV0=0 NO_LOD0=0 MORPHS_IMPORTED=575",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_FULL_NUDE: SOURCED=37 LOADED=37 SRC_VERTS=41874 UE_LOD0_VERTS=42651 UE_LOD0_TRIS=63695 MISSING_MATERIAL=0 WRONG_BONES=0 NO_UV0=0 NO_LOD0=0 MORPHS_IMPORTED=575",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.07"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LuminousImportedBodyLOD0AndNativeScale",
+			"fullTestPath": "OfflineGame.Gate12.P0.LuminousImportedBodyLOD0AndNativeScale",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.40563809871673584,
+			"dateTime": "2026.10.17-15.30.07",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_IMPORTED_CLOTHED: UE_LOD0_VERTICES=9996 UE_LOD0_TRIANGLES=16754 SOURCE_PRIMITIVE_VERTICES=9604 BOUNDS_WIDTH_CM=123.8300 BOUNDS_HEIGHT_CM=128.1429",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_MORPHS_CLOTHED: SOURCE_EFFECTIVE_POSITION=15 UE_IMPORTED=9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "P0_CLOTHED: 15 nonzero source position morphs vs 9 imported; UE 0.015cm morph threshold is under investigation. DO NOT accept full facial/anatomy fidelity yet.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Private\\Tests\\OGGate12P0CharacterFidelityTests.cpp",
+					"lineNumber": 99,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_IMPORTED_UNDERWEAR: UE_LOD0_VERTICES=9996 UE_LOD0_TRIANGLES=16754 SOURCE_PRIMITIVE_VERTICES=9604 BOUNDS_WIDTH_CM=123.8300 BOUNDS_HEIGHT_CM=128.1429",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_MORPHS_UNDERWEAR: SOURCE_EFFECTIVE_POSITION=15 UE_IMPORTED=9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "P0_UNDERWEAR: 15 nonzero source position morphs vs 9 imported; UE 0.015cm morph threshold is under investigation. DO NOT accept full facial/anatomy fidelity yet.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Private\\Tests\\OGGate12P0CharacterFidelityTests.cpp",
+					"lineNumber": 99,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_IMPORTED_NUDE: UE_LOD0_VERTICES=9996 UE_LOD0_TRIANGLES=16754 SOURCE_PRIMITIVE_VERTICES=9604 BOUNDS_WIDTH_CM=123.8300 BOUNDS_HEIGHT_CM=128.1429",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_MORPHS_NUDE: SOURCE_EFFECTIVE_POSITION=15 UE_IMPORTED=9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.17-15.30.07"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "P0_NUDE: 15 nonzero source position morphs vs 9 imported; UE 0.015cm morph threshold is under investigation. DO NOT accept full facial/anatomy fidelity yet.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Private\\Tests\\OGGate12P0CharacterFidelityTests.cpp",
+					"lineNumber": 99,
+					"timestamp": "2026.10.17-15.30.07"
+				}
+			],
+			"warnings": 3,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterPresentationPreferencePersistence",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.CharacterPresentationPreferencePersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.022081997245550156,
+			"dateTime": "2026.10.17-15.30.07",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DevelopmentSourceViewerIsExactAndNoncanonical",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.DevelopmentSourceViewerIsExactAndNoncanonical",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.053757701069116592,
+			"dateTime": "2026.10.17-15.30.07",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LocalPlayerCreateRestoreNoFabricatedOwnership",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.LocalPlayerCreateRestoreNoFabricatedOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.25958159565925598,
+			"dateTime": "2026.10.17-15.30.07",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReportBrowsingAcknowledgementAndReload",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.ReportBrowsingAcknowledgementAndReload",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.34474641084671021,
+			"dateTime": "2026.10.17-15.30.08",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReservedBindingCollisionFailsClosed",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.ReservedBindingCollisionFailsClosed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.30377298593521118,
+			"dateTime": "2026.10.17-15.30.08",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "VisualAssetsExactVersionAndMissing2D",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.VisualAssetsExactVersionAndMissing2D",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"55E9D1484392F6DCBB320497158E6E87"
+			],
+			"duration": 0.016786500811576843,
+			"dateTime": "2026.10.17-15.30.08",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}
