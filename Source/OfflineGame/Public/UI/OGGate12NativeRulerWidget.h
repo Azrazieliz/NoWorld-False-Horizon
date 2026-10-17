@@ -7,6 +7,7 @@
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
+class UOGGate12ExploredMapWidget;
 class UImage;
 class UTexture2D;
 class UHorizontalBox;
@@ -103,6 +104,9 @@ private:
     TObjectPtr<UUniformGridPanel> RosterGrid;
 
     UPROPERTY(Transient)
+    TObjectPtr<UOGGate12ExploredMapWidget> TerritoryMapWidget;
+
+    UPROPERTY(Transient)
     TObjectPtr<AOGGate12CharacterPreviewStage> PreviewStage;
 
     UPROPERTY(Transient)
@@ -125,6 +129,7 @@ private:
     void RefreshFrozenScene(EOGRulerPrimaryDestination Destination);
     void BuildCurrentPage();
     void BuildHome();
+    void BuildGacha();
     void BuildRoster();
     void RebuildRosterGrid();
     void BuildDevelopmentQaCharacterViewer();

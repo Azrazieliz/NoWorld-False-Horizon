@@ -2,6 +2,8 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
+#include "UI/OGGate12ExploredMapWidget.h"
+#include "GameFramework/PlayerController.h"
 #include "UI/OGGate12CharacterPreviewStage.h"
 #include "UI/OGGate12CharacterPresentationPreferences.h"
 #include "Runtime/OGPlayerProfileSettings.h"
@@ -426,6 +428,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
 {
     if (!Content) return;
     RosterGrid = nullptr;
+    TerritoryMapWidget = nullptr;
     Content->ClearChildren();
     if (OpenIdentityIndex == INDEX_NONE || !bPrefer3DCharacterPresentation)
         ReleasePreviewStage();
@@ -460,47 +463,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         else BuildCharacterDetail();
         break;
     case EOGRulerPrimaryDestination::Gacha:
-        AddMessage(Content,
-            Session->bRealGachaAccessUnlocked
-                ? TEXT("No approved live banner is available.")
-                : TEXT("Gacha is locked by the canonical world state."),
-            19, TextMuted);
-        AddMessage(Content,
-            TEXT("No fabricated banner, pool, ticket, currency or secondary duplicate rewards."),
-            16, TextMuted);
-        AddAction(Content,
-            bGachaHistoryExpanded ? TEXT("HIDE ACQUISITION HISTORY")
-                                  : TEXT("VIEW ACQUISITION HISTORY"),
-            TEXT("gacha-history-toggle"));
-        if (bGachaHistoryExpanded)
-        {
-            FString GachaError;
-            if (!Session->RefreshGachaHistory(GachaError))
-            {
-                AddMessage(Content, GachaError.IsEmpty()
-                    ? TEXT("Canonical gacha history unavailable.")
-                    : GachaError, 16, TextMuted);
-            }
-            else if (Session->GachaHistoryProjection.IsEmpty())
-            {
-                AddMessage(Content, TEXT("No recorded acquisition events."),
-                    16, TextMuted);
-            }
-            else
-            {
-                for (const FOGGachaHistoryEntryViewModel& Entry :
-                    Session->GachaHistoryProjection)
-                {
-                    AddMessage(Content,
-                        FString::Printf(TEXT("%s  %s  %s  tick %lld"),
-                            *Entry.IdentityId.ToString(),
-                            *Entry.VersionId.ToString(),
-                            *Entry.Rarity.ToString(),
-                            Entry.WorldTick),
-                        15, TextMain);
-                }
-            }
-        }
+        BuildGacha();
         break;
     case EOGRulerPrimaryDestination::Territory:
         BuildTerritory();
@@ -957,6 +920,136 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
     }
 }
 
+
+void UOGGate12NativeRulerWidget::BuildGacha()
+{
+    if (!Content || !WidgetTree) return;
+    UGameInstance* GI = GetGameInstance();
+    UOGGate12RulerSessionSubsystem* Session =
+        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Session || !Session->IsBoundToStoredRuler()) return;
+
+    // Gate10 frozen 04 visual structure: upper right utility controls, full
+    // vertical showcase, compact banner rail, two primary draw buttons and
+    // two utility actions. All content remains canonical, NEVER borrowed
+    // from the mockup's fictional banner, currency or character.
+    UHorizontalBox* Utilities = WidgetTree->ConstructWidget<UHorizontalBox>(
+        UHorizontalBox::StaticClass(), TEXT("GachaUpperRightUtilityBar"));
+    Content->AddChildToVerticalBox(Utilities)->SetPadding(FMargin(5.f,1.f,5.f,9.f));
+    {
+        UTextBlock* Section=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass(), TEXT("GachaSectionTitle"));
+        Section->SetText(FText::FromString(TEXT("GACHA")));
+        Section->SetColorAndOpacity(FSlateColor(FLinearColor(.81f,.79f,.85f,1.f)));
+        FSlateFontInfo F=Section->GetFont();F.Size=19;Section->SetFont(F);
+        Utilities->AddChildToHorizontalBox(Section)->SetSize(
+            FSlateChildSize(ESlateSizeRule::Fill));
+    }
+    UVerticalBox* Options=WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(), TEXT("GachaRatesAndHistory"));
+    Utilities->AddChildToHorizontalBox(Options);
+    // Gate07 must install rate details before this control can be used.
+    AddAction(Options, TEXT("RATES"), TEXT("gacha-rates"), false);
+    AddAction(Options, bGachaHistoryExpanded ? TEXT("CLOSE HISTORY")
+        : TEXT("HISTORY"), TEXT("gacha-history-toggle"));
+
+    UBorder* BannerEdge=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("GachaShowcaseAngularOuterRail"));
+    BannerEdge->SetBrushColor(FLinearColor(.34f,.32f,.39f,1.f));
+    BannerEdge->SetPadding(FMargin(1.f));
+    UBorder* BannerFace=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("GachaShowcaseBlackStage"));
+    BannerFace->SetBrushColor(FLinearColor(.006f,.006f,.011f,.85f));
+    BannerFace->SetPadding(FMargin(10.f));
+    BannerEdge->AddChild(BannerFace);
+    USizeBox* BannerHeight=WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), TEXT("GachaTallPortraitShowcase"));
+    BannerHeight->SetMinDesiredHeight(335.f);
+    BannerHeight->AddChild(BannerEdge);
+    Content->AddChildToVerticalBox(BannerHeight)->SetPadding(FMargin(5.f,1.f,5.f,8.f));
+    UVerticalBox* Showcase=WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(), TEXT("CanonicalGachaShowcase"));
+    BannerFace->AddChild(Showcase);
+    AddMessage(Showcase, Session->bRealGachaAccessUnlocked
+        ? TEXT("ACQUISITION") : TEXT("ACQUISITION LOCKED"), 21,
+        FLinearColor(.86f,.84f,.88f,1.f));
+    AddMessage(Showcase, Session->bApprovedBannerProvided
+        ? TEXT("A verified banner is available from the canonical world.")
+        : TEXT("No approved active banner is installed in this world."),
+        16, TextMuted);
+    // Banner is never invented. Until an authoritative current banner +
+    // asset source is present, this intentionally remains an empty dark
+    // art stage; it is not a mockup crop.
+    USizeBox* BlankArt=WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(), TEXT("CanonicalBannerArtOnly"));
+    BlankArt->SetMinDesiredHeight(180.f);
+    Showcase->AddChildToVerticalBox(BlankArt)
+        ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+
+    UBorder* SelectorEdge=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("GachaBannerSelectorThinRail"));
+    SelectorEdge->SetBrushColor(FLinearColor(.39f,.36f,.42f,1.f));
+    SelectorEdge->SetPadding(FMargin(1.f));
+    UBorder* SelectorFace=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass());
+    SelectorFace->SetBrushColor(FLinearColor(.014f,.012f,.020f,.96f));
+    SelectorFace->SetPadding(FMargin(8.f,11.f));
+    SelectorEdge->AddChild(SelectorFace);
+    UTextBlock* Selector=WidgetTree->ConstructWidget<UTextBlock>(
+        UTextBlock::StaticClass(), TEXT("LiveBannerSelectorLabel"));
+    Selector->SetText(FText::FromString(Session->bApprovedBannerProvided
+        ? TEXT("VERIFIED BANNER") : TEXT("NO APPROVED BANNERS")));
+    Selector->SetColorAndOpacity(FSlateColor(TextMain));
+    Selector->SetJustification(ETextJustify::Center);
+    FSlateFontInfo Font=Selector->GetFont();Font.Size=13;Selector->SetFont(Font);
+    SelectorFace->AddChild(Selector);
+    Content->AddChildToVerticalBox(SelectorEdge)
+        ->SetPadding(FMargin(7.f,3.f,7.f,11.f));
+
+    UHorizontalBox* DrawActions=WidgetTree->ConstructWidget<UHorizontalBox>(
+        UHorizontalBox::StaticClass(), TEXT("GachaTwoNativeDrawActions"));
+    Content->AddChildToVerticalBox(DrawActions)->SetPadding(FMargin(3.f,2.f,3.f,4.f));
+    // No native pull UI until the Gate07-approved banner, payment and
+    // transactional pull binding are all present. Disabled controls make the
+    // frozen structure visible without granting fictional acquisitions.
+    const bool bCanDraw=false;
+    for (int32 I=0;I<2;++I)
+    {
+        UVerticalBox* Wrapper=WidgetTree->ConstructWidget<UVerticalBox>(
+            UVerticalBox::StaticClass());
+        DrawActions->AddChildToHorizontalBox(Wrapper)
+            ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        AddAction(Wrapper, I==0 ? TEXT("DRAW  ×1") : TEXT("DRAW  ×10"),
+            I==0 ? TEXT("gacha-draw-1") : TEXT("gacha-draw-10"), bCanDraw);
+    }
+    UHorizontalBox* BottomUtilities=WidgetTree->ConstructWidget<UHorizontalBox>(
+        UHorizontalBox::StaticClass(), TEXT("GachaDetailsAndExchange"));
+    Content->AddChildToVerticalBox(BottomUtilities);
+    UVerticalBox* Details=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    UVerticalBox* Exchange=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    BottomUtilities->AddChildToHorizontalBox(Details)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    BottomUtilities->AddChildToHorizontalBox(Exchange)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    AddAction(Details,TEXT("DETAILS"),TEXT("gacha-details"),false);
+    AddAction(Exchange,TEXT("EXCHANGE"),TEXT("gacha-exchange"),false);
+
+    if (!bGachaHistoryExpanded) return;
+    FString Error;
+    if (!Session->RefreshGachaHistory(Error))
+    {
+        AddMessage(Content, Error.IsEmpty() ? TEXT("Acquisition history unavailable.") : Error, 14, TextMuted);
+        return;
+    }
+    if (Session->GachaHistoryProjection.IsEmpty())
+    {
+        AddMessage(Content, TEXT("No recorded acquisitions."), 15, TextMuted);
+        return;
+    }
+    for (const FOGGachaHistoryEntryViewModel& Entry : Session->GachaHistoryProjection)
+        AddMessage(Content, FString::Printf(TEXT("%s  %s  tick %lld"),
+            *Entry.IdentityId.ToString(),*Entry.Rarity.ToString(),Entry.WorldTick),
+            14, TextMain);
+}
+
 void UOGGate12NativeRulerWidget::BuildTerritory()
 {
     UGameInstance* GI = GetGameInstance();
@@ -969,6 +1062,58 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
         FString::Printf(TEXT("%d canonical territory holdings"),
             Territory.Territories.Num()), 19, TextMain);
 
+
+    // A real interactive known-trail viewport, not the fictional landscape
+    // from the Gate10 concept. Future accepted Gate02 map tiles can overlay
+    // this coordinate-true viewport without replacing its pan/zoom input.
+    AddMessage(Content, TEXT("KNOWN EXPLORATION"), 17, Gate12RulerGold);
+    TerritoryMapWidget = WidgetTree->ConstructWidget<UOGGate12ExploredMapWidget>(
+        UOGGate12ExploredMapWidget::StaticClass(), TEXT("ActualKnownTerritoryViewport"));
+    if (const UWorld* World = GetWorld())
+    {
+        const APlayerController* PC = World->GetFirstPlayerController();
+        const AOGWorldPrototypeCharacter* Pawn =
+            PC ? Cast<AOGWorldPrototypeCharacter>(PC->GetPawn()) : nullptr;
+        if (Pawn)
+        {
+            const FVector Position = Pawn->GetActorLocation();
+            TerritoryMapWidget->SetKnownWorldTrail(
+                Pawn->GetVisitedMapTrailForHud(),
+                FVector2D(Position.X,Position.Y));
+        }
+    }
+    UBorder* MapFrame = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(), TEXT("TerritoryNativeMapFrame"));
+    MapFrame->SetBrushColor(FLinearColor(.37f,.33f,.42f,1.f));
+    MapFrame->SetPadding(FMargin(1.f));
+    MapFrame->AddChild(TerritoryMapWidget);
+    USizeBox* MapHeight = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(),TEXT("TerritoryMapViewportHeight"));
+    MapHeight->SetMinDesiredHeight(340.f);
+    MapHeight->AddChild(MapFrame);
+    Content->AddChildToVerticalBox(MapHeight)->SetPadding(FMargin(3.f,4.f,3.f,5.f));
+    UHorizontalBox* MapTools=WidgetTree->ConstructWidget<UHorizontalBox>(
+        UHorizontalBox::StaticClass(),TEXT("FrozenTerritoryMapTools"));
+    Content->AddChildToVerticalBox(MapTools);
+    for (const TPair<FString,FString>& Tool :
+        {TPair<FString,FString>(TEXT("＋"),TEXT("map/zoom-in")),
+         TPair<FString,FString>(TEXT("－"),TEXT("map/zoom-out")),
+         TPair<FString,FString>(TEXT("CENTER"),TEXT("map/center"))})
+    {
+        UVerticalBox* ToolCell=WidgetTree->ConstructWidget<UVerticalBox>(
+            UVerticalBox::StaticClass());
+        MapTools->AddChildToHorizontalBox(ToolCell)
+            ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        AddAction(ToolCell,Tool.Key,Tool.Value);
+    }
+    if (!TerritoryMapWidget->HasKnownTrail())
+        AddMessage(Content,
+            TEXT("No mapped path has been discovered in this world yet."),
+            13, TextMuted);
+    else
+        AddMessage(Content,
+            TEXT("Known traversed path only. Drag to pan; pinch controls and scroll to zoom. Undiscovered geography remains hidden."),
+            12, TextMuted);
     if (Territory.Territories.IsEmpty())
     {
         AddMessage(Content,
@@ -1495,6 +1640,16 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     else if (Action == TEXT("gacha-history-toggle"))
     {
         bGachaHistoryExpanded = !bGachaHistoryExpanded;
+    }
+    else if (Action.StartsWith(TEXT("map/")))
+    {
+        if (TerritoryMapWidget)
+        {
+            if (Action == TEXT("map/zoom-in")) TerritoryMapWidget->StepZoom(1.3f);
+            else if (Action == TEXT("map/zoom-out")) TerritoryMapWidget->StepZoom(1.f/1.3f);
+            else if (Action == TEXT("map/center")) TerritoryMapWidget->RecenterView();
+        }
+        return;
     }
     else if (Action.StartsWith(TEXT("territory/")))
     {
