@@ -1,3 +1,14 @@
+## 2026-10-17 17:11 - CURRENT VERIFIED native code-first save entry
+
+- Last scoped source commit pushed and ls-remote verified: 82fc98ec77e8c1e786e0d08cabe830cd0857b819, Gate12 production branch. Original Foundation unchanged; protected Koikatsu code/assets excluded.
+- UE5.8.3 Win64 Editor build exit 0 / 7 of 7 actions succeeded: Saved/Gate12Readiness/Gate12_CodeFirst_SaveEntry_Build_20261017.log.
+- Native Gate12 exit 0, 11 clean + 1 warning + 0 failed (12 tests). Exact opening test OfflineGame.Gate12.Opening.ContinueRequiresReadableCanonicalWorld: Success with 0 errors and warnings.
+- Full native OfflineGame exit 0, 133 clean + 18 warnings + 0 failed (151 tests), opening test also success.
+- Hash-grounded copies of two test indices, two summaries and manifest: docs/production/gate12/evidence/20261017_code_first_p0_save_entry/.
+- Isolated real GAME journey started 2026-10-17 17:11 Europe/Paris run id 90c019da30a346bf89454a22c3a90b88. Prior receipt archived under Saved/Gate12Readiness/Isolated_NoCook_Win64_Game/Saved/Gate12Readiness/ReceiptArchive/. Live result still pending in this checkpoint.
+- Android SDK validated, but adb devices returned no connected devices: physical Android QA blocked by connection. Routine non-destructive dev build authorized.
+- Next exact action: inspect live journey and run-specific receipt, fix only genuine errors, push runtime evidence. Full code-first audit IN_PROGRESS, not DONE.
+
 ## 2026-10-17 17:00 - CURRENT Gate12 code-first P0 implementation (pending native verification)
 
 - Authority: issue #25 and Gate00 CODE-FIRST full systems audit commission. Gate12 isolated branch production/gate12-koikatsu-ue583-fixture-20261010; last fetched/pushed HEAD before this change 7dbac546546b964814a5106071a773fef37cecd8. Frozen Foundation 3f54f07 untouched.
