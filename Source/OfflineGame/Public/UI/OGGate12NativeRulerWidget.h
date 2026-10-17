@@ -8,6 +8,7 @@
 
 class UVerticalBox;
 class UCanvasPanel;
+class UMaterialInstanceDynamic;
 class UScaleBox;
 class UOGGate12ExploredMapWidget;
 class UImage;
@@ -97,6 +98,10 @@ private:
     TObjectPtr<UImage> Gate10FigmaGachaChrome;
 
     bool bGachaChromeWasVisible = false;
+
+    // Own the live character UI cutout for the full scene capture lifetime.
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> LivePreviewCutoutMaterial;
 
     UPROPERTY(Transient)
     TObjectPtr<UScaleBox> Gate10PortraitGachaScale;

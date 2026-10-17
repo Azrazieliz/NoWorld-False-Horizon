@@ -11315,19 +11315,40 @@ bool AOGWorldPresentationHud::DrawFoundationDiagnosticSurface(AOGWorldPrototypeC
     auto Button = [&](FName Id, const FString& Label, float X, float Y, float W, bool bEnabled)
     {
         const float H = ButtonHeight;
-        DrawGamePanel(bEnabled ? FLinearColor(.10f, .19f, .25f, .96f) : FLinearColor(.06f, .08f, .09f, .96f), X, Y, W, H);
-        DrawGameText(Label,X+12*Scale,Y+(H-ReadableHeight)*.5f,ReadableHeight,
-            bEnabled?FLinearColor::White:FLinearColor(.45f,.5f,.55f),W-24*Scale);
+        // Frozen Gate10 black metal, clipped-angle framing. Interactive
+        // diagnostic/interaction functionality comes from the Foundation.
+        DrawGamePanel(bEnabled
+            ? FLinearColor(.012f,.009f,.023f,.95f)
+            : FLinearColor(.009f,.008f,.014f,.86f),X,Y,W,H);
+        const FLinearColor Edge = bEnabled
+            ? FLinearColor(.67f,.61f,.76f,.94f)
+            : FLinearColor(.29f,.28f,.35f,.8f);
+        DrawLine(X+9.f*Scale,Y,X+W-9.f*Scale,Y,Edge,1.f);
+        DrawLine(X+9.f*Scale,Y+H,X+W-9.f*Scale,Y+H,Edge,1.f);
+        DrawLine(X,Y+9.f*Scale,X+9.f*Scale,Y,Edge,.9f);
+        DrawLine(X+W-9.f*Scale,Y,X+W,Y+9.f*Scale,Edge,.9f);
+        DrawLine(X,Y+H-9.f*Scale,X+9.f*Scale,Y+H,Edge,.9f);
+        DrawLine(X+W-9.f*Scale,Y+H,X+W,Y+H-9.f*Scale,Edge,.9f);
+        DrawGameText(Label,X+9*Scale,Y+(H-ReadableHeight)*.5f,
+            ReadableHeight*.83f,bEnabled
+                ? FLinearColor(.85f,.82f,.92f,1.f)
+                : FLinearColor(.43f,.41f,.50f,1.f),W-18*Scale);
         if (bEnabled) AddFoundationHitBox(FVector2D(X,Y), FVector2D(W,H), Id, true, 150);
     };
     if (!bModal)
     {
         if (FoundationSurface == TEXT("world"))
         {
-            const float W = FMath::Max(215 * Scale, FMath::Min(Canvas->ClipX, Canvas->ClipY) * .22f);
-            const float Y = 238 * Scale;
-            Button(TEXT("OG.Diagnostics.Open"), TEXT("Menu"), 28 * Scale, Y, W, Menu != nullptr);
-            Button(TEXT("OG.InteractionMenu.Open"), TEXT("Interaction"), 28 * Scale, Y + 72 * Scale, W, Host != nullptr);
+            // Two narrow edge utilities instead of enormous bright
+            // horizontal blocks covering the exploration view.
+            const float W=FMath::Clamp(Canvas->ClipX*.235f,
+                80.f*Scale,126.f*Scale);
+            const float X=12.f*Scale;
+            const float Y=Canvas->ClipY*.32f;
+            Button(TEXT("OG.Diagnostics.Open"),TEXT("MENU"),
+                X,Y,W,Menu!=nullptr);
+            Button(TEXT("OG.InteractionMenu.Open"),TEXT("INTERACT"),
+                X,Y+ButtonHeight+8.f*Scale,W,Host!=nullptr);
         }
         return false;
     }
@@ -11340,8 +11361,8 @@ bool AOGWorldPresentationHud::DrawFoundationDiagnosticSurface(AOGWorldPrototypeC
         FMath::Max(460 * Scale, RowCount * RowStep + 3 * ReadableHeight + ButtonHeight + 70 * Scale));
     const float CloseY = Top + PanelHeight - ButtonHeight - 24 * Scale;
     DrawRect(FLinearColor(.008f,.012f,.02f,.72f),0,0,Canvas->ClipX,Canvas->ClipY);
-    DrawGamePanel(FLinearColor(.025f,.045f,.075f,.98f),
-        X - 8 * Scale, Top - 12 * Scale, W + 16 * Scale, PanelHeight);
+    DrawGamePanel(FLinearColor(.010f,.008f,.020f,.985f),
+        X-8*Scale,Top-12*Scale,W+16*Scale,PanelHeight);
     DrawFoundationText(bInteractionMenuOpen || bActiveInteraction ? TEXT("Interaction") : TEXT("Activities"),
         FLinearColor::White, X + 8 * Scale, Top, nullptr, .6f * Scale);
     float Y = Top + FMath::Max(35 * Scale, ReadableHeight + 18.0f);

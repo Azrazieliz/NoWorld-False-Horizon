@@ -28,7 +28,10 @@ AOGGate12CharacterPreviewStage::AOGGate12CharacterPreviewStage()
     Capture->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
     Capture->bCaptureEveryFrame = true;
     Capture->bCaptureOnMovement = false;
-    Capture->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+    // SceneColorHDR stores INVERSE opacity in alpha. A native UI material
+    // converts it to ordinary premultiplied opacity, removing the black
+    // rectangular scene-capture surface without removing any real geometry.
+    Capture->CaptureSource = ESceneCaptureSource::SCS_SceneColorHDR;
     SetActorEnableCollision(false);
 }
 
@@ -52,7 +55,7 @@ bool AOGGate12CharacterPreviewStage::InitializeApprovedPreview(
 
     RenderTarget = NewObject<UTextureRenderTarget2D>(this, NAME_None, RF_Transient);
     if (!RenderTarget) return false;
-    RenderTarget->ClearColor = FLinearColor(0.f, 0.f, 0.f, 0.f);
+    RenderTarget->ClearColor = FLinearColor(0.f, 0.f, 0.f, 1.f);
     RenderTarget->InitAutoFormat(512, 768);
     RenderTarget->UpdateResourceImmediate(true);
     Capture->TextureTarget = RenderTarget;
@@ -117,7 +120,7 @@ bool AOGGate12CharacterPreviewStage::InitializeDevelopmentQaPreview(
 
     RenderTarget = NewObject<UTextureRenderTarget2D>(this, NAME_None, RF_Transient);
     if (!RenderTarget) return false;
-    RenderTarget->ClearColor = FLinearColor(0.f, 0.f, 0.f, 0.f);
+    RenderTarget->ClearColor = FLinearColor(0.f, 0.f, 0.f, 1.f);
     RenderTarget->InitAutoFormat(512, 768);
     RenderTarget->UpdateResourceImmediate(true);
     Capture->TextureTarget = RenderTarget;

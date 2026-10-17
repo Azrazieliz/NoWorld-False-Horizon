@@ -12,6 +12,8 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Engine/Texture2D.h"
+#include "Materials/MaterialInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "Components/Border.h"
@@ -156,6 +158,7 @@ void UOGGate12NativeRulerWidget::ReleasePreviewStage()
     ReleaseRosterPreviewStages();
     if (IsValid(PreviewStage)) PreviewStage->Destroy();
     PreviewStage = nullptr;
+    LivePreviewCutoutMaterial = nullptr;
 }
 
 void UOGGate12NativeRulerWidget::BuildRoot()
@@ -581,100 +584,133 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
 void UOGGate12NativeRulerWidget::BuildHome()
 {
     if (!Content || !WidgetTree) return;
-    UGameInstance* GI = GetGameInstance();
+    const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session || !Session->IsBoundToStoredRuler()) return;
 
-    // Frozen Gate10 portrait Ruler Home: full-height character-first stage,
-    // narrow left utility rail and three stacked right-side actions.
-    // An actual Registry-approved OWNED character, if any, is already painted
-    // by RefreshFrozenScene BELOW these non-interactive and UI-only layers.
-    // An empty roster remains a correct pure-black stage, never a fake hero.
-    UBorder* HeroOuter = WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("Gate10HomeStageFineOuterRail"));
-    HeroOuter->SetBrushColor(FLinearColor(.21f,.20f,.24f,.71f));
-    HeroOuter->SetPadding(FMargin(1.f));
-    UBorder* HeroBlack = WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("Gate10HomeStageTransparentBlack"));
-    HeroBlack->SetBrushColor(FLinearColor(.004f,.004f,.009f,.36f));
-    UOverlay* HeroLayers=WidgetTree->ConstructWidget<UOverlay>(
-        UOverlay::StaticClass(),TEXT("RulerHomeOrnamentAndLiveStage"));
-    HeroLayers->AddChildToOverlay(HeroBlack);
-    UOGGate12GothicChromeWidget* HeroEtch=
-        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
-            UOGGate12GothicChromeWidget::StaticClass());
-    HeroEtch->Configure(FLinearColor(.53f,.49f,.58f,1.f),INDEX_NONE,false);
-    HeroLayers->AddChildToOverlay(HeroEtch);
-    HeroOuter->AddChild(HeroLayers);
-    USizeBox* HeroHeight = WidgetTree->ConstructWidget<USizeBox>(
-        USizeBox::StaticClass(), TEXT("Gate10HomePortraitStageHeight"));
-    HeroHeight->SetMinDesiredHeight(570.f);
-    HeroHeight->AddChild(HeroOuter);
-    Content->AddChildToVerticalBox(HeroHeight)->SetPadding(FMargin(0.f,0.f,0.f,5.f));
+    // One native viewport-anchored Home stage, using the accepted Gacha
+    // screen's permanent obsidian, silver borders and restrained typography.
+    // A full-height grey placeholder and a second nav rail are prohibited.
+    USizeBox* Bounds=WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(),TEXT("Gate10HomeOneSceneNotThreeColumns"));
+    Bounds->SetMinDesiredWidth(390.f);
+    Bounds->SetHeightOverride(505.f);
+    UCanvasPanel* Scene=WidgetTree->ConstructWidget<UCanvasPanel>(
+        UCanvasPanel::StaticClass(),TEXT("Gate10HomeAnchoredPortraitScene"));
+    Bounds->AddChild(Scene);
+    Content->AddChildToVerticalBox(Bounds)->SetPadding(FMargin(2.f,3.f,2.f,4.f));
 
-    UHorizontalBox* MainStage = WidgetTree->ConstructWidget<UHorizontalBox>(
-        UHorizontalBox::StaticClass(), TEXT("Gate10HomeLeftStageRightLayout"));
-    HeroBlack->SetPadding(FMargin(3.f));
-    HeroBlack->AddChild(MainStage);
-
-    // Gate10 approved bottom navigation already provides five destinations.
-    // Do not duplicate it in a cramped left rail that steals model space.
-    // The central stage deliberately has no false silhouette/character art.
-    USizeBox* CharacterStage = WidgetTree->ConstructWidget<USizeBox>(
-        USizeBox::StaticClass(), TEXT("Gate10HomeOnlyActualCharacterStage"));
-    UHorizontalBoxSlot* CenterStageSlot =
-        MainStage->AddChildToHorizontalBox(CharacterStage);
-    FSlateChildSize CenterStageWeight(ESlateSizeRule::Fill);
-    CenterStageWeight.Value=.73f;
-    CenterStageSlot->SetSize(CenterStageWeight);
-    UOGGate12GothicChromeWidget* CharacterFrame=
-        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
-            UOGGate12GothicChromeWidget::StaticClass());
-    CharacterFrame->Configure(FLinearColor(.69f,.61f,.78f,1.f),0,false);
-    CharacterStage->AddChild(CharacterFrame);
-
-    UVerticalBox* RightRail = WidgetTree->ConstructWidget<UVerticalBox>(
-        UVerticalBox::StaticClass(), TEXT("Gate10HomeRightActions"));
-    UHorizontalBoxSlot* RightRailSlot =
-        MainStage->AddChildToHorizontalBox(RightRail);
-    FSlateChildSize RightRailWeight(ESlateSizeRule::Fill);
-    RightRailWeight.Value=.27f;
-    RightRailSlot->SetSize(RightRailWeight);
-    // Unlike mocked example quest/banner tiles, these 3 controls map
-    // directly to real existing Foundation functionality.
-    AddMessage(RightRail, TEXT("RULER"), 16,
-        FLinearColor(.88f,.86f,.90f,1.f));
-    AddMessage(RightRail,
-        FString::Printf(TEXT("%d OWNED IDENTITIES"),
-            Session->OwnedRoster.Num()), 12, TextMuted);
-    AddAction(RightRail, TEXT("ENTER WORLD"), TEXT("world"));
-    AddAction(RightRail, TEXT("CHARACTERS"), TEXT("nav/1"));
-    AddAction(RightRail, TEXT("GACHA"), TEXT("nav/2"));
-
-    UBorder* BottomRibbon=WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("Gate10HomeCanonicalStateRibbon"));
-    BottomRibbon->SetBrushColor(FLinearColor(.018f,.016f,.024f,.96f));
-    BottomRibbon->SetPadding(FMargin(6.f,7.f));
-    UHorizontalBox* Facts=WidgetTree->ConstructWidget<UHorizontalBox>(
-        UHorizontalBox::StaticClass());
-    BottomRibbon->AddChild(Facts);
-    auto AddFact=[this,Facts](const FString& Caption)
+    auto Position=[Scene](UWidget* Widget,float X,float Y,
+        float X2,float Y2)
     {
-        UTextBlock* Item=WidgetTree->ConstructWidget<UTextBlock>(
-            UTextBlock::StaticClass());
-        Item->SetText(FText::FromString(Caption));
-        Item->SetColorAndOpacity(FSlateColor(FLinearColor(.74f,.72f,.77f,1.f)));
-        Item->SetAutoWrapText(true);
-        FSlateFontInfo Font=Item->GetFont(); Font.Size=11; Item->SetFont(Font);
-        Facts->AddChildToHorizontalBox(Item)
-            ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        UCanvasPanelSlot* Slot=Scene->AddChildToCanvas(Widget);
+        Slot->SetAnchors(FAnchors(X,Y,X2,Y2));
+        Slot->SetOffsets(FMargin(0.f));
     };
-    AddFact(FString::Printf(TEXT("%d TERRITORIES"),
-        Session->TerritoryProjection.Territories.Num()));
-    AddFact(FString::Printf(TEXT("%d UNREAD REPORTS"),
-        Session->HomeProjection.UnacknowledgedReportCount));
-    Content->AddChildToVerticalBox(BottomRibbon);
+    UBorder* Void=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(),TEXT("Gate10HomeObsidianVoid"));
+    // Owned source-backed character art can remain visible behind Home.
+    // Do not manufacture a portrait for an empty Registry roster.
+    Void->SetBrushColor(FLinearColor(.003f,.003f,.007f,
+        Session->OwnedRoster.IsEmpty() ? .92f : .17f));
+    Position(Void,0.f,0.f,1.f,1.f);
+
+    // Authentic Registry-approved OWNED artwork, when present, stays behind
+    // the controls via RefreshFrozenScene. Do not create a fake character.
+    UOGGate12GothicChromeWidget* Outline=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass(),
+            TEXT("Gate10HomeFullStageAngularFiligree"));
+    Outline->Configure(FLinearColor(.63f,.56f,.72f,1.f),INDEX_NONE,false);
+    Position(Outline,.013f,.014f,.987f,.982f);
+
+    UOGGate12GothicChromeWidget* PortraitOutline=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass(),
+            TEXT("Gate10HomeCharacterFirstStageEtch"));
+    PortraitOutline->Configure(FLinearColor(.51f,.45f,.61f,1.f),
+        INDEX_NONE,false);
+    Position(PortraitOutline,.052f,.12f,.71f,.88f);
+
+    auto TextAt=[this,&Position](const FString& String,
+        const TCHAR* Key,float X,float Y,float X2,float Y2,
+        int32 Size,const FLinearColor& Ink)
+    {
+        UTextBlock* Text=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass(),FName(Key));
+        Text->SetText(FText::FromString(String));
+        Text->SetJustification(ETextJustify::Center);
+        Text->SetAutoWrapText(true);
+        Text->SetColorAndOpacity(FSlateColor(Ink));
+        FSlateFontInfo Font=Text->GetFont();
+        Font.Size=Size;Text->SetFont(Font);
+        Position(Text,X,Y,X2,Y2);
+    };
+    const FLinearColor Silver(.84f,.81f,.90f,1.f);
+    const FLinearColor Dim(.56f,.53f,.64f,1.f);
+    TextAt(TEXT("THE RULER"),TEXT("Gate10HomeRulerIdentifierTitle"),
+        .07f,.033f,.63f,.090f,22,Silver);
+    TextAt(FString::Printf(TEXT("ID  %s"),
+        *Session->BoundRulerId.ToString().Left(14)),
+        TEXT("HomeActualBoundRulerID"),.10f,.090f,.64f,.13f,12,Dim);
+    if (Session->OwnedRoster.IsEmpty())
+    {
+        TextAt(TEXT("NO OWNED MANIFESTATIONS"),
+            TEXT("ActualEmptyRosterOnHome"),
+            .12f,.485f,.63f,.55f,16,Dim);
+    }
+
+    auto NativeAction=[this,&Position](const TCHAR* Caption,
+        const TCHAR* Action,float Y)
+    {
+        UOverlay* Surface=WidgetTree->ConstructWidget<UOverlay>(
+            UOverlay::StaticClass());
+        UBorder* Back=WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass());
+        Back->SetBrushColor(FLinearColor(.014f,.010f,.026f,.96f));
+        Surface->AddChildToOverlay(Back);
+        UOGGate12GothicChromeWidget* Frame=
+            WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+                UOGGate12GothicChromeWidget::StaticClass());
+        Frame->Configure(FLinearColor(.74f,.65f,.83f,1.f),
+            INDEX_NONE,false);
+        Surface->AddChildToOverlay(Frame);
+        UOGGate12RulerActionButton* Button=
+            WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
+                UOGGate12RulerActionButton::StaticClass());
+        Button->RulerWidget=this;
+        Button->ActionId=Action;
+        Button->SetBackgroundColor(FLinearColor(0.f,0.f,0.f,0.f));
+        Button->OnClicked.AddDynamic(
+            Button,&UOGGate12RulerActionButton::InvokeAction);
+        UTextBlock* Label=WidgetTree->ConstructWidget<UTextBlock>(
+            UTextBlock::StaticClass());
+        Label->SetText(FText::FromString(Caption));
+        Label->SetJustification(ETextJustify::Center);
+        Label->SetAutoWrapText(true);
+        Label->SetColorAndOpacity(FSlateColor(
+            FLinearColor(.87f,.84f,.93f,1.f)));
+        FSlateFontInfo F=Label->GetFont();
+        F.Size=14;Label->SetFont(F);
+        Button->AddChild(Label);
+        Surface->AddChildToOverlay(Button);
+        Position(Surface,.69f,Y,.965f,Y+.103f);
+    };
+    NativeAction(TEXT("ENTER WORLD"),TEXT("world"),.39f);
+    NativeAction(TEXT("CHARACTERS"),TEXT("nav/1"),.515f);
+    NativeAction(TEXT("GACHA"),TEXT("nav/2"),.64f);
+
+    UBorder* Rule=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass());
+    Rule->SetBrushColor(FLinearColor(.38f,.34f,.46f,.74f));
+    Position(Rule,.06f,.917f,.94f,.919f);
+    TextAt(FString::Printf(TEXT("%d TERRITORIES"),
+        Session->TerritoryProjection.Territories.Num()),
+        TEXT("HomeRealTerritoryCount"),.055f,.933f,.46f,.975f,12,Dim);
+    TextAt(FString::Printf(TEXT("%d UNREAD REPORTS"),
+        Session->HomeProjection.UnacknowledgedReportCount),
+        TEXT("HomeActualReportCount"),.52f,.933f,.96f,.975f,12,Dim);
 }
 
 void UOGGate12NativeRulerWidget::HandleRosterSearchChanged(
@@ -777,15 +813,29 @@ void UOGGate12NativeRulerWidget::BuildDevelopmentQaCharacterViewer()
     Brush.SetResourceObject(PreviewStage->GetLiveRenderTarget());
     Brush.ImageSize = FVector2D(512.f, 768.f);
     UImage* Image = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
-    Image->SetBrush(Brush);
+    static const TCHAR* UiCutoutPath=TEXT(
+        "/Game/UI/Gate10/Materials/M_Gate10_CharacterCaptureAlphaUI."
+        "M_Gate10_CharacterCaptureAlphaUI");
+    if (UMaterialInterface* Mat=LoadObject<UMaterialInterface>(
+        nullptr,UiCutoutPath))
+    {
+        LivePreviewCutoutMaterial=UMaterialInstanceDynamic::Create(Mat,this);
+        LivePreviewCutoutMaterial->SetTextureParameterValue(
+            TEXT("LiveScene"),PreviewStage->GetLiveRenderTarget());
+        Image->SetBrushFromMaterial(LivePreviewCutoutMaterial);
+    }
+    else
+    {
+        Image->SetBrush(Brush);
+        UE_LOG(LogTemp,Warning,
+            TEXT("Original character preview alpha-compositing asset missing"));
+    }
     UScaleBox* Fit = WidgetTree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass());
     Fit->SetStretch(EStretch::ScaleToFit);
     Fit->AddChild(Image);
     USizeBox* View = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-    // Fill the full available screen width; never show a tiny 3D render
-    // inside an otherwise empty black column. Actual mesh remains sourced.
-    View->SetMinDesiredHeight(640.f);
-    Fit->SetStretch(EStretch::ScaleToFill);
+    View->SetMinDesiredWidth(380.f);
+    View->SetMinDesiredHeight(590.f);
     View->AddChild(Fit);
     Content->AddChildToVerticalBox(View);
     AddMessage(Content,
@@ -1750,12 +1800,26 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
     // ScaleToFit displays the complete artwork/model without cropping or bars.
     UImage* Image = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
     Image->SetBrush(Brush);
+    if (bThreeDimensional && IsValid(PreviewStage))
+    {
+        static const TCHAR* UiCutoutPath=TEXT(
+            "/Game/UI/Gate10/Materials/M_Gate10_CharacterCaptureAlphaUI."
+            "M_Gate10_CharacterCaptureAlphaUI");
+        if (UMaterialInterface* Mat=LoadObject<UMaterialInterface>(
+            nullptr,UiCutoutPath))
+        {
+            LivePreviewCutoutMaterial=UMaterialInstanceDynamic::Create(Mat,this);
+            LivePreviewCutoutMaterial->SetTextureParameterValue(
+                TEXT("LiveScene"),PreviewStage->GetLiveRenderTarget());
+            Image->SetBrushFromMaterial(LivePreviewCutoutMaterial);
+        }
+    }
     UScaleBox* Fit = WidgetTree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass());
     Fit->SetStretch(EStretch::ScaleToFit);
     Fit->AddChild(Image);
     USizeBox* Height = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-    Height->SetMinDesiredHeight(640.0f);
-    Fit->SetStretch(EStretch::ScaleToFill);
+    Height->SetMinDesiredWidth(380.f);
+    Height->SetMinDesiredHeight(590.f);
     Height->AddChild(Fit);
     Parent->AddChildToVerticalBox(Height);
 }

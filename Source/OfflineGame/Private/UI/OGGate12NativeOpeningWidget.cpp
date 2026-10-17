@@ -61,9 +61,28 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     BackdropSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
     BackdropSlot->SetOffsets(FMargin(0.f,0.f,0.f,0.f));
 
-    // Gate10's approved opening is an ANIMATED interface, not the old ten
-    // exploratory images. Author this real native UMG scene and its independent
-    // moving atmosphere without inserting illustrative mockup art.
+    // Editable Gothic architectural art is a noninteractive backdrop,
+    // not a pasted UI screenshot. Slate-only animation remains above it.
+    // All actions are independent native UMG buttons.
+    const TCHAR* OriginalScenePath =
+        TEXT("/Game/UI/Gate10/Opening/T_Gate10_VacantThroneBackdrop_V1."
+             "T_Gate10_VacantThroneBackdrop_V1");
+    const UTexture2D* ThroneArt =
+        LoadObject<UTexture2D>(nullptr, OriginalScenePath);
+    if (ThroneArt)
+    {
+        UImage* BackdropArt=WidgetTree->ConstructWidget<UImage>(
+            UImage::StaticClass(),TEXT("Gate10VacantThroneApprovedArtBackdrop"));
+        BackdropArt->SetVisibility(ESlateVisibility::HitTestInvisible);
+        BackdropArt->SetBrushFromTexture(
+            const_cast<UTexture2D*>(ThroneArt),true);
+        UCanvasPanelSlot* ArtSlot=Canvas->AddChildToCanvas(BackdropArt);
+        ArtSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
+        ArtSlot->SetOffsets(FMargin(0.f));
+    }
+
+    // Keep real reduced-motion-aware ambient elements and the native
+    // animated 04 Vacant Throne vector tracery over the backdrop.
     UCanvasPanel* Stage = WidgetTree->ConstructWidget<UCanvasPanel>(
         UCanvasPanel::StaticClass(), TEXT("OpeningAnimatedSceneStage"));
     Stage->SetVisibility(ESlateVisibility::HitTestInvisible);
@@ -77,6 +96,9 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
         UOGGate12VacantThroneSceneWidget::StaticClass(),
         TEXT("Gate10AnimatedVacantThroneVectorScene"));
     NativeThroneScene->SetVisibility(ESlateVisibility::HitTestInvisible);
+    // Do not superimpose a second opaque throne on the imported source.
+    // Subtle moving tracery preserves live HSR-style UI motion.
+    NativeThroneScene->SetRenderOpacity(ThroneArt ? .16f : 1.f);
     UCanvasPanelSlot* VectorLayer=Stage->AddChildToCanvas(NativeThroneScene);
     VectorLayer->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
     VectorLayer->SetOffsets(FMargin(0.f));
@@ -125,7 +147,7 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     TitleWidthConstraint->AddChild(NativeTitle);
     TitleSlot = Canvas->AddChildToCanvas(TitleWidthConstraint);
     TitleSlot->SetAutoSize(true);
-    TitleSlot->SetAnchors(FAnchors(.5f,.70f));
+    TitleSlot->SetAnchors(FAnchors(.5f,.78f));
     TitleSlot->SetAlignment(FVector2D(.5f,.5f));
 
     UBorder* MenuFrame = WidgetTree->ConstructWidget<UBorder>(
@@ -145,7 +167,7 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     MenuSlot = Canvas->AddChildToCanvas(MenuWidthConstraint);
     MenuSlot->SetAutoSize(true);
     MenuSlot->SetAlignment(FVector2D(.5f,1.0f));
-    MenuSlot->SetAnchors(FAnchors(.5f,.88f));
+    MenuSlot->SetAnchors(FAnchors(.5f,.92f));
     MenuSlot->SetPosition(FVector2D(0.f,0.f));
 
     // Actual native utility actions, circular ornamental buttons at upper
@@ -336,7 +358,7 @@ void UOGGate12NativeOpeningWidget::NativeTick(
             MenuWidthConstraint->SetWidthOverride(FMath::Max(150.f, DesiredWidth));
         }
         MenuSlot->SetAnchors(
-            bWide ? FAnchors(.77f,.84f) : FAnchors(.5f,.88f));
+            bWide ? FAnchors(.77f,.89f) : FAnchors(.5f,.92f));
         MenuSlot->SetAlignment(FVector2D(.5f,1.f));
         if (TitleSlot && TitleWidthConstraint)
         {
@@ -344,7 +366,7 @@ void UOGGate12NativeOpeningWidget::NativeTick(
                 Size.X - 24.f, bWide ? Size.X * .40f : Size.X * .92f));
             TitleWidthConstraint->SetWidthOverride(Width);
             TitleSlot->SetAnchors(
-                bWide ? FAnchors(.76f,.59f) : FAnchors(.5f,.70f));
+                bWide ? FAnchors(.76f,.70f) : FAnchors(.5f,.78f));
         }
     }
     // Continuous native ambient animation; no baked PNG or cinematic.
