@@ -372,6 +372,9 @@ void UOGGate12NativeRulerWidget::AddAction(
     Label->SetText(FText::FromString(Title));
     Label->SetColorAndOpacity(FSlateColor(bEnabled ? TextMain : TextMuted));
     Label->SetJustification(ETextJustify::Center);
+    FSlateFontInfo TouchLabelFont=Label->GetFont();
+    TouchLabelFont.Size=21;
+    Label->SetFont(TouchLabelFont);
     Button->AddChild(Label);
     // The accepted Gate10 ornament is drawn as native vector Slate chrome,
     // with the actual clickable button independently layered above it.
@@ -388,7 +391,7 @@ void UOGGate12NativeRulerWidget::AddAction(
     Layers->AddChildToOverlay(Frame);
     USizeBox* TouchHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass());
-    TouchHeight->SetMinDesiredHeight(45.f);
+    TouchHeight->SetMinDesiredHeight(62.f);
     TouchHeight->AddChild(Layers);
     UVerticalBoxSlot* LayoutSlot =
         Parent->AddChildToVerticalBox(TouchHeight);
@@ -1421,7 +1424,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
     // A real interactive known-trail viewport, not the fictional landscape
     // from the Gate10 concept. Future accepted Gate02 map tiles can overlay
     // this coordinate-true viewport without replacing its pan/zoom input.
-    AddMessage(Content, TEXT("KNOWN EXPLORATION"), 17, Gate12RulerGold);
+    AddMessage(Content, TEXT("KNOWN EXPLORATION"), 20, Gate12RulerGold);
     TerritoryMapWidget = WidgetTree->ConstructWidget<UOGGate12ExploredMapWidget>(
         UOGGate12ExploredMapWidget::StaticClass(), TEXT("ActualKnownTerritoryViewport"));
     if (const UWorld* World = GetWorld())
@@ -1443,13 +1446,25 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
     MapFrame->SetPadding(FMargin(1.f));
     UOverlay* MapLayers=WidgetTree->ConstructWidget<UOverlay>(
         UOverlay::StaticClass(),TEXT("TerritoryRealMapAndOrnament"));
-    MapLayers->AddChildToOverlay(TerritoryMapWidget);
+    // A UserWidget containing only an unbounded Border can otherwise have
+    // zero desired size. Allocate real paint geometry for the graticule and
+    // accurate known exploration trail; never fake terrain/map discoveries.
+    USizeBox* MapPaintBounds=WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(),TEXT("TerritoryRealMapSlatePaintBounds"));
+    MapPaintBounds->SetMinDesiredWidth(380.f);
+    MapPaintBounds->SetMinDesiredHeight(710.f);
+    MapPaintBounds->AddChild(TerritoryMapWidget);
+    UOverlaySlot* MapFill=MapLayers->AddChildToOverlay(MapPaintBounds);
+    MapFill->SetHorizontalAlignment(HAlign_Fill);
+    MapFill->SetVerticalAlignment(VAlign_Fill);
     UOGGate12GothicChromeWidget* MapEtch=
         WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
             UOGGate12GothicChromeWidget::StaticClass());
     MapEtch->Configure(FLinearColor(.58f,.54f,.61f,1.f),INDEX_NONE,false);
     MapEtch->SetVisibility(ESlateVisibility::HitTestInvisible);
-    MapLayers->AddChildToOverlay(MapEtch);
+    UOverlaySlot* MapEtchFill=MapLayers->AddChildToOverlay(MapEtch);
+    MapEtchFill->SetHorizontalAlignment(HAlign_Fill);
+    MapEtchFill->SetVerticalAlignment(VAlign_Fill);
     if (!TerritoryMapWidget->HasKnownTrail())
     {
         UTextBlock* Unexplored=WidgetTree->ConstructWidget<UTextBlock>(
@@ -1597,9 +1612,11 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         // Preserve the Gacha's restrained obsidian + etched metal instead of
         // four opaque grey placeholders that obscured the approved layout.
         Frame->SetBrushColor(bActive
-            ? FLinearColor(.016f,.013f,.025f,1.f)
-            : FLinearColor(.007f,.006f,.013f,1.f));
+            ? FLinearColor(.003f,.002f,.006f,1.f)
+            : FLinearColor(.001f,.001f,.002f,1.f));
         Frame->SetPadding(FMargin(1.f));
+        Frame->SetHorizontalAlignment(HAlign_Fill);
+        Frame->SetVerticalAlignment(VAlign_Fill);
         UOGGate12RulerActionButton* Button =
             WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
                 UOGGate12RulerActionButton::StaticClass());
@@ -1655,15 +1672,16 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         FSlateFontInfo SummaryFont=RealCount->GetFont();
         SummaryFont.Size=16; RealCount->SetFont(SummaryFont);
         Face->AddChildToVerticalBox(RealCount)
-            ->SetPadding(FMargin(6.f,18.f,6.f,10.f));
+            ->SetPadding(FMargin(6.f,12.f,6.f,9.f));
         // Real native text stays interactive, while the Gacha-style black
         // panel prevents the default UButton Slate grey from filling the
         // frozen Records card. The etching must paint ABOVE the hit surface.
         UBorder* BlackCard=WidgetTree->ConstructWidget<UBorder>(
             UBorder::StaticClass());
         BlackCard->SetBrushColor(bActive
-            ? FLinearColor(.028f,.023f,.038f,.99f)
-            : FLinearColor(.009f,.008f,.017f,.99f));
+            ? FLinearColor(.005f,.003f,.008f,1.f)
+            : FLinearColor(.0015f,.0013f,.003f,1.f));
+        BlackCard->SetVerticalAlignment(VAlign_Center);
         BlackCard->SetPadding(FMargin(8.f,14.f,8.f,12.f));
         BlackCard->AddChild(Face);
         Button->AddChild(BlackCard);
@@ -1675,11 +1693,17 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         Etching->Configure(bActive
             ? FLinearColor(.68f,.65f,.74f,1.f)
             : FLinearColor(.43f,.40f,.48f,1.f),INDEX_NONE,bActive);
-        OrnamentedRecord->AddChildToOverlay(Button);
+        UOverlaySlot* RecordButtonFill=
+            OrnamentedRecord->AddChildToOverlay(Button);
+        RecordButtonFill->SetHorizontalAlignment(HAlign_Fill);
+        RecordButtonFill->SetVerticalAlignment(VAlign_Fill);
         // Decoration is render-only. Put above the button so the native
         // Slate button brushes cannot occlude the shared gothic filigree.
         Etching->SetVisibility(ESlateVisibility::HitTestInvisible);
-        OrnamentedRecord->AddChildToOverlay(Etching);
+        UOverlaySlot* RecordEtchingFill=
+            OrnamentedRecord->AddChildToOverlay(Etching);
+        RecordEtchingFill->SetHorizontalAlignment(HAlign_Fill);
+        RecordEtchingFill->SetVerticalAlignment(VAlign_Fill);
         Frame->AddChild(OrnamentedRecord);
         USizeBox* Size = WidgetTree->ConstructWidget<USizeBox>(
             USizeBox::StaticClass());
@@ -1689,11 +1713,12 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     }
     UBorder* DetailFrame = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("RecordsCanonicalDetailFrame"));
-    DetailFrame->SetBrushColor(FLinearColor(.064f,.054f,.078f,1.f));
+    DetailFrame->SetBrushColor(FLinearColor(.002f,.0015f,.004f,1.f));
     DetailFrame->SetPadding(FMargin(1.f));
     UBorder* DetailDark = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("RecordsCanonicalDetailBlack"));
-    DetailDark->SetBrushColor(FLinearColor(.009f,.009f,.013f,.95f));
+    DetailDark->SetBrushColor(FLinearColor(.0012f,.0010f,.002f,1.f));
+    DetailDark->SetVerticalAlignment(VAlign_Center);
     DetailDark->SetPadding(FMargin(8.f,10.f));
     UOverlay* DetailLayers=WidgetTree->ConstructWidget<UOverlay>(
         UOverlay::StaticClass(),TEXT("RecordsCanonicalDetailGothicLayers"));
@@ -1711,7 +1736,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     DetailDark->AddChild(Detail);
     USizeBox* DetailHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("RecordsGachaLanguageDetailedPanel"));
-    DetailHeight->SetMinDesiredHeight(440.f);
+    DetailHeight->SetHeightOverride(380.f);
     DetailHeight->AddChild(DetailFrame);
     Content->AddChildToVerticalBox(DetailHeight)
         ->SetPadding(FMargin(7.f,13.f,7.f,10.f));
