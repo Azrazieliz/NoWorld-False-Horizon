@@ -53,13 +53,16 @@ def select_compare(base,candidates):
   blocked=[x for x in g["blocked_critical_gates"] if
            next(f for f in g["features"] if f["id"]==x)["feature_identity_verified"]]
   unverified=[x for x in g["features"] if x["critical"] and not x["feature_identity_verified"]]
-  can_review=not regressions and bool(improvements) and not unverified and len(blocked)<len([
+  # Incremental improvements remain reviewable even before a hard gate clears.
+  # They are never production approval; only a tested visible change is eligible.
+  can_review=record.get('verified_delta') is True and not regressions and bool(improvements) and not unverified and len(blocked)<=len([
       x for x in base["blocked_critical_gates"] if b[x]["feature_identity_verified"]])
   ordered.append({"label":record["label"],"score":g["weighted_metric_score_0_to_100"],
    "blocked_critical":g["blocked_critical_gates"],
    "verified_blocked_count":len(blocked),
    "feature_improvements":improvements,"feature_regressions":regressions,
    "eligible_for_user_review":can_review,
+   "visible_native_change_verified":record.get('verified_delta') is True,
    "native_render":record["image"]})
  ordered.sort(key=lambda x:(len(x["feature_regressions"]),x["verified_blocked_count"],
               -len(x["feature_improvements"]),-x["score"]))
@@ -82,20 +85,22 @@ def run(plan,manifest,out_dir,submit=None,game_guard=True):
           submit=submit,game_guard=game_guard,score=scorer)
  baseline=bank[sweep["baseline_image"]]
  trials=[{"label":v["label"],"image":v["native_image"],
-          "gates":bank[v["native_image"]]} for v in sweep["results"]]
+          "gates":bank[v["native_image"]],
+          "verified_delta":v.get("native_visible_change_verified",False)} for v in sweep["results"]]
  ranked=select_compare(baseline,trials)
  # Always produce side-by-side per-feature evidence for best candidate
  # under the ranking, never assume overall pixel metric is sufficient.
  if ranked:
-  best=ranked[0]
+  review=next((r for r in ranked if r["eligible_for_user_review"]),None)
+  best=review if review is not None else ranked[0]
   best_gates=gates.score_features(manifest,best["native_render"],
        report_dir=out_dir/"BEST_FEATURE_CROPS")
   best["feature_scorecard"]=best_gates
- else:best=None
+ else:best=None;review=None
  report={"schema":"NOWORLD_KOIKATSU_FEATURE_GATED_OPTIMIZER_V1",
   "feature_manifest_sha256":hashlib.sha256(json.dumps(manifest,sort_keys=True).encode()).hexdigest(),
   "reference":plan["reference"],"baseline":baseline,"candidates_ranked":ranked,
-  "selected_for_human_inspection":best["label"] if best and best["eligible_for_user_review"] else None,
+  "selected_for_human_inspection":review["label"] if review else None,
   "status":"CANDIDATES_SCORED_NOT_ARTISTICALLY_APPROVED",
   "feature_count":len(baseline["features"]),
   "native_state_restored":sweep["baseline_restored"],

@@ -53,7 +53,20 @@ with tempfile.TemporaryDirectory() as td:
   "wrong_outfit_lower_gate_score":next(x["score_0_to_100"] for x in results["baseline"]["features"] if x["id"]=="main_outfit") <
    next(x["score_0_to_100"] for x in best["feature_scorecard"]["features"] if x["id"]=="main_outfit")-5,
   "best_candidate_requires_human_review":results["selected_for_human_inspection"]=="corrected_robe",
+  "review_requires_real_visible_delta":best["visible_native_change_verified"] is True,
  }
  native.CAMERA=old_cam
+ # A real localized incremental gain remains reviewable while its hard gate fails.
+ b={"features":[{"id":"hair","critical":True,"feature_identity_verified":True,
+      "score_0_to_100":40.},{"id":"face","critical":True,"feature_identity_verified":True,
+      "score_0_to_100":80.}],"blocked_critical_gates":["hair"]}
+ g={"features":[{"id":"hair","critical":True,"feature_identity_verified":True,
+      "score_0_to_100":47.},{"id":"face","critical":True,"feature_identity_verified":True,
+      "score_0_to_100":80.}],"blocked_critical_gates":["hair"],"weighted_metric_score_0_to_100":63.5}
+ trial={"label":"incremental","image":"mock","gates":g,"verified_delta":True}
+ partial=gate.select_compare(b,[trial])[0]
+ checks["visible_incremental_gain_reviewable_before_threshold"]=partial["eligible_for_user_review"]
+ trial["verified_delta"]=False
+ checks["unseen_gain_never_promoted"]=not gate.select_compare(b,[trial])[0]["eligible_for_user_review"]
  print("FEATURE_NATIVE_OPTIMIZER_QA="+json.dumps({"passed":sum(checks.values()),"total":len(checks),"checks":checks,"best":best["label"],"baseline_score":results["baseline"]["weighted_metric_score_0_to_100"],"best_score":best["score"],"paid_calls":0,"native_game_edited":False},sort_keys=True))
  if not all(checks.values()):raise SystemExit(2)
