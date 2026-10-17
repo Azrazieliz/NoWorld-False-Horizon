@@ -54,6 +54,7 @@ private:
     UPROPERTY(Transient)
     TArray<FVector2D> KnownTrail;
     FVector2D KnownPlayer = FVector2D::ZeroVector;
+    bool bHasKnownPlayer = false;
     FVector2D ViewOffset = FVector2D::ZeroVector;
     FVector2D LastPointer = FVector2D::ZeroVector;
     float Zoom = 1.f;

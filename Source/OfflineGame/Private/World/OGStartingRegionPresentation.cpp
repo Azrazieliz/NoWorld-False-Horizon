@@ -1840,7 +1840,10 @@ void AOGWorldPrototypeCharacter::BeginPlay()
     DiagnosticCombat->OnCombatPoseRequested.AddUObject(this, &AOGWorldPrototypeCharacter::PresentAcceptedCombatAction);
     CacheStartingRegion();
     LoadControlProfile();
-    ConfigureFoundationParty();
+    // Diagnostic party IDs/companions may exist only in explicit fixture runs.
+    // A new persistent Ruler explores as the controlled Pawn without a
+    // manufactured combat unit, summons, rewards, or compulsory first fight.
+    if (AreFoundationDebugFixturesEnabled()) ConfigureFoundationParty();
     CreateFoundationTouchInterface();
     GroundSnapAttempts = 0;
     if (UCharacterMovementComponent* Movement = GetCharacterMovement())
@@ -11091,14 +11094,17 @@ void AOGWorldPrototypeCharacter::InitializeFoundationIntegration()
     SetActorLocation(FVector(0, 0, GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 4));
     GetCharacterMovement()->SetMovementMode(MOVE_Walking);
     FString Error;
-    if (!DiagnosticCombat->StartScenario(*Core->GetWorldStore(),
-        [WeakCore](int64& Tick, FString& OutError)
-        {
-            Tick = WeakCore.IsValid() ? WeakCore->GetCanonicalWorldTick() : -1;
-            if (Tick < 0) { OutError = TEXT("Canonical clock unavailable."); return false; }
-            return true;
-        }, IntegrationWorld->GetActorLocation(), Error))
-        UE_LOG(LogOfflineGame, Error, TEXT("Foundation combat integration: %s"), *Error);
+    if (AreFoundationDebugFixturesEnabled())
+    {
+        if (!DiagnosticCombat->StartScenario(*Core->GetWorldStore(),
+            [WeakCore](int64& Tick, FString& OutError)
+            {
+                Tick = WeakCore.IsValid() ? WeakCore->GetCanonicalWorldTick() : -1;
+                if (Tick < 0) { OutError = TEXT("Canonical clock unavailable."); return false; }
+                return true;
+            }, IntegrationWorld->GetActorLocation(), Error))
+            UE_LOG(LogOfflineGame, Error, TEXT("Foundation combat fixture: %s"), *Error);
+    }
     DiagnosticMenu->Initialize();
     InteractionHost->Initialize();
     if (auto* Presentation = GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>())

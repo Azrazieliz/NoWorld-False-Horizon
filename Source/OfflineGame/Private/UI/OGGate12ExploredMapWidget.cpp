@@ -23,6 +23,7 @@ void UOGGate12ExploredMapWidget::SetKnownWorldTrail(
 {
     KnownTrail = WorldPoints;
     KnownPlayer = ActualPlayerPosition;
+    bHasKnownPlayer = true;
     InvalidateLayoutAndVolatility();
 }
 
@@ -47,9 +48,28 @@ int32 UOGGate12ExploredMapWidget::NativePaint(
     const int32 Base = Super::NativePaint(
         Args, Geometry, CullingRect, DrawElements, LayerId, Style, bParentEnabled);
     const FVector2D Size = Geometry.GetLocalSize();
-    if (KnownTrail.IsEmpty() || Size.X < 32.f || Size.Y < 32.f)
-        return Base;
+    if (Size.X < 32.f || Size.Y < 32.f) return Base;
     const FVector2D Center = Size * .5f + ViewOffset;
+    // Geographic content is unknown until actually discovered. Render only
+    // a nonsemantic projected coordinate grid, not fabricated continents,
+    // locations, ownership or a baked concept-map screenshot.
+    const float Spacing = FMath::Max(30.f, 84.f * Zoom);
+    const FLinearColor GridInk(.23f,.22f,.29f,.45f);
+    for (float X = FMath::Fmod(Center.X,Spacing); X <= Size.X; X += Spacing)
+    {
+        FSlateDrawElement::MakeLines(DrawElements,Base+1,
+            Geometry.ToPaintGeometry(),
+            {FVector2D(X,0.f),FVector2D(X,Size.Y)},
+            ESlateDrawEffect::None,GridInk,true,.7f);
+    }
+    for (float Y = FMath::Fmod(Center.Y,Spacing); Y <= Size.Y; Y += Spacing)
+    {
+        FSlateDrawElement::MakeLines(DrawElements,Base+1,
+            Geometry.ToPaintGeometry(),
+            {FVector2D(0.f,Y),FVector2D(Size.X,Y)},
+            ESlateDrawEffect::None,GridInk,true,.7f);
+    }
+    if (KnownTrail.IsEmpty() && !bHasKnownPlayer) return Base+1;
     const float WorldToPixel = FMath::Min(Size.X,Size.Y) * Zoom / 10000.f;
     TArray<FVector2D> Points;
     Points.Reserve(KnownTrail.Num());
@@ -71,13 +91,16 @@ int32 UOGGate12ExploredMapWidget::NativePaint(
     // Only the actual current player position is used as a center marker.
     static const FSlateColorBrush CurrentMarker(
         FLinearColor(.87f,.78f,.54f,1.f));
-    const FVector2D MarkerSize(8.f,8.f);
-    FSlateDrawElement::MakeBox(
-        DrawElements, Base+2,
-        Geometry.ToPaintGeometry(
-            FVector2f(MarkerSize),
-            FSlateLayoutTransform(FVector2f(Center - MarkerSize*.5f))),
-        &CurrentMarker, ESlateDrawEffect::None);
+    if (bHasKnownPlayer)
+    {
+        const FVector2D MarkerSize(8.f,8.f);
+        FSlateDrawElement::MakeBox(
+            DrawElements, Base+2,
+            Geometry.ToPaintGeometry(
+                FVector2f(MarkerSize),
+                FSlateLayoutTransform(FVector2f(Center - MarkerSize*.5f))),
+            &CurrentMarker, ESlateDrawEffect::None);
+    }
     return Base+2;
 }
 

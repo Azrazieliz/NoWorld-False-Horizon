@@ -1,3 +1,15 @@
+## 2026-10-17 19:06 P0 CF002 and Gate10 UI implementation WIP (native build pending)
+
+- Authority: direct user commission Complete 1 and 2 on top of source baseline 21bccac (no Foundation reset/creative redesign).
+- CF002 source: UOGFoundationInteractionHost now binds actual persisted Session BoundRulerId (not diagnostic ID), and normal World player actor is the original Pawn. User presence, optional participants and persistent session graph are still validated. NPC/event diagnostics remain explicitly gated.
+- Source World: ConfigureFoundationParty/StartScenario only on optional -FoundationFixtures. Ordinary game does not auto-create diagnostic fighters, start an unwanted fight, or falsely call a new empty world party defeated; World remains free to explore.
+- Gate10 source: Gacha's user-approved canvas untouched. Home and Records readability, margins, larger native 2x2 panels, chrome/navigation and Territory native map size were improved; map now paints coordinate-only grid and only real current player marker. No invented geography, characters, owned roster, banner or mockup imported.
+- Changed native C++ files: Private/Interaction/OGFoundationInteractionHost.cpp; Private/World/OGStartingRegionPresentation.cpp; Private/UI/OGGate12NativeRulerWidget.cpp; Private/UI/OGGate12ExploredMapWidget.cpp; Public/UI/OGGate12ExploredMapWidget.h.
+- Active UE5.8.3 Win64 build started 2026-10-17 19:03 Europe/Paris, remote process PID 240; output Saved/Gate12Readiness/Gate12_P0_CF002_Visual_20261017_build.log. Compilation and actual real journey NOT YET VERIFIED. Do not mark either system DONE from source alone; finish build first, fix compile issues, run new isolated -Journey -Onscreen, inspect real new receipt and captures.
+- The authorized Samsung SM-S948B Android 16 is physically connected over ADB, 54 pct battery. Routine non-destructive Android dev QA permitted after Win64 verification, preserving any installed app/user data.
+- No frozen Foundation/PR16/Registry mutation, original save reset, character source replacement, file clean/stash, or approved Gacha redesign. Protected Koikatsu dirty changes and untracked sources excluded.
+- Full Gate10 visual parity still requires approved native imagery and genuine content plus actual landscape/portrait device QA. This checkpoint is WIP with precise next action.
+
 ## 2026-10-17 18:05 - requested 18-system and 9-screen source/UI audit complete
 
 - This commission is an AUDIT, not an authorization to change frozen UI or gameplay. Verified latest native code baseline a68f85ae88a7d21b5aee8bafef2963f6daf6b3da (audit capture-only commit 1b90cf8); full requirements/visual reports written to docs/production/gate12/GATE12_USER_REQUESTED_SYSTEMS_IMPLEMENTATION_AUDIT_20261017.md and GATE12_GATE10_FROZEN_UI_VISUAL_AUDIT_20261017.md.

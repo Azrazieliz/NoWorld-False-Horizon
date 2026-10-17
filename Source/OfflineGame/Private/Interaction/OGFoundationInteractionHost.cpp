@@ -2,6 +2,7 @@
 #include "Combat/OGDiagnosticCombatComponent.h"
 #include "Combat/OGDiagnosticHumanoid.h"
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "World/OGStartingRegionPresentation.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimSequence.h"
@@ -52,13 +53,19 @@ bool UOGFoundationInteractionHost::Initialize()
 
 bool UOGFoundationInteractionHost::EnsureRuntime()
 {
-    if (!Core.IsValid() || !Combat.IsValid() || !Core->IsCoreReady() ||
-        !Core->GetWorldStore() || Core->GetCanonicalWorldTick() < 0)
-    { Status = TEXT("Canonical world, clock and protagonist context are not ready."); return false; }
+    const UOGGate12RulerSessionSubsystem* Session =
+        GetWorld() && GetWorld()->GetGameInstance()
+            ? GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>()
+            : nullptr;
+    if (!Core.IsValid() || !Core->IsCoreReady() || !Core->GetWorldStore() ||
+        Core->GetCanonicalWorldTick() < 0 || !Session ||
+        !Session->IsBoundToStoredRuler() || !Session->BoundRulerId.IsValid())
+    { Status = TEXT("Canonical world, clock and persisted Ruler are not ready."); return false; }
     if (!Runtime)
     {
         BoundStore = Core->GetWorldStore();
-        Runtime = MakeUnique<FOGSystemicInteractionRuntime>(*BoundStore, Combat->GetRulerId(), Core->GetOptionalPackageHost());
+        Runtime = MakeUnique<FOGSystemicInteractionRuntime>(
+            *BoundStore, Session->BoundRulerId, Core->GetOptionalPackageHost());
         Runtime->SetPresentationBridge(this);
     }
     // The release delegate clears the runtime before a Store can be destroyed.
@@ -110,7 +117,7 @@ AActor* UOGFoundationInteractionHost::FindBoundActor(const FOGEntityId& Entity) 
 
 void UOGFoundationInteractionHost::BuildDiagnosticSelection(bool bAll)
 {
-    if (!Combat.IsValid()) return;
+    if (!Combat.IsValid() || !Combat->IsActive() || !BoundStore) return;
     TArray<FOGInteractionParticipant> Candidates;
     FOGEntityId Controlled; FOGContentId Identity; FOGCharacterManifestationRecord Copy;
     bool bCopy = false; FString Error;
@@ -150,20 +157,29 @@ bool UOGFoundationInteractionHost::BeginContext(FName Context,
     const TArray<FOGInteractionParticipant>& Participants, const FOGEntityId& ContextEvent)
 {
     if (!Initialize() || IsActive()) return false;
-    AActor* Protagonist = Combat->GetProtagonistWorldActor();
+    UOGGate12RulerSessionSubsystem* Session =
+        GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+    if (!Session || !Session->IsBoundToStoredRuler() ||
+        !Session->BoundRulerId.IsValid())
+    { Status = TEXT("A stored Ruler is required for World interaction."); return false; }
+    // Ordinary exploration binds the existing controlled pawn. An authored
+    // diagnostic encounter may supply a different true controlled body.
+    AActor* Protagonist = Combat.IsValid() && Combat->IsActive()
+        ? Combat->GetProtagonistWorldActor() : GetOwner();
     if (!Protagonist)
-    { Status = TEXT("The canonical protagonist body must be bound before embodied interaction entry."); return false; }
+    { Status = TEXT("A controlled World body is required before interaction."); return false; }
     FOGInteractionEntry Entry; Entry.Context = Context; Entry.ContextEventId = ContextEvent;
     Entry.World = GetWorld(); Entry.PreferredLocation = Protagonist->GetActorLocation();
     if (APawn* Pawn = Cast<APawn>(GetOwner())) Entry.ReturnController = Cast<APlayerController>(Pawn->GetController());
     if (const AOGWorldPrototypeCharacter* Player = Cast<AOGWorldPrototypeCharacter>(GetOwner()))
         Entry.bPrivacyPresentation = Player->GetSfwPresentation();
     bool bPresence = false; FOGWorldPresenceRecord Presence; FString Error;
-    if (!BoundStore->TryReadWorldPresence(Combat->GetRulerId(), bPresence, Presence, Error))
+    if (!BoundStore->TryReadWorldPresence(Session->BoundRulerId, bPresence, Presence, Error))
     { Status = Error; return false; }
     if (bPresence) Entry.LocationId = Presence.LocationId;
     FOGInteractionParticipant Player;
-    Player.Character.EntityId = Combat->GetRulerId(); Player.Character.OwnerEntityId = Combat->GetRulerId();
+    Player.Character.EntityId = Session->BoundRulerId;
+    Player.Character.OwnerEntityId = Session->BoundRulerId;
     Player.Role = TEXT("player"); Player.Actor = Protagonist;
     if (ACharacter* Character = Cast<ACharacter>(Protagonist))
         if (Character->GetMesh() && Character->GetMesh()->GetSkeletalMeshAsset() && Character->GetMesh()->GetSkeletalMeshAsset()->GetSkeleton())
@@ -171,7 +187,7 @@ bool UOGFoundationInteractionHost::BeginContext(FName Context,
     Entry.Participants.Add(Player);
     const TArray<FOGInteractionParticipant>& Other = Participants.IsEmpty() ? SelectedParticipants : Participants;
     for (const auto& Binding : Other)
-        if (Binding.Character.EntityId != Combat->GetRulerId()) Entry.Participants.Add(Binding);
+        if (Binding.Character.EntityId != Session->BoundRulerId) Entry.Participants.Add(Binding);
     return EnterAuthored(Entry, FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph());
 }
 
@@ -182,7 +198,9 @@ bool UOGFoundationInteractionHost::EnterAuthored(const FOGInteractionEntry& Entr
     // Never silently replace a companion actor with the protagonist identity.
     for (const auto& Binding : Entry.Participants)
         if (Binding.Role == TEXT("player") && Entry.World.IsValid() &&
-            Binding.Actor.Get() != Combat->GetProtagonistWorldActor())
+            Binding.Actor.Get() !=
+                (Combat.IsValid() && Combat->IsActive()
+                    ? Combat->GetProtagonistWorldActor() : GetOwner()))
         { Status = TEXT("Player-side actor must be the bound canonical protagonist body."); return false; }
     // Reveal ordinary World presentation before native entry captures visibility.
     // Otherwise a Ruler-hidden participant would be saved as permanently hidden,
@@ -216,17 +234,21 @@ TArray<FOGFoundationInteractionRow> UOGFoundationInteractionHost::GetRows() cons
     TArray<FOGFoundationInteractionRow> Rows;
     if (!IsActive())
     {
-        const bool bReady = Combat.IsValid() && Combat->IsActive() && Combat->GetProtagonistWorldActor() &&
-            Core.IsValid() && Core->IsCoreReady();
+        const bool bReady = Core.IsValid() && Core->IsCoreReady() &&
+            GetOwner() && GetWorld() && GetWorld()->GetGameInstance() &&
+            GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>() &&
+            GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>()->IsBoundToStoredRuler();
+        const bool bDiagnosticSelection = bReady && Combat.IsValid() &&
+            Combat->IsActive();
         Rows.Add({TEXT("world"), TEXT("World interaction"), bReady});
         Rows.Add({TEXT("ruler"), TEXT("Ruler interaction"), bReady});
         Rows.Add({TEXT("roster"), TEXT("Roster interaction"), bReady});
         Rows.Add({TEXT("npc"), TEXT("NPC context interaction"), bReady && !SelectedParticipants.IsEmpty()});
-        const bool bEvent = bReady && Combat->GetResolvedEncounterEventId().IsValid();
+        const bool bEvent = bDiagnosticSelection && Combat->GetResolvedEncounterEventId().IsValid();
         Rows.Add({TEXT("event"), TEXT("Event context interaction"), bEvent});
         Rows.Add({TEXT("post_combat"), TEXT("Post-combat interaction"), bEvent});
-        Rows.Add({TEXT("select_next"), TEXT("Select next canonical participant"), bReady});
-        Rows.Add({TEXT("select_all"), TEXT("Select available diagnostic group"), bReady});
+        Rows.Add({TEXT("select_next"), TEXT("Select next canonical participant"), bDiagnosticSelection});
+        Rows.Add({TEXT("select_all"), TEXT("Select available diagnostic group"), bDiagnosticSelection});
     }
     else
     {
@@ -250,7 +272,9 @@ bool UOGFoundationInteractionHost::ActivateRow(FName Id)
     if (!Row || !Row->bEnabled) { Status = TEXT("This interaction control is unavailable in the current state."); return false; }
     if (IsEntry(Id))
         return BeginContext(Id, {}, (Id == TEXT("event") || Id == TEXT("post_combat")) ?
-            Combat->GetResolvedEncounterEventId() : FOGEntityId());
+            (Combat.IsValid() && Combat->IsActive()
+                ? Combat->GetResolvedEncounterEventId() : FOGEntityId())
+                : FOGEntityId());
     if (Id == TEXT("select_next") || Id == TEXT("select_all"))
     { BuildDiagnosticSelection(Id == TEXT("select_all")); return true; }
     if (Id == TEXT("exit")) { Cancel(); return true; }
@@ -266,8 +290,10 @@ bool UOGFoundationInteractionHost::ActivateRow(FName Id)
     }
     else if (Id == TEXT("camera"))
     {
-        const FVector Center = Combat->GetProtagonistWorldActor() ?
-            Combat->GetProtagonistWorldActor()->GetActorLocation() : GetOwner()->GetActorLocation();
+        AActor* Protagonist = Combat.IsValid() && Combat->IsActive()
+            ? Combat->GetProtagonistWorldActor() : GetOwner();
+        const FVector Center = Protagonist
+            ? Protagonist->GetActorLocation() : GetOwner()->GetActorLocation();
         CameraAngle += PI / 4;
         const FVector Camera = Center + FVector(FMath::Cos(CameraAngle) * 450, FMath::Sin(CameraAngle) * 450, 180);
         bResult = Runtime->SetCamera(FTransform((Center - Camera).Rotation(), Camera), Error);
