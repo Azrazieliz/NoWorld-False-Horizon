@@ -1,4 +1,5 @@
 #include "Persistence/OGOpeningResumeValidation.h"
+#include "Persistence/OGWorldStore.h"
 
 #include "HAL/FileManager.h"
 #include "HAL/PlatformTime.h"
@@ -7,6 +8,33 @@
 
 namespace FOGOpeningResumeValidation
 {
+bool HasLiveReadableWorld(const IOGWorldStore* Store,
+                          const FString& DatabasePath,
+                          bool bForceIntegrityCheck)
+{
+    // Never confuse an initialized game instance with a readable world. Match
+    // the exact active canonical file and reject a closed/missing store.
+    const FString AbsolutePath = FPaths::ConvertRelativePathToFull(DatabasePath);
+    if (!Store || !Store->IsOpen() ||
+        IFileManager::Get().FileSize(*AbsolutePath) < 512 ||
+        !FPaths::IsSamePath(
+            FPaths::ConvertRelativePathToFull(Store->GetDatabasePath()),
+            AbsolutePath))
+        return false;
+
+    FString Error;
+    if (Store->GetSchemaVersion(Error) <= 0 || !Error.IsEmpty())
+        return false;
+    if (!bForceIntegrityCheck)
+        return true;
+
+    // Read-only PRAGMA executed on the existing canonical connection. No
+    // backup, migration, write transaction or Ruler ownership mutation.
+    FString Report;
+    return Store->RunIntegrityCheck(Report, Error) && Error.IsEmpty() &&
+        Report.TrimStartAndEnd().Equals(TEXT("ok"), ESearchCase::IgnoreCase);
+}
+
 bool CanEnterRuler(bool bCoreReady, bool bWorldFilePresent, bool bReadableWorld)
 {
     return bCoreReady && (!bWorldFilePresent || bReadableWorld);

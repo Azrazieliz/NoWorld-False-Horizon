@@ -35,7 +35,14 @@ bool FOGGate12OpeningResumeIntegrityTest::RunTest(const FString&)
             AddError(Error);
             return false;
         }
+        bPassed &= TestTrue(TEXT("Live WAL world passes canonical store integrity"),
+            FOGOpeningResumeValidation::HasLiveReadableWorld(&Store, ValidDb, true));
+        bPassed &= TestFalse(TEXT("Live store cannot validate unrelated save path"),
+            FOGOpeningResumeValidation::HasLiveReadableWorld(
+                &Store, FPaths::Combine(Directory, TEXT("not_this_world.db")), true));
         Store.Close();
+        bPassed &= TestFalse(TEXT("Closed store cannot enable opening Continue"),
+            FOGOpeningResumeValidation::HasLiveReadableWorld(&Store, ValidDb, true));
         const int64 BytesBefore = IFileManager::Get().FileSize(*ValidDb);
         const FDateTime StampBefore = IFileManager::Get().GetTimeStamp(*ValidDb);
         bPassed &= TestTrue(TEXT("Read-only validator accepts real schema"),

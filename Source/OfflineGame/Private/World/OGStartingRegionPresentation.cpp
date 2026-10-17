@@ -5920,7 +5920,8 @@ void AOGWorldPresentationHud::SynchronizeGate12NativeOpeningUMG(
         FPaths::ProjectSavedDir(), TEXT("OfflineGame"));
     UOGGameCoreSubsystem* Core = GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
     const bool bHasWorld = Core && Core->IsCoreReady() &&
-        FOGOpeningResumeValidation::HasReadableWorld(
+        FOGOpeningResumeValidation::HasLiveReadableWorld(
+            Core->GetWorldStore(),
             FPaths::Combine(SaveRoot, TEXT("WorldState.db")));
     TArray<FString> RecoveryFiles;
     IFileManager::Get().FindFilesRecursive(
@@ -6028,8 +6029,11 @@ void AOGWorldPresentationHud::DrawFoundationOpening(
             TEXT("OfflineGame"),
             TEXT("Import"));
 
-    const bool bWorldExists =
-        FOGOpeningResumeValidation::HasReadableWorld(DatabasePath);
+    const UOGGameCoreSubsystem* OpeningCore = GetGameInstance()
+        ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    const bool bWorldExists = OpeningCore && OpeningCore->IsCoreReady() &&
+        FOGOpeningResumeValidation::HasLiveReadableWorld(
+            OpeningCore->GetWorldStore(), DatabasePath);
 
     TArray<FString> SnapshotFiles;
     IFileManager::Get().FindFilesRecursive(
@@ -10268,8 +10272,9 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         const FString OpeningDb = FPaths::Combine(
             FPaths::ProjectSavedDir(), TEXT("OfflineGame"), TEXT("WorldState.db"));
         const bool bWorldFilePresent = IFileManager::Get().FileExists(*OpeningDb);
-        const bool bReadableWorld = bWorldFilePresent &&
-            FOGOpeningResumeValidation::HasReadableWorld(OpeningDb, true);
+        const bool bReadableWorld = bWorldFilePresent && OpeningCore &&
+            FOGOpeningResumeValidation::HasLiveReadableWorld(
+                OpeningCore->GetWorldStore(), OpeningDb, true);
         const bool bCoreReady = OpeningCore && OpeningCore->IsCoreReady();
         const bool bMayEnter = BoxName == FName(TEXT("OG.Opening.Continue"))
             ? bCoreReady && bReadableWorld

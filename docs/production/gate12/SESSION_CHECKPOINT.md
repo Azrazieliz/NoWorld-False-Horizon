@@ -1,3 +1,13 @@
+## 2026-10-17 17:20 - LIVE runtime failure isolated / WAL-method repair WIP
+
+- Commit a01791b23bd13854eb5754a61ac1d69561ea459a preserves validated original 7/7 Win64 build plus native 12/12 and full 151/151 indices/hashes.
+- Fresh isolated actual game run 90c019da30a346bf89454a22c3a90b88 used ONLY its own new receipt (previous was archived). Outcome = FAILED, NOT 23/23: first five checks pass, sixth ruler_ui_presented FAIL (Root=0, Nav=0, class=None). Real Slate screenshot shows still on Opening, WORLD SAVE UNVERIFIED - RECOVERY REQUIRED; no new Ruler created. Live Foundation core reported CoreReady=1. After shutdown isolated WorldState.db passes Python sqlite quick_check and has actual entities+world_events tables. Exact FAILURE JSON/screenshot/sha manifest under docs/production/gate12/evidence/20261017_code_first_p0_save_entry/; never label it success.
+- Root fault boundary: old new-read-only independent SQLite handle produces false unverified UI for the already-open canonical WAL world. Method switched to HasLiveReadableWorld with exact DB path, active store IsOpen, schema version; actual action uses deeper read-only integrity_check on same canonical open connection. Still no silent save replacement, migrations, fake ownership or Registry changes. Existing off-line HasReadableWorld retained for isolated/cold fixture checks.
+- New native tests include live WAL store success, closed store refusal and mismatched path refusal, in addition to existing corruption/same-size replacement tests.
+- UE5.8.3 Win64 build 7 actions RUNNING started 2026-10-17 17:20 +02:00, output Saved/Gate12Readiness/Gate12_CodeFirst_LiveWalOpeningFix_Build_20261017.log. Newly changed method unverified until this build, native targeted suite and DIFFERENT isolated real journey succeed.
+- Original Foundation and protected Koikatsu files unmodified. Android no device connected; broader production content/art remains blocked. Gate12 DONE not authorized.
+- Next action: await running UBT build; fix any compiler issue; run targeted new tests and isolated live game with unique receipt, capture actual status. Do not reuse previous failing or passing receipts as new proof.
+
 ## 2026-10-17 17:11 - CURRENT VERIFIED native code-first save entry
 
 - Last scoped source commit pushed and ls-remote verified: 82fc98ec77e8c1e786e0d08cabe830cd0857b819, Gate12 production branch. Original Foundation unchanged; protected Koikatsu code/assets excluded.

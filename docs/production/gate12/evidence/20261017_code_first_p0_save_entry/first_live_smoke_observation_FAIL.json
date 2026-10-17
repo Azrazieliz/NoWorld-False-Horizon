@@ -1,0 +1,43 @@
+﻿{
+    "schema":  "GATE12_WIN64_GAME_SMOKE_NOCOOK_V1",
+    "utc":  "2026-10-17T15:13:19.3542493Z",
+    "run_id":  "90c019da30a346bf89454a22c3a90b88",
+    "source_commit":  "82fc98ec77e8c1e786e0d08cabe830cd0857b819",
+    "compiled_module_sha256":  "F60BE8EA9A0E14CA8744265868466A6A3855155C700B3E7CA79D6F2602BCAE46",
+    "prior_journey_receipt_archive":  "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\ReceiptArchive\\journey_prior_90c019da30a346bf89454a22c3a90b88.json",
+    "project":  "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\OfflineGame.uproject",
+    "isolated_saved":  "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved",
+    "original_saves_untouched_by_project_path":  true,
+    "launch_pid":  8548,
+    "game_boot_map":  "/Game/Maps/StartingWorld",
+    "startup_log":  "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12_Win64_Game_20261017_171117.log",
+    "game_engine_or_map_reported":  true,
+    "starting_world_seen_in_log":  true,
+    "fatal_error_seen_in_log":  false,
+    "screenshot":  null,
+    "screenshot_bytes":  0,
+    "onscreen_window_capture_requested":  true,
+    "onscreen_game_window_frames":  [
+                                        "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\OnscreenFrames\\Step_00_opening_unverified_window_only.png",
+                                        "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\OnscreenFrames\\Step_01_world_begin_play.png",
+                                        "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\OnscreenFrames\\Step_03_native_opening_umg_controls_present.png",
+                                        "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\OnscreenFrames\\Step_05_opening_to_ruler_via_real_canvas_action.png",
+                                        "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\OnscreenFrames\\Step_06_ruler_ui_presented.png"
+                                    ],
+    "onscreen_capture_failures":  [
+
+                                  ],
+    "native_slate_ui_screenshots":  [
+                                        "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\JourneyScreenshots\\opening_native_portrait.png",
+                                        "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\JourneyScreenshots\\ruler_before_owner.png"
+                                    ],
+    "native_slate_ui_screenshot_count":  2,
+    "journey_enabled":  true,
+    "journey_path":  "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Isolated_NoCook_Win64_Game\\Saved\\Gate12Readiness\\runtime_ruler_world_journey.json",
+    "journey_finished":  true,
+    "journey_passed":  false,
+    "programmatic_existing_ui_handlers_tested":  true,
+    "proven_interactive_navigation":  false,
+    "proven_android_device":  false,
+    "outcome":  "NATIVE_RULER_WORLD_RULER_FAILED"
+}

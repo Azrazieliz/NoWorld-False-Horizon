@@ -1,0 +1,15 @@
+{
+  "status": "FAILED_CURRENT_WIN64_JOURNEY",
+  "run_id": "90c019da30a346bf89454a22c3a90b88",
+  "source_commit": "82fc98ec77e8c1e786e0d08cabe830cd0857b819",
+  "failed_step": "ruler_ui_presented",
+  "root_widget_present": false,
+  "actual_screenshot": "Opening persisted with WORLD SAVE UNVERIFIED - RECOVERY REQUIRED",
+  "database_after_exit": "sqlite quick_check(1)=ok; entities+world_events exist",
+  "method_changed": "new HasLiveReadableWorld uses bound canonical IOGWorldStore",
+  "sha256": {
+    "first_live_journey_FAIL.json": "70d6a79c6a550c337caf35801646d5a4f9ffbebe50016e88386b61ab42f625b1",
+    "first_live_journey_stuck_opening_QA_FAIL.png": "2a54a7f274337317d05281d9b9ca7da2fedc97b4b8deccd647f436de85e72cae",
+    "first_live_smoke_observation_FAIL.json": "ba0f86492b4bfdfe335efa2210b9f789faef05ca597e2460c5e7e462d4486572"
+  }
+}
