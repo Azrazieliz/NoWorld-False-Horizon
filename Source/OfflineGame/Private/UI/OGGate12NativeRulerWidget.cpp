@@ -3,6 +3,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
 #include "UI/OGGate12ExploredMapWidget.h"
+#include "UI/OGGate12GothicChromeWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/OGGate12CharacterPreviewStage.h"
 #include "UI/OGGate12CharacterPresentationPreferences.h"
@@ -98,6 +99,27 @@ void UOGGate12NativeRulerWidget::NativeDestruct()
     Super::NativeDestruct();
 }
 
+void UOGGate12NativeRulerWidget::NativeTick(
+    const FGeometry& MyGeometry, float InDeltaTime)
+{
+    Super::NativeTick(MyGeometry, InDeltaTime);
+    if (!Gate10FigmaGachaChrome) return;
+    const UGameInstance* GI = GetGameInstance();
+    const UOGGate12RulerSessionSubsystem* Session =
+        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    const FVector2D ViewportSize = MyGeometry.GetLocalSize();
+    // Gate10 Gacha chrome is portrait-authoritative, never stretched across
+    // a landscape layout. The original native landscape UI stays functional.
+    const bool bVisible = Session &&
+        Session->CurrentDestination == EOGRulerPrimaryDestination::Gacha &&
+        ViewportSize.Y > ViewportSize.X;
+    if (bVisible != bGachaChromeWasVisible)
+    {
+        bGachaChromeWasVisible = bVisible;
+        Gate10FigmaGachaChrome->SetOpacity(bVisible ? 0.93f : 0.f);
+    }
+}
+
 void UOGGate12NativeRulerWidget::ShowWorldTransitionError(const FString& Error)
 {
     LastUiError = Error;
@@ -152,6 +174,15 @@ void UOGGate12NativeRulerWidget::BuildRoot()
     UOverlaySlot* BackSlot = Layers->AddChildToOverlay(FrozenSceneArtwork);
     BackSlot->SetHorizontalAlignment(HAlign_Fill);
     BackSlot->SetVerticalAlignment(VAlign_Fill);
+    // The imported Figma layer contains ONLY approved-layout ornaments,
+    // with a transparent center and no fictional art, buttons or player data.
+    Gate10FigmaGachaChrome = WidgetTree->ConstructWidget<UImage>(
+        UImage::StaticClass(), TEXT("Gate10FigmaGachaDecorOnly"));
+    Gate10FigmaGachaChrome->SetVisibility(ESlateVisibility::HitTestInvisible);
+    Gate10FigmaGachaChrome->SetOpacity(0.f);
+    UOverlaySlot* ChromeSlot = Layers->AddChildToOverlay(Gate10FigmaGachaChrome);
+    ChromeSlot->SetHorizontalAlignment(HAlign_Fill);
+    ChromeSlot->SetVerticalAlignment(VAlign_Fill);
     UOverlaySlot* UiSlot = Layers->AddChildToOverlay(Screen);
     UiSlot->SetHorizontalAlignment(HAlign_Fill);
     UiSlot->SetVerticalAlignment(VAlign_Fill);
@@ -201,6 +232,22 @@ void UOGGate12NativeRulerWidget::RefreshFrozenScene(
     FrozenSceneArtwork->SetOpacity(0.f);
     LoadedSceneTexture = nullptr;
     LoadedSceneSource.Reset();
+
+    if (Gate10FigmaGachaChrome)
+    {
+        if (Destination == EOGRulerPrimaryDestination::Gacha)
+        {
+            // Imported through Unreal's native asset pipeline: cooked asset,
+            // never a Saved-folder runtime lookup or an embedded screenshot.
+            static const TCHAR* ChromePath = TEXT(
+                "/Game/UI/Gate10/Chrome/T_Gate10_Gacha_VectorChrome_V2."
+                "T_Gate10_Gacha_VectorChrome_V2");
+            if (UTexture2D* Chrome = LoadObject<UTexture2D>(nullptr, ChromePath))
+                Gate10FigmaGachaChrome->SetBrushFromTexture(Chrome, true);
+        }
+        else
+            Gate10FigmaGachaChrome->SetOpacity(0.f);
+    }
 
     if (Destination != EOGRulerPrimaryDestination::Home || !VisualCatalog)
         return;
@@ -280,17 +327,32 @@ void UOGGate12NativeRulerWidget::AddAction(
     Button->RulerWidget = this;
     Button->ActionId = Action;
     Button->SetIsEnabled(bEnabled);
-    Button->SetBackgroundColor(
-        bEnabled ? FLinearColor(0.13f, 0.14f, 0.16f, 1.0f)
-                 : FLinearColor(0.045f, 0.046f, 0.052f, 1.0f));
+    Button->SetBackgroundColor(FLinearColor(0.f,0.f,0.f,0.f));
     Button->OnClicked.AddDynamic(Button, &UOGGate12RulerActionButton::InvokeAction);
     UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
     Label->SetText(FText::FromString(Title));
     Label->SetColorAndOpacity(FSlateColor(bEnabled ? TextMain : TextMuted));
     Label->SetJustification(ETextJustify::Center);
     Button->AddChild(Label);
-    UVerticalBoxSlot* LayoutSlot = Parent->AddChildToVerticalBox(Button);
-    LayoutSlot->SetPadding(FMargin(5.0f, 4.0f, 5.0f, 4.0f));
+    // The accepted Gate10 ornament is drawn as native vector Slate chrome,
+    // with the actual clickable button independently layered above it.
+    UOverlay* Layers = WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass());
+    UOGGate12GothicChromeWidget* Frame =
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    Frame->Configure(bEnabled
+        ? FLinearColor(.61f,.58f,.64f,1.f)
+        : FLinearColor(.30f,.29f,.34f,1.f),INDEX_NONE,false);
+    Layers->AddChildToOverlay(Frame);
+    Layers->AddChildToOverlay(Button);
+    USizeBox* TouchHeight=WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass());
+    TouchHeight->SetMinDesiredHeight(45.f);
+    TouchHeight->AddChild(Layers);
+    UVerticalBoxSlot* LayoutSlot =
+        Parent->AddChildToVerticalBox(TouchHeight);
+    LayoutSlot->SetPadding(FMargin(3.f,2.f,3.f,2.f));
 }
 
 void UOGGate12NativeRulerWidget::BuildNav()
@@ -344,9 +406,7 @@ void UOGGate12NativeRulerWidget::BuildNav()
             static_cast<int32>(Session->CurrentDestination) == Index;
         Button->RulerWidget = this;
         Button->ActionId = FString::Printf(TEXT("nav/%d"), Index);
-        Button->SetBackgroundColor(
-            bSelected ? FLinearColor(.057f,.052f,.068f,1.f)
-                      : FLinearColor(.006f,.006f,.009f,1.f));
+        Button->SetBackgroundColor(FLinearColor(0.f,0.f,0.f,0.f));
         Button->OnClicked.AddDynamic(
             Button, &UOGGate12RulerActionButton::InvokeAction);
         UVerticalBox* NativeInsignia =
@@ -363,7 +423,9 @@ void UOGGate12NativeRulerWidget::BuildNav()
         NativeInsignia->AddChildToVerticalBox(ThinTopRule);
         UTextBlock* Icon = WidgetTree->ConstructWidget<UTextBlock>(
             UTextBlock::StaticClass());
-        Icon->SetText(FText::FromString(Marks[Index]));
+        // Native Slate filigree paints the selected insignia beneath this
+        // reserved accessibility-safe vertical glyph space.
+        Icon->SetText(FText::FromString(TEXT(" ")));
         Icon->SetJustification(ETextJustify::Center);
         Icon->SetColorAndOpacity(FSlateColor(bSelected
             ? ContextAccent : FLinearColor(.57f,.55f,.61f,1.f)));
@@ -386,8 +448,17 @@ void UOGGate12NativeRulerWidget::BuildNav()
         NativeInsignia->AddChildToVerticalBox(Label)
             ->SetPadding(FMargin(0.f,0.f,0.f,5.f));
         Button->AddChild(NativeInsignia);
+        UOverlay* Layers = WidgetTree->ConstructWidget<UOverlay>(
+            UOverlay::StaticClass());
+        UOGGate12GothicChromeWidget* Gothic =
+            WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+                UOGGate12GothicChromeWidget::StaticClass());
+        Gothic->Configure(bSelected ? ContextAccent
+            : FLinearColor(.49f,.46f,.54f,1.f),Index,bSelected);
+        Layers->AddChildToOverlay(Gothic);
+        Layers->AddChildToOverlay(Button);
         UHorizontalBoxSlot* NavigationCell =
-            NavigationBar->AddChildToHorizontalBox(Button);
+            NavigationBar->AddChildToHorizontalBox(Layers);
         NavigationCell->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
         NavigationCell->SetPadding(FMargin(1.f,0.f));
     }
@@ -495,11 +566,19 @@ void UOGGate12NativeRulerWidget::BuildHome()
     HeroOuter->SetPadding(FMargin(1.f));
     UBorder* HeroBlack = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("Gate10HomeStageTransparentBlack"));
-    HeroBlack->SetBrushColor(FLinearColor(.009f,.008f,.014f,.56f));
-    HeroOuter->AddChild(HeroBlack);
+    HeroBlack->SetBrushColor(FLinearColor(.004f,.004f,.009f,1.f));
+    UOverlay* HeroLayers=WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(),TEXT("RulerHomeOrnamentAndLiveStage"));
+    HeroLayers->AddChildToOverlay(HeroBlack);
+    UOGGate12GothicChromeWidget* HeroEtch=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    HeroEtch->Configure(FLinearColor(.53f,.49f,.58f,1.f),INDEX_NONE,false);
+    HeroLayers->AddChildToOverlay(HeroEtch);
+    HeroOuter->AddChild(HeroLayers);
     USizeBox* HeroHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("Gate10HomePortraitStageHeight"));
-    HeroHeight->SetMinDesiredHeight(425.f);
+    HeroHeight->SetMinDesiredHeight(880.f);
     HeroHeight->AddChild(HeroOuter);
     Content->AddChildToVerticalBox(HeroHeight)->SetPadding(FMargin(0.f,0.f,0.f,5.f));
 
@@ -959,12 +1038,20 @@ void UOGGate12NativeRulerWidget::BuildGacha()
     BannerEdge->SetPadding(FMargin(1.f));
     UBorder* BannerFace=WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("GachaShowcaseBlackStage"));
-    BannerFace->SetBrushColor(FLinearColor(.006f,.006f,.011f,.85f));
+    BannerFace->SetBrushColor(FLinearColor(.004f,.004f,.008f,1.f));
     BannerFace->SetPadding(FMargin(10.f));
-    BannerEdge->AddChild(BannerFace);
+    UOverlay* BannerLayers=WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(),TEXT("GachaOrnamentAndBannerStage"));
+    BannerLayers->AddChildToOverlay(BannerFace);
+    UOGGate12GothicChromeWidget* BannerEtch=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    BannerEtch->Configure(FLinearColor(.56f,.53f,.63f,1.f),INDEX_NONE,false);
+    BannerLayers->AddChildToOverlay(BannerEtch);
+    BannerEdge->AddChild(BannerLayers);
     USizeBox* BannerHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("GachaTallPortraitShowcase"));
-    BannerHeight->SetMinDesiredHeight(335.f);
+    BannerHeight->SetMinDesiredHeight(770.f);
     BannerHeight->AddChild(BannerEdge);
     Content->AddChildToVerticalBox(BannerHeight)->SetPadding(FMargin(5.f,1.f,5.f,8.f));
     UVerticalBox* Showcase=WidgetTree->ConstructWidget<UVerticalBox>(
@@ -1086,10 +1173,18 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
         UBorder::StaticClass(), TEXT("TerritoryNativeMapFrame"));
     MapFrame->SetBrushColor(FLinearColor(.37f,.33f,.42f,1.f));
     MapFrame->SetPadding(FMargin(1.f));
-    MapFrame->AddChild(TerritoryMapWidget);
+    UOverlay* MapLayers=WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass(),TEXT("TerritoryRealMapAndOrnament"));
+    MapLayers->AddChildToOverlay(TerritoryMapWidget);
+    UOGGate12GothicChromeWidget* MapEtch=
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    MapEtch->Configure(FLinearColor(.58f,.54f,.61f,1.f),INDEX_NONE,false);
+    MapLayers->AddChildToOverlay(MapEtch);
+    MapFrame->AddChild(MapLayers);
     USizeBox* MapHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(),TEXT("TerritoryMapViewportHeight"));
-    MapHeight->SetMinDesiredHeight(340.f);
+    MapHeight->SetMinDesiredHeight(830.f);
     MapHeight->AddChild(MapFrame);
     Content->AddChildToVerticalBox(MapHeight)->SetPadding(FMargin(3.f,4.f,3.f,5.f));
     UHorizontalBox* MapTools=WidgetTree->ConstructWidget<UHorizontalBox>(
@@ -1241,7 +1336,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
                 UOGGate12RulerActionButton::StaticClass());
         Button->RulerWidget = this;
         Button->ActionId = FString::Printf(TEXT("records/%d"), Index);
-        Button->SetBackgroundColor(FLinearColor(.010f,.009f,.014f,.97f));
+        Button->SetBackgroundColor(FLinearColor(0.f,0.f,0.f,0.f));
         Button->OnClicked.AddDynamic(
             Button, &UOGGate12RulerActionButton::InvokeAction);
         UVerticalBox* Face = WidgetTree->ConstructWidget<UVerticalBox>(
@@ -1271,7 +1366,17 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         FSlateFontInfo SF = Sub->GetFont(); SF.Size=9; Sub->SetFont(SF);
         Face->AddChildToVerticalBox(Sub)->SetPadding(FMargin(6.f,2.f,6.f,9.f));
         Button->AddChild(Face);
-        Frame->AddChild(Button);
+        UOverlay* OrnamentedRecord=WidgetTree->ConstructWidget<UOverlay>(
+            UOverlay::StaticClass());
+        UOGGate12GothicChromeWidget* Etching=
+            WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+                UOGGate12GothicChromeWidget::StaticClass());
+        Etching->Configure(bActive
+            ? FLinearColor(.68f,.65f,.74f,1.f)
+            : FLinearColor(.43f,.40f,.48f,1.f),INDEX_NONE,bActive);
+        OrnamentedRecord->AddChildToOverlay(Etching);
+        OrnamentedRecord->AddChildToOverlay(Button);
+        Frame->AddChild(OrnamentedRecord);
         USizeBox* Size = WidgetTree->ConstructWidget<USizeBox>(
             USizeBox::StaticClass());
         Size->SetMinDesiredHeight(130.f);

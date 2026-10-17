@@ -12,6 +12,7 @@ class USizeBox;
 class UImage;
 class UTextBlock;
 class UBorder;
+class UOGGate12VacantThroneSceneWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
     FOGGate12NativeOpeningAction, FName, Action);
@@ -65,6 +66,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UImage> OpeningArtwork;
     // Actual native animated atmospheric layers, not a screenshot or rarity VFX.
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> StageSlot;
+    UPROPERTY(Transient) TObjectPtr<UOGGate12VacantThroneSceneWidget> NativeThroneScene;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> ThroneSilhouetteSlot;
     UPROPERTY(Transient) TObjectPtr<UBorder> AmbientHalo;
     UPROPERTY(Transient) TArray<TObjectPtr<UCanvasPanelSlot>> EmberSlots;

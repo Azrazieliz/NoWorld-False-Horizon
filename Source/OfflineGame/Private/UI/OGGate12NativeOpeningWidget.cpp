@@ -1,4 +1,8 @@
 #include "UI/OGGate12NativeOpeningWidget.h"
+#include "UI/OGGate12GothicChromeWidget.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
+#include "UI/OGGate12VacantThroneSceneWidget.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/CanvasPanel.h"
@@ -65,53 +69,17 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     StageSlot = Canvas->AddChildToCanvas(Stage);
     StageSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
     StageSlot->SetOffsets(FMargin(0.f));
-    auto Layer = [this, Stage](const TCHAR* Name, FAnchors Anchors,
-                                FLinearColor Tint) -> UCanvasPanelSlot*
-    {
-        UBorder* Shape = WidgetTree->ConstructWidget<UBorder>(
-            UBorder::StaticClass(), FName(Name));
-        Shape->SetVisibility(ESlateVisibility::HitTestInvisible);
-        Shape->SetBrushColor(Tint);
-        UCanvasPanelSlot* Slot = Stage->AddChildToCanvas(Shape);
-        Slot->SetAnchors(Anchors);
-        Slot->SetOffsets(FMargin(0.f));
-        return Slot;
-    };
-    // Architectural throne silhouette; visual scene is generated from editable
-    // UMG geometry so neither screenshot text nor characters are embedded.
-    Layer(TEXT("DistantLeftVault"), FAnchors(.05f,.04f,.12f,.83f),
-          FLinearColor(.028f,.026f,.035f,.92f));
-    Layer(TEXT("DistantRightVault"), FAnchors(.88f,.04f,.95f,.83f),
-          FLinearColor(.028f,.026f,.035f,.92f));
-    Layer(TEXT("LeftVaultEtching"), FAnchors(.118f,.04f,.120f,.75f),
-          FLinearColor(.24f,.22f,.25f,.29f));
-    Layer(TEXT("RightVaultEtching"), FAnchors(.880f,.04f,.882f,.75f),
-          FLinearColor(.24f,.22f,.25f,.29f));
-    Layer(TEXT("DeepThroneBack"), FAnchors(.414f,.20f,.586f,.67f),
-          FLinearColor(.017f,.016f,.023f,.98f));
-    Layer(TEXT("ThroneRimLeft"), FAnchors(.411f,.20f,.415f,.66f),
-          FLinearColor(.31f,.29f,.33f,.48f));
-    Layer(TEXT("ThroneRimRight"), FAnchors(.585f,.20f,.589f,.66f),
-          FLinearColor(.31f,.29f,.33f,.48f));
-    Layer(TEXT("VacantThroneSeat"), FAnchors(.393f,.56f,.607f,.63f),
-          FLinearColor(.012f,.012f,.017f,1.f));
-    Layer(TEXT("ThroneArmLeft"), FAnchors(.375f,.49f,.411f,.67f),
-          FLinearColor(.027f,.026f,.035f,1.f));
-    Layer(TEXT("ThroneArmRight"), FAnchors(.589f,.49f,.625f,.67f),
-          FLinearColor(.027f,.026f,.035f,1.f));
-    Layer(TEXT("CathedralFloorRim"), FAnchors(.10f,.81f,.90f,.814f),
-          FLinearColor(.29f,.28f,.34f,.34f));
-    // Animated fog-light volume, authored separately from the throne shape.
-    ThroneSilhouetteSlot = Layer(
-        TEXT("MovingThroneLightColumn"), FAnchors(.49f,.15f,.51f,.67f),
-        FLinearColor(.38f,.36f,.47f,.12f));
-    AmbientHalo = WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("AnimatedThroneHalo"));
-    AmbientHalo->SetVisibility(ESlateVisibility::HitTestInvisible);
-    AmbientHalo->SetBrushColor(FLinearColor(.13f,.12f,.17f,.18f));
-    UCanvasPanelSlot* HaloSlot = Stage->AddChildToCanvas(AmbientHalo);
-    HaloSlot->SetAnchors(FAnchors(.35f,.22f,.65f,.52f));
-    HaloSlot->SetOffsets(FMargin(0.f));
+    // Gate10 opening-04 genuine vector stage replaces the previous flat
+    // gray UMG primitives, retains independent 2D graphics and all real
+    // opening controls. Never load illustrative ten-concept artwork.
+    NativeThroneScene = WidgetTree->ConstructWidget<UOGGate12VacantThroneSceneWidget>(
+        UOGGate12VacantThroneSceneWidget::StaticClass(),
+        TEXT("Gate10AnimatedVacantThroneVectorScene"));
+    NativeThroneScene->SetVisibility(ESlateVisibility::HitTestInvisible);
+    UCanvasPanelSlot* VectorLayer=Stage->AddChildToCanvas(NativeThroneScene);
+    VectorLayer->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
+    VectorLayer->SetOffsets(FMargin(0.f));
+
     // Native particles animate deterministically with reduced-motion support.
     // They are ambient UI effects, NEVER six-tier rarity frame VFX.
     for (int32 Index = 0; Index < 13; ++Index)
@@ -134,7 +102,7 @@ void UOGGate12NativeOpeningWidget::BuildRoot()
     AtmosphericAccent = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("ThroneAtmosphereGoldAccent"));
     AtmosphericAccent->SetBrushColor(FLinearColor(.29f,.22f,.13f,.18f));
-    UCanvasPanelSlot* AccentSlot = Canvas->AddChildToCanvas(AtmosphericAccent);
+    UCanvasPanelSlot* AccentSlot = Stage->AddChildToCanvas(AtmosphericAccent);
     AccentSlot->SetAnchors(FAnchors(.48f,.08f,.52f,.63f));
     AccentSlot->SetOffsets(FMargin(0.f,0.f,0.f,0.f));
 
@@ -211,10 +179,7 @@ void UOGGate12NativeOpeningWidget::AddAction(
     Button->Opening = this;
     Button->Action = Action;
     Button->SetIsEnabled(bEnabled);
-    Button->SetBackgroundColor(!bEnabled
-        ? FLinearColor(.028f,.029f,.031f,1.f)
-        : bPrimary ? FLinearColor(.16f,.115f,.065f,.98f)
-                   : FLinearColor(.036f,.033f,.039f,.98f));
+    Button->SetBackgroundColor(FLinearColor(0.f,0.f,0.f,0.f));
     Button->OnClicked.AddDynamic(Button,
         &UOGGate12OpeningActionButton::InvokeOpeningAction);
     UTextBlock* TextLabel =
@@ -225,11 +190,33 @@ void UOGGate12NativeOpeningWidget::AddAction(
     TextLabel->SetColorAndOpacity(FSlateColor(
         bEnabled ? (bPrimary ? OrnamentGold : OpeningTextColor) : Muted));
     FSlateFontInfo Font = TextLabel->GetFont();
-    Font.Size = bPrimary ? 23 : 18;
+    Font.Size = bPrimary ? 36 : 29;
     TextLabel->SetFont(Font);
     Button->AddChild(TextLabel);
-    UVerticalBoxSlot* AddedButtonSlot = Menu->AddChildToVerticalBox(Button);
-    AddedButtonSlot->SetPadding(FMargin(5.f,7.f,5.f,7.f));
+    UOverlay* Decorations = WidgetTree->ConstructWidget<UOverlay>(
+        UOverlay::StaticClass());
+    UBorder* OpaqueBlack = WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass());
+    OpaqueBlack->SetBrushColor(FLinearColor(.006f,.005f,.010f,.97f));
+    Decorations->AddChildToOverlay(OpaqueBlack);
+    UOGGate12GothicChromeWidget* LiveFrame =
+        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+            UOGGate12GothicChromeWidget::StaticClass());
+    LiveFrame->Configure(!bEnabled
+        ? FLinearColor(.24f,.23f,.27f,1.f)
+        : bPrimary
+            ? FLinearColor(.78f,.68f,.45f,1.f)
+            : FLinearColor(.56f,.54f,.61f,1.f),
+        INDEX_NONE,bPrimary && bEnabled);
+    Decorations->AddChildToOverlay(LiveFrame);
+    Decorations->AddChildToOverlay(Button);
+    USizeBox* ControlHeight=WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass());
+    ControlHeight->SetMinDesiredHeight(bPrimary ? 69.f : 60.f);
+    ControlHeight->AddChild(Decorations);
+    UVerticalBoxSlot* AddedButtonSlot =
+        Menu->AddChildToVerticalBox(ControlHeight);
+    AddedButtonSlot->SetPadding(FMargin(3.f,4.f,3.f,4.f));
 }
 
 void UOGGate12NativeOpeningWidget::RebuildMenu()
@@ -345,6 +332,8 @@ void UOGGate12NativeOpeningWidget::NativeTick(
         AtmosphericAccent->SetBrushColor(
             FLinearColor(.46f,.44f,.52f,Alpha));
     }
+    if (NativeThroneScene)
+        NativeThroneScene->UpdateAtmosphere(Phase,bReducedMotion);
     if (AmbientHalo)
     {
         const float Glow = bReducedMotion ? .09f :

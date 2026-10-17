@@ -81,6 +81,7 @@ protected:
     virtual void NativeOnInitialized() override;
     virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
+    virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
     UPROPERTY(Transient)
@@ -88,6 +89,12 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UImage> FrozenSceneArtwork;
+
+    // Figma-authored interface chrome only; interactions remain native UMG.
+    UPROPERTY(Transient)
+    TObjectPtr<UImage> Gate10FigmaGachaChrome;
+
+    bool bGachaChromeWasVisible = false;
 
     UPROPERTY(Transient)
     TObjectPtr<UTexture2D> LoadedSceneTexture;
