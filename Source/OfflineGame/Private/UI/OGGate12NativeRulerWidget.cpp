@@ -239,7 +239,11 @@ void UOGGate12NativeRulerWidget::BuildRoot()
     BottomFrame->SetBrushColor(FLinearColor(.009f,.009f,.012f,.96f));
     BottomFrame->SetPadding(FMargin(3.f,5.f));
     BottomFrame->AddChild(NavigationBar);
-    UVerticalBoxSlot* NavSlot = Screen->AddChildToVerticalBox(BottomFrame);
+    USizeBox* NativeNavHeight = WidgetTree->ConstructWidget<USizeBox>(
+        USizeBox::StaticClass(),TEXT("Gate10FiveNativeButtonsFullHeight"));
+    NativeNavHeight->SetMinDesiredHeight(116.f);
+    NativeNavHeight->AddChild(BottomFrame);
+    UVerticalBoxSlot* NavSlot = Screen->AddChildToVerticalBox(NativeNavHeight);
     NavSlot->SetPadding(FMargin(5.0f, 5.0f, 5.0f, 6.0f));
 }
 
@@ -555,8 +559,9 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         USizeBox::StaticClass());
     HeadingHeight->SetMinDesiredHeight(80.f);
     HeadingHeight->AddChild(HeadingLayers);
-    Content->AddChildToVerticalBox(HeadingHeight)
-        ->SetPadding(FMargin(4.f,0.f,4.f,8.f));
+    if (Session->CurrentDestination != EOGRulerPrimaryDestination::Home)
+        Content->AddChildToVerticalBox(HeadingHeight)
+            ->SetPadding(FMargin(4.f,0.f,4.f,8.f));
     if (!LastUiError.IsEmpty()) AddMessage(Content, LastUiError, 16, TextMuted);
     switch (Session->CurrentDestination)
     {
@@ -595,7 +600,10 @@ void UOGGate12NativeRulerWidget::BuildHome()
     USizeBox* Bounds=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(),TEXT("Gate10HomeOneSceneNotThreeColumns"));
     Bounds->SetMinDesiredWidth(390.f);
-    Bounds->SetHeightOverride(505.f);
+    // The 505-unit stage rendered only 216 physical pixels on the real
+    // portrait fixture. Reserve the actual available tall viewport rather
+    // than reproducing a short banner inside an otherwise empty Ruler page.
+    Bounds->SetHeightOverride(1250.f);
     UCanvasPanel* Scene=WidgetTree->ConstructWidget<UCanvasPanel>(
         UCanvasPanel::StaticClass(),TEXT("Gate10HomeAnchoredPortraitScene"));
     Bounds->AddChild(Scene);
