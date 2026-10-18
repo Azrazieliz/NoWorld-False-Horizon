@@ -45,3 +45,9 @@ Cross-Gate standing project policy, effective 2026-10-18. READ BEFORE PRODUCTION
 Requirement | source/artifact actually changed | real native visual/function PASS/FAIL/UNVERIFIED | evidence path+SHA | remaining blocker / next executable action | time spent.
 
 Only add a new record when a real failure and corrected method are identified. Product work, not ledger expansion, is the objective.
+
+### 2026-10-18 ? Android ARM64 memory preflight
+
+- A 12-action compile with only ~3.3GB free physical and ~5.3GB free commit exhausted host commit after ~106 seconds; watchdog stopped without producing a native ARM64 link. The initial 1.7GB/3.5GB guard was too permissive.
+- Corrected the existing native UBT helper to reject known-problematic full-build memory conditions BEFORE launching Unreal (3.0GB physical / 6.5GB free commit conservative threshold); preserves active user apps and existing APK/.so backups. No app build ran to validate a future memory-adequate host.
+- A PowerShell source-parser check passed. It is NOT a successful Android compile or phone validation.

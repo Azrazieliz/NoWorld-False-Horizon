@@ -6,7 +6,16 @@ if((git -C $w branch --show-current).Trim() -ne 'production/gate12-koikatsu-ue58
 if((git -C $f rev-parse HEAD).Trim() -ne '3f54f07cacbf193e160d0be15a7be5a7bc730c3b' -or (git -C $f status --porcelain)){throw 'Frozen Foundation changed'}
 if(@(Get-Process -Name 'UnrealEditor*' -ErrorAction SilentlyContinue).Count -gt 0){Write-Output 'NOT_STARTED_EDITOR_IN_USE';exit 12}
 $o=Get-CimInstance Win32_OperatingSystem
-if($o.FreePhysicalMemory/1024 -lt 1700 -or $o.FreeVirtualMemory/1024 -lt 3500){Write-Output 'NOT_STARTED_CURRENT_HOST_MEMORY';exit 12}
+# 2026-10-18 actual 12-action ARM64 compile started with 3.3GB physical /
+# 5.3GB commit available, then spent 106s and hit STOPPED_COMMIT_PRESSURE.
+# Fail *before* full UBT invocation until the host can afford a native rebuild;
+# never sacrifice protected user apps or a current editor to free memory.
+if($o.FreePhysicalMemory/1024 -lt 3000 -or $o.FreeVirtualMemory/1024 -lt 6500){
+  Write-Output ('NOT_STARTED_NATIVE_REBUILD_MEMORY_RAM_MB='+[math]::Round($o.FreePhysicalMemory/1024)+
+    '_COMMIT_MB='+[math]::Round($o.FreeVirtualMemory/1024)+
+    '_REQUIRES_RAM_3000_COMMIT_6500')
+  exit 12
+}
 $sdk='C:\Users\mimim\AppData\Local\Android\Sdk'
 $env:ANDROID_HOME=$sdk;$env:ANDROID_SDK_ROOT=$sdk
 $env:NDKROOT=Join-Path $sdk 'ndk\27.2.12479018'
