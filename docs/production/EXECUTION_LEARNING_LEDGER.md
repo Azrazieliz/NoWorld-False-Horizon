@@ -32,6 +32,14 @@ Cross-Gate standing project policy, effective 2026-10-18. READ BEFORE PRODUCTION
 - Propagation: source combat action presentation and World HUD now share the same assumption-free rule. Dedicated regression OfflineGame.Gate12.Combat.MotionProfiles.NoUniversalRifleOrSword passed 1/1 under UE5.8.3. Actual clip assets require Gate09; equipment metadata contract needs Gate07; targeting/hits require Gate04. Never claim authored animation from a parser or diagnostic.
 - UE5.8 compile failure was corrected at the checked-format API, not rerun unchanged. See Gate12 weapon motion dependency handoff.
 
+### 2026-10-18 ? Generalizable weapon/ability presentation correction
+
+- Actual failure: Narrow sword-only interpretation, diagnostic gun/reach fallback, equipment-only resolution that omits innate abilities, and Ultimate using Skill clip family.
+- Method: Read explicit authored equipment style or, if absent, explicit canonical entity innate style. Conflicts fail closed. Choose ONLY skeleton-compatible authored clips or no motion. Distinct Basic/Skill/Ultimate clip and semantic SFX keys; never play mismatched audio if its skeleton-compatible action clip is unbound.
+- Propagate to fists, sling, bow, technology, magic, natural arms, nonhuman anatomy and multiweapon compositions, plus content contracts Gate04/07/09.
+- Evidence: Source/static checks ONLY, user explicitly deferred application builds. No visual or Android acceptance yet. Contract in docs/production/gate12/GATE12_WEAPON_MOTION_DEPENDENCIES_20261018.md.
+- Never repeat: Do not synthesize a firearm/sword stance, physical weapon, ownership or special effects when no real authored assets exist.
+
 ## Checkpoint record format
 
 Requirement | source/artifact actually changed | real native visual/function PASS/FAIL/UNVERIFIED | evidence path+SHA | remaining blocker / next executable action | time spent.

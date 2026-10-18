@@ -19,3 +19,13 @@ Gate 10 (UI): Supply distinct authored weapon/skill icons and interaction presen
 Gate 11 (Registry): Accept and register actual authored assets and identity/ownership as needed. Do not synthesize records.
 
 Gate 12: Integrate real approved equipment/profile updates and gameplay animation, evaluate visible result per skeleton, build Android and test the connected Galaxy S26 Ultra. No production animation, 3D weapon, projectile, audio or mobile acceptance is claimed by this code-only bridge.
+
+## Further implementation: innate style and Ultimate dispatch (source-only, build withheld)
+
+The existing equipment-profile resolver also accepts the optional 'combat_motion_profile' string in the real canonical actor's EntityStateJson, for specifically authored **natural weapon, bare-handed, supernatural, magic and nonhumanoid techniques**. Character state is used only when no equipped item supplies a profile. Conflicting usable equipped-item profiles still fail closed; never replace with innate style. A single usable equipment profile takes precedence. No synthetic equipment, canonical ID or schema migration is created.
+
+Canonical characters without an explicitly authored character/equipment profile no longer trigger the legacy generic humanoid attack/recoil: correct animation is deferred until a compatible authored clip exists. Explicit noncanonical diagnostic fixture actions may retain old diagnostic clips.
+
+Clip families: CombatAttack.<profile>.<1-3>, CombatSkill.<profile>.<1-3>, and distinct CombatUltimate.<profile>. Matching optional Gate09 authored SOUND events: gameplay.attack.<profile>, gameplay.skill.<profile>, gameplay.ultimate.<profile>; only played if the compatible action clip is actually bound. No generic rifle/pistol sound and no disconnected attack audio. Gate09 supplies skeleton-compatible clips, grip/holster, release/contact timing, recovery, transition, distinct locomotion per style. Gate04 supplies authored action/kit-specific delivery, collision/target/LOS, projectile and magic rules. Gate07 signs off the canonical source for the optional item and innate presentation profiles; JSON remains an interim read-only bridge, not a Registry/save migration.
+
+This refinement is NOT COMPILED, NATIVE TESTED, OR VISUALLY ACCEPTED YET by the current user instruction to defer builds until feasible implementation is complete.

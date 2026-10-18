@@ -43,17 +43,34 @@ FName FOGCombatMotionPresentation::ResolveAuthoredProfile(
         }
         Result=Candidate;
     }
-    return Result;
+    // Fists, spells, unusual anatomies and other innate skills need not
+    // equip a fictional item. Use an *explicit* authored character state,
+    // not a guessed default gun/sword/fist animation.
+    return Result.IsNone() ? ParseProfile(Projection.EntityStateJson) : Result;
 }
 
-FName FOGCombatMotionPresentation::ActionClipId(FName Profile, int32 Chain, bool bBasic)
+FName FOGCombatMotionPresentation::ActionClipId(FName Profile, int32 Chain,
+    bool bBasic, bool bUltimate)
 {
     if (Profile.IsNone()) return NAME_None;
     const FString Name=Profile.ToString();
     if (Name.Len() > 64) return NAME_None;
+    // Ultimate is not an ordinary skill-chain attack. It has its own
+    // authored clip and event timeline so the animation author can match
+    // character-specific windup, hit markers and recovery.
+    if (bUltimate)
+        return FName(*FString::Printf(TEXT("CombatUltimate.%s"),*Name));
     const int32 Step=FMath::Clamp(Chain, 0, 2) + 1;
-    // Unreal format literals are compile-time checked: never use a runtime
-    // conditional as FString::Printf's format argument.
     return FName(*FString::Printf(TEXT("Combat%s.%s.%d"),
         bBasic ? TEXT("Attack") : TEXT("Skill"), *Name, Step));
+}
+
+FName FOGCombatMotionPresentation::SemanticActionSoundId(FName Profile,
+    bool bBasic, bool bUltimate)
+{
+    if (Profile.IsNone() || Profile.ToString().Len() > 64) return NAME_None;
+    const TCHAR* Family = bUltimate ? TEXT("ultimate")
+        : bBasic ? TEXT("attack") : TEXT("skill");
+    return FName(*FString::Printf(TEXT("gameplay.%s.%s"),
+        Family, *Profile.ToString()));
 }

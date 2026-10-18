@@ -5298,8 +5298,14 @@ void AOGWorldPrototypeCharacter::MoveForward(float Value)
 
     if (!Direction.IsNearlyZero())
     {
-        LastNonZeroMoveDirection = Direction.GetSafeNormal();
         AddMovementInput(Direction, Value);
+        // The signed and combined pending vector represents actual input:
+        // X=-1/backward, Y=-1/left and diagonal directions. Recording
+        // the UNSIGNED axis or only the last callback made facing and
+        // contextual action direction incorrect.
+        const FVector ActualPending = GetPendingMovementInputVector();
+        if (!ActualPending.IsNearlyZero())
+            LastNonZeroMoveDirection = ActualPending.GetSafeNormal();
     }
 }
 
@@ -5344,8 +5350,14 @@ void AOGWorldPrototypeCharacter::MoveRight(float Value)
 
     if (!Direction.IsNearlyZero())
     {
-        LastNonZeroMoveDirection = Direction.GetSafeNormal();
         AddMovementInput(Direction, Value);
+        // The signed and combined pending vector represents actual input:
+        // X=-1/backward, Y=-1/left and diagonal directions. Recording
+        // the UNSIGNED axis or only the last callback made facing and
+        // contextual action direction incorrect.
+        const FVector ActualPending = GetPendingMovementInputVector();
+        if (!ActualPending.IsNearlyZero())
+            LastNonZeroMoveDirection = ActualPending.GetSafeNormal();
     }
 }
 
@@ -11112,9 +11124,18 @@ void AOGWorldPrototypeCharacter::PresentAcceptedCombatAction(uint8 Command, int3
         ? FName(*FString::Printf(TEXT("Attack%d"), Chain + 1))
         : Command == static_cast<uint8>(EOGDiagnosticCommand::Ultimate)
             ? FName(TEXT("Ultimate")) : FName(TEXT("Skill"));
+    FName AuthoredAudioEvent(TEXT("gameplay.attack"));
     if (CanonicalPresentation && CanonicalPresentation->HasProjection())
     {
-        // Read ONLY the character's real equipped-item projection. A ranged
+        // The untyped sound also belongs to the diagnostic motion.
+        // Never play a firearm-like default cue for magic, fists or unknown
+        // canonical skills; the Gate09 authored event may be unresolved.
+        AuthoredAudioEvent=NAME_None;
+        // The legacy fallback is a diagnostic generic humanoid reach. It
+        // must never become an implicitly selected pistol/rifle action for
+        // an actually bound canonical character (or an unusual anatomy).
+        Pose=NAME_None;
+        // Read ONLY explicit canonical character/item motion metadata. A ranged
         // slingshot, natural fist, spell, two-handed weapon, technology or
         // mixed-anatomy profile can bind independent compatible authored
         // clips. Never silently apply a rifle/machinegun or sword pose.
@@ -11122,20 +11143,27 @@ void AOGWorldPrototypeCharacter::PresentAcceptedCombatAction(uint8 Command, int3
             CanonicalPresentation->GetProjection());
         if (!Motion.IsNone())
         {
+            const bool bBasic=Command==static_cast<uint8>(EOGDiagnosticCommand::Basic);
+            const bool bUltimate=Command==static_cast<uint8>(EOGDiagnosticCommand::Ultimate);
             const FName AuthoredClip=FOGCombatMotionPresentation::ActionClipId(
-                Motion, Chain,
-                Command==static_cast<uint8>(EOGDiagnosticCommand::Basic));
-            Pose=DiagnosticAnimations->HasCompatibleBinding(AuthoredClip)
-                ? AuthoredClip : NAME_None;
-            // Missing authored animation is reported upstream as a Gate09
-            // asset dependency: a false generic firearm pose is NOT played.
+                Motion,Chain,bBasic,bUltimate);
+            if (DiagnosticAnimations && DiagnosticAnimations->HasCompatibleBinding(AuthoredClip))
+            {
+                Pose=AuthoredClip;
+                AuthoredAudioEvent=FOGCombatMotionPresentation::SemanticActionSoundId(
+                    Motion,bBasic,bUltimate);
+            }
+            // Unbound animation also suppresses its authored SFX cue;
+            // otherwise the player hears a weapon that never moves.
+            // Missing source belongs to Gate09, never generic firearm pose.
         }
     }
     if (!Pose.IsNone()) DiagnosticAnimations->PresentTimedAction(Pose, .32f);
     if (bHapticsEnabled)
         if (auto* PC = Cast<APlayerController>(Controller))
             PC->PlayDynamicForceFeedback(HapticsIntensity * .22f, .035f, true, true, true, true);
-    SemanticAudio->PlaySemanticEvent(TEXT("gameplay.attack"), GetActorLocation());
+    if (SemanticAudio && !AuthoredAudioEvent.IsNone())
+        SemanticAudio->PlaySemanticEvent(AuthoredAudioEvent, GetActorLocation());
 }
 
 void AOGWorldPrototypeCharacter::Landed(const FHitResult& Hit)
