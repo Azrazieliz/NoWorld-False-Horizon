@@ -25,6 +25,13 @@ Cross-Gate standing project policy, effective 2026-10-18. READ BEFORE PRODUCTION
 | Characters restricted to one-third; 3D QA viewer mislocated | Dedicated full portrait destination; exactly 3 tall owned portrait cards per row; 2D/3D toggle INSIDE actual owned character detail, not global debug menu | Gate12 commit 5374ac84; real-owned character demonstration still OPEN |
 | Repeated build loops without product improvement; premature 23/23 claims | Execute closest existing integration, make smallest systemic fix, real render/functional proof, then stop or change failed method. Never count same receipt as different source | Enforced by requiring exact screenshot/receipt path and source SHA at each future production checkpoint |
 
+### 2026-10-18 ? Weapon-family correction
+
+- Rejected failure: one fixed sword icon in World and one generic attack pose implicitly represented all characters/weapons/supernatural kits. Root cause: diagnostic presentation was promoted into a universal content rule.
+- Corrected method: neutral action icon and read-only authored equipped-item motion profile, rig-compatible bound animation only; missing/conflicting/broken profiles do not select a guessed firearm pose. Open-ended category names allow natural anatomy, sling, melee, casting and technology.
+- Propagation: source combat action presentation and World HUD now share the same assumption-free rule. Dedicated regression OfflineGame.Gate12.Combat.MotionProfiles.NoUniversalRifleOrSword passed 1/1 under UE5.8.3. Actual clip assets require Gate09; equipment metadata contract needs Gate07; targeting/hits require Gate04. Never claim authored animation from a parser or diagnostic.
+- UE5.8 compile failure was corrected at the checked-format API, not rerun unchanged. See Gate12 weapon motion dependency handoff.
+
 ## Checkpoint record format
 
 Requirement | source/artifact actually changed | real native visual/function PASS/FAIL/UNVERIFIED | evidence path+SHA | remaining blocker / next executable action | time spent.

@@ -1,3 +1,14 @@
+## 2026-10-18 18:15 +02 - P0 diverse weapons / action motion routing (scoped code ready)
+
+- Latest base at start was 867c770d649b858ca863d4f2dc9d77c03835d283. Verified protected Koikatsu sources and unrelated experimental content left untouched.
+- User corrected sword-only interpretation: weapons include all melee/unarmed, sling, bows, magic, technology, firearms, multiarm or any authored profile. Do not impose universal rifle stance.
+- Implemented source Runtime: Combat/OGCombatMotionPresentation.h/.cpp reads optional explicitly-authored combat_motion_profile from actual equipped item's EvolutionStateJson, never guesses from display name, rejects malformed/conflicting and broken gear, returns open-ended authored action clip ID. World/OGStartingRegionPresentation.cpp replaces false sword-shaped attack HUD with neutral glyph, plays selected authored action ONLY when compatible sequence for actual skeleton is bound; missing cannot silently become firearm pose. Frozen combat formulas, source Registry/economy/ownership untouched. Dedicated gate12 test added.
+- Actual UE5.8 Editor build succeeded 4/4 exit0 after one precise UE checked-format syntax fix: Saved/Gate12Readiness/Gate12_Combat_GeneralWeaponsMotion_20261018_Rebuild.log. Exact single native test OfflineGame.Gate12.Combat.MotionProfiles.NoUniversalRifleOrSword succeeded 1/1, editor exit0; archived test index in docs/production/gate12/evidence/20261018_weapon_motion_profiles.
+- Actual on-screen isolated run b3bf2e138a2d4e44ad3850a14923df9c was NATIVE_JOURNEY_UNVERIFIED: no visible native game window/screenshot. Do not repeat same failing low-memory launch. No actual pose/art visual acceptance, no device build test.
+- Samsung Galaxy S26 Ultra showed up under adb devices -l as R3GYC0LSC7K at 17:45; only unrelated installed package detected, no new approved NoWorld APK or on-device weapon QA. Do not replace protected APKs.
+- EXACT external inputs in docs/production/gate12/GATE12_WEAPON_MOTION_DEPENDENCIES_20261018.md: Gate07 approved equipment motion profiles/source, Gate09 skeleton-specific animations and poses/transitions, Gate04 targeting/projectile/contact/kit delivery, Gate10 weapon HUD icons, Gate11 authentic accepted assets. Explicit optional JSON key is currently only a bridging convention pending Gate07 canonical signoff.
+- Next independent production work: once above Gate07/Gate09 data arrives, bind actual profile changes and verify real game animations. Otherwise continue other verified systems; never claim comprehensive game finish from parser/test success.
+
 ## 2026-10-18 14:45 +02 - Complete user-requested 18-system READ-ONLY diagnosis
 
 - Current source-based 18/18 and nine-area UI diagnosis: docs/production/gate12/GATE12_USER_REQUIREMENTS_CURRENT_STATE_20261018.md. 18/18 full feature families remain partially/unaccepted; read-only audit ONLY, no new feature tests or completed gameplay claimed.

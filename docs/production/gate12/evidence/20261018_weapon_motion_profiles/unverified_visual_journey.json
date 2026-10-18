@@ -1,0 +1,18 @@
+{
+	"schema": "GATE12_ISOLATED_NATIVE_WIN64_GAME_JOURNEY_V1",
+	"original_project_saves": "NO_ACCESS_ISOLATED_PROJECT_ONLY",
+	"android_cooked_or_installed": false,
+	"production_assets_modified": false,
+	"programmatic_native_ui_actions": true,
+	"physical_touch_inputs_verified": false,
+	"complete": false,
+	"passed": false,
+	"status": "RUNNING",
+	"steps": [
+		{
+			"name": "world_begin_play",
+			"passed": true,
+			"detail": "World=StartingWorld, project_isolated=1"
+		}
+	]
+}

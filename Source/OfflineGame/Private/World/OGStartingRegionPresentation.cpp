@@ -18,6 +18,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Animation/AnimInstance.h"
+#include "Combat/OGCombatMotionPresentation.h"
 #include "Animation/Skeleton.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Canvas.h"
@@ -9364,16 +9365,24 @@ void AOGWorldPresentationHud::DrawHUD()
                 }
                 if (HitBoxName==TEXT("OG.World.Attack"))
                 {
-                    // No firearm. Minimal melee blade-shaped abstract HUD
-                    // mark; the actual sword mesh/animation still belongs
-                    // to accepted equipment and Gate09 assets.
-                    const float L=ButtonSize*.29f;
-                    DrawLine(CenterX-L,CenterY+L*.70f,
-                        CenterX+L,CenterY-L*.94f,Accent,2.3f);
-                    DrawLine(CenterX-L*.92f,CenterY+L*.28f,
-                        CenterX-L*.38f,CenterY+L*.81f,Accent,2.0f);
-                    DrawLine(CenterX-L,CenterY+L*.70f,
-                        CenterX-L*1.12f,CenterY+L*.97f,Accent,2.1f);
+                    // Universal ACTION glyph, never a fixed sword, gun,
+                    // bow, staff or anatomical fist. The actual effect and
+                    // motion are determined by the bound authored kit/weapon,
+                    // not by the HUD's invented equipment assumption.
+                    const float L=ButtonSize*.23f;
+                    for (int32 I=0;I<4;++I)
+                    {
+                        const float A=I*PI*.5f+PI*.25f;
+                        const float B=(I+1)*PI*.5f+PI*.25f;
+                        DrawLine(CenterX+FMath::Cos(A)*L,
+                            CenterY+FMath::Sin(A)*L,
+                            CenterX+FMath::Cos(B)*L,
+                            CenterY+FMath::Sin(B)*L,Accent,1.8f);
+                    }
+                    DrawLine(CenterX-L*.44f,CenterY,
+                        CenterX+L*.44f,CenterY,Accent,1.8f);
+                    DrawLine(CenterX,CenterY-L*.44f,
+                        CenterX,CenterY+L*.44f,Accent,1.8f);
                 }
                 else
                     DrawGameIcon(FName(*Label),X+ButtonSize*.26f,
@@ -11099,10 +11108,30 @@ void AOGWorldPrototypeCharacter::PresentAcceptedCombatAction(uint8 Command, int3
     State.bAllowWhileClimbing = false;
     if (ActionRuntime) ActionRuntime->BeginAuthoredAction(State);
     AttackVisualEndsAtSeconds = GetWorld()->GetTimeSeconds() + .32;
-    const FName Pose = Command == static_cast<uint8>(EOGDiagnosticCommand::Basic)
+    FName Pose = Command == static_cast<uint8>(EOGDiagnosticCommand::Basic)
         ? FName(*FString::Printf(TEXT("Attack%d"), Chain + 1))
-        : Command == static_cast<uint8>(EOGDiagnosticCommand::Ultimate) ? FName(TEXT("Ultimate")) : FName(TEXT("Skill"));
-    DiagnosticAnimations->PresentTimedAction(Pose, .32f);
+        : Command == static_cast<uint8>(EOGDiagnosticCommand::Ultimate)
+            ? FName(TEXT("Ultimate")) : FName(TEXT("Skill"));
+    if (CanonicalPresentation && CanonicalPresentation->HasProjection())
+    {
+        // Read ONLY the character's real equipped-item projection. A ranged
+        // slingshot, natural fist, spell, two-handed weapon, technology or
+        // mixed-anatomy profile can bind independent compatible authored
+        // clips. Never silently apply a rifle/machinegun or sword pose.
+        const FName Motion=FOGCombatMotionPresentation::ResolveAuthoredProfile(
+            CanonicalPresentation->GetProjection());
+        if (!Motion.IsNone())
+        {
+            const FName AuthoredClip=FOGCombatMotionPresentation::ActionClipId(
+                Motion, Chain,
+                Command==static_cast<uint8>(EOGDiagnosticCommand::Basic));
+            Pose=DiagnosticAnimations->HasCompatibleBinding(AuthoredClip)
+                ? AuthoredClip : NAME_None;
+            // Missing authored animation is reported upstream as a Gate09
+            // asset dependency: a false generic firearm pose is NOT played.
+        }
+    }
+    if (!Pose.IsNone()) DiagnosticAnimations->PresentTimedAction(Pose, .32f);
     if (bHapticsEnabled)
         if (auto* PC = Cast<APlayerController>(Controller))
             PC->PlayDynamicForceFeedback(HapticsIntensity * .22f, .035f, true, true, true, true);
