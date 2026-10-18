@@ -1,5 +1,7 @@
 # NoWorld SM01/SM02/GAEA/UE — MANDATORY LEARNED PRODUCTION METHOD
 **Effective 2026-10-16.** Owner: shared Software Mastery, consumed by Gates 01–12.
+
+**2026-10-18 PRIORITY — Gate01/Test06:** Read `TEST06_8OF10_GATE_SCORE_CONTINUITY_20261018.md` and K042–K044 before any further Koikatsu character test. The White Gold Dancer visible result received **user 8/10** after its earlier native no-approval receipt was written. Its exact original scripts and four-view QA are the preserved highest user-rated benchmark; the pre-Test06 feature-gate code at `521d725` remains the baseline. Do not substitute the failed witch, claim user 8/10 was computed by numeric gate scoring, or run further unsolicited calibrations. This requirement is strictly about Koikatsu automation continuity.
 **Reference authority:** `MASTER_LEARNED_METHODS_V1.json` (26 initial lessons). All prior older narrative handoffs are subordinate when they conflict.
 **Purpose:** Let the commissioned Gates automate real production requests through repeatable tools. This test series assesses the assistant's capabilities; the sample characters are disposable QA, **not** required canonical game characters.
 

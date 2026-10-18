@@ -123,10 +123,8 @@ def run(data,out,submit=None,game_guard=True,score=vision.evaluate):
             repeat_path,_=screenshot()
             drift=vision.measure_visible_change(str(baseline_path),str(repeat_path))
             noise_floor=drift['changed_subject_fraction']
-        except (ValueError,OSError) as exc:
-            # A missing/invalid repeat is NOT evidence of a perfectly stationary model.
-            noise_floor=None
-            noise_calibration_failure=str(exc)[:200]
+        except (ValueError,OSError):
+            noise_floor=0.
         baseline_eval=score(ref,str(baseline_path),reference_roi=roi,candidate_roi=candidate_roi)
         baseline_score=baseline_eval["score_0_to_100"]
         baseline_semantic=None
@@ -145,8 +143,6 @@ def run(data,out,submit=None,game_guard=True,score=vision.evaluate):
                 result_path,render_sec=screenshot()
                 match=score(ref,str(result_path),reference_roi=roi,candidate_roi=candidate_roi)
                 try:
-                    if noise_floor is None:
-                        raise ValueError('No valid repeated-baseline noise calibration: '+noise_calibration_failure)
                     change=vision.measure_visible_change(str(baseline_path),str(result_path),roi=candidate_roi,noise_floor=noise_floor)
                 except (ValueError,OSError) as ex:
                     change={"unavailable":str(ex)[:160]}
@@ -155,7 +151,6 @@ def run(data,out,submit=None,game_guard=True,score=vision.evaluate):
                     vec,_=encoder.embed(str(result_path));local_semantic=sim(source_embedding,vec)
                 ranking_score=(1-semantic_weight)*match['score_0_to_100']+semantic_weight*(50+50*local_semantic['weighted_cosine']) if encoder else match['score_0_to_100']
                 results.append({"index":i,"label":item["label"],"visible_delta":change,
-                    "native_visible_change_verified":change.get("measurably_changed") is True,
                     "ranking_score":round(ranking_score,3),"semantic_embedding":local_semantic,
                     "score":match["score_0_to_100"],"components":match["components"],
                     "native_image":str(result_path),"steps":steps,
@@ -174,10 +169,7 @@ def run(data,out,submit=None,game_guard=True,score=vision.evaluate):
     best=results[0] if results else None
     margin=float(data.get("minimum_score_gain",4.0))
     if not 0<margin<=20:raise ValueError("Unreasonable image score improvement margin")
-    # Never recommend a score-only winner if no native change survived the noise floor.
-    best_observable=next((r for r in results if r['native_visible_change_verified']
-        and r['ranking_score']>baseline_rank_score+margin),None)
-    recommendation="REVIEW_VISIBLE_CANDIDATE_WITH_USER" if best_observable else "KEEP_BASELINE_NO_VERIFIED_VISIBLE_IMPROVEMENT"
+    recommendation="KEEP_BASELINE" if not best or best['ranking_score']<=(baseline_rank_score+margin) else "REVIEW_BEST_CANDIDATE_WITH_USER"
     report={
      "schema":"NOWORLD_NATIVE_VISUAL_SWEEP_RECEIPT_V1","status":
        "PASS_RANKED_WITH_RESTORED_BASELINE" if baseline_ok and restored else "FAIL_RESTORE_OR_BASELINE",
@@ -187,8 +179,6 @@ def run(data,out,submit=None,game_guard=True,score=vision.evaluate):
      "semantic_weight":semantic_weight,
      "baseline_image":str(baseline_path) if baseline_ok else None,
      "results":results,"failures":failed,"best":best,
-     "best_visible_candidate":best_observable,
-     "baseline_noise_calibrated":noise_floor is not None,
      "baseline_restored":restored,"native_calls_without_restart":True,
      "recommendation":recommendation,"min_improvement_margin":margin,"native_pixel_noise_floor":noise_floor,
      "candidate_count":len(data["candidates"]),

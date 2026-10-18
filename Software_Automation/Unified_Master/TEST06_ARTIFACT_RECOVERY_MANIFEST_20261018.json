@@ -1,0 +1,110 @@
+﻿{
+    "schema":  "KOIKATSU_TEST06_READONLY_PROVENANCE_RECOVERY_V1",
+    "user_visual_rating":  "8/10 (user feedback reported after earlier receipt)",
+    "recovered_at":  "2026-10-18",
+    "artifact_count":  20,
+    "original_test06_card_hash_matches_receipt":  true,
+    "original_source_file_on_windows":  false,
+    "files":  [
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\ANNE_LONG_nonce.txt",
+                      "bytes":  19,
+                      "sha256":  "80131e4d4d48259d958ae270f1e17d03b7049f6814d5dfd3fc9b50a8b6dcb0bd"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\FIRST_STAGE_NONCE.txt",
+                      "bytes":  18,
+                      "sha256":  "07b32d2cc9419e2fd60195982353f6a9e8d70c1bbc9bda4bfb8edb34d1146eab"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\FOUR_LONG_HAIR_ASSET_TRIALS.jpg",
+                      "bytes":  122637,
+                      "sha256":  "268ca94e4e1d585a7f5fffb9e1cf8ef8ef1cdf5224399879b23775e010fe5377"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\IORI_LONG_nonce.txt",
+                      "bytes":  19,
+                      "sha256":  "5fbd1d7cbe4e197d5763823f31a9593935905af72b0155c13581fbd20249f580"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\MINAMI_LONG_nonce.txt",
+                      "bytes":  19,
+                      "sha256":  "2e5c4dd38a0069ea870cfd072cd8b25ad8b2ec803e385b982341e9a5f9c4a150"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\T06_ACTUAL_NATIVE_KK_4_VIEW_QA.jpg",
+                      "bytes":  180830,
+                      "sha256":  "0ec6ccda6289c656873c3277722d1caffe70143b70d2757df4fb06853aa80213"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\T06_FIRST_STAGE_RECEIPT.json",
+                      "bytes":  6447,
+                      "sha256":  "b810297c5f421af86a476f8d51f0ba1c215daf01786bb51d542a7d132bdd8624"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\T06_RESULT_RECEIPT.json",
+                      "bytes":  1043,
+                      "sha256":  "7a065bedd8f138dbe00c4247bb4d1abd79465576a680ba2de667c29002d66ef5"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\T06_UV_COLOR_VARIANTS.json",
+                      "bytes":  1271,
+                      "sha256":  "a2f8d916ec49f54d7a55323436c6c9e05c45671a27c506aefc06ee0dde90e7f6"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\T06_WHITE_GOLD_DANCER_DISPOSABLE_QA.zip",
+                      "bytes":  3292960,
+                      "sha256":  "740bedbc548d94327808fbd318bbe55af4a7f98906bc01fcfab5a5e9b18268d3"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\T06_WHITE_GOLD_DANCER_EDITABLE_NATIVE_KK_CARD.png",
+                      "bytes":  3214022,
+                      "sha256":  "65b65e7c4fcc74254195c156dc39bd65416b9c23566f14bcb5c9301800389695"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\NW_Blender_Private_Review_20261017\\TEST06_WHITE_GOLD_DANCER\\TAKANE_LONG_nonce.txt",
+                      "bytes":  19,
+                      "sha256":  "e0bbe7a0b3f33d6859b1d798de5774eabbeaac6016633c917ab61e9b0b4cbaac"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_white_gold_catalog.py",
+                      "bytes":  1334,
+                      "sha256":  "54c929844fa0ebf3200140cbadc23406efb455e6dee7010b6648ebcdf7239333"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_gold_dancer_trial.py",
+                      "bytes":  3532,
+                      "sha256":  "71d7b9a84b4afee8415e83fc3c07f08d6b39366b346f19852c0b7f63bfb98010"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_gold_dancer_materials.py",
+                      "bytes":  2317,
+                      "sha256":  "4db6b2a4e896496ba5c6f0b987cef8ba988db9d3fb965674123c3b0bec0cd360"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_long_hair_trials.py",
+                      "bytes":  1444,
+                      "sha256":  "0e42bc67c6ff6315cf133c35630023bcc6af7f3e27f833f86afb88de65b2a388"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_long_hair_contact.py",
+                      "bytes":  786,
+                      "sha256":  "d28f14aff6ce6e8ee38926966253529106a67a8094da1268cf3d9cd18dbc2e07"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_gold_ornament_recolor.py",
+                      "bytes":  1256,
+                      "sha256":  "71d2ae1d4ef57ae92bf00755444c71424bd7bbbbf0e4e02612dab32f327e35fb"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_face_body_fit.py",
+                      "bytes":  1121,
+                      "sha256":  "0abc305dd63f7b8b7dcc2e5744362039b569d2d3276a7d4f67a95fbd6d4ff332"
+                  },
+                  {
+                      "path":  "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation\\Unified_Master\\new_ref_gold_dancer_package.py",
+                      "bytes":  2294,
+                      "sha256":  "f40c91ab2bb6eebb46f4eefd8a189798d909edb3e72320bb5a4d9b8ddba2e41e"
+                  }
+              ]
+}

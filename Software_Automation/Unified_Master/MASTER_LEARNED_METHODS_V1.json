@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-17T1557Z",
+  "revision": "2026-10-18T0826Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -421,6 +421,36 @@
       "evidence": "2026-10-17 Test05 set_clothes index0 --effective-id 0 returned Invalid or unsupported clothing part, while actual native screenshot retained school uniform and Top remained unchanged in saved user QA card. Corrective neutral top API still missing.",
       "status": "UNRESOLVED_TOP_SLOT_API",
       "regression_test": "test05_qa_and_regressions.py native_KK_source marks PASS_CARD_SAVED_BUT_TOP_SLOT_NOT_NEUTRAL; do not claim accepted neutral garment until source patch and visual proof."
+    },
+    {
+      "id": "K042",
+      "topic": "test06_white_gold_dancer_user_8_of_10",
+      "applies_to": "gate01",
+      "requirement": "Test06 White Gold Dancer is the most recent user-evaluated Koikatsu reference benchmark: user explicitly rated visible result 8/10. It was a disposable test of automation, NOT a commissioned character. This rating is user judgment, not a calculated feature-gate score.",
+      "procedure": "For each future Gate01 startup load TEST06_8OF10_GATE_SCORE_CONTINUITY_20261018.md, recover native Test06 visual evidence and scripts, maintain 8/10 as user-rated historical benchmark and never substitute the later failed witch output or an earlier Test05 for this result.",
+      "evidence": "User confirmed 8/10 in 2026-10-18 chat; native Test06 four-view T06_ACTUAL_NATIVE_KK_4_VIEW_QA.jpg and T06_RESULT_RECEIPT.json in TEST06_WHITE_GOLD_DANCER, original receipt predates user assessment.",
+      "status": "verified_historical_recovery_with_limits",
+      "regression_test": "Master preflight MUST require K042 plus the Test06 continuity handoff and four-view script provenance; user artistic 8/10 must not be misidentified as native 80/100 gate output."
+    },
+    {
+      "id": "K043",
+      "topic": "test06_native_uv_asset_fit_fast_batch",
+      "applies_to": "gate01",
+      "requirement": "Test06 eight original native Python scripts and real rendered QA are a prior best user-rated 8/10 baseline: single-Maker 11.77sec initial native batch, visual long-hair alternatives, native UV alpha-preserving ivory/gold/turquoise recolor and deliberate face and body recipe.",
+      "procedure": "Preserve the exact eight original Test06 new_ref scripts without editing; keep TEST06_WHITE_GOLD_DANCER artifacts immutable; for a future explicitly requested trial reuse installed indexed catalog and persistent Maker batch, visual hair shortlist, authentic UV and alpha texture recolors and original source morph maps.",
+      "evidence": "2026-10-17 TEST06_WHITE_GOLD_DANCER T06_FIRST_STAGE_RECEIPT.json 11.77 seconds; FOUR_LONG_HAIR_ASSET_TRIALS.jpg with Takane Anne Minami Iori; T06_UV_COLOR_VARIANTS.json with skirt 415444 top 583252 recolored pixels; native four view QA and eight new_ref scripts.",
+      "status": "verified_historical_benchmark",
+      "regression_test": "Ensure all eight Test06 new_ref scripts are Git tracked and exact original renders plus source receipt remain on local disk with no unauthorized overwrites."
+    },
+    {
+      "id": "K044",
+      "topic": "original_feature_gate_baseline_user_rating_distinction",
+      "applies_to": "gate01",
+      "requirement": "Preserve original commit 521d725 native visual search and per-feature gated optimizer as active code, pre-dating Test06. Human 8/10 for Test06 does not equal optimizer 80/100 and full-reference image was not transferred to Windows PC.",
+      "procedure": "Keep native visual search, native gate optimizer and their paired tests byte-matched to git 521d725, preserve later unapproved deviations in Git history, never silently select failed witch styling and never claim Test06 gate-calculated the user rating. Accept future tests only on new user instruction with visually judged likeness.",
+      "evidence": "Git 521d725 2026-10-17 at 21:47 predates Test06 21:52-22:06; original native Test06 script calls direct Maker, no optimizer. T06_RESULT_RECEIPT.json says original user reference image chat only, not on PC. User subsequently rated visual result 8/10.",
+      "status": "verified_recovered_code_with_score_limit",
+      "regression_test": "Compare four recovered native search and optimizer code/test blob SHA values to Git 521d725; fail on loss of Test06 user 8/10 continuity and on false claim the rating came from automatic gate scoring."
     }
   ]
 }

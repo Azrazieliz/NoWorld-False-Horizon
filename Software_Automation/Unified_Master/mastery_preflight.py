@@ -1,6 +1,6 @@
 """Read-only, subsecond master-method guard for every software-mastery job.
 
-All 41 recorded learned controls must be present. This checks the stored doctrine and known
+All 44 recorded learned controls must be present. This checks the stored doctrine and known
 native source fixes before an automated Gate task is dispatched; it does not claim
 to verify visual likeness, active game DLL state, texture parity or Android quality.
 """
@@ -12,7 +12,7 @@ import re
 
 HERE = pathlib.Path(__file__).resolve().parent
 LEDGER = HERE / "MASTER_LEARNED_METHODS_V1.json"
-REQUIRED = {"K%03d" % i for i in range(1, 42)}
+REQUIRED = {"K%03d" % i for i in range(1, 45)}
 GATES = {"Gate%02d" % i for i in range(1, 13)}
 SOURCE_SNIPPETS = {
     "SM01_Runtime_Source/SM01RuntimeController.cs": [
@@ -57,6 +57,10 @@ SOURCE_SNIPPETS = {
     "kk_gate_native_optimizer.py": ["select_compare", "feature_improvements", "feature_regressions", "native_state_restored"],
     "test_kk_feature_gates.py": ["floating_hair_affects_hair_gate", "wrong_robe_main_outfit_detected"],
     "test_kk_gate_native_optimizer.py": ["baseline_restored_after_trials", "wrong_outfit_lower_gate_score"],
+    "TEST06_8OF10_GATE_SCORE_CONTINUITY_20261018.md": ["user-rated 8/10", "11.77", "521d725", "Test06"],
+    "TEST06_ARTIFACT_RECOVERY_MANIFEST_20261018.json": ["8/10", "new_ref_gold_dancer_trial.py", "T06_ACTUAL_NATIVE_KK_4_VIEW_QA.jpg"],
+    "new_ref_gold_dancer_trial.py": ["apply_morph_batch", "set_clothes_top", "render_views"],
+    "new_ref_gold_dancer_materials.py": ["surface_sources", "surface_edits", "alpha"],
 }
 def ensure_master(ledger_path=LEDGER, source_dir=HERE):
     """Fail closed on missing contract, missing scope, or known regressed sources.

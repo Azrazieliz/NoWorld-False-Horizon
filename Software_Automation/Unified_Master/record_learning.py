@@ -40,16 +40,15 @@ def main():
     try:
         temp.replace(LEDGER)
     except PermissionError:
-        # Windows may reject os.replace for an existing JSON watched by other tools.
-        # Use explicit Move-Item -Force, then revalidate the full append-only ledger.
-        import subprocess
-        cmd=['powershell.exe','-NoProfile','-NonInteractive','-Command',
-            'Move-Item -LiteralPath $args[0] -Destination $args[1] -Force -ErrorAction Stop',
-            str(temp),str(LEDGER)]
-        proc=subprocess.run(cmd,capture_output=True,text=True,timeout=12)
-        if proc.returncode or temp.exists():
-            raise RuntimeError('Windows ledger replacement failed: '+proc.stderr[-350:])
+        # Some Windows hosts deny os.replace over an existing JSON file.
+        # Copy the already validated draft, verify its bytes and schema, then
+        # remove only the temporary draft. Keep it intact if copying fails.
+        import shutil
+        shutil.copyfile(temp, LEDGER)
+        if LEDGER.read_bytes() != temp.read_bytes():
+            raise RuntimeError('Learning ledger copy differed from validated draft')
         ensure_master(LEDGER)
+        temp.unlink()
     print('NW_LESSON_RECORDED='+json.dumps({'id':args.id,'revision':doc['revision'],
         'status':args.status,'regression':args.regression},ensure_ascii=False))
 if __name__=='__main__':main()
