@@ -215,8 +215,21 @@ void UOGGate12NativeOpeningWidget::AddTopUtilityIcon(
     Mark->SetText(FText::FromString(Glyph));
     Mark->SetJustification(ETextJustify::Center);
     Mark->SetColorAndOpacity(FSlateColor(OpeningTextColor));
-    FSlateFontInfo Font=Mark->GetFont(); Font.Size=23;Mark->SetFont(Font);
-    Button->AddChild(Mark);
+    // Verified cmap/glyph bitmaps: the gear U+2699 lives in Symbols,
+    // and recovery U+21BA lives in Math. Symbols2 misses BOTH and renders
+    // fallback tofu; never repeat that rejected output.
+    const bool bSettingsGlyph=Action == FName(TEXT("OG.Settings.Toggle"));
+    Mark->SetFont(FSlateFontInfo(
+        FPaths::ProjectContentDir() /
+            (bSettingsGlyph
+                ? TEXT("Slate/Fonts/NotoSansSymbols-Variable.ttf")
+                : TEXT("Slate/Fonts/NotoSansMath-Regular.ttf")),30.f));
+    if (UButtonSlot* IconSlot=Cast<UButtonSlot>(Button->AddChild(Mark)))
+    {
+        IconSlot->SetHorizontalAlignment(HAlign_Fill);
+        IconSlot->SetVerticalAlignment(VAlign_Center);
+        IconSlot->SetPadding(FMargin(3.f));
+    }
     UCanvasPanelSlot* UtilityCanvasSlot=Canvas->AddChildToCanvas(Button);
     UtilityCanvasSlot->SetAnchors(FAnchors(RightAnchor,.035f));
     UtilityCanvasSlot->SetAlignment(FVector2D(1.f,0.f));
@@ -288,7 +301,9 @@ void UOGGate12NativeOpeningWidget::AddAction(
     UBorder* OpaqueBlack = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass());
     OpaqueBlack->SetBrushColor(FLinearColor(.006f,.005f,.010f,.97f));
-    Decorations->AddChildToOverlay(OpaqueBlack);
+    UOverlaySlot* BackFill=Decorations->AddChildToOverlay(OpaqueBlack);
+    BackFill->SetHorizontalAlignment(HAlign_Fill);
+    BackFill->SetVerticalAlignment(VAlign_Fill);
     UOGGate12GothicChromeWidget* LiveFrame =
         WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
             UOGGate12GothicChromeWidget::StaticClass());
@@ -298,9 +313,13 @@ void UOGGate12NativeOpeningWidget::AddAction(
             ? FLinearColor(.78f,.68f,.45f,1.f)
             : FLinearColor(.56f,.54f,.61f,1.f),
         INDEX_NONE,bPrimary && bEnabled);
-    Decorations->AddChildToOverlay(Button);
+    UOverlaySlot* ButtonFill=Decorations->AddChildToOverlay(Button);
+    ButtonFill->SetHorizontalAlignment(HAlign_Fill);
+    ButtonFill->SetVerticalAlignment(VAlign_Fill);
     LiveFrame->SetVisibility(ESlateVisibility::HitTestInvisible);
-    Decorations->AddChildToOverlay(LiveFrame);
+    UOverlaySlot* FrameFill=Decorations->AddChildToOverlay(LiveFrame);
+    FrameFill->SetHorizontalAlignment(HAlign_Fill);
+    FrameFill->SetVerticalAlignment(VAlign_Fill);
     USizeBox* ControlHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass());
     ControlHeight->SetMinDesiredHeight(bPrimary ? 80.f : 68.f);

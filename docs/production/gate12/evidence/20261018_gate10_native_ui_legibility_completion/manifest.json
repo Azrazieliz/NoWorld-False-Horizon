@@ -1,0 +1,31 @@
+{
+  "source_branch": "production/gate12-koikatsu-ue583-fixture-20261010",
+  "run_id": "7396b648b3ca45bea774549808d61ec4",
+  "tested_binary": "UE 5.8.3 OfflineGameEditor Win64 development",
+  "build_log": "Saved/Gate12Readiness/Gate12_UI_VerifiedSymbolFaces_FinalBuild_20261018.log",
+  "native_visual_result": "real Unreal capture Opening and Home; approved Figma background/chrome retained",
+  "recent_prior_23_of_23_run_id": "0efe99bafeb94de0a345eaa1d1f4a7c3",
+  "current_targeted_journey_scope": "10/23 as intentionally timed; NOT a complete 23-step pass for final font-only delta",
+  "android_device_validated": false,
+  "physical_device_connected_via_adb": false,
+  "known_remaining": "Android visual/orientation/touch validation and complete Gate10 cross-surface approval remain open",
+  "notes": "Opening native gear and recovery arrow bundled SIL OFL font coverage confirmed by glyph bitmap and Unreal capture; Home 24pt native actions remain within metal bounds.",
+  "screenshots": [
+    {
+      "filename": "opening_native_portrait.png",
+      "resolution": [
+        432,
+        700
+      ],
+      "sha256": "3e1a10fa320ba851eb2d7d8d5267b2e68a8feb95b14b40f838c5df8d1ce2bc86"
+    },
+    {
+      "filename": "ruler_nav_home.png",
+      "resolution": [
+        432,
+        700
+      ],
+      "sha256": "55c53660a5ded38f97589ef750a826af728f84eb5f047938097151a16e57c08e"
+    }
+  ]
+}

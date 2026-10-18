@@ -425,9 +425,13 @@ void UOGGate12NativeRulerWidget::AddAction(
     Frame->Configure(bEnabled
         ? FLinearColor(.61f,.58f,.64f,1.f)
         : FLinearColor(.30f,.29f,.34f,1.f),INDEX_NONE,false);
-    Layers->AddChildToOverlay(Button);
+    UOverlaySlot* TouchButton=Layers->AddChildToOverlay(Button);
+    TouchButton->SetHorizontalAlignment(HAlign_Fill);
+    TouchButton->SetVerticalAlignment(VAlign_Fill);
     Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
-    Layers->AddChildToOverlay(Frame);
+    UOverlaySlot* TouchChrome=Layers->AddChildToOverlay(Frame);
+    TouchChrome->SetHorizontalAlignment(HAlign_Fill);
+    TouchChrome->SetVerticalAlignment(VAlign_Fill);
     USizeBox* TouchHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass());
     TouchHeight->SetMinDesiredHeight(62.f);
@@ -766,13 +770,18 @@ void UOGGate12NativeRulerWidget::BuildHome()
         UBorder* Back=WidgetTree->ConstructWidget<UBorder>(
             UBorder::StaticClass());
         Back->SetBrushColor(FLinearColor(.014f,.010f,.026f,.96f));
-        Surface->AddChildToOverlay(Back);
+        UOverlaySlot* BackFill=Surface->AddChildToOverlay(Back);
+        BackFill->SetHorizontalAlignment(HAlign_Fill);
+        BackFill->SetVerticalAlignment(VAlign_Fill);
         UOGGate12GothicChromeWidget* Frame=
             WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
                 UOGGate12GothicChromeWidget::StaticClass());
         Frame->Configure(FLinearColor(.74f,.65f,.83f,1.f),
             INDEX_NONE,false);
-        Surface->AddChildToOverlay(Frame);
+        Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UOverlaySlot* FrameFill=Surface->AddChildToOverlay(Frame);
+        FrameFill->SetHorizontalAlignment(HAlign_Fill);
+        FrameFill->SetVerticalAlignment(VAlign_Fill);
         UOGGate12RulerActionButton* Button=
             WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
                 UOGGate12RulerActionButton::StaticClass());
@@ -785,13 +794,19 @@ void UOGGate12NativeRulerWidget::BuildHome()
             UTextBlock::StaticClass());
         Label->SetText(FText::FromString(Caption));
         Label->SetJustification(ETextJustify::Center);
-        Label->SetAutoWrapText(true);
+        // The three Figma chrome actions are narrow. Center compact,
+        // single-line text inside each full-surface native hit target.
+        Label->SetAutoWrapText(false);
         Label->SetColorAndOpacity(FSlateColor(
             FLinearColor(.87f,.84f,.93f,1.f)));
-        Label->SetFont(Gate10Type(30,true,true));
+        // Captured 26 pt ENTER WORLD clipped left by 4 pixels; 24 pt
+        // stays readable and remains entirely within the approved rail.
+        Label->SetFont(Gate10Type(24,true,true));
         CenterNativeButton(Button,Label);
-        Surface->AddChildToOverlay(Button);
-        Position(Surface,.69f,Y,.965f,Y+.103f);
+        UOverlaySlot* ButtonFill=Surface->AddChildToOverlay(Button);
+        ButtonFill->SetHorizontalAlignment(HAlign_Fill);
+        ButtonFill->SetVerticalAlignment(VAlign_Fill);
+        Position(Surface,.695f,Y,.967f,Y+.103f);
     };
     NativeAction(TEXT("ENTER WORLD"),TEXT("world"),.39f);
     NativeAction(TEXT("CHARACTERS"),TEXT("nav/1"),.515f);
@@ -1532,8 +1547,8 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
         UHorizontalBox::StaticClass(),TEXT("FrozenTerritoryMapTools"));
     Content->AddChildToVerticalBox(MapTools);
     for (const TPair<FString,FString>& Tool :
-        {TPair<FString,FString>(TEXT("＋"),TEXT("map/zoom-in")),
-         TPair<FString,FString>(TEXT("－"),TEXT("map/zoom-out")),
+        {TPair<FString,FString>(TEXT("+"),TEXT("map/zoom-in")),
+         TPair<FString,FString>(TEXT("-"),TEXT("map/zoom-out")),
          TPair<FString,FString>(TEXT("CENTER"),TEXT("map/center"))})
     {
         UVerticalBox* ToolCell=WidgetTree->ConstructWidget<UVerticalBox>(
