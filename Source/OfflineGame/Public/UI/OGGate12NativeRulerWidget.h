@@ -7,6 +7,7 @@
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
+class USizeBox;
 class UCanvasPanel;
 class UMaterialInstanceDynamic;
 class UScaleBox;
@@ -118,6 +119,12 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UVerticalBox> Content;
+
+    // The Characters destination fills the full available portrait area.
+    // Updated only on a genuine geometry change, not every frame.
+    UPROPERTY(Transient)
+    TObjectPtr<USizeBox> FullPageEmptyCharactersStage;
+    float LastCharactersViewportHeight = 0.f;
 
     UPROPERTY(Transient)
     TObjectPtr<UHorizontalBox> NavigationBar;

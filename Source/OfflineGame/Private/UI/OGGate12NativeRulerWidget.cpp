@@ -161,6 +161,18 @@ void UOGGate12NativeRulerWidget::NativeTick(
     // rotation from World, hide the whole Ruler surface until portrait fits.
     // In portrait, use the user-approved Gacha canvas or native other pages.
     const bool bPortrait = ViewportSize.Y > ViewportSize.X;
+    if (bPortrait && FullPageEmptyCharactersStage)
+    {
+        // No one-third-screen Character panel on tall phone displays.
+        // The safe-zone root has its own top title and bottom nav; this
+        // stage owns the entire remaining scrolling content height.
+        const float FullHeight=FMath::Max(1130.f,ViewportSize.Y-212.f);
+        if (FMath::Abs(FullHeight-LastCharactersViewportHeight)>5.f)
+        {
+            FullPageEmptyCharactersStage->SetHeightOverride(FullHeight);
+            LastCharactersViewportHeight=FullHeight;
+        }
+    }
     const bool bGachaVisible = bPortrait && Session &&
         Session->CurrentDestination == EOGRulerPrimaryDestination::Gacha;
     bGachaChromeWasVisible = bGachaVisible;
@@ -265,6 +277,10 @@ void UOGGate12NativeRulerWidget::BuildRoot()
 
     UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>(
         UScrollBox::StaticClass(), TEXT("RulerScrollableContent"));
+    // Keep every real roster, Records and Territory page scrollable, but
+    // never expose Slate's bright platform-default scrollbar in the
+    // approved dark Ruler presentation (observed as a white right rail).
+    Scroll->SetScrollBarVisibility(ESlateVisibility::Collapsed);
     UVerticalBoxSlot* ScrollSlot = Screen->AddChildToVerticalBox(Scroll);
     ScrollSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     ScrollSlot->SetPadding(FMargin(9.0f, 4.0f, 9.0f, 4.0f));
@@ -521,8 +537,12 @@ void UOGGate12NativeRulerWidget::BuildNav()
             : FLinearColor(.65f,.63f,.68f,1.f)));
         // Long destination captions must stay inside their actual fifth
         // of the screen; preserve readable point size without clipping.
-        Label->SetFont(Gate10Type(
-            Index==1 ? 16 : Index==3 ? 17 : 22,true,true));
+        // 360px wide S26-like portrait fixture gives only ~70px per
+        // destination: preserve all five full labels without text crossing
+        // native metal cell borders. The icon supplies visual emphasis.
+        const int32 CaptionSize =
+            (Index==1 || Index==3) ? 14 : 18;
+        Label->SetFont(Gate10Type(CaptionSize,true,true));
         Label->SetAutoWrapText(false);
         Label->SetMinDesiredWidth(0.f);
         UVerticalBoxSlot* InsigniaTitle =
@@ -587,6 +607,8 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     if (!Content) return;
     RosterGrid = nullptr;
     TerritoryMapWidget = nullptr;
+    FullPageEmptyCharactersStage = nullptr;
+    LastCharactersViewportHeight = 0.f;
     Content->ClearChildren();
     if (OpenIdentityIndex == INDEX_NONE || !bPrefer3DCharacterPresentation)
         ReleasePreviewStage();
@@ -830,33 +852,55 @@ void UOGGate12NativeRulerWidget::BuildRoster()
         // already implemented in BuildCharacterDetail().
         USizeBox* EmptyStage=WidgetTree->ConstructWidget<USizeBox>(
             USizeBox::StaticClass(),TEXT("CanonicalEmptyOwnedRosterStage"));
-        EmptyStage->SetMinDesiredHeight(620.f);
+        // Characters is its OWN full-viewport destination, not a 620-unit
+        // inset inside Home. The viewport is ~1250 Slate layout units on
+        // our 432x700 portrait fixture (DPI ~0.5). Fill it completely.
+        EmptyStage->SetMinDesiredHeight(1130.f);
+        FullPageEmptyCharactersStage=EmptyStage;
         UOverlay* EmptyLayers=WidgetTree->ConstructWidget<UOverlay>(
-            UOverlay::StaticClass());
+            UOverlay::StaticClass(),TEXT("CharacterEmptyFullscreenLayers"));
         UBorder* Black=WidgetTree->ConstructWidget<UBorder>(
             UBorder::StaticClass());
         Black->SetBrushColor(FLinearColor(.004f,.003f,.009f,1.f));
-        EmptyLayers->AddChildToOverlay(Black);
+        UOverlaySlot* BlackFill=EmptyLayers->AddChildToOverlay(Black);
+        BlackFill->SetHorizontalAlignment(HAlign_Fill);
+        BlackFill->SetVerticalAlignment(VAlign_Fill);
+        // Preserve the approved atmospheric artwork: this is scenery, not
+        // an invented hero or a duplicate of a non-owned Manifestation.
+        if (UTexture2D* ApprovedBack=LoadObject<UTexture2D>(nullptr,
+            TEXT("/Game/UI/Gate10/Opening/T_Gate10_VacantThroneBackdrop_V1."
+                 "T_Gate10_VacantThroneBackdrop_V1")))
+        {
+            UImage* AtmosphericArtwork=WidgetTree->ConstructWidget<UImage>(
+                UImage::StaticClass(),TEXT("CharacterFullPortraitBackdrop"));
+            AtmosphericArtwork->SetBrushFromTexture(ApprovedBack,true);
+            AtmosphericArtwork->SetOpacity(.38f);
+            AtmosphericArtwork->SetVisibility(ESlateVisibility::HitTestInvisible);
+            UOverlaySlot* ArtFill=EmptyLayers->AddChildToOverlay(AtmosphericArtwork);
+            ArtFill->SetHorizontalAlignment(HAlign_Fill);
+            ArtFill->SetVerticalAlignment(VAlign_Fill);
+        }
         UOGGate12GothicChromeWidget* Frame=
             WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
                 UOGGate12GothicChromeWidget::StaticClass());
-        Frame->Configure(FLinearColor(.48f,.43f,.57f,1.f),INDEX_NONE,false);
+        Frame->Configure(FLinearColor(.48f,.43f,.57f,.72f),INDEX_NONE,false);
         Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
         UOverlaySlot* FrameSlot=EmptyLayers->AddChildToOverlay(Frame);
         FrameSlot->SetHorizontalAlignment(HAlign_Fill);
         FrameSlot->SetVerticalAlignment(VAlign_Fill);
         UVerticalBox* Copy=WidgetTree->ConstructWidget<UVerticalBox>(
             UVerticalBox::StaticClass());
-        AddMessage(Copy,TEXT("NO CHARACTERS ACQUIRED"),26,TextMain);
+        AddMessage(Copy,TEXT("NO OWNED CHARACTERS"),31,TextMain);
         AddMessage(Copy,
-            TEXT("Your owned characters will appear here."),
-            17,TextMuted);
+            TEXT("Acquired characters appear here."),
+            18,TextMuted);
         UOverlaySlot* CopySlot=EmptyLayers->AddChildToOverlay(Copy);
         CopySlot->SetHorizontalAlignment(HAlign_Fill);
         CopySlot->SetVerticalAlignment(VAlign_Center);
         EmptyStage->AddChild(EmptyLayers);
-        Content->AddChildToVerticalBox(EmptyStage)
-            ->SetPadding(FMargin(5.f,12.f,5.f,12.f));
+        UVerticalBoxSlot* FullPage=Content->AddChildToVerticalBox(EmptyStage);
+        FullPage->SetHorizontalAlignment(HAlign_Fill);
+        FullPage->SetPadding(FMargin(1.f,2.f,1.f,4.f));
 #if !UE_BUILD_SHIPPING
         // The automated noncanonical source integrity fixture still needs
         // its direct qa/open entry point. It is intentionally NOT a visible
@@ -880,10 +924,11 @@ void UOGGate12NativeRulerWidget::BuildRoster()
 
     RosterGrid = WidgetTree->ConstructWidget<UUniformGridPanel>(
         UUniformGridPanel::StaticClass());
-    RosterGrid->SetSlotPadding(FMargin(3.0f));
+    RosterGrid->SetSlotPadding(FMargin(5.f,7.f));
     UScaleBox* Responsive = WidgetTree->ConstructWidget<UScaleBox>(
         UScaleBox::StaticClass());
     Responsive->SetStretch(EStretch::ScaleToFit);
+    Responsive->SetStretchDirection(EStretchDirection::DownOnly);
     Responsive->AddChild(RosterGrid);
     Content->AddChildToVerticalBox(Responsive);
     RebuildRosterGrid();
@@ -1054,8 +1099,10 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
             : Compared < 0;
     });
 
-    // Exactly three uniform portrait cards in original approved proportions.
-    constexpr float CardWidth = 144.0f;
+    // Exactly three TALL character portraits filling the full portrait
+    // page. 144 Slate units previously used barely half its available
+    // width; 262 x 3 plus gutters fits the 840-unit content viewport.
+    constexpr float CardWidth = 262.0f;
     const float CardHeight = CardWidth / GetApprovedRosterCardRatio();
     for (int32 Position = 0; Position < VisibleIndices.Num(); ++Position)
     {
@@ -2051,8 +2098,10 @@ void UOGGate12NativeRulerWidget::AddCharacterVisual(
     Fit->SetStretch(EStretch::ScaleToFit);
     Fit->AddChild(Image);
     USizeBox* Height = WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-    Height->SetMinDesiredWidth(380.f);
-    Height->SetMinDesiredHeight(590.f);
+    // Character visuals belong at near-full-page scale in their own
+    // detail card, not a 380-unit rotating side panel.
+    Height->SetMinDesiredWidth(780.f);
+    Height->SetMinDesiredHeight(1040.f);
     Height->AddChild(Fit);
     Parent->AddChildToVerticalBox(Height);
 }
@@ -2077,8 +2126,25 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
     AddMessage(Content,
         FString::Printf(TEXT("%d separately owned Manifestations"),
             Identity.ManifestationCount), 17, TextMuted);
-    AddAction(Content, bPrefer3DCharacterPresentation ? TEXT("PRESENTATION: 3D (switch to 2D)") : TEXT("PRESENTATION: 2D (switch to 3D)"), TEXT("presentation/toggle"));
-    AddCharacterVisual(Content, Identity, bPrefer3DCharacterPresentation);
+    // The 2D/3D switch is PART OF this owned character's visual card.
+    // It never appears as a free-floating Characters-page control.
+    UBorder* PortraitSurface=WidgetTree->ConstructWidget<UBorder>(
+        UBorder::StaticClass(),TEXT("OwnedCharacterFullscreenVisualCard"));
+    PortraitSurface->SetBrushColor(FLinearColor(.005f,.004f,.011f,1.f));
+    PortraitSurface->SetPadding(FMargin(8.f,10.f));
+    UVerticalBox* VisualCardContents=WidgetTree->ConstructWidget<UVerticalBox>(
+        UVerticalBox::StaticClass(),TEXT("OwnedCharacterVisualAndLocalControls"));
+    PortraitSurface->AddChild(VisualCardContents);
+    AddCharacterVisual(VisualCardContents, Identity,
+        bPrefer3DCharacterPresentation);
+    AddAction(VisualCardContents,
+        bPrefer3DCharacterPresentation
+            ? TEXT("3D VIEW  /  SELECT 2D")
+            : TEXT("2D VIEW  /  SELECT 3D"),
+        TEXT("presentation/toggle"));
+    UVerticalBoxSlot* VisualPanel=Content->AddChildToVerticalBox(PortraitSurface);
+    VisualPanel->SetPadding(FMargin(4.f,6.f,4.f,12.f));
+    VisualPanel->SetHorizontalAlignment(HAlign_Fill);
     for (int32 Index = 0; Index < Identity.Manifestations.Num(); ++Index)
     {
         const FOGRosterManifestationViewModel& Manifestation =
