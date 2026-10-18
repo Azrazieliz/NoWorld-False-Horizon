@@ -1,6 +1,6 @@
 """Read-only, subsecond master-method guard for every software-mastery job.
 
-All 45 recorded learned controls must be present. This checks the stored doctrine and known
+All 46 recorded learned controls must be present. This checks the stored doctrine and known
 native source fixes before an automated Gate task is dispatched; it does not claim
 to verify visual likeness, active game DLL state, texture parity or Android quality.
 """
@@ -12,7 +12,7 @@ import re
 
 HERE = pathlib.Path(__file__).resolve().parent
 LEDGER = HERE / "MASTER_LEARNED_METHODS_V1.json"
-REQUIRED = {"K%03d" % i for i in range(1, 46)}
+REQUIRED = {"K%03d" % i for i in range(1, 47)}
 GATES = {"Gate%02d" % i for i in range(1, 13)}
 SOURCE_SNIPPETS = {
     "SM01_Runtime_Source/SM01RuntimeController.cs": [
@@ -63,9 +63,10 @@ SOURCE_SNIPPETS = {
     "new_ref_gold_dancer_materials.py": ["surface_sources", "surface_edits", "alpha"],
     "kk_native_feature_alignment.py": ["figure_bbox", "register_boxes", "candidate_rois", "pose_normalization_verified"],
     "kk_registered_gate_optimizer.py": ["register_boxes", "native.run", "BEST_FEATURE_CROPS", "native_state_restored"],
-    "kk_benchmark_guard.py": ["require_permitted_step", "scored_native_sweep", "require_reversible_plan"],
+    "kk_benchmark_guard.py": ["require_permitted_step", "scored_native_sweep", "require_reversible_plan", "_LEGACY_NATIVE_SCRIPTS"],
     "kk_scored_benchmark_runner.py": ["kk_test08_gate_dispatch", "gate.run"],
-    "kk_native_visual_search.py": ["native_noise_measurement_valid", "benchmark_guard.require_permitted_step(step)"],
+    "kk_native_visual_search.py": ["native_noise_measurement_valid", "benchmark_guard.require_permitted_step(step)", "DIRECT_NATIVE_CLIENT_EDIT_BLOCKED", "_NATIVE_SUBMIT_AUTH"],
+    "test_kk_strict_native_dispatch_guard.py": ["ungated_test07plus_blocked", "direct_client_submit_blocked", "genuine_authorized_scored_edit_permitted"],
     "test_kk_native_feature_alignment.py": ["registered_selfscore_exceeds_unregistered_by_15", "wrong_top_lowers_its_own_feature"],
     "test_kk_registered_gate_optimizer.py": ["camera_zero_noise_is_valid", "native_baseline_restored"],
 }

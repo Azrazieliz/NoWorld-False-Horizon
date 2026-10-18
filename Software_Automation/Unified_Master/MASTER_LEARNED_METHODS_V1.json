@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-18T1039Z",
+  "revision": "2026-10-18T1123Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -461,6 +461,16 @@
       "evidence": "Test09 saved real native front render T09_RESTORED_FIT_front.png used in registered synthetic-reframing QA: old global coordinate 22.76/100 vs aligned 84.47/100; wrong top feature fell from 83.08 to 68.85. Reversible mocked native gate: baseline outfit 62.7 to correct 82.4; exact zero camera noise verified; 8/8 native alignment tests, 8/8 registered optimizer tests, original feature-gate and native optimizer regressions pass.",
       "status": "verified_scoring_correction_not_visual_quality_proof",
       "regression_test": "Must pass test_kk_native_feature_alignment.py and test_kk_registered_gate_optimizer.py using saved real native image, plus original test_kk_feature_gates.py, test_kk_native_visual_search.py, test_kk_gate_native_optimizer.py and test_kk_benchmark_guard.py. Check no ungated character save, masks required on complex backgrounds, zero verified noise admitted and uncertain pose/semantic fidelity never claimed."
+    },
+    {
+      "id": "K046",
+      "topic": "fail_closed_all_koikatsu_native_mutations_no_name_bypass",
+      "applies_to": "gate01",
+      "requirement": "Every future Test07+ and unnamed or differently named Koikatsu reconstruction must run via the verified full-reference feature-gated reversible native editing loop. Prior script-name only guarding missed kk_ref10_*.py. Never let unsupported new native setters run without the user original source present on Windows. Preserve original proven Test01-06 scripts.",
+      "procedure": "Treat all unrecognized scripts as gate-required by default; whitelist only historical named Test06 scripts and offline native QA tests. In kk_native_visual_search.client_factory(), direct submit of native payload is blocked without verified invoke call scope; invoke itself checks whether planned native mutation is authorized. Do not start artwork generation when the source image and annotated subject mask have not arrived on PC. Retain original 521d725 gates and original T06 evidence.",
+      "evidence": "Test10 improvised native modules named kk_ref10_* bypassed the previous script_requires_gate regex anchored to test##/t##. New strict test_kk_strict_native_dispatch_guard.py passes 11 cases: rename circumvention denied, direct client submission blocked, mock read-only inspection allowed, scoped genuine candidate allowed, out-of-plan edit denied, authorization expired and denied.",
+      "status": "verified_control_boundary_only_not_artistic_success",
+      "regression_test": "Run test_kk_strict_native_dispatch_guard.py and preserved kk_benchmark_guard, native visual search, native optimizer, reference gate dispatcher and registered optimizer tests; verify never saved or modified a Koikatsu character during the guard test. Source hash/ROI and baseline must be present for every candidate."
     }
   ]
 }

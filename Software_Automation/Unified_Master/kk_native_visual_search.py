@@ -9,7 +9,8 @@ Do not confuse image score with semantic recognition or production approval.
 Reference must be accessible locally on the authorized PC at native resolution.
 """
 from __future__ import annotations
-import argparse,contextlib,importlib.util,io,json,pathlib,sys,time,uuid
+import argparse,contextlib,contextvars,importlib.util,io,json,pathlib,sys,time,uuid
+_NATIVE_SUBMIT_AUTH=contextvars.ContextVar("nw_kk_verified_native_submit",default=None)
 import kk_one_session as master
 import kk_visual_fit as vision
 
@@ -58,7 +59,13 @@ def parse_spec(path):
 def client_factory():
     spec=importlib.util.spec_from_file_location("nw_sm01_client",master.CLIENT)
     m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
-    return m.submit
+    def scored_client_submit(payload,timeout=8):
+        # Direct client_factory().submit used by improvised scripts bypassed
+        # the scored-loop check in invoke(). Require its verified call scope.
+        if _NATIVE_SUBMIT_AUTH.get() is not payload:
+            raise RuntimeError("DIRECT_NATIVE_CLIENT_EDIT_BLOCKED: use invoke() under a scored reference gate")
+        return m.submit(payload,timeout)
+    return scored_client_submit
 
 def make_payload(step,nonce):
     args=step["args"]
@@ -92,8 +99,12 @@ def invoke(submit,step,timeout=8):
     payload=make_payload(step,nonce)
     log=io.StringIO()
     stamp=time.perf_counter()
-    with contextlib.redirect_stdout(log):
-        rc=submit(payload,timeout)
+    token=_NATIVE_SUBMIT_AUTH.set(payload)
+    try:
+        with contextlib.redirect_stdout(log):
+            rc=submit(payload,timeout)
+    finally:
+        _NATIVE_SUBMIT_AUTH.reset(token)
     try:last=json.loads(log.getvalue().strip().splitlines()[-1])
     except Exception as exc:raise RuntimeError("Malformed sandbox native receipt: "+str(exc))
     if rc!=0 or last.get("status")!="RECEIPT_WRITTEN":

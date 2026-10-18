@@ -18,13 +18,36 @@ _READ_ONLY={"render_camera_view","inspect_appearance","inspect_accessory",
  "export_surface_texture","inspect_morph","inspect_hair"}
 _FORBIDDEN={"save_derived_card","save_card","save_coordinate","delete_card"}
 
+# Only immutable prior practical tests and explicit OFFLINE unit suites may retain
+# the original ungated native mode. An arbitrary script name is never trusted.
+_LEGACY_NATIVE_SCRIPTS=frozenset({
+    "new_ref_white_gold_catalog.py",
+    "new_ref_gold_dancer_trial.py",
+    "new_ref_gold_dancer_materials.py",
+    "new_ref_long_hair_trials.py",
+    "new_ref_long_hair_contact.py",
+    "new_ref_gold_ornament_recolor.py",
+    "new_ref_face_body_fit.py",
+    "new_ref_gold_dancer_package.py",
+    "test_kk_native_visual_search.py",
+    "test_kk_gate_native_optimizer.py",
+    "test_kk_benchmark_guard.py",
+})
+
 def script_requires_gate(script_name=None):
-    """Detect benchmark entry points, rather than ordinary offline QA modules."""
+    """Fail closed for all new live Maker writers, regardless of filename.
+
+    The old prefix-only detection could be bypassed by renaming test10_*
+    to kk_ref10_* (the exact mistake made during the latest visual trial).
+    """
     if script_name is None:
         script_name=pathlib.Path(getattr(sys.modules.get("__main__"),"__file__","")).name
     name=pathlib.Path(script_name).name.lower()
-    m=re.match(r"^(?:test|t)0*(\d{1,3})(?:[_\-.]|$)",name)
-    return bool(m and int(m.group(1))>=7)
+    if name in _LEGACY_NATIVE_SCRIPTS:
+        return False
+    if re.match(r"^(?:test|t)0*([1-6])(?:[_\-.]|$)",name):
+        return False
+    return True
 
 def step_signature(step):
     return json.dumps({"op":step["op"],"args":step.get("args",{})},
