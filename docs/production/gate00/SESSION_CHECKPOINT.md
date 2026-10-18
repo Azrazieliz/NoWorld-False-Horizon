@@ -1,9 +1,18 @@
 # Gate 00 — Crash-safe session checkpoint
 
-Updated: 2026-10-17, Europe/Paris
+Updated: 2026-10-19, Europe/Paris
 Owner: Gate 00 (coordination and scope only)
-Work item: issue #25 live-state reconciliation
-Task status: DONE after branch push/issue update; gameplay production remains ACTIVE under Gate 12
+Work item: issue #25 P0 all-weapons cross-Gate correction and 18-family priority continuity
+Task status: ACTIVE until this P0 correction is pushed and issue #25 updated; Gate12 and specialist gameplay production remain INCOMPLETE
+
+## 2026-10-19 P0 cross-Gate decision and correction — current
+
+- **Actual Gate12 HEAD checked local AND origin:** `0e1004c04c438f834668a369e9119187888e8895` on `D:\UnrealProjects\OfflineGame_Gate12_Koikatsu_20261010`. Gate12 tracked Koikatsu files and untracked source/assets remain protected and unchanged by Gate00. Foundation remains frozen. On this inspection no running Unreal build was seen; recheck when next operating.
+- **Permanent weapon correction:** ALL weapon/attack families are valid, including fists, melee, sling, bow, firearm, future/energy, magic and nonhuman innate attacks. Frozen TWO combat executors unchanged. The obsolete code-first audit instruction `sword/melee (NOT firearms)` is now corrected in-place, and the current board records owner-specific inputs. Do not generate a universal rifle/sword pose.
+- **Real product progress already existing, do not rebuild:** Gate12's `3d51e41` equipment-neutral HUD/read-only `FOGCombatMotionPresentation` had recorded 4/4 UE build plus 1/1 targeted motion test. Its later `bd34762` innate, Ultimate and SFX additions are source-only and UNCOMPILED. Gate12 2026-10-18 checkpoint explicitly states defer further app builds while advancing implementable source; known-memory shortage prevented subsequent ARM64 link. No new app test or claim made by Gate00.
+- **All requested game scope retained:** Gate12's existing 2026-10-18 18-family/nine-UI factual audit already exists and remains open 18/18 at full gameplay acceptance. Gate00 did not rerun validated foundational tests, commission a duplicate audit, or constrain work to weapons. Real independent priorities include characters, UI, physical kingdom, interaction/13 real bodies, persistence/economy and Android device acceptance, with specialist content separately owned.
+- **Genuine cross-Gate blockers only:** Gate04 approved per-method targeting/contact/projectile/LOS/phase/hit contracts; Gate07 item anatomy slots, equipment/innate profile binding provenance and attachment rules; Gate09 actual skeleton-compatible weapon-specific motion layers, notifies, VFX/SFX. All three have exact actionable asks on the current live board and machine state, consuming Gate12's existing `GATE12_WEAPON_MOTION_DEPENDENCIES_20261018.md` instead of inventing duplicate schemas or a new executor. Gate12 continues independent code until genuine inputs arrive.
+- **Evidence/limitations:** Gate00 changed ONLY the coordination branch's source directives and tracking. No game C++/Blueprint, animation, weapon assets or Android binaries created or verified in this session. Confirm remote push and issue #25 update before declaring this Gate00-specific P0 correction DONE. Superseded 2026-10-17 observations follow for recovery history.
 
 ## Branch and recovery
 - Worktree: `D:\UnrealProjects\OfflineGame_Gate00_Coordination_20261017`

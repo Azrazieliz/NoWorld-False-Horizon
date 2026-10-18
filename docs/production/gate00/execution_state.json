@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_GATE00_EXECUTION_BOARD_V1",
-  "updated_local_date": "2026-10-17",
+  "updated_local_date": "2026-10-19",
   "timezone": "Europe/Paris",
   "authority": "Gate00/user; an intent and coordination register, not acceptance of untested game content",
   "single_issue": "https://github.com/Azrazieliz/Offline-Game/issues/25",
@@ -14,16 +14,17 @@
     "cook_authorized": true,
     "next_app_visible_adult_mode_requirement": true,
     "last_current_build_device_verification": "NOT_TESTED",
-    "authorization_scope": "Standing approval for routine non-destructive Android development compilation, cook, packaging, test signing, isolated APK install/update and physical QA; no repeated approval required.",
+    "authorization_scope": "Standing approval for non-destructive development APK/device QA, subject to later Gate12 user instruction deferring additional app builds until feasible source implementation is complete; never interrupt an in-flight build or attempt known-low-memory native link.",
+    "current_build_instruction": "DEFER_APP_BUILDS_UNTIL_FEASIBLE_SOURCE_WORK_COMPLETE (Gate12 checkpoint 2026-10-18 20:03 +02)",
     "production_app_exists": false,
     "production_release_authorized": false,
     "destructive_uninstall_or_data_wipe_authorized": false
   },
   "verified_git_heads": {
-    "Gate12": "c0681bb36b1f2266fa33178b431d2ecf00488e89",
+    "Gate12": "0e1004c04c438f834668a369e9119187888e8895",
     "SoftwareMastery": "4f636a14098fb63f9b4b31228c53393a5e3702dc",
     "Gate09": "39b90fd577e184f1c33b63c47c829407ba044333",
-    "Gate00_prior": "1ea882e8e6c655f16be2a8c4e0c24a2d2ae31ffc"
+    "Gate00_prior": "1cf31aba0e3a3e45ff34c62d7b18a6a4510ffd74"
   },
   "tasks": [
     {
@@ -31,8 +32,8 @@
       "owner": "Gate12",
       "status": "ACTIVE",
       "acceptance": "Actual iterative dev APK built/cooked/installed and physically tested with evidence for Ruler/World/roster/persistence/Adult Mode; no production release authorization",
-      "next": "Preserve dirty source; finish any active build; complete commissioned full code-first requirements traceability, ranked P0-P3 backlog, and implement/verify first P0 code fix; then perform authorized iterative isolated Android build/device QA with per-feature receipts.",
-      "source_sha": "c0681bb36b1f2266fa33178b431d2ecf00488e89"
+      "next": "Preserve dirty Koikatsu and untracked assets; continue independent P0/P1 native source-system integration and complete the outstanding 18-family gameplay scope without redoing validated modules. Existing weapon motion resolver is PARTIAL; innate/Ultimate/sound additions are source-only and uncompiled. Latest Gate12 checkpoint says DEFER new app builds until feasible source work is done; do not re-trigger an OOM build. When safe and authorized to resume, compile/test only meaningful changed code and proceed to real Android Ruler/World touch/device QA.",
+      "source_sha": "0e1004c04c438f834668a369e9119187888e8895"
     },
     {
       "id": "P0-FIDELITY",
@@ -93,11 +94,20 @@
       "next": null
     }
   ],
+  "cross_gate_weapon_action_p0": {
+    "scope": "Unarmed/fists, slingshots, bows, thrown/melee, firearms, futuristic and magic/innate/anatomy-specific attacks under existing two combat executors; no generic sword/pistol/rifle pose",
+    "Gate04": {"status": "BLOCKED_ON_APPROVED_COMBAT_CONTRACT", "next": "Deliver per-ability and weapon attack class, action/turn executor semantics, range/LOS/targeting, projectile/contact/collision, damage/hit/cancel windows and exact test cases without changing frozen rules."},
+    "Gate07": {"status": "BLOCKED_ON_APPROVED_ITEM_SOURCE", "next": "Deliver real equipment item IDs, allowed body/anatomical slots and combo compatibility, exact source of authored combat_motion_profile or approved read-only alternative, attachment/socket definitions and sample valid/invalid fixtures."},
+    "Gate09": {"status": "BLOCKED_ON_REAL_MOTION_AND_FX", "next": "Deliver actual rig/skeleton-specific authored idle/carry/movement/attack/aim/release/contact/recovery sequences with grip sockets, animation notifies, transitions, VFX/SFX asset bindings and render comparisons for at least unarmed, sling/bow, magic, firearm and tech styles."},
+    "Gate12": {"status": "PARTIAL_SOURCE_NOT_CURRENTLY_BUILT", "source_sha": "0e1004c04c438f834668a369e9119187888e8895", "next": "Preserve existing motion adapter and tests, integrate Gate04/07/09 deliverables and independently advance other P0/P1 gameplay. Current-build native/visual/Android acceptance remains NOT_TESTED."},
+    "dependencies_reference": "docs/production/gate12/GATE12_WEAPON_MOTION_DEPENDENCIES_20261018.md"
+  },
+  "game_scope": {"requested_feature_families": 18, "whole_family_accepted": 0, "source_audit": "docs/production/gate12/GATE12_USER_REQUIREMENTS_CURRENT_STATE_20261018.md", "note": "18/18 still have player-facing gaps; isolated Win64 23/23 is narrower navigation evidence."},
   "gate_workflows": {
     "Gate01-2D": "visual concept/approval only",
     "Gate01-3D": "Party native 3D/rig/materials/export source only"
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "No repeated permission for isolated development builds or tests. Gate12 must finish already commissioned code-first audit and first P0 code implementation while preserving dirty source; Android dev APK/device QA remains active and authorized. Ask only for destructive actions, public release or irreversible user-data changes."
+  "next_user_action": "No new user approval needed for authorized non-destructive future QA, but respect Gate12 2026-10-18 instruction to defer more app builds until meaningful source implementation. Gate12 should continue independent high-priority game systems and integrate actual Gate04/07/09 authored content when supplied; all 18 feature families still require player-facing work. Never ask for repeated global permissions; only for irreversible or destructive actions."
 }
