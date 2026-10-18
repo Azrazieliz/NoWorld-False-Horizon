@@ -1,3 +1,8 @@
+## 2026-10-18 ? P0 time protection, execution and permanent learning
+
+- Standing reusable policy and actual prior-UI root-cause corrections: docs/production/EXECUTION_LEARNING_LEDGER.md. Short diagnosis budget, no redundant work, apply corrections across systems, require real visual/native proof. Private examination details deliberately excluded from public Git.
+- Policy-only change; no production code, frozen assets, protected user edits or save files changed. Continue actual Gate10 visual parity and genuinely owned character integration.
+
 ## 2026-10-18 13:55 +02 - Full-page Characters native UI correction: built and 23/23 native-verified
 
 - User demanded that Characters occupy its entire portrait page rather than 1/3 of the screen, with polish closer to the provided mobile reference video. Existing commit before work 16e4e9749aa11e4e3ffc988a3c78596a09b18b83; no reset. Approved Figma Gacha art and protected Koikatsu edits untouched.
