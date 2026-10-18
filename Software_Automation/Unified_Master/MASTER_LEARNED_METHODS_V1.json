@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-18T0826Z",
+  "revision": "2026-10-18T1039Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -451,6 +451,16 @@
       "evidence": "Git 521d725 2026-10-17 at 21:47 predates Test06 21:52-22:06; original native Test06 script calls direct Maker, no optimizer. T06_RESULT_RECEIPT.json says original user reference image chat only, not on PC. User subsequently rated visual result 8/10.",
       "status": "verified_recovered_code_with_score_limit",
       "regression_test": "Compare four recovered native search and optimizer code/test blob SHA values to Git 521d725; fail on loss of Test06 user 8/10 continuity and on false claim the rating came from automatic gate scoring."
+    },
+    {
+      "id": "K045",
+      "topic": "native_roi_registration_and_verified_zero_noise",
+      "applies_to": "gate01",
+      "requirement": "Correct the Koikatsu full-reference scoring defect in which identical normalized image coordinates compare blank margins instead of the visible character when native Maker camera framing differs. Treat a verified unchanged-camera zero-noise measurement as valid, not uncalibrated. Reject unverified scoring and never retain regressions.",
+      "procedure": "For Test07+ execute only kk_scored_benchmark_runner.py and source/ROI/mask-validated kk_test08_gate_dispatch.py. Use kk_registered_gate_optimizer.py with kk_native_feature_alignment.py to map annotated source ROIs onto the actual fixed baseline Maker subject bounding box; reuse the same boxes for all reversibly scored candidates. Use native_noise_measurement_valid to separate exact-zero drift from failed calibration; reject all ungrounded missing source or mask. Original pre-Test06 optimizer remains untouched.",
+      "evidence": "Test09 saved real native front render T09_RESTORED_FIT_front.png used in registered synthetic-reframing QA: old global coordinate 22.76/100 vs aligned 84.47/100; wrong top feature fell from 83.08 to 68.85. Reversible mocked native gate: baseline outfit 62.7 to correct 82.4; exact zero camera noise verified; 8/8 native alignment tests, 8/8 registered optimizer tests, original feature-gate and native optimizer regressions pass.",
+      "status": "verified_scoring_correction_not_visual_quality_proof",
+      "regression_test": "Must pass test_kk_native_feature_alignment.py and test_kk_registered_gate_optimizer.py using saved real native image, plus original test_kk_feature_gates.py, test_kk_native_visual_search.py, test_kk_gate_native_optimizer.py and test_kk_benchmark_guard.py. Check no ungated character save, masks required on complex backgrounds, zero verified noise admitted and uncertain pose/semantic fidelity never claimed."
     }
   ]
 }

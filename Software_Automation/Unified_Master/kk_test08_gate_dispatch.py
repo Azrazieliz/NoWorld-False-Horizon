@@ -18,8 +18,10 @@ from PIL import Image
 import kk_reference_features as features
 import kk_feature_gates as gates
 import kk_gate_native_optimizer as optimizer
+import kk_registered_gate_optimizer as registered_optimizer
 import kk_native_visual_search as native
 import kk_one_session as one
+import kk_benchmark_guard as benchmark_guard
 
 HERE=pathlib.Path(__file__).resolve().parent
 BASELINE="521d725"
@@ -42,15 +44,22 @@ def status():
   rel=(pathlib.Path("Software_Automation")/"Unified_Master"/name).as_posix()
   a=subprocess.run(["git","-C",str(repo),"rev-parse",f"{BASELINE}:{rel}"],
                  text=True,capture_output=True,timeout=8)
-  b=subprocess.run(["git","-C",str(repo),"hash-object",str(HERE/name)],
+  # Preserve original source as a pristine on-disk copy while the live native
+  # invoke path enforces no-ungated-Test07+ changes.
+  live_path=(HERE/"kk_native_visual_search_521d725.py") if name=="kk_native_visual_search.py" else HERE/name
+  b=subprocess.run(["git","-C",str(repo),"hash-object",str(live_path)],
                  text=True,capture_output=True,timeout=8)
   if a.returncode or b.returncode or a.stdout.strip()!=b.stdout.strip():
    errors.append(name)
  if errors:raise RuntimeError("Original feature-gate source modified: "+", ".join(errors))
+ live=(HERE/"kk_native_visual_search.py").read_text(encoding="utf-8")
+ if "benchmark_guard.require_permitted_step(step)" not in live:
+  raise RuntimeError("Native edit path is not protected by scoring gate")
  return {"baseline_commit":BASELINE,"original_gate_files_verified":len(REQUIRED_FILES),
+         "native_mutation_gate_enforced":True,
          "last_user_rated_visual_benchmark":"Test06 8/10","test07_accepted":False,
          "test08_character_generated":False,"maker_started":False}
-def prepare(reference,annotations,plan_path,mask_path=None):
+def prepare(reference,annotations,plan_path,mask_path=None,benchmark_id="TEST08"):
  """Fail CLOSED without user image, visible ROIs, original catalog/native plan."""
  ref=pathlib.Path(reference)
  if not ref.is_file():raise FileNotFoundError("Original full-resolution reference is not on PC: "+str(ref))
@@ -59,7 +68,7 @@ def prepare(reference,annotations,plan_path,mask_path=None):
   rgb=im.convert("RGB")
   W,H=rgb.size
  note=json.loads(pathlib.Path(annotations).read_text(encoding="utf-8-sig"))
- if note.get("schema")!="NW_KK_TEST08_USER_GROUNDED_FEATURES_V1":
+ if note.get("schema") not in ("NW_KK_TEST08_USER_GROUNDED_FEATURES_V1","NW_KK_USER_GROUNDED_FEATURES_V1"):
   raise ValueError("Missing Test08 feature annotation schema")
  if note.get("reference_sha256")!=sha(ref):
   raise ValueError("Annotation not bound to original reference bytes")
@@ -102,7 +111,7 @@ def prepare(reference,annotations,plan_path,mask_path=None):
   raise ValueError("Native trial plan reference must be the SAME original image")
  if not plan.get("restore_baseline") or not plan.get("candidates"):
   raise ValueError("A/B trials must restore original Maker baseline")
- if not all(x in note for x in ("view","benchmark_id")) or note["benchmark_id"]!="TEST08":
+ if not all(x in note for x in ("view","benchmark_id")) or note["benchmark_id"]!=benchmark_id:
   raise ValueError("Wrong benchmark identity")
  view=note["view"]
  if view!=plan["view"]:
@@ -115,9 +124,9 @@ def prepare(reference,annotations,plan_path,mask_path=None):
            "view":view,"verified_features":verified,
            "masked_reference":mask_source is not None}
  return prepared,boxes,mask_source,plan
-def run(reference,annotations,plan,out_dir,mask=None):
+def run(reference,annotations,plan,out_dir,mask=None,benchmark_id="TEST08"):
  status()
- prepared,boxes,pixels,native_plan=prepare(reference,annotations,plan,mask)
+ prepared,boxes,pixels,native_plan=prepare(reference,annotations,plan,mask,benchmark_id=benchmark_id)
  out=pathlib.Path(out_dir)
  if out.exists():raise FileExistsError("Never overwrite Test08 evidence or earlier runs")
  # ALL validation and Maker guards precede writes and native edits.
@@ -144,15 +153,18 @@ def run(reference,annotations,plan,out_dir,mask=None):
       "mask_file":str(mask) if mask else None,"actual_scoring_image":str(mask_ref),
       "source_pixels_modified":False},indent=2),encoding="utf-8")
  (out/"FEATURES_MANIFEST.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
- result=optimizer.run(scored_plan,manifest,out/"GATED_NATIVE_TRIALS")
+ with benchmark_guard.scored_native_sweep(scored_plan,manifest):
+  result=registered_optimizer.run(scored_plan,manifest,out/"GATED_NATIVE_TRIALS",
+        reference_mask=mask)
  candidates=result["candidates_ranked"]
  # Native delta must exist and exceed calibrated same-state movement.
  sweep=json.loads((out/"GATED_NATIVE_TRIALS"/"NATIVE_NONDESTRUCTIVE_SWEEP.json").read_text())
  changes={x["label"]:x.get("visible_delta",{}) for x in sweep.get("results",[])}
  noise=sweep.get("native_pixel_noise_floor")
- noise_valid=type(noise) in (int,float) and 0<noise<.90
- # Existing original sweep can silently substitute 0 after repeat-camera error.
- # Without positive independent noise evidence, do not present any score as improved.
+ noise_valid=(sweep.get("native_noise_measurement_valid") is True and
+              type(noise) in (int,float) and 0<=noise<.90)
+ # A perfectly stable camera has VALID calibrated noise of 0. Only missing
+ # repeat-camera evidence, not an exact zero, must block scored improvements.
  provisional=[r for r in candidates if r["eligible_for_user_review"] and
             not r["feature_regressions"] and len(r["feature_improvements"])>0
             and noise_valid and changes.get(r["label"],{}).get("measurably_changed") is True]
@@ -161,7 +173,8 @@ def run(reference,annotations,plan,out_dir,mask=None):
  baseline={f["id"]:f for f in result["baseline"]["features"]}
  eligible=[];rejected={}
  for r in provisional:
-  measured=gates.score_features(manifest,r["native_render"])
+  measured=gates.score_features(manifest,r["native_render"],
+      rois=result["registration"]["candidate_rois"])
   losses=[f["id"] for f in measured["features"] if f["critical"] and
      (f["score_0_to_100"] < baseline[f["id"]]["score_0_to_100"]-2.0 or
       not f["feature_identity_verified"])]
@@ -169,9 +182,11 @@ def run(reference,annotations,plan,out_dir,mask=None):
      f["score_0_to_100"] > baseline[f["id"]]["score_0_to_100"]+4.0]
   if losses or not gains:rejected[r["label"]]={"critical_losses":losses,"gains":gains}
   else:eligible.append(r)
- decision={"schema":"NW_KK_TEST08_GATE_DISPATCH_V1",
+ decision={"schema":"NW_KK_BENCHMARK_GATE_DISPATCH_V1","benchmark_id":benchmark_id,
     "native_state_restored":result["native_state_restored"],
     "native_noise_baseline_confirmed":noise_valid,
+    "native_feature_regions_registered":bool(result.get("registration")),
+    "registered_native_roi_map":result["registration"]["candidate_rois"],
     "candidate_count":len(candidates),
     "no_critical_feature_regressions":[r["label"] for r in eligible],
     "candidates_blocked_for_critical_loss":rejected,
@@ -180,7 +195,7 @@ def run(reference,annotations,plan,out_dir,mask=None):
     "user_visual_rating":None,
     "no_paid_conversion":True,
     "source_sha256":prepared["ref_sha256"]}
- (out/"TEST08_VISUAL_GATE_DECISION.json").write_text(json.dumps(decision,indent=2))
+ (out/(benchmark_id+"_VISUAL_GATE_DECISION.json")).write_text(json.dumps(decision,indent=2))
  return decision
 def main():
  p=argparse.ArgumentParser(description=__doc__)

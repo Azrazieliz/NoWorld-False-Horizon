@@ -14,7 +14,10 @@ import kk_one_session as master
 import kk_visual_fit as vision
 
 OP_SET={"set_eye_iris","set_iris_asset","set_hair_palette","set_hair","set_clothes",
-        "set_clothes_top","set_accessory_vector","apply_morph_batch"}
+        "set_clothes_top","set_accessory_vector","apply_morph_batch",
+        "apply_accessory","apply_accessory_native","set_accessory_parent",
+        "set_surface_color","set_surface_float","set_surface_shader",
+        "apply_surface_texture","set_clothes_state"}
 PROFILE_OPS={"set_hair_palette","set_hair","set_clothes_top","set_accessory_vector"}
 VIEWS={"face","front","upper","body"}
 ROOT=pathlib.Path(r"D:\UnrealProjects\NW_Blender_Private_Review_20261017\REFERENCE_GUIDED_QA")
@@ -81,6 +84,10 @@ def make_payload(step,nonce):
     return out
 
 def invoke(submit,step,timeout=8):
+    # Benchmark Test07+ must not bypass the source-grounded scored optimizer.
+    # Read-only camera/inspection operations remain available.
+    import kk_benchmark_guard as benchmark_guard
+    benchmark_guard.require_permitted_step(step)
     nonce="NWFIT_"+uuid.uuid4().hex[:14]
     payload=make_payload(step,nonce)
     log=io.StringIO()
@@ -119,12 +126,16 @@ def run(data,out,submit=None,game_guard=True,score=vision.evaluate):
     try:
         restore()
         baseline_path,baseline_capture_sec=screenshot()
+        noise_measurement_valid=False
+        noise_measurement_error=None
         try:
             repeat_path,_=screenshot()
             drift=vision.measure_visible_change(str(baseline_path),str(repeat_path))
             noise_floor=drift['changed_subject_fraction']
-        except (ValueError,OSError):
+            noise_measurement_valid=True  # exact identical repeat with zero noise IS valid
+        except (ValueError,OSError) as ex:
             noise_floor=0.
+            noise_measurement_error=str(ex)[:180]
         baseline_eval=score(ref,str(baseline_path),reference_roi=roi,candidate_roi=candidate_roi)
         baseline_score=baseline_eval["score_0_to_100"]
         baseline_semantic=None
@@ -180,6 +191,8 @@ def run(data,out,submit=None,game_guard=True,score=vision.evaluate):
      "baseline_image":str(baseline_path) if baseline_ok else None,
      "results":results,"failures":failed,"best":best,
      "baseline_restored":restored,"native_calls_without_restart":True,
+     "native_noise_measurement_valid":noise_measurement_valid if baseline_ok else False,
+     "native_noise_measurement_error":noise_measurement_error if baseline_ok else "baseline unavailable",
      "recommendation":recommendation,"min_improvement_margin":margin,"native_pixel_noise_floor":noise_floor,
      "candidate_count":len(data["candidates"]),
      "total_elapsed_seconds":round(time.perf_counter()-started,2),
