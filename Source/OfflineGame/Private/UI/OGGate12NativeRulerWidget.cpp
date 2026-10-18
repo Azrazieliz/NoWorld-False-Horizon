@@ -36,6 +36,7 @@
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/UniformGridPanel.h"
+#include "Components/UniformGridSlot.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/GameInstance.h"
@@ -279,26 +280,17 @@ void UOGGate12NativeRulerWidget::BuildRoot()
     BottomFrame->SetPadding(FMargin(3.f,5.f));
     UOverlay* NavLayers=WidgetTree->ConstructWidget<UOverlay>(
         UOverlay::StaticClass(),TEXT("GachaDerivedFiveNativeNavLayer"));
-    static const TCHAR* NavPackage =
-        TEXT("/Game/UI/Gate10/Chrome/T_Gate10_SharedFiveNavChrome_Neutral."
-             "T_Gate10_SharedFiveNavChrome_Neutral");
-    if (UTexture2D* NavTexture=LoadObject<UTexture2D>(nullptr,NavPackage))
-    {
-        UImage* EtchedNav=WidgetTree->ConstructWidget<UImage>(
-            UImage::StaticClass(),TEXT("Gate10FiveNavNeutralFigmaArt"));
-        EtchedNav->SetBrushFromTexture(NavTexture,true);
-        EtchedNav->SetVisibility(ESlateVisibility::HitTestInvisible);
-        UOverlaySlot* ArtSlot=NavLayers->AddChildToOverlay(EtchedNav);
-        ArtSlot->SetHorizontalAlignment(HAlign_Fill);
-        ArtSlot->SetVerticalAlignment(VAlign_Fill);
-    }
+    // The imported shared raster had an opaque WHITE backing and enlarged
+    // filigree crossing all five native hitboxes. Do not draw it. Keep the
+    // approved Gacha asset untouched, use separately clipped native dark
+    // metal chrome for each real navigation destination below.
     UOverlaySlot* NativeButtons=NavLayers->AddChildToOverlay(NavigationBar);
     NativeButtons->SetHorizontalAlignment(HAlign_Fill);
     NativeButtons->SetVerticalAlignment(VAlign_Fill);
     BottomFrame->AddChild(NavLayers);
     USizeBox* NativeNavHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(),TEXT("Gate10FiveNativeButtonsFullHeight"));
-    NativeNavHeight->SetMinDesiredHeight(146.f);
+    NativeNavHeight->SetMinDesiredHeight(126.f);
     NativeNavHeight->AddChild(BottomFrame);
     UVerticalBoxSlot* NavSlot = Screen->AddChildToVerticalBox(NativeNavHeight);
     NavSlot->SetPadding(FMargin(5.0f, 5.0f, 5.0f, 6.0f));
@@ -530,7 +522,7 @@ void UOGGate12NativeRulerWidget::BuildNav()
         // Long destination captions must stay inside their actual fifth
         // of the screen; preserve readable point size without clipping.
         Label->SetFont(Gate10Type(
-            Index==1 || Index==3 ? 20 : 24,true,true));
+            Index==1 ? 16 : Index==3 ? 17 : 22,true,true));
         Label->SetAutoWrapText(false);
         Label->SetMinDesiredWidth(0.f);
         UVerticalBoxSlot* InsigniaTitle =
@@ -545,16 +537,13 @@ void UOGGate12NativeRulerWidget::BuildNav()
                 UOGGate12GothicChromeWidget::StaticClass());
         Gothic->Configure(bSelected ? ContextAccent
             : FLinearColor(.49f,.46f,.54f,1.f),Index,bSelected);
-        Layers->AddChildToOverlay(Button);
-        // The exact approved Gacha chrome derivative supplies the ornamental
-        // rails when installed; use native vector chrome as a safe fallback.
-        if (!LoadObject<UTexture2D>(nullptr,
-            TEXT("/Game/UI/Gate10/Chrome/T_Gate10_SharedFiveNavChrome_Neutral."
-                 "T_Gate10_SharedFiveNavChrome_Neutral")))
-        {
-            Gothic->SetVisibility(ESlateVisibility::HitTestInvisible);
-            Layers->AddChildToOverlay(Gothic);
-        }
+        UOverlaySlot* RealNavHit=Layers->AddChildToOverlay(Button);
+        RealNavHit->SetHorizontalAlignment(HAlign_Fill);
+        RealNavHit->SetVerticalAlignment(VAlign_Fill);
+        Gothic->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UOverlaySlot* BoundedNavChrome=Layers->AddChildToOverlay(Gothic);
+        BoundedNavChrome->SetHorizontalAlignment(HAlign_Fill);
+        BoundedNavChrome->SetVerticalAlignment(VAlign_Fill);
         UHorizontalBoxSlot* NavigationCell =
             NavigationBar->AddChildToHorizontalBox(Layers);
         NavigationCell->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -719,19 +708,21 @@ void UOGGate12NativeRulerWidget::BuildHome()
     HomeRails->SetVisibility(ESlateVisibility::HitTestInvisible);
     Position(HomeRails,.016f,.011f,.983f,.994f);
 
-    // Editable Figma artwork shared with Gate10's accepted Gacha language.
-    // It contains ONLY decorative shapes, never mockup characters or data.
-    // Native hit targets and canonical labels remain layered independently.
+    // The former Home wallpaper embedded three obsolete duplicate actions.
+    // Do NOT flatten, mask with opaque panels or present unclickable chrome.
+    // Use the ALREADY APPROVED Opening 04 throne architecture as a subtle
+    // full-width environment backdrop. Canonical content remains a separate
+    // native interactive layer; no character image or ownership is fabricated.
     if (UTexture2D* HomeArt=LoadObject<UTexture2D>(nullptr,
-        TEXT("/Game/UI/Gate10/Chrome/T_Gate10_HomeChrome_V1."
-             "T_Gate10_HomeChrome_V1")))
+        TEXT("/Game/UI/Gate10/Opening/T_Gate10_VacantThroneBackdrop_V1."
+             "T_Gate10_VacantThroneBackdrop_V1")))
     {
-        UImage* Chrome=WidgetTree->ConstructWidget<UImage>(
-            UImage::StaticClass(),TEXT("Gate10HomeFigmaChromeOnly"));
-        Chrome->SetBrushFromTexture(HomeArt,true);
-        Chrome->SetVisibility(ESlateVisibility::HitTestInvisible);
-        Chrome->SetOpacity(Session->OwnedRoster.IsEmpty()?1.f:.32f);
-        Position(Chrome,0.f,0.f,1.f,1.f);
+        UImage* Environment=WidgetTree->ConstructWidget<UImage>(
+            UImage::StaticClass(),TEXT("Gate10HomeApprovedThroneEnvironment"));
+        Environment->SetBrushFromTexture(HomeArt,true);
+        Environment->SetVisibility(ESlateVisibility::HitTestInvisible);
+        Environment->SetOpacity(Session->OwnedRoster.IsEmpty() ? .56f : .26f);
+        Position(Environment,0.f,.08f,1.f,.90f);
     }
 
     auto TextAt=[this,&Position](const FString& String,
@@ -750,17 +741,13 @@ void UOGGate12NativeRulerWidget::BuildHome()
     };
     const FLinearColor Silver(.84f,.81f,.90f,1.f);
     const FLinearColor Dim(.56f,.53f,.64f,1.f);
-    TextAt(TEXT("THE RULER"),TEXT("Gate10HomeRulerIdentifierTitle"),
-        .07f,.033f,.63f,.090f,49,Silver);
-    TextAt(FString::Printf(TEXT("ID  %s"),
-        *Session->BoundRulerId.ToString().Left(14)),
-        TEXT("HomeActualBoundRulerID"),.10f,.090f,.64f,.13f,20,Dim);
-    if (Session->OwnedRoster.IsEmpty())
-    {
-        TextAt(TEXT("NO OWNED MANIFESTATIONS"),
-            TEXT("ActualEmptyRosterOnHome"),
-            .12f,.485f,.63f,.55f,24,Dim);
-    }
+    // Ruler is the canonical account/world actor, NOT a Character
+    // Manifestation. Never show opaque persistence IDs or promote empty
+    // ownership records to the Home screen.
+    TextAt(TEXT("RULER MODE"),TEXT("Gate10HomeActualModeTitle"),
+        .075f,.045f,.92f,.13f,45,Silver);
+    TextAt(TEXT("WORLD OVERVIEW"),TEXT("Gate10HomeCanonicalOverview"),
+        .12f,.535f,.88f,.61f,27,Silver);
 
     auto NativeAction=[this,&Position](const TCHAR* Caption,
         const TCHAR* Action,float Y)
@@ -806,11 +793,11 @@ void UOGGate12NativeRulerWidget::BuildHome()
         UOverlaySlot* ButtonFill=Surface->AddChildToOverlay(Button);
         ButtonFill->SetHorizontalAlignment(HAlign_Fill);
         ButtonFill->SetVerticalAlignment(VAlign_Fill);
-        Position(Surface,.695f,Y,.967f,Y+.103f);
+        Position(Surface,.17f,Y,.83f,Y+.095f);
     };
-    NativeAction(TEXT("ENTER WORLD"),TEXT("world"),.39f);
-    NativeAction(TEXT("CHARACTERS"),TEXT("nav/1"),.515f);
-    NativeAction(TEXT("GACHA"),TEXT("nav/2"),.64f);
+    // World is the only Home CTA. Characters/Gacha remain in the permanent
+    // five-way nav; duplicate destinations are removed, not merely hidden.
+    NativeAction(TEXT("ENTER WORLD"),TEXT("world"),.735f);
 
     UBorder* Rule=WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass());
@@ -838,13 +825,42 @@ void UOGGate12NativeRulerWidget::BuildRoster()
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session || Session->OwnedRoster.IsEmpty())
     {
-        AddMessage(Content, TEXT("No owned character Manifestations."), 18, TextMuted);
+        // No invented portrait, no stand-alone rotating QA tab in the
+        // production roster. The per-owned-Manifestation 2D/3D switch is
+        // already implemented in BuildCharacterDetail().
+        USizeBox* EmptyStage=WidgetTree->ConstructWidget<USizeBox>(
+            USizeBox::StaticClass(),TEXT("CanonicalEmptyOwnedRosterStage"));
+        EmptyStage->SetMinDesiredHeight(620.f);
+        UOverlay* EmptyLayers=WidgetTree->ConstructWidget<UOverlay>(
+            UOverlay::StaticClass());
+        UBorder* Black=WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass());
+        Black->SetBrushColor(FLinearColor(.004f,.003f,.009f,1.f));
+        EmptyLayers->AddChildToOverlay(Black);
+        UOGGate12GothicChromeWidget* Frame=
+            WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
+                UOGGate12GothicChromeWidget::StaticClass());
+        Frame->Configure(FLinearColor(.48f,.43f,.57f,1.f),INDEX_NONE,false);
+        Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UOverlaySlot* FrameSlot=EmptyLayers->AddChildToOverlay(Frame);
+        FrameSlot->SetHorizontalAlignment(HAlign_Fill);
+        FrameSlot->SetVerticalAlignment(VAlign_Fill);
+        UVerticalBox* Copy=WidgetTree->ConstructWidget<UVerticalBox>(
+            UVerticalBox::StaticClass());
+        AddMessage(Copy,TEXT("NO CHARACTERS ACQUIRED"),26,TextMain);
+        AddMessage(Copy,
+            TEXT("Your owned characters will appear here."),
+            17,TextMuted);
+        UOverlaySlot* CopySlot=EmptyLayers->AddChildToOverlay(Copy);
+        CopySlot->SetHorizontalAlignment(HAlign_Fill);
+        CopySlot->SetVerticalAlignment(VAlign_Center);
+        EmptyStage->AddChild(EmptyLayers);
+        Content->AddChildToVerticalBox(EmptyStage)
+            ->SetPadding(FMargin(5.f,12.f,5.f,12.f));
 #if !UE_BUILD_SHIPPING
-        AddAction(Content,
-            bDevelopmentQaViewerOpen
-                ? TEXT("CLOSE DEVELOPMENT 3D SOURCE VIEWER")
-                : TEXT("VIEW EXISTING LUMINOUS 3D QA SOURCE (NOT OWNED)"),
-            bDevelopmentQaViewerOpen ? TEXT("qa/close") : TEXT("qa/open"));
+        // The automated noncanonical source integrity fixture still needs
+        // its direct qa/open entry point. It is intentionally NOT a visible
+        // roster action or a fictional owned Character card.
         if (bDevelopmentQaViewerOpen)
             BuildDevelopmentQaCharacterViewer();
 #endif
@@ -1568,8 +1584,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
     if (Territory.Territories.IsEmpty())
     {
         AddMessage(Content,
-            TEXT("No territorial holdings in this world. "
-                 "World ownership and geography have not been invented."),
+            TEXT("No territories are owned in this world."),
             17, TextMuted);
         return;
     }
@@ -1712,7 +1727,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         Sub->SetAutoWrapText(true);
         Sub->SetWrapTextAt(212.f);
         Sub->SetColorAndOpacity(FSlateColor(TextMuted));
-        Sub->SetFont(Gate10Type(21,false,true));
+        Sub->SetFont(Gate10Type(18,false,true));
         UVerticalBoxSlot* SubtitleSlot=Face->AddChildToVerticalBox(Sub);
         SubtitleSlot->SetHorizontalAlignment(HAlign_Fill);
         SubtitleSlot->SetPadding(FMargin(6.f,4.f,6.f,6.f));
@@ -1775,9 +1790,14 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         Frame->AddChild(OrnamentedRecord);
         USizeBox* Size = WidgetTree->ConstructWidget<USizeBox>(
             USizeBox::StaticClass());
-        Size->SetMinDesiredHeight(400.f);
+        // Every Records tile MUST have identical actual geometry; minimum
+        // desired height leaves mixed-length text cards unequal on screen.
+        Size->SetHeightOverride(400.f);
         Size->AddChild(Frame);
-        Board->AddChildToUniformGrid(Size, Index/2, Index%2);
+        UUniformGridSlot* RecordCell=
+            Board->AddChildToUniformGrid(Size, Index/2, Index%2);
+        RecordCell->SetHorizontalAlignment(HAlign_Fill);
+        RecordCell->SetVerticalAlignment(VAlign_Fill);
     }
     UBorder* DetailFrame = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("RecordsCanonicalDetailFrame"));
