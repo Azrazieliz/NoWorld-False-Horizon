@@ -1,3 +1,16 @@
+# Gate09 CURRENT UNREAL NATIVE CHECKPOINT — 2026-10-19
+
+**User request:** Test genuine Koikatsu movements in Unreal 5.8.3 and import all converted compatible assets on PASS.
+**TRUE CURRENT STATUS:** **4/4 native Unreal AnimSequences imported, saved and independently cold-validated**, exact copied **975-bone** Luminous V3 CLOTHED native skeleton, frame rates 30 fps and valid durations; 975/975 native case-insensitive bone name matches, nonzero Unreal-evaluated head/Center pose changes. **Not yet artistic/gameplay/Android accepted; remaining unconverted ~1,533 raw Unity clips and mod contents NOT imported**.
+**Standalone Unreal QA location:** `D:\UnrealProjects\Gate09_Unreal583_Animation_QA_20261019\G09_AnimQA.uproject`. Four actual saved `.uasset` files in `Content/Gate09_QA_20261019`, six SHA-unchanged original skeletal assets copied from Gate12 at their original package paths. Source Gate12 worktree not modified.
+**Native proof ZIP:** `D:\UnrealProjects\Gate09_Protected_Production_20261016\GATE09_UNREAL583_NATIVE_FOUR_CLIPS_20261019.zip`, SHA-256 `c197b1ae2445ec454656b92372ae2b8834c62121c07a59065ae3b356be0ea57d`, 3,936,945 bytes, 30 entries, ZIP integrity PASS, 4 verified AnimSequence `.uasset` + 6 copied original skeletal `.uasset` + independent full source and native cold verification receipts + standalone editor `.uproject`. Private local only.
+**Canonical technical detail:** `docs/production/gate09/GATE09_UNREAL583_NATIVE_FOUR_CLIP_IMPORT_QA_20261019.md`. Reproducible scripts `ue583_isolated_import_single.py`, `ue583_isolated_batch_if_tracks_pass.py`, `ue583_isolated_cold_pose_qa.py`, `test_ue583_native_motion_qadelivery.py`.
+**Native receipts:** `Saved/Gate09QA/unreal_02_track_verified_batch.json` and `unreal_03_cold_pose_qa.json`, status PASS; first import probe false negative resolved via UE5.8 `AnimDataModel` instead of unavailable AnimationBlueprintLibrary. Corrected Python FName casefold mistake.
+**Regression:** Gate09 QA 5/5 PASS, shared Master K048 recorded with 44/44 master regressions PASS.
+**Scope still open:** Gate12 gameplay Character/AnimBP integration, whole-character full-color visual QA, all additional locomotion/flight/swim/attack/climb and separate dance/adult sources, facial morph runtime, cross-wardrobe compatibility, independent Android performance. No fake production PASS and no content mass-adoption beyond tested assets.
+**Next step:** Gate12 may use protected native QA project/package under own UE runtime authority; Gate09 must source/author actual movement/expressive content and solve individual rig/visual compatibility before adding any more. Preserve original Luminous/Alter source cards, Registry v2, Foundation `3f54f07cacbf193e160d0be15a7be5a7bc730c3b`, PR16.
+---
+
 # Gate09 CURRENT SESSION CHECKPOINT — 2026-10-19
 
 **Current task:** Authentic installed Koikatsu Unity standing animation → genuine editable Luminous source → UE interchange; facial/adult source inventory. **STATUS: SOURCE_VALIDATED / EDITABLE_4_ACTIONS / FBX_REIMPORT_PASS; ARTISTIC_QA_PARTIAL; UE_AND_ANDROID_NOT_TESTED.**
