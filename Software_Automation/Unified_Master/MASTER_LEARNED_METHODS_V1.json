@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-18T1123Z",
+  "revision": "2026-10-19T1459Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -471,6 +471,16 @@
       "evidence": "Test10 improvised native modules named kk_ref10_* bypassed the previous script_requires_gate regex anchored to test##/t##. New strict test_kk_strict_native_dispatch_guard.py passes 11 cases: rename circumvention denied, direct client submission blocked, mock read-only inspection allowed, scoped genuine candidate allowed, out-of-plan edit denied, authorization expired and denied.",
       "status": "verified_control_boundary_only_not_artistic_success",
       "regression_test": "Run test_kk_strict_native_dispatch_guard.py and preserved kk_benchmark_guard, native visual search, native optimizer, reference gate dispatcher and registered optimizer tests; verify never saved or modified a Koikatsu character during the guard test. Source hash/ROI and baseline must be present for every candidate."
+    },
+    {
+      "id": "K047",
+      "topic": "koikatsu_unity_clip_to_real_blender_unreal_fbx_source",
+      "applies_to": "gate09|gate12",
+      "requirement": "Use real original Unity AnimationClip and native Koikatsu prefab Transform CRC hashes and verified rest-space basis before calling a standing motion clip compatible with Luminous; Blender FBX reimport and artistic quality must be reported separately from Unreal runtime.",
+      "procedure": "Read installed abdata/action/animator/14.unity3d through vendored UnityPy 1.25.4 without modifying it. Decode genericBindings path CRC32 and 3/4/3 component widths; streamed frames as float time/key count/5 uint32 words per key, dense sample arrays, constants; map all 234 hashes through original abdata/chara/oo_base.unity3d Transform hierarchy. Preserve 30fps Unity samples/rest quaternions and source SHA. Solve source-specific reflected world axis basis using actual native Blender rest points (19 paired joints), align local rotations through source/target world rest axes, bake into unchanged Luminous 975-bone Blender armature, visually reject T poses/bad emotes, export animation-only FBX, and clean-reimport to verify 975 bones plus moving evaluated joints. Never accept artist quality or Unreal playback from Blender QA alone.",
+      "evidence": "2026-10-19 Gate09 verified 1537 source clips, 234/234 exact CRC32 paths, 3 original standing clips + one alternate, 192/230 mapped animation bones, basis determinant -1 and 19-point measured fit, four native Blender 5.2.2 Actions (three idles plus bow), four 975-bone FBX reimports with nonzero skeletal movement, visual captures and seven real source QA regression checks.",
+      "status": "verified_native_source_blender_interchange_art_unreal_pending",
+      "regression_test": "Gate09 Scripts/Gate09/test_authentic_koikatsu_unity_transfer.py checks original source SHA, all 234 prefab CRC32 resolved, quaternion unit norms, genuine Blender action source SHA, four FBX native 975-joint moving reimports, visual capture source SHA, facial plugin provenance and rights/Unreal approvals withheld."
     }
   ]
 }
