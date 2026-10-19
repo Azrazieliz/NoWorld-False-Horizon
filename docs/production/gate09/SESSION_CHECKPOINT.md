@@ -1,3 +1,17 @@
+# Gate09 Luminous Valentine Base v6 ACTUAL COMBAT SOURCE + NATIVE UE CHECKPOINT — 2026-10-19
+
+**New actual assets:** 3 genuine Koikatsu-compatible installed Mixamo sword-motion clip sources resolved against source prefab 93/128 unique CRC paths each, retargeted as THREE Blender actions on exact approved Luminous V3 975-bone character, exported to three independent FBX animation sources, imported into native Unreal 5.8.3 AnimSequence assets and independent cold pose / exact 975/975 reference bone names PASS. Original four UE animation assets hash unchanged.
+
+**New Sovereign Eclipse:** 287 editable Blender mesh parts authored for original 16m radius rose field with exactly 12 ribs and independent Day/Night/boundary; native Unreal imported FOUR StaticMesh + EIGHT material assets, independent UE cold reopen PASS. **Not animated Niagara, not live environment field.**
+
+**PRIVATE EXACT DELIVERABLE:** `D:\UnrealProjects\Gate09_Protected_Production_20261016\GATE09_LUMINOUS_V6_REAL_COMBAT_SOURCES_UNREAL_CHECKPOINT_20261019.zip`; 53,839,501 bytes, SHA256 `81484e124c52987163efd1025a9bdd3fccaeecaeb190ec3b2b75d16dc1f70c41`. 49 entries CRC PASS; 21 native UE assets, source BLEND/FBX/GLB, 6 diagnostic Luminous pose PNGs + field preview, original hashed source evidence, four UE QA receipts.
+
+**QA status:** REAL SOURCE / NATIVE UE IMPORT PASS. **ART HOLD / GAMEPLAY HOLD:** source swing clips are 2.5/1.8/3.0sec, do NOT meet v6 composed 180/390/650ms hit cadence. Workbench visuals show missing physical sword and unsatisfactory grip/readability, field preview visually sparse rather than professional shell. No actual A1 notifier/hit events/combo/blood FX, A2/A3/Ultimates/QTE/passive FX, animated negation, gameplay field/intersections, Unreal material QA or Android. **Do not claim skill complete.** Need actual Gate07 Dharma item/equip source before weapon fidelity.
+
+**Authoritative review:** `docs/production/gate09/GATE09_LUMINOUS_V6_COMBAT_NATIVE_QA_20261019.md`. All source, frozen Foundation, PR16, previous verified Unreal proof and Gate12 worktrees preserved.
+
+---
+
 # Gate09 NEW CURRENT SOURCE / NATIVE FACIAL CHECKPOINT — 2026-10-19
 
 **User commission:** Immediate test of installed Koikatsu adult-mode motions/face mode in Unreal. **Actual completed:** read-only 25 original adult-mode bundles containing 750 authentic source clips; first clip in each bundle 343/343 native prefab CRC32 binding paths; body facial-morph original confirmed and native Unreal 5.8.3 two-curve 2-second `AnimSequence` authored and cold-reloaded, 96 real morph targets on exact cloned Luminous CLOTHED body mesh, source copies hash-identical 3/3. **No explicit adult scene generated or transferred**, no claimed artistic/gameplay success.
