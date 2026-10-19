@@ -1,3 +1,14 @@
+# Gate09 NEW CURRENT SOURCE / NATIVE FACIAL CHECKPOINT — 2026-10-19
+
+**User commission:** Immediate test of installed Koikatsu adult-mode motions/face mode in Unreal. **Actual completed:** read-only 25 original adult-mode bundles containing 750 authentic source clips; first clip in each bundle 343/343 native prefab CRC32 binding paths; body facial-morph original confirmed and native Unreal 5.8.3 two-curve 2-second `AnimSequence` authored and cold-reloaded, 96 real morph targets on exact cloned Luminous CLOTHED body mesh, source copies hash-identical 3/3. **No explicit adult scene generated or transferred**, no claimed artistic/gameplay success.
+**Native Unreal facial asset:** `/Game/Gate09_QA_20261019/AuthenticFaceSource/AN_G09_Luminous_NativeBlinkSmile_SourceProof` in `D:\UnrealProjects\Gate09_Unreal583_Animation_QA_20261019\G09_AnimQA.uproject`. Two source curve names `Eye_Closed`, `Mouth_Distorted_Smile__Closed`; 60 frames/30fps/61 keyed samples; genuine native UE cold PASS.
+**Protected source and native archive:** `D:\UnrealProjects\Gate09_Protected_Production_20261016\GATE09_NATIVE_FACE_AND_ADULT_SOURCE_METADATA_QA_20261019.zip`; **SHA-256 `a46933e7fdf170179985630399ffcbfa4d5c13bd7ea88d95961741f5c96bd8f8`**, 4,306,951 bytes, 4 UE uassets (1 authored face clip and 3 copied source references), native receipts plus metadata (no adult scene payload).
+**Detailed gates report:** `docs/production/gate09/GATE09_ADULT_NATIVE_SOURCE_AND_REAL_UNREAL_FACE_QA_20261019.md`.
+**Gate09 QA:** 5/5 PASS; Master K049 45/45; runner 10/10. Full original source/games unaffected.
+**Blocked:** Actual explicit scene asset transfer pending verified adulthood of each depicted form and per-mod source-use/distribution authorization. Character/Unreal rig compatibility not proven by Unity source hashes alone. No explicit data, storyboard or visual produced. Separate ordinary locomotion/dance work still pending.
+**Next real scope:** Gate09 eligible original source-animation editing and exact UE body/face quality; Gate12 gameplay implementation, Gate00 artistic permission and review; Gate01/00 adult eligibility; Gate11 canonical Registry intake.
+---
+
 # Gate09 CURRENT UNREAL NATIVE CHECKPOINT — 2026-10-19
 
 **User request:** Test genuine Koikatsu movements in Unreal 5.8.3 and import all converted compatible assets on PASS.
