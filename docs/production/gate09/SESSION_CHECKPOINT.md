@@ -1,3 +1,18 @@
+# Gate09 CURRENT SESSION CHECKPOINT — 2026-10-19
+
+**Current task:** Authentic installed Koikatsu Unity standing animation → genuine editable Luminous source → UE interchange; facial/adult source inventory. **STATUS: SOURCE_VALIDATED / EDITABLE_4_ACTIONS / FBX_REIMPORT_PASS; ARTISTIC_QA_PARTIAL; UE_AND_ANDROID_NOT_TESTED.**
+**Current branch:** `production/gate09-rig-motion-20261016`, get exact latest source commit with `git rev-parse HEAD`; original frozen Foundation and PR16 never changed.
+**Current editable source:** `D:\UnrealProjects\Gate09_Protected_Production_20261016\G09_AuthenticIdleAndBow_Source_Review_v4.blend`, SHA-256 `d7bb6a98ef362410fbe23d649ab70569d2ee30716ecbd2df9ab3c404bf43f8b2`.
+**Protected local ZIP:** `D:\UnrealProjects\Gate09_Protected_Production_20261016\GATE09_AUTHENTIC_KOIKATSU_TO_UNREAL_IDLE_PROOF_20261019.zip`, **52,548,122 bytes**, SHA-256 `0c9d5940a539386156f791218568aae10e6450bb228ed3f4ba3867d56df03fdd`. 27 entries, CRC PASS, 4 real Action FBXs, 1 editable .blend, 4 actual pose captures, verified Unity native extracts and provenance; protected on PC, never published to GitHub.
+**Three authentic idles:** `f_tachi_00_02` → Thoughtful, `f_tachi_00_09` → Greeting, `f_tachi_00_19_L` → Expressive, 30fps, original Koikatsu source hashes. Separate `f_tachi_00_18_L` is a real bow emote, not an idle.
+**Proven:** native Unity transform binding CRC32 234/234 resolved, measured source-specific rest basis, genuinely skinned Blender 5.2.2 Actions mapping 192/230 bones, four animation-only FBXs imported afresh as 975-bone moving Actions. Gate09 7/7 source regressions, Master 43/43, runner 10/10. Permanent K047 recorded.
+**Face:** actual KK_SexFaces mod DLL and Luminous morph-target assets detected; facial/morph curves NOT baked into UE. Adult mod source inventory includes 111 potential source packages and 328 native H files. Local source index only, not game transfer or redistribution approval.
+**Actual user-visible review:** four source posed renders, improvement after source/target bone-rest orientation correction; no Painterly Anime PBR visual acceptance yet.
+**Next source job:** find/authentically adapt foot-contact locomotion/walk-run-swim-fly-dodge-climb sources to rig; refine art and motion; request Gate12 isolated Unreal import of these supplied 4 FBX sources, not duplication of Gate12 controllers. Dance and adult distinct later. Gate04/07 profile contracts required for combat.
+**Authoritative details:** `GATE09_KOIKATSU_UNITY_TO_UNREAL_AUTHENTIC_MOTION_20261019.md`. No Gate11 Registry intake/ARTIFACT_READY, no Gate00 final artistic approval or Android claims.
+
+## Previous 2026-10-16 checkpoint (historical; retained)
+
 # Gate09 SESSION_CHECKPOINT — 2026-10-16
 
 **Commission:** Issues [#25](https://github.com/Azrazieliz/Offline-Game/issues/25), [#21](https://github.com/Azrazieliz/Offline-Game/issues/21), [#20](https://github.com/Azrazieliz/Offline-Game/issues/20).

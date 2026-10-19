@@ -1,0 +1,75 @@
+{
+  "schema": "GATE09_SOURCE_MOTION_3_IDLES_1_BOW_INTERCHANGE_V1",
+  "source_blend_sha256": "d7bb6a98ef362410fbe23d649ab70569d2ee30716ecbd2df9ab3c404bf43f8b2",
+  "files": [
+    {
+      "source": "f_tachi_00_02",
+      "motion_role": "Idle_01_Thoughtful",
+      "file": "G09_LuminousV3_Idle_01_Thoughtful.fbx",
+      "sha256": "6622933189721721844a706049b88df12f58eedffd0cc55c2ff2321f86b3b184",
+      "bytes": 15210140,
+      "fps": 30,
+      "frames": [
+        1,
+        151
+      ],
+      "compatible_target": "Luminous V3 CLOTHED / same 975-bone imported GLB skeleton only",
+      "unreal_native_import": "NOT_TESTED",
+      "art_acceptance": "SOURCE_REVIEW_NOT_APPROVED"
+    },
+    {
+      "source": "f_tachi_00_09",
+      "motion_role": "Idle_02_Greeting",
+      "file": "G09_LuminousV3_Idle_02_Greeting.fbx",
+      "sha256": "78c693a224adf73f060183bb68f9b5a9097c65d534dd52f70618fa6ffdcda2ea",
+      "bytes": 14389292,
+      "fps": 30,
+      "frames": [
+        1,
+        143
+      ],
+      "compatible_target": "Luminous V3 CLOTHED / same 975-bone imported GLB skeleton only",
+      "unreal_native_import": "NOT_TESTED",
+      "art_acceptance": "SOURCE_REVIEW_NOT_APPROVED"
+    },
+    {
+      "source": "f_tachi_00_19_L",
+      "motion_role": "Idle_03_Expressive",
+      "file": "G09_LuminousV3_Idle_03_Expressive.fbx",
+      "sha256": "70c11ccd5c4c0867672b85a0ddb51d6ba1a7f1f07bfcfe54ffbf894c13883c74",
+      "bytes": 14325900,
+      "fps": 30,
+      "frames": [
+        1,
+        142
+      ],
+      "compatible_target": "Luminous V3 CLOTHED / same 975-bone imported GLB skeleton only",
+      "unreal_native_import": "NOT_TESTED",
+      "art_acceptance": "SOURCE_REVIEW_NOT_APPROVED"
+    },
+    {
+      "source": "f_tachi_00_18_L",
+      "motion_role": "Emote_Bow_Source",
+      "file": "G09_LuminousV3_Emote_Bow_Source.fbx",
+      "sha256": "1a3f041c5b9d3597c23675ce8d63ce2ac0129e3e67405ad2fc94ce2b13b5f357",
+      "bytes": 14574540,
+      "fps": 30,
+      "frames": [
+        1,
+        142
+      ],
+      "compatible_target": "Luminous V3 CLOTHED / same 975-bone imported GLB skeleton only",
+      "unreal_native_import": "NOT_TESTED",
+      "art_acceptance": "SOURCE_REVIEW_NOT_APPROVED"
+    }
+  ],
+  "source_character_unchanged": true,
+  "production_approval": false,
+  "missing": [
+    "Unreal native import and skeleton retarget",
+    "Foot lock and root axis validation",
+    "facial expression curves",
+    "hair and cloth secondary motion",
+    "full-color artistic review"
+  ]
+}
