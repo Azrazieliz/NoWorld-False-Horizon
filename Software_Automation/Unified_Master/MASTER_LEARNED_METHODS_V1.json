@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-19T1544Z",
+  "revision": "2026-10-19T1619Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -491,6 +491,16 @@
       "evidence": "2026-10-19 Gate09 imported original 4 real Koikatsu source sequences to native UE 5.8.3: all 4 saved 975-track AnimSequences at 30fps, four cold-load passes, exact 975/975 bone matches after correcting case-sensitive Python false mismatch (231/975 wrong), actual changing Unreal head/Center poses, Gate12 native skeleton clones SHA-identical 6/6, QA ZIP 10 .uassets and 30 entries CRC PASS, Gate09 5/5 regression checks. First inspection failed because AnimationBlueprintLibrary is unavailable; reliable fix uses UAnimDataController data model.",
       "status": "verified_native_unreal_qa_only_not_android_or_artistic",
       "regression_test": "Gate09 Scripts/Gate09/test_ue583_native_motion_qadelivery.py checks native Unreal asset files, four source hashes and skeletons, cold independent UE track+pose evaluation, all 975/975 case-insensitive names, six unchanged copies of Gate12 originals, QA archive SHA/CRC/asset count, and explicit nonproduction scope."
+    },
+    {
+      "id": "K049",
+      "topic": "native_koikatsu_adult_source_metadata_and_real_luminous_unreal_face_morph",
+      "applies_to": "gate09|gate12",
+      "requirement": "Preserve adult-mode Koikatsu source provenance and determine genuine rig binding compatibility without assuming source eligibility, rights or automatic Unreal support; use exact original facial shape targets to author non-explicit test morph curve on isolated Luminous UE skeleton only, verify independently after cold reload.",
+      "procedure": "Read-only UnityPy scan first 25 source h/anim bundles, count original AnimationClips, time/fps/binding attributes and SHA. Resolve each bundle first clip 343 hashed native Transform paths using CRC32 on authentic oo_base.unity3d prefab suffix paths, without extracting adult motion keys. For independent facial proof copy exact original Luminous CLOTHED Body Mesh003Prim000 uassets into separate UE5.8 QA project. Only after confirming actual original nonzero morph array and Unreal morph_targets, create native AnimSequence via AnimSequenceFactory with copied exact skeleton; AnimationDataController set 30fps, 60 frames, add_curve(AnimationCurveIdentifier/RCT_FLOAT,curve_flags=4), set_curve_keys with 61 RichCurveKeys for Eye_Closed and Mouth_Distorted_Smile__Closed, set_curve_meta_data_morph_target on QA skeleton only, save. Independently cold-load and verify via Unreal AnimationLibrary.get_animation_curve_names(seq,RawCurveTrackTypes.RCT_FLOAT) and model.get_number_of_float_curves=2. Archive only original copied skeleton and new UE source asset plus metadata, no third-party payload.",
+      "evidence": "19 October 2026 Gate09: 288 installed original native h animator bundles, read-only 25 bundles/750 30fps 1.3333s records, 25/25 first clips 343/343 native Koikatsu CRC32 transform paths; 96 actual morphs on original copied Luminous mesh, isolated native UE5.8 AnimSequence 2 seconds 61 source-morph keys Eye_Closed and Mouth_Distorted_Smile__Closed, 2 real saved float curves independent UE cold reload PASS, 3/3 unchanged Gate12 original-source uassets, source proof ZIP 4 UE uassets and CRC PASS, Gate09 5/5 assertions. Age eligibility, source rights, scene animation and artistic QA remain unapproved.",
+      "status": "verified_readonly_source_paths_and_unreal_native_face_only_no_explicit_scene",
+      "regression_test": "Gate09 Scripts/Gate09/test_native_adult_metadata_and_face_qadelivery.py confirms sampled native-source evidence and no motion key export, exact 343/343 source CRC path maps, actual UE native morphs and 2 cold-loaded curves, 3 unchanged source uassets, and ZIP SHA+CRC+4 valid Unreal uassets, with no adult scene export."
     }
   ]
 }
