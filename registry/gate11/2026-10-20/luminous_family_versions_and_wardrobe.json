@@ -1,0 +1,87 @@
+{
+  "schema": "gate11.intake.luminous_character_family.v1",
+  "as_of": "2026-10-20",
+  "character_name": "Luminous Valentine",
+  "foundation_sha": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+  "identity": {
+    "content_id": "character:luminous_valentine.identity",
+    "status": "GATE11_APPROVED_DESIGN_ID_NOT_INSTALLED",
+    "source": "PREEXISTING_GATE11_20261012_RESERVATION_AND_GATE00_APPROVED_INTENT",
+    "native_registry_v2_record_exists": false,
+    "origin_rarity": "MR"
+  },
+  "versions": {
+    "BASE": {
+      "content_id": "character:luminous_valentine.version_ln_base",
+      "status": "GATE11_APPROVED_DESIGN_ID_NOT_INSTALLED",
+      "authoritative_3d_source_zip_sha256": "c83d71b687e7760cd4d3f4f2f8b2ec11d3ac28c78c8030367b83723e0dce2456",
+      "base_kit_source_sha256": "2221b8e7302ee1efb1b8c2c06e12ddd096fd43c1ea8b14f6f5054f4b4ee0c6da",
+      "wardrobes": {
+        "CLOTHED": {
+          "card_sha256": "34f4ee644087797cdad955dcc53f69a90479136b582a4359bf3eaa3673e04424",
+          "skinned_glb_sha256": "c1efbc9d1e0a09d840201922de9634147b359828cdfc59e5a79c7f723891c441",
+          "role": "DEFAULT_BASE"
+        },
+        "UNDERWEAR": {
+          "card_sha256": "f9770a7432fb32433b701b33b064786ad021e1ac7eccfd6f339211b0af4524d5",
+          "skinned_glb_sha256": "bdf8a59f319ccf49eb186395d3ec9c7a2434156bd07be7a3652be3b3e4b05257",
+          "role": "ADULT_CONTEXT"
+        },
+        "NUDE": {
+          "card_sha256": "b0298bbb3ebad6ce5e45e0d11437ed56891a106788ee6f6d8c510fbab22ec3de",
+          "skinned_glb_sha256": "a5800ca3865d1971c381ff510103730a1bcebeacda21daaa9bc4d32e9cb90074",
+          "role": "ADULT_CONTEXT"
+        }
+      },
+      "default_state": "CLOTHED",
+      "skinned_glb_technical_status": "REAL_HASHED_EXPORT_QA_ONLY",
+      "accepted_playable_actor": null,
+      "accepted_preview_actor": null
+    },
+    "ALTER": {
+      "content_id": null,
+      "status": "VERSION_ID_AND_PRODUCTION_BINDINGS_PENDING_EXISTING_APPROVAL_AND_NAMESPACE_VERIFICATION",
+      "protected_source_archive": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
+      "source_archive_sha256": null,
+      "three_user_authored_cards": "PRESERVED_AND_STATE_MAPPED_BY_GATE01_G12_EXISTING_EVIDENCE",
+      "exact_per_state_card_hashes": "NOT_PRESENT_IN_SUPPLIED_HANDOFF",
+      "wardrobe_state_ids": [
+        "CLOTHED",
+        "UNDERWEAR",
+        "NUDE"
+      ],
+      "default_state": "CLOTHED",
+      "kit_binding": null,
+      "base_kit_inherited": false,
+      "no_art_remake_required": true
+    }
+  },
+  "wardrobe_privacy_rule": {
+    "source": "Gate11 Privacy Presentation Projection v2 2026-10-12",
+    "actual_appearance_id": "PERSISTED_STATE_ON_GENUINELY_OWNED_MANIFESTATION",
+    "effective_rendered_appearance_id": "RESOLVED_FOR_CONTEXT_PRIVACY_AVAILABLE_ASSETS",
+    "privacy_changes_equipment": false,
+    "privacy_changes_actual_wardrobe": false,
+    "wardrobes_create_versions_or_manifestations": false
+  },
+  "ownership": {
+    "owned_manifestation_uuid": null,
+    "source": "LIVE_AUTHORITATIVE_WORLD_STORE_ONLY",
+    "duplicate_acquisition_creates_independent_instance": true,
+    "chips": false
+  },
+  "package": {
+    "canonical_package_id": null,
+    "installed_receipt": null,
+    "activated": false
+  },
+  "art_source_closed": true,
+  "gate11_artifact_ready": false,
+  "native_visual_catalog_eligible": false,
+  "production_import_conditions": [
+    "approved complete per-version provenance and native materials/rig/morph validation",
+    "reconciled source/latest alteration hashes",
+    "actual Gate11-accepted installed package + exact actor binding",
+    "real world-store Manifestation ownership for player roster"
+  ]
+}

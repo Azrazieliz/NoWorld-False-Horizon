@@ -1,0 +1,613 @@
+{
+  "project": "NoWorld: False Horizon",
+  "gate": "07",
+  "date": "2026-10-19",
+  "basis_commit": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+  "canonical_status": "USER_REVIEW_COMPLETE_GATE00_ACCEPTANCE_PENDING",
+  "crossgate_notice": "No Registry acceptance, live content ids, banner pools, currency balances, git commits, or Unreal integrations created.",
+  "decisions": [
+    {
+      "decision_id": "G07-D01",
+      "title": "Character Origin-Rarity rates",
+      "priority": "P0",
+      "evidence_state": "PARTIAL",
+      "verified_observation": "Six grades R/SR/SSR/UR/LR/MR approved. Existing 1.2% top candidate; no six-grade baseline in frozen docs.",
+      "proposed_recommendation": "For full six-tier MR-top standard limited banner: 65% R, 18% SR, 9% SSR, 4.5% UR, 2.3% LR, 1.2% MR. Bind table to actual approved eligible pool only.",
+      "alternatives": "B: 54/25/12/5.5/2.3/1.2 for more access; C: 72/15/7/3/1.8/1.2 for higher scarcity.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "GATE00_APPROVAL",
+      "sources": [
+        "Original v0.40 master; Gate00 2026-10-13 final Gate10 UI design acceptance; https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/Characters/OGCharacterDefinitions.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/TUNING_UI_FREEZE.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/Gacha/OGGachaDefinitions.h"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "The six-grade table is not globally applicable: only a specifically approved all-six, MR-top standard limited banner.",
+        "The 1.2% top-origin-rate is a frozen simulation candidate, not unconditional activation of a banner.",
+        "Absolute Transcendence is not a seventh acquisition rarity."
+      ],
+      "review_annotation": "Selected six-tier Proposal A, not the alternate profiles; requires Gate00 canonical acceptance and an actual eligible MR-top all-six content pool before live use.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D02",
+      "title": "Soft pity, hard pity and featured guarantee",
+      "priority": "P0",
+      "evidence_state": "GAP_CONFIRMED",
+      "verified_observation": "Service multiplies top entry weight after 50; freeze demands +5 absolute percentage points per pull 51–69. Featured 50/50 is not guaranteed by arbitrary authored weights.",
+      "proposed_recommendation": "Gate12 use integer bps tier-first sampling: top(n)=120 bps through 50, 120+500*(n-50) bps 51–69, 10000 at 70. Lower tiers proportional to configured base; featured top 50/50 then guaranteed after miss. Maintain category carry.",
+      "alternatives": "Alternative implementation can be equivalent fixed-point math, provided exact probabilities and deterministic RNG remain verified.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "FROZEN_RULE_IMPLEMENTATION",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/TUNING_UI_FREEZE.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/Gacha/OGGachaService.cpp"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Soft pity uses +500 absolute bps for each ordinal 51-69; hard 70.",
+        "Featured 50/50 then guarantee; pity/category carry.",
+        "Do not change frozen tuning without Gate00."
+      ],
+      "review_annotation": "Approval applies to source-correct additive bps sampling and exact 50/50 logic; Gate12 change pending; frozen tuning not rebalanced.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D03",
+      "title": "Ten-pull minimum and atomic batch",
+      "priority": "P0",
+      "evidence_state": "GAP_CONFIRMED",
+      "verified_observation": "PullBatch 1–10 exists but no SR+ floor; existing transaction encompasses batch.",
+      "proposed_recommendation": "Gate12 apply the frozen SR+ ten-pull floor only on authored eligible ten-pull banners. Proposed minimum perturbation: if all ten rolled R, upgrade the last result to an eligible SR grade, leaving top-rarity roll and pity unchanged. All payment and manifestations commit atomically.",
+      "alternatives": "Alternative: constrained SR+ roll on tenth; changes higher-rarity marginal rates and requires exact published probabilities.",
+      "approval_status": "USER_DEFERRED",
+      "feedback_required": false,
+      "feedback_type": "USER_DETAIL_CHOICE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/TUNING_UI_FREEZE.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/Gacha/OGGachaService.cpp"
+      ],
+      "user_feedback": {
+        "code": "D",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "defer proposed detail; existing frozen invariant remains mandatory"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Preserve baseline and require explicit future resolution where needed for native feature execution",
+      "fixed_constraints": [
+        "On eligible ten-pulls, at least SR+ is required by the frozen UI/tuning rule.",
+        "Frozen batch atomicity must be retained."
+      ],
+      "review_annotation": "Deferred choice is how an eligible 10-pull guarantees SR+, not whether the frozen floor exists. Do not deploy an unfloored applicable ten-pull.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "HOLD_NEW_DESIGN_DETAIL"
+    },
+    {
+      "decision_id": "G07-D04",
+      "title": "Banner pools, schedule, eligibility and heroification",
+      "priority": "P0",
+      "evidence_state": "CONTENT_INPUT_ABSENT",
+      "verified_observation": "Banner schema accepts FOGContentId entries, but verified canonical live pools are not supplied. Heroic Record is content-dependent.",
+      "proposed_recommendation": "Require Gate11-approved female pullable Identity/Version records, active installation/schedule, legally selectable player-known details, pity category and featured rules; show honest EMPTY/LOCKED when absent. World death never rewritten by acquisition.",
+      "alternatives": "Alternative banner-specific narrative gates may further narrow entries; no invented data or implied fixture ownership.",
+      "approval_status": "USER_DEFERRED",
+      "feedback_required": false,
+      "feedback_type": "GATE11_SOURCE_REQUIRED",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/Gacha/OGGachaDefinitions.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/GACHA_ECONOMY.md"
+      ],
+      "user_feedback": {
+        "code": "D",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "defer proposed detail; existing frozen invariant remains mandatory"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Preserve baseline and require explicit future resolution where needed for native feature execution",
+      "fixed_constraints": [
+        "Only installed and Gate11-recognized eligible Identity/Version definitions may be used in production.",
+        "Do not authorize empty/invalid or fictional live banners; show locked/empty state.",
+        "Death/heroification cannot rewrite actual World history."
+      ],
+      "review_annotation": "Deferred authoring of live banner pools/schedules. Never populate UI from fixtures or infer catalog entries from rarity approvals; continue true locked/empty state.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "HOLD_NEW_DESIGN_DETAIL"
+    },
+    {
+      "decision_id": "G07-D05",
+      "title": "Ticket taxonomy and payment priority",
+      "priority": "P0",
+      "evidence_state": "PARTIAL",
+      "verified_observation": "Ordinary one-pull ticket list and ticket-first payment exist; no complete typed multi/guaranteed/selector execution contracts in reviewed service.",
+      "proposed_recommendation": "Keep authored CompatibleTicketIds order for ordinary payments; separate ticket-kind execution contracts: single, multi, event/dimensional, guarantee/restricted, exceptional selector. Never expire by default. Quote exact debits and pity routing.",
+      "alternatives": "Alternative special ticket presentation order; special ticket semantics must remain explicitly authored, never inferred from name.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_DETAIL_CHOICE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/GACHA_ECONOMY.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/Gacha/OGGachaService.cpp",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/Gacha/OGGachaDefinitions.h"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Compatible ordinary tickets are spent first automatically; special guaranteed/selector routes must be authored.",
+        "Ordinary tickets advance ordinary pity; no automatic expiry.",
+        "No new core pull currency."
+      ],
+      "review_annotation": "Ticket-family contract is accepted, but no ticket IDs, entitlement, balances, pools, or exceptions are approved from this choice.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D06",
+      "title": "Currency, wallet, ledger and recovery",
+      "priority": "P0",
+      "evidence_state": "PARTIAL",
+      "verified_observation": "Nonnegative SQLite resource_balances and atomic Pull exist. Dedicated audit debit ledger/idempotency/quote were not located in inspected service.",
+      "proposed_recommendation": "Exactly one core renewable pull currency, gameplay-earned; no currency ID or price until canon. Gate12 add read-only source-backed quote, request-id idempotency and atomic debit receipt/event references, without creating a parallel wallet.",
+      "alternatives": "Alternative use authoritative event log as ledger index if it satisfies exact balance delta and replay uniqueness.",
+      "approval_status": "USER_DEFERRED",
+      "feedback_required": false,
+      "feedback_type": "FROZEN_RULE_IMPLEMENTATION",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Database/Migrations/0004_territory_resources_projects.sql",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/Gacha/OGGachaService.cpp"
+      ],
+      "user_feedback": {
+        "code": "D",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "defer proposed detail; existing frozen invariant remains mandatory"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Preserve baseline and require explicit future resolution where needed for native feature execution",
+      "fixed_constraints": [
+        "Core acquisition currency is gameplay-earned, offline-renewable, and no IAP.",
+        "All payment, pity, Manifestation and event changes commit or roll back together.",
+        "The confirmation UI must show actual intended consumption before execution; do not fabricate balances."
+      ],
+      "review_annotation": "Defer enhancement details (quote API/idempotency/ledger shape), not frozen payment atomicity or accurate pre-execution payment display. Disable transaction UI if exact payment cannot be confirmed.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "HOLD_NEW_DESIGN_DETAIL"
+    },
+    {
+      "decision_id": "G07-D07",
+      "title": "Acquisition income, sources, sinks and farming",
+      "priority": "P1",
+      "evidence_state": "DESIGN_PENDING",
+      "verified_observation": "Frozen simulator bands 4–8,7–14,14–27,27–52+ pull-equivalents/hour are NOT mandated wages or player-level multipliers. No complete authored reward source catalog verified.",
+      "proposed_recommendation": "Use source-attached reward definitions for exploration, quests, production, dispatch, challenges, and higher-order farms; renewable source must exist even late game. Model pull EV incl tickets; verify no zero-access deadlock or repeat-sell inflation.",
+      "alternatives": "Alternative relative source mixes after Gate02/05/06/08 world content, but never hidden progression payout multipliers.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_POLICY_FEEDBACK",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/GACHA_ECONOMY.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/TUNING_UI_FREEZE.md"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "No universal player-tier income multiplier or hidden fixed weekly wages.",
+        "A real, renewable acquisition source must exist in the persistent World."
+      ],
+      "review_annotation": "Approval to model actual gameplay sources and sinks; reward amounts and world content remain authored/approved separately.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D08",
+      "title": "Item families, material identities and Quality vs Rank",
+      "priority": "P1",
+      "evidence_state": "DESIGN_PENDING",
+      "verified_observation": "Persistent item instances already have definition, Rank, Quality, durability, evolution and history fields. No approved 15-item content batch identified in inspected frozen repository.",
+      "proposed_recommendation": "Produce source-grade catalog of >=15 items across 3 materially coherent families only after regional content decisions; keep item Quality/potential and Item Rank independent of six character rarities; explicit art/effect references.",
+      "alternatives": "Alternative catalogs: regional survival/feudal craft vs occult relic vs mixed cultural kits, requiring Gate00 direction before canon.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "GATE00_CREATIVE_CHOICE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/World/OGItemKnowledgeCharacterRecords.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/World/OGInventoryEquipmentService.cpp"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Item Quality, current Item Rank and character Origin/Current Rarity remain independent.",
+        "No canonical item IDs, item assets or regional cultures invented from the approval of a catalog process."
+      ],
+      "review_annotation": "Approval to prepare a 15+ item/three-family source-grade proposed catalog, not approval of actual item identities or material families. Requires Gate02/Gate06 environment/faction constraints.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D09",
+      "title": "Anatomy equipment slots and visible layers",
+      "priority": "P1",
+      "evidence_state": "PARTIAL",
+      "verified_observation": "EquipItem uses an injected slot validator but does not itself verify item ownership against wearer; equipment_bindings schema has no UNIQUE(item_entity_id). Authored species/body topology and conflict maps not found in reviewed service.",
+      "proposed_recommendation": "Gate12 enforce owner/authorized wearer and unique physical item binding transactionally; Gate07 supply body-plan-owned slots, occupancy/layer conflicts, attachments and forms; cover two humanoids and one nonhuman test anatomy. Keep functional item state distinct from skin/clothing.",
+      "alternatives": "Alternative pure occupancy-graph or tagged body-surface matching; both must preserve physical constraints and forms.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_DETAIL_CHOICE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/World/OGItemKnowledgeCharacterRecords.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/World/OGInventoryEquipmentService.cpp",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Body-specific compatible slots; worn items visible and actual outfit layers preserved.",
+        "No simultaneous use of a unique physical item without a valid explicit mechanism."
+      ],
+      "review_annotation": "Approve anatomy schema and wearer/owner/uniqueness enforcement; no unilateral database migration or approved visual rewrites.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D10",
+      "title": "Storage, stackability and item transfers",
+      "priority": "P1",
+      "evidence_state": "PARTIAL",
+      "verified_observation": "Containers and container_contents amount persist. TransferItem clears stale bindings/placement transactionally; no general evaluated mass/volume/shape capacity gate found in inspected service.",
+      "proposed_recommendation": "Physical capacity = mass + volume/shape + container/creature constraints, with exceptions only from authored powers. Aggregate fungible small items with provenance-safe stacks; distinct historical/sentient equipment persists as separate instances.",
+      "alternatives": "Alternative mass-only model for ordinary portable containers; keep exceptional anatomy/geometry constraints where needed.",
+      "approval_status": "USER_DEFERRED",
+      "feedback_required": false,
+      "feedback_type": "USER_DETAIL_CHOICE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/World/OGItemKnowledgeCharacterRecords.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/World/OGInventoryEquipmentService.cpp",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Database/Migrations/0013_items_knowledge_characters.sql",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md"
+      ],
+      "user_feedback": {
+        "code": "D",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "defer proposed detail; existing frozen invariant remains mandatory"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Preserve baseline and require explicit future resolution where needed for native feature execution",
+      "fixed_constraints": [
+        "Carried physical storage is capability limited; no arbitrary infinite inventory.",
+        "Existing actual pocket/storage capabilities may bypass limits according to authored rules."
+      ],
+      "review_annotation": "Deferred capacity algorithm/stack rules; physical inventory limitations are still frozen and required.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "HOLD_NEW_DESIGN_DETAIL"
+    },
+    {
+      "decision_id": "G07-D11",
+      "title": "Loot and world acquisition ecology",
+      "priority": "P1",
+      "evidence_state": "DESIGN_PENDING",
+      "verified_observation": "Three requested context-specific loot families and settlement sources are not authored in inspected foundation tree. Gate08 owns placement.",
+      "proposed_recommendation": "Author at least human patrol, animal, rare monster/relic tables with deterministic conditional weights/guarantees; sovereign ownership, death/retreat and partial harvest causality; no universal equipment jackpot table.",
+      "alternatives": "Alternative fixed recoverable gear with probabilistic condition/quality versus probabilistic material quantities; content-specific authored mix preferred.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_POLICY_FEEDBACK",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/GACHA_ECONOMY.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Loot must follow ecology, ownership, context and persistence; no universal jackpot table."
+      ],
+      "review_annotation": "Approve producing ecosystem-conditioned loot examples; Gate08 owns placement and Gate06 owns faction/settlement context; rewards not automatically canon.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D12",
+      "title": "Crafting, known recipes, experiments and invention",
+      "priority": "P1",
+      "evidence_state": "DESIGN_PENDING",
+      "verified_observation": "Frozen docs demand Known and Experiment modes; no dedicated recipe/experiment runtime service located in reviewed frozen source tree.",
+      "proposed_recommendation": "Author 8–12 prerequisite-graph recipes plus 2 experimentation routes, explicit tools/skills/facility/environment, deterministic seed and costs/failure outputs. Gate12 implements transaction integration only when commissioned.",
+      "alternatives": "Alternative learning thresholds: named discovery prerequisites or contextual breakthrough proofs, depending world metaphysics.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_DETAIL_CHOICE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/World/OGInventoryEquipmentService.cpp"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Both learned recipes and genuine experimentation; no free creation without materials/facility/knowledge or legitimate mechanics."
+      ],
+      "review_annotation": "Approve 8-12 proposed recipes and two experiment paths, dependent on real materials and Gate04 effect contracts; native crafting not yet implemented.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D13",
+      "title": "Durability, repair and exceptional equipment evolution",
+      "priority": "P1",
+      "evidence_state": "PARTIAL",
+      "verified_observation": "DurabilityStateJson/EvolutionStateJson persist. No global upkeep rules frozen; gratuitous wear contradicted.",
+      "proposed_recommendation": "Only consequential wear/damage events; repairs require actual resources and technique where applicable; retain history; allow evolution/sentience only via authored process. No generic feed equipment loop.",
+      "alternatives": "Alternative disable normal wear entirely except authored breakage events; same narrative consequence.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_POLICY_FEEDBACK",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/World/OGItemKnowledgeCharacterRecords.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "No durability chore loop; damage/repair causally meaningful; no generic weapon-feeding recipe."
+      ],
+      "review_annotation": "Approve event-based meaningful durability, repair and exceptional evolution; no recurrent busywork.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D14",
+      "title": "Item–owner affinity vs user proficiency",
+      "priority": "P1",
+      "evidence_state": "PARTIAL",
+      "verified_observation": "SQLite item-owner affinity and independent owner/proficiency IDs exist; transfer resolver is injected. No authored milestone curves or bonuses verified.",
+      "proposed_recommendation": "Separate per-(item,owner) affinity from per-(owner,discipline) proficiency, retain transfer history, display grades; only content-specific effect references and optional milestones. Never universal damage multiplier.",
+      "alternatives": "Alternative narrower discipline IDs by species/equipment family as learned; thresholds remain item-specific.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_POLICY_FEEDBACK",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/World/OGItemKnowledgeCharacterRecords.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/World/OGInventoryEquipmentService.cpp",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Owner–item affinity and owner–discipline proficiency remain distinct; no universal damage coefficient."
+      ],
+      "review_annotation": "Approve separate persistent item affinity and category proficiency; milestones/effects authored per content, not generic multipliers.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D15",
+      "title": "Trading, merchants, barter and local economies",
+      "priority": "P2",
+      "evidence_state": "DESIGN_PENDING",
+      "verified_observation": "Resource balances exist, but dedicated local vendor/trade/pricing contracts not found in inspected Gate07 source modules.",
+      "proposed_recommendation": "Author actual vendors/markets by civilization and location, supply-demand constraints, barter and currency settlement through existing state, causal production/restocking, anti-arbitrage validation. Keep Ruler pull currency outside default NPC trade unless explicitly canonized.",
+      "alternatives": "Alternative fixed-price local shops for selected items with authored scarcity; still no world-wide infinite merchant stocks.",
+      "approval_status": "USER_DEFERRED",
+      "feedback_required": false,
+      "feedback_type": "USER_POLICY_FEEDBACK",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Database/Migrations/0004_territory_resources_projects.sql",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/GACHA_ECONOMY.md",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md"
+      ],
+      "user_feedback": {
+        "code": "D",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "defer proposed detail; existing frozen invariant remains mandatory"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Preserve baseline and require explicit future resolution where needed for native feature execution",
+      "fixed_constraints": [
+        "Trading, scarcity and settlement behavior must derive from actual World/civilization resources.",
+        "Do not infer tradability of the gacha pull currency without authorized content."
+      ],
+      "review_annotation": "Deferred vendor and pricing architecture, not permission for universal vendors, unlimited buyback, automatic infinite stocks, or unsupported pull-currency trades.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "HOLD_NEW_DESIGN_DETAIL"
+    },
+    {
+      "decision_id": "G07-D16",
+      "title": "Consumables, equipment effects, other rewards",
+      "priority": "P2",
+      "evidence_state": "DESIGN_PENDING",
+      "verified_observation": "Item modifiers persist, combat formula ownership belongs Gate04; no generic consumable execution pipeline confirmed by audited service.",
+      "proposed_recommendation": "Content defines use conditions, world effects, charges, targeting, provenance and Gate04 effect IDs; atomic consumption and rollback. Separate plot/utility items from combat gear.",
+      "alternatives": "Alternative consumable family approach by physical item, ritual/tool or passive relic; require actual content/system cause.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "USER_POLICY_FEEDBACK",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Public/World/OGItemKnowledgeCharacterRecords.h",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/World/OGInventoryEquipmentService.cpp"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Effects remain Gate04-owned; consumption and use must be atomic and provenance-preserving."
+      ],
+      "review_annotation": "Approve content-schema/effect-binding direction, dependent on Gate04 IDs and authorized gameplay state.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D17",
+      "title": "Visual assets, package manifests and provenance",
+      "priority": "P2",
+      "evidence_state": "DESIGN_PENDING",
+      "verified_observation": "No finished Gate07 item visual/media package was verified. Gate01 owns visual creation, Gate11 intake, Gate12 integration.",
+      "proposed_recommendation": "Source/interchange assets with size/hash/version, render and attachment variants, shared material reuse without replacing distinct designs; build packages reference data by stable content IDs. No fake cooked Android-size claims.",
+      "alternatives": "Alternative incremental pack by material family/biome; protect approved visual identities.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "GATE00_PRODUCTION_SCOPE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/World/OGInventoryEquipmentService.cpp",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_SYSTEMS_PRODUCTION.md"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Gate11 authorizes ARTIFACT_READY and Gate12 documents INTEGRATED; tests/briefs/assets are not interchangeable."
+      ],
+      "review_annotation": "Approve editability/provenance/package evidence standards, not a claim that art assets exist or passed Gate11/12.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    },
+    {
+      "decision_id": "G07-D18",
+      "title": "Save/ownership invariants and duplicate characters",
+      "priority": "P0",
+      "evidence_state": "FROZEN",
+      "verified_observation": "Gate00 latest duplicate policy: independent Manifestations, no character chips. Existing gacha transaction commits pity, resource, Manifestation and world event together.",
+      "proposed_recommendation": "Preserve independent copies and origin history, no automatic fragments/chips, no rollback of death/history, no temporary QA fixtures masquerading as owned canonical characters.",
+      "alternatives": "No alternative without explicit change of frozen architecture.",
+      "approval_status": "USER_ACCEPTED_GATE00_PENDING",
+      "feedback_required": false,
+      "feedback_type": "FROZEN_RULE_NO_CHOICE",
+      "sources": [
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/Source/OfflineGame/Private/Gacha/OGGachaService.cpp",
+        "https://github.com/Azrazieliz/Offline-Game/blob/3f54f07cacbf193e160d0be15a7be5a7bc730c3b/docs/CHARACTER_PROGRESSION.md"
+      ],
+      "user_feedback": {
+        "code": "A",
+        "received_on": "2026-10-19",
+        "notes": "None",
+        "meaning": "accept proposed direction"
+      },
+      "gate00_canonical_status": "NOT_YET_CANONIZED",
+      "native_runtime_status": "NOT_REVALIDATED_BY_GATE07",
+      "authorized_now": "Prepare production specifications / request Gate00 routing; do not alter canonical content or saves",
+      "fixed_constraints": [
+        "Identity→Version→independent Manifestation; duplicates do not create chips/fragments.",
+        "No World history rewrite or invented owned characters."
+      ],
+      "review_annotation": "Approve preservation of existing independently owned Manifestations and no-chips; invariant was frozen before this feedback.",
+      "implementation_permitted_without_further_canonical_decision": false,
+      "next_action_type": "ROUTE_APPROVED_DIRECTION"
+    }
+  ],
+  "revision": "feedback-accepted-v1",
+  "review_basis": "Explicit user feedback supplied 2026-10-19, Gate07 IDs D01–D18; A=accept recommendation, D=defer detail.",
+  "revision_date": "2026-10-19",
+  "gate00_review_required": true,
+  "feedback_count": {
+    "accepted_directions": 13,
+    "deferred_decisions": 5,
+    "unanswered": 0
+  },
+  "scope_not_changed": [
+    "Foundation frozen commit",
+    "Approved Gate10 rarity UI",
+    "Approved Gate11 Registry authority",
+    "Gate12 runtime branches",
+    "Actual banner schedules and pools",
+    "Owned Manifestations",
+    "Resource/currency balances",
+    "Android installations or saves"
+  ],
+  "document_type": "proposed_authoritative_handoff_not_canonical_source"
+}

@@ -1,0 +1,59 @@
+{
+  "schema": "gate11.gate12_read_only_eligibility.v1",
+  "based_on": "Gate00 consolidated 2026-10-20",
+  "source_branch": "content/master-integration",
+  "can_consume_as_source_now": {
+    "luminous_base_reference": {
+      "identity_id": "character:luminous_valentine.identity",
+      "base_version_id": "character:luminous_valentine.version_ln_base",
+      "accepted_for_catalog": false,
+      "wardrobe_card_sha256": {
+        "CLOTHED": "34f4ee644087797cdad955dcc53f69a90479136b582a4359bf3eaa3673e04424",
+        "UNDERWEAR": "f9770a7432fb32433b701b33b064786ad021e1ac7eccfd6f339211b0af4524d5",
+        "NUDE": "b0298bbb3ebad6ce5e45e0d11437ed56891a106788ee6f6d8c510fbab22ec3de"
+      },
+      "state_glb_hashes_QA_only": {
+        "CLOTHED": "c1efbc9d1e0a09d840201922de9634147b359828cdfc59e5a79c7f723891c441",
+        "UNDERWEAR": "bdf8a59f319ccf49eb186395d3ec9c7a2434156bd07be7a3652be3b3e4b05257",
+        "NUDE": "a5800ca3865d1971c381ff510103730a1bcebeacda21daaa9bc4d32e9cb90074"
+      },
+      "real_owned_Manifestation_id": null,
+      "preview_actor_class": null,
+      "world_playable_class": null,
+      "kit_design_registry": "base_v6_approved_design_ids.json",
+      "kit_exact_payload": "sources/g04_luminous_base_v6_exact_unmodified.json"
+    },
+    "luminous_alter": {
+      "shared_identity_id": "character:luminous_valentine.identity",
+      "version_id": null,
+      "three_state_mapping": "PRESERVED_IN_PROTECTED_GATE01_ORIGINAL_CARD_PROOFS",
+      "specific_source_card_sha256_by_state": null,
+      "inherits_base_kit": false,
+      "eligible_for_native_visual_catalog": false
+    },
+    "gate09_QA_clips": {
+      "list_file": "gate09_four_native_clips_technical_intake.json",
+      "usable_for": "BASE_CLOTHED_ISOLATED_EVALUATION_ONLY",
+      "live_gameplay": false
+    },
+    "gate02_R1_candidate": {
+      "source_manifest": "gate02_r1_verified_candidate_source.json",
+      "usage": "ISOLATED_UE_QA_ONLY",
+      "world_activated": false
+    },
+    "gate07": {
+      "policy_file": "gate07_approved_policy_not_items.json",
+      "rates_applicable_now": false,
+      "item_ids": [],
+      "Dharma_id": null,
+      "banner_ids": []
+    }
+  },
+  "to_unlock_production_catalog": {
+    "Gate11": "complete hash-locked per-Version source/material/rig/morph and exact accepted package manifest; then native registry approval and activation receipts",
+    "Gate12": "true preview and IOGGate12OwnedWorldCharacterBinding playable actor paths with accepted native objects and non-fabricated world-store ownership; animate only compatible rig",
+    "Gate09": "production-ready per-rig clips after artistic quality and live deformation verification",
+    "Gate02": "art and UE World evidence",
+    "Gate07": "real authored catalog/recipes/banner pools, supported ownership"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "gate11.intake.gate02_firstworld_r1.v1",
+  "private_archive_path": "D:\\NoWorld_Art_Production\\NoWorld_FirstWorld_RegionKit_R1_20261019.zip",
+  "archive_sha256": "0b12490cf3559f134b1ec40514c318604e0f4c27ae9a5468a1328460b7eb1db9",
+  "archive_bytes": 715075060,
+  "verification": "GATE00_SHA_53_OF_53_AND_CRC_APPROVED_SOURCE_RECEIPT",
+  "FBX_anchors": 5,
+  "GLBs": 8,
+  "seed": 1412,
+  "stable_placements": 10454,
+  "tiles": 625,
+  "scatter_sha256": "f6375aa36356164e76bedf8713b77fe35223b2c6d7e05088408d3f90a28fd8f5",
+  "area_m": [
+    3200,
+    3200
+  ],
+  "native_editable_source": "source/NW_FirstWorld_R1_Master_EDITABLE.blend",
+  "source_report": "docs/production/gate00/GATE02_R1_FIRST_WORLD_INTAKE_20261019.json",
+  "status": "VERIFIED_SOURCE_CANDIDATE_ART_AND_NATIVE_NOT_APPROVED",
+  "canonical_location_content_ids": [],
+  "runtime_activated": false,
+  "gate11_artifact_ready": false,
+  "original_P03_reused_mesh_rights": "ATTRIBUTION_AND_SOURCE_LINEAGE_PENDING",
+  "blocking_owner_requirements": {
+    "Gate02": "authored-vs-reused P03 origin and revision with visual art approval; retain P34 source",
+    "Gate12": "isolated authentic UE import collision/navigation/river/water/streaming/camera/performance proof",
+    "Gate00": "final visual/art placement signoff"
+  },
+  "no_forced_spawns_routes_or_fake_locations": true
+}

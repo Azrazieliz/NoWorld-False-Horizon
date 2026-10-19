@@ -1,0 +1,76 @@
+{
+  "schema": "gate11.intake.gate09_four_clips.v1",
+  "source_repo_ref": "production/gate09-rig-motion-20261016",
+  "evidence_doc": "docs/production/gate09/GATE09_UNREAL583_NATIVE_FOUR_CLIP_IMPORT_QA_20261019.md",
+  "private_native_qa_archive_path": "D:\\UnrealProjects\\Gate09_Protected_Production_20261016\\GATE09_UNREAL583_NATIVE_FOUR_CLIPS_20261019.zip",
+  "native_qa_archive_sha256": "c197b1ae2445ec454656b92372ae2b8834c62121c07a59065ae3b356be0ea57d",
+  "qa_target_unreal_skeleton": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_Skeleton",
+  "skeleton_bone_count": 975,
+  "tested_version": "BASE",
+  "tested_wardrobe": "CLOTHED",
+  "status": "TECHNICALLY_VERIFIED_FOUR_NATIVE_ANIMSEQUENCE_QA_ONLY",
+  "clips": [
+    {
+      "role": "Idle_01_Thoughtful",
+      "source_fbx_sha256": "6622933189721721844a706049b88df12f58eedffd0cc55c2ff2321f86b3b184",
+      "native_QA_path": "/Game/Gate09_QA_20261019/TestSingle/G09_LuminousV3_Idle_01_Thoughtful",
+      "frames": 150,
+      "fps": 30,
+      "duration_s": 5.0,
+      "tracks": 975,
+      "source_sha_status": "FROM_GATE09_GIT_MANIFEST",
+      "native_asset_cold_load": "GATE09_VERIFIED",
+      "production_registry_id": null,
+      "eligible_for_other_wardrobes_or_Alter": false
+    },
+    {
+      "role": "Idle_02_Greeting",
+      "source_fbx_sha256": "78c693a224adf73f060183bb68f9b5a9097c65d534dd52f70618fa6ffdcda2ea",
+      "native_QA_path": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_02_Greeting",
+      "frames": 142,
+      "fps": 30,
+      "duration_s": 4.733,
+      "tracks": 975,
+      "source_sha_status": "FROM_GATE09_GIT_MANIFEST",
+      "native_asset_cold_load": "GATE09_VERIFIED",
+      "production_registry_id": null,
+      "eligible_for_other_wardrobes_or_Alter": false
+    },
+    {
+      "role": "Idle_03_Expressive",
+      "source_fbx_sha256": "70c11ccd5c4c0867672b85a0ddb51d6ba1a7f1f07bfcfe54ffbf894c13883c74",
+      "native_QA_path": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_03_Expressive",
+      "frames": 141,
+      "fps": 30,
+      "duration_s": 4.7,
+      "tracks": 975,
+      "source_sha_status": "FROM_GATE09_GIT_MANIFEST",
+      "native_asset_cold_load": "GATE09_VERIFIED",
+      "production_registry_id": null,
+      "eligible_for_other_wardrobes_or_Alter": false
+    },
+    {
+      "role": "Emote_Bow",
+      "source_fbx_sha256": "1a3f041c5b9d3597c23675ce8d63ce2ac0129e3e67405ad2fc94ce2b13b5f357",
+      "native_QA_path": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Emote_Bow_Source",
+      "frames": 141,
+      "fps": 30,
+      "duration_s": 4.7,
+      "tracks": 975,
+      "source_sha_status": "FROM_GATE09_GIT_MANIFEST",
+      "native_asset_cold_load": "GATE09_VERIFIED",
+      "production_registry_id": null,
+      "eligible_for_other_wardrobes_or_Alter": false
+    }
+  ],
+  "artistic_animation_approved": false,
+  "runtime_anim_bp_connected": false,
+  "device_validated": false,
+  "missing": [
+    "live full-body deformation check with final accepted mesh",
+    "production actor AnimBP binding/cue/loop/root policy approval",
+    "cross-state rig retarget test if using outside BASE CLOTHED",
+    "Gate11 native asset receipt with each exact uasset hash for private package association"
+  ],
+  "no_mass_registration_of_archive_or_mod_clips": true
+}

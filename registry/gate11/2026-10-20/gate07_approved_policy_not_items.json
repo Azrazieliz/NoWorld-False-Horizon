@@ -1,0 +1,185 @@
+{
+  "schema": "gate11.intake.gate07_policy.v1",
+  "as_of": "2026-10-20",
+  "source_exact_unmodified": {
+    "path": "sources/g07_feedback_decisions_exact_unmodified.json",
+    "sha256": "fc6d73eb16c882c4743c7f836fc8ff7b4c3676fdb99870faa2eb92fecd53cd63"
+  },
+  "accepted_design_direction_ids": [
+    "G07-D01",
+    "G07-D02",
+    "G07-D05",
+    "G07-D07",
+    "G07-D08",
+    "G07-D09",
+    "G07-D11",
+    "G07-D12",
+    "G07-D13",
+    "G07-D14",
+    "G07-D16",
+    "G07-D17",
+    "G07-D18"
+  ],
+  "deferred_ids": [
+    "G07-D03",
+    "G07-D04",
+    "G07-D06",
+    "G07-D10",
+    "G07-D15"
+  ],
+  "per_direction": [
+    {
+      "id": "G07-D01",
+      "name": "Character Origin-Rarity rates",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D02",
+      "name": "Soft pity, hard pity and featured guarantee",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D03",
+      "name": "Ten-pull minimum and atomic batch",
+      "review": "DETAIL_DEFERRED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D04",
+      "name": "Banner pools, schedule, eligibility and heroification",
+      "review": "DETAIL_DEFERRED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D05",
+      "name": "Ticket taxonomy and payment priority",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D06",
+      "name": "Currency, wallet, ledger and recovery",
+      "review": "DETAIL_DEFERRED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D07",
+      "name": "Acquisition income, sources, sinks and farming",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D08",
+      "name": "Item families, material identities and Quality vs Rank",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D09",
+      "name": "Anatomy equipment slots and visible layers",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D10",
+      "name": "Storage, stackability and item transfers",
+      "review": "DETAIL_DEFERRED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D11",
+      "name": "Loot and world acquisition ecology",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D12",
+      "name": "Crafting, known recipes, experiments and invention",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D13",
+      "name": "Durability, repair and exceptional equipment evolution",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D14",
+      "name": "Item–owner affinity vs user proficiency",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D15",
+      "name": "Trading, merchants, barter and local economies",
+      "review": "DETAIL_DEFERRED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D16",
+      "name": "Consumables, equipment effects, other rewards",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D17",
+      "name": "Visual assets, package manifests and provenance",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    },
+    {
+      "id": "G07-D18",
+      "name": "Save/ownership invariants and duplicate characters",
+      "review": "DIRECTION_ACCEPTED",
+      "canonical_specific_content_ids": []
+    }
+  ],
+  "conditional_mr_top_all_six_banner": {
+    "enabled": false,
+    "authorized_only_if": "approved live limited banner with actual all-six Registry eligible MR-top pool",
+    "rarity_rates_bps": {
+      "R": 6500,
+      "SR": 1800,
+      "SSR": 900,
+      "UR": 450,
+      "LR": 230,
+      "MR": 120
+    },
+    "hard_pity_pull": 70,
+    "soft_pity_after_pull": 50,
+    "soft_pity_additive_bps_per_pull": 500,
+    "featured_independent_probability_bps": 5000,
+    "off_feature_next_top_guaranteed_featured": true,
+    "actual_banner_id": null,
+    "pool_content_ids": []
+  },
+  "source_approved_content_definitions": {
+    "individual_equipment_ids": [],
+    "individual_items_or_material_ids": [],
+    "crafting_recipes": [],
+    "currency_ids": [],
+    "ticket_ids": [],
+    "Dharma_id": null,
+    "owned_items": [],
+    "banner_ids": []
+  },
+  "constraints": {
+    "ten_pull_SR_plus_floor_preserved": true,
+    "no_unapproved_ten_pull_transactions": true,
+    "tickets_first_real_balances_only": true,
+    "inventory_not_infinite": true,
+    "trading_not_activated_without_regional_data": true,
+    "no_character_chips": true,
+    "duplicate_is_independent_manifestation": true,
+    "item_quality_separate_from_rank_and_origin_rarity": true,
+    "no_automatically_granted_Dharma": true
+  },
+  "next_source": {
+    "Gate07": "real ≥15 defined items from ≥3 families, 8–12 recipes and 2 experiments, anatomy + Dharma source/rights and approved world context",
+    "Gate12": "Gacha pity and currency spending source validation after actual authorized pool; legal physical equipment and inventory rules",
+    "Gate00": "specific item/banner/world economic content signoff"
+  }
+}

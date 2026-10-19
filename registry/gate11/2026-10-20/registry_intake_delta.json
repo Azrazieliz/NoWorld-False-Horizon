@@ -1,0 +1,60 @@
+{
+  "schema": "gate11.registry_control_plane.intake_delta.v1",
+  "as_of": "2026-10-20",
+  "branch": "content/master-integration",
+  "foundation_sha": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+  "historical_registry": {
+    "archive_sha256": "27717520028bb8e9a0295eabc97fb8c1b35d03f367e82a0c2ba85b52e38fcae4",
+    "records_unchanged": 31,
+    "preexisting_accepted_production_records": 0,
+    "baseline_v2_not_overwritten": true,
+    "baseline_ids_collision_checked": true
+  },
+  "intake_records": [
+    {
+      "family": "LUMINOUS_BASE_IDENTITY_VERSION",
+      "status": "APPROVED_DESIGN_ID_ONLY",
+      "runtime_content_activation": false,
+      "gate11_artifact_ready": false,
+      "linked_source": "luminous_family_versions_and_wardrobe.json"
+    },
+    {
+      "family": "LUMINOUS_BASE_V6_SKILLS",
+      "status": "APPROVED_DESIGN_IDS_ONLY",
+      "runtime_content_activation": false,
+      "gate11_artifact_ready": false,
+      "linked_source": "base_v6_approved_design_ids.json"
+    },
+    {
+      "family": "LUMINOUS_ALTER_VERSION",
+      "status": "BLOCKED_EXACT_APPROVED_VERSION_ID_AND_NATIVE_ASSET_BINDING_MISSING_IN_ATTACHED_SOURCE",
+      "linked_source": "luminous_family_versions_and_wardrobe.json"
+    },
+    {
+      "family": "GATE09_FOUR_NATIVE_CLIPS",
+      "status": "VERIFIED_NATIVE_QA_PRODUCTION_BLOCKED",
+      "linked_source": "gate09_four_native_clips_technical_intake.json"
+    },
+    {
+      "family": "GATE02_WORLD_R1",
+      "status": "VERIFIED_SOURCE_QA_ONLY",
+      "linked_source": "gate02_r1_verified_candidate_source.json"
+    },
+    {
+      "family": "GATE07_13_DESIGN_DIRECTIONS",
+      "status": "APPROVED_POLICY_NOT_ITEM_CONTENT",
+      "linked_source": "gate07_approved_policy_not_items.json"
+    }
+  ],
+  "immutable_rules": {
+    "no_canonical_owner_manifestations_created": true,
+    "no_installed_runtime_packages_created": true,
+    "no_artifact_ready": true,
+    "no_chip_records": true,
+    "do_not_change_foundation": true,
+    "do_not_change_existing_saves": true,
+    "do_not_touch_PR16": true,
+    "do_not_recreate_finished_characters": true
+  },
+  "approval_explanation": "Gate00 October20 user-approved Base v6 is design-authoritative despite original source JSON PROPOSED flag. Gate11 allocates only source-derived design-stage content IDs, not native records/installations/Manifestations."
+}

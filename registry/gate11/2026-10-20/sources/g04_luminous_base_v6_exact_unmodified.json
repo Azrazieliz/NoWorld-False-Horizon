@@ -1,0 +1,1321 @@
+{
+  "schema": "gate04.luminous_valentine.base.ln23.offensive_v6.proposal",
+  "design_version": "2026-10-19.v6",
+  "status": "PROPOSED_ONLY_ORIGIN_MR_APPROVED",
+  "source_revision": "Luminous_LN23_Offensive_Revision_v3_20261019 (preserved; independent revision)",
+  "frozen_foundation_commit": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+  "authority": {
+    "origin_rarity": {
+      "value": "MR",
+      "status": "USER_APPROVED"
+    },
+    "current_rarity_at_acquisition": {
+      "value": "MR",
+      "status": "PROPOSED_SEPARATE_FROM_ORIGIN_APPROVAL"
+    },
+    "starting_power_rank": {
+      "value": "Hero",
+      "status": "PROPOSED_LOW_ENTRY_MAGNITUDE"
+    },
+    "level": {
+      "value": 1,
+      "status": "PROPOSED"
+    },
+    "identity_id": {
+      "value": "draft:character.luminous_valentine",
+      "status": "DRAFT_NOT_REGISTRY_ID"
+    },
+    "base_version_id": {
+      "value": "draft:character.luminous_valentine.base",
+      "status": "DRAFT_NOT_REGISTRY_ID"
+    },
+    "appearance": "preserve approved V3 2D and Koikatsu source; do not recreate",
+    "source_era": "Japanese LN23, 2025 final published main series, secondary ability name translations flagged",
+    "rank_note": "A gameplay Manifestation begins at Hero Rank/Level 1 for low-entry values, not a canon claim that LN23 Luminous herself is Hero. Attained Rank and effective Rank both proposed Hero at acquisition; earned qualitative breakthroughs advance to higher ranks. No hidden Divine Rank with imaginary power seal."
+  },
+  "roster_slots": {
+    "core_total": 9,
+    "actives": 3,
+    "passives": 6,
+    "ultimate_separate": 1,
+    "qte_separate": 0,
+    "world_fantasm_separate": 1,
+    "learned_techniques_outside_core": true,
+    "USTRUCT_mapping": "FOGResolvedSkillSet.ActiveSkills=3, PassiveSkills=6, UltimateSkill=composite branch ID; World Fantasm via Manifestation record"
+  },
+  "combat_role": {
+    "primary": "high offense blood/sword carry",
+    "secondary": "burst healing and offensive ally buffs",
+    "defense": "below-average for proposed personal Rank damage profile; sustains via conditional drain and self restoration",
+    "method": "attacker who must actually damage eligible enemies to refill and sustain; bloodless and higher-Authority targets can starve resource economy"
+  },
+  "stats": {
+    "reference": "Hero Rank Level 1, no gear or temporary buffs; playable starting owned Manifestation, not LN23 canonical existence value",
+    "rank_index_zero_based": 4,
+    "curve": "R(r)=10^(0.4r+0.04r^2); resolved stat = seed*R(r)^alpha, no within-rank gain at L1",
+    "magnitude_stat_seeds_and_elasticities": {
+      "max_hp": {
+        "mortal_1_seed": 8,
+        "alpha": 1.35
+      },
+      "attack": {
+        "mortal_1_seed": 3,
+        "alpha": 1.4
+      },
+      "defense": {
+        "mortal_1_seed": "2.5",
+        "alpha": 1.2
+      }
+    },
+    "FOGCombatStats": {
+      "max_hp": 8455,
+      "attack": 4103,
+      "defense": 1219,
+      "speed": 136,
+      "crit_rate_bps": 3200,
+      "crit_damage_bonus_bps": 12000,
+      "crit_rate_resistance_bps": 800,
+      "crit_damage_resistance_bps": 1000,
+      "hit_bps": 12000,
+      "dodge_bps": 1600,
+      "block_rate_bps": 400,
+      "block_reduction_bps": 2000,
+      "defense_penetration_bps": 1200,
+      "damage_dealt_multiplier_bps": 10000,
+      "damage_taken_multiplier_bps": 10000,
+      "true_damage_resistance_bps": 0
+    },
+    "extended_authored_stats_bps": {
+      "blood_eligible_damage_lifesteal_bps": 2400,
+      "hemorrhage_hp_damage_lifesteal_bps": 1200,
+      "active_restoration_done_bonus_bps": 2400,
+      "max_lifesteal_per_owner_action_of_max_hp_bps": 1800,
+      "self_revive_restored_max_hp_bps": 2200,
+      "dawn_oath_bonus_healing_bps": 2000,
+      "overheal_conversion_to_shield_bps": 4000,
+      "overheal_shield_cap_of_target_max_hp_bps": 800
+    },
+    "interpretation": "HP 8455 / ATK 4103 / DEF 1219 at entry. DEF ~30% of ATK; defense weaker than heal/sustain. Rank growth uses the frozen coefficient at r=4; high future numbers require actual Rank progress, not automatically Absolute.",
+    "precision_note": "Integer magnitudes calculated with Decimal exponent at reference Rank. Percentage fields are bps (10000=100%). Each scripted effect resolves via core math and rule priority, not an unrestricted baked multiplier.",
+    "no_unregistered_resistances": "No blood/holy/dark/fire/poison/spirit/soul/wound/control resistance defined unless there is an actual registered content effect family; Native FOGCombatStats supports CritRateResistance, CritDamageResistance and TrueDamageResistance only. No random innate elemental resistances invented.",
+    "scaling_note": "Absolute is a Transcendence grade, not a Rank or Level; no predefined Absolute Lv100 numerical template. Separate source power from owned Manifestation progression."
+  },
+  "resources": {
+    "scarlet_reserve": {
+      "min": 0,
+      "max": 100,
+      "initial": 35,
+      "gain_on_first_skill_enemy_hp_damage": 10,
+      "gain_first_valid_bleed_tick_per_owner_action": 6,
+      "gain_on_successful_conditional_dodge_counter": 8,
+      "gain_on_heal_to_injured_ally": 8,
+      "gain_per_valid_distinct_event_once": true,
+      "does_not_gain_from_own_lifesteal": true,
+      "no_gain_on_fully_absorbed_damage": true,
+      "cost_pay_after_target_validation": true,
+      "never_negative": true
+    },
+    "ultimate_charge": {
+      "min_percent": 0,
+      "max_percent": 200,
+      "day_cost_percent": 100,
+      "night_cost_percent": 150,
+      "generation": "must use existing character-owned ultimate charge resolver; no invented universal team meter"
+    },
+    "day_night_attunement": {
+      "initial": "Night",
+      "Night_after": "active:blood_throne",
+      "Day_after": "active:crimson_benediction",
+      "other_active": "preserve_current",
+      "duration_owner_turns": 2,
+      "duration_world_milliseconds": 10000,
+      "cosmic_sunlight_dependency": false,
+      "damage_bonus_when_night_bps": 1000,
+      "healing_bonus_when_day_bps": 1200,
+      "expiry": "returns Neutral after defined lifetime",
+      "ultimate_can_choose_either_branch_even_if_other_attunement": true
+    }
+  },
+  "statuses": {
+    "Hemal Mark": {
+      "max_stacks": 4,
+      "duration_owner_turns": 3,
+      "duration_world_ms": 14000,
+      "source_target_scoped": true,
+      "apply_condition": "confirmed HP damage and eligible flowing blood or explicit blood-equivalent tissue; immune/bloodless targets gain zero",
+      "no_hit_overflow_status_replication": true,
+      "refresh": "newest application resets source-specific lifetime"
+    },
+    "Hemorrhage": {
+      "max_stacks": 2,
+      "duration_owner_turns": 2,
+      "duration_world_ms": 10000,
+      "tick_attack_bps_per_stack": 1800,
+      "tick_trigger": "OnSourceOwnerTurnStart or world 5 second interval",
+      "can_crit": false,
+      "separate_dot_recap": true,
+      "requires_blood_vulnerability": true
+    },
+    "Dawn Oath": {
+      "max_stacks": 1,
+      "duration_owner_turns": 2,
+      "duration_world_ms": 10000,
+      "trigger": "after A3 genuine healing and eligible buff",
+      "consumption": "Day Ultimate bonus or World Negation Rekindling Edict"
+    },
+    "Eclipse Claim": {
+      "max_stacks": 1,
+      "duration_owner_turns": 2,
+      "duration_world_ms": 8000,
+      "trigger": "A2 destroys three Hemal Marks on a living eligible target",
+      "consumption": "Night ultimate extra strike or World Negation Nocturne Severance"
+    },
+    "Restoration Lock": {
+      "max_stacks": 1,
+      "duration_owner_turns": 1,
+      "duration_world_ms": 4000,
+      "scope": "only same previously severed effect content ID from same source on same target",
+      "not_absolute": "Does not block ordinary unrelated healing, resurrection or other Authorities without a separate permitted contest"
+    }
+  },
+  "core_skills": [
+    {
+      "id": "draft:luminous_valentine.skill.scarlet_cadence",
+      "name": "Dharma — Scarlet Cadence",
+      "slot_type": "active",
+      "effects": [
+        {
+          "mechanic": "SwordAttackSequence",
+          "hit_atk_bps": [
+            4000,
+            6000,
+            9000
+          ],
+          "independent_hit_crit": true,
+          "hit_overflow_replication": false,
+          "target": "one in melee reach",
+          "gear": "Any legal sword; equipped Gate07 Dharma grants optional lawful blade channel without spawning it"
+        },
+        {
+          "mechanic": "ApplyHemalMark",
+          "on": "first and second separate genuine HP-damaging contacts",
+          "stacks_each": 1,
+          "max_added_per_action": 2,
+          "requires": "blood-bearing and not immune"
+        },
+        {
+          "mechanic": "InvokeVampiricSovereigntyScarletReserveGain",
+          "on": "first genuinely HP-damaging contact",
+          "amount": 10,
+          "once_per_authored_action": true,
+          "do_not_grant_resource_twice": true
+        },
+        {
+          "mechanic": "InvokeVampiricSovereigntyLifesteal",
+          "on": "eligible blood/sword HP damage",
+          "ratio_bps": 2400,
+          "healing_from_shield_damage": false,
+          "once_owner_action_max_hp_cap_bps": 1800,
+          "do_not_stack_with_passive_P1": true
+        },
+        {
+          "mechanic": "RiposteWindow",
+          "on": "third-hit finish",
+          "eligible_dodge_cancel_after_ms": 520,
+          "parry_by_attack_timing": true
+        },
+        {
+          "mechanic": "TargetedExecutionSequence",
+          "condition": "If the third hit lands on a target with >=2 Luminous-owned Hemal Marks, extend current Hemorrhage by one owner turn without exceeding 3 turns; once per authored action, no additional mark generation",
+          "max_extension_owner_turns": 1
+        }
+      ],
+      "turn": {
+        "cost_reserve": 0,
+        "cooldown_owner_actions": 0,
+        "delay": "resolver_supplied_by_authoritative_timeline",
+        "normal_basic": true
+      },
+      "world": {
+        "combo_taps": 3,
+        "individual_contact_frames_ms": [
+          180,
+          390,
+          650
+        ],
+        "dodge_cancel_from_ms": 520,
+        "reach_m": 2.8,
+        "no_universal_heavy": true
+      },
+      "visual_cues": [
+        "thin scarlet edge following silver-black blade",
+        "blood threads only on confirmed blood-eligible contact",
+        "third hit compressed rose-petal impact, trailing dark red spark"
+      ],
+      "targeting_v6": {
+        "mode": "ST_ENEMY",
+        "range_world_m": 2.8,
+        "affected": "one selected enemy",
+        "hit_distribution": "3 independent sword hits on the same target",
+        "never": "automatic area splash"
+      }
+    },
+    {
+      "id": "draft:luminous_valentine.skill.blood_throne",
+      "name": "Blood Throne — Hematic Crucible",
+      "slot_type": "active",
+      "effects": [
+        {
+          "mechanic": "HematicLance",
+          "range_m": 14,
+          "max_targets": 3,
+          "atk_bps_per_hit": [
+            11500,
+            12500
+          ],
+          "damage_channel": "blood+physical with explicit split resolved by typed handler",
+          "can_crit": true,
+          "hit_overflow_replication": false
+        },
+        {
+          "mechanic": "ConsumeHemalMarks",
+          "required": 3,
+          "consume": 3,
+          "bonus_atk_bps": 10000,
+          "applicable_to": "one target with >=3 Hemal Marks",
+          "on_success_grants": "Eclipse Claim"
+        },
+        {
+          "mechanic": "InvokeVampiricSovereigntySiphon",
+          "vampirism_bps": 2400,
+          "only_actual_target_HP_loss": true,
+          "do_not_stack_with_passive_P1": true
+        },
+        {
+          "mechanic": "BloodlessCost",
+          "on": "bloodless / blood-immune target selected while no stored valid blood",
+          "current_hp_cost_bps": 200,
+          "cannot_pay_if_would_reduce_to_0hp": true,
+          "still_does_sword_spirit_damage": "yes, but no Hemal Mark"
+        },
+        {
+          "mechanic": "Attunement",
+          "state": "Night",
+          "effect": "damage dealt +10% for 2 owner turns / 10s, excluding true-authority guaranteed counters"
+        },
+        {
+          "mechanic": "SpilloverJudgment",
+          "condition": "If the primary target is defeated by A2 after 3 marks were actually consumed, transfer one non-damaging Hemal Mark to a different eligible blood-bearing enemy within 4m; once per cast, no automatic additional damage",
+          "requires_actual_second_enemy": true
+        }
+      ],
+      "turn": {
+        "cost_reserve": 30,
+        "cooldown_owner_actions": 2,
+        "aoe_target_cap": 3
+      },
+      "world": {
+        "cooldown_ms": 12000,
+        "cast_ms": 650,
+        "range_m": 14,
+        "aim": "directional arcs with target lock",
+        "dodge_cancel_from_ms": 470
+      },
+      "visual_cues": [
+        "dark red liquid spiral from actual preexisting blood, otherwise shallow self-cut indicated",
+        "three needle-thin blood lances, no arbitrary blood appearing from stone",
+        "impact leaves dark rose-shaped wound glyph"
+      ],
+      "targeting_v6": {
+        "mode": "AOE_ENEMIES_MAX3",
+        "range_world_m": 14,
+        "affected": "up to three eligible enemies each receive two hits",
+        "primary": "only declared primary gets 3-Mark consumption extra strike and Eclipse Claim",
+        "secondary": "may receive Bleed if eligible; no free primary bonus"
+      }
+    },
+    {
+      "id": "draft:luminous_valentine.skill.crimson_benediction",
+      "name": "Crimson Benediction — Rose of Morning",
+      "slot_type": "active",
+      "effects": [
+        {
+          "mechanic": "Restoration",
+          "primary_ally_atk_bps": 6500,
+          "secondary_ally_atk_bps": 2500,
+          "secondary_cap": 2,
+          "requires": "injured or valid restorative beneficiary",
+          "is_healing_not_damage": true,
+          "healing_done_bonus_bps_from_passive": 2400,
+          "can_overheal_into_shield_if_passive_P5": true
+        },
+        {
+          "mechanic": "Blessing",
+          "buffs": {
+            "attack_bps": 2200,
+            "speed_bps": 1200,
+            "healing_received_bps": 2000
+          },
+          "duration_owner_turns": 2,
+          "duration_world_ms": 10000,
+          "buffs_on_primary_and_valid_secondary": true
+        },
+        {
+          "mechanic": "Cleanse",
+          "eligible_families": [
+            "registered_ordinary_bleed"
+          ],
+          "max_stacks": 1,
+          "does_not_purge_higher_order_unevaluated_authority": true
+        },
+        {
+          "mechanic": "DawnOath",
+          "on": "at least one target genuinely restored",
+          "max": 1,
+          "duration_owner_turns": 2,
+          "duration_world_ms": 10000,
+          "do_not_stack_DawnOath_grant_with_P5": true
+        },
+        {
+          "mechanic": "Attunement",
+          "state": "Day",
+          "effect": "healing output +12% while active, applied as separate multiplicative category"
+        },
+        {
+          "mechanic": "ConsecratedMomentum",
+          "condition": "After actually restoring at least 1 HP to an injured ally, the primary ally’s next authored damaging attack gains 10% damage; consumed by next direct hit within 2 turns / 10s",
+          "bonus_bps": 1000,
+          "stack_limit": 1
+        }
+      ],
+      "turn": {
+        "cost_reserve": 30,
+        "cooldown_owner_actions": 3,
+        "cast_is_one_normal_action": true
+      },
+      "world": {
+        "cooldown_ms": 16000,
+        "cast_ms": 600,
+        "range_m": 15,
+        "soft_auto_target": "lowest hp eligible ally, selectable",
+        "dodge_cancel_from_ms": 560
+      },
+      "visual_cues": [
+        "single scarlet drop lifted above open palm becomes luminous rose",
+        "ivory/gold roots connect physically eligible allies",
+        "rose petals turn outward on healing, never depict damage numbers"
+      ],
+      "targeting_v6": {
+        "mode": "ALLY_MULTI_MAX3",
+        "range_world_m": 15,
+        "affected": "one selected ally primary + up to two eligible nearby allies secondary",
+        "enemy_damage": 0
+      },
+      "alternate_cast_v6": {
+        "active_id": "draft:luminous_valentine.skill.crimson_benediction",
+        "branch": "Covenant of Returning Dawn",
+        "target": "one living selected ally; cannot retroactively target a promoted reserve after defeat",
+        "initial_reserve_cost": 30,
+        "additional_reserve_cost": 45,
+        "total_reserve_cost": 75,
+        "prepare_lifetime_turns": 2,
+        "prepare_lifetime_world_ms": 10000,
+        "trigger": "OnDefeat after current action, before succession; only if soul continuity valid, not canonically dead, no higher-priority effect blocks revival",
+        "restored_hp_max_bps": 1800,
+        "result_buff_attack_bps": 2200,
+        "result_buff_speed_bps": 1200,
+        "buff_duration_turns": 2,
+        "buff_duration_world_ms": 10000,
+        "trigger_limit": "once per encounter across A3 ally Covenant and Day Ultimate ally revival, keyed by Luminous manifestation/encounter",
+        "cost_commitment": "Spend 75 at prepare cast (not another 75 on trigger). Failed validity at cast spends nothing. Trigger expires without refund if no qualifying defeat.",
+        "mutual_exclusion": "A3 heal/buff is a different branch; the prepared-covenant cast does NOT perform AoE healing or grant Dawn Oath, and its cooldown is shared.",
+        "dual_executor": "same prepared state/ledger persistent across turn/world transitions without resetting timer."
+      }
+    },
+    {
+      "id": "draft:luminous_valentine.skill.vampiric_sovereignty",
+      "name": "Vampiric Sovereignty",
+      "slot_type": "passive",
+      "effects": [
+        {
+          "mechanic": "Lifesteal",
+          "source_families": [
+            "eligible_hp_damage_from_sword",
+            "eligible_hp_damage_from_blood"
+          ],
+          "ratio_bps": 2400,
+          "exclude": [
+            "shield_damage",
+            "reflected_damage",
+            "own_hp_cost",
+            "true_dmg_without_blood_eligibility",
+            "night_ultimate_hits_use_replacement_25pct_siphon"
+          ],
+          "owner_action_heal_cap_max_hp_bps": 1800
+        },
+        {
+          "mechanic": "LifestealFromBleed",
+          "ratio_bps": 1200,
+          "on": "eligible Hemorrhage HP DoT only",
+          "cannot_create_resource_loop": true
+        },
+        {
+          "mechanic": "BloodReserveGain",
+          "amount": 10,
+          "trigger": "first positive eligible enemy HP damage per action",
+          "bleed_tick_amount": 6,
+          "bleed_tick_limit_once_owner_action": true
+        },
+        {
+          "mechanic": "BloodAffinity",
+          "blood_skill_status_potency_bonus_bps": 1200,
+          "only_blood_bearing_and_not_immune": true
+        }
+      ],
+      "turn": {
+        "passive_event_ids": [
+          "OnConfirmedHpDamage",
+          "OnDamageOverTimeTick"
+        ],
+        "no_cooldown": true
+      },
+      "world": {
+        "event_driven": true
+      },
+      "visual_cues": [
+        "actual blood droplets orbit her blade only during resource gain",
+        "healing feeds thin crimson thread to collarbone"
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.skill.scarlet_rhythm",
+      "name": "Scarlet Rhythm",
+      "slot_type": "passive",
+      "effects": [
+        {
+          "mechanic": "CritDamageBonus",
+          "condition": "target has >=2 source Hemal Marks",
+          "crit_damage_bonus_bps": 1800
+        },
+        {
+          "mechanic": "ApplyHemorrhage",
+          "condition": "A1 third strike damages a blood-eligible target",
+          "stacks": 1,
+          "max": 2,
+          "tick_atk_bps_per_stack": 1800
+        },
+        {
+          "mechanic": "OnMarkThreshold",
+          "condition": "target reaches exactly 4 Hemal Marks",
+          "next A2 mark-consumption damage_bonus_bps": 2500,
+          "consume_bonus_after_one_hit": true
+        },
+        {
+          "mechanic": "ActionTempo",
+          "condition": "A1 third hit damages target",
+          "next A1 authoritatively resolved action delay reduction_bps": 1000,
+          "once_per_sequence": true
+        },
+        {
+          "mechanic": "MomentumConversion",
+          "condition": "At A1 third strike hit, if Hemorrhage is already active, next A2 cost is lowered by 5 Reserve; once per owner action and never below zero",
+          "reserve_discount": 5
+        }
+      ],
+      "turn": {
+        "passive_event_ids": [
+          "OnSwordHit",
+          "OnHemalMarkAdded"
+        ],
+        "no_cooldown": true
+      },
+      "world": {
+        "event_driven": true
+      },
+      "visual_cues": [
+        "four blood-thorn petals form around target only at four marks",
+        "one sharp silver pulse on empowered final strike"
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.skill.queen_nightfall",
+      "name": "Queen of Nightfall",
+      "slot_type": "passive",
+      "effects": [
+        {
+          "mechanic": "NightPressure",
+          "condition": "Night attunement",
+          "speed_bonus_bps": 800,
+          "defense_penetration_bonus_bps_against_bleeding": 1500
+        },
+        {
+          "mechanic": "PerfectDodgeReward",
+          "condition": "authored perfect dodge against qualifying melee threat, blood-eligible attacker",
+          "reserve_gain": 8,
+          "next_A1_first_hit_atk_bonus_bps": 3000,
+          "expires_after_owner_actions": 1
+        },
+        {
+          "mechanic": "SwitchQTE",
+          "condition": "control enters Luminous while marked enemy within 4m and entry ready",
+          "melee_counter_atk_bps": 8500,
+          "heal_bps_of_actual_hp_damage": 2000,
+          "cooldown_ms": 16000,
+          "no_persistent_extra_onfield_copy": true
+        },
+        {
+          "mechanic": "LowDefenseTradeoff",
+          "condition": "none",
+          "flat_defense_buff": 0,
+          "no_generic_guard_or_auto_parry": true
+        },
+        {
+          "mechanic": "NightExecutionPursuit",
+          "condition": "When A2 defeats a living target while Night attunement active, gain +12 Ultimate percentage points once per owner turn",
+          "ultimate_charge_gain_percent": 12,
+          "once_per_owner_turn": true
+        }
+      ],
+      "turn": {
+        "passive_event_ids": [
+          "OnAttunementChanged",
+          "OnPerfectDodge",
+          "OnControlSwitchEntry"
+        ]
+      },
+      "world": {
+        "event_driven": true
+      },
+      "visual_cues": [
+        "violet-black behind-edge on controlled dodge, no global freeze",
+        "QTE blade traces a crescent rose before returning control"
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.skill.crimson_reconstitution",
+      "name": "Crimson Reconstitution",
+      "slot_type": "passive",
+      "effects": [
+        {
+          "mechanic": "Restoration",
+          "on": "own action start while alive",
+          "heal_missing_hp_bps": 400,
+          "does_not_apply_to_canonical_death": true
+        },
+        {
+          "mechanic": "SelfReviveBeforeSuccession",
+          "on": "OnDefeat pending resolution after current action",
+          "requires": [
+            "not canonical death",
+            "soul continuity verified",
+            "has >=40 Scarlet Reserve",
+            "once per encounter"
+          ],
+          "reserve_cost": 40,
+          "revive_hp_max_bps": 2200,
+          "consumes_pre_succession_window": true
+        },
+        {
+          "mechanic": "RevivalAfterglow",
+          "on": "successful self-revive",
+          "attack_bonus_bps": 1200,
+          "duration_owner_actions": 1
+        },
+        {
+          "mechanic": "RebirthPreventLoop",
+          "once_encounter_ledger_key": "manifestation_entity_id + encounter_id",
+          "cannot_self_trigger_on_own_revival_action": true
+        }
+      ],
+      "turn": {
+        "passive_event_ids": [
+          "OnOwnerActionStart",
+          "OnDefeat"
+        ],
+        "once_per_encounter_revive": true
+      },
+      "world": {
+        "event_driven": true
+      },
+      "visual_cues": [
+        "ring of coagulated rose thorns binds injury; works only if soul persists",
+        "single red pulse when restored, no canonical resurrection cutscene"
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.skill.dawn_sanctification",
+      "name": "Dawn Sanctification",
+      "slot_type": "passive",
+      "effects": [
+        {
+          "mechanic": "HealingDoneBonus",
+          "bonus_bps": 2400,
+          "affects": [
+            "Crimson Benediction",
+            "Day Ultimate",
+            "eligible integrated heal techniques"
+          ],
+          "not_lifesteal": true
+        },
+        {
+          "mechanic": "OverhealToBarrier",
+          "ratio_of_overheal_bps": 4000,
+          "max_barrier_target_max_hp_bps": 800,
+          "duration_owner_turns": 2,
+          "duration_world_ms": 8000,
+          "keeps_normal_overheal_rule_priority": true
+        },
+        {
+          "mechanic": "DawnOathGrant",
+          "condition": "A3 actually restores >0 missing HP",
+          "max_stack": 1,
+          "day_ultimate_consumption_healing_bonus_bps": 2000
+        },
+        {
+          "mechanic": "WoundCleansing",
+          "condition": "Crimson Benediction heals living target",
+          "remove_max_one_stack_from": [
+            "registered_ordinary_bleed"
+          ],
+          "higher_order_seal_still_contested": true
+        },
+        {
+          "mechanic": "MercifulEdge",
+          "condition": "When A3 healing actually saves ally from under 35% HP to at least 35%, Luminous gains +10% ATK for next single sword or blood cast",
+          "bonus_atk_bps": 1000,
+          "expires_owner_actions": 1
+        }
+      ],
+      "turn": {
+        "passive_event_ids": [
+          "OnHealingResolved",
+          "OnCrimsonBenedictionResolved"
+        ]
+      },
+      "world": {
+        "event_driven": true
+      },
+      "visual_cues": [
+        "healing shows pale gold blossom veins; overheal condenses into thin translucent petal layers",
+        "no opaque perfect shield"
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.skill.twilight_law",
+      "name": "Twilight Lawkeeper",
+      "slot_type": "passive",
+      "effects": [
+        {
+          "mechanic": "ObservedTechniqueLedger",
+          "trigger": "genuinely witnessed technique with perceptual access",
+          "store_content_id_and_source": "yes",
+          "max_new_copies_per_encounter": 1,
+          "copying_requires_authorized_compatibility": true
+        },
+        {
+          "mechanic": "AuthorityReadiness",
+          "condition": "observed specific effect and provenance",
+          "against_same_content_effect_effect_penetration_bonus_bps": 1500,
+          "once_per_encounter_target_effect_pair": true
+        },
+        {
+          "mechanic": "WorldNegationUnlock",
+          "gate": "Current Rarity MR and Origin Rarity MR",
+          "grade": "World Negation",
+          "no_free_ability_without_manifestation_field_activation": true
+        },
+        {
+          "mechanic": "DawnNightAttunement",
+          "on": "A2 resolves -> Night; A3 resolves -> Day",
+          "duration_owner_turns": 2,
+          "duration_world_ms": 10000,
+          "both_ultimate_branches_always_selectable": true
+        },
+        {
+          "mechanic": "MercyEntry",
+          "condition": "World switch to Luminous, valid ally HP <35%, has >=20 Reserve, cooldown 16s",
+          "consume_reserve": 20,
+          "heal_ally_attack_bps": 9000,
+          "one_time_per_entry": true,
+          "turn_translation": "only lawful reserve succession entry, not free arbitrary switch"
+        },
+        {
+          "mechanic": "RecordedWeakness",
+          "condition": "Once per encountered enemy content effect successfully examined, the next matching attempted field rule gains specificity +1 for that one rule contest only; grants no automatic priority over higher authority",
+          "specificity_delta": 1,
+          "once_per_enemy_effect_content_id": true
+        }
+      ],
+      "turn": {
+        "passive_event_ids": [
+          "OnSkillObserved",
+          "OnAbilityResolved",
+          "OnWorldFantasmActivation",
+          "OnPartyEntry"
+        ]
+      },
+      "world": {
+        "event_driven": true
+      },
+      "visual_cues": [
+        "one narrow gold glyph records observed skill rather than all powers",
+        "Day/Night eye glint changes color without recoloring approved iris identity"
+      ]
+    }
+  ],
+  "ultimate": {
+    "id": "draft:luminous_valentine.ultimate.twin_principles",
+    "name": "Twin Thrones — Ahura Mazda / Angra Mainyu",
+    "slot_type": "ultimate",
+    "canonical_source_powers": [
+      "Ahura Mazda life domination and restorative authority",
+      "Angra Mainyu creation/research and opposing authority"
+    ],
+    "gameplay_branch_day": "Ahura Mazda — Day of Returning Life",
+    "gameplay_branch_night": "Angra Mainyu — Night of the Final Rose",
+    "semantics": "Day/Night are player-facing forms of two LN23 authorities, not official technique names. Both castable anytime; not dependent on literal sunlight. Day is 0-damage healing + offensive buffs. Night is blood/sword burst with actual contact and no universal guaranteed negation.",
+    "day": {
+      "cost_ultimate_percent": 100,
+      "damage_to_enemies_bps": 0,
+      "heal_primary_ally_atk_bps": 22000,
+      "heal_other_eligible_allies_atk_bps": 9500,
+      "heals_self_if_in_party": true,
+      "cleanses": {
+        "max_stacks_per_ally": 2,
+        "families": [
+          "registered_ordinary_bleed"
+        ],
+        "higher_order_heal_block": "requires eligible per-content Authority contest; no automatic cleansing"
+      },
+      "buffs": {
+        "attack_bps": 2500,
+        "damage_taken_multiplier_reduction_bps": 1400,
+        "healing_received_bps": 2400,
+        "duration_owner_turns": 2,
+        "duration_world_ms": 12000
+      },
+      "special": {
+        "prepared_eligible_soul_stable_revive_max_targets": 1,
+        "revive_hp_max_bps": 3000,
+        "cost_additional_reserve": 35,
+        "requires": [
+          "target genuinely incapacitated not canonically dead",
+          "continuous soul provenance",
+          "no superior resurrection negation",
+          "target not already being revived by other trigger"
+        ],
+        "revive_before_succession_if_prepared_only": true
+      },
+      "dawn_oath_bonus_healing_bps": 2000,
+      "visual": "sunless ivory-gold dawn erupts from a single scarlet rose; gold filaments reknit physical injuries; allies are gold-outline rather than damaged.",
+      "revival_shared_ledger_v6": "Shares one ally-revival charge per encounter with A3 Covenant; in ordinary turn execution it must have a valid prepared reaction or be a legal interrupt DURING defeat window, never after succession. Active revive attempt is not a full-party automatic revive."
+    },
+    "night": {
+      "cost_ultimate_percent": 150,
+      "strike_atk_bps": [
+        9000,
+        12000,
+        15000,
+        18000
+      ],
+      "total_atk_bps_before_modifiers": 54000,
+      "targets": "one primary, up to two nearby secondary each take 60% strike magnitudes",
+      "bonus_condition": "Eclipse Claim on primary target",
+      "bonus_atk_bps": 9000,
+      "consumes_eclipse_claim": true,
+      "siphon_from_actual_hp_damage_bps": 2500,
+      "siphon_cap_max_hp_bps": 2500,
+      "hemorrhage_add_stacks": 1,
+      "defense_penetration_bonus_bps": 2000,
+      "can_crit": "each strike independently",
+      "hit_overflow_replication": false,
+      "bloodless_behavior": "spirit/law blade damage still works; blood status/drain fail unless blood-equivalent proven",
+      "visual": "violet-black sky folds into blood-rose aperture; four blade/blood-lance strokes sharpen to final black petal cut, visible wounds only on damage.",
+      "siphon_stacking_rule": "The Night Ultimate 25% siphon REPLACES the passive 24% sword/blood direct-damage lifesteal for hits generated by this cast; it does not stack additively. Only one actual-HP-loss siphon event per damaging hit and per-target cast cap 25% of Luminous Max HP. Separate later Hemorrhage ticks may trigger the passive 12% damage-over-time siphon if eligible."
+    },
+    "turn": {
+      "selected_branch_explicit": true,
+      "one_ultimate_id": true,
+      "spend_selected_cost_only": true,
+      "interrupt_priorities_character_defined": true,
+      "charge_carries_if_higher_than_cost": true
+    },
+    "world": {
+      "input_day": "tap ultimate",
+      "input_night": "hold ultimate >0.30 s",
+      "cast_day_ms": 950,
+      "cast_night_ms": 1200,
+      "cancel_before_release": false,
+      "no_slow_modal_selector": true
+    },
+    "requires_native_dispatcher": true
+  },
+  "world_fantasm": {
+    "id": "draft:luminous_valentine.fantasm.sovereign_eclipse",
+    "name": "Sovereign Eclipse — The Rose Between Life and Nothing",
+    "grade": "World Negation",
+    "grade_is_derived_from_approved_origin_MR": true,
+    "unlocks_only_when_current_rarity": "MR",
+    "not_sanctuary": "independent Fantasm; Sanctuary remains learned/prepared ritual",
+    "activation": {
+      "cost_scarlet_reserve": 60,
+      "needs": [
+        "Current Rarity MR",
+        "Luminous alive and not silenced/sealed",
+        "at least one self-created Hemal Mark OR one owned Dawn Oath active",
+        "valid non-overlapping ownership of same Fantasm instance"
+      ],
+      "turn_activation": "uses one legal action; no simultaneous free charge",
+      "world_cast_ms": 1100,
+      "world_cooldown_ms": 75000,
+      "turn_cooldown_owner_actions": 6,
+      "duration_owner_turns": 3,
+      "duration_world_ms": 18000,
+      "hybrid_transition": "preserve remaining duration proportion; nominal conversion 6000ms per owner turn, never reset field to full",
+      "range_world_m": 16,
+      "radius_turn_semantics": "all actually occupied battlefield positions within mapped field footprint, no global reserve inclusion"
+    },
+    "visual_space": {
+      "geometry": "A 16-m articulated rose-ring; warm ivory-gold floor inside one moving semicircle, liquid-black/violet petal geometry inside other; one jagged luminous interference seam traces their contested boundaries",
+      "sky": "No universal solar clock changes. Instead the local horizon is a pale dawn on one side and deep burgundy eclipse on other",
+      "blood": "Blood-ink rose thorns emanate only from available eligible blood sources or previously created legitimate Hemal Marks",
+      "boundary": "Intersects real terrain and water; under water refracts and partially scatters; on flight projects curved 3D shell, not a flat UI decal",
+      "effects": "Successful negation desaturates only targeted effect mesh, snaps its glyph into three black petals, then dissolves. Failed contest visibly bends violet petals backward and original enemy glyph remains intact",
+      "repeated_activation": "150ms character hand gesture and quick field unfold rather than mandatory repeated cinematic"
+    },
+    "mechanical_rules": [
+      {
+        "rule_id": "draft:luminous_valentine.rule.nocturne_severance",
+        "name": "Nocturne Severance",
+        "side": "Night",
+        "target": "one enemy with >=3 owned Hemal Marks and an actually registered temporary shield, ordinary regeneration or summon-maintenance tether. No arbitrary resistance type.",
+        "trigger": "next true successful A1, A2 or Night Ultimate damage while target inside field",
+        "consume": {
+          "Hemal Mark": 3
+        },
+        "attempt": "negate exactly one eligible content-ID effect instance; descending eligible potency then stable lexical ContentId tie-break",
+        "success": "remove selected temporary effect, apply Restoration Lock for one turn or 4s to same effect ID from same source only",
+        "fail": "marks consumed only on successful contest; marks remain on blocked contest, still damage normally",
+        "max_successes_per_target_per_field": 1,
+        "never_target": [
+          "persistent equipment properties",
+          "attained Rank",
+          "canonical death",
+          "permanent world history",
+          "unrelated healing",
+          "invulnerabilities explicitly higher than her Authority"
+        ],
+        "visual_success": "one thick black thorn passes through specific shield polygon which folds into a blood-red sigil; surrounding effects remain visible",
+        "visual_failure": "crimson thorn snaps and enemy protective glyph keeps glowing"
+      },
+      {
+        "rule_id": "draft:luminous_valentine.rule.rekindling_edict",
+        "name": "Rekindling Edict",
+        "side": "Day",
+        "target": "one ally inside field with owned Dawn Oath, HP<=35%, and one ACTUALLY REGISTERED temporary heal-block effect. If no such effect exists, no invocation.",
+        "trigger": "Luminous next successfully resolves A3 or Day Ultimate on that ally",
+        "consume": {
+          "Dawn Oath": 1
+        },
+        "attempt": "Contest exactly one registered eligible temporary heal-block effect content ID before applying real healing; fail closed on unknown effect family.",
+        "success": "remove exactly one negative status; heal resolves against updated state",
+        "fail": "Dawn Oath stays; existing heal reduction/inversion still applies; no fabricated cure",
+        "max_successes_per_ally_per_field": 1,
+        "never_target": [
+          "irreversible death",
+          "unrelated curses",
+          "persistent species vulnerabilities",
+          "world-scale authority with unmatched priority"
+        ],
+        "visual_success": "gold-white rose grows through narrow red restriction chain, breaking one chain link",
+        "visual_failure": "gold thread reaches barrier then scatters as black glass"
+      },
+      {
+        "rule_id": "draft:luminous_valentine.rule.last_rose",
+        "name": "Last Rose Verdict",
+        "side": "boundary interference line",
+        "target": "one observable duplicate or repeated projection of a previously recorded enemy cast inside field; not the unique original",
+        "trigger": "observed eligible same-content projection recasts while Luminous has at least 20 Scarlet Reserve and unspent field counter",
+        "consume": {
+          "Scarlet Reserve": 20
+        },
+        "attempt": "negate only a projected repeated instance (one copy) and leave originating ability and other casts untouched",
+        "success": "that one projection fizzles; caster may act again normally",
+        "fail": "20 Reserve not charged unless legal contest succeeds",
+        "max_successes_per_field": 1,
+        "requires": [
+          "source content-ID recorded by P6",
+          "line of sight/perception",
+          "projected / repeated active instance actually distinct from source"
+        ],
+        "never_target": [
+          "a unique unobserved attack",
+          "time itself",
+          "Domain Core",
+          "other owned Fantasm as whole"
+        ],
+        "visual_success": "thin diagonal gold/violet seam erases exactly the duplicate image with a petal-shaped missing frame",
+        "visual_failure": "projection passes unchanged; seam visibly tears and closes"
+      },
+      {
+        "rule_id": "draft:luminous_valentine.rule.field_collision",
+        "name": "Boundary Collision",
+        "side": "entire world field",
+        "target": "overlapping World Fantasm / Domain Authority",
+        "trigger": "field meshes genuinely overlap",
+        "attempt": "resolve effects and boundaries independently by existing FOGRulePriority Authority > Specificity > SourceRank > stable SourceRuleId, plus actual applicable counter/compatibility and channel strength",
+        "success": "only locally won boundary segments and individually eligible effects negated",
+        "fail": "lost segments retract; other higher-order field remains and can cut into Luminous field",
+        "max_successes_per_target_per_field": "per eligible effect rule only",
+        "never_target": [
+          "whole field automatic because MR Origin Rarity",
+          "all opponents regardless Rank",
+          "world ceiling without actual bypass"
+        ],
+        "visual_success": "gold/violet botanical tiles expand locally at each successful collision site",
+        "visual_failure": "segments crumple into dark petals, allowing opposing field colors to dominate"
+      }
+    ],
+    "priority_and_limits": {
+      "authority": "use actual FOGRulePriority comparison with source-specific counter compatibility, never MR rarity alone",
+      "effect_family_eligibility": "only explicit family-tagged effects; metadata tags not autonomous mechanics",
+      "effect_contest_order": "validate target and actual state > spend trigger costs on successful contested resolution > apply specific allowed effect > record stable event ID",
+      "rng": "No hidden % negation chance; explicit rival Authority rules/seed only if they require RNG",
+      "status_indexing": "per owner Manifestation ID + source ContentId + target EntityId; copies do not share stacks",
+      "field_exit": "fantasm-only architecture evaporates; healed HP, wounds, valid damage and physical world changes persist; no reset on swap"
+    },
+    "field_visual_cut_in": {
+      "first_activation_timeline_ms": [
+        [
+          0,
+          "camera close on two preserved heterochromatic eyes, no redesign"
+        ],
+        [
+          180,
+          "thin vertical red droplet splits into gold and violet glyph"
+        ],
+        [
+          430,
+          "Luminous traces a short sword arc; twelve rib-like rose stems materialize"
+        ],
+        [
+          780,
+          "field shell forms; terrain response and enemy fields visibly bend border"
+        ],
+        [
+          1100,
+          "gameplay camera fully restored; all three negation indicators live"
+        ]
+      ],
+      "post_activation_telegraphs": [
+        "black thorn on Night eligible target",
+        "gold rose-eye on Dawn Oath ally",
+        "dual-color narrow seam on eligible repeated projection"
+      ],
+      "visual_miss_rules": "no fancy negation success animation when eligibility/contest failed; always show distinct block reflection"
+    },
+    "approval_status": "GRADE_DERIVED_APPROVED_MR_EXPRESSION_NOT_APPROVED",
+    "rule_taxonomy_v6": {
+      "night": "registered shield, regeneration, or summon tether suppression only after exact effect instance contest",
+      "day": "conditional heal-block contest only if the target has genuine registered heal-block content ID",
+      "boundary": "recorded projection duplicate only, not original",
+      "collision": "segment-wise Authority contest and visible wins/losses; no blanket field negation",
+      "immune_targets": "unknown immunity and invalid family fail closed without invented resistance stat",
+      "cost_rollback": "only commit marks/costs according to the specific successful check, never grant free unlimited retry"
+    }
+  },
+  "learned_skills_separate": [
+    {
+      "name": "Disintegration",
+      "origin": "holy spirit-particle technique",
+      "acquisition": "known lore power; player access/equip/integration to compact kit depends on character history",
+      "not_in_nine": true
+    },
+    {
+      "name": "Sanctuary (ritual)",
+      "origin": "faith-supported prepared ability",
+      "acquisition": "requires genuine belief/support, specific preparation and sustained source",
+      "not_in_nine": true
+    },
+    {
+      "name": "Fantasy Library / Skill Synchronization",
+      "origin": "Divine Ancestor and Angra Mainyu analysis",
+      "acquisition": "must actually observe, comprehend and validate compatible skill; one temporary imitation per encounter by P6 suggested",
+      "not_in_nine": true
+    },
+    {
+      "name": "Multidimensional Barrier",
+      "origin": "spacetime defense",
+      "acquisition": "learned/available by progression; not extra default active button",
+      "not_in_nine": true
+    },
+    {
+      "name": "Rosa Espada",
+      "origin": "historical sword sacrifice",
+      "acquisition": "not castable with destroyed Night Rose, no automatic Dharma substitution",
+      "not_in_nine": true
+    },
+    {
+      "name": "Dharma advanced techniques",
+      "origin": "current LN23 Genesis-grade sword",
+      "acquisition": "Requires Gate07 item truly owned and equipped; no free Genesis sword or retroactive quality upgrade.",
+      "not_in_nine": true
+    }
+  ],
+  "visual_direction": {
+    "color_palette": {
+      "blood": "#9B193F",
+      "night": "#34254E",
+      "day": "#EAD5A0",
+      "steel": "#B9BBC7",
+      "gold": "#D4B76D"
+    },
+    "identity_fidelity": "preserve silver-white/lavender hair, scarlet/pale-blue eye mapping, narrow-eyed mature expression, black Gothic dress, cross and black bow; no blood armor outfit auto-redesign",
+    "animation_owner": "Gate09 actual authored VFX and animation",
+    "runtime_owner": "Gate12",
+    "equipment_owner": "Gate07",
+    "performance": "character-specific mobile cue budget to profile on Galaxy S26 Ultra rather than assume"
+  },
+  "integration_requirements": {
+    "core_native_contract": [
+      "FOGResolvedSkillSet ActiveSkills=3, PassiveSkills=6, UltimateSkill exactly one ID",
+      "FOGCombatStats 17 physical members; extended custom typed fields via data/mechanic handler, not unofficial C++ struct mutation",
+      "FOGRulePriority Authority, Specificity, SourceRank and stable source rule ID",
+      "Character Identity exclusivity and turn revive-before-succession",
+      "Rank/Level/Current Rarity and World Fantasm record persistence across combat modes",
+      "Starting Hero Rank data is a proposed Manifestation stat projection; approved MR Origin Rarity remains immutable"
+    ],
+    "gate12_bespoke_handlers": [
+      "BloodEligibleSource",
+      "ScarletReserve",
+      "HemalMarks",
+      "HemorrhageDOT",
+      "ConditionalLifesteal",
+      "HealingDoneMultiplierAndOverhealShield",
+      "SoulContinuityAndPreSuccessionRevive",
+      "DawnNightAttunement",
+      "DayUltimateAllyHealBuff",
+      "NightUltimateMultiHitSiphon",
+      "WorldNegationPerEffectRuleContest",
+      "FantasmBoundaryAgainstWorldAndDomain",
+      "HybridDurationRemainingFraction",
+      "LearnedTechniqueProvenance",
+      "QTESwitchAndSuccessionMappings",
+      "NoUnregisteredResistanceFamiliesAndAbilityFailClosed"
+    ],
+    "gate07": [
+      "Dharma item, not auto-owned or auto-equipped",
+      "other legal sword fallback"
+    ],
+    "gate09": [
+      "Dharma blood melee set",
+      "blood lances and contact siphon",
+      "Dawn heal ceremony and Night execution",
+      "World Fantasm actual field and case-specific success/failure collision"
+    ],
+    "never_mutate": [
+      "Foundation",
+      "saves",
+      "PR16",
+      "existing Luminous art and character card",
+      "Gate11 Registry IDs",
+      "real gacha pool"
+    ],
+    "known_blockers": [
+      "no actual Gate12 native handlers implemented or compiled by Gate04",
+      "no Gate09 accepted combat skill animation assets verified",
+      "origin rarity approved in conversation but not canonical registered"
+    ]
+  },
+  "test_policy": "Source-level deterministic fixtures, not native Unreal. Check low entry magnitudes, nine core slots, no fabricated resistance stats, World Negation condition/priority, and lifesteal non-loop.",
+  "decisions": {
+    "approved": [
+      "Origin Rarity MR"
+    ],
+    "proposed": [
+      "Hero Rank, Level 1 at acquisition",
+      "Current Rarity MR at acquisition",
+      "all exact stat values and gain curves",
+      "3 active/6 passive skill effects",
+      "Day/Night Ultimate tuning",
+      "World Negation four authored laws"
+    ],
+    "unchanged": [
+      "Frozen Unreal Foundation and original V3 art/Koikatsu cards",
+      "LN23 canon source priority"
+    ]
+  },
+  "design_policy": {
+    "original_base_version_preserved": true,
+    "design_emphasis": "offensive sword/vampirism/Bleed with ally resurrection/buff branch",
+    "core_skill_count": 9,
+    "active_skills": 3,
+    "passives": 6,
+    "ultimates_separate": 1,
+    "world_fantasm_separate": 1,
+    "learned_skills_separate": true,
+    "original_source_authority": "Tensura LN23; translations not mechanically canonical",
+    "no_other_versions_canonized": true
+  },
+  "effect_taxonomy": {
+    "rules": "Do not invent status resistance statistics. Parent families are semantic mechanic types, not automatically registered canonical IDs. An actual handler must validate immunity/content eligibility.",
+    "base_effect_families": {
+      "Bleed": {
+        "kind": "negative.status.damage_over_time",
+        "default_rule": "A Bleed variant author defines source stat, tick rate, stacks, duration, damage type, cleanse and status applicability. No invented universal per-target Bleed Resistance stat.",
+        "ordinary_cleanse_eligible": true
+      },
+      "AttackUp": {
+        "kind": "positive.buff",
+        "rule": "Add bonus to resolved Attack for authored duration and stack limit; not a global innate stat."
+      },
+      "SpeedUp": {
+        "kind": "positive.buff",
+        "rule": "Resolve SPD change through executor timing adapter; never mutate an already pending ordered action without authored rule."
+      },
+      "HealingReceivedUp": {
+        "kind": "positive.buff",
+        "rule": "Multiplies legitimate direct restoration on target; does not modify HP-loss siphon unless authored."
+      },
+      "DamageTakenReduction": {
+        "kind": "positive.buff",
+        "rule": "Reduces ordinary eligible damage in own multiplier category; not same as DEF or a new resistance stat."
+      },
+      "Shield": {
+        "kind": "positive.barrier",
+        "rule": "Temporary separate barrier with existing shield/extra HP resolution; not silently added as permanent MaxHP."
+      },
+      "Marked": {
+        "kind": "sourced.target_marker",
+        "rule": "Does not imply Bleed, poison, fire or damage on its own."
+      },
+      "RevivalPrepared": {
+        "kind": "positive.conditional_trigger",
+        "rule": "Armed before defeat; resolves during defeat/revival window with valid soul and once-per-encounter ledger."
+      }
+    },
+    "luminous_derived": {
+      "Hemorrhage": {
+        "parent": "Bleed",
+        "source": "Luminous",
+        "stacks": 2,
+        "tick_atk_bps_per_stack": 1800,
+        "duration_turns": 2,
+        "duration_world_ms": 10000,
+        "crit": false,
+        "tick_source": "OnSourceOwnerTurnStart OR 5-second World timer; mutually exclusive per executor clock, not both"
+      },
+      "HemalMark": {
+        "parent": "Marked",
+        "source_scoped": true,
+        "stack_cap": 4,
+        "duration_turns": 3,
+        "duration_world_ms": 14000,
+        "bleed_status": false,
+        "requires_actual_eligible_contact": true
+      },
+      "DawnOath": {
+        "parent": "RevivalPrepared/empowerment_marker",
+        "stack_cap": 1,
+        "duration_turns": 2,
+        "duration_world_ms": 10000,
+        "requires_actual_healing": true
+      },
+      "EclipseClaim": {
+        "parent": "Marked",
+        "stack_cap": 1,
+        "trigger": "consume 3 Hemal Marks through active blood burst"
+      },
+      "RestorationLock": {
+        "parent": "conditional_effect_specific_lock",
+        "scope": "only same content-ID and source, not all healing or regeneration"
+      }
+    }
+  },
+  "target_semantics": {
+    "A1": {
+      "mode": "ST_ENEMY",
+      "range_world_m": 2.8,
+      "affected": "one selected enemy",
+      "hit_distribution": "3 independent sword hits on the same target",
+      "never": "automatic area splash"
+    },
+    "A2": {
+      "mode": "AOE_ENEMIES_MAX3",
+      "range_world_m": 14,
+      "affected": "up to three eligible enemies each receive two hits",
+      "primary": "only declared primary gets 3-Mark consumption extra strike and Eclipse Claim",
+      "secondary": "may receive Bleed if eligible; no free primary bonus"
+    },
+    "A3_heal": {
+      "mode": "ALLY_MULTI_MAX3",
+      "range_world_m": 15,
+      "affected": "one selected ally primary + up to two eligible nearby allies secondary",
+      "enemy_damage": 0
+    },
+    "A3_covenant": {
+      "mode": "ST_ALLY_PREPARED_REVIVAL",
+      "range_world_m": 15,
+      "affected": "one living ally; no splash healing, not an instant revive after succession"
+    },
+    "Day_ultimate": {
+      "mode": "AOE_ALLIES",
+      "affected": "selected primary and other actually deployed allies within legitimate party/field targeting",
+      "enemy_damage": 0
+    },
+    "Night_ultimate": {
+      "mode": "ST_PRIMARY_PLUS_AOE_SPLASH",
+      "affected": "primary four full strikes; up to two secondary take 60% of each strike magnitude",
+      "target_cap": 3
+    },
+    "passives": {
+      "mode": "EVENT_DRIVEN_CONDITIONAL",
+      "target": "explicit per event / owner, never automatically universal"
+    }
+  },
+  "revival_branch_v6": {
+    "active_id": "draft:luminous_valentine.skill.crimson_benediction",
+    "branch": "Covenant of Returning Dawn",
+    "target": "one living selected ally; cannot retroactively target a promoted reserve after defeat",
+    "initial_reserve_cost": 30,
+    "additional_reserve_cost": 45,
+    "total_reserve_cost": 75,
+    "prepare_lifetime_turns": 2,
+    "prepare_lifetime_world_ms": 10000,
+    "trigger": "OnDefeat after current action, before succession; only if soul continuity valid, not canonically dead, no higher-priority effect blocks revival",
+    "restored_hp_max_bps": 1800,
+    "result_buff_attack_bps": 2200,
+    "result_buff_speed_bps": 1200,
+    "buff_duration_turns": 2,
+    "buff_duration_world_ms": 10000,
+    "trigger_limit": "once per encounter across A3 ally Covenant and Day Ultimate ally revival, keyed by Luminous manifestation/encounter",
+    "cost_commitment": "Spend 75 at prepare cast (not another 75 on trigger). Failed validity at cast spends nothing. Trigger expires without refund if no qualifying defeat.",
+    "mutual_exclusion": "A3 heal/buff is a different branch; the prepared-covenant cast does NOT perform AoE healing or grant Dawn Oath, and its cooldown is shared.",
+    "dual_executor": "same prepared state/ledger persistent across turn/world transitions without resetting timer."
+  },
+  "character_stat_schema_v6": {
+    "native_stat_count": 16,
+    "derived_character_mechanics": {
+      "direct_blood_sword_lifesteal_bps": 2400,
+      "bleed_lifesteal_bps": 1200,
+      "active_healing_done_bonus_bps": 2400,
+      "lifesteal_cap_max_hp_per_owner_action_bps": 1800,
+      "owner_action_regeneration_missing_hp_bps": 400,
+      "self_revive_hp_max_bps": 2200,
+      "ally_prepared_revive_hp_max_bps": 1800,
+      "day_revive_hp_max_bps": 3000,
+      "overheal_to_shield_bps": 4000,
+      "overheal_shield_cap_target_max_hp_bps": 800,
+      "blood_status_potency_bonus_bps": 1200
+    },
+    "forbidden_new_blood_magic_fire_poison_resistance_fields": true
+  },
+  "gear_and_versions_v6": {
+    "Dharma": "Gate07 equipment item if actually owned; A1 supports any legal sword, but no phantom spawned Dharma item",
+    "base": "Current gameplay Version only",
+    "alter": "Next authored kit, not this one",
+    "awakened": "Missing",
+    "berserker": "Missing",
+    "grand_convergence": "Unavailable; do not invent lineage composition or activate."
+  }
+}
