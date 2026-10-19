@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-19T1459Z",
+  "revision": "2026-10-19T1544Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -481,6 +481,16 @@
       "evidence": "2026-10-19 Gate09 verified 1537 source clips, 234/234 exact CRC32 paths, 3 original standing clips + one alternate, 192/230 mapped animation bones, basis determinant -1 and 19-point measured fit, four native Blender 5.2.2 Actions (three idles plus bow), four 975-bone FBX reimports with nonzero skeletal movement, visual captures and seven real source QA regression checks.",
       "status": "verified_native_source_blender_interchange_art_unreal_pending",
       "regression_test": "Gate09 Scripts/Gate09/test_authentic_koikatsu_unity_transfer.py checks original source SHA, all 234 prefab CRC32 resolved, quaternion unit norms, genuine Blender action source SHA, four FBX native 975-joint moving reimports, visual capture source SHA, facial plugin provenance and rights/Unreal approvals withheld."
+    },
+    {
+      "id": "K048",
+      "topic": "unreal583_native_koikatsu_animation_only_fbx_import_real_pose",
+      "applies_to": "gate09|gate12",
+      "requirement": "After using verified authentic Koikatsu source pose curves on Luminous skinned Blender rig, test imported animation-only FBX on an EXACT copied approved Unreal skeleton in a sandbox project; prove saved asset and fresh Unreal pose movement before authorizing integration. Never rename, overwrite, or assert Android success.",
+      "procedure": "Make minimal separate UE5.8.3 PythonScriptPlugin project; copy original target SkeletalMesh/Skeleton/Physics .uassets without change and preserve package paths. Unreal FbxImportUI: import_mesh=False, import_as_skeletal=True, import_animations=True, automated_import_should_detect_type=False, mesh_type_to_import=FBXIT_ANIMATION, skeleton=unreal.load_asset(EXACT_G12_CLOTHED_SKELETON). AssetImportTask task.automated=True save=True replace_existing=False destination=/Game/Gate09_QA_20261019. Validate via AnimSequence.controller.get_model_interface().get_bone_track_names/get_number_of_frames/get_frame_rate; Python track names normalized with casefold because Unreal FNames are case-insensitive. Independently cold-reopen uasset and evaluate AnimSequence.get_anim_pose_at_frame(frame,unreal.AnimPoseEvaluationOptions()) and AnimPose.get_bone_pose(Name,AnimPoseSpaces.LOCAL) at several frames; require nonzero head/Center pose movement. Archive complete standalone native Unreal QA project and receipts, never production override.",
+      "evidence": "2026-10-19 Gate09 imported original 4 real Koikatsu source sequences to native UE 5.8.3: all 4 saved 975-track AnimSequences at 30fps, four cold-load passes, exact 975/975 bone matches after correcting case-sensitive Python false mismatch (231/975 wrong), actual changing Unreal head/Center poses, Gate12 native skeleton clones SHA-identical 6/6, QA ZIP 10 .uassets and 30 entries CRC PASS, Gate09 5/5 regression checks. First inspection failed because AnimationBlueprintLibrary is unavailable; reliable fix uses UAnimDataController data model.",
+      "status": "verified_native_unreal_qa_only_not_android_or_artistic",
+      "regression_test": "Gate09 Scripts/Gate09/test_ue583_native_motion_qadelivery.py checks native Unreal asset files, four source hashes and skeletons, cold independent UE track+pose evaluation, all 975/975 case-insensitive names, six unchanged copies of Gate12 originals, QA archive SHA/CRC/asset count, and explicit nonproduction scope."
     }
   ]
 }

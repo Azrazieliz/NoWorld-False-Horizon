@@ -19,7 +19,7 @@ test('new_K027_guard_persisted',lambda:any(r['id']=='K027' and r.get('regression
 test('inherited_six_presets_blocked',lambda:(lambda r:r['status']=='REVIEW_INHERITED_COORDINATES' and r['no_auto_promotion'] and r['baseline_matching_indices']==[1,2,3,4,5,6])(check_inherited_coordinates({'coordinates':{'0':{'clothes':[{'part':0}]}}})))
 test('all_seven_changed_no_false_inheritance',lambda:not check_inherited_coordinates({'coordinates':{str(i):{'clothes':[{'part':0}]} for i in range(7)}})['no_auto_promotion'])
 test('K029_persistent',lambda:any(r['id']=='K029' for r in json.loads(LEDGER.read_text(encoding='utf-8-sig'))['rules']))
-for lesson in ('K030','K031','K032','K033','K034','K035','K036','K037','K038','K039','K040','K041','K047'):
+for lesson in ('K030','K031','K032','K033','K034','K035','K036','K037','K038','K039','K040','K041','K047','K048'):
     test('new_'+lesson+'_regression_persisted',lambda lesson=lesson:any(r['id']==lesson and r.get('regression_test') for r in json.loads(LEDGER.read_text(encoding='utf-8-sig'))['rules']))
 test('K029_normal_channel_loss_blocks_art_acceptance',lambda:(lambda r:r['status']=='P0_HOLD_MATERIAL_PARITY' and r['scale']=='PASS_RELATIVE_BOUNDING_DIMENSIONS' and r['material_normal_channel']=='FAIL_SOURCE_NORMAL_MAPS_NOT_BOUND' and not r['visual_fidelity_accepted'])(check_character_material_scale(source_normal_maps=29,target_normal_bindings=0,source_dimensions=[1.2383,1.5217,0.6701],target_dimensions=[1.2383,1.5217,0.6701])))
 test('K029_scale_change_separate_from_shader_loss',lambda:(lambda r:r['scale']=='FAIL_BOUNDING_DIMENSIONS_CHANGED' and r['status']=='P0_HOLD_SCALE')(check_character_material_scale(source_normal_maps=0,target_normal_bindings=0,source_dimensions=[1,2,3],target_dimensions=[0.01,0.02,0.03])))
