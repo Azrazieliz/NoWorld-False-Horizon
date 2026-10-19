@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-19T1619Z",
+  "revision": "2026-10-19T1918Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -501,6 +501,16 @@
       "evidence": "19 October 2026 Gate09: 288 installed original native h animator bundles, read-only 25 bundles/750 30fps 1.3333s records, 25/25 first clips 343/343 native Koikatsu CRC32 transform paths; 96 actual morphs on original copied Luminous mesh, isolated native UE5.8 AnimSequence 2 seconds 61 source-morph keys Eye_Closed and Mouth_Distorted_Smile__Closed, 2 real saved float curves independent UE cold reload PASS, 3/3 unchanged Gate12 original-source uassets, source proof ZIP 4 UE uassets and CRC PASS, Gate09 5/5 assertions. Age eligibility, source rights, scene animation and artistic QA remain unapproved.",
       "status": "verified_readonly_source_paths_and_unreal_native_face_only_no_explicit_scene",
       "regression_test": "Gate09 Scripts/Gate09/test_native_adult_metadata_and_face_qadelivery.py confirms sampled native-source evidence and no motion key export, exact 343/343 source CRC path maps, actual UE native morphs and 2 cold-loaded curves, 3 unchanged source uassets, and ZIP SHA+CRC+4 valid Unreal uassets, with no adult scene export."
+    },
+    {
+      "id": "K050",
+      "topic": "genuine_native_weapon_motion_and_spatial_world_field_unreal_source_proofs",
+      "applies_to": "gate09|gate12|gate04|gate07",
+      "requirement": "Preserve approved Luminous 975-bone assets and four prior native AnimSequences. Mine real installed Koikatsu-compatible weapon motions and author distinct source scene and actual UE imports without claiming art or 180/390/650ms timing. For world-field content, keep fully editable 16m/12-rib source mesh components and separate Day/Night/seam groups. Never import 287 components as if one approved Niagara effect, never add phantom sword.",
+      "procedure": "Inspect actual installed Mixamo-for-Koikatsu weapon bundle and CSV metadata; decode genuine Unity AnimationClip curves at 30fps with established native prefab CRC/rest coordinate basis; Luminous copied approved skeleton retarget in new .blend only, export separately under isolated source paths. Unreal 5.8 native AnimSequences: track 975/975 and independent cold pose nonstatic sample verification. Build full editable v6 Sovereign Eclipse botanical geometry, exact horizontal radius 15.97m, 12 authoritative ribs and independent seam/Day/Night; material-group glTF into 4 native StaticMeshes + 8 materials; separate UE cold verify bound radius centimeters/asset counts. Compare previews, fail visual-quality acceptance on weaponless fist-motion or sparse/static world shell, flag original Gate07 sword equipment dependency, preserve unmodified old four native animation proof hashes. Package only private original source and native UE uassets plus QA receipts; no public mod binary.",
+      "evidence": "19 October 2026 native Unreal 5.8.3 QA project: 3 separate 975-track sword AnimSequences at 30 fps from authentic Mixamo/Koikatsu source with independent cold motion PASS, still 2.5/1.8/3.0s and NOT v6 180/390/650ms combined skill; 4 native Sovereign Eclipse StaticMesh, 8 material assets on 16m/12-rib original authored source and cold load PASS; 6 character pose previews demonstrate visual-art hold; source ZIP 53,839,501 bytes SHA256 81484e124c52987163efd1025a9bdd3fccaeecaeb190ec3b2b75d16dc1f70c41, original 4 native Unreal animation hashes unchanged; all Gate12 files preserved.",
+      "status": "verified_native_source_import_and_exact_radius_world_geometry_ART_HOLD",
+      "regression_test": "Gate09 private package_luminous_v6_native_checkpoint.py validates 3 true native imported actions and separate cold moving pose, 4 native field meshes/8 materials cold loaded, three source FBX hashes, 4 original unchanged AnimSequences, 6 identical source skeletal dependency copies, and 21 native UE assets in CRC clean private zip; real combat/contact/VFX and art remain HOLD."
     }
   ]
 }
