@@ -5,7 +5,14 @@ Owner: Gate 00 (coordination and scope only)
 Work item: issue #25 P0 all-weapons cross-Gate correction and 18-family priority continuity
 Task status: ACTIVE until this P0 correction is pushed and issue #25 updated; Gate12 and specialist gameplay production remain INCOMPLETE
 
-## 2026-10-19 P0 cross-Gate decision and correction — current
+## 2026-10-19 — Gate02 R1 world package intake (newest checkpoint)
+
+- Gate02 handoff accepted as **SOURCE_RECEIVED_VERIFIED** only. On connected PC found protected ZIP `D:\NoWorld_Art_Production\NoWorld_FirstWorld_RegionKit_R1_20261019.zip` at 715,075,060 bytes / SHA-256 `0b12490cf3559f134b1ec40514c318604e0f4c27ae9a5468a1328460b7eb1db9`, CRC PASS, 53 individual hashes PASS, 5 FBX, 8 GLB, deterministic 10,454 placements/625 tiles SHA `f6375aa36356164e76bedf8713b77fe35223b2c6d7e05088408d3f90a28fd8f5` replay PASS. No binaries moved, extracted source or Gate12 edited.
+- Inspect actual R1 Blender Cycles previews A–E: visual finish/art **NOT APPROVED**. Spatial citadel/town/farm/Watchwood/roads is retained as a noncanonical 3.2km candidate for isolated integration, not complete 100km World. Main deficits in [R1 intake and owner commission](GATE02_R1_FIRST_WORLD_INTAKE_20261019.md) and [state](GATE02_R1_FIRST_WORLD_INTAKE_20261019.json).
+- Gate12 actual current `OfflineGame.uproject` does not explicitly list PCG enabled; existing native World = `Content/Maps/StartingWorld.umap` + `OGStartingRegionPresentation` / `OGFoundationIntegrationWorld`. Task is stage real R1 source 1 FBX+1 GLB into SEPARATE QA world, validate basis/height/collision/PCG/World Partition readiness, then native persistent streaming and mobile QA without replacing playground. Respect current build deferral and source protection.
+- Gate02 owns iterative art, real rivers/bridges/interiors/caves, traversal/LODs. Gate11 owns P03 third-party provenance/rights and canonical acceptance once eligible. No Gate00 creative final approval, no Registry IDs, no Android or gameplay PASS. Keep full system scope and no mandatory first fight/spawn/route. Gate00 intake DONE only when board/state/checkpoint commit and issue #25 update are verified.
+
+## 2026-10-19 P0 cross-Gate decision and correction — prior checkpoint
 
 - **Actual Gate12 HEAD checked local AND origin:** `0e1004c04c438f834668a369e9119187888e8895` on `D:\UnrealProjects\OfflineGame_Gate12_Koikatsu_20261010`. Gate12 tracked Koikatsu files and untracked source/assets remain protected and unchanged by Gate00. Foundation remains frozen. On this inspection no running Unreal build was seen; recheck when next operating.
 - **Permanent weapon correction:** ALL weapon/attack families are valid, including fists, melee, sling, bow, firearm, future/energy, magic and nonhuman innate attacks. Frozen TWO combat executors unchanged. The obsolete code-first audit instruction `sword/melee (NOT firearms)` is now corrected in-place, and the current board records owner-specific inputs. Do not generate a universal rifle/sword pose.

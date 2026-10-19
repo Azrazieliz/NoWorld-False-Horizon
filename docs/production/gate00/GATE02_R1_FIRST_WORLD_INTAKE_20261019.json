@@ -1,0 +1,85 @@
+{
+  "schema": "NoWorld.Gate00.FirstWorld.R1.Intake/1",
+  "registered_local_date": "2026-10-19",
+  "handoff_owner": "Gate02",
+  "package": {
+    "archive_path": "D:\\NoWorld_Art_Production\\NoWorld_FirstWorld_RegionKit_R1_20261019.zip",
+    "archive_bytes": 715075060,
+    "archive_sha256": "0b12490cf3559f134b1ec40514c318604e0f4c27ae9a5468a1328460b7eb1db9",
+    "extracted_path": "D:\\NoWorld_Art_Production\\NoWorld_FirstWorld_RegionKit_R1_20261019",
+    "protected_local_source": true,
+    "public_binary_upload_authorized": false,
+    "primary_contract": "contracts/GATE12_UNREAL_PCG_HANDOFF.md",
+    "native_editable_source": "source/NW_FirstWorld_R1_Master_EDITABLE.blend"
+  },
+  "verification": {
+    "performed_by": "Gate00 remote independent rerun on authorized PC",
+    "archive_crc": "PASS",
+    "archive_zip_entries": 54,
+    "sha256_file_manifest": "qa/FULL_FILE_SHA256_MANIFEST.json",
+    "file_hashes_verified": 53,
+    "hash_verification": "PASS",
+    "binary_fbx_anchor_headers": 5,
+    "glb_assets_headers": 8,
+    "glb_reusable_modules": 4,
+    "unique_procedural_placements": 10454,
+    "tiles": 625,
+    "seed": 1412,
+    "scatter_sha256": "f6375aa36356164e76bedf8713b77fe35223b2c6d7e05088408d3f90a28fd8f5",
+    "deterministic_regeneration": "PASS_IDENTICAL",
+    "blender_previews_reviewed": [
+      "preview/A_Eastern_Market_Town_Cycles.png",
+      "preview/B_Southern_Agriculture_Cycles.png",
+      "preview/C_Watchwood_Cycles.png",
+      "preview/D_Citadel_Cycles.png",
+      "preview/E_Regional_Geology_Cycles.png"
+    ],
+    "native_unreal_import": "NOT_TESTED",
+    "world_partition_pcg": "NOT_TESTED",
+    "android": "NOT_TESTED"
+  },
+  "spatial_candidate": {
+    "status": "RETAIN_FOR_ISOLATED_STAGING_NOT_CANONICAL",
+    "extent_m": [
+      3200,
+      3200
+    ],
+    "tile_m": 128,
+    "height_sample_grid": [
+      513,
+      513
+    ],
+    "heightmap_encoding": "unsigned16; z_m=-20+(sample/65535)*770",
+    "coordinate_contract": "Blender meters Z-up. FBX world-space; GLB Y-up/local-space. Verify UE centimeters and no double transform.",
+    "anchors": [
+      "NW_FW_R1_CITADEL",
+      "NW_FW_R1_EASTERN_TOWN",
+      "NW_FW_R1_FARMLAND",
+      "NW_FW_R1_WATCHWOOD"
+    ],
+    "road_source": "anchors/regional_roads.fbx",
+    "main_world_size_claim": "R1 is a 3.2km candidate subregion, NOT the complete first World"
+  },
+  "acceptance": {
+    "source_procedural_handoff": "RECEIVED_VERIFIED",
+    "layout_for_qa_staging": "ACCEPTED_AS_CANDIDATE_ONLY",
+    "artistic_painterly_anime_pbr": "NOT_APPROVED",
+    "native_collision_navigation_terrain_streaming": "NOT_TESTED",
+    "asset_rights_p03": "PENDING_PROVENANCE",
+    "gate11_registry": "NOT_ACCEPTED_NO_IDS",
+    "world_mode_activation": "NOT_AUTHORIZED"
+  },
+  "next_owners": {
+    "Gate02": "Refine existing P34/P12-34 authored source toward frozen painterly anime PBR: correct settlement/royal architecture scale and environmental cohesion, weathered varied medieval facades, convincing graded inhabited farms, forest density, geological/scar detail, connected river and bridges, caves, interiors, traverse-safe roads; deliver editable incremental assets, previews/comparisons, provenance and optimized variants; do not redo working anchors.",
+    "Gate12": "After source-work priority and safe memory preflight, inspect verified R1 package; stage one source anchor FBX and one module GLB in isolated Unreal QA map, establish basis/centimeters/material/collision, verify heightfield and one 128m seed-1412 tile, then build persistent stable-ID procedural/PCG/streaming map incrementally. Existing OfflineGame.uproject does not list enabled PCG plugin; inspect real plugin/World Partition readiness before claiming it. Preserve StartingWorld.umap and dirty sources; NO replacement or Android PASS until actual receipts.",
+    "Gate11": "When visual acceptance and engine evidence exist, inspect original P03 reused licensed art rights, SHA/provenance/source records and actual canonical eligibility; no invented location ID, ownership or premature ARTIFACT_READY."
+  },
+  "frozen_rules": [
+    "unchanged Foundation and PR16",
+    "no forced first spawn/fight/route",
+    "persistent geography and causal modifications",
+    "no invented NPCs, factions, quests, bosses",
+    "no global level scaling",
+    "nonhuman protagonist permitted"
+  ]
+}

@@ -84,8 +84,8 @@
     {
       "id": "P1-WORLD",
       "owner": "Gate02",
-      "status": "IN_PROGRESS_NOT_ACCEPTED",
-      "next": "Editable Three-Valley Confluence production geography and native Unreal evidence"
+      "status": "R1_SOURCE_RECEIVED_VERIFIED_ART_NATIVE_PENDING",
+      "next": "Gate12 consume real verified Gate02 R1 package in isolated Unreal test world and demonstrate FBX/GLB scale/material/collision + 513x513 heightfield and deterministic 128m PCG tile. Gate02 refine deficient AAA painterly anime PBR, connected water, bridges, caves, interiors, traversable roads and mobile-friendly LOD; Gate11 provenance only after eligibility."
     },
     {
       "id": "P1-UI-DESIGN",
@@ -94,6 +94,26 @@
       "next": null
     }
   ],
+  "first_world_r1": {
+    "registration": "SOURCE_RECEIVED_VERIFIED_ONLY",
+    "intake_manifest": "docs/production/gate00/GATE02_R1_FIRST_WORLD_INTAKE_20261019.json",
+    "integration_handoff": "docs/production/gate00/GATE02_R1_FIRST_WORLD_INTAKE_20261019.md",
+    "archive_path": "D:\\NoWorld_Art_Production\\NoWorld_FirstWorld_RegionKit_R1_20261019.zip",
+    "archive_bytes": 715075060,
+    "archive_sha256": "0b12490cf3559f134b1ec40514c318604e0f4c27ae9a5468a1328460b7eb1db9",
+    "verified_zip_crc": true,
+    "verified_manifest_files": 53,
+    "verified_seed1412_placements": 10454,
+    "blender_previews_reviewed": 5,
+    "layout_status": "CANDIDATE_STAGING_RETAINED",
+    "artistic_approval": "NOT_APPROVED",
+    "native_UE": "NOT_TESTED",
+    "PCG_plugin_enabled_in_latest_Gate12_uproject": false,
+    "android": "NOT_TESTED",
+    "Gate02": "Continue actual P34 quality refinement, water/bridges/caves/interiors, navigation-safe geometry and LOD; do not rebuild existing anchors.",
+    "Gate12": "Import tested real R1 source in isolated QA world with transforms, heightfield, persistent seeded PCG, collision/streaming evidence; preserve StartingWorld and dirty source.",
+    "Gate11": "Provenance/rights and canonical records only after visual and native eligibility."
+  },
   "cross_gate_weapon_action_p0": {
     "scope": "Unarmed/fists, slingshots, bows, thrown/melee, firearms, futuristic and magic/innate/anatomy-specific attacks under existing two combat executors; no generic sword/pistol/rifle pose",
     "Gate04": {"status": "BLOCKED_ON_APPROVED_COMBAT_CONTRACT", "next": "Deliver per-ability and weapon attack class, action/turn executor semantics, range/LOS/targeting, projectile/contact/collision, damage/hit/cancel windows and exact test cases without changing frozen rules."},
