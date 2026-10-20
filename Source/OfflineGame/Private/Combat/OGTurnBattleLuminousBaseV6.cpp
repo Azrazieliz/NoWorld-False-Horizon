@@ -49,7 +49,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
     const bool bA2=Action.SkillId==Kit.CoreSkills.ActiveSkills[1];
     const bool bA3=Action.SkillId==Kit.CoreSkills.ActiveSkills[2];
     const bool bUlt=Action.SkillId==Kit.CoreSkills.UltimateSkill;
-    if (!bA1 && !bA2 && !bA3 && !bUlt)
+    const bool bField=Action.SkillId==Kit.WorldFantasmId;
+    if (!bA1 && !bA2 && !bA3 && !bUlt && !bField)
         return true; // Other skill definitions use the existing content executor.
 
     if (Source.SkillSet.ActiveSkills.Num()!=3 ||
@@ -71,6 +72,9 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             OutError=TEXT("Base v6 passive missing; refusing partial skill effects.");
             return false;
         }
+
+    if(bField)
+        return TryActivateLuminousAuthoredField(Source,Kit.WorldFantasmId,OutError);
 
     TSharedPtr<FJsonObject> Context;
     if (!FJsonSerializer::Deserialize(
@@ -184,6 +188,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         StateOfOwner.bCovenantSoulVerified=bPreparedSoulVerified;
         StateOfOwner.bCovenantNegationClear=bPreparedNegationClear;
         StateOfOwner.bDayAttunement=true;
+        StateOfOwner.bAttunementActive=true;
+        StateOfOwner.AttunementExpiryAction=StateOfOwner.OwnerActions+3;
     }
     if(bUlt)StateOfOwner.UltimateChargePercent-=ChargeCost;
     if(bA2)
@@ -381,6 +387,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                !ApplyHealing(Source.UnitEntityId,Id,Heal,Action.SkillId,OutError))
                 return false;
             StateOfOwner.BlessingExpiry.Add(Id,CurrentOwnerAction+2);
+            if(bA3)
+                StateOfOwner.DawnOathByBeneficiary.Add(Id,CurrentOwnerAction+2);
             if(!bGrantedOnHpDamage)
             {
                 StateOfOwner.ScarletReserve=FMath::Min(

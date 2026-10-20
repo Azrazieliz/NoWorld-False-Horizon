@@ -51,7 +51,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     const bool bA2=Action.SkillId==A2;
     const bool bA3=Action.SkillId==A3;
     const bool bUlt=Action.SkillId==Ultimate;
-    if(!bA1&&!bA2&&!bA3&&!bUlt)return true;
+    const bool bField=Action.SkillId==Approved.WorldFantasmId;
+    if(!bA1&&!bA2&&!bA3&&!bUlt&&!bField)return true;
     if(Source.SkillSet.ActiveSkills.Num()!=3 ||
        Source.SkillSet.PassiveSkills.Num()!=6 ||
        Source.SkillSet.UltimateSkill!=Ultimate ||
@@ -75,6 +76,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
             OutError=TEXT("Alter is missing a source-approved passive.");
             return false;
         }
+    if(bField)
+        return TryActivateLuminousAuthoredField(
+            Source,Approved.WorldFantasmId,OutError);
+
     TSharedPtr<FJsonObject> Context;
     if(!FJsonSerializer::Deserialize(
         TJsonReaderFactory<>::Create(Action.ResolutionJson),Context) ||

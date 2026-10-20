@@ -6,6 +6,7 @@
 #include "Combat/OGCombatRankHooks.h"
 #include "Combat/OGCombatTriggerRuntime.h"
 #include "Combat/OGCombatTypes.h"
+#include "Rules/OGRulePriority.h"
 #include "OGTurnBattle.generated.h"
 
 UENUM(BlueprintType)
@@ -77,6 +78,42 @@ struct OFFLINEGAME_API FOGTurnBattleState
     int64 CurrentActionValue = 0;
 };
 
+/**
+ * An effect instance already validated by the registered mechanic engine.
+ * Source-provenance, authoritative potency and spatial checks are performed
+ * by the engine supplying this event, NEVER by a user-controlled JSON flag.
+ */
+enum class EOGLuminousFieldRule : uint8
+{
+    BaseNocturneSeverance, BaseRekindlingEdict, BaseLastRose,
+    BaseBoundaryCollision, AlterBloodReversal, AlterThornUnbinding,
+    AlterMirrorDebt, AlterBoundaryDecree
+};
+struct FOGLuminousRegisteredEffectContest
+{
+    EOGLuminousFieldRule Rule = EOGLuminousFieldRule::BaseNocturneSeverance;
+    FOGEntityId OwnerManifestationId;
+    FOGEntityId TargetUnitId;
+    FOGContentId RegisteredEffectId;
+    FOGEntityId EffectSourceId;
+    FOGRulePriority AttackingPriority;
+    FOGRulePriority DefendingPriority;
+    // These statements must originate from registered typed content/state;
+    // UI JSON must never be accepted as a substitute.
+    bool bRegisteredTemporaryEffect = false;
+    bool bSpecificEffectFamilyEligible = false;
+    bool bPerceptuallyObserved = false;
+    bool bInAuthorizedFieldFootprint = false;
+    bool bProjectionCopyNotOriginal = false;
+    bool bPreviouslyRecordedSameContentEffect = false;
+    bool bCooldownElapsed = false; // actual World ms deadline (not inferred)
+    bool bBoundaryOverlapSegment = false;
+};
+using FOGLuminousAcceptedFieldEligibility = TFunction<
+    bool(const FOGCombatUnitState&,const FOGContentId&,FString&)>;
+using FOGLuminousRegisteredEffectRemoval = TFunction<
+    bool(const FOGLuminousRegisteredEffectContest&,FString&)>;
+
 class OFFLINEGAME_API FOGTurnBattle
 {
 public:
@@ -109,6 +146,22 @@ public:
         FString& OutError);
     int32 GetResolvedLuminousUltimateCharge(
         const FOGEntityId& ManifestationId) const;
+
+    // Gate 00 Registry/current MR / effect and field ownership gate, provided
+    // by authoritative native runtime. Absent gate means activation DENIED.
+    void BindApprovedLuminousFieldEligibility(
+        FOGLuminousAcceptedFieldEligibility InGate)
+    {
+        LuminousFieldEligibility=MoveTemp(InGate);
+    }
+
+    // Registered effect engine supplies one concrete effect instance and a
+    // lawful on-success removal callback; no global immunity suppression.
+    bool TryResolveLuminousRegisteredFieldContest(
+        const FOGLuminousRegisteredEffectContest& Contest,
+        const FOGLuminousRegisteredEffectRemoval& RemoveOneEligibleEffect,
+        bool& bOutWonSpecificContest,
+        FString& OutError);
 
     int32 SelectNextActingUnitIndex() const;
 
@@ -162,6 +215,26 @@ public:
         FString& OutError);
 
 private:
+    struct FLuminousFieldState
+    {
+        FOGContentId OwnerFantasmId;
+        int32 ActivatedOwnerAction = 0;
+        int32 ExpiresBeforeOwnerAction = INDEX_NONE;
+        int32 BaseNocturneSuccessfulTargetCount = 0;
+        TSet<FOGEntityId> NocturneConsumedTargets;
+        TSet<FOGEntityId> RekindledAllies;
+        bool bLastRoseUsed = false;
+        int32 AlterBloodReversalSuccessCount = 0;
+        TSet<FOGEntityId> AlterThornConsumedTargets;
+        bool bAlterMirrorDebtUsed = false;
+    };
+    TMap<FOGEntityId,FLuminousFieldState> LuminousFields;
+    FOGLuminousAcceptedFieldEligibility LuminousFieldEligibility;
+    bool TryActivateLuminousAuthoredField(
+        const FOGCombatUnitState& Unit,
+        const FOGContentId& ExactFantasmId,
+        FString& OutError);
+
     struct FLuminousBaseBattleRuntime
     {
         int32 ScarletReserve = 35;
@@ -187,6 +260,8 @@ private:
         TMap<FOGEntityId,int32> HemorrhageEndOwnerAction;
         TMap<FOGEntityId,int32> BlessingExpiry;
         int32 DawnOathExpiry = 0;
+        TMap<FOGEntityId,int32> DawnOathByBeneficiary;
+        int32 NextFantasmReadyOwnerAction = 0;
     };
 
     // Per-Manifestation, per-battle state. Never a shared identity/global meter.

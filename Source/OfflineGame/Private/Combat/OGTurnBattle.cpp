@@ -64,6 +64,8 @@ bool FOGTurnBattle::Initialize(
     PendingDefeatedUnitIds.Reset();
     LuminousBaseStates.Reset();
     LuminousAlterStates.Reset();
+    LuminousFields.Reset();
+    LuminousFieldEligibility=FOGLuminousAcceptedFieldEligibility();
     IdentityContext =
         MoveTemp(InIdentityContext);
     RankSuppressionResolver =
