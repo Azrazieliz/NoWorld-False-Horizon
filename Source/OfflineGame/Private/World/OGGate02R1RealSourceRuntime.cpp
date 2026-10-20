@@ -242,9 +242,23 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
                 bool bFound=false;FName Kind;FString State;int64 Revision=0;FString Error;
                 if(PersistentId.IsValid() &&
                     Store->TryReadEntity(PersistentId,bFound,Kind,State,Revision,Error) &&
-                    bFound && Kind==FName(TEXT("gate02_r1_ecology_v1")) &&
-                    State.Contains(TEXT("\"removed\":true")))
+                    bFound && Kind==FName(TEXT("gate02_r1_ecology_v1")))
+                {
+                    // Persistence content is JSON, not a whitespace-dependent
+                    // substring: {"removed": true} and {"removed":true}
+                    // must have identical state after offline reload.
+                    // A corrupt persisted ecology record must not quietly
+                    // respawn a tree or rock whose removal may be canonical.
                     bRemoved=true;
+                    TSharedPtr<FJsonObject> PersistentState;
+                    bool bCanonicalRemoved=false;
+                    if(FJsonSerializer::Deserialize(
+                           TJsonReaderFactory<>::Create(State),PersistentState) &&
+                       PersistentState.IsValid() &&
+                       PersistentState->TryGetBoolField(
+                           TEXT("removed"),bCanonicalRemoved))
+                        bRemoved=bCanonicalRemoved;
+                }
             }
             if(bRemoved)continue;
             const FTransform LocalTransform(
