@@ -168,14 +168,6 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     }
     if(bA2)Own.EucharistNextAvailableAction=Current+3;
     if(bA3)Own.CommunionNextAvailableAction=Current+4;
-    bool bSoul=false,bUnnegated=false;
-    if(Context->TryGetBoolField(TEXT("verified_soul_continuity"),bSoul) &&
-       Context->TryGetBoolField(TEXT("verified_no_superior_revival_negation"),bUnnegated))
-    {
-        Own.bSoulContinuityVerified=bSoul;
-        Own.bNoSuperiorRevivalNegationVerified=bUnnegated;
-    }
-
     // The source's exact self-sacrificial standing buff never makes Alter
     // a substitute for Base's healer or player Ruler.
     if(bA3)
@@ -186,13 +178,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     }
 
     TSet<FOGEntityId> Eligible;
-    const TArray<TSharedPtr<FJsonValue>>* Blood=nullptr;
-    if(Context->TryGetArrayField(TEXT("verified_blood_eligible_targets"),Blood))
-        for(const TSharedPtr<FJsonValue>& V:*Blood)
-        {
-            FGuid G;
-            if(FGuid::Parse(V->AsString(),G))Eligible.Add(FOGEntityId(G));
-        }
+    for(const FOGEntityId& TargetId:Action.TargetUnitIds)
+        if(IsLuminousBloodStatusEligible(Source.UnitEntityId,TargetId,
+            AcceptedBleedFamilyId))
+            Eligible.Add(TargetId);
 
     // Alter-owned Rupture Seals expire after three owner turns; an
     // expired seal cannot fuel a delayed bonus or World Fantasm contest.
@@ -405,8 +394,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousAlterRevival(
     FLuminousAlterBattleRuntime* R=LuminousAlterStates.Find(UnitId);
     FOGCombatUnitState* U=FindMutableUnit(UnitId);
     if(!R || !U || !IsAlter(*U) || R->bSelfRevived || R->RedTithe<75 ||
-       !R->bSoulContinuityVerified ||
-       !R->bNoSuperiorRevivalNegationVerified ||
+       !IsLuminousRevivalEligible(UnitId,UnitId,false) ||
        U->Presence!=EOGCombatPresence::Defeated ||
        U->OccupiedLaneIndex==INDEX_NONE)return;
     const FOGLargeNumber Restore=FOGLargeNumber::ScaleByBasisPoints(

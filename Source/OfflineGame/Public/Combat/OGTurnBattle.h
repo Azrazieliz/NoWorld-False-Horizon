@@ -111,6 +111,18 @@ struct FOGLuminousRegisteredEffectContest
 };
 using FOGLuminousAcceptedFieldEligibility = TFunction<
     bool(const FOGCombatUnitState&,const FOGContentId&,FString&)>;
+
+// Registered native source of truth only. Never parse client-provided claims
+// of blood anatomy, susceptibility, soul continuity or superior Authority.
+using FOGLuminousNativeBloodEligibility = TFunction<bool(
+    const FOGCombatUnitState& Attacker,
+    const FOGCombatUnitState& Target,
+    const FOGContentId& RegisteredStatusFamily)>;
+using FOGLuminousNativeRevivalEligibility = TFunction<bool(
+    const FOGCombatUnitState& RestoringManifestation,
+    const FOGCombatUnitState& IncapacitatedTarget,
+    bool bAllyCovenant)>;
+
 using FOGLuminousRegisteredEffectRemoval = TFunction<
     bool(const FOGLuminousRegisteredEffectContest&,FString&)>;
 
@@ -146,6 +158,16 @@ public:
         FString& OutError);
     int32 GetResolvedLuminousUltimateCharge(
         const FOGEntityId& ManifestationId) const;
+
+    void BindLuminousAuthoritativeStatusGates(
+        FOGLuminousNativeBloodEligibility InBlood,
+        FOGLuminousNativeRevivalEligibility InRevival,
+        FOGContentId InAcceptedBleedFamilyId)
+    {
+        LuminousBloodEligibility=MoveTemp(InBlood);
+        LuminousRevivalEligibility=MoveTemp(InRevival);
+        AcceptedBleedFamilyId=MoveTemp(InAcceptedBleedFamilyId);
+    }
 
     // Gate 00 Registry/current MR / effect and field ownership gate, provided
     // by authoritative native runtime. Absent gate means activation DENIED.
@@ -240,6 +262,34 @@ private:
     };
     TMap<FOGEntityId,FLuminousFieldState> LuminousFields;
     FOGLuminousAcceptedFieldEligibility LuminousFieldEligibility;
+    FOGLuminousNativeBloodEligibility LuminousBloodEligibility;
+    FOGLuminousNativeRevivalEligibility LuminousRevivalEligibility;
+    FOGContentId AcceptedBleedFamilyId;
+    bool IsLuminousBloodStatusEligible(
+        const FOGEntityId& AttackerId,
+        const FOGEntityId& TargetId,
+        const FOGContentId& StatusFamily) const
+    {
+        // Bleed family ID must be provided from installed Registry; a
+        // hand-made draft token is not permission to create blood statuses.
+        if(!LuminousBloodEligibility || !AcceptedBleedFamilyId.IsValid() ||
+           StatusFamily!=AcceptedBleedFamilyId)return false;
+        const FOGCombatUnitState* Attacker=FindUnit(AttackerId);
+        const FOGCombatUnitState* Target=FindUnit(TargetId);
+        return Attacker && Target &&
+            LuminousBloodEligibility(*Attacker,*Target,StatusFamily);
+    }
+    bool IsLuminousRevivalEligible(
+        const FOGEntityId& RestoringId,
+        const FOGEntityId& TargetId,
+        bool bAlly) const
+    {
+        if(!LuminousRevivalEligibility)return false;
+        const FOGCombatUnitState* Restoring=FindUnit(RestoringId);
+        const FOGCombatUnitState* Target=FindUnit(TargetId);
+        return Restoring && Target &&
+            LuminousRevivalEligibility(*Restoring,*Target,bAlly);
+    }
     bool TryActivateLuminousAuthoredField(
         const FOGCombatUnitState& Unit,
         const FOGContentId& ExactFantasmId,
@@ -250,8 +300,6 @@ private:
         int32 ScarletReserve = 35;
         int32 UltimateChargePercent = 0;
         bool bRevivalUsed = false;
-        bool bSelfSoulContinuityVerified = false;
-        bool bNoSuperiorRevivalNegationVerified = false;
         bool bDayAttunement = false;
         bool bAttunementActive = true; // Initial Night from approved Base v6.
         int32 AttunementExpiryAction = 2;
@@ -265,8 +313,6 @@ private:
         bool bAllyRevivalSpent = false;
         FOGEntityId PreparedCovenantTarget;
         int32 CovenantExpiryOwnerAction = -1;
-        bool bCovenantSoulVerified = false;
-        bool bCovenantNegationClear = false;
         int32 OwnerActions = 0;
         TMap<FOGEntityId,int32> HemalMarks;
         TMap<FOGEntityId,int32> HemorrhageStacks;
@@ -307,8 +353,6 @@ private:
         int32 EucharistNextAvailableAction = 0;
         int32 CommunionNextAvailableAction = 0;
         bool bSelfRevived = false;
-        bool bSoulContinuityVerified = false;
-        bool bNoSuperiorRevivalNegationVerified = false;
         TMap<FOGEntityId,int32> RuptureSeals;
         TMap<FOGEntityId,int32> SealExpiryOwnerAction;
         TMap<FOGEntityId,int32> SeveringWounds;

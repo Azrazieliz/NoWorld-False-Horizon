@@ -110,19 +110,12 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
     }
 
     FString UltimateBranch;
-    bool bPreparedSoulVerified=false,bPreparedNegationClear=false;
-    if(bA3Covenant)
+    if(bA3Covenant &&
+       !IsLuminousRevivalEligible(Source.UnitEntityId,
+                                 Action.TargetUnitIds[0],true))
     {
-        if(!Context->TryGetBoolField(TEXT("verified_target_soul_continuity"),
-                                     bPreparedSoulVerified) ||
-           !bPreparedSoulVerified ||
-           !Context->TryGetBoolField(TEXT("verified_no_superior_revival_negation"),
-                                     bPreparedNegationClear) ||
-           !bPreparedNegationClear)
-        {
-            OutError=TEXT("A3 Covenant requires explicit lawful soul and higher-order Authority verification.");
-            return false;
-        }
+        OutError=TEXT("A3 Covenant preparation denied by authoritative native soul and superior Authority rules.");
+        return false;
     }
     if(bUlt)
     {
@@ -185,8 +178,6 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         StateOfOwner.ScarletReserve-=75;
         StateOfOwner.PreparedCovenantTarget=Action.TargetUnitIds[0];
         StateOfOwner.CovenantExpiryOwnerAction=StateOfOwner.OwnerActions+3;
-        StateOfOwner.bCovenantSoulVerified=bPreparedSoulVerified;
-        StateOfOwner.bCovenantNegationClear=bPreparedNegationClear;
         StateOfOwner.bDayAttunement=true;
         StateOfOwner.bAttunementActive=true;
         StateOfOwner.AttunementExpiryAction=StateOfOwner.OwnerActions+3;
@@ -214,14 +205,6 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
            !ApplyHealing(Source.UnitEntityId,Source.UnitEntityId,
                          Restore,Action.SkillId,OutError))
             return false;
-    }
-
-    bool bSoulVerified=false,bUnnegated=false;
-    if(Context->TryGetBoolField(TEXT("verified_soul_continuity"),bSoulVerified) &&
-       Context->TryGetBoolField(TEXT("verified_no_superior_revival_negation"),bUnnegated))
-    {
-        StateOfOwner.bSelfSoulContinuityVerified=bSoulVerified;
-        StateOfOwner.bNoSuperiorRevivalNegationVerified=bUnnegated;
     }
 
     ++StateOfOwner.OwnerActions;
@@ -271,14 +254,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
     // Hemal Marks/Hemorrhage/siphon. Unclassified enemies still take lawful
     // sword/spirit damage; no assumed universal blood physiology.
     TSet<FOGEntityId> BloodEligible;
-    const TArray<TSharedPtr<FJsonValue>>* BloodIds=nullptr;
-    if(Context->TryGetArrayField(TEXT("verified_blood_eligible_targets"),BloodIds))
-        for(const TSharedPtr<FJsonValue>& V:*BloodIds)
-        {
-            FGuid G;
-            if(FGuid::Parse(V->AsString(),G))
-                BloodEligible.Add(FOGEntityId(G));
-        }
+    for(const FOGEntityId& TargetId:Action.TargetUnitIds)
+        if(IsLuminousBloodStatusEligible(Source.UnitEntityId,TargetId,
+            AcceptedBleedFamilyId))
+            BloodEligible.Add(TargetId);
 
     const uint64 Seed=static_cast<uint64>(
         HashCombine(GetTypeHash(State.BattleId.ToString()),
@@ -497,8 +476,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousBaseRevival(
     FOGCombatUnitState* Unit=FindMutableUnit(UnitId);
     if(!Runtime || !Unit || !IsBaseLuminous(*Unit) ||
        Runtime->bRevivalUsed || Runtime->ScarletReserve<40 ||
-       !Runtime->bSelfSoulContinuityVerified ||
-       !Runtime->bNoSuperiorRevivalNegationVerified ||
+       !IsLuminousRevivalEligible(UnitId,UnitId,false) ||
        Unit->Presence!=EOGCombatPresence::Defeated ||
        Unit->OccupiedLaneIndex==INDEX_NONE)return;
 
@@ -535,8 +513,8 @@ void FOGTurnBattle::TryResolveApprovedLuminousAllyCovenant(
         FLuminousBaseBattleRuntime* S=LuminousBaseStates.Find(OwnerId);
         const FOGCombatUnitState* Owner=FindUnit(OwnerId);
         if(!S || !Owner || !Owner->IsAlive() || !IsBaseLuminous(*Owner) ||
-           S->bAllyRevivalSpent || !S->bCovenantSoulVerified ||
-           !S->bCovenantNegationClear ||
+           S->bAllyRevivalSpent ||
+           !IsLuminousRevivalEligible(OwnerId,TargetUnitId,true) ||
            S->PreparedCovenantTarget!=TargetUnitId ||
            S->CovenantExpiryOwnerAction<S->OwnerActions ||
            Owner->TeamIndex!=Target->TeamIndex)continue;

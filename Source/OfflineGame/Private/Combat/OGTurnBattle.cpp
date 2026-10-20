@@ -68,6 +68,9 @@ bool FOGTurnBattle::Initialize(
     LuminousAlterStates.Reset();
     LuminousFields.Reset();
     LuminousFieldEligibility=FOGLuminousAcceptedFieldEligibility();
+    LuminousBloodEligibility=FOGLuminousNativeBloodEligibility();
+    LuminousRevivalEligibility=FOGLuminousNativeRevivalEligibility();
+    AcceptedBleedFamilyId=FOGContentId();
     IdentityContext =
         MoveTemp(InIdentityContext);
     RankSuppressionResolver =
