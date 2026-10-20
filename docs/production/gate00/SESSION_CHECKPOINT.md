@@ -1,3 +1,21 @@
+# 2026-10-20 — Gate00 authority migration / current executable checkpoint
+
+**Effective authority:** User's FULL PRODUCTION ACTIVATION. Gate 11 retired; Gate00 directly owns historical Registry v2 preservation, content/provenance/canonical intake and escalation. Gate12 owns technical automated validation and native gameplay/World/character integration without Gate11 manual approval. **No production native edits were made by Gate00.** Do not interpret the historical owner lines below as current.
+
+**Verified latest remote at inspection:** Gate00 `a35712ea0295bc7315c7d99104a20f765c70e31c`; subsequent new commits on the existing coordination branch: `74db0d0` handover/order, `661a6f2` machine state, `4dbbdbd` operating rules, `f1cc727` live board, `84f45d0` recovery bootstrap; this checkpoint update adds another remote commit. The local Gate00 checkout was **CLEAN but BEHIND** remote at `340ea90`, deliberately untouched. **Do not force push/reset checkout**; use remote current origin to synchronize safely at the next operation.
+
+**Verified Gate12 remote/local HEAD:** `f5f2345cfce41d332d097daeb89eeb10bfd247fe`; Gate12 dirty 2 tracked Koikatsu character files + many user-owned untracked Unreal QA assets/Android/scripts. Do not clean/reset/stash these. Gate12 20 October source checkpoint: four original Gate09 native animations cold loaded; three R1 world QA asset imports; D02 source fixes; combined native incremental build **reported pending**, no new build/test result inferred; original Alter source Party states present but **not converted into finished UE visual assets**; no Android device attached/tested. Current Gate09 remote HEAD `6db52bc4b543d94dca9d8ec86fc48c29b48f81f6`, additional QA combat/facial sources not accepted live gameplay.
+
+**Historical Registry v2:** 31 original records intact on `content/master-integration` @ `973d8506c249338b540565e1f54796af248db910`, `registry/gate11/2026-10-20/` original additive proofs untouched. Existing design-stage `character:luminous_valentine.identity` and `character:luminous_valentine.version_ln_base` **not installed**, Alter version ID and native source kit payload unresolved, no artificial ownership. **No new Registry v2 IDs minted** by this authority transfer.
+
+**Concrete committed result:** [AUTHORITATIVE TAKEOVER AND P0 TASKING](GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md), updated operating rules, authoritative state, board, recovery. Gate02 real first World/PCG and final art, Gate04 approved Base v6 and exact Alter payload, Gate07 13 accepted/5 deferred invariants, Gate09 motions/VFX/Koikatsu intake, Gate12 entire 18-system native implementation and Android are each assigned without a Gate11 chokepoint. No reopened characters or Gate10 UI rework.
+
+**Current status:** Gate00 authority transfer/coordination update **DONE when issue #25 current notice is posted and remote source read verified**; game implementation **OPEN**. No Gate00 claims of Android/world/Alter/skill success. **Next Gate00 owned operation:** read the next newly published actual specialist/Gate12 SHA/test/visual/Registry evidence; promote an actual eligible additive Registry intake if source + approvals + native proof exist, otherwise route only one bounded blocker and let Gate12 continue. Specialists are not auto-invoked by issue text.
+
+**Replacement invocation:** Continue new Gate00 from current remote Issue #25 + `docs/production/gate00/GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md` and `execution_state.json`; check remote HEAD and preserve Gate12 dirty worktree, then execute the next actual unresolved coordination/Registry action. No Gate11 approval queue.
+
+---
+
 # Gate 00 — Crash-safe session checkpoint
 
 Updated: 2026-10-19, Europe/Paris
