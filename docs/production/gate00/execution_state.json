@@ -2,7 +2,7 @@
   "schema": "NOWORLD_GATE00_EXECUTION_BOARD_V1",
   "updated_local_date": "2026-10-20",
   "timezone": "Europe/Paris",
-  "authority": "Gate00 sole active creative/canonical intake authority after Gate11 retirement; Gate12 automated technical/native validation; historical Registry v2 retained.",
+  "authority": "Gate00 after Gate11 retirement; latest 2026-10-20 direct user approval of Alter v1, all Gate07 A-proposals and procedural World/shared movement motion source pipeline controls",
   "single_issue": "https://github.com/Azrazieliz/Offline-Game/issues/25",
   "coordination_branch": "coordination/gate00-live-ops-20261016",
   "frozen_foundation_sha": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
@@ -59,22 +59,22 @@
     },
     {
       "id": "P0-ALTER",
-      "owner": "Gate01-3D",
-      "status": "USER_SOURCE_PRESERVED_WARDROBE_MAPPING_VERIFIED",
-      "next": "Reuse confirmed three-state native source bindings for authentic Gate11/Gate12 intake; do not remap cards or require optional 2D."
+      "owner": "Gate12",
+      "status": "DESIGN_AND_V1_KIT_USER_APPROVED_ORIGINAL_3_WARDROBE_SOURCES_PRESERVED_NATIVE_NOT_READY",
+      "next": "Preserve original Party CLOTHED/UNDERWEAR/NUDE and finished design; complete actual UE mesh/skeleton/morph/material conversion and true three-state gameplay binding, and separate approved Alter v1 kit only from source-verified coefficients. No Gate11 dependency."
     },
     {
       "id": "P0-MOTION",
       "owner": "Gate09",
-      "status": "FOUR_NATIVE_UNREAL_ANIMSEQUENCES_TECHNICAL_PASS_FULL_LIBRARY_INCOMPLETE",
+      "status": "FOUR_REAL_NATIVE_ANIMSEQUENCES_MUST_FIRST_PASS_ACTUAL_ANDROID_PLAYBACK_BEFORE_BULK_KOIKATSU_SOURCE_TRANSFER",
       "source_sha": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
-      "next": "Preserve 4 cold-tested Base-CLOTHED clips; Gate09 now also has 3 sword-source clips and Fantasm mesh/face QA but sword grip/cadence and live VFX/playback remain unaccepted. Author real skeletal/weapon-specific gameplay motion, locomotion, notifications and effects; Gate12 integrate incrementally."
+      "next": "Gate12 test exact four Base CLOTHED clips in real character live gameplay on connected physical Android (currently unavailable) including deform/visibility/blend/performance. Once PASS, Gate09/Gate12 transfer full eligible authentic Koikatsu movement/pose/face/intimacy clips to UE via existing source workflow with rig/source rights/age checks. Gate09 independently authors multiple shared locomotion variants; Gate12 chooses physics/anatomy/abilities-compatible profiles, character-specific refinement later."
     },
     {
       "id": "P1-KIT",
       "owner": "Gate04",
-      "status": "BASE_V6_USER_APPROVED_NATIVE_PENDING",
-      "next": "Gate04 approved Luminous Base v6 mechanics source design-stage IDs already in historic Registry intake; Gate12 implement without inventing runtime IDs and Gate09 supply visuals. Recover original separately approved Alter kit exact source; Base must not be silently assigned to Alter."
+      "status": "BASE_V6_AND_ALTER_V1_USER_APPROVED_NATIVE_NOT_ACCEPTED",
+      "next": "Gate12 implement approved Base v6 AND distinct approved Alter v1 in two existing combat executors, don't inherit Base into Alter. Recover exact Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip numeric/effect source. Gate09 full per-Version animations/FX; Gate00 additive Registry v2 acceptance after authentic source/native evidence; no fake owned Luminous."
     },
     {
       "id": "P1-REGISTRY",
@@ -84,9 +84,9 @@
     },
     {
       "id": "P1-WORLD",
-      "owner": "Gate02",
-      "status": "R1_NATIVE_QA_SAMPLE_IMPORTED_ART_AND_PRODUCTION_WORLD_INCOMPLETE",
-      "next": "Gate12 reuse already native QA imported 3 real R1 source assets and seed1412 rock; now author actual UE Landscape/PCG/persistent region traversal/collision without replacing StartingWorld until proven. Gate02 finish existing P34 art with water/bridges/interiors/geology/settlements; current first world and Android not accepted."
+      "owner": "Gate12 (procedural remainder); Gate02 (authored anchors)",
+      "status": "GATE02_REAL_R1_ANCHORS_QA_STAGED_GATE12_OWNS_REST_OF_WORLD_NOT_COMPLETE",
+      "next": "Gate12 directly build full first World procedural native UE5.8.3 around Gate02-authored R1 anchors (seed-stable persistent Landscape/PCG/World Partition, collision/nav, art-constrained biome, hydrology, settlements, caves/interiors, original persistent consequences). Gate02 refines/creates only authored anchors and modules; its partial R1 is not intended as entirety."
     },
     {
       "id": "P1-UI-DESIGN",
@@ -108,22 +108,22 @@
     "blender_previews_reviewed": 5,
     "layout_status": "CANDIDATE_STAGING_RETAINED",
     "artistic_approval": "NOT_APPROVED",
-    "native_UE": "THREE_SOURCE_ASSETS_COLD_SAVED_IN_ISOLATED_QA; NOT_LANDSCAPE_OR_PRODUCTION_WORLD",
+    "native_UE": "THREE_SOURCE_ASSETS_COLD_SAVED_IN_ISOLATED_QA_ONLY; PROCEDURAL_FIRST_WORLD_NOT_YET_IMPLEMENTED",
     "PCG_plugin_enabled_in_latest_Gate12_uproject": false,
     "android": "NOT_TESTED",
-    "Gate02": "Continue actual P34 quality refinement, water/bridges/caves/interiors, navigation-safe geometry and LOD; do not rebuild existing anchors.",
-    "Gate12": "Import tested real R1 source in isolated QA world with transforms, heightfield, persistent seeded PCG, collision/streaming evidence; preserve StartingWorld and dirty source.",
+    "Gate02": "Supply original approved R1 geography/settlement/biome anchors, reusable modules, continued artistic anchor improvements and valid source. NOT responsible for hand-authoring the remainder of whole World.",
+    "Gate12": "Direct creation of rest of first World procedurally in existing Unreal with persistent seed stable IDs, World Partition/PCG/Landscape, geo/environment quality and real gameplay/traversal. Retain existing QA evidence; advance production map.",
     "Gate00": "Direct original source/provenance/rights and additive canonical intake only after art and native eligibility; former Gate11 is retired."
   },
   "cross_gate_weapon_action_p0": {
     "scope": "Unarmed/fists, slingshots, bows, thrown/melee, firearms, futuristic and magic/innate/anatomy-specific attacks under existing two combat executors; no generic sword/pistol/rifle pose",
     "Gate04": {
-      "status": "BLOCKED_ON_APPROVED_COMBAT_CONTRACT",
-      "next": "Deliver per-ability and weapon attack class, action/turn executor semantics, range/LOS/targeting, projectile/contact/collision, damage/hit/cancel windows and exact test cases without changing frozen rules."
+      "status": "BASE_V6_AND_ALTER_V1_USER_APPROVED_SOURCE_DETAIL_ALTER_ZIP_REQUIRED",
+      "next": "Bind actual exact v6 and v1 separate mechanically complete targeting/ultimate/fantasm effects only from approved original source; full v1 ZIP missing in current Gate00 context; preserve two executors"
     },
     "Gate07": {
-      "status": "BLOCKED_ON_APPROVED_ITEM_SOURCE",
-      "next": "Deliver real equipment item IDs, allowed body/anatomical slots and combo compatibility, exact source of authored combat_motion_profile or approved read-only alternative, attachment/socket definitions and sample valid/invalid fixtures."
+      "status": "18_OF_18_POLICY_DIRECTIONS_APPROVED_EXACT_ITEM_SOURCE_STILL_REQUIRED",
+      "next": "Consume all 18 Gate07 approved original recommendation A directions, including former D03/D04/D06/D10/D15, retaining physical item IDs/provenance and not fabricating catalog ownership."
     },
     "Gate09": {
       "status": "BLOCKED_ON_REAL_MOTION_AND_FX",
@@ -140,7 +140,19 @@
     "requested_feature_families": 18,
     "whole_family_accepted": 0,
     "source_audit": "docs/production/gate12/GATE12_USER_REQUIREMENTS_CURRENT_STATE_20261018.md",
-    "note": "18/18 still have player-facing gaps; isolated Win64 23/23 is narrower navigation evidence."
+    "note": "18/18 still have player-facing gaps; isolated Win64 23/23 is narrower navigation evidence.",
+    "character_completion_policy": {
+      "versions": [
+        "BASE",
+        "AWAKENED",
+        "ALTER",
+        "BERSERKER"
+      ],
+      "kit_each_when_character_considered_finished": true,
+      "grand_convergence": "SEPARATE_PENDING_USER_APPROVAL_AND_ELIGIBILITY",
+      "do_not_invent_future_versions": true
+    },
+    "common_movement_policy": "Reusable independently authored variations of walk/run/swim/fly/etc, mapped by character abilities, anatomy and physics; not wholly bespoke per character."
   },
   "gate_workflows": {
     "Gate01-2D": "visual concept/approval only",
@@ -148,7 +160,7 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "None for routine authorized native development or Registry continuity. Gate00 owns cross-Gate blocking source/creative decisions; only escalate genuinely unresolved canon or destructive operations. Gate12 to resume from actual preserved worktree and next native milestone.",
+  "next_user_action": "Please provide exact bytes of Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip for Alter v1 approved numerical mechanics/effect source; Android four-clip actual device test requires physical device present. Other stated conceptual approvals are now resolved; not a new design approval round.",
   "received_reports_20261020": {
     "status": "FOUR_GATE_REPORTS_COMMITTED_ON_GATE00_COORDINATION_BRANCH",
     "index": "docs/production/gate00/received_reports/README_20261020.md",
@@ -158,7 +170,7 @@
       "Gate07": "docs/production/gate00/received_reports/GATE07_USER_REVIEWED_ECONOMY_20261019.md",
       "Gate09": "docs/production/gate00/received_reports/GATE09_NATIVE_ANIMATIONS_20261019.md"
     },
-    "note": "Received report records committed; original Gate04/Gate07 user ZIPs and Gate09 protected binaries not uploaded; not native/canonical approval."
+    "note": "Historical four-report 13-accepted+5-deferred intake is superseded on decisions by 20-Oct user approval of all 18; original reports preserved unchanged."
   },
   "latest_source_reconciliation_20261020": {
     "gate12_branch": "production/gate12-koikatsu-ue583-fixture-20261010",
@@ -193,5 +205,55 @@
     "original_ids_and_source_provenance": "PRESERVE",
     "alter_kit": "APPROVED_BUT_EXACT_SOURCE_NOT_LOCATED",
     "release_authorized": false
+  },
+  "binding_approval_overlay_20261020": "docs/production/gate00/GATE00_20261020_ALTER_G07_WORLD_MOTION_APPROVALS.md",
+  "binding_approval_overlay_json": "docs/production/gate00/GATE00_USER_APPROVAL_OVERLAY_20261020.json",
+  "gate07_latest_approval": {
+    "as_of": "2026-10-20",
+    "accepted_direction_count": 18,
+    "formerly_deferred_now_approved": [
+      "D03",
+      "D04",
+      "D06",
+      "D10",
+      "D15"
+    ],
+    "original_staged_Gate07_13_5_record_is_history_only": true,
+    "source": "content/master-integration/registry/gate11/2026-10-20/sources/g07_feedback_decisions_exact_unmodified.json",
+    "approval_overlay": "docs/production/gate00/GATE00_USER_APPROVAL_OVERLAY_20261020.json",
+    "individual_item_or_banner_ids_newly_canonized": 0
+  },
+  "luminous_alter_kit_v1": {
+    "design": "USER_APPROVED_20261019_CONFIRMED_20261020",
+    "starting": {
+      "HP": 7650,
+      "ATK": 4830,
+      "DEF": 1040,
+      "SPD": 151,
+      "Rank": "Hero",
+      "Level": 1
+    },
+    "version": "ALTER",
+    "origin_rarity": "MR",
+    "actives": [
+      "Vesperblade",
+      "Black Eucharist",
+      "Martyr's Communion"
+    ],
+    "passives_count": 6,
+    "resource": "Red Tithe 0-100",
+    "world_fantasm": "Cathedral of the Unwritten Death",
+    "ultimate": "Black Mass / Rite of Ruin / Rite of the Hollow Crown",
+    "source_zip_name": "Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip",
+    "source_zip_content_available_in_this_turn": false,
+    "full_effects_coefficient_verified": false,
+    "native_imported": false,
+    "registry_accepted": false
+  },
+  "animation_import_gate": {
+    "precondition": "Verify 4 existing Koikatsu authentic Gate09 clips as actual native character gameplay on physical Android before mass Koikatsu animation/sex-scene transfer",
+    "device_verified": false,
+    "motion_library": "independently authored common movement variations selected per anatomy/physics/abilities",
+    "eligible_source": "authentic Koikatsu and related original source via existing pipeline with adult/rights and skeleton/retarget checks"
   }
 }
