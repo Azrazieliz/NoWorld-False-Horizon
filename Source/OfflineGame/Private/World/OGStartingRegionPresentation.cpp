@@ -10070,9 +10070,10 @@ void AOGWorldPresentationHud::DrawHUD()
         if (bLuminousAuthoredEmotesExpanded)
         {
             static const TCHAR* Names[] = {
-                TEXT("Thoughtful"),TEXT("Greeting"),TEXT("Expressive"),TEXT("Bow")
+                TEXT("Thoughtful"),TEXT("Greeting"),TEXT("Expressive"),
+                TEXT("Bow"),TEXT("Dance")
             };
-            for(int32 I=0;I<4;++I)
+            for(int32 I=0;I<UE_ARRAY_COUNT(Names);++I)
                 DrawGameButton(Names[I],
                     FName(*FString::Printf(TEXT("OG.Gate09.Emote.%d"),I)),
                     X,Y+(I+1)*50.f*Scale,W,44.f*Scale,false,true,112);
@@ -10146,7 +10147,8 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         {
             const FString Suffix=BoxName.ToString().Mid(16);
             int32 Index=INDEX_NONE;
-            if (LexTryParseString(Index,*Suffix) && Index>=0 && Index<4)
+            if (LexTryParseString(Index,*Suffix) && Index>=0 &&
+                Index<=static_cast<int32>(EOGLuminousV3AuthoredEmote::DancePerformance))
             {
                 if (!Luminous->PlayGate09AuthoredEmote(
                     static_cast<EOGLuminousV3AuthoredEmote>(Index)))
