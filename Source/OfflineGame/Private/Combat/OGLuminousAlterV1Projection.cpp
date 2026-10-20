@@ -1,37 +1,106 @@
 #include "Combat/OGLuminousAlterV1Projection.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Misc/SecureHash.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
-FOGLuminousAlterV1Projection
-FOGLuminousAlterV1Projection::FromApprovedDesign()
+bool FOGLuminousAlterV1Projection::LoadApprovedV1(
+    FOGLuminousAlterV1Projection& Out, FString& OutError)
 {
-    // Source: user-approved Gate04 2026-10-19 Alter v1 archive,
-    // SHA-256 2c6474548541df55b036eaa5a605805f64bba6fe212d4c91c4013c7fdd1a254c.
-    // These are the design-stage IDs, not fictional installed Registry IDs.
-    FOGLuminousAlterV1Projection P;
-    P.DraftVersionId=FOGContentId(TEXT("draft:character.luminous_valentine.alter"));
-    P.HeroLevelOne.MaxHp=FOGLargeNumber::FromInt64(7650);
-    P.HeroLevelOne.Attack=FOGLargeNumber::FromInt64(4830);
-    P.HeroLevelOne.Defense=FOGLargeNumber::FromInt64(1040);
-    P.HeroLevelOne.Speed=151;
-    P.HeroLevelOne.CritRateBps=3700;
-    P.HeroLevelOne.CritDamageBonusBps=13200;
-    P.HeroLevelOne.CritRateResistanceBps=600;
-    P.HeroLevelOne.CritDamageResistanceBps=700;
-    P.HeroLevelOne.HitBps=12400;
-    P.HeroLevelOne.DodgeBps=1900;
-    P.HeroLevelOne.BlockRateBps=300;
-    P.HeroLevelOne.BlockReductionBps=1400;
-    P.HeroLevelOne.DefensePenetrationBps=1700;
-    P.HeroLevelOne.DamageDealtMultiplierBps=10000;
-    P.HeroLevelOne.DamageTakenMultiplierBps=10000;
-    P.HeroLevelOne.TrueDamageResistanceBps=0;
-    for(int32 N=1;N<=3;++N)
-        P.Skills.ActiveSkills.Add(FOGContentId(
-            FString::Printf(TEXT("draft:luminous_valentine.alter.active_%d"),N)));
-    for(int32 N=1;N<=6;++N)
-        P.Skills.PassiveSkills.Add(FOGContentId(
-            FString::Printf(TEXT("draft:luminous_valentine.alter.passive_%d"),N)));
-    P.Skills.UltimateSkill=FOGContentId(
-        TEXT("draft:luminous_valentine.alter.ultimate.black_mass"));
-    P.Skills.CurrentForm=P.DraftVersionId;
-    return P;
+    Out=FOGLuminousAlterV1Projection();
+    OutError.Reset();
+    const FString Path=FPaths::Combine(FPaths::ProjectContentDir(),
+        TEXT("NoWorld/Combat/AuthoritativeDesign"),
+        TEXT("Luminous_Alter_Offensive_Kit_v1_APPROVED_DESIGN.json"));
+    TArray<uint8> Bytes;
+    if(!FFileHelper::LoadFileToArray(Bytes,*Path) || Bytes.IsEmpty())
+    {
+        OutError=TEXT("Exact approved Gate04 Alter v1 source data unavailable.");
+        return false;
+    }
+    FMD5 Md5;
+    Md5.Update(Bytes.GetData(),Bytes.Num());
+    uint8 Digest[16];
+    Md5.Final(Digest);
+    if(!BytesToHex(Digest,16).Equals(
+        TEXT("5f372226e7b93b63e7b37bb000b68295"),
+        ESearchCase::IgnoreCase))
+    {
+        OutError=TEXT("Gate04 Alter v1 bytes differ from the user-approved source.");
+        return false;
+    }
+    FString Text;
+    FFileHelper::BufferToString(Text,Bytes.GetData(),Bytes.Num());
+    TSharedPtr<FJsonObject> J;
+    if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),J)||
+       !J.IsValid() ||
+       J->GetStringField(TEXT("schema")) !=
+        TEXT("gate04.luminous_valentine.alter.ln23.offensive_risk_v1") ||
+       J->GetStringField(TEXT("status")) !=
+        TEXT("USER_VALIDATED_GATE04_DESIGN_V1_PENDING_GATE11_GATE12_GATE09"))
+    {
+        OutError=TEXT("Alter v1 schema or approval scope differs from the frozen design.");
+        return false;
+    }
+    const TSharedPtr<FJsonObject>& Authority=J->GetObjectField(TEXT("authority"));
+    const TSharedPtr<FJsonObject>& Stats=J->GetObjectField(TEXT("baseline_hero_lv1"));
+    const TSharedPtr<FJsonObject>& Resources=J->GetObjectField(TEXT("resources"));
+    const TSharedPtr<FJsonObject>& Tithe=Resources->GetObjectField(TEXT("red_tithe"));
+    const TSharedPtr<FJsonObject>& Charge=Resources->GetObjectField(TEXT("ultimate_charge"));
+
+    Out.DraftVersionId=FOGContentId(Authority->GetStringField(TEXT("version_id")));
+    auto Read=[&](const TCHAR* Id)->int32
+    {
+        return static_cast<int32>(Stats->GetIntegerField(Id));
+    };
+    auto& S=Out.HeroLevelOne;
+    S.MaxHp=FOGLargeNumber::FromInt64(Read(TEXT("hp")));
+    S.Attack=FOGLargeNumber::FromInt64(Read(TEXT("atk")));
+    S.Defense=FOGLargeNumber::FromInt64(Read(TEXT("def")));
+    S.Speed=Read(TEXT("spd"));
+    S.CritRateBps=Read(TEXT("crit_rate"));
+    S.CritDamageBonusBps=Read(TEXT("crit_damage"));
+    S.CritRateResistanceBps=Read(TEXT("crit_resist"));
+    S.CritDamageResistanceBps=Read(TEXT("crit_damage_resist"));
+    S.HitBps=Read(TEXT("hit"));
+    S.DodgeBps=Read(TEXT("dodge"));
+    S.BlockRateBps=Read(TEXT("block"));
+    S.BlockReductionBps=Read(TEXT("block_reduction"));
+    S.DefensePenetrationBps=Read(TEXT("pen"));
+    S.DamageDealtMultiplierBps=Read(TEXT("damage_dealt"));
+    S.DamageTakenMultiplierBps=Read(TEXT("damage_taken"));
+    S.TrueDamageResistanceBps=Read(TEXT("true_damage_resist"));
+
+    for(const TSharedPtr<FJsonValue>& Entry:J->GetArrayField(TEXT("actives")))
+        Out.Skills.ActiveSkills.Add(
+            FOGContentId(Entry->AsObject()->GetStringField(TEXT("id"))));
+    for(const TSharedPtr<FJsonValue>& Entry:J->GetArrayField(TEXT("passives")))
+        Out.Skills.PassiveSkills.Add(
+            FOGContentId(Entry->AsObject()->GetStringField(TEXT("id"))));
+    Out.Skills.UltimateSkill=FOGContentId(
+        J->GetObjectField(TEXT("ultimate"))->GetStringField(TEXT("id")));
+    Out.WorldFantasmId=FOGContentId(
+        J->GetObjectField(TEXT("world_fantasm"))->GetStringField(TEXT("id")));
+    Out.Skills.CurrentForm=Out.DraftVersionId;
+    Out.InitialRedTithe=static_cast<int32>(Tithe->GetIntegerField(TEXT("initial")));
+    Out.RedTitheMaximum=static_cast<int32>(Tithe->GetIntegerField(TEXT("maximum")));
+    Out.UltimateChargeCapPercent=static_cast<int32>(
+        Charge->GetIntegerField(TEXT("maximum_percent")));
+    if(!Out.DraftVersionId.IsValid() ||
+       Out.Skills.ActiveSkills.Num()!=3 ||
+       Out.Skills.PassiveSkills.Num()!=6 ||
+       !Out.Skills.UltimateSkill.IsValid() ||
+       !Out.WorldFantasmId.IsValid() ||
+       Out.Skills.HasDuplicateSkills() ||
+       Out.InitialRedTithe!=20 ||
+       Out.RedTitheMaximum!=100 ||
+       Out.UltimateChargeCapPercent!=200 ||
+       FOGLargeNumber::Compare(S.MaxHp,FOGLargeNumber())<=0 ||
+       S.Speed<=0)
+    {
+        OutError=TEXT("Alter v1 exact kit shape, stat projection or resource cap invalid.");
+        return false;
+    }
+    return true;
 }

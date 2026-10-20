@@ -1,4 +1,5 @@
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGLuminousAlterV1Projection.h"
 #include "Combat/OGCombatMath.h"
 #include "Random/OGDeterministicRng.h"
 #include "Serialization/JsonReader.h"
@@ -33,6 +34,19 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
 {
     OutError.Reset();
     if(!IsAlter(Source))return true;
+    // Execute only against the exact 35,551-byte user-approved Alter design
+    // source. A draft content identifier is not installed Registry authority.
+    FOGLuminousAlterV1Projection Approved;
+    if(!FOGLuminousAlterV1Projection::LoadApprovedV1(Approved,OutError))
+        return false;
+    if(Approved.Skills.ActiveSkills[0]!=A1 ||
+       Approved.Skills.ActiveSkills[1]!=A2 ||
+       Approved.Skills.ActiveSkills[2]!=A3 ||
+       Approved.Skills.UltimateSkill!=Ultimate)
+    {
+        OutError=TEXT("Alter v1 source IDs do not match the native executor binding.");
+        return false;
+    }
     const bool bA1=Action.SkillId==A1;
     const bool bA2=Action.SkillId==A2;
     const bool bA3=Action.SkillId==A3;

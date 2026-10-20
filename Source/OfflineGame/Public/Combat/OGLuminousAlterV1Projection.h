@@ -3,15 +3,21 @@
 #include "CoreMinimal.h"
 #include "Combat/OGCombatTypes.h"
 
-/** Approved design projection only. Gate11 still owns final Registry intake;
- * neither this data nor its draft ContentIds creates a Manifestation. */
+/** Exact user-approved Alter v1 design, still pending production Registry.
+ * No Manifestation, currency or rarity progression is invented by loading it.
+ */
 struct OFFLINEGAME_API FOGLuminousAlterV1Projection
 {
     FOGCombatStats HeroLevelOne;
     FOGResolvedSkillSet Skills;
     FOGContentId DraftVersionId;
-    int32 InitialRedTithe=20;
-    int32 RedTitheMaximum=100;
+    FOGContentId WorldFantasmId;
+    int32 InitialRedTithe=0;
+    int32 RedTitheMaximum=0;
+    int32 UltimateChargeCapPercent=0;
 
-    static FOGLuminousAlterV1Projection FromApprovedDesign();
+    /** Fail closed on any changed source bytes or incomplete 3A+6P schema. */
+    static bool LoadApprovedV1(
+        FOGLuminousAlterV1Projection& Out,
+        FString& OutError);
 };
