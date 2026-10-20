@@ -25,6 +25,11 @@ private:
     UFUNCTION() void OnClothedClicked();
     UFUNCTION() void OnUnderwearClicked();
     UFUNCTION() void OnNudeClicked();
+    UFUNCTION() void OnThoughtfulClicked();
+    UFUNCTION() void OnGreetingClicked();
+    UFUNCTION() void OnExpressiveClicked();
+    UFUNCTION() void OnBowClicked();
 
     void ChangeWardrobe(int32 StateIndex);
+    void PlayAuthenticEmote(int32 EmoteIndex);
 };

@@ -193,6 +193,8 @@ private:
     bool bLastAppliedPrivacy = false;
     bool bLastAppliedExplicitContext = false;
     bool bCompatibleNativeMotion = false;
+    // The motion driver is selected from the exact imported clip skeleton, not a fixed part index.
+    int32 ActiveMotionLeaderIndex = INDEX_NONE;
     bool bLuminousReady = false;
     bool bGate09EmotePlaying = false;
     float Gate09EmoteEndTime = 0.f;

@@ -202,6 +202,7 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     // CurrentWardrobe, never by the Privacy/SFW presentation resolver.
     EffectiveAppearance.EffectiveRenderedWardrobe = Desired;
     CurrentNativeClip = nullptr;
+    ActiveMotionLeaderIndex = INDEX_NONE;
     bCompatibleNativeMotion = false;
     CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
     bGate09EmotePlaying = false;
@@ -460,11 +461,14 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousNativeMotionClip(UAnimSequence* 
             return false;
         }
     }
+    // Release a former leader before assigning the current clip's actual driver.
+    Leader->SetLeaderPoseComponent(nullptr);
     for (int32 Index = 0; Index < ActivePartCount; ++Index)
         if (Index != LeaderIndex) RuntimeParts[Index]->SetLeaderPoseComponent(Leader);
     Leader->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     Leader->PlayAnimation(Clip, bLoop);
     CurrentNativeClip = Clip;
+    ActiveMotionLeaderIndex = LeaderIndex;
     bCompatibleNativeMotion = true;
     UE_LOG(LogTemp, Display,
         TEXT("G12_LUMINOUS_NATIVE_MOTION_STARTED=%s skeleton=%s matching_leader_part=%d"),
@@ -508,8 +512,8 @@ bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
 void AOGLuminousV3PlayableCharacter::InterruptGate09AuthoredEmote()
 {
     if (!bGate09EmotePlaying) return;
-    if (RuntimeParts.IsValidIndex(3) && RuntimeParts[3])
-        RuntimeParts[3]->Stop();
+    if (RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) && RuntimeParts[ActiveMotionLeaderIndex])
+        RuntimeParts[ActiveMotionLeaderIndex]->Stop();
     bGate09EmotePlaying = false;
     Gate09EmoteEndTime = 0.f;
     CurrentNativeClip = nullptr;
@@ -568,8 +572,8 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
         Desired == EOGLuminousV3MotionPhase::Flying ||
         Desired == EOGLuminousV3MotionPhase::Swimming)
     {
-        if (RuntimeParts.IsValidIndex(3) && RuntimeParts[3])
-            RuntimeParts[3]->Stop();
+        if (RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) && RuntimeParts[ActiveMotionLeaderIndex])
+            RuntimeParts[ActiveMotionLeaderIndex]->Stop();
         UE_LOG(LogTemp, Display,
             TEXT("G12_LUMINOUS_MOTION_STATE_NEUTRAL=%d no_wrong_ground_gait_in_flight_or_swim"),
             static_cast<int32>(Desired));
@@ -727,6 +731,7 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
     GetWorldTimerManager().ClearTimer(QAWorldModeTimer);
     CurrentNativeClip = nullptr;
     bGate09EmotePlaying = false;
+    ActiveMotionLeaderIndex = INDEX_NONE;
     Gate09EmoteEndTime = 0.f;
     RuntimeParts.Reset();
     bCompatibleNativeMotion = false;
