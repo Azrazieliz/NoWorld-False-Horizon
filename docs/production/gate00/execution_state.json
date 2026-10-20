@@ -18,7 +18,8 @@
     "current_build_instruction": "NO_GATE09_PC_RESOURCE_HOLD; Gate12 non-destructive native/dev Android work authorized immediately, sequence builds conservatively and check active jobs/memory; no current device PASS",
     "production_app_exists": false,
     "production_release_authorized": false,
-    "destructive_uninstall_or_data_wipe_authorized": false
+    "destructive_uninstall_or_data_wipe_authorized": false,
+    "current_adb_result_20261020": "NO_ATTACHED_ANDROID_DEVICE; adb devices -l returned header only on authorized connected Windows PC."
   },
   "verified_git_heads": {
     "Gate12": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
@@ -254,6 +255,7 @@
     "precondition": "Verify 4 existing Koikatsu authentic Gate09 clips as actual native character gameplay on physical Android before mass Koikatsu animation/sex-scene transfer",
     "device_verified": false,
     "motion_library": "independently authored common movement variations selected per anatomy/physics/abilities",
-    "eligible_source": "authentic Koikatsu and related original source via existing pipeline with adult/rights and skeleton/retarget checks"
+    "eligible_source": "authentic Koikatsu and related original source via existing pipeline with adult/rights and skeleton/retarget checks",
+    "device_check_evidence": "2026-10-20 adb devices -l yielded no attached devices"
   }
 }
