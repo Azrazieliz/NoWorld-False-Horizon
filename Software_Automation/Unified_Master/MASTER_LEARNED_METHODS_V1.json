@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_AUTOMATION_LEARNING_LEDGER_V1",
-  "revision": "2026-10-19T1918Z",
+  "revision": "2026-10-20T1016Z",
   "authority": "Gate00/user; each specialist Gate owns only commissioned content",
   "root": "D:\\UnrealProjects\\OfflineGame_BlenderMastery_20261015\\Software_Automation",
   "branch": "software/mastery-integrated",
@@ -511,6 +511,26 @@
       "evidence": "19 October 2026 native Unreal 5.8.3 QA project: 3 separate 975-track sword AnimSequences at 30 fps from authentic Mixamo/Koikatsu source with independent cold motion PASS, still 2.5/1.8/3.0s and NOT v6 180/390/650ms combined skill; 4 native Sovereign Eclipse StaticMesh, 8 material assets on 16m/12-rib original authored source and cold load PASS; 6 character pose previews demonstrate visual-art hold; source ZIP 53,839,501 bytes SHA256 81484e124c52987163efd1025a9bdd3fccaeecaeb190ec3b2b75d16dc1f70c41, original 4 native Unreal animation hashes unchanged; all Gate12 files preserved.",
       "status": "verified_native_source_import_and_exact_radius_world_geometry_ART_HOLD",
       "regression_test": "Gate09 private package_luminous_v6_native_checkpoint.py validates 3 true native imported actions and separate cold moving pose, 4 native field meshes/8 materials cold loaded, three source FBX hashes, 4 original unchanged AnimSequences, 6 identical source skeletal dependency copies, and 21 native UE assets in CRC clean private zip; real combat/contact/VFX and art remain HOLD."
+    },
+    {
+      "id": "K051",
+      "topic": "Blender 5.2 physically grounded full skeleton attack via single root bone + constrained sword",
+      "applies_to": "gate09|gate12",
+      "requirement": "Use original approved 975 bone actor and authentic sword attack curves; ground source action across all frames without manually posing 975 bones or independently keying equipped sword, and preserve true root translation in native Unreal 5.8.",
+      "procedure": "Duplicate only the existing Blender Action, keep 975 original quaternion curves; identify parentless Center root and toe world positions each frame; measure root local to world 3x3 Jacobian by sampling Center.location epsilon, invert to map desired world XY lunge and floor Z to local root keys. Key Center.location once per frame to ground minimum of actual left and right toe positions at 3mm stage height and provide <=35cm smoothstep forward impulse. Keep physical sword parented to Right wrist as existing 8cm measured grip. Export source .blend and single animation-only FBX. Import directly onto existing UE975 skeleton; assert native Center bone actually carries >30cm translation, all original track names match, five reusable native concrete notify classes remain after forced package save and independent UE cold load. Use transparent FX pass from physically sampled sword-tip motion rather than static generic bars and keep original render cache.",
+      "evidence": "20 October 2026: original actual Luminous A1 had both toes 11.74cm off ground on first strike; physical root correction across 33 source frames max ground residue <0.0000001m, measured sword hand offset 0.08m maximum, 35cm forward stride. Genuine Blender 5.2 Eevee renders at frames6/12/20. UE5.8.3 native 975 bone AnimSequence extracted 35.194cm root Center translation, five concrete Blueprint notifies survive independently verified cold restart; original approved source untouched.",
+      "status": "verified_native_root_ground_motion_unreal_cold",
+      "regression_test": "A1 v9 Blender source JSON confirms 33 floor positions and sword offsets; UE independent cold JSON unreal_22_a1_v9_FINAL_cold_root_notifies.json verifies 975 bone names, >30cm Center root translation and five named concrete notifies without retesting original four idles."
+    },
+    {
+      "id": "K052",
+      "topic": "Blender 5.2 separate physically sampled sword VFX pass and preserved character render frames",
+      "applies_to": "gate09|gate12",
+      "requirement": "Compose high-fidelity silver/crimson sword arcs directly from actual animated equipment blade history; avoid static generic bars, solid opaque blade fans, duplicating sword in VFX alpha, re-rendering all character frames, or blank GLB exports due source visibility fcurves.",
+      "procedure": "Open verified physically grounded A1 v9 source; evaluate original sword.matrix_world at 5 frames around each of 3 native hit events; construct narrow tapered true tip-path swept surface, curved crimson tip-trace and sparse contact petal sparks; author keyed visibility in separate Blender 5.2 source; save timed source before static interchange. For GLB static Unreal effect mesh export, clear the render-visibility Action data on export copies and explicitly unhide 9 FX mesh objects before selection; original animation keys remain in source. For alpha pass, render only twelve effect frames and explicitly hide all non FX geometry types including CURVE (physical sword uses 58 CURVE components) and MESH. Composite glow and precise alpha on already rendered 33 genuine grounded Luminous frames, no re-render of character; retain two distinct editable sources and UE geometric effects. Import 9 real native UE static effect mesh groups plus 3 materials and independently cold verify assets.",
+      "evidence": "20 October 2026: initial Blender full-blade fan rejected as opaque wedge and empty GLB due action hiding. Method changed to 9 sword-tip-trace physical source meshes with 3 material groups, 12 transparent contact-only renders in 20s, 33 character frames reused without re-render in 5s Python/FFmpeg compositing, resulting 30 fps MP4 SHA256 00aee09d48f2de86d65ce2269a570196a1d2b4762222e1c7f3d7bab66fd3022a; UE 5.8.3 import 9 StaticMeshes and 3 material assets, independent cold pass. No Niagara claimed, Gate12 runtime binding pending.",
+      "status": "verified_animated_blender_source_motion_vfx_and_native_ue_static_fx",
+      "regression_test": "Compare G09_A1_v10_MotionBasedFX_BeforeAfter_QA.jpg and typed source v9-v10 receipts. Source glTF actual 9 mesh primitives 3 materials. Final PNG VFX pass must contain only source-generated arc/spark geometry (no original CURVE sword child meshes). Native unreal_25_a1_v10_final_mesh_cold.json reports 9 mesh/3 material cold pass; actual composited output 33 frames 30fps and 12 contact FX frames."
     }
   ]
 }
