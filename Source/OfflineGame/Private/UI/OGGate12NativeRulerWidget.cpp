@@ -1375,10 +1375,10 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
             UBorder::StaticClass(),TEXT("CanonicalGachaResultOrRatesPanel"));
         Panel->SetBrushColor(FLinearColor(.008f,.005f,.016f,.985f));
         Panel->SetPadding(FMargin(18.f));
-        UCanvasPanelSlot* Slot=Gate10PortraitGachaCanvas->AddChildToCanvas(Panel);
-        Slot->SetAnchors(FAnchors(100.f/864.f,250.f/1536.f,
+        UCanvasPanelSlot* PortraitCanvasSlot=Gate10PortraitGachaCanvas->AddChildToCanvas(Panel);
+        PortraitCanvasSlot->SetAnchors(FAnchors(100.f/864.f,250.f/1536.f,
                                  765.f/864.f,1020.f/1536.f));
-        Slot->SetOffsets(FMargin(0.f));
+        PortraitCanvasSlot->SetOffsets(FMargin(0.f));
         UScrollBox* Scroll=WidgetTree->ConstructWidget<UScrollBox>(
             UScrollBox::StaticClass());
         Panel->AddChild(Scroll);

@@ -69,7 +69,7 @@ FOGEntityId ResolveR1PersistentIdFromOriginalSource(const FString& SourceId)
     // Namespaced deterministic 128-bit UUID; never share the historical
     // Registry's IDs or create a random World entity on every stream cycle.
     const FString Stable=TEXT("gate02.r1.scatter:")+SourceId;
-    const FString Hex=FMD5::HashAnsiString(TCHAR_TO_UTF8(*Stable));
+    const FString Hex=FMD5::HashAnsiString(*Stable);
     FGuid Parsed;
     if (FGuid::ParseExact(Hex,EGuidFormats::Digits,Parsed))
         return FOGEntityId(Parsed);

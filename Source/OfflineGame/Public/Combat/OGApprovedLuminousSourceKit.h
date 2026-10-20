@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Combat/OGCombatTypes.h"
-#include "Combat/OGApprovedLuminousSourceKit.generated.h"
+#include "OGApprovedLuminousSourceKit.generated.h"
 
 /** Verified user-approved Base v6 source data with independently approved
  * Registry design identifiers. These data alone never install a package,
