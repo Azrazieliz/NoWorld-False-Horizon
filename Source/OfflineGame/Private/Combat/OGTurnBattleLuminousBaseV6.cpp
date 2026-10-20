@@ -150,6 +150,21 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         OutError=TEXT("Manifestation lacks its own required ultimate charge.");
         return false;
     }
+    const int32 NextOwnerAction=StateOfOwner.OwnerActions+1;
+    if((bA2 && NextOwnerAction<StateOfOwner.NextA2ReadyOwnerAction) ||
+       (bA3 && NextOwnerAction<StateOfOwner.NextA3ReadyOwnerAction))
+    {
+        OutError=TEXT("Approved Base v6 two/three-owner-action cooldown not ready.");
+        return false;
+    }
+    const int32 BaseReserveCost=bA2?
+        FMath::Max(0,30-StateOfOwner.DiscountNextA2Reserve):
+        bA3Covenant?75:bA3?30:0;
+    if(BaseReserveCost>StateOfOwner.ScarletReserve)
+    {
+        OutError=TEXT("Base v6 insufficient Scarlet Reserve for actual skill cost.");
+        return false;
+    }
     if(bA3Covenant && StateOfOwner.bAllyRevivalSpent)
     {
         OutError=TEXT("The shared ally revival ledger was already consumed in this encounter.");
@@ -171,6 +186,17 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         StateOfOwner.bDayAttunement=true;
     }
     if(bUlt)StateOfOwner.UltimateChargePercent-=ChargeCost;
+    if(bA2)
+    {
+        StateOfOwner.ScarletReserve-=BaseReserveCost;
+        StateOfOwner.DiscountNextA2Reserve=0;
+        StateOfOwner.NextA2ReadyOwnerAction=NextOwnerAction+3;
+    }
+    else if(bA3)
+    {
+        if(!bA3Covenant)StateOfOwner.ScarletReserve-=BaseReserveCost;
+        StateOfOwner.NextA3ReadyOwnerAction=NextOwnerAction+4;
+    }
 
     // Own-action regeneration: 4% of missing HP, living actor only.
     // No regeneration from corpse/succession or source combat-log replay.
@@ -194,6 +220,9 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
 
     ++StateOfOwner.OwnerActions;
     const int32 CurrentOwnerAction=StateOfOwner.OwnerActions;
+    if(StateOfOwner.bAttunementActive &&
+       CurrentOwnerAction>StateOfOwner.AttunementExpiryAction)
+        StateOfOwner.bAttunementActive=false; // Neutral, neither Night nor Day.
     // Status effects belong to this Manifestation, never all characters who
     // share the Luminous Identity. Resolve actual HP damage before any siphon.
     TArray<FOGEntityId> Expired;
@@ -218,8 +247,13 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(!Limited.IsZero() &&
            !ApplyHealing(Source.UnitEntityId,Source.UnitEntityId,
                          Limited,Action.SkillId,OutError))return false;
-        StateOfOwner.ScarletReserve=FMath::Min(
-            Kit.ScarletReserveMax,StateOfOwner.ScarletReserve+6);
+        if(StateOfOwner.LastBleedReserveOwnerAction!=CurrentOwnerAction &&
+           !Actual.IsZero())
+        {
+            StateOfOwner.ScarletReserve=FMath::Min(
+                Kit.ScarletReserveMax,StateOfOwner.ScarletReserve+6);
+            StateOfOwner.LastBleedReserveOwnerAction=CurrentOwnerAction;
+        }
     }
     for(const FOGEntityId& E:Expired)
     {
@@ -260,8 +294,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         Request.DefenseReference=Source.Stats.Attack;
         Request.bAllowHitOverflowReplication=false;
         Request.bCanCrit=true;
-        if(StateOfOwner.bDayAttunement==false &&
-           StateOfOwner.OwnerActions>0)
+        if(StateOfOwner.bAttunementActive &&
+           !StateOfOwner.bDayAttunement)
             Request.AdditionalMultiplierBps.Add(11000);
         const FOGDamageResolution Damage=FOGCombatMath::ResolveDamage(
             Request,Source.Stats,Target->Stats,Rng);
@@ -321,8 +355,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                 return false;
         }
         StateOfOwner.bDayAttunement=false;
+        StateOfOwner.bAttunementActive=true;
+        StateOfOwner.AttunementExpiryAction=CurrentOwnerAction+2;
     }
-    else if((bA3 && !bA3Covenant) ||
+    else if(bA3 ||
             (bUlt && UltimateBranch==TEXT("day")))
     {
         const bool bDayUltimate=bUlt;
@@ -338,7 +374,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             FOGLargeNumber Heal=FOGLargeNumber::ScaleByBasisPoints(
                 Source.Stats.Attack,Scale);
             Heal=FOGLargeNumber::ScaleByBasisPoints(Heal,12400);
-            if(StateOfOwner.bDayAttunement)
+            if(StateOfOwner.bAttunementActive && StateOfOwner.bDayAttunement)
                 Heal=FOGLargeNumber::ScaleByBasisPoints(Heal,11200);
             Heal=MinNumber(Heal,Missing);
             if(!Heal.IsZero() &&
@@ -352,7 +388,12 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                 bGrantedOnHpDamage=true;
             }
         }
-        StateOfOwner.bDayAttunement=true;
+        if(bA3)
+        {
+            StateOfOwner.bDayAttunement=true;
+            StateOfOwner.bAttunementActive=true;
+            StateOfOwner.AttunementExpiryAction=CurrentOwnerAction+2;
+        }
         StateOfOwner.DawnOathExpiry=CurrentOwnerAction+2;
     }
     else if(bUlt)
@@ -366,7 +407,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                         I==0?Strokes[K]:Strokes[K]*6000/10000,
                         2500,false,K==3))
                     return false;
-        StateOfOwner.bDayAttunement=false;
+        // Both Ultimates are independently selectable and preserve existing
+        // attunement: they do NOT force the owner into Night.
     }
 
     if(!ActionLifesteal.IsZero())

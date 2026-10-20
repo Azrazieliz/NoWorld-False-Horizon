@@ -170,6 +170,12 @@ private:
         bool bSelfSoulContinuityVerified = false;
         bool bNoSuperiorRevivalNegationVerified = false;
         bool bDayAttunement = false;
+        bool bAttunementActive = true; // Initial Night from approved Base v6.
+        int32 AttunementExpiryAction = 2;
+        int32 NextA2ReadyOwnerAction = 0;
+        int32 NextA3ReadyOwnerAction = 0;
+        int32 DiscountNextA2Reserve = 0;
+        int32 LastBleedReserveOwnerAction = INDEX_NONE;
         bool bAllyRevivalSpent = false;
         FOGEntityId PreparedCovenantTarget;
         int32 CovenantExpiryOwnerAction = -1;
