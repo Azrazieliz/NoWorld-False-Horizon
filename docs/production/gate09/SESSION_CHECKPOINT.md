@@ -1,3 +1,15 @@
+# Gate09 REAL A1 v9 grounded source + v10 actual physical blade effects (20 October 2026)
+
+**Current source checkpoint:** Genuine Blender 5.2 Luminous v3 975-bone `Luminous_A1_ScarletCadence_GroundedRootMotion_v9.blend`, actual right-wrist sword and 33-frame 30fps animation. Grounded previous 11.74cm unsupported feet using single Center root bone; animated forward lunge 35cm native Unreal track. **Five concrete hit/cancel native events cold PASS** on v9 in isolated UE5.8.3. Original approved character and four previously verified native idle/emote assets unchanged.
+
+**Actual distinct FX:** Blender 5.2 `Luminous_A1_ScarletCadence_ActualSwordSweptFX_v10.blend`, sword-history 9 physical mesh sources / 3 materials; each 3 hit sword-tip traces derives from measured original sword motion. UE5.8.3 native 9 meshes+3 materials independently cold PASS. True Luminous 33-frame Eevee render + 12 alpha VFX frames, final 30fps video `Luminous_A1_ScarletCadence_v10_Composited_RealBladeTrail_30fps.mp4`.
+
+**Private integral Gate12 intake:** `D:\UnrealProjects\Gate09_Protected_Production_20261016\G09_Luminous_A1_BaseV6_GroundedRealBlade_UE583_PRIVATE_INTAKE_20261020.zip`, 82,781,767 bytes SHA256 `eeac1234053be10c0c39f6de2e465ee6664b79ba48879be67c396af9aa8ffe5a`, 34 native uassets, 16 source/QA items, integrity PASS, excludes original mod payload and redundant canonical skeletal packages. Source details and exact authority blocker: `docs/production/gate09/GATE09_LUMINOUS_A1_V9V10_REAL_NATIVE_PRODUCTION_20261020.md`.
+
+**ART/GAMEPLAY HOLD:** A1 not globally complete. Canonical Gate07 Dharma physical weapon, Gate12 combat collision/contacts, dodges/turn integration, native Niagara/field, actual skinned UE viewport and Android visuals pending. A2/A3/Ultimates/World Fantasm pending. No generic substitutes. Shared Blender Mastery K051/K052 48/48 targeted PASS.
+
+---
+
 # Gate09 Luminous Valentine Base v6 ACTUAL COMBAT SOURCE + NATIVE UE CHECKPOINT — 2026-10-19
 
 **New actual assets:** 3 genuine Koikatsu-compatible installed Mixamo sword-motion clip sources resolved against source prefab 93/128 unique CRC paths each, retargeted as THREE Blender actions on exact approved Luminous V3 975-bone character, exported to three independent FBX animation sources, imported into native Unreal 5.8.3 AnimSequence assets and independent cold pose / exact 975/975 reference bone names PASS. Original four UE animation assets hash unchanged.
