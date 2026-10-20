@@ -1,5 +1,6 @@
 #include "Combat/OGWorldActionRuntime.h"
 #include "Combat/OGActionCombatAdapter.h"
+#include "Engine/World.h"
 #include "World/OGTraversalFramework.h"
 
 bool FOGActionCancelWindow::Allows(float ElapsedSeconds, EOGActionCancelDestination Destination) const

@@ -1,6 +1,6 @@
 #include "CoreMinimal.h"
 
-#if WITH_DEV_AUTOMATION_TESTS
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
 #include "Misc/AutomationTest.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/Texture2D.h"

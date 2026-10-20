@@ -33,7 +33,8 @@ if(Test-Path $bin){
  if((Get-FileHash $bak -Algorithm SHA256).Hash.ToLowerInvariant() -ne $oldhash){throw 'ARM64 binary backup mismatch'}
 }
 $args=@(('"' + $ubt + '"'),'OfflineGame','Android','Development',('-Project="' + (Join-Path $w 'OfflineGame.uproject') + '"'),
- '-MaxParallelActions=1','-NoPCH','-NoUBA','-NoXGE','-NoHotReload','-WaitMutex')
+ # Restore UE shared precompiled headers: NoPCH exhausted 8GB physical RAM on this host.
+ '-MaxParallelActions=1','-NoUBA','-NoXGE','-NoHotReload','-WaitMutex')
 $t=[DateTime]::UtcNow
 $p=Start-Process -FilePath $dotnet -ArgumentList $args -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $r 'ubt_stdout.txt') -RedirectStandardError (Join-Path $r 'ubt_stderr.txt')
 Write-Output "ANDROID_ARM64_UBT_START_PID=$($p.Id)"

@@ -6,6 +6,7 @@
 #include "InputCoreTypes.h"
 #include "Rendering/DrawElements.h"
 #include "Styling/SlateBrush.h"
+#include "Brushes/SlateColorBrush.h"
 
 void UOGGate12ExploredMapWidget::NativeOnInitialized()
 {
@@ -183,8 +184,8 @@ FReply UOGGate12ExploredMapWidget::NativeOnTouchEnded(
     if (bDragging)
         for (const TPair<int32,FVector2D>& Touch : ActiveTouches)
         {
+            // Exactly one touch remains; avoid a dead loop increment on Clang.
             LastPointer=Touch.Value;
-            break;
         }
     return FReply::Handled();
 }

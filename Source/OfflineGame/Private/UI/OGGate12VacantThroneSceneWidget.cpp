@@ -4,6 +4,7 @@
 #include "Components/Border.h"
 #include "Rendering/DrawElements.h"
 #include "Styling/SlateBrush.h"
+#include "Brushes/SlateColorBrush.h"
 
 void UOGGate12VacantThroneSceneWidget::NativeOnInitialized()
 {
