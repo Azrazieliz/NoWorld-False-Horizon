@@ -1,3 +1,5 @@
+> **LATEST APPROVAL OVERRIDE (2026-10-20):** [Alter Kit v1 + ALL 18 Gate07 directions + procedural first World owned by Gate12 + Android-first Koikatsu animation gate + shared movement variants](GATE00_20261020_ALTER_G07_WORLD_MOTION_APPROVALS.md) (and [machine-readable overlay](GATE00_USER_APPROVAL_OVERLAY_20261020.json)) **supersede any contrary statements below**. Gate02 provides anchors only; Gate12 procedurally builds the rest. Former Gate07 D03/D04/D06/D10/D15 are now **APPROVED** as original proposed recommendations, not deferred. Alter v1 kit is user-approved separately from Base v6; exact original full numerical source still requires archive bytes. Future Awakened/Berserker/Grand not invented. Test four existing genuine clips in live Android gameplay before bulk Koikatsu source transfer. Gate09 authors multiple common motion variants selected by physics/anatomy; combat remains Version-specific. Retired Gate11 is not restored.
+
 # Gate 00 — Authoritative takeover and executable production orders
 **Effective:** 2026-10-20 (Europe/Paris)  
 **Authority:** direct user instruction of 20 October 2026; Issue #25; original approved specs.  
