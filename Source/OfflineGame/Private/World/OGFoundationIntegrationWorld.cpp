@@ -150,9 +150,18 @@ void AOGFoundationIntegrationWorld::Tick(float DeltaSeconds)
     if (!FlightBorrower.IsValid()) { return; }
     auto* Pawn = FlightBorrower.Get();
     auto* Party = Pawn->FindComponentByClass<UOGWorldPartyRuntimeComponent>();
-    if (!Party || !Party->GetSlots().IsValidIndex(Party->GetControlledSlot()) ||
-        Party->GetSlots()[Party->GetControlledSlot()].Unit.UnitEntityId != FlightOwnerId ||
-        !Pawn->GetTraversalCapabilities()->HasCapability(FOGTraversalCapabilityIds::Flight))
+    // The Ruler can control the baseline World Pawn without owning any
+    // Manifestation/party slot. In that legitimate state FlightOwnerId is
+    // intentionally empty. Never revoke the station's temporary grant
+    // immediately just because the empty roster has no party slot.
+    const bool bCapturedPartyOwnerChanged = FlightOwnerId.IsValid() &&
+        (!Party ||
+         !Party->GetSlots().IsValidIndex(Party->GetControlledSlot()) ||
+         Party->GetSlots()[Party->GetControlledSlot()].Unit.UnitEntityId != FlightOwnerId);
+    if (bCapturedPartyOwnerChanged ||
+        !Pawn->GetTraversalCapabilities() ||
+        !Pawn->GetTraversalCapabilities()->HasCapability(
+            FOGTraversalCapabilityIds::Flight))
     {
         SetFlight(Pawn, false);
     }

@@ -439,6 +439,21 @@ bool UOGGate12RulerSessionSubsystem::Navigate(
     return RefreshCanonicalProjections(OutError);
 }
 
+bool UOGGate12RulerSessionSubsystem::SelectRulerForWorld(FString& OutError)
+{
+    OutError.Reset();
+    if (!RefreshCanonicalProjections(OutError))
+        return false;
+
+    // No manufactured owned Manifestation and no deletion of the previously
+    // acquired roster. This selection changes only the World controller.
+    SelectedIdentityId = FOGContentId();
+    SelectedManifestationId = FOGEntityId();
+    CurrentDestination = EOGRulerPrimaryDestination::Characters;
+    UserFacingAvailability = TEXT("Controlling the original Ruler protagonist.");
+    return true;
+}
+
 bool UOGGate12RulerSessionSubsystem::SelectOwnedManifestation(
     const FOGContentId& IdentityId,
     const FOGEntityId& ManifestationId,

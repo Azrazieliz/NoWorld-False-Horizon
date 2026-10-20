@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "TimerManager.h"
 #include "World/OGStartingRegionPresentation.h"
+#include "UI/OGGate12OwnedWorldCharacterBinding.h"
 #include "OGLuminousV3PlayableCharacter.generated.h"
 
 class USkeletalMesh;
@@ -78,11 +79,18 @@ enum class EOGLuminousV3AuthoredEmote : uint8
  * combat, touch controls, camera and party systems remain inherited unchanged.
  */
 UCLASS(Blueprintable)
-class OFFLINEGAME_API AOGLuminousV3PlayableCharacter final : public AOGWorldPrototypeCharacter
+class OFFLINEGAME_API AOGLuminousV3PlayableCharacter final : public AOGWorldPrototypeCharacter, public IOGGate12OwnedWorldCharacterBinding
 {
     GENERATED_BODY()
 public:
     AOGLuminousV3PlayableCharacter();
+
+    // Actual acquired Manifestation, verified in the canonical SQLite store;
+    // never a QA owner, auto-granted character or interchangeable Version.
+    virtual bool BindOwnedWorldCharacter_Implementation(
+        const FOGEntityId& RulerId, const FOGContentId& IdentityId,
+        const FOGContentId& VersionId, const FOGEntityId& ManifestationId,
+        bool bSfwPresentation) override;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|Native Assets")
     TArray<FSoftObjectPath> ClothedNativeParts;
@@ -190,6 +198,12 @@ private:
     void CycleLuminousWardrobeFromGamepad();
 
     int32 ActivePartCount = 0;
+    FOGEntityId BoundOwnedRuler;
+    FOGEntityId BoundOwnedManifestation;
+    FOGContentId BoundOwnedIdentity;
+    FOGContentId BoundOwnedVersion;
+    bool bNativeOwnedCharacterBound = false;
+    bool bOwnedPresentationSfw = true;
     bool bLastAppliedPrivacy = false;
     bool bLastAppliedExplicitContext = false;
     bool bCompatibleNativeMotion = false;

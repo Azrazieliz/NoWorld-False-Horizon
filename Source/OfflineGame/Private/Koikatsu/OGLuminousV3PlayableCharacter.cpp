@@ -93,6 +93,11 @@ FOGLuminousV3AppearanceProjection FOGLuminousV3AppearancePolicy::Resolve(
 AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
+    // Existing Gate11 allocated DESIGN identifiers, verified from the original
+    // preserved intake. Assignment here does NOT install a Registry package,
+    // grant a Manifestation or declare this asset production-accepted.
+    CanonicalLuminousIdentityId = TEXT("character:luminous_valentine.identity");
+    CanonicalLuminousVersionId = TEXT("character:luminous_valentine.version_ln_base");
 }
 
 const TArray<FSoftObjectPath>& AOGLuminousV3PlayableCharacter::PartsFor(EOGLuminousV3Wardrobe State) const
@@ -237,7 +242,8 @@ bool AOGLuminousV3PlayableCharacter::RefreshPrivacyRenderedAppearance()
     // Only the rendered representation is changed by Privacy. The actual
     // wardrobe, equipment, identity, Manifestation and canonical DB remain
     // completely untouched by this method.
-    const bool bPrivacy = GetSfwPresentation();
+    const bool bPrivacy = bNativeOwnedCharacterBound
+        ? bOwnedPresentationSfw : GetSfwPresentation();
     const bool bQAAuthorized = IsIsolatedWardrobeQAContext();
     const bool bHasSafeBase = ClothedNativeParts.Num() ==
         ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed);
@@ -285,8 +291,21 @@ bool AOGLuminousV3PlayableCharacter::ResolveCanonicalControlledContext(
     OutContext = FOGFoundationCharacterContext();
     if (CanonicalLuminousIdentityId.IsEmpty() || CanonicalLuminousVersionId.IsEmpty())
     {
-        Error = TEXT("Gate11 Luminous canonical IdentityId/VersionId not yet assigned; refusing persistent wardrobe modification");
+        Error = TEXT("No approved Luminous canonical Identity/Version IDs on this exact World actor.");
         return false;
+    }
+    if (bNativeOwnedCharacterBound)
+    {
+        if (BoundOwnedIdentity.ToString() != CanonicalLuminousIdentityId ||
+            BoundOwnedVersion.ToString() != CanonicalLuminousVersionId)
+        {
+            Error = TEXT("Owned Luminous binding no longer matches this authored World pawn.");
+            return false;
+        }
+        OutContext.EntityId = BoundOwnedManifestation;
+        OutContext.ManifestationId = BoundOwnedManifestation;
+        OutContext.OwnerEntityId = BoundOwnedRuler;
+        return true;
     }
     const UGameInstance* GI = GetGameInstance();
     const UOGGameCoreSubsystem* Core = GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
@@ -609,6 +628,64 @@ void AOGLuminousV3PlayableCharacter::CycleLuminousWardrobeFromGamepad()
         NextIndex, bSuccess ? TEXT("PASS") : TEXT("FAIL"));
 }
 
+bool AOGLuminousV3PlayableCharacter::BindOwnedWorldCharacter_Implementation(
+    const FOGEntityId& RulerId, const FOGContentId& IdentityId,
+    const FOGContentId& VersionId, const FOGEntityId& ManifestationId,
+    bool bSfwPresentation)
+{
+    LastLuminousError.Reset();
+    if (bNativeOwnedCharacterBound || !bLuminousReady ||
+        !RulerId.IsValid() || !IdentityId.IsValid() || !VersionId.IsValid() ||
+        !ManifestationId.IsValid() ||
+        CanonicalLuminousIdentityId != IdentityId.ToString() ||
+        CanonicalLuminousVersionId != VersionId.ToString())
+    {
+        LastLuminousError=TEXT("Exact accepted Luminous Identity/Version or native asset binding unavailable.");
+        return false;
+    }
+    UGameInstance* GI=GetGameInstance();
+    UOGGameCoreSubsystem* Core=GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    IOGWorldStore* Store=Core ? Core->GetWorldStore() : nullptr;
+    if (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen())
+    {
+        LastLuminousError=TEXT("Canonical ownership database unavailable.");
+        return false;
+    }
+    FOGCharacterManifestationRecord Owned;
+    bool bFound=false;
+    if (!Store->TryReadCharacterManifestation(
+            ManifestationId,bFound,Owned,LastLuminousError) ||
+        !bFound || Owned.OwningRulerId!=RulerId ||
+        Owned.IdentityId!=IdentityId || Owned.ActiveVersionId!=VersionId ||
+        Owned.LifecycleState!=FName(TEXT("active")))
+    {
+        if (LastLuminousError.IsEmpty())
+            LastLuminousError=TEXT("Luminous is not an active Manifestation of this Ruler.");
+        return false;
+    }
+    BoundOwnedRuler=RulerId;
+    BoundOwnedIdentity=IdentityId;
+    BoundOwnedVersion=VersionId;
+    BoundOwnedManifestation=ManifestationId;
+    bNativeOwnedCharacterBound=true;
+    bOwnedPresentationSfw=bSfwPresentation;
+    CurrentWardrobe=EOGLuminousV3Wardrobe::Clothed;
+    // Missing presentation state on a newly acquired Manifestation naturally
+    // uses its source-authored CLOTHED default. Existing owned attire is read
+    // from persistent state; no new state is written during possession.
+    RestoreCanonicalWardrobe();
+    if (!RefreshPrivacyRenderedAppearance())
+    {
+        bNativeOwnedCharacterBound=false;
+        BoundOwnedRuler=FOGEntityId();
+        BoundOwnedManifestation=FOGEntityId();
+        BoundOwnedIdentity=FOGContentId();
+        BoundOwnedVersion=FOGContentId();
+        return false;
+    }
+    return true;
+}
+
 void AOGLuminousV3PlayableCharacter::BeginPlay()
 {
     Super::BeginPlay();
@@ -648,7 +725,9 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     if (!bLuminousReady || !GetWorld()) return;
-    if (GetSfwPresentation() != bLastAppliedPrivacy ||
+    const bool bEffectiveSfw = bNativeOwnedCharacterBound
+        ? bOwnedPresentationSfw : GetSfwPresentation();
+    if (bEffectiveSfw != bLastAppliedPrivacy ||
         IsIsolatedWardrobeQAContext() != bLastAppliedExplicitContext)
     {
         // Device Privacy is non-authoritative, so toggling it cannot call

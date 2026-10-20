@@ -148,8 +148,11 @@ private:
     bool bPrefer3DCharacterPresentation = false;
     // Diagnostic artwork viewer only; not a real owned Manifestation.
     bool bDevelopmentQaViewerOpen = false;
-    int32 RecordsSection = 0;
+    // -1 is the four-destination Records hub; selecting a card opens a full page.
+    int32 RecordsSection = -1;
     bool bGachaHistoryExpanded = false;
+    bool bGachaRatesExpanded = false;
+    bool bGachaResultsExpanded = false;
     FOGEntityId SelectedTerritoryId;
     int32 SelectedTerritoryOverlayIndex = 0;
     FString LastUiError;

@@ -13,6 +13,7 @@ bool SelectWeightedEntry(
     bool bTopOnly,
     bool bFeaturedTopOnly,
     bool bUnfeaturedTopOnly,
+    bool bSrOnly,
     int32& OutIndex,
     FString& OutError)
 {
@@ -22,7 +23,7 @@ bool SelectWeightedEntry(
     // The reviewed soft-pity rule adds percentage POINTS to top-rarity
     // probability, not a multiplier to entry weights.
     const bool bAdditivePity = !bTopOnly && !bFeaturedTopOnly &&
-        !bUnfeaturedTopOnly && Banner.SoftPityStart > 0 &&
+        !bUnfeaturedTopOnly && !bSrOnly && Banner.SoftPityStart > 0 &&
         PullOrdinalSinceTop > Banner.SoftPityStart &&
         Banner.SoftPityBonusPerPullBps > 0;
     bool bSoftTop = false;
@@ -41,6 +42,7 @@ bool SelectWeightedEntry(
         if ((bTopOnly && !bTop) ||
             (bFeaturedTopOnly && (!bTop || !Entry.bFeatured)) ||
             (bUnfeaturedTopOnly && (!bTop || Entry.bFeatured)) ||
+            (bSrOnly && Entry.Rarity != FName(TEXT("SR"))) ||
             (bAdditivePity && bTop != bSoftTop))
         {
             continue;
@@ -204,16 +206,21 @@ bool FOGGachaService::PullBatch(const FOGGachaBannerDefinition& Banner,
         OutError = TEXT("A batch requires between one and ten pulls.");
         return false;
     }
-    // D03 floor method remains deferred. Never charge for a ten-pull
-    // without its mandatory SR+ atomic floor; fail before transaction.
-    if (Count == 10)
-    {
-        OutError = TEXT("Ten-pull unavailable until approved SR+ floor implementation.");
-        return false;
-    }
     if (!ValidateBanner(Banner, OutError) || !RulerId.IsValid())
     {
         if (OutError.IsEmpty()) OutError = TEXT("Gacha requires a valid owning Ruler ID.");
+        return false;
+    }
+    // Gate07 D03 exact approved A: if all ten initial results would be R,
+    // replace the LAST with an actual eligible SR. Never manufacture SR
+    // content; fail before transaction if a banner cannot honor that floor.
+    if (Count == 10 &&
+        !Banner.Entries.ContainsByPredicate([](const FOGGachaPoolEntry& Entry)
+        {
+            return Entry.Weight > 0 && Entry.Rarity == FName(TEXT("SR"));
+        }))
+    {
+        OutError = TEXT("Ten-pull requires an eligible authored SR pool entry.");
         return false;
     }
     if (!Store.BeginTransaction(OutError)) return false;
@@ -226,11 +233,18 @@ bool FOGGachaService::PullBatch(const FOGGachaBannerDefinition& Banner,
         return false;
     };
     int64 NextSeed = Seed;
+    bool bAlreadyRolledSrPlus = false;
     for (int32 Index = 0; Index < Count; ++Index)
     {
         FOGGachaPullResult Result;
-        if (!PullInternal(Banner, RulerId, WorldTick, NextSeed, Result, OutError, false))
+        // First nine R allow a potential floor on the final slot, but the
+        // final slot is still rolled normally before any conditional upgrade.
+        const bool bApplyFloor = Count == 10 && Index == 9 &&
+            !bAlreadyRolledSrPlus;
+        if (!PullInternal(Banner, RulerId, WorldTick, NextSeed, Result,
+                OutError, false, bApplyFloor))
             return Fail();
+        if (Result.Rarity != FName(TEXT("R"))) bAlreadyRolledSrPlus = true;
         NextSeed = static_cast<int64>(static_cast<uint64>(NextSeed) +
             static_cast<uint64>(FMath::Max<int64>(1, Result.RngDrawCount + 1)));
         OutResults.Add(MoveTemp(Result));
@@ -253,7 +267,8 @@ bool FOGGachaService::PullInternal(
     int64 Seed,
     FOGGachaPullResult& OutResult,
     FString& OutError,
-    bool bOwnTransaction)
+    bool bOwnTransaction,
+    bool bUpgradeFinalRToSR)
 {
     OutResult = FOGGachaPullResult();
     OutError.Reset();
@@ -418,10 +433,21 @@ bool FOGGachaService::PullInternal(
             bHardPity,
             false,
             false,
+            false,
             SelectedIndex,
             Error))
     {
         return Fail(Error);
+    }
+
+    // D03 applies only when the final naturally rolled result is ALSO R,
+    // not when the tenth result is already an SR, SSR, UR, LR or MR.
+    if (bUpgradeFinalRToSR &&
+        Banner.Entries[SelectedIndex].Rarity == FName(TEXT("R")))
+    {
+        if (!SelectWeightedEntry(Banner, Rng, PullOrdinalSinceTop,
+                false, false, false, true, SelectedIndex, Error))
+            return Fail(Error);
     }
 
     const FOGGachaPoolEntry* Selected =
@@ -438,6 +464,7 @@ bool FOGGachaService::PullInternal(
         if (!SelectWeightedEntry(
                 Banner, Rng, PullOrdinalSinceTop,
                 true, bUseFeatured, !bUseFeatured,
+                false,
                 SelectedIndex, Error))
             return Fail(Error);
         Selected = &Banner.Entries[SelectedIndex];

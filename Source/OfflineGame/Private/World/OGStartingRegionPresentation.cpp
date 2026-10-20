@@ -37,6 +37,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/TouchInterface.h"
 #include "Gacha/OGGachaService.h"
+#include "Gacha/OGApprovedGachaBannerCatalog.h"
 #include "Kismet/BlueprintPlatformLibrary.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
@@ -5628,6 +5629,47 @@ void AOGWorldPresentationHud::SetFoundationRulerPresentationOwner(
     ClearActiveGachaPresentation();
 }
 
+namespace
+{
+bool ValidateInstalledPlayableGachaPool(
+    const FOGGachaBannerDefinition& Banner,FString& OutError)
+{
+    // A syntactically valid weighted pool is not D04 eligibility.
+    // Never charge the Ruler for a nonexistent/unauthorized Version or
+    // grant an empty placeholder Manifestation with no real World actor.
+    UOGGate12CharacterVisualCatalog* Catalog =
+        LoadObject<UOGGate12CharacterVisualCatalog>(nullptr,
+            TEXT("/Game/NoWorld/UI/DA_NoWorld_CharacterVisuals."
+                 "DA_NoWorld_CharacterVisuals"));
+    if (!Catalog)
+    {
+        OutError=TEXT("No installed accepted character visual Registry catalog.");
+        return false;
+    }
+    for (const FOGGachaPoolEntry& Pool:Banner.Entries)
+    {
+        const FOGGate12CharacterVisualEntry* Installed =
+            Catalog->FindExact(Pool.IdentityId,Pool.VersionId);
+        if (!Installed || Installed->ApprovedWorldPlayableClass.IsNull())
+        {
+            OutError=FString::Printf(
+                TEXT("Uninstalled or ineligible pool Identity/Version: %s / %s"),
+                *Pool.IdentityId.ToString(),*Pool.VersionId.ToString());
+            return false;
+        }
+        const UClass* Class=Installed->ApprovedWorldPlayableClass.LoadSynchronous();
+        if (!Class || !Class->IsChildOf(AOGWorldPrototypeCharacter::StaticClass()) ||
+            !Class->ImplementsInterface(
+                UOGGate12OwnedWorldCharacterBinding::StaticClass()))
+        {
+            OutError=TEXT("Banner member lacks an approved exact owned World actor.");
+            return false;
+        }
+    }
+    return true;
+}
+}
+
 void AOGWorldPresentationHud::SetActiveGachaPresentation(
     const FOGGachaBannerDefinition& Banner,
     int64 CanonicalWorldTick,
@@ -5635,6 +5677,7 @@ void AOGWorldPresentationHud::SetActiveGachaPresentation(
 {
     FString Error;
     if (!FOGGachaService::ValidateBanner(Banner, Error) ||
+        !ValidateInstalledPlayableGachaPool(Banner, Error) ||
         CanonicalWorldTick < 0)
     {
         bHasActiveGachaPresentation = false;
@@ -5655,6 +5698,115 @@ void AOGWorldPresentationHud::SetActiveGachaPresentation(
     GachaCommandSeed = DeterministicSeed;
     bHasActiveGachaPresentation = true;
     FoundationStatusMessage.Reset();
+}
+
+bool AOGWorldPresentationHud::ExecuteActiveGachaDraw(
+    int32 Count, FString& OutError)
+{
+    OutError.Reset();
+    if ((Count != 1 && Count != 10) || !bHasActiveGachaPresentation)
+    {
+        OutError = TEXT("No eligible active authored banner or draw count.");
+        FoundationStatusMessage = OutError;
+        return false;
+    }
+    UGameInstance* GI = GetGameInstance();
+    UOGGameCoreSubsystem* Core =
+        GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    UOGGate12RulerSessionSubsystem* Session =
+        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    IOGWorldStore* Store = Core ? Core->GetWorldStore() : nullptr;
+    if (!Store || !Store->IsOpen() || !Core || !Core->IsCoreReady() ||
+        !Session || !Session->IsBoundToStoredRuler() ||
+        !Session->bRealGachaAccessUnlocked)
+    {
+        OutError = TEXT("Summoning requires the verified Ruler, unlocked access and canonical world.");
+        FoundationStatusMessage = OutError;
+        return false;
+    }
+    const int64 Tick = Core->GetCanonicalWorldTick();
+    if (Tick < 0 ||
+        !FOGGachaService::ValidateBanner(ActiveGachaBanner, OutError) ||
+        !ValidateInstalledPlayableGachaPool(ActiveGachaBanner, OutError))
+    {
+        if (OutError.IsEmpty()) OutError = TEXT("No valid World time for acquisition.");
+        FoundationStatusMessage = OutError;
+        return false;
+    }
+    FOGGachaService Gacha(*Store);
+    TArray<FOGGachaPullResult> Results;
+    if (!Gacha.PullBatch(ActiveGachaBanner, Session->BoundRulerId,
+            Tick, GachaCommandSeed, Count, Results, OutError))
+    {
+        FoundationStatusMessage = OutError;
+        return false;
+    }
+    LastGachaResults = MoveTemp(Results);
+    // Preserve the RNG stream across committed batches (including SR floor).
+    for (const FOGGachaPullResult& Result : LastGachaResults)
+        GachaCommandSeed = static_cast<int64>(
+            static_cast<uint64>(GachaCommandSeed) +
+            static_cast<uint64>(FMath::Max<int64>(1, Result.RngDrawCount + 1)));
+    GachaOverlay = TEXT("results");
+    GachaDetailsPage = 0;
+    FoundationStatusMessage = FString::Printf(
+        TEXT("Summoned %d Manifestation%s."), Count,
+        Count == 1 ? TEXT("") : TEXT("s"));
+    // The transaction already committed. Refresh is presentation-only,
+    // and a projection error must NOT imply the acquisition was undone.
+    FString ProjectionError;
+    if (!Session->RefreshCanonicalProjections(ProjectionError))
+        UE_LOG(LogTemp, Warning, TEXT("Acquisition committed; roster refresh: %s"),
+            *ProjectionError);
+    return true;
+}
+
+bool AOGWorldPresentationHud::LoadInstalledGachaBannerForRuler(
+    FString& OutError)
+{
+    OutError.Reset();
+    // Respect an already-activated banner supplied by the authorized
+    // installed-content service; never replace it with a guessed pool.
+    if (bHasActiveGachaPresentation) return true;
+    UGameInstance* GI = GetGameInstance();
+    UOGGameCoreSubsystem* Core =
+        GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    UOGGate12RulerSessionSubsystem* Session =
+        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!Core || !Core->IsCoreReady() || !Session ||
+        !Session->IsBoundToStoredRuler())
+    {
+        OutError=TEXT("No stored player World for live banner resolution.");
+        return false;
+    }
+    UOGApprovedGachaBannerCatalog* Catalog =
+        LoadObject<UOGApprovedGachaBannerCatalog>(nullptr,
+            TEXT("/Game/NoWorld/Gacha/DA_NoWorld_ApprovedBanners."
+                 "DA_NoWorld_ApprovedBanners"));
+    if (!Catalog)
+    {
+        OutError=TEXT("No installed accepted banner catalog.");
+        return false;
+    }
+    const int64 WorldTick=Core->GetCanonicalWorldTick();
+    for (const FOGInstalledScheduledGachaBanner& Scheduled:
+         Catalog->ActiveSchedules)
+    {
+        if (!Scheduled.bAcceptedInstalledAndActivated ||
+            WorldTick < Scheduled.BeginsAtWorldTick ||
+            WorldTick >= Scheduled.EndsBeforeWorldTick)
+            continue;
+        // Every pull is still Ruler-access, payment and Registry-gated.
+        // Seed is tied to the actual World and owner, not an invented
+        // Ruler account or developer wallet.
+        const int64 Seed=static_cast<int64>(
+            HashCombine(GetTypeHash(Session->BoundRulerId.ToString()),
+                        GetTypeHash(WorldTick)));
+        SetActiveGachaPresentation(Scheduled.Banner,WorldTick,Seed);
+        if (bHasActiveGachaPresentation) return true;
+    }
+    OutError=TEXT("No currently eligible installed authored banner.");
+    return false;
 }
 
 void AOGWorldPresentationHud::ClearActiveGachaPresentation()
@@ -5747,7 +5899,42 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
         return;
     }
 
-    if (Session->SelectedManifestationId.IsValid())
+    if (!Session->SelectedManifestationId.IsValid())
+    {
+        AOGWorldPrototypeCharacter* Previous =
+            Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn());
+        const bool bWasControllingSummon = Previous &&
+            Previous->GetClass()->ImplementsInterface(
+                UOGGate12OwnedWorldCharacterBinding::StaticClass());
+        if (bWasControllingSummon)
+        {
+            FActorSpawnParameters Spawn;
+            Spawn.Owner = PlayerOwner;
+            Spawn.SpawnCollisionHandlingOverride =
+                ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            AOGWorldPrototypeCharacter* OriginalRuler =
+                GetWorld()->SpawnActor<AOGWorldPrototypeCharacter>(
+                    AOGWorldPrototypeCharacter::StaticClass(),
+                    Previous->GetActorTransform(), Spawn);
+            if (!IsValid(OriginalRuler))
+            {
+                FailAndReturnToRuler(TEXT("Original Ruler World pawn could not be restored."));
+                return;
+            }
+            PlayerOwner->Possess(OriginalRuler);
+            if (PlayerOwner->GetPawn() != OriginalRuler)
+            {
+                OriginalRuler->Destroy();
+                if (IsValid(Previous)) PlayerOwner->Possess(Previous);
+                FailAndReturnToRuler(TEXT("Ruler possession failed; previous pawn preserved."));
+                return;
+            }
+            // The existing World is already initialized. Preserve its actors,
+            // player location and state rather than rebuilding the test course.
+            Previous->Destroy();
+        }
+    }
+    else
     {
         UOGGate12CharacterVisualCatalog* Catalog = Gate12NativeRulerWidget
             ? Gate12NativeRulerWidget->GetVisualCatalog() : nullptr;
@@ -10210,55 +10397,12 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         }
     }
 
-    if (BoxName == FName(TEXT("OG.Gacha.Pull")) || BoxName == FName(TEXT("OG.Gacha.Pull10")))
+    if (BoxName == FName(TEXT("OG.Gacha.Pull")) ||
+        BoxName == FName(TEXT("OG.Gacha.Pull10")))
     {
-        if (!bHasActiveGachaPresentation)
-        {
-            FoundationStatusMessage =
-                TEXT("No active gacha banner/command context.");
-            return;
-        }
-
-        if (UGameInstance* GameInstance = GetGameInstance())
-        {
-            if (UOGGameCoreSubsystem* Core =
-                    GameInstance->GetSubsystem<UOGGameCoreSubsystem>())
-            {
-                if (IOGWorldStore* Store = Core->GetWorldStore())
-                {
-                    FOGGachaService Gacha(*Store);
-                    TArray<FOGGachaPullResult> Results;
-                    const int32 Count = BoxName == TEXT("OG.Gacha.Pull10") ? 10 : 1;
-                    FString Error;
-                    if (Gacha.PullBatch(
-                            ActiveGachaBanner,
-                            GetFoundationRulerPresentationOwner(),
-                            GachaCommandWorldTick,
-                            GachaCommandSeed,
-                            Count,
-                            Results,
-                            Error))
-                    {
-                        LastGachaResults = Results;
-                        GachaOverlay = TEXT("results");
-                        GachaDetailsPage = 0;
-                        for (const auto& Result : Results)
-                            GachaCommandSeed = static_cast<int64>(static_cast<uint64>(GachaCommandSeed) +
-                                static_cast<uint64>(FMath::Max<int64>(1, Result.RngDrawCount + 1)));
-                        FoundationStatusMessage = FString::Printf(
-                            TEXT("Summoned %d character%s. Results below."),
-                            Count, Count == 1 ? TEXT("") : TEXT("s"));
-                    }
-                    else
-                    {
-                        FoundationStatusMessage =
-                            FString::Printf(
-                                TEXT("Pull failed: %s"),
-                                *Error);
-                    }
-                }
-            }
-        }
+        FString Error;
+        ExecuteActiveGachaDraw(
+            BoxName == FName(TEXT("OG.Gacha.Pull10")) ? 10 : 1, Error);
         return;
     }
 

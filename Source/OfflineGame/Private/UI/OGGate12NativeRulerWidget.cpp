@@ -845,6 +845,13 @@ void UOGGate12NativeRulerWidget::BuildRoster()
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    // The protagonist is always available independently of gacha ownership.
+    // This is NOT a character Manifestation and is never counted as one.
+    if (Session && Session->IsBoundToStoredRuler())
+    {
+        AddMessage(Content, TEXT("RULER — ORIGINAL PLAYER"), 22, TextMain);
+        AddAction(Content, TEXT("CONTROL THE RULER"), TEXT("select-ruler"));
+    }
     if (!Session || Session->OwnedRoster.IsEmpty())
     {
         // No invented portrait, no stand-alone rotating QA tab in the
@@ -1238,6 +1245,11 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session || !Session->IsBoundToStoredRuler()) return;
 
+    AOGWorldPresentationHud* Hud = GetOwningPlayer()
+        ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
+    const bool bCanSummon = Hud && Hud->HasActiveGachaPresentation() &&
+        Session->bRealGachaAccessUnlocked;
+
     UImage* Chrome = WidgetTree->ConstructWidget<UImage>(
         UImage::StaticClass(), TEXT("Gate10GachaOrnamentNotControls"));
     Gate10FigmaGachaChrome = Chrome;
@@ -1319,18 +1331,18 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         112.f,55.f,170.f,35.f,25,Main);
     TextAt(FString::Printf(TEXT("ID %s"),*RulerId.Left(12)),
         TEXT("ActualStoredRulerID"),112.f,89.f,176.f,26.f,18,GachaMuted);
-    ActionAt(TEXT("RATES"),TEXT("gacha-rates"),686.f,132.f,70.f,88.f,false,18);
+    ActionAt(TEXT("RATES"),TEXT("gacha-rates"),686.f,132.f,70.f,88.f,bCanSummon,18);
     ActionAt(TEXT("HISTORY"),TEXT("gacha-history-toggle"),
         761.f,132.f,94.f,88.f,true,18);
 
-    if (!Session->bApprovedBannerProvided)
+    if (!Hud || !Hud->HasActiveGachaPresentation())
         TextAt(TEXT("NO ACTIVE BANNER"),
             TEXT("AuthoritativeNoActiveBanner"),155.f,830.f,555.f,96.f,48,Main);
     else
-        TextAt(TEXT("APPROVED BANNER AVAILABLE"),
-            TEXT("AuthoritativeBannerAvailable"),143.f,835.f,574.f,94.f,38,Main);
+        TextAt(Hud->GetActiveGachaBanner().BannerId.ToString(),
+            TEXT("AuthoritativeInstalledBannerId"),108.f,812.f,640.f,118.f,35,Main);
 
-    ActionAt(TEXT("NO BANNER"),TEXT("gacha/banner/0"),
+    ActionAt(bCanSummon ? TEXT("ACTIVE") : TEXT("NO BANNER"),TEXT("gacha/banner/0"),
              68.f,1038.f,242.f,80.f,false,21);
     ActionAt(TEXT("UNAVAILABLE"),TEXT("gacha/banner/1"),
              332.f,1038.f,242.f,80.f,false,19);
@@ -1339,11 +1351,11 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     // A pull must NEVER fire before Gate07's actual banner/economy transaction
     // has been bound. No invented pity/tickets/currency are displayed.
     ActionAt(TEXT("DRAW ×1"),TEXT("gacha-draw-1"),
-             50.f,1170.f,309.f,100.f,false,37);
+             50.f,1170.f,309.f,100.f,bCanSummon,37);
     ActionAt(TEXT("DRAW ×10"),TEXT("gacha-draw-10"),
-             511.f,1170.f,311.f,100.f,false,37);
-    ActionAt(TEXT("DETAILS"),TEXT("gacha-details"),
-             151.f,1289.f,223.f,50.f,false,24);
+             511.f,1170.f,311.f,100.f,bCanSummon,37);
+    ActionAt(TEXT("DETAILS"),TEXT("gacha-rates"),
+             151.f,1289.f,223.f,50.f,bCanSummon,24);
     ActionAt(TEXT("EXCHANGE"),TEXT("gacha-exchange"),
              488.f,1289.f,227.f,50.f,false,24);
 
@@ -1356,6 +1368,57 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
                  10.f+171.f*Index,1393.f,167.f,111.f,true,
                  Index==1 ? 19 : 22);
 
+    if (bGachaResultsExpanded || bGachaRatesExpanded)
+    {
+        const bool bShowRates = bGachaRatesExpanded;
+        UBorder* Panel = WidgetTree->ConstructWidget<UBorder>(
+            UBorder::StaticClass(),TEXT("CanonicalGachaResultOrRatesPanel"));
+        Panel->SetBrushColor(FLinearColor(.008f,.005f,.016f,.985f));
+        Panel->SetPadding(FMargin(18.f));
+        UCanvasPanelSlot* Slot=Gate10PortraitGachaCanvas->AddChildToCanvas(Panel);
+        Slot->SetAnchors(FAnchors(100.f/864.f,250.f/1536.f,
+                                 765.f/864.f,1020.f/1536.f));
+        Slot->SetOffsets(FMargin(0.f));
+        UScrollBox* Scroll=WidgetTree->ConstructWidget<UScrollBox>(
+            UScrollBox::StaticClass());
+        Panel->AddChild(Scroll);
+        UVerticalBox* Rows=WidgetTree->ConstructWidget<UVerticalBox>(
+            UVerticalBox::StaticClass());
+        Scroll->AddChild(Rows);
+        if (bShowRates && Hud && Hud->HasActiveGachaPresentation())
+        {
+            const FOGGachaBannerDefinition& Banner=Hud->GetActiveGachaBanner();
+            AddMessage(Rows,TEXT("AUTHORITATIVE BANNER RATES"),26,Main);
+            AddMessage(Rows,Banner.BannerId.ToString(),17,GachaMuted);
+            int64 Total=0;
+            for (const FOGGachaPoolEntry& E:Banner.Entries)
+                Total+=FMath::Max(0,E.Weight);
+            for (const FOGGachaPoolEntry& E:Banner.Entries)
+            {
+                const double Rate=Total>0
+                    ? 100.0*static_cast<double>(E.Weight)/static_cast<double>(Total)
+                    : 0.0;
+                AddMessage(Rows,FString::Printf(TEXT("%s / %s / %.3f%%%s"),
+                    *E.IdentityId.ToString(),*E.Rarity.ToString(),Rate,
+                    E.bFeatured?TEXT(" / FEATURED"):TEXT("")),17,Main);
+            }
+            AddMessage(Rows,TEXT("Displayed weights are BASE rates. Persisted pity and featured guarantees apply to individual draws."),17,GachaMuted);
+        }
+        else if (Hud)
+        {
+            AddMessage(Rows,TEXT("ACTUAL SUMMON RESULTS"),26,Main);
+            for (const FOGGachaPullResult& Result:Hud->GetLastGachaResults())
+                AddMessage(Rows,FString::Printf(
+                    TEXT("%s / %s / %s%s"),
+                    *Result.IdentityId.ToString(),*Result.Rarity.ToString(),
+                    *Result.ManifestationId.ToString(),
+                    Result.bDuplicateIdentity?TEXT(" / INDEPENDENT COPY"):TEXT("")),
+                    17,Main);
+        }
+        ActionAt(TEXT("CLOSE"),TEXT("gacha-overlay-close"),
+                 629.f,256.f,125.f,53.f,true,19);
+        return;
+    }
     if (!bGachaHistoryExpanded) return;
     // This panel is the existing canonical acquisition history projection.
     // It never fabricates banner records when there are none.
@@ -1491,7 +1554,10 @@ void UOGGate12NativeRulerWidget::BuildGacha()
     // No native pull UI until the Gate07-approved banner, payment and
     // transactional pull binding are all present. Disabled controls make the
     // frozen structure visible without granting fictional acquisitions.
-    const bool bCanDraw=false;
+    const AOGWorldPresentationHud* Hud=GetOwningPlayer()
+        ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
+    const bool bCanDraw=Hud && Hud->HasActiveGachaPresentation() &&
+        Session->bRealGachaAccessUnlocked;
     for (int32 I=0;I<2;++I)
     {
         UVerticalBox* Wrapper=WidgetTree->ConstructWidget<UVerticalBox>(
@@ -1722,10 +1788,14 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     UUniformGridPanel* Board = WidgetTree->ConstructWidget<UUniformGridPanel>(
         UUniformGridPanel::StaticClass(), TEXT("FrozenRecordsFourSectionBoard"));
     Board->SetSlotPadding(FMargin(7.f,9.f));
-    Content->AddChildToVerticalBox(Board);
+    // The four cards are a navigation HUB, not persistent tabs above a
+    // miniature detail panel. Each selected section owns the whole page.
+    if (RecordsSection < 0)
+    {
+        Content->AddChildToVerticalBox(Board);
     for (int32 Index=0; Index<4; ++Index)
     {
-        const bool bActive = RecordsSection == Index;
+        const bool bActive = false;
         UBorder* Frame = WidgetTree->ConstructWidget<UBorder>(
             UBorder::StaticClass());
         // Preserve the Gacha's restrained obsidian + etched metal instead of
@@ -1846,6 +1916,10 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         RecordCell->SetHorizontalAlignment(HAlign_Fill);
         RecordCell->SetVerticalAlignment(VAlign_Fill);
     }
+        return;
+    }
+
+    AddAction(Content, TEXT("BACK TO RECORDS"), TEXT("records/back"));
     UBorder* DetailFrame = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("RecordsCanonicalDetailFrame"));
     DetailFrame->SetBrushColor(FLinearColor(.002f,.0015f,.004f,1.f));
@@ -1871,7 +1945,9 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     DetailDark->AddChild(Detail);
     USizeBox* DetailHeight = WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass(), TEXT("RecordsGachaLanguageDetailedPanel"));
-    DetailHeight->SetHeightOverride(380.f);
+    // Long Reports/Chronicle/Intelligence histories are independent scrolling
+    // pages, not clipped to the 380px footer of a four-card overview.
+    DetailHeight->SetMinDesiredHeight(980.f);
     DetailHeight->AddChild(DetailFrame);
     Content->AddChildToVerticalBox(DetailHeight)
         ->SetPadding(FMargin(7.f,13.f,7.f,10.f));
@@ -2254,13 +2330,52 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         bDevelopmentQaViewerOpen = (Action == TEXT("qa/open"));
     }
 #endif
+    else if (Action == TEXT("select-ruler"))
+    {
+        if (Session->SelectRulerForWorld(Error))
+        {
+            OpenIdentityIndex = INDEX_NONE;
+            bPrefer3DCharacterPresentation = false;
+            ReleasePreviewStage();
+        }
+    }
     else if (Action == TEXT("roster/sort"))
     {
         RosterSortMode = (RosterSortMode + 1) % 3;
     }
     else if (Action == TEXT("gacha-history-toggle"))
     {
+        bGachaRatesExpanded = false;
+        bGachaResultsExpanded = false;
         bGachaHistoryExpanded = !bGachaHistoryExpanded;
+    }
+    else if (Action == TEXT("gacha-rates"))
+    {
+        bGachaHistoryExpanded = false;
+        bGachaResultsExpanded = false;
+        bGachaRatesExpanded = !bGachaRatesExpanded;
+    }
+    else if (Action == TEXT("gacha-overlay-close"))
+    {
+        bGachaRatesExpanded = false;
+        bGachaResultsExpanded = false;
+        bGachaHistoryExpanded = false;
+    }
+    else if (Action == TEXT("gacha-draw-1") ||
+             Action == TEXT("gacha-draw-10"))
+    {
+        AOGWorldPresentationHud* Hud=GetOwningPlayer()
+            ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
+        if (!Hud || !Session->bRealGachaAccessUnlocked ||
+            !Hud->HasActiveGachaPresentation())
+            Error=TEXT("No eligible installed banner or unlocked Ruler.");
+        else if (Hud->ExecuteActiveGachaDraw(
+                     Action == TEXT("gacha-draw-10")?10:1,Error))
+        {
+            bGachaRatesExpanded = false;
+            bGachaHistoryExpanded = false;
+            bGachaResultsExpanded = true;
+        }
     }
     else if (Action.StartsWith(TEXT("map/")))
     {
@@ -2320,6 +2435,10 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
             Session->AcknowledgeOwnedReport(
                 Session->ReportProjection[Index].ReportId, Error);
     }
+    else if (Action == TEXT("records/back"))
+    {
+        RecordsSection = -1;
+    }
     else if (Action.StartsWith(TEXT("records/")))
     {
         const int32 Index = FCString::Atoi(*Action.Mid(8));
@@ -2331,7 +2450,22 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         const int32 Index = FCString::Atoi(*Action.Mid(4));
         if (Index < 0 || Index >= 5) return;
         OpenIdentityIndex = INDEX_NONE;
+        RecordsSection = -1;
+        bGachaRatesExpanded = false;
+        bGachaHistoryExpanded = false;
+        bGachaResultsExpanded = false;
         Session->Navigate(static_cast<EOGRulerPrimaryDestination>(Index), Error);
+        if (Error.IsEmpty() && Index == 2 && GetOwningPlayer())
+        {
+            if (AOGWorldPresentationHud* Hud =
+                Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()))
+            {
+                FString BannerError;
+                Hud->LoadInstalledGachaBannerForRuler(BannerError);
+                // No catalog is the legitimate empty state, not a reason to
+                // block Ruler navigation or invent a featured banner.
+            }
+        }
     }
     else if (Action.StartsWith(TEXT("identity/")))
     {

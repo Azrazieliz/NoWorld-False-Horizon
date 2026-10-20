@@ -63,6 +63,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Gacha")
     bool RefreshGachaHistory(FString& OutError);
 
+    /** The Ruler is the original player and is NEVER a gacha Manifestation.
+     * Selecting the Ruler must remain possible after selecting a summon. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Characters")
+    bool SelectRulerForWorld(FString& OutError);
+
     /** Persist identity-specific "last used" only after validating actual ownership. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|P0")
     bool SelectOwnedManifestation(

@@ -911,6 +911,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "OfflineGame|Ruler|Gacha")
     void ClearActiveGachaPresentation();
 
+    // Reuse the established canonical gacha service for native Gate10 UI.
+    // No second wallet, draw executor, or fictional banner.
+    bool HasActiveGachaPresentation() const { return bHasActiveGachaPresentation; }
+    const FOGGachaBannerDefinition& GetActiveGachaBanner() const { return ActiveGachaBanner; }
+    const TArray<FOGGachaPullResult>& GetLastGachaResults() const { return LastGachaResults; }
+    bool ExecuteActiveGachaDraw(int32 Count, FString& OutError);
+    bool LoadInstalledGachaBannerForRuler(FString& OutError);
+
 #if WITH_DEV_AUTOMATION_TESTS
     /** Test-only HUD geometry seam, deliberately unavailable to shipping. */
     void ForceWorldPresentationForActionHitboxFixture()

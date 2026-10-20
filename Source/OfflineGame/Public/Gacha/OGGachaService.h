@@ -43,6 +43,7 @@ public:
 private:
     bool PullInternal(const FOGGachaBannerDefinition& Banner, const FOGEntityId& RulerId,
         int64 WorldTick, int64 Seed, FOGGachaPullResult& OutResult,
-        FString& OutError, bool bOwnTransaction);
+        FString& OutError, bool bOwnTransaction,
+        bool bUpgradeFinalRToSR = false);
     IOGWorldStore& Store;
 };
