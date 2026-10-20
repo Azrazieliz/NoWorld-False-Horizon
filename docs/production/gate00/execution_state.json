@@ -1,6 +1,6 @@
 {
   "schema": "NOWORLD_GATE00_EXECUTION_BOARD_V1",
-  "updated_local_date": "2026-10-19",
+  "updated_local_date": "2026-10-20",
   "timezone": "Europe/Paris",
   "authority": "Gate00/user; an intent and coordination register, not acceptance of untested game content",
   "single_issue": "https://github.com/Azrazieliz/Offline-Game/issues/25",
@@ -21,9 +21,9 @@
     "destructive_uninstall_or_data_wipe_authorized": false
   },
   "verified_git_heads": {
-    "Gate12": "0e1004c04c438f834668a369e9119187888e8895",
+    "Gate12": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
     "SoftwareMastery": "4f636a14098fb63f9b4b31228c53393a5e3702dc",
-    "Gate09": "39b90fd577e184f1c33b63c47c829407ba044333",
+    "Gate09": "8a058a169bfcaf8d4d137da8c135fa32b93ef6f4",
     "Gate00_prior": "1cf31aba0e3a3e45ff34c62d7b18a6a4510ffd74"
   },
   "tasks": [
@@ -65,15 +65,15 @@
     {
       "id": "P0-MOTION",
       "owner": "Gate09",
-      "status": "PARTIAL_GENUINE_MOTION_SOURCE_PROOF",
-      "source_sha": "39b90fd577e184f1c33b63c47c829407ba044333",
-      "next": "Prove authentic native animation path-hash bindings and cross-wardrobe deform before locomotion/dance production acceptance."
+      "status": "FOUR_NATIVE_UNREAL_ANIMSEQUENCES_TECHNICAL_PASS_FULL_LIBRARY_INCOMPLETE",
+      "source_sha": "8a058a169bfcaf8d4d137da8c135fa32b93ef6f4",
+      "next": "Gate12 has cold-loaded 4 clips for Base CLOTHED via its 20 October commit; next actual gameplay animation state machine and authored locomotion; Gate09 full 1537 source conversion/art quality remains incomplete. No universal wardrobe/Alter retarget, Android or adult scene acceptance."
     },
     {
       "id": "P1-KIT",
       "owner": "Gate04",
-      "status": "NOT_ACCEPTED",
-      "next": "Build Base and Alter kit candidates aligned with frozen mechanics"
+      "status": "BASE_V6_USER_APPROVED_NATIVE_PENDING",
+      "next": "Consume exact user-approved Base v6 source; Gate11 has design-stage source IDs; Gate12 two-executor native mechanics and Gate09 combat VFX still pending. Alter separate kit was approved in conversation but exact source payload not present in supplied Base ZIP; retrieve, never invent."
     },
     {
       "id": "P1-REGISTRY",
@@ -84,8 +84,8 @@
     {
       "id": "P1-WORLD",
       "owner": "Gate02",
-      "status": "R1_SOURCE_RECEIVED_VERIFIED_ART_NATIVE_PENDING",
-      "next": "Gate12 consume real verified Gate02 R1 package in isolated Unreal test world and demonstrate FBX/GLB scale/material/collision + 513x513 heightfield and deterministic 128m PCG tile. Gate02 refine deficient AAA painterly anime PBR, connected water, bridges, caves, interiors, traversable roads and mobile-friendly LOD; Gate11 provenance only after eligibility."
+      "status": "R1_NATIVE_QA_SAMPLE_IMPORTED_ART_AND_PRODUCTION_WORLD_INCOMPLETE",
+      "next": "Gate12 f5f2345 imported Gate02 source roads/moss rock/height Texture2D and saved QA map; genuine Landscape/PCG/streaming/first complete active World NOT delivered. Gate02 art quality/water/caves/interiors remains missing; continue native production using anchors and determinism without duplicate source staging."
     },
     {
       "id": "P1-UI-DESIGN",
@@ -116,18 +116,61 @@
   },
   "cross_gate_weapon_action_p0": {
     "scope": "Unarmed/fists, slingshots, bows, thrown/melee, firearms, futuristic and magic/innate/anatomy-specific attacks under existing two combat executors; no generic sword/pistol/rifle pose",
-    "Gate04": {"status": "BLOCKED_ON_APPROVED_COMBAT_CONTRACT", "next": "Deliver per-ability and weapon attack class, action/turn executor semantics, range/LOS/targeting, projectile/contact/collision, damage/hit/cancel windows and exact test cases without changing frozen rules."},
-    "Gate07": {"status": "BLOCKED_ON_APPROVED_ITEM_SOURCE", "next": "Deliver real equipment item IDs, allowed body/anatomical slots and combo compatibility, exact source of authored combat_motion_profile or approved read-only alternative, attachment/socket definitions and sample valid/invalid fixtures."},
-    "Gate09": {"status": "BLOCKED_ON_REAL_MOTION_AND_FX", "next": "Deliver actual rig/skeleton-specific authored idle/carry/movement/attack/aim/release/contact/recovery sequences with grip sockets, animation notifies, transitions, VFX/SFX asset bindings and render comparisons for at least unarmed, sling/bow, magic, firearm and tech styles."},
-    "Gate12": {"status": "PARTIAL_SOURCE_NOT_CURRENTLY_BUILT", "source_sha": "0e1004c04c438f834668a369e9119187888e8895", "next": "Preserve existing motion adapter and tests, integrate Gate04/07/09 deliverables and independently advance other P0/P1 gameplay. Current-build native/visual/Android acceptance remains NOT_TESTED."},
+    "Gate04": {
+      "status": "BLOCKED_ON_APPROVED_COMBAT_CONTRACT",
+      "next": "Deliver per-ability and weapon attack class, action/turn executor semantics, range/LOS/targeting, projectile/contact/collision, damage/hit/cancel windows and exact test cases without changing frozen rules."
+    },
+    "Gate07": {
+      "status": "BLOCKED_ON_APPROVED_ITEM_SOURCE",
+      "next": "Deliver real equipment item IDs, allowed body/anatomical slots and combo compatibility, exact source of authored combat_motion_profile or approved read-only alternative, attachment/socket definitions and sample valid/invalid fixtures."
+    },
+    "Gate09": {
+      "status": "BLOCKED_ON_REAL_MOTION_AND_FX",
+      "next": "Deliver actual rig/skeleton-specific authored idle/carry/movement/attack/aim/release/contact/recovery sequences with grip sockets, animation notifies, transitions, VFX/SFX asset bindings and render comparisons for at least unarmed, sling/bow, magic, firearm and tech styles."
+    },
+    "Gate12": {
+      "status": "SOURCE_INCREMENT_IMPLEMENTED_FULL_GAMEPLAY_ACCEPTANCE_PENDING",
+      "source_sha": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
+      "next": "Preserve existing motion adapter and tests, integrate Gate04/07/09 deliverables and independently advance other P0/P1 gameplay. Current-build native/visual/Android acceptance remains NOT_TESTED."
+    },
     "dependencies_reference": "docs/production/gate12/GATE12_WEAPON_MOTION_DEPENDENCIES_20261018.md"
   },
-  "game_scope": {"requested_feature_families": 18, "whole_family_accepted": 0, "source_audit": "docs/production/gate12/GATE12_USER_REQUIREMENTS_CURRENT_STATE_20261018.md", "note": "18/18 still have player-facing gaps; isolated Win64 23/23 is narrower navigation evidence."},
+  "game_scope": {
+    "requested_feature_families": 18,
+    "whole_family_accepted": 0,
+    "source_audit": "docs/production/gate12/GATE12_USER_REQUIREMENTS_CURRENT_STATE_20261018.md",
+    "note": "18/18 still have player-facing gaps; isolated Win64 23/23 is narrower navigation evidence."
+  },
   "gate_workflows": {
     "Gate01-2D": "visual concept/approval only",
     "Gate01-3D": "Party native 3D/rig/materials/export source only"
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "No new user approval needed for authorized non-destructive future QA, but respect Gate12 2026-10-18 instruction to defer more app builds until meaningful source implementation. Gate12 should continue independent high-priority game systems and integrate actual Gate04/07/09 authored content when supplied; all 18 feature families still require player-facing work. Never ask for repeated global permissions; only for irreversible or destructive actions."
+  "next_user_action": "No new user approval needed for authorized non-destructive future QA, but respect Gate12 2026-10-18 instruction to defer more app builds until meaningful source implementation. Gate12 should continue independent high-priority game systems and integrate actual Gate04/07/09 authored content when supplied; all 18 feature families still require player-facing work. Never ask for repeated global permissions; only for irreversible or destructive actions.",
+  "received_reports_20261020": {
+    "status": "FOUR_GATE_REPORTS_COMMITTED_ON_GATE00_COORDINATION_BRANCH",
+    "index": "docs/production/gate00/received_reports/README_20261020.md",
+    "reports": {
+      "Gate02": "docs/production/gate00/GATE02_R1_FIRST_WORLD_INTAKE_20261019.md",
+      "Gate04": "docs/production/gate00/received_reports/GATE04_APPROVED_LUMINOUS_BASE_V6_20261019.md",
+      "Gate07": "docs/production/gate00/received_reports/GATE07_USER_REVIEWED_ECONOMY_20261019.md",
+      "Gate09": "docs/production/gate00/received_reports/GATE09_NATIVE_ANIMATIONS_20261019.md"
+    },
+    "note": "Received report records committed; original Gate04/Gate07 user ZIPs and Gate09 protected binaries not uploaded; not native/canonical approval."
+  },
+  "latest_source_reconciliation_20261020": {
+    "gate12_branch": "production/gate12-koikatsu-ue583-fixture-20261010",
+    "gate12_head": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
+    "gate12_report": "docs/production/gate12/evidence/20261020_consolidated_native/20261020_native_stage_manifest.json",
+    "actual_gate02_imports": 3,
+    "actual_gate09_coldloaded_clips": 4,
+    "landscape_actor_created": false,
+    "production_world_activated": false,
+    "alter_source_zip": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
+    "alter_authoritative_sources": "3 user-confirmed native Koikatsu Party cards; NO Alter FBX/GLB/Blender files in source ZIP",
+    "alter_converter_status": "CLOTHED real PMX hash verified; Blender 5.2.2 import interrupted to prevent out-of-memory; no accepted exported Alter asset",
+    "alter_approved_kit_exact_payload": "NOT_LOCATED_IN_THIS_GATE00_BASE_V6_SOURCE",
+    "note": "Do not reopen finished character art; work with confirmed existing sources and carry forward already committed native imports."
+  }
 }
