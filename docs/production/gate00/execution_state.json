@@ -13,13 +13,20 @@
   "device": {
     "cook_authorized": true,
     "next_app_visible_adult_mode_requirement": true,
-    "last_current_build_device_verification": "NOT_TESTED",
+    "last_current_build_device_verification": "PHYSICAL_ADB_CONNECTION_PASS_ONLY__NATIVE_GAMEPLAY_NOT_TESTED",
     "authorization_scope": "Standing approval for non-destructive development APK/device QA, subject to later Gate12 user instruction deferring additional app builds until feasible source implementation is complete; never interrupt an in-flight build or attempt known-low-memory native link.",
     "current_build_instruction": "NO_GATE09_PC_RESOURCE_HOLD; Gate12 non-destructive native/dev Android work authorized immediately, sequence builds conservatively and check active jobs/memory; no current device PASS",
     "production_app_exists": false,
     "production_release_authorized": false,
     "destructive_uninstall_or_data_wipe_authorized": false,
-    "current_adb_result_20261020": "NO_ATTACHED_ANDROID_DEVICE; adb devices -l returned header only on authorized connected Windows PC."
+    "current_adb_result_20261020": "AUTHORIZED_PHYSICAL_SM_S948B_ANDROID_17_CONNECTED; GAME_NOT_INSTALLED_AND_CURRENT_4CLIP_ANDROID_BUILD_NOT_AVAILABLE",
+    "android_connected_currently_as_of_20261020": true,
+    "android_device_model": "SM-S948B",
+    "android_os": "17",
+    "latest_local_apk_stale_date": "2026-10-11 23:57:22",
+    "installed_matching_production_game_package": false,
+    "four_clip_playback_pass": false,
+    "device_connection_may_change": true
   },
   "verified_git_heads": {
     "Gate12": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
@@ -61,21 +68,21 @@
     {
       "id": "P0-ALTER",
       "owner": "Gate12",
-      "status": "DESIGN_AND_V1_KIT_USER_APPROVED_ORIGINAL_3_WARDROBE_SOURCES_PRESERVED_NATIVE_NOT_READY",
-      "next": "Preserve original Party CLOTHED/UNDERWEAR/NUDE and finished design; complete actual UE mesh/skeleton/morph/material conversion and true three-state gameplay binding, and separate approved Alter v1 kit only from source-verified coefficients. No Gate11 dependency."
+      "status": "APPROVED_KIT_FULL_SOURCE_VERIFIED_NATIVE_NOT_READY",
+      "next": "Exact user-approved original ZIP now received and CRC+17 SHA checks PASS (archive SHA256 063be65715a86bd994ae906f144242b544ca635844cc33ab7ec87108e472e30c; JSON SHA256 2c6474548541df55b036eaa5a605805f64bba6fe212d4c91c4013c7fdd1a254c). Retrieve project Library file ID libfile_34e1ff025a70819193e7444e40b9e855, verify source before native use; create exact independent Alter handler and real three-state UE conversion, no remake, no fabricated Registry acceptance."
     },
     {
       "id": "P0-MOTION",
       "owner": "Gate09",
-      "status": "FOUR_REAL_NATIVE_ANIMSEQUENCES_MUST_FIRST_PASS_ACTUAL_ANDROID_PLAYBACK_BEFORE_BULK_KOIKATSU_SOURCE_TRANSFER",
+      "status": "PHYSICAL_ANDROID_CONNECTED_CLIP_QUALIFICATION_NOT_YET_ATTEMPTED",
       "source_sha": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
-      "next": "Gate12 test exact four Base CLOTHED clips in real character live gameplay on connected physical Android (currently unavailable) including deform/visibility/blend/performance. Once PASS, Gate09/Gate12 transfer full eligible authentic Koikatsu movement/pose/face/intimacy clips to UE via existing source workflow with rig/source rights/age checks. Gate09 independently authors multiple shared locomotion variants; Gate12 chooses physics/anatomy/abilities-compatible profiles, character-specific refinement later."
+      "next": "ADB physical Samsung SM-S948B Android 17 confirmed now; build/install version with all four actual Gate09 native AnimSequences bound to real in-game character and capture real deformation, blend, performance and logs. Last APK dates Oct11, predates Oct20 clips and cannot qualify them. Do not bulk import authentic Koikatsu motions until four-clips actually pass."
     },
     {
       "id": "P1-KIT",
       "owner": "Gate04",
-      "status": "BASE_V6_AND_ALTER_V1_USER_APPROVED_NATIVE_NOT_ACCEPTED",
-      "next": "Gate12 implement approved Base v6 AND distinct approved Alter v1 in two existing combat executors, don't inherit Base into Alter. Recover exact Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip numeric/effect source. Gate09 full per-Version animations/FX; Gate00 additive Registry v2 acceptance after authentic source/native evidence; no fake owned Luminous."
+      "status": "BASE_V6_AND_ALTER_V1_USER_APPROVED_ALTER_V1_FULL_SOURCE_NOW_VERIFIED_NATIVE_NOT_ACCEPTED",
+      "next": "Complete Alter v1 numerical sources retrieved and 17 member SHA manifest validated; Gate12 can read approved exact JSON via project Library and original ZIP. Implement Base v6 and Alter v1 separately, full 3+6/Ultimate/Fantasm effects in two executors, Gate09 source-authentic VFX. No canonical registration nor native PASS implied."
     },
     {
       "id": "P1-REGISTRY",
@@ -111,7 +118,7 @@
     "artistic_approval": "NOT_APPROVED",
     "native_UE": "THREE_SOURCE_ASSETS_COLD_SAVED_IN_ISOLATED_QA_ONLY; PROCEDURAL_FIRST_WORLD_NOT_YET_IMPLEMENTED",
     "PCG_plugin_enabled_in_latest_Gate12_uproject": false,
-    "android": "NOT_TESTED",
+    "android": "NOT_TESTED; PHYSICAL_ANDROID_DEVICE_PRESENT_BUT_WORLD_RUNTIME_NOT_PLAYABLE",
     "Gate02": "Supply original approved R1 geography/settlement/biome anchors, reusable modules, continued artistic anchor improvements and valid source. NOT responsible for hand-authoring the remainder of whole World.",
     "Gate12": "Direct creation of rest of first World procedurally in existing Unreal with persistent seed stable IDs, World Partition/PCG/Landscape, geo/environment quality and real gameplay/traversal. Retain existing QA evidence; advance production map.",
     "Gate00": "Direct original source/provenance/rights and additive canonical intake only after art and native eligibility; former Gate11 is retired."
@@ -161,7 +168,7 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "Please provide exact bytes of Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip for Alter v1 approved numerical mechanics/effect source; Android four-clip actual device test requires physical device present. Other stated conceptual approvals are now resolved; not a new design approval round.",
+  "next_user_action": "No additional ZIP upload or Android connection needed at this moment. Gate12 native integration and current 4-clip Android APK/gameplay qualification are now executable; recheck device connection before test. No further creative approval required.",
   "received_reports_20261020": {
     "status": "FOUR_GATE_REPORTS_COMMITTED_ON_GATE00_COORDINATION_BRANCH",
     "index": "docs/production/gate00/received_reports/README_20261020.md",
@@ -169,9 +176,10 @@
       "Gate02": "docs/production/gate00/GATE02_R1_FIRST_WORLD_INTAKE_20261019.md",
       "Gate04": "docs/production/gate00/received_reports/GATE04_APPROVED_LUMINOUS_BASE_V6_20261019.md",
       "Gate07": "docs/production/gate00/received_reports/GATE07_USER_REVIEWED_ECONOMY_20261019.md",
-      "Gate09": "docs/production/gate00/received_reports/GATE09_NATIVE_ANIMATIONS_20261019.md"
+      "Gate09": "docs/production/gate00/received_reports/GATE09_NATIVE_ANIMATIONS_20261019.md",
+      "Gate04Alter": "docs/production/gate00/received_reports/GATE04_ALTER_V1_VERIFIED_SOURCE_INTAKE_20261020.md"
     },
-    "note": "Historical four-report 13-accepted+5-deferred intake is superseded on decisions by 20-Oct user approval of all 18; original reports preserved unchanged."
+    "note": "Historical four-report 13-accepted+5-deferred intake is superseded on decisions by 20-Oct user approval of all 18; original reports preserved unchanged. Exact Alter approved original ZIP now received via 2026-10-20 project attachment; previous missing ZIP status superseded."
   },
   "latest_source_reconciliation_20261020": {
     "gate12_branch": "production/gate12-koikatsu-ue583-fixture-20261010",
@@ -257,5 +265,15 @@
     "motion_library": "independently authored common movement variations selected per anatomy/physics/abilities",
     "eligible_source": "authentic Koikatsu and related original source via existing pipeline with adult/rights and skeleton/retarget checks",
     "device_check_evidence": "2026-10-20 adb devices -l yielded no attached devices"
+  },
+  "verified_gate04_alter_v1_source": {
+    "archive_sha256": "063be65715a86bd994ae906f144242b544ca635844cc33ab7ec87108e472e30c",
+    "approved_json_sha256": "2c6474548541df55b036eaa5a605805f64bba6fe212d4c91c4013c7fdd1a254c",
+    "reference_tests_reported": 38,
+    "zip_crc_pass": true,
+    "manifest_entries_verified": 17,
+    "library_file_id": "libfile_34e1ff025a70819193e7444e40b9e855",
+    "full_mechanics_retrievable": true,
+    "native_gameplay_pass": false
   }
 }
