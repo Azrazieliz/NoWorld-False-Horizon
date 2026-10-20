@@ -512,6 +512,7 @@ bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
         TEXT("/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_02_Greeting.G09_LuminousV3_Idle_02_Greeting"),
         TEXT("/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_03_Expressive.G09_LuminousV3_Idle_03_Expressive"),
         TEXT("/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Emote_Bow_Source.G09_LuminousV3_Emote_Bow_Source"),
+        TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Dance_Performance.G12_LuminousV3_Koikatsu_Dance_Performance"),
     };
     const int32 Index = static_cast<int32>(Emote);
     if (Index < 0 || Index >= UE_ARRAY_COUNT(Paths))
@@ -541,6 +542,24 @@ void AOGLuminousV3PlayableCharacter::InterruptGate09AuthoredEmote()
 UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     EOGLuminousV3MotionPhase Phase) const
 {
+    // These are genuine installed Koikatsu-compatible source animations
+    // imported onto the exact 975-bone CLOTHED Luminous skeleton.
+    // Wardrobe-skeleton mismatch never falls through to another appearance.
+    // Flight and swimming do not borrow Walk/Run ground gait.
+    if (Phase == EOGLuminousV3MotionPhase::Flying ||
+        Phase == EOGLuminousV3MotionPhase::Swimming)
+    {
+        if (EffectiveAppearance.EffectiveRenderedWardrobe != EOGLuminousV3Wardrobe::Clothed)
+            return nullptr;
+        const bool bFlight = Phase == EOGLuminousV3MotionPhase::Flying;
+        const bool bHover = bFlight && GetVelocity().SizeSquared() < FMath::Square(35.0f);
+        const TCHAR* Path = bFlight
+            ? (bHover
+                ? TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Flight_Hover.G12_LuminousV3_Koikatsu_Flight_Hover")
+                : TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Flight_Start.G12_LuminousV3_Koikatsu_Flight_Start"))
+            : TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Swimming_Stroke.G12_LuminousV3_Koikatsu_Swimming_Stroke");
+        return LoadObject<UAnimSequence>(nullptr, Path);
+    }
     const TArray<FSoftObjectPath>* Clips = nullptr;
     switch (Phase)
     {
@@ -584,12 +603,21 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
                     EOGLuminousV3MotionPhase::Run : EOGLuminousV3MotionPhase::Walk;
         }
     }
-    if (Desired == CurrentMotionPhase) return;
+    if (Desired == CurrentMotionPhase)
+    {
+        // Flying has separate moving and hovering source motions. Update the
+        // native sequence on velocity change without changing World state.
+        if (Desired == EOGLuminousV3MotionPhase::Flying)
+        {
+            if (UAnimSequence* FlightClip = ResolveAuthoredMotionClip(Desired))
+                if (FlightClip != CurrentNativeClip)
+                    SetLuminousNativeMotionClip(FlightClip, true);
+        }
+        return;
+    }
     CurrentMotionPhase = Desired;
     if (Desired == EOGLuminousV3MotionPhase::Idle ||
-        Desired == EOGLuminousV3MotionPhase::Fall ||
-        Desired == EOGLuminousV3MotionPhase::Flying ||
-        Desired == EOGLuminousV3MotionPhase::Swimming)
+        Desired == EOGLuminousV3MotionPhase::Fall)
     {
         if (RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) && RuntimeParts[ActiveMotionLeaderIndex])
             RuntimeParts[ActiveMotionLeaderIndex]->Stop();
@@ -602,7 +630,12 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
     if (!Sequence || !SetLuminousNativeMotionClip(
         Sequence, Desired != EOGLuminousV3MotionPhase::Jump))
     {
-        UE_LOG(LogTemp, Error, TEXT("G12_LUMINOUS_MOTION_NATIVE_INCOMPATIBLE state=%d: %s"),
+        // Safe fallback if currently worn wardrobe does not share this native
+        // skeleton. Never animate a different 975-bone skeleton by mistake.
+        if (RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) &&
+            RuntimeParts[ActiveMotionLeaderIndex])
+            RuntimeParts[ActiveMotionLeaderIndex]->Stop();
+        UE_LOG(LogTemp, Warning, TEXT("G12_LUMINOUS_MOTION_NATIVE_MISSING_OR_WRONG_RIG state=%d: %s"),
             static_cast<int32>(Desired), *LastLuminousError);
     }
 }
@@ -631,7 +664,7 @@ void AOGLuminousV3PlayableCharacter::CycleLuminousWardrobeFromGamepad()
 bool AOGLuminousV3PlayableCharacter::BindOwnedWorldCharacter_Implementation(
     const FOGEntityId& RulerId, const FOGContentId& IdentityId,
     const FOGContentId& VersionId, const FOGEntityId& ManifestationId,
-    bool bSfwPresentation)
+    bool bRequestedSfwPresentation)
 {
     LastLuminousError.Reset();
     if (bNativeOwnedCharacterBound || !bLuminousReady ||
@@ -668,7 +701,7 @@ bool AOGLuminousV3PlayableCharacter::BindOwnedWorldCharacter_Implementation(
     BoundOwnedVersion=VersionId;
     BoundOwnedManifestation=ManifestationId;
     bNativeOwnedCharacterBound=true;
-    bOwnedPresentationSfw=bSfwPresentation;
+    bOwnedPresentationSfw=bRequestedSfwPresentation;
     CurrentWardrobe=EOGLuminousV3Wardrobe::Clothed;
     // Missing presentation state on a newly acquired Manifestation naturally
     // uses its source-authored CLOTHED default. Existing owned attire is read

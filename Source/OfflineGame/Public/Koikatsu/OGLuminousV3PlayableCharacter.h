@@ -70,7 +70,7 @@ enum class EOGLuminousV3MotionPhase : uint8
 UENUM(BlueprintType)
 enum class EOGLuminousV3AuthoredEmote : uint8
 {
-    Thoughtful, Greeting, Expressive, Bow
+    Thoughtful, Greeting, Expressive, Bow, DancePerformance
 };
 
 /**
