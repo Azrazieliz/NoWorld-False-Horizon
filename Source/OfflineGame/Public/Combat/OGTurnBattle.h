@@ -176,6 +176,15 @@ public:
         const FOGContentId& SkillId,
         FString& OutError);
 
+    /** Exactly the HP lost by the most recently resolved damage event,
+     * after barriers and overkill but before any defeat-triggered revival.
+     * Never infer actual HP loss by inspecting HP after an OnDefeat reaction. */
+    FOGLargeNumber GetLastEffectiveHpDamage(
+        const FOGEntityId& TargetId) const
+    {
+        return LastEffectiveHpDamage.FindRef(TargetId);
+    }
+
     bool ApplyHealing(
         const FOGEntityId& SourceUnitId,
         const FOGEntityId& TargetUnitId,
@@ -266,6 +275,20 @@ private:
 
     // Per-Manifestation, per-battle state. Never a shared identity/global meter.
     TMap<FOGEntityId,FLuminousBaseBattleRuntime> LuminousBaseStates;
+
+    struct FLuminousDawnBarrier
+    {
+        FOGEntityId GrantingManifestation;
+        FOGEntityId Beneficiary;
+        FOGLargeNumber Remaining;
+        int32 ExpiresAfterOwnerAction = INDEX_NONE;
+    };
+    TArray<FLuminousDawnBarrier> LuminousDawnBarriers;
+    TMap<FOGEntityId,FOGLargeNumber> LastEffectiveHpDamage;
+    void GrantAuthoredDawnOverhealBarrier(
+        const FOGEntityId& OwnerId,
+        const FOGEntityId& BeneficiaryId,
+        const FOGLargeNumber& ExcessHealing);
 
     struct FLuminousAlterBattleRuntime
     {

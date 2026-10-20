@@ -247,7 +247,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(!Bleed.IsZero() &&
            !ApplyDamage(Source.UnitEntityId,T->UnitEntityId,
                Bleed,Action.SkillId,OutError)) return false;
-        const FOGLargeNumber Actual=MinNumber(Before,Bleed);
+        const FOGLargeNumber Actual=GetLastEffectiveHpDamage(T->UnitEntityId);
         const FOGLargeNumber Siphon=FOGLargeNumber::ScaleByBasisPoints(Actual,1200);
         const FOGLargeNumber Limited=MinNumber(Siphon,PositiveMissing(Source));
         if(!Limited.IsZero() &&
@@ -310,7 +310,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(!ApplyDamage(Source.UnitEntityId,TargetId,
                         Damage.TotalDamage,Action.SkillId,OutError))
             return false;
-        const FOGLargeNumber Actual=MinNumber(Before,Damage.TotalDamage);
+        const FOGLargeNumber Actual=GetLastEffectiveHpDamage(TargetId);
         if(Actual.IsZero())return true;
         if(!bGrantedOnHpDamage && BloodEligible.Contains(TargetId))
         {
@@ -364,7 +364,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         StateOfOwner.bAttunementActive=true;
         StateOfOwner.AttunementExpiryAction=CurrentOwnerAction+2;
     }
-    else if(bA3 ||
+    else if((bA3 && !bA3Covenant) ||
             (bUlt && UltimateBranch==TEXT("day")))
     {
         const bool bDayUltimate=bUlt;
@@ -374,7 +374,6 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             FOGCombatUnitState* T=FindMutableUnit(Id);
             if(!T || !T->IsAlive())continue;
             const FOGLargeNumber Missing=PositiveMissing(*T);
-            if(Missing.IsZero())continue;
             const int32 Scale=bDayUltimate?(I==0?22000:9500):
                                           (I==0?6500:2500);
             FOGLargeNumber Heal=FOGLargeNumber::ScaleByBasisPoints(
@@ -382,14 +381,20 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             Heal=FOGLargeNumber::ScaleByBasisPoints(Heal,12400);
             if(StateOfOwner.bAttunementActive && StateOfOwner.bDayAttunement)
                 Heal=FOGLargeNumber::ScaleByBasisPoints(Heal,11200);
+            const FOGLargeNumber UncappedHeal=Heal;
             Heal=MinNumber(Heal,Missing);
             if(!Heal.IsZero() &&
                !ApplyHealing(Source.UnitEntityId,Id,Heal,Action.SkillId,OutError))
                 return false;
+            const FOGLargeNumber Overheal=FOGLargeNumber::Add(
+                UncappedHeal,
+                FOGLargeNumber(-Heal.Significand,Heal.Exponent10));
+            if(!Overheal.IsZero())
+                GrantAuthoredDawnOverhealBarrier(Source.UnitEntityId,Id,Overheal);
             StateOfOwner.BlessingExpiry.Add(Id,CurrentOwnerAction+2);
-            if(bA3)
+            if(bA3 && !Heal.IsZero())
                 StateOfOwner.DawnOathByBeneficiary.Add(Id,CurrentOwnerAction+2);
-            if(!bGrantedOnHpDamage)
+            if(!Heal.IsZero() && !bGrantedOnHpDamage)
             {
                 StateOfOwner.ScarletReserve=FMath::Min(
                     Kit.ScarletReserveMax,StateOfOwner.ScarletReserve+8);
@@ -498,4 +503,40 @@ void FOGTurnBattle::TryResolveApprovedLuminousAllyCovenant(
         S->BlessingExpiry.Add(TargetUnitId,S->OwnerActions+2);
         return;
     }
+}
+
+
+void FOGTurnBattle::GrantAuthoredDawnOverhealBarrier(
+    const FOGEntityId& OwnerId,const FOGEntityId& BeneficiaryId,
+    const FOGLargeNumber& ExcessHealing)
+{
+    FLuminousBaseBattleRuntime* OwnerState=LuminousBaseStates.Find(OwnerId);
+    const FOGCombatUnitState* Target=FindUnit(BeneficiaryId);
+    if(!OwnerState || !Target || !Target->IsAlive() ||
+       FOGLargeNumber::Compare(ExcessHealing,FOGLargeNumber())<=0)
+        return;
+    const FOGLargeNumber MaxBarrier=FOGLargeNumber::ScaleByBasisPoints(
+        Target->Stats.MaxHp,800);
+    const FOGLargeNumber Gift=FOGLargeNumber::ScaleByBasisPoints(
+        ExcessHealing,4000);
+    for(FLuminousDawnBarrier& Barrier:LuminousDawnBarriers)
+        if(Barrier.GrantingManifestation==OwnerId &&
+           Barrier.Beneficiary==BeneficiaryId)
+        {
+            if(OwnerState->OwnerActions>Barrier.ExpiresAfterOwnerAction)
+                Barrier.Remaining=FOGLargeNumber();
+            const FOGLargeNumber Candidate=FOGLargeNumber::Add(
+                Barrier.Remaining,Gift);
+            Barrier.Remaining=FOGLargeNumber::Compare(Candidate,MaxBarrier)<0
+                ?Candidate:MaxBarrier;
+            Barrier.ExpiresAfterOwnerAction=OwnerState->OwnerActions+2;
+            return;
+        }
+    FLuminousDawnBarrier Barrier;
+    Barrier.GrantingManifestation=OwnerId;
+    Barrier.Beneficiary=BeneficiaryId;
+    Barrier.Remaining=FOGLargeNumber::Compare(Gift,MaxBarrier)<0
+        ?Gift:MaxBarrier;
+    Barrier.ExpiresAfterOwnerAction=OwnerState->OwnerActions+2;
+    LuminousDawnBarriers.Add(MoveTemp(Barrier));
 }

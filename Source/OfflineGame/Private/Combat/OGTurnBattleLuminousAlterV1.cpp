@@ -219,9 +219,11 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
             Source.Stats.Attack,1600*It.Value());
         if(!Tick.IsZero())
         {
-            const FOGLargeNumber Actual=AlterMin(T->CurrentHp,Tick);
+            const FOGLargeNumber Before=T->CurrentHp;
             if(!ApplyDamage(Source.UnitEntityId,T->UnitEntityId,
                 Tick,Action.SkillId,OutError))return false;
+            const FOGLargeNumber Actual=GetLastEffectiveHpDamage(T->UnitEntityId);
+            if(Actual.IsZero())continue;
             Own.RedTithe=FMath::Min(100,Own.RedTithe+5);
             const FOGLargeNumber Heal=AlterMin(
                 FOGLargeNumber::ScaleByBasisPoints(Actual,900),
@@ -264,9 +266,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         const FOGDamageResolution D=FOGCombatMath::ResolveDamage(
             Req,Attacker,T->Stats,Rng);
         if(D.TotalDamage.IsZero())return true;
-        const FOGLargeNumber Actual=AlterMin(T->CurrentHp,D.TotalDamage);
+        const FOGLargeNumber Before=T->CurrentHp;
         if(!ApplyDamage(Source.UnitEntityId,Id,D.TotalDamage,
                         Action.SkillId,OutError))return false;
+        const FOGLargeNumber Actual=GetLastEffectiveHpDamage(Id);
         if(!Actual.IsZero()&&Eligible.Contains(Id))
         {
             if(bSeal)

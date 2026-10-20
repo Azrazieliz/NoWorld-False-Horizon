@@ -63,6 +63,8 @@ bool FOGTurnBattle::Initialize(
     OutstandingTriggeredActionSequences.Reset();
     PendingDefeatedUnitIds.Reset();
     LuminousBaseStates.Reset();
+    LuminousDawnBarriers.Reset();
+    LastEffectiveHpDamage.Reset();
     LuminousAlterStates.Reset();
     LuminousFields.Reset();
     LuminousFieldEligibility=FOGLuminousAcceptedFieldEligibility();
@@ -517,9 +519,47 @@ bool FOGTurnBattle::ApplyDamage(
         return false;
     }
 
+    // Dawn Sanctification P5 is a specific, source-owned 40% overheal
+    // barrier capped at 8% target MaxHP, NOT a generic shield added to all
+    // actors. Consume only live, unexpired layers; sorted per source GUID for
+    // deterministic replay when two distinct Base Manifestations buff one ally.
+    FOGLargeNumber EffectiveAmount=Amount;
+    FOGLargeNumber Absorbed;
+    TArray<int32> BarrierIndices;
+    for(int32 I=0;I<LuminousDawnBarriers.Num();++I)
+        if(LuminousDawnBarriers[I].Beneficiary==TargetUnitId)
+            BarrierIndices.Add(I);
+    BarrierIndices.Sort([this](int32 A,int32 B)
+    {
+        return LuminousDawnBarriers[A].GrantingManifestation.ToString() <
+               LuminousDawnBarriers[B].GrantingManifestation.ToString();
+    });
+    for(const int32 I:BarrierIndices)
+    {
+        FLuminousDawnBarrier& Barrier=LuminousDawnBarriers[I];
+        const FLuminousBaseBattleRuntime* OwnerState=
+            LuminousBaseStates.Find(Barrier.GrantingManifestation);
+        if(!OwnerState || OwnerState->OwnerActions>Barrier.ExpiresAfterOwnerAction ||
+           FOGLargeNumber::Compare(Barrier.Remaining,FOGLargeNumber())<=0 ||
+           EffectiveAmount.IsZero())
+            continue;
+        const FOGLargeNumber Used=
+            FOGLargeNumber::Compare(EffectiveAmount,Barrier.Remaining)<0
+                ?EffectiveAmount:Barrier.Remaining;
+        Barrier.Remaining=FOGLargeNumber::Add(
+            Barrier.Remaining,FOGLargeNumber(-Used.Significand,Used.Exponent10));
+        EffectiveAmount=FOGLargeNumber::Add(
+            EffectiveAmount,FOGLargeNumber(-Used.Significand,Used.Exponent10));
+        Absorbed=FOGLargeNumber::Add(Absorbed,Used);
+    }
+    // Snapshot actual HP loss BEFORE the OnDefeat trigger fires. Overkill
+    // beyond remaining HP is not a vampirism/status/resource source.
+    LastEffectiveHpDamage.Add(TargetUnitId,
+        FOGLargeNumber::Compare(EffectiveAmount,Target->CurrentHp)<0
+            ?EffectiveAmount:Target->CurrentHp);
     FOGLargeNumber NegativeAmount(
-        -Amount.Significand,
-        Amount.Exponent10);
+        -EffectiveAmount.Significand,
+        EffectiveAmount.Exponent10);
 
     Target->CurrentHp =
         FOGLargeNumber::Add(
@@ -532,9 +572,12 @@ bool FOGTurnBattle::ApplyDamage(
     Damage.SourceUnitId = SourceUnitId;
     Damage.TargetUnitId = TargetUnitId;
     Damage.SkillId = SkillId;
-    Damage.PayloadJson = FString::Printf(
-        TEXT("{\"amount\":\"%s\"}"),
-        *Amount.ToDebugString());
+    Damage.PayloadJson = Absorbed.IsZero()
+        ? FString::Printf(TEXT("{\"amount\":\"%s\"}"),
+              *EffectiveAmount.ToDebugString())
+        : FString::Printf(TEXT("{\"amount\":\"%s\",\"dawn_barrier_absorbed\":\"%s\",\"nominal\":\"%s\"}"),
+              *EffectiveAmount.ToDebugString(),*Absorbed.ToDebugString(),
+              *Amount.ToDebugString());
     Log.Append(MoveTemp(Damage));
 
     if (FOGLargeNumber::Compare(
