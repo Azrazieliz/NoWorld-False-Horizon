@@ -1,0 +1,187 @@
+{
+  "schema": "noworld.gate00.user_approval_overlay.v1",
+  "as_of": "2026-10-20",
+  "authority": "LATEST_DIRECT_USER_20261020",
+  "source_branch": "coordination/gate00-live-ops-20261016",
+  "retired_gate11": true,
+  "original_registry_reference": {
+    "branch": "content/master-integration",
+    "head_at_review": "973d8506c249338b540565e1f54796af248db910",
+    "historical_records_unchanged": 31,
+    "immutable_original_file": "registry/gate11/2026-10-20/sources/g07_feedback_decisions_exact_unmodified.json",
+    "sha256": "fc6d73eb16c882c4743c7f836fc8ff7b4c3676fdb99870faa2eb92fecd53cd63",
+    "new_approval_additive_not_original_mutation": true
+  },
+  "gate07": {
+    "status": "ALL_18_DIRECTIONS_USER_APPROVED",
+    "accepted_decision_ids": [
+      "G07-D01",
+      "G07-D02",
+      "G07-D03",
+      "G07-D04",
+      "G07-D05",
+      "G07-D06",
+      "G07-D07",
+      "G07-D08",
+      "G07-D09",
+      "G07-D10",
+      "G07-D11",
+      "G07-D12",
+      "G07-D13",
+      "G07-D14",
+      "G07-D15",
+      "G07-D16",
+      "G07-D17",
+      "G07-D18"
+    ],
+    "newly_approved": [
+      "G07-D03",
+      "G07-D04",
+      "G07-D06",
+      "G07-D10",
+      "G07-D15"
+    ],
+    "newly_approved_variant": "ORIGINAL_PROPOSED_RECOMMENDATION_A",
+    "source_grade_records_or_owned_items_approved": false,
+    "D03": {
+      "rule": "Eligible ten-pull R-only results: upgrade tenth to eligible SR, atomic grants/payment/pity intact",
+      "live_banner_pool_must_be_authored": true
+    },
+    "D04": {
+      "rule": "Registry v2 accepted, installed and eligible female pullable Identity/Version source only; schedule/knowledge/pity/featured authored; fail closed otherwise",
+      "owner": "Gate00+Gate12"
+    },
+    "D06": {
+      "rule": "One offline renewable gameplay earned pull currency, actual quote, idempotency, atomic ledger in existing service",
+      "currency_id": null
+    },
+    "D10": {
+      "rule": "Physical mass+volume+shape+container/anatomy storage; stack fungibles with provenance, distinct singular item history",
+      "new_storage_system": "DO_NOT_REBUILD_EXISTING"
+    },
+    "D15": {
+      "rule": "World/faction/settlement vendors, barter, causal supplies/supply-demand, anti-arbitrage; no default gacha-currency trade",
+      "vendor_ids": []
+    }
+  },
+  "luminous": {
+    "identity": "Luminous Valentine",
+    "versions": {
+      "BASE": {
+        "combat_kit": "USER_APPROVED_V6_UNCHANGED"
+      },
+      "ALTER": {
+        "combat_kit": "USER_APPROVED_V1",
+        "exact_original_zip_name": "Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip",
+        "exact_archive_file_verified_in_this_turn": false,
+        "precise_multipliers_effect_caps_conditions": "PENDING_VERBATIM_SOURCE",
+        "origin_rarity": "MR",
+        "starting_rank": "Hero",
+        "starting_level": 1,
+        "starting_stats": {
+          "HP": 7650,
+          "ATK": 4830,
+          "DEF": 1040,
+          "SPD": 151
+        },
+        "actives": [
+          "Vesperblade",
+          "Black Eucharist",
+          "Martyr's Communion"
+        ],
+        "active_targets": [
+          "enemy_single",
+          "enemy_aoe",
+          "self"
+        ],
+        "passive_count": 6,
+        "passives_exact_definition_status": "SOURCE_NEEDED",
+        "resource": {
+          "name": "Red Tithe",
+          "min": 0,
+          "max": 100
+        },
+        "effect_parent": "Bleed",
+        "effect_child": "Severing Wound",
+        "other_effect": "Rupture Seals",
+        "ultimate": {
+          "name": "Black Mass",
+          "variants": [
+            {
+              "name": "Rite of Ruin",
+              "target": "enemy_aoe_dps"
+            },
+            {
+              "name": "Rite of the Hollow Crown",
+              "target": "enemy_st_dps"
+            }
+          ]
+        },
+        "fantasm": {
+          "name": "Cathedral of the Unwritten Death",
+          "grade": "World Negation",
+          "authored_effects_expected": 4,
+          "actual_effects_exact_names": "SOURCE_NEEDED"
+        },
+        "revival": "One conditional soul-valid self revive per encounter",
+        "no_base_kit_inheritance": true,
+        "android_gameplay_validated": false,
+        "production_asset_ready": false
+      },
+      "AWAKENED": {
+        "kit": "RESERVED_USER_NOT_YET_AUTHORIZED"
+      },
+      "BERSERKER": {
+        "kit": "RESERVED_USER_NOT_YET_AUTHORIZED"
+      }
+    },
+    "grand_convergence": {
+      "status": "RESERVED_SEPARATELY_AUTHORIZED_LATER",
+      "not_auto_version": true
+    }
+  },
+  "world": {
+    "gate02_role": "PREEXISTING_AUTHORED_ANCHORS_AND_MODULES",
+    "gate12_role": "GENERATE_ALL_REMAINING_FIRST_WORLD_IN_NATIVE_UNREAL_USING_ANCHORS",
+    "native_requirements": [
+      "existing asset reuse",
+      "real Landscape",
+      "seed-stable World Partition/PCG",
+      "persistent changed state",
+      "collision/navigation",
+      "terrain biome variation",
+      "water and bridges",
+      "caves and interiors",
+      "world scale and art direction",
+      "no forced route or initial combat"
+    ],
+    "world_replaced": false,
+    "art_or_device_accepted": false
+  },
+  "animation": {
+    "device_gate": {
+      "prior_proven_native_clips": 4,
+      "required_first": "ALL_FOUR_REAL_GAMEPLAY_CLIPS_PLAYABLE_ON_AUTHORIZED_PHYSICAL_DEVICE",
+      "status": "NOT_VERIFIED_FOR_CURRENT_BUILD"
+    },
+    "after_first_proof": "GATE09+GATE12_AUTHENTIC_KOIKATSU_ELIGIBLE_MOTION_POSE_FACIAL_INTIMACY_TO_NATIVE_UNREAL",
+    "method": "AUTHENTIC_SOURCE_TRANSFER_THROUGH_EXISTING_KOIKATSU_BLENDER_UNREAL_PIPELINE",
+    "bulk_transfer_requires_eligibility_rights_and_rig_compatibility": true,
+    "adult_source_eligibility": "VERIFY_ALL_DEPICTED_FORMS_ADULT_AND_SOURCE_USE_RIGHTS",
+    "common_locomotion": {
+      "independent_authored_variants": true,
+      "profile_selection_basis": [
+        "anatomy",
+        "abilities",
+        "physics",
+        "environment",
+        "character state"
+      ],
+      "character_refinements": "ONLY_AFTER_SHARED_BASE_WORKS"
+    },
+    "combat": "VERSION_SPECIFIC_NATIVE_ACTIONS"
+  },
+  "foundation_immutable": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+  "PR16": "UNMERGED_UNCHANGED",
+  "record_type": "APPROVAL_AND_PRODUCTION_COMMAND_NOT_GAMEPLAY_COMPLETION"
+}
