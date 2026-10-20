@@ -101,6 +101,15 @@ public:
     const FOGTurnBattleState& GetState() const { return State; }
     const FOGCombatLog& GetLog() const { return Log; }
 
+    // Explicit bridge from the already-authoritative, per-Manifestation
+    // ultimate-charge resolver. Never infer a free global team charge.
+    bool SetResolvedLuminousUltimateCharge(
+        const FOGEntityId& ManifestationId,
+        int32 ChargePercent,
+        FString& OutError);
+    int32 GetResolvedLuminousUltimateCharge(
+        const FOGEntityId& ManifestationId) const;
+
     int32 SelectNextActingUnitIndex() const;
 
     bool ApplyResolvedAction(
@@ -153,6 +162,67 @@ public:
         FString& OutError);
 
 private:
+    struct FLuminousBaseBattleRuntime
+    {
+        int32 ScarletReserve = 35;
+        int32 UltimateChargePercent = 0;
+        bool bRevivalUsed = false;
+        bool bSelfSoulContinuityVerified = false;
+        bool bNoSuperiorRevivalNegationVerified = false;
+        bool bDayAttunement = false;
+        bool bAllyRevivalSpent = false;
+        FOGEntityId PreparedCovenantTarget;
+        int32 CovenantExpiryOwnerAction = -1;
+        bool bCovenantSoulVerified = false;
+        bool bCovenantNegationClear = false;
+        int32 OwnerActions = 0;
+        TMap<FOGEntityId,int32> HemalMarks;
+        TMap<FOGEntityId,int32> HemorrhageStacks;
+        TMap<FOGEntityId,int32> HemorrhageEndOwnerAction;
+        TMap<FOGEntityId,int32> BlessingExpiry;
+        int32 DawnOathExpiry = 0;
+    };
+
+    // Per-Manifestation, per-battle state. Never a shared identity/global meter.
+    TMap<FOGEntityId,FLuminousBaseBattleRuntime> LuminousBaseStates;
+
+    struct FLuminousAlterBattleRuntime
+    {
+        int32 RedTithe = 20;
+        int32 UltimateChargePercent = 0;
+        int32 OwnerActions = 0;
+        int32 MartyrMomentum = 0;
+        int32 MomentumExpiresOwnerAction = -1;
+        int32 MartyrStanceExpires = -1;
+        bool bMartyrNextFinisherPending = false;
+        int32 DeathPriceExpiresOwnerAction = -1;
+        int32 EucharistNextAvailableAction = 0;
+        int32 CommunionNextAvailableAction = 0;
+        bool bSelfRevived = false;
+        bool bSoulContinuityVerified = false;
+        bool bNoSuperiorRevivalNegationVerified = false;
+        TMap<FOGEntityId,int32> RuptureSeals;
+        TMap<FOGEntityId,int32> SealExpiryOwnerAction;
+        TMap<FOGEntityId,int32> SeveringWounds;
+        TMap<FOGEntityId,int32> WoundExpiryOwnerAction;
+    };
+    TMap<FOGEntityId,FLuminousAlterBattleRuntime> LuminousAlterStates;
+    bool ExecuteApprovedLuminousAlterAction(
+        const FOGResolvedCombatAction& Action,
+        FOGCombatUnitState& Source,
+        FString& OutError);
+    void TryResolveApprovedLuminousAlterRevival(
+        const FOGEntityId& UnitId);
+
+    bool ExecuteApprovedLuminousBaseAction(
+        const FOGResolvedCombatAction& Action,
+        FOGCombatUnitState& Source,
+        FString& OutError);
+    void TryResolveApprovedLuminousBaseRevival(
+        const FOGEntityId& UnitId);
+    void TryResolveApprovedLuminousAllyCovenant(
+        const FOGEntityId& TargetUnitId);
+
     FOGCombatUnitState* FindMutableUnit(const FOGEntityId& UnitId);
     const FOGCombatUnitState* FindUnit(const FOGEntityId& UnitId) const;
     const FOGTurnTeamState* FindTeam(int32 TeamIndex) const;

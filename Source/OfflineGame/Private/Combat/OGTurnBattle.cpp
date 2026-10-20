@@ -62,6 +62,8 @@ bool FOGTurnBattle::Initialize(
     PendingTriggeredActions.Reset();
     OutstandingTriggeredActionSequences.Reset();
     PendingDefeatedUnitIds.Reset();
+    LuminousBaseStates.Reset();
+    LuminousAlterStates.Reset();
     IdentityContext =
         MoveTemp(InIdentityContext);
     RankSuppressionResolver =
@@ -463,6 +465,13 @@ bool FOGTurnBattle::ApplyResolvedAction(
                 Action.ActionDelay);
     }
 
+    // The ordinary combat executor now dispatches the exact authored Base
+    // active/ultimate actions instead of only logging their resolution JSON.
+    // Non-Luminous actions remain on the existing standard effect pipeline.
+    if (!ExecuteApprovedLuminousBaseAction(Action,*Source,OutError) ||
+        !ExecuteApprovedLuminousAlterAction(Action,*Source,OutError))
+        return false;
+
     FOGCombatLogEvent Resolved;
     Resolved.Type = EOGCombatLogEventType::ActionResolved;
     Resolved.SourceUnitId = Action.SourceUnitId;
@@ -558,6 +567,11 @@ bool FOGTurnBattle::ApplyDamage(
             TargetUnitId,
             SkillId,
             DefeatSequence);
+        // Revive before ordinary succession, only with verified source/soul
+        // eligibility, required Scarlet Reserve and once-encounter ledger.
+        TryResolveApprovedLuminousBaseRevival(TargetUnitId);
+        TryResolveApprovedLuminousAllyCovenant(TargetUnitId);
+        TryResolveApprovedLuminousAlterRevival(TargetUnitId);
     }
 
     return true;
