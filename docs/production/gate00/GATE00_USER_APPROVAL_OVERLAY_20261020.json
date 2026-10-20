@@ -199,12 +199,12 @@
       "installed_game_package_matching_offline_noworld_koikatsu_gate12": false,
       "android_playback_pass": false
     },
-    "after_first_proof": "GATE09+GATE12_AUTHENTIC_KOIKATSU_ELIGIBLE_MOTION_POSE_FACIAL_INTIMACY_TO_NATIVE_UNREAL",
+    "after_first_proof": "GATE12_DIRECTLY_IMPORT_REMAINING_GENUINE_ELIGIBLE_KOIKATSU_PARTY_AND_MODS_SOURCE_ANIMATIONS_TO_UNREAL",
     "method": "AUTHENTIC_SOURCE_TRANSFER_THROUGH_EXISTING_KOIKATSU_BLENDER_UNREAL_PIPELINE",
     "bulk_transfer_requires_eligibility_rights_and_rig_compatibility": true,
     "adult_source_eligibility": "VERIFY_ALL_DEPICTED_FORMS_ADULT_AND_SOURCE_USE_RIGHTS",
     "common_locomotion": {
-      "independent_authored_variants": true,
+      "independent_authored_variants": false,
       "profile_selection_basis": [
         "anatomy",
         "abilities",
@@ -212,11 +212,27 @@
         "environment",
         "character state"
       ],
-      "character_refinements": "ONLY_AFTER_SHARED_BASE_WORKS"
+      "character_refinements": "ONLY_AFTER_SHARED_BASE_WORKS",
+      "authentic_source_variants_only": true,
+      "no_original_motion_production_owner": true
     },
-    "combat": "VERSION_SPECIFIC_NATIVE_ACTIONS"
+    "combat": "GATE12_REUSE_COMPATIBLE_KOIKATSU_MOD_ANIMATIONS_PER_VERSION__SOURCE_MISSING_BLOCK_ON_UNAVAILABLE_AUTHORED_UNIQUE_CLIPS",
+    "vfx_sfx": "Gate12 integrate real existing original source Unreal systems compatible VFX and sounds; no Gate09 commission; no invented render-ready animation"
   },
   "foundation_immutable": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
   "PR16": "UNMERGED_UNCHANGED",
-  "record_type": "APPROVAL_AND_PRODUCTION_COMMAND_NOT_GAMEPLAY_COMPLETION"
+  "record_type": "APPROVAL_AND_PRODUCTION_COMMAND_NOT_GAMEPLAY_COMPLETION",
+  "owner_override_20261020": {
+    "authority": "LATEST_USER_DIRECTIVE",
+    "dismissed_gate": "Gate09",
+    "status": "RETIRED_FOR_FUTURE_PRODUCTION_NO_NEW_ART_ANIMATION_OR_SFX_COMMISSION",
+    "preserve_existing_native_4_clips": true,
+    "no_reliable_new_animation_authoring_producer": true,
+    "motion_and_runtime_vfx_owner": "Gate12",
+    "motion_source": "EXISTING_AUTHENTIC_KOIKATSU_PARTY_INSTALLED_MODS_ORIGINAL_CLIPS_ONLY",
+    "source_validation_before_import": "4_ACTUAL_CURRENT_ANDROID_GAMEPLAY_CLIPS_PASS",
+    "missing_clip_policy": "MARK_SOURCE_MISSING_NO_SYNTHETIC_LOW_QUALITY_ALTERNATE",
+    "adult_source_requirements": "adult only source eligibility rights privacy and consent-appropriate scene",
+    "handoff": "docs/production/gate00/GATE00_20261020_GATE09_REMOVAL_GATE12_FULL_NATIVE_COMMISSION.md"
+  }
 }
