@@ -1,3 +1,5 @@
+> **SUPERSEDED DECISION STATUS (20 OCT 2026):** The user has NOW APPROVED all five formerly deferred proposals **D03, D04, D06, D10, D15**. The original 19-Oct 13 accepted / 5 deferred outcomes below are **historical evidence**, not a live deferral. Gate00 recovered exact proposed recommendations from preserved Gate07 original source (`content/master-integration/registry/gate11/2026-10-20/sources/g07_feedback_decisions_exact_unmodified.json`). [New source-grade addendum](../GATE00_20261020_ALTER_G07_WORLD_MOTION_APPROVALS.md) lists all five, with original-source guardrails. **18/18 Gate07 design directions user-approved**; no fictional canonical item/banner/merchant/owned content implied. Keep original file unchanged for provenance.
+
 # RECEIVED — Gate 07 → Gate 00 — User-reviewed economy handoff
 **User-supplied report date:** 19 October 2026  
 **Recorded on Gate 00 branch:** 20 October 2026  
