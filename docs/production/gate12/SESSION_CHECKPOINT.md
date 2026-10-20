@@ -1,3 +1,14 @@
+## 2026-10-20 ? P0 consolidated implementation checkpoint
+
+- Source branch production/gate12-koikatsu-ue583-fixture-20261010, original SHA 0e1004c04c438f834668a369e9119187888e8895. User consolidated commission file supplied; approved character and world sources preserved.
+- Gate09: four source-authentic UE native AnimSequences imported, cold-loaded 4/4 with shared CLOTHED Mesh000Prim000 skeleton, actual SHA manifest in docs/production/gate12/evidence/20261020_consolidated_native. First compiled native controller change 9/9 exit0, receipt Saved/Gate12Readiness/Gate12_20261020_Gate09_EmoteBindings_Build.log. Later strict skeleton leader fix pending combined build. Native gameplay playback not yet accepted.
+- Gate02: actual FBX regional roads, moss-rock GLB, textured static meshes, terrain 513 R16 texture imported, native isolated experimental QA map saved at /Game/Experimental/FirstWorldR1/Maps/L_FirstWorld_R1_REAL_ART_QA, one true seed1412 rock actor with stable ID. Source and native receipts archived at docs/production/gate12/evidence/20261020_consolidated_native. No canonical map replacement, Landscape Actor, PCG graph or art acceptance.
+- Gate07: D02 additive top-tier pity (MR 120bp through pull50, +500bp/ordinal from 51, hard pity70), independent featured 50/50, guard against one-sided pool; D03 ten-pull fails closed before charge until exact deferred SR+ evaluator approved; D09 reject unowned equipment and same physical item in more than one equip slot; C++ source and new targeted tests implemented, combined native build/tests pending. No invented banners or currencies.
+- Luminous Alter source archive confirmed original 3 user-authored cards, textures and dependency manifest, but explicitly NOT YET converted to Blender FBX/GLB or native UE geometry, Gate11 mapping pending. Must use SM01/SM02 native production; never report Alter imported until real 3D and all wardrobe states genuinely present.
+- User Base v6 source physically included in consolidated ZIP, but only draft content IDs and no native handler parity or actual canonical mapped skill IDs yet. No false gameplay activation.
+- Current heavy sequential job: Saved/Gate12Readiness/Gate12_20261020_EconomyAndAnimation_Incremental_Build.log. Wait for it; preserve other dirty user changes. Android ADB lists zero physical devices. No device pass.
+- Next: finish build, run changed-feature native tests, fix real UE road QA actor selection, pursue original Alter exporter, commit and push exact tested artifacts and remaining blockers.
+
 ## 2026-10-18 20:03 +02 - P0 code-first implementation; NO further app builds by user instruction
 
 - Latest source base: 3d51e415dc8618ec5e7fb3cb956b3f337e7a2d0b. Working local Koikatsu .cpp/.h and experimental content are user-owned dirty files: NOT TOUCHED OR STAGED.

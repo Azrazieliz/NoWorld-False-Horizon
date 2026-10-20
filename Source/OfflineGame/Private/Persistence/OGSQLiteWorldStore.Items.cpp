@@ -401,6 +401,48 @@ bool FOGSQLiteWorldStore::UpsertEquipmentBinding(
         return false;
     }
 
+    // One physical item cannot simultaneously occupy equipment slots on
+    // different wearers (or duplicate slots). This guard applies to ALL
+    // callers, including direct world-store adapters, without an unsafe
+    // schema migration or overwrite of old saved equipment history.
+    sqlite3_stmt* Claim = nullptr;
+    const char* LookupSql =
+        "SELECT wearer_entity_id, slot_content_id FROM equipment_bindings "
+        "WHERE item_entity_id = ? LIMIT 2;";
+    if (sqlite3_prepare_v2(Database, LookupSql, -1, &Claim, nullptr) != SQLITE_OK)
+    {
+        OutError = LastError(TEXT("Prepare unique equipment item claim"));
+        return false;
+    }
+    if (!BindItemText(Claim, 1, Binding.ItemId.ToString()))
+    {
+        OutError = LastError(TEXT("Bind unique equipment item claim"));
+        sqlite3_finalize(Claim);
+        return false;
+    }
+    int32 PriorClaims = 0;
+    bool bConflictingClaim = false;
+    int Step = SQLITE_DONE;
+    while ((Step = sqlite3_step(Claim)) == SQLITE_ROW)
+    {
+        ++PriorClaims;
+        if (PriorClaims > 1 ||
+            ItemColumnText(Claim, 0) != Binding.WearerEntityId.ToString() ||
+            ItemColumnText(Claim, 1) != Binding.SlotId.ToString())
+            bConflictingClaim = true;
+    }
+    sqlite3_finalize(Claim);
+    if (Step != SQLITE_DONE)
+    {
+        OutError = LastError(TEXT("Check unique equipment claim"));
+        return false;
+    }
+    if (bConflictingClaim)
+    {
+        OutError = TEXT("Equipment item already bound to another wearer or slot.");
+        return false;
+    }
+
     sqlite3_stmt* Statement = nullptr;
     const char* Sql =
         "INSERT INTO equipment_bindings(wearer_entity_id, slot_content_id, item_entity_id, state_json) "

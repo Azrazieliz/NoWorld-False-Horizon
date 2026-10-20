@@ -35,6 +35,11 @@ public:
         const FOGGachaBannerDefinition& Banner,
         FString& OutError);
 
+    /** Read-only exact D02 additive soft-pity quote in basis points. */
+    static int32 CalculateTopRarityChanceBps(
+        const FOGGachaBannerDefinition& Banner,
+        int32 PullOrdinalSinceTop);
+
 private:
     bool PullInternal(const FOGGachaBannerDefinition& Banner, const FOGEntityId& RulerId,
         int64 WorldTick, int64 Seed, FOGGachaPullResult& OutResult,

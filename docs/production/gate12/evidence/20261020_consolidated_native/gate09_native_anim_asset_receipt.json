@@ -1,0 +1,31 @@
+{
+  "source_archive": "D:\\UnrealProjects\\Gate09_Protected_Production_20261016\\GATE09_UNREAL583_NATIVE_FOUR_CLIPS_20261019.zip",
+  "source_sha256": "c197b1ae2445ec454656b92372ae2b8834c62121c07a59065ae3b356be0ea57d",
+  "native_assets": [
+    {
+      "package": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Emote_Bow_Source",
+      "local_path": "Content\\Gate09_QA_20261019\\NativeKoikatsu\\G09_LuminousV3_Emote_Bow_Source.uasset",
+      "sha256": "7d7f98c46000590444e412ddadfdceb5f5fac02b5e0b260b0b6362ae67a79b10",
+      "size": 3678502
+    },
+    {
+      "package": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_02_Greeting",
+      "local_path": "Content\\Gate09_QA_20261019\\NativeKoikatsu\\G09_LuminousV3_Idle_02_Greeting.uasset",
+      "sha256": "0d6cc2d6cdb336f90a9c71e0fe28df558402290b01e1be1c584a170854793545",
+      "size": 3600350
+    },
+    {
+      "package": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_03_Expressive",
+      "local_path": "Content\\Gate09_QA_20261019\\NativeKoikatsu\\G09_LuminousV3_Idle_03_Expressive.uasset",
+      "sha256": "88bcdc7d15a071756d86fad232333f22ca67bffaa93254cc0e15b82c63622f7f",
+      "size": 3692158
+    },
+    {
+      "package": "/Game/Gate09_QA_20261019/TestSingle/G09_LuminousV3_Idle_01_Thoughtful",
+      "local_path": "Content\\Gate09_QA_20261019\\TestSingle\\G09_LuminousV3_Idle_01_Thoughtful.uasset",
+      "sha256": "35193c4338f9851ef1d77ed8ac40c5f7c8500d80372b0ff9cb9f4cee4717dc12",
+      "size": 3711682
+    }
+  ],
+  "status": "UNREAL_PACKAGE_FILES_STAGED_PENDING_COLD_LOAD_AND_GAMEPLAY_BINDING"
+}

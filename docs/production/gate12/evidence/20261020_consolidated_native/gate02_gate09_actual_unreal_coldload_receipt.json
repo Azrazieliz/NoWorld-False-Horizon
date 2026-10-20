@@ -1,0 +1,167 @@
+{
+  "status": "NATIVE_IMPORT_AND_REAL_QA_LEVEL_SAVED_NOT_ART_ACCEPTED",
+  "timestamp": 1792481578.072071,
+  "source_source_archive": "D:/NoWorld_Art_Production/NoWorld_FirstWorld_RegionKit_R1_20261019.zip",
+  "assets": [
+    {
+      "source": "anchors/regional_roads.fbx",
+      "source_sha256": "c0c157388f59f052185380a66c8e0e5fc107181490ef49fc14a335b6fee7398a",
+      "native_objects": [
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/OUTER_TOWN___weathered_perimeter_stone_wall_section_0.OUTER_TOWN___weathered_perimeter_stone_wall_section_0",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/OUTER_TOWN___weathered_perimeter_stone_wall_section_1.OUTER_TOWN___weathered_perimeter_stone_wall_section_1",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/OUTER_TOWN___weathered_perimeter_stone_wall_section_2.OUTER_TOWN___weathered_perimeter_stone_wall_section_2",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/OUTER_TOWN___weathered_perimeter_stone_wall_section_3.OUTER_TOWN___weathered_perimeter_stone_wall_section_3",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/P22___deep_indigo_roof_ceramics.P22___deep_indigo_roof_ceramics",
+          "type": "MaterialInstanceConstant"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/P22___warm_carved_sandstone_edge.P22___warm_carved_sandstone_edge",
+          "type": "MaterialInstanceConstant"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/P31___compacted_dark_village_road_gravel.P31___compacted_dark_village_road_gravel",
+          "type": "MaterialInstanceConstant"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/ROAD___Eastern_caravan_road.ROAD___Eastern_caravan_road",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/ROAD___Market_north_street.ROAD___Market_north_street",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/ROAD___Royal_pilgrimage___east_spine.ROAD___Royal_pilgrimage___east_spine",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/ROAD___South_rural_return.ROAD___South_rural_return",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/ROAD___Southern_mill_and_agriculture_road.ROAD___Southern_mill_and_agriculture_road",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/ROAD___Village_woodward_pathway.ROAD___Village_woodward_pathway",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___ashlar_round_watchhouse_00.TOWN_WALL___ashlar_round_watchhouse_00",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___ashlar_round_watchhouse_01.TOWN_WALL___ashlar_round_watchhouse_01",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___ashlar_round_watchhouse_02.TOWN_WALL___ashlar_round_watchhouse_02",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___ashlar_round_watchhouse_03.TOWN_WALL___ashlar_round_watchhouse_03",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___slate_lantern_cap_00.TOWN_WALL___slate_lantern_cap_00",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___slate_lantern_cap_01.TOWN_WALL___slate_lantern_cap_01",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___slate_lantern_cap_02.TOWN_WALL___slate_lantern_cap_02",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/Roads/TOWN_WALL___slate_lantern_cap_03.TOWN_WALL___slate_lantern_cap_03",
+          "type": "StaticMesh"
+        }
+      ]
+    },
+    {
+      "source": "modules/moss_rock.glb",
+      "source_sha256": "f324307832e4a2799eae54ca4946dc5e03267051f9e734e98126747a26ff7c22",
+      "native_objects": [
+        {
+          "package": "/Game/Experimental/FirstWorldR1/MossRock/moss_rock/Materials/rock_moss_set_02.rock_moss_set_02",
+          "type": "MaterialInstanceConstant"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/MossRock/moss_rock/StaticMeshes/rock_moss_set_02_rock07_001.rock_moss_set_02_rock07_001",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/MossRock/moss_rock/StaticMeshes/rock_moss_set_02_rock08_001.rock_moss_set_02_rock08_001",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/MossRock/moss_rock/StaticMeshes/rock_moss_set_02_rock09_001.rock_moss_set_02_rock09_001",
+          "type": "StaticMesh"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/MossRock/moss_rock/Textures/rock_moss_set_02_diff_1k.rock_moss_set_02_diff_1k",
+          "type": "Texture2D"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/MossRock/moss_rock/Textures/rock_moss_set_02_nor_gl.rock_moss_set_02_nor_gl",
+          "type": "Texture2D"
+        },
+        {
+          "package": "/Game/Experimental/FirstWorldR1/MossRock/moss_rock/Textures/rock_moss_set_02_rough_1k.rock_moss_set_02_rough_1k",
+          "type": "Texture2D"
+        }
+      ]
+    },
+    {
+      "source": "terrain/NW_RiverVale_CrownBasinRivenEscarpment_height_513_R16.png",
+      "source_sha256": "a96be0d00278e8bb8af0c471e9d0ea0c6c94c2944835be97b48af8ffd4b35cfd",
+      "native_objects": [
+        {
+          "package": "/Game/Experimental/FirstWorldR1/HeightSource/NW_RiverVale_CrownBasinRivenEscarpment_height_513_R16.NW_RiverVale_CrownBasinRivenEscarpment_height_513_R16",
+          "type": "Texture2D"
+        }
+      ]
+    }
+  ],
+  "map": "/Game/Experimental/FirstWorldR1/Maps/L_FirstWorld_R1_REAL_ART_QA",
+  "errors": [],
+  "gate09_native_asset_cold_reload": [
+    {
+      "clip": "/Game/Gate09_QA_20261019/TestSingle/G09_LuminousV3_Idle_01_Thoughtful",
+      "seconds": 5.0,
+      "skeleton": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_Skeleton.Mesh_00_Prim_00_Skeleton"
+    },
+    {
+      "clip": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_02_Greeting",
+      "seconds": 4.733333110809326,
+      "skeleton": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_Skeleton.Mesh_00_Prim_00_Skeleton"
+    },
+    {
+      "clip": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_03_Expressive",
+      "seconds": 4.699999809265137,
+      "skeleton": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_Skeleton.Mesh_00_Prim_00_Skeleton"
+    },
+    {
+      "clip": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Emote_Bow_Source",
+      "seconds": 4.699999809265137,
+      "skeleton": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_Skeleton.Mesh_00_Prim_00_Skeleton"
+    }
+  ],
+  "seed1412_tile_id": "T_12_11",
+  "real_source_rock_actors_with_persistent_ids": 1
+}

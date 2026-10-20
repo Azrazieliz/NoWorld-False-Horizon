@@ -65,6 +65,12 @@ enum class EOGLuminousV3MotionPhase : uint8
 {
     Idle, Walk, Run, Jump, Fall, Swimming, Flying
 };
+/** Four real Gate09 Base-CLOTHED native skeletal clips. */
+UENUM(BlueprintType)
+enum class EOGLuminousV3AuthoredEmote : uint8
+{
+    Thoughtful, Greeting, Expressive, Bow
+};
 
 /**
  * Native 975-joint Luminous body on existing World Mode pawn.
@@ -158,6 +164,12 @@ public:
 
     UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|MotionV3")
     bool HasCompatibleLuminousMotion() const { return bCompatibleNativeMotion; }
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Emotes")
+    bool PlayGate09AuthoredEmote(EOGLuminousV3AuthoredEmote Emote);
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Emotes")
+    void InterruptGate09AuthoredEmote();
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|Emotes")
+    bool IsGate09EmotePlaying() const { return bGate09EmotePlaying; }
 
 protected:
     virtual void BeginPlay() override;
@@ -182,6 +194,8 @@ private:
     bool bLastAppliedExplicitContext = false;
     bool bCompatibleNativeMotion = false;
     bool bLuminousReady = false;
+    bool bGate09EmotePlaying = false;
+    float Gate09EmoteEndTime = 0.f;
     int32 QACycleStep = 0;
     int32 QAMotionCycleStep = 0;
     float QANextCycleSeconds = 0.f;

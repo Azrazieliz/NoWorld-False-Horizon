@@ -204,6 +204,8 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     CurrentNativeClip = nullptr;
     bCompatibleNativeMotion = false;
     CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
+    bGate09EmotePlaying = false;
+    Gate09EmoteEndTime = 0.f;
     bLuminousReady = true;
     if (GetMesh()) GetMesh()->SetHiddenInGame(true);
     UE_LOG(LogTemp, Display, TEXT("Gate12 Luminous: native wardrobe=%s parts=%d/45 skeletons=975"),
@@ -422,11 +424,29 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousNativeMotionClip(UAnimSequence* 
         LastLuminousError = TEXT("Motion V3 requires a native Luminous character and animation asset");
         return false;
     }
-    USkeletalMeshComponent* Leader = RuntimeParts[3];
-    if (!Leader || !Leader->GetSkeletalMeshAsset() ||
-        Clip->GetSkeleton() != Leader->GetSkeletalMeshAsset()->GetSkeleton())
+    // Gate09 cold-import receipts show the authored clips reference the
+    // Mesh000Prim000 CLOTHED Skeleton. The old hard-coded part[3] leader
+    // pointed at a DIFFERENT native skeleton and would reject all four
+    // verified clips. Match the actual authored skeleton, never retarget.
+    USkeletalMeshComponent* Leader = nullptr;
+    int32 LeaderIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < ActivePartCount; ++Index)
     {
-        LastLuminousError = TEXT("Refused foreign/fixture animation: native skeleton asset mismatch");
+        USkeletalMeshComponent* Candidate =
+            RuntimeParts.IsValidIndex(Index) ? RuntimeParts[Index] : nullptr;
+        if (Candidate && Candidate->GetSkeletalMeshAsset() &&
+            Candidate->GetSkeletalMeshAsset()->GetSkeleton() ==
+                Clip->GetSkeleton())
+        {
+            Leader = Candidate;
+            LeaderIndex = Index;
+            break;
+        }
+    }
+    if (!Leader)
+    {
+        LastLuminousError =
+            TEXT("Native Gate09 clip has no exact skeleton in this rendered wardrobe");
         return false;
     }
     for (int32 Index = 0; Index < ActivePartCount; ++Index)
@@ -441,16 +461,60 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousNativeMotionClip(UAnimSequence* 
         }
     }
     for (int32 Index = 0; Index < ActivePartCount; ++Index)
-        if (Index != 3) RuntimeParts[Index]->SetLeaderPoseComponent(Leader);
+        if (Index != LeaderIndex) RuntimeParts[Index]->SetLeaderPoseComponent(Leader);
     Leader->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     Leader->PlayAnimation(Clip, bLoop);
     CurrentNativeClip = Clip;
     bCompatibleNativeMotion = true;
-    UE_LOG(LogTemp, Display, TEXT("G12_LUMINOUS_975_NATIVE_MOTION_STARTED=%s skeleton=%s source_clips=22_bone_tracks"),
-        *Clip->GetName(), *Clip->GetSkeleton()->GetPathName());
+    UE_LOG(LogTemp, Display,
+        TEXT("G12_LUMINOUS_NATIVE_MOTION_STARTED=%s skeleton=%s matching_leader_part=%d"),
+        *Clip->GetName(), *Clip->GetSkeleton()->GetPathName(),LeaderIndex);
     return true;
 }
 
+bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
+    EOGLuminousV3AuthoredEmote Emote)
+{
+    if (!bLuminousReady ||
+        EffectiveAppearance.EffectiveRenderedWardrobe != EOGLuminousV3Wardrobe::Clothed ||
+        (GetCharacterMovement() &&
+         (!GetCharacterMovement()->IsMovingOnGround() ||
+          GetVelocity().SizeSquared2D() > FMath::Square(12.f))))
+    {
+        LastLuminousError = TEXT("Gate09 native emotes require stationary Luminous Base CLOTHED");
+        return false;
+    }
+    static const TCHAR* Paths[] = {
+        TEXT("/Game/Gate09_QA_20261019/TestSingle/G09_LuminousV3_Idle_01_Thoughtful.G09_LuminousV3_Idle_01_Thoughtful"),
+        TEXT("/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_02_Greeting.G09_LuminousV3_Idle_02_Greeting"),
+        TEXT("/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_03_Expressive.G09_LuminousV3_Idle_03_Expressive"),
+        TEXT("/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Emote_Bow_Source.G09_LuminousV3_Emote_Bow_Source"),
+    };
+    const int32 Index = static_cast<int32>(Emote);
+    if (Index < 0 || Index >= UE_ARRAY_COUNT(Paths))
+    {
+        LastLuminousError = TEXT("Unknown Gate09 native emote");
+        return false;
+    }
+    UAnimSequence* Clip = LoadObject<UAnimSequence>(nullptr, Paths[Index]);
+    if (!Clip || !SetLuminousNativeMotionClip(Clip, false))
+        return false; // Existing strict reference-skeleton / pose checks.
+    bGate09EmotePlaying = true;
+    Gate09EmoteEndTime = GetWorld()->GetTimeSeconds() + Clip->GetPlayLength();
+    UE_LOG(LogTemp,Display,TEXT("G12_GATE09_EMOTE_STARTED index=%d clip=%s"),
+        Index,*Clip->GetPathName());
+    return true;
+}
+void AOGLuminousV3PlayableCharacter::InterruptGate09AuthoredEmote()
+{
+    if (!bGate09EmotePlaying) return;
+    if (RuntimeParts.IsValidIndex(3) && RuntimeParts[3])
+        RuntimeParts[3]->Stop();
+    bGate09EmotePlaying = false;
+    Gate09EmoteEndTime = 0.f;
+    CurrentNativeClip = nullptr;
+    CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
+}
 UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     EOGLuminousV3MotionPhase Phase) const
 {
@@ -601,6 +665,16 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
         }
     }
     const float Now = GetWorld()->GetTimeSeconds();
+    if (bGate09EmotePlaying)
+    {
+        const UCharacterMovementComponent* Move = GetCharacterMovement();
+        if (Now >= Gate09EmoteEndTime ||
+            (Move && (!Move->IsMovingOnGround() ||
+              GetVelocity().SizeSquared2D() > FMath::Square(12.f))))
+            InterruptGate09AuthoredEmote();
+        else
+            return; // Allow the entire authored pose to play, without Idle resetting it.
+    }
     if (bRunNonPersistentWardrobeQACycle && QACycleStep < 3 &&
         Now >= QANextCycleSeconds)
     {
@@ -652,6 +726,8 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
     }
     GetWorldTimerManager().ClearTimer(QAWorldModeTimer);
     CurrentNativeClip = nullptr;
+    bGate09EmotePlaying = false;
+    Gate09EmoteEndTime = 0.f;
     RuntimeParts.Reset();
     bCompatibleNativeMotion = false;
     bLuminousReady = false;

@@ -1,0 +1,52 @@
+{
+  "source_archive": "D:\\NoWorld_Art_Production\\NoWorld_FirstWorld_RegionKit_R1_20261019.zip",
+  "archive_sha256": "0b12490cf3559f134b1ec40514c318604e0f4c27ae9a5468a1328460b7eb1db9",
+  "staged_artifacts": [
+    {
+      "name": "anchors/regional_roads.fbx",
+      "bytes": 98140,
+      "sha256": "c0c157388f59f052185380a66c8e0e5fc107181490ef49fc14a335b6fee7398a"
+    },
+    {
+      "name": "modules/moss_rock.glb",
+      "bytes": 6781532,
+      "sha256": "f324307832e4a2799eae54ca4946dc5e03267051f9e734e98126747a26ff7c22"
+    },
+    {
+      "name": "terrain/NW_RiverVale_terrain_height_float32.raw",
+      "bytes": 1052676,
+      "sha256": "ab4c8f84d1b24494eb017f53c53a035adafaa3d65d42ac9f4197be4a4117ead7"
+    },
+    {
+      "name": "terrain/NW_RiverVale_CrownBasinRivenEscarpment_height_513_R16.png",
+      "bytes": 340725,
+      "sha256": "a96be0d00278e8bb8af0c471e9d0ea0c6c94c2944835be97b48af8ffd4b35cfd"
+    },
+    {
+      "name": "terrain/NW_RiverVale_soil_placement_mask_513_R16.png",
+      "bytes": 349793,
+      "sha256": "bd1e494783991845ff657f411a02b4c495528fd949e62158fd61d75609d1b500"
+    },
+    {
+      "name": "contracts/anchor_registry_candidate.json",
+      "bytes": 3668,
+      "sha256": "dc78c5fd35676462f7f437342a295b1c091a03cb4336d706fed75882ab430111"
+    },
+    {
+      "name": "contracts/GATE12_UNREAL_PCG_HANDOFF.md",
+      "bytes": 4334,
+      "sha256": "e44ebe53fd80a43c4e2668b38ef16cb0aeb60c7d220739416638adef1cfdfe0d"
+    },
+    {
+      "name": "procedural/scatter_rules.json",
+      "bytes": 1656,
+      "sha256": "54cdaad111c98d4b7756ef92e810b23285549e4e1b3cf9a3570c9f0240030299"
+    },
+    {
+      "name": "procedural/tile_index.json",
+      "bytes": 250296,
+      "sha256": "6cbb69626d80dcd87b3a58aa8f0f3459d73e34597aff7fd2d2d48d4a275d8426"
+    }
+  ],
+  "status": "EXACT_SOURCE_STAGED_NOT_YET_NATIVE_UNREAL_IMPORT"
+}

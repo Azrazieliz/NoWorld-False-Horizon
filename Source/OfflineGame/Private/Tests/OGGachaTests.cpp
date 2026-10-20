@@ -27,6 +27,9 @@ FOGGachaBannerDefinition MakeSingleFeaturedTopBanner()
     Banner.TopRarity = TEXT("UR");
     Banner.SoftPityStart = 0;
     Banner.HardPity = 1;
+    // Single-top fixture cannot represent an independent limited 50/50;
+    // the new production validation correctly rejects that dishonest pool.
+    Banner.bFeaturedGuaranteeAfterMiss = false;
 
     FOGGachaPoolEntry Entry;
     Entry.IdentityId = FOGContentId(TEXT("test:character.alpha"));
@@ -322,6 +325,67 @@ bool FOGGachaTicketFirstPaymentTest::RunTest(
         *Directory,
         false,
         true);
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FOGGachaD02NativeAdditiveProbabilityTest,
+    "OfflineGame.Gacha.D02AdditivePityFeaturedPoolAndHonestTenPullLock",
+    EAutomationTestFlags_ApplicationContextMask |
+        EAutomationTestFlags::EngineFilter)
+
+bool FOGGachaD02NativeAdditiveProbabilityTest::RunTest(const FString&)
+{
+    // Self-contained, entirely noncanonical deterministic test pool.
+    // Official D01 all-six MR-top rate profile totals 10,000 basis points.
+    FOGGachaBannerDefinition Banner;
+    Banner.BannerId = FOGContentId(TEXT("test:banner.all_six_mr_profile_A"));
+    Banner.CurrencyId = FOGContentId(TEXT("test:currency.not_real"));
+    Banner.PityCategory = TEXT("test:mr_limited");
+    Banner.TopRarity = TEXT("MR");
+    Banner.SoftPityStart = 50;
+    Banner.SoftPityBonusPerPullBps = 500;
+    Banner.HardPity = 70;
+    Banner.bFeaturedGuaranteeAfterMiss = true;
+    const FName Grades[] = {TEXT("R"),TEXT("SR"),TEXT("SSR"),
+        TEXT("UR"),TEXT("LR"),TEXT("MR"),TEXT("MR")};
+    const int32 Weights[] = {6500,1800,900,450,230,60,60};
+    for (int32 Index=0;Index<7;++Index)
+    {
+        FOGGachaPoolEntry E;
+        E.IdentityId = FOGContentId(FString::Printf(
+            TEXT("test:character.d02_only_%d"),Index));
+        E.VersionId = FOGContentId(FString::Printf(
+            TEXT("test:version.d02_only_%d"),Index));
+        E.Rarity = Grades[Index];
+        E.Weight = Weights[Index];
+        E.bFeatured = Index==5;
+        Banner.Entries.Add(E);
+    }
+    FString Error;
+    TestTrue(TEXT("Independent featured and standard top pool required"),
+        FOGGachaService::ValidateBanner(Banner,Error));
+    TestEqual(TEXT("Before 51 base MR chance 1.2%"),
+        FOGGachaService::CalculateTopRarityChanceBps(Banner,50),120);
+    TestEqual(TEXT("At 51 MR chance 1.2% +5 points =6.2%"),
+        FOGGachaService::CalculateTopRarityChanceBps(Banner,51),620);
+    TestEqual(TEXT("At 69 chance 96.2%"),
+        FOGGachaService::CalculateTopRarityChanceBps(Banner,69),9620);
+    TestEqual(TEXT("At 70 hard pity 100%"),
+        FOGGachaService::CalculateTopRarityChanceBps(Banner,70),10000);
+    Banner.Entries.Pop();
+    TestFalse(TEXT("Reject dishonest one-sided featured 50/50 pool"),
+        FOGGachaService::ValidateBanner(Banner,Error));
+    FOGSQLiteWorldStore Store; // Not opened: ten-pull MUST reject before writes.
+    FOGGachaService Service(Store);
+    TArray<FOGGachaPullResult> Results;
+    TestFalse(TEXT("Deferred SR+ ten-pull never charges or creates ownership"),
+        Service.PullBatch(Banner,FOGEntityId::NewId(),0,42,10,Results,Error));
+    TestTrue(TEXT("Ten-pull makes specific safety constraint visible"),
+        Error.Contains(TEXT("SR+")));
+    TestTrue(TEXT("Blocked ten-pull returned no Manifestations"),
+        Results.IsEmpty());
     return true;
 }
 

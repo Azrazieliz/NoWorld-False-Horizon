@@ -394,4 +394,52 @@ bool FOGKnowledgePromotionAdultHeroicStateTest::RunTest(
     return true;
 }
 
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FOGItemRealOwnershipAndUniqueClaimRegression,
+    "OfflineGame.Items.D09OwnerEntitlementAndUniquePhysicalEquipment",
+    EAutomationTestFlags_ApplicationContextMask |
+        EAutomationTestFlags::EngineFilter)
+bool FOGItemRealOwnershipAndUniqueClaimRegression::RunTest(const FString&)
+{
+    const FString Directory=MakeCharacterStateTestDirectory();
+    IFileManager::Get().MakeDirectory(*Directory,true);
+    FOGSQLiteWorldStore Store;
+    FString Error;
+    if (!TestTrue(TEXT("Open isolated economy DB"),
+        Store.Open(FPaths::Combine(Directory,TEXT("unique_item.db")),Error)))
+        return false;
+    const FOGEntityId RulerA=FOGEntityId::NewId();
+    const FOGEntityId RulerB=FOGEntityId::NewId();
+    TestTrue(TEXT("RulerA"),PersistTestEntity(Store,RulerA,TEXT("ruler"),Error));
+    TestTrue(TEXT("RulerB"),PersistTestEntity(Store,RulerB,TEXT("ruler"),Error));
+    FOGInventoryEquipmentService Equipment(Store);
+    FOGEntityId Item;
+    TestTrue(TEXT("Create A-owned physical equipment"),
+        Equipment.CreateItem(RulerA,FOGContentId(TEXT("test:item.unique_physical")),
+        FOGContentId(),FOGContentId(),3,Item,Error));
+    const FOGContentId MainHand(TEXT("test:slot.hand"));
+    const FOGContentId BackSlot(TEXT("test:slot.back"));
+    auto AnatomyAccepts=[](const FOGEntityId&,const FOGContentId&,
+            const FOGItemInstanceRecord&,FString&)->bool {return true;};
+    TestFalse(TEXT("B cannot equip A's unique item"),
+        Equipment.EquipItem(RulerB,MainHand,Item,AnatomyAccepts,Error));
+    TestTrue(TEXT("Explicit owner mismatch error"),
+        Error.Contains(TEXT("owner mismatch")));
+    TestTrue(TEXT("Actual owner can equip physical item"),
+        Equipment.EquipItem(RulerA,MainHand,Item,AnatomyAccepts,Error));
+    TestFalse(TEXT("Same item cannot appear in second equipment slot"),
+        Equipment.EquipItem(RulerA,BackSlot,Item,AnatomyAccepts,Error));
+    TestTrue(TEXT("Unique item claim collision reported"),
+        Error.Contains(TEXT("already bound")));
+    bool bFound=false;
+    FOGEquipmentBindingRecord Existing;
+    TestTrue(TEXT("Original equipment binding intact"),
+        Store.TryReadEquipmentBinding(RulerA,MainHand,bFound,Existing,Error));
+    TestTrue(TEXT("Original unique physical item still equipped"),
+        bFound && Existing.ItemId==Item);
+    IFileManager::Get().DeleteDirectory(*Directory,false,true);
+    return true;
+}
+
 #endif

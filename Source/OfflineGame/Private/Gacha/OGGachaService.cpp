@@ -12,12 +12,26 @@ bool SelectWeightedEntry(
     int32 PullOrdinalSinceTop,
     bool bTopOnly,
     bool bFeaturedTopOnly,
+    bool bUnfeaturedTopOnly,
     int32& OutIndex,
     FString& OutError)
 {
     TArray<int64> EffectiveWeights;
     EffectiveWeights.Init(0, Banner.Entries.Num());
 
+    // The reviewed soft-pity rule adds percentage POINTS to top-rarity
+    // probability, not a multiplier to entry weights.
+    const bool bAdditivePity = !bTopOnly && !bFeaturedTopOnly &&
+        !bUnfeaturedTopOnly && Banner.SoftPityStart > 0 &&
+        PullOrdinalSinceTop > Banner.SoftPityStart &&
+        Banner.SoftPityBonusPerPullBps > 0;
+    bool bSoftTop = false;
+    if (bAdditivePity)
+    {
+        const int32 EffectiveTopBps =
+            FOGGachaService::CalculateTopRarityChanceBps(Banner, PullOrdinalSinceTop);
+        bSoftTop = Rng.NextRange(0, 10000) < EffectiveTopBps;
+    }
     int64 TotalWeight = 0;
     for (int32 Index = 0; Index < Banner.Entries.Num(); ++Index)
     {
@@ -25,31 +39,14 @@ bool SelectWeightedEntry(
         const bool bTop = Entry.Rarity == Banner.TopRarity;
 
         if ((bTopOnly && !bTop) ||
-            (bFeaturedTopOnly && (!bTop || !Entry.bFeatured)))
+            (bFeaturedTopOnly && (!bTop || !Entry.bFeatured)) ||
+            (bUnfeaturedTopOnly && (!bTop || Entry.bFeatured)) ||
+            (bAdditivePity && bTop != bSoftTop))
         {
             continue;
         }
 
-        int64 Weight = Entry.Weight;
-        if (!bTopOnly &&
-            !bFeaturedTopOnly &&
-            bTop &&
-            Banner.SoftPityStart > 0 &&
-            PullOrdinalSinceTop > Banner.SoftPityStart &&
-            Banner.SoftPityBonusPerPullBps > 0)
-        {
-            const int64 SoftSteps =
-                static_cast<int64>(PullOrdinalSinceTop - Banner.SoftPityStart);
-            const int64 MultiplierBps =
-                10000 +
-                SoftSteps *
-                static_cast<int64>(Banner.SoftPityBonusPerPullBps);
-
-            Weight = FMath::Max<int64>(
-                1,
-                (Weight * MultiplierBps) / 10000);
-        }
-
+        const int64 Weight = Entry.Weight;
         if (Weight <= 0)
         {
             continue;
@@ -90,6 +87,29 @@ bool SelectWeightedEntry(
 }
 }
 
+int32 FOGGachaService::CalculateTopRarityChanceBps(
+    const FOGGachaBannerDefinition& Banner, int32 PullOrdinalSinceTop)
+{
+    if (Banner.HardPity > 0 && PullOrdinalSinceTop >= Banner.HardPity)
+        return 10000;
+    int64 All = 0;
+    int64 Top = 0;
+    for (const FOGGachaPoolEntry& Entry : Banner.Entries)
+    {
+        if (Entry.Weight <= 0) continue;
+        All += Entry.Weight;
+        if (Entry.Rarity == Banner.TopRarity) Top += Entry.Weight;
+    }
+    if (All <= 0) return 0;
+    const int64 BaseBps = (Top * 10000 + All / 2) / All;
+    const int64 Bonus = PullOrdinalSinceTop > Banner.SoftPityStart &&
+        Banner.SoftPityStart > 0
+        ? static_cast<int64>(PullOrdinalSinceTop - Banner.SoftPityStart) *
+            static_cast<int64>(Banner.SoftPityBonusPerPullBps)
+        : 0;
+    return static_cast<int32>(FMath::Clamp<int64>(BaseBps + Bonus, 0, 10000));
+}
+
 bool FOGGachaService::ValidateBanner(
     const FOGGachaBannerDefinition& Banner,
     FString& OutError)
@@ -128,6 +148,7 @@ bool FOGGachaService::ValidateBanner(
 
     bool bHasTop = false;
     bool bHasFeaturedTop = false;
+    bool bHasUnfeaturedTop = false;
     int64 BaseWeightTotal = 0;
 
     for (const FOGGachaPoolEntry& Entry : Banner.Entries)
@@ -152,6 +173,7 @@ bool FOGGachaService::ValidateBanner(
         {
             bHasTop = true;
             bHasFeaturedTop |= Entry.bFeatured;
+            bHasUnfeaturedTop |= !Entry.bFeatured;
         }
     }
 
@@ -161,9 +183,10 @@ bool FOGGachaService::ValidateBanner(
         return false;
     }
 
-    if (Banner.bFeaturedGuaranteeAfterMiss && !bHasFeaturedTop)
+    if (Banner.bFeaturedGuaranteeAfterMiss &&
+        (!bHasFeaturedTop || !bHasUnfeaturedTop))
     {
-        OutError = TEXT("Featured guarantee requires at least one featured top-rarity entry.");
+        OutError = TEXT("True featured 50/50 requires BOTH featured and standard top-rarity entries.");
         return false;
     }
 
@@ -179,6 +202,13 @@ bool FOGGachaService::PullBatch(const FOGGachaBannerDefinition& Banner,
     if (Count < 1 || Count > 10)
     {
         OutError = TEXT("A batch requires between one and ten pulls.");
+        return false;
+    }
+    // D03 floor method remains deferred. Never charge for a ten-pull
+    // without its mandatory SR+ atomic floor; fail before transaction.
+    if (Count == 10)
+    {
+        OutError = TEXT("Ten-pull unavailable until approved SR+ floor implementation.");
         return false;
     }
     if (!ValidateBanner(Banner, OutError) || !RulerId.IsValid())
@@ -387,6 +417,7 @@ bool FOGGachaService::PullInternal(
             PullOrdinalSinceTop,
             bHardPity,
             false,
+            false,
             SelectedIndex,
             Error))
     {
@@ -399,22 +430,16 @@ bool FOGGachaService::PullInternal(
     bool bTopRarity =
         Selected->Rarity == Banner.TopRarity;
 
-    if (bTopRarity &&
-        State.bFeaturedGuarantee &&
-        !Selected->bFeatured)
+    if (bTopRarity && Banner.bFeaturedGuaranteeAfterMiss)
     {
+        // Independent exactly balanced selection AFTER a top-rarity draw.
+        const bool bUseFeatured = State.bFeaturedGuarantee ||
+            Rng.NextRange(0, 2) == 0;
         if (!SelectWeightedEntry(
-                Banner,
-                Rng,
-                PullOrdinalSinceTop,
-                true,
-                true,
-                SelectedIndex,
-                Error))
-        {
+                Banner, Rng, PullOrdinalSinceTop,
+                true, bUseFeatured, !bUseFeatured,
+                SelectedIndex, Error))
             return Fail(Error);
-        }
-
         Selected = &Banner.Entries[SelectedIndex];
         bTopRarity = true;
     }

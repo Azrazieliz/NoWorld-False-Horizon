@@ -186,6 +186,26 @@ bool FOGInventoryEquipmentService::EquipItem(
         return false;
     }
 
+    // Equipment requires the wearer to be the actual item owner, or an
+    // independently owned Manifestation whose Ruler owns the item. This
+    // prevents equipping equipment from unrelated NPC/player inventories.
+    bool bLawfulOwner = Item.OwnerEntityId == WearerEntityId;
+    if (!bLawfulOwner)
+    {
+        bool bManifestationFound = false;
+        FOGCharacterManifestationRecord Owned;
+        if (!Store.TryReadCharacterManifestation(
+                WearerEntityId, bManifestationFound, Owned, OutError))
+            return false;
+        bLawfulOwner = bManifestationFound &&
+            Owned.ManifestationId == WearerEntityId &&
+            Owned.OwningRulerId == Item.OwnerEntityId;
+    }
+    if (!bLawfulOwner)
+    {
+        OutError = TEXT("Equipment owner mismatch: item does not belong to wearer or owning Ruler.");
+        return false;
+    }
     if (!SlotValidator(
             WearerEntityId,
             SlotId,
