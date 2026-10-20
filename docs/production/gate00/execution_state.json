@@ -73,16 +73,16 @@
     },
     {
       "id": "P0-MOTION",
-      "owner": "Gate09",
-      "status": "PHYSICAL_ANDROID_CONNECTED_CLIP_QUALIFICATION_NOT_YET_ATTEMPTED",
+      "owner": "Gate12 (Gate09 dismissed)",
+      "status": "GATE09_DISMISSED_GATE12_NATIVE_IMPORT_FROM_KOIKATSU_MODS_CURRENT_FOUR_ANDROID_NOT_TESTED",
       "source_sha": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
-      "next": "ADB physical Samsung SM-S948B Android 17 confirmed now; build/install version with all four actual Gate09 native AnimSequences bound to real in-game character and capture real deformation, blend, performance and logs. Last APK dates Oct11, predates Oct20 clips and cannot qualify them. Do not bulk import authentic Koikatsu motions until four-clips actually pass."
+      "next": "Preserve 4 old authentic source clips. Gate12 implement actual playable character/AnimBP binding, compile current Android, install on physical device and verify all four. After PASS Gate12 directly catalogs/imports eligible real authentic Koikatsu/mod movement, poses, intimacy, facial, character-version-specific attacks; no new bespoke original author, no fabricated generic motion; mark source missing for unsupported rigs. Preserve existing Gate09 historical assets."
     },
     {
       "id": "P1-KIT",
       "owner": "Gate04",
       "status": "BASE_V6_AND_ALTER_V1_USER_APPROVED_ALTER_V1_FULL_SOURCE_NOW_VERIFIED_NATIVE_NOT_ACCEPTED",
-      "next": "Complete Alter v1 numerical sources retrieved and 17 member SHA manifest validated; Gate12 can read approved exact JSON via project Library and original ZIP. Implement Base v6 and Alter v1 separately, full 3+6/Ultimate/Fantasm effects in two executors, Gate09 source-authentic VFX. No canonical registration nor native PASS implied."
+      "next": "Both Base v6 and exact-source Alter v1 combat kit approved. Gate12 owns native two-executor mechanics, animation adaptation and existing VFX/audio source integration; Gate09 dismissed, do not await them. Actual Alter native assets not yet accepted."
     },
     {
       "id": "P1-REGISTRY",
@@ -134,13 +134,13 @@
       "next": "Consume all 18 Gate07 approved original recommendation A directions, including former D03/D04/D06/D10/D15, retaining physical item IDs/provenance and not fabricating catalog ownership."
     },
     "Gate09": {
-      "status": "BLOCKED_ON_REAL_MOTION_AND_FX",
-      "next": "Deliver actual rig/skeleton-specific authored idle/carry/movement/attack/aim/release/contact/recovery sequences with grip sockets, animation notifies, transitions, VFX/SFX asset bindings and render comparisons for at least unarmed, sling/bow, magic, firearm and tech styles."
+      "status": "DISMISSED_20261020_NO_NEW_ASSETS",
+      "next": "Gate12 assumes authentic Koikatsu/mod source acquisition, retargeting, native import and montage/notifies where real compatible clips exist; otherwise explicitly source missing."
     },
     "Gate12": {
       "status": "SOURCE_INCREMENT_IMPLEMENTED_FULL_GAMEPLAY_ACCEPTANCE_PENDING",
       "source_sha": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
-      "next": "Integrate already authored Stage-0 source and eligible exact contracts without waiting Gate11 approval, preserving both combat executors. Gameplay and current Android unverified."
+      "next": "Complete existing two executors and weapon/ability animation by imported compatible authentic Koikatsu/mod source only. Device-gate four existing clips first; no newly authored generic filler, no Gate09 commission; implementation beyond available motion remains source-blocked."
     },
     "dependencies_reference": "docs/production/gate12/GATE12_WEAPON_MOTION_DEPENDENCIES_20261018.md"
   },
@@ -168,7 +168,7 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "No additional ZIP upload or Android connection needed at this moment. Gate12 native integration and current 4-clip Android APK/gameplay qualification are now executable; recheck device connection before test. No further creative approval required.",
+  "next_user_action": "All 18 Gate07 choices approved; Alter exact source verified; Android last physically connected. Gate12 should execute, not request another plan or commission Gate09. Only genuine source missing or physical/device/tool errors are concrete blockers.",
   "received_reports_20261020": {
     "status": "FOUR_GATE_REPORTS_COMMITTED_ON_GATE00_COORDINATION_BRANCH",
     "index": "docs/production/gate00/received_reports/README_20261020.md",
@@ -275,5 +275,23 @@
     "library_file_id": "libfile_34e1ff025a70819193e7444e40b9e855",
     "full_mechanics_retrievable": true,
     "native_gameplay_pass": false
+  },
+  "latest_user_execution_override_20261020": {
+    "source": "User direct 2026-10-20 Gate09 dismissal and original Koikatsu-only fallback",
+    "gate09": "DISMISSED_NO_FUTURE_ART_ANIMATION_COMMISSION",
+    "gate12": "SOLE_NATIVE_ANIMATION_AND_KOIKATSU_MOD_SOURCE_IMPORT_OWNER",
+    "original_motion_producer_available": false,
+    "prior_four_native_clips": "PRESERVED_REQUIRE_ANDROID_GAMEPLAY_PASS",
+    "source_policy": "AUTHENTIC_KOIKATSU_INSTALLED_MODS_ELIGIBLE_WITH_HASH_RIG_RIGHTS",
+    "unavailable_clip": "SOURCE_MISSING_NO_GENERATED_OR_GENERIC_MOTION",
+    "gate07": "18_OF_18_USER_APPROVED",
+    "alter": "ORIGINAL_EXACT_SOURCE_VERIFIED",
+    "handoff": "docs/production/gate00/GATE00_20261020_GATE09_REMOVAL_GATE12_FULL_NATIVE_COMMISSION.md"
+  },
+  "gate_ownership_override": {
+    "Gate09": "DISMISSED_ALL_FUTURE_ANIMATION_WORK",
+    "Gate12": "SOLE_NEW_NATIVE_KOIKATSU_MOD_MOTION_IMPORT_RETARGET_BIND_QUALIFY",
+    "Gate00": "CANONICAL_REGISTRY_INTAKE",
+    "Gate02": "AUTHORED_WORLD_ANCHORS_ONLY"
   }
 }
