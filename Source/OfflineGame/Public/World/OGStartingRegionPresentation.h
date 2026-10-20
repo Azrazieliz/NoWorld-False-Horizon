@@ -97,6 +97,14 @@ public:
     void SetFoundationIntegrationBoundary(AActor* Provider)
     { FoundationIntegrationBoundary = Provider; if (Provider) ClearGeneratedContent(); }
 
+    /** Commits one already-authorized Gate02 source-scatter removal to the
+     * canonical offline store by its stable authored ID. World interaction
+     * owns permission/tool/harvest validation, never this presentation actor.
+     * No synthesized loot, NPC or World Canon is produced here. */
+    bool PersistGate02SourceScatterRemoval(
+        const FString& Gate02StableScatterId,
+        FString& OutError);
+
     UFUNCTION(BlueprintPure, Category = "OfflineGame|World|Generation")
     int32 GetActiveSeed() const { return ActiveSeed; }
 
@@ -192,6 +200,8 @@ private:
     void LoadR1SourceScatter();
     void RefreshR1StreamedTiles(bool bForce);
     float R1HeightAt(int32 X,int32 Y) const;
+    // One shared stable-ID resolver for streaming reads and canonical writes.
+    static FOGEntityId R1PersistentStateId(const FString& SourceId);
 
     static constexpr int32 GeneratorVersion = 1;
 

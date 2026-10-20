@@ -64,7 +64,7 @@ UStaticMesh* R1ActualModule(int32 Type)
     if (Type<0 || Type>=4) return nullptr;
     return LoadObject<UStaticMesh>(nullptr,Paths[Type]);
 }
-FOGEntityId R1PersistentStateId(const FString& SourceId)
+FOGEntityId ResolveR1PersistentIdFromOriginalSource(const FString& SourceId)
 {
     // Namespaced deterministic 128-bit UUID; never share the historical
     // Registry's IDs or create a random World entity on every stream cycle.
@@ -75,6 +75,12 @@ FOGEntityId R1PersistentStateId(const FString& SourceId)
         return FOGEntityId(Parsed);
     return FOGEntityId();
 }
+}
+
+FOGEntityId AOGStartingRegionGenerator::R1PersistentStateId(
+    const FString& SourceId)
+{
+    return ResolveR1PersistentIdFromOriginalSource(SourceId);
 }
 
 float AOGStartingRegionGenerator::R1HeightAt(int32 X,int32 Y) const
