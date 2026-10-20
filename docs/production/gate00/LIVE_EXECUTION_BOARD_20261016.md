@@ -1,5 +1,15 @@
 # Gate 00 — Live execution board (2026-10-16)
 
+## 2026-10-20 — FOUR CROSS-GATE REPORTS NOW COMMITTED TO GATE00
+
+**Authoritative latest received-report index:** [Gate02 + Gate04 + Gate07 + Gate09 intake registry](received_reports/README_20261020.md). Full Gate00 report records have been committed under `received_reports/` for **Gate04 approved Base v6**, **Gate07 13 accepted / 5 deferred economy decisions**, and **Gate09 4 genuine native AnimSequences**, in addition to the existing **Gate02 R1 verified 3.2km region-kit intake**. [Current machine state](execution_state.json) supersedes historical status rows below.
+
+**Native source reconciliation:** Gate12 current `f5f2345` already has 4 native Gate09 clips cold-loaded, Gate02 road/moss/height inputs in an isolated Unreal QA map, and Gate07 source-level fixes; NOT a complete motion library, true UE Landscape/World, completed economy or Android acceptance. Gate11 branch has Base v6 source-derived staged IDs but not complete native/canonical character activation. The **separately approved Alter combat-kit payload is absent from supplied Base-only v6 ZIP** and must be retrieved exactly, never guessed. The **Alter 16 October source ZIP has 3 user-approved Party cards/material sources, but not finished Alter GLB/FBX/BLEND assets**; current CLOTHED PMX is source-verified, heavy Blender import interrupted due to low RAM (not complete). Gate12 should continue from its latest native sources without repeating finished imports or reopening completed art.
+
+**No source binary/public redistribution implied:** Gate04/Gate07 attached original ZIP files, Gate09 private source binaries and Gate02 715MB art archive are not pushed to this public coordination branch; their report records, hashes, source pointers and specialist branch links are version controlled.
+
+
+
 **One authoritative coordination board; user-facing:** https://github.com/Azrazieliz/Offline-Game/issues/25
 
 ## 2026-10-19 P0 Gate02 R1 first-World source intake — latest environment evidence
