@@ -284,12 +284,16 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     {
         const FOGEntityId Id=Action.TargetUnitIds[0];
         constexpr int32 Steps[]={4800,6400,10500};
+        bool bActualThirdHit=false;
         for(int32 I=0;I<3;++I)
         {
             const int32 Before=Own.RuptureSeals.FindRef(Id);
             if(!Strike(Id,Steps[I],1800,I==0||I==2,I==2 && Before>=2))
                 return false;
-            if(I==2 && Before>=3)
+            if(I==2)
+                bActualThirdHit=FOGLargeNumber::Compare(
+                    GetLastEffectiveHpDamage(Id),FOGLargeNumber())>0;
+            if(I==2 && Before>=3 && bActualThirdHit)
             {
                 Own.RuptureSeals.Remove(Id);
                 Own.SealExpiryOwnerAction.Remove(Id);
@@ -297,7 +301,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
             }
         }
         if(Own.bMartyrNextFinisherPending &&
-           Current<=Own.MartyrStanceExpires)
+           Current<=Own.MartyrStanceExpires && bActualThirdHit)
         {
             Own.bMartyrNextFinisherPending=false;
             if(!Strike(Id,5000,1800,false,false))return false;
@@ -357,12 +361,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     else if(bUlt)
     {
         const FOGEntityId Id=Action.TargetUnitIds[0];
-        const bool bFinisher=Own.RuptureSeals.FindRef(Id)>=3;
-        if(bFinisher)
-        {
-            Own.RuptureSeals.Remove(Id);
-            Own.SealExpiryOwnerAction.Remove(Id);
-        }
+        const bool bEligibleFinisher=Own.RuptureSeals.FindRef(Id)>=3;
+        bool bFirstHitConfirmed=false;
         constexpr int32 Steps[]={5500,6500,7500,9000,10500,13500};
         for(int32 I=0;I<6;++I)
         {
@@ -371,8 +371,19 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
                 FOGLargeNumber::ScaleByBasisPoints(Source.Stats.MaxHp,4000))<=0)
                 Scale=Scale*12000/10000;
             if(!Strike(Id,Scale,2200,false,false))return false;
+            if(I==0 && bEligibleFinisher &&
+               FOGLargeNumber::Compare(GetLastEffectiveHpDamage(Id),
+                                         FOGLargeNumber())>0)
+            {
+                // Hollow Crown v1 consumes three seals on a successful
+                // first hit ONLY; no mark loss on blocked/missed opener.
+                bFirstHitConfirmed=true;
+                Own.RuptureSeals.Remove(Id);
+                Own.SealExpiryOwnerAction.Remove(Id);
+            }
         }
-        if(bFinisher && !Strike(Id,13000,2200,false,false))return false;
+        if(bFirstHitConfirmed &&
+           !Strike(Id,13000,2200,false,false))return false;
     }
     // Alter's P1 18% (Harvest replacement 22%), hard 16% owner max-HP
     // allowance, and only actual blood-eligible target HP loss.

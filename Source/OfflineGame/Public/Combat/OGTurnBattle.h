@@ -366,6 +366,12 @@ private:
     void TryResolveApprovedLuminousAlterRevival(
         const FOGEntityId& UnitId);
 
+    // Dry legal-action check before writing any timeline, battle log or HP.
+    bool PrevalidateLuminousActionWithoutSideEffects(
+        const FOGResolvedCombatAction& Action,
+        const FOGCombatUnitState& Source,
+        FString& OutError) const;
+
     bool ExecuteApprovedLuminousBaseAction(
         const FOGResolvedCombatAction& Action,
         FOGCombatUnitState& Source,

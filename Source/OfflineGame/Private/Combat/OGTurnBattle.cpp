@@ -449,6 +449,12 @@ bool FOGTurnBattle::ApplyResolvedAction(
         }
     }
 
+    // Validate the approved 3A/6P action BEFORE writing the declared event
+    // or advancing the action-value timeline. A rejected cast must not
+    // consume a player turn or leave a false combat event in the log.
+    if(!PrevalidateLuminousActionWithoutSideEffects(Action,*Source,OutError))
+        return false;
+
     FOGCombatLogEvent Declared;
     Declared.Type = EOGCombatLogEventType::ActionDeclared;
     Declared.SourceUnitId = Action.SourceUnitId;
