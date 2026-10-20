@@ -1,3 +1,5 @@
+> **LIVE AUTHORITY 2026-10-20:** [Gate00 now owns canonical coordination; Gate11 retired; Gate12 automated/native intake and full P0 production order](GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md). [Updated machine state](execution_state.json). Existing historical tables below mentioning Gate11 as a blocker are superseded. Four Base CLOTHED clips + first World R1 limited QA and Gate07 source fixes exist, NOT a completed playable World/Alter/canon/Android game. No Gate09 PC resource hold; safe native development is authorized. Further specialist conversations do **not** automatically execute from an issue comment.
+
 # Gate 00 — Live execution board (2026-10-16)
 
 ## 2026-10-20 — FOUR CROSS-GATE REPORTS NOW COMMITTED TO GATE00
