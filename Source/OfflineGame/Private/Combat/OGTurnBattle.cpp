@@ -666,10 +666,22 @@ bool FOGTurnBattle::ApplyHealing(
         return false;
     }
 
-    Target->CurrentHp =
-        FOGLargeNumber::Add(
-            Target->CurrentHp,
-            Amount);
+    // Shared canonical healing must never make HP exceed actual resolved
+    // MaxHP. Base v6 overheal is an independently owned Dawn barrier,
+    // not invisible uncapped HP; normal healing logs only real restored HP.
+    if (FOGLargeNumber::Compare(Target->Stats.MaxHp,FOGLargeNumber())<=0)
+    {
+        OutError=TEXT("Resolved healing target has no valid positive MaxHP.");
+        return false;
+    }
+    const FOGLargeNumber HpBefore=Target->CurrentHp;
+    const FOGLargeNumber NominalRestored=FOGLargeNumber::Add(HpBefore,Amount);
+    Target->CurrentHp=FOGLargeNumber::Compare(
+        NominalRestored,Target->Stats.MaxHp)>0
+        ? Target->Stats.MaxHp : NominalRestored;
+    const FOGLargeNumber ActuallyRestored=FOGLargeNumber::Add(
+        Target->CurrentHp,
+        FOGLargeNumber(-HpBefore.Significand,HpBefore.Exponent10));
 
     FOGCombatLogEvent Healing;
     Healing.Type =
@@ -678,8 +690,8 @@ bool FOGTurnBattle::ApplyHealing(
     Healing.TargetUnitId = TargetUnitId;
     Healing.SkillId = SkillId;
     Healing.PayloadJson = FString::Printf(
-        TEXT("{\"amount\":\"%s\"}"),
-        *Amount.ToDebugString());
+        TEXT("{\"amount\":\"%s\",\"nominal_healing\":\"%s\"}"),
+        *ActuallyRestored.ToDebugString(),*Amount.ToDebugString());
     Log.Append(MoveTemp(Healing));
 
     return true;
