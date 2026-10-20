@@ -73,8 +73,8 @@
       "ALTER": {
         "combat_kit": "USER_APPROVED_V1",
         "exact_original_zip_name": "Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip",
-        "exact_archive_file_verified_in_this_turn": false,
-        "precise_multipliers_effect_caps_conditions": "PENDING_VERBATIM_SOURCE",
+        "exact_archive_file_verified_in_this_turn": true,
+        "precise_multipliers_effect_caps_conditions": "FULL_APPROVED_JSON_RECEIVED_AND_SHA256_VERIFIED__USE_EXACT_ORIGINAL",
         "origin_rarity": "MR",
         "starting_rank": "Hero",
         "starting_level": 1,
@@ -95,7 +95,7 @@
           "self"
         ],
         "passive_count": 6,
-        "passives_exact_definition_status": "SOURCE_NEEDED",
+        "passives_exact_definition_status": "SOURCE_VERIFIED_READ_ORIGINAL_JSON",
         "resource": {
           "name": "Red Tithe",
           "min": 0,
@@ -121,12 +121,43 @@
           "name": "Cathedral of the Unwritten Death",
           "grade": "World Negation",
           "authored_effects_expected": 4,
-          "actual_effects_exact_names": "SOURCE_NEEDED"
+          "actual_effects_exact_names": [
+            "Blood Reversal — Denied Recovery",
+            "Thorn Unbinding — Broken Continuation",
+            "Mirror Debt — No Returned Wound",
+            "Boundary Decree — The Unwritten Margin"
+          ]
         },
         "revival": "One conditional soul-valid self revive per encounter",
         "no_base_kit_inheritance": true,
         "android_gameplay_validated": false,
-        "production_asset_ready": false
+        "production_asset_ready": false,
+        "approved_source": {
+          "archive_name": "Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip",
+          "archive_bytes": 3252143,
+          "archive_sha256": "063be65715a86bd994ae906f144242b544ca635844cc33ab7ec87108e472e30c",
+          "crc_zip_ok": true,
+          "manifest_member_checks": 17,
+          "sha256_manifest_all_match": true,
+          "original_upload_file_id": "file_0000000064008211b57f3ce2f570b0f1",
+          "library_file_id": "libfile_34e1ff025a70819193e7444e40b9e855",
+          "approved_json_filename": "Luminous_Alter_Offensive_Kit_v1_APPROVED_DESIGN.json",
+          "approved_json_sha256": "2c6474548541df55b036eaa5a605805f64bba6fe212d4c91c4013c7fdd1a254c",
+          "approval_record_sha256": "ce23ead657388b11c89dc08722756656ce27de84dd2ee8d09b8d894bafc9f2c4",
+          "frozen_native_projection_sha256": "a401b0a4f076265420f8c528bacf0cc2c46a63d1233ffac8d7ea91255ba144e9",
+          "mechanics_unchanged_from_original_review": true,
+          "receipt": "docs/production/gate00/received_reports/GATE04_ALTER_V1_VERIFIED_SOURCE_INTAKE_20261020.md",
+          "native_acceptance": "NOT_IMPLEMENTED_OR_VALIDATED"
+        },
+        "passive_names": [
+          "Blood’s Accounting",
+          "Anatomy of Ruin",
+          "Ecstasy of Attrition",
+          "Eclipse Harrier",
+          "The Unfinished Death",
+          "Debts the World Cannot Collect"
+        ],
+        "actual_effects_exact_names_from_approved_source": true
       },
       "AWAKENED": {
         "kit": "RESERVED_USER_NOT_YET_AUTHORIZED"
@@ -162,7 +193,11 @@
     "device_gate": {
       "prior_proven_native_clips": 4,
       "required_first": "ALL_FOUR_REAL_GAMEPLAY_CLIPS_PLAYABLE_ON_AUTHORIZED_PHYSICAL_DEVICE",
-      "status": "NOT_VERIFIED_FOR_CURRENT_BUILD"
+      "status": "PHYSICAL_ANDROID_ADB_CONNECTED_MODEL_SM_S948B_ANDROID17__NO_CURRENT_4_CLIP_ANDROID_BUILD_OR_GAMEPLAY_TEST",
+      "old_latest_apk_timestamp": "2026-10-11T23:57:22",
+      "device_present_20261020": true,
+      "installed_game_package_matching_offline_noworld_koikatsu_gate12": false,
+      "android_playback_pass": false
     },
     "after_first_proof": "GATE09+GATE12_AUTHENTIC_KOIKATSU_ELIGIBLE_MOTION_POSE_FACIAL_INTIMACY_TO_NATIVE_UNREAL",
     "method": "AUTHENTIC_SOURCE_TRANSFER_THROUGH_EXISTING_KOIKATSU_BLENDER_UNREAL_PIPELINE",
