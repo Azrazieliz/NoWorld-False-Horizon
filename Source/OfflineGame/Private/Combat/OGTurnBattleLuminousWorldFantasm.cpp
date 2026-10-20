@@ -310,6 +310,17 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
     default:
         break;
     }
+    // Alter P6 Negation Account: +8 Tithe only on genuine successful
+    // World Negation, once for each of the four source rule categories.
+    if(!bBase)
+    {
+        const uint8 Category=static_cast<uint8>(Contest.Rule);
+        if(!Field->AlterNegationRefundedCategories.Contains(Category))
+        {
+            Field->AlterNegationRefundedCategories.Add(Category);
+            AlterState->RedTithe=FMath::Min(100,AlterState->RedTithe+8);
+        }
+    }
     FOGCombatLogEvent Won;
     Won.Type=EOGCombatLogEventType::ActionResolved;
     Won.SourceUnitId=Contest.OwnerManifestationId;

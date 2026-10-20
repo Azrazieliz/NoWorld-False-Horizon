@@ -240,6 +240,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     auto Strike=[&](const FOGEntityId& Id,int32 AtkBps,
                     int32 SiphonRate,bool bSeal,bool bWound)->bool
     {
+        // Source-owned hit provenance must not inherit a previous strike.
+        LastEffectiveHpDamage.Remove(Id);
         FOGCombatUnitState* T=FindMutableUnit(Id);
         if(!T || !T->IsAlive())return true;
         FOGCombatStats Attacker=Source.Stats;
@@ -342,10 +344,26 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     }
     else if(bUlt && Branch==TEXT("ruin"))
     {
+        // Approved Ruin branch grants +10 Tithe once ONLY if its primary
+        // genuinely suffered at least one Ruin hit and died from the cast.
+        const FOGEntityId Primary=Action.TargetUnitIds[0];
+        const FOGCombatUnitState* PrimaryBefore=FindUnit(Primary);
+        const bool bPrimaryAliveBeforeRuin=PrimaryBefore && PrimaryBefore->IsAlive();
+        bool bPrimaryRuinHpHit=false;
         constexpr int32 Steps[]={14500,14500,8000};
         for(const FOGEntityId& Id:Action.TargetUnitIds)
             for(const int32 Step:Steps)
+            {
                 if(!Strike(Id,Step,1800,false,Step==8000))return false;
+                if(Id==Primary &&
+                   FOGLargeNumber::Compare(GetLastEffectiveHpDamage(Id),
+                                             FOGLargeNumber())>0)
+                    bPrimaryRuinHpHit=true;
+            }
+        const FOGCombatUnitState* PrimaryAfter=FindUnit(Primary);
+        if(bPrimaryAliveBeforeRuin && bPrimaryRuinHpHit && PrimaryAfter &&
+           !PrimaryAfter->IsAlive())
+            Own.RedTithe=FMath::Min(100,Own.RedTithe+10);
     }
     else if(bUlt)
     {

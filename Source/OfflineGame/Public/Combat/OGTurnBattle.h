@@ -236,6 +236,7 @@ private:
         int32 AlterBloodReversalSuccessCount = 0;
         TSet<FOGEntityId> AlterThornConsumedTargets;
         bool bAlterMirrorDebtUsed = false;
+        TSet<uint8> AlterNegationRefundedCategories;
     };
     TMap<FOGEntityId,FLuminousFieldState> LuminousFields;
     FOGLuminousAcceptedFieldEligibility LuminousFieldEligibility;
