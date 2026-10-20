@@ -1,3 +1,5 @@
+> **SUPERSEDING USER APPROVAL RECEIVED 20 OCT 2026:** Alongside this unchanged **Base v6** approved design, **Alter v1** is separately USER-APPROVED with explicit Martyr-Executioner identity, 3 actives/6 passives, Red Tithe, Black Mass branches and Cathedral World Negation. [Gate00 exact preserved summary/production handoff](../GATE00_20261020_ALTER_G07_WORLD_MOTION_APPROVALS.md) / [machine-readable approved version record](../GATE00_USER_APPROVAL_OVERLAY_20261020.json). The actual v1 ZIP is named `Gate04_Luminous_Alter_APPROVED_Handoffs_20261019.zip` but its bytes were not available in this Gate00 conversation or initial library/PC search. **Do not derive/copy Alter multipliers, passives or four Fantasm laws from Base v6**. Historical 'original Alter payload missing' means exact payload missing, **NOT creative approval missing**. Gate11 retired; Gate00 retains canonical intake, Gate12 owns technical/native binding.
+
 # RECEIVED — Gate 04 → Gate 00 — Approved Luminous Valentine Base combat kit
 **User-supplied report date:** 19 October 2026  
 **Recorded on Gate 00 branch:** 20 October 2026  
