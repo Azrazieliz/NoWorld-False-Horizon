@@ -2,7 +2,7 @@
   "schema": "NOWORLD_GATE00_EXECUTION_BOARD_V1",
   "updated_local_date": "2026-10-20",
   "timezone": "Europe/Paris",
-  "authority": "Gate00/user; an intent and coordination register, not acceptance of untested game content",
+  "authority": "Gate00 sole active creative/canonical intake authority after Gate11 retirement; Gate12 automated technical/native validation; historical Registry v2 retained.",
   "single_issue": "https://github.com/Azrazieliz/Offline-Game/issues/25",
   "coordination_branch": "coordination/gate00-live-ops-20261016",
   "frozen_foundation_sha": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
@@ -15,7 +15,7 @@
     "next_app_visible_adult_mode_requirement": true,
     "last_current_build_device_verification": "NOT_TESTED",
     "authorization_scope": "Standing approval for non-destructive development APK/device QA, subject to later Gate12 user instruction deferring additional app builds until feasible source implementation is complete; never interrupt an in-flight build or attempt known-low-memory native link.",
-    "current_build_instruction": "DEFER_APP_BUILDS_UNTIL_FEASIBLE_SOURCE_WORK_COMPLETE (Gate12 checkpoint 2026-10-18 20:03 +02)",
+    "current_build_instruction": "NO_GATE09_PC_RESOURCE_HOLD; Gate12 non-destructive native/dev Android work authorized immediately, sequence builds conservatively and check active jobs/memory; no current device PASS",
     "production_app_exists": false,
     "production_release_authorized": false,
     "destructive_uninstall_or_data_wipe_authorized": false
@@ -23,8 +23,9 @@
   "verified_git_heads": {
     "Gate12": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
     "SoftwareMastery": "4f636a14098fb63f9b4b31228c53393a5e3702dc",
-    "Gate09": "8a058a169bfcaf8d4d137da8c135fa32b93ef6f4",
-    "Gate00_prior": "1cf31aba0e3a3e45ff34c62d7b18a6a4510ffd74"
+    "Gate09": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
+    "Gate00_prior": "1cf31aba0e3a3e45ff34c62d7b18a6a4510ffd74",
+    "Gate00_authority_order": "74db0d046b9f2848d9646a58b3c1c9eaa2bd9c17"
   },
   "tasks": [
     {
@@ -32,8 +33,8 @@
       "owner": "Gate12",
       "status": "ACTIVE",
       "acceptance": "Actual iterative dev APK built/cooked/installed and physically tested with evidence for Ruler/World/roster/persistence/Adult Mode; no production release authorization",
-      "next": "Preserve dirty Koikatsu and untracked assets; continue independent P0/P1 native source-system integration and complete the outstanding 18-family gameplay scope without redoing validated modules. Existing weapon motion resolver is PARTIAL; innate/Ultimate/sound additions are source-only and uncompiled. Latest Gate12 checkpoint says DEFER new app builds until feasible source work is done; do not re-trigger an OOM build. When safe and authorized to resume, compile/test only meaningful changed code and proceed to real Android Ruler/World touch/device QA.",
-      "source_sha": "0e1004c04c438f834668a369e9119187888e8895"
+      "next": "Finish or diagnose the Gate12 2026-10-20 pending combined native economy/animation build using safe resources; preserve dirty source. Integrate approved Base v6, original Alter three-state source, Gate02 R1 into real Landscape/PCG/persistent World, Gate09 live motions and Gate07 13 accepted rules; independently advance other 18 requested families, Gate10 approved UI, real dev Android QA when device present. No Gate11 approval dependency.",
+      "source_sha": "f5f2345cfce41d332d097daeb89eeb10bfd247fe"
     },
     {
       "id": "P0-FIDELITY",
@@ -66,26 +67,26 @@
       "id": "P0-MOTION",
       "owner": "Gate09",
       "status": "FOUR_NATIVE_UNREAL_ANIMSEQUENCES_TECHNICAL_PASS_FULL_LIBRARY_INCOMPLETE",
-      "source_sha": "8a058a169bfcaf8d4d137da8c135fa32b93ef6f4",
-      "next": "Gate12 has cold-loaded 4 clips for Base CLOTHED via its 20 October commit; next actual gameplay animation state machine and authored locomotion; Gate09 full 1537 source conversion/art quality remains incomplete. No universal wardrobe/Alter retarget, Android or adult scene acceptance."
+      "source_sha": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
+      "next": "Preserve 4 cold-tested Base-CLOTHED clips; Gate09 now also has 3 sword-source clips and Fantasm mesh/face QA but sword grip/cadence and live VFX/playback remain unaccepted. Author real skeletal/weapon-specific gameplay motion, locomotion, notifications and effects; Gate12 integrate incrementally."
     },
     {
       "id": "P1-KIT",
       "owner": "Gate04",
       "status": "BASE_V6_USER_APPROVED_NATIVE_PENDING",
-      "next": "Consume exact user-approved Base v6 source; Gate11 has design-stage source IDs; Gate12 two-executor native mechanics and Gate09 combat VFX still pending. Alter separate kit was approved in conversation but exact source payload not present in supplied Base ZIP; retrieve, never invent."
+      "next": "Gate04 approved Luminous Base v6 mechanics source design-stage IDs already in historic Registry intake; Gate12 implement without inventing runtime IDs and Gate09 supply visuals. Recover original separately approved Alter kit exact source; Base must not be silently assigned to Alter."
     },
     {
       "id": "P1-REGISTRY",
-      "owner": "Gate11",
-      "status": "ARTIFACT_READY_NOT_GRANTED",
-      "next": "Validate authentic consolidated package/ID bindings from Gate01-3D/Gate12"
+      "owner": "Gate00",
+      "status": "GATE11_RETIRED_GATE00_INTAKE_ACTIVE_NO_ARTIFACT_READY",
+      "next": "Gate00 preserve Registry v2 31 historical records and existing design-stage Base IDs/source/provenance; additive true intake only from accepted original source, source-verified unique IDs and Gate12 native evidence. Gate12 automated technical validation/integration proceeds without manual Gate11 approval."
     },
     {
       "id": "P1-WORLD",
       "owner": "Gate02",
       "status": "R1_NATIVE_QA_SAMPLE_IMPORTED_ART_AND_PRODUCTION_WORLD_INCOMPLETE",
-      "next": "Gate12 f5f2345 imported Gate02 source roads/moss rock/height Texture2D and saved QA map; genuine Landscape/PCG/streaming/first complete active World NOT delivered. Gate02 art quality/water/caves/interiors remains missing; continue native production using anchors and determinism without duplicate source staging."
+      "next": "Gate12 reuse already native QA imported 3 real R1 source assets and seed1412 rock; now author actual UE Landscape/PCG/persistent region traversal/collision without replacing StartingWorld until proven. Gate02 finish existing P34 art with water/bridges/interiors/geology/settlements; current first world and Android not accepted."
     },
     {
       "id": "P1-UI-DESIGN",
@@ -107,12 +108,12 @@
     "blender_previews_reviewed": 5,
     "layout_status": "CANDIDATE_STAGING_RETAINED",
     "artistic_approval": "NOT_APPROVED",
-    "native_UE": "NOT_TESTED",
+    "native_UE": "THREE_SOURCE_ASSETS_COLD_SAVED_IN_ISOLATED_QA; NOT_LANDSCAPE_OR_PRODUCTION_WORLD",
     "PCG_plugin_enabled_in_latest_Gate12_uproject": false,
     "android": "NOT_TESTED",
     "Gate02": "Continue actual P34 quality refinement, water/bridges/caves/interiors, navigation-safe geometry and LOD; do not rebuild existing anchors.",
     "Gate12": "Import tested real R1 source in isolated QA world with transforms, heightfield, persistent seeded PCG, collision/streaming evidence; preserve StartingWorld and dirty source.",
-    "Gate11": "Provenance/rights and canonical records only after visual and native eligibility."
+    "Gate00": "Direct original source/provenance/rights and additive canonical intake only after art and native eligibility; former Gate11 is retired."
   },
   "cross_gate_weapon_action_p0": {
     "scope": "Unarmed/fists, slingshots, bows, thrown/melee, firearms, futuristic and magic/innate/anatomy-specific attacks under existing two combat executors; no generic sword/pistol/rifle pose",
@@ -131,7 +132,7 @@
     "Gate12": {
       "status": "SOURCE_INCREMENT_IMPLEMENTED_FULL_GAMEPLAY_ACCEPTANCE_PENDING",
       "source_sha": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
-      "next": "Preserve existing motion adapter and tests, integrate Gate04/07/09 deliverables and independently advance other P0/P1 gameplay. Current-build native/visual/Android acceptance remains NOT_TESTED."
+      "next": "Integrate already authored Stage-0 source and eligible exact contracts without waiting Gate11 approval, preserving both combat executors. Gameplay and current Android unverified."
     },
     "dependencies_reference": "docs/production/gate12/GATE12_WEAPON_MOTION_DEPENDENCIES_20261018.md"
   },
@@ -147,7 +148,7 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "No new user approval needed for authorized non-destructive future QA, but respect Gate12 2026-10-18 instruction to defer more app builds until meaningful source implementation. Gate12 should continue independent high-priority game systems and integrate actual Gate04/07/09 authored content when supplied; all 18 feature families still require player-facing work. Never ask for repeated global permissions; only for irreversible or destructive actions.",
+  "next_user_action": "None for routine authorized native development or Registry continuity. Gate00 owns cross-Gate blocking source/creative decisions; only escalate genuinely unresolved canon or destructive operations. Gate12 to resume from actual preserved worktree and next native milestone.",
   "received_reports_20261020": {
     "status": "FOUR_GATE_REPORTS_COMMITTED_ON_GATE00_COORDINATION_BRANCH",
     "index": "docs/production/gate00/received_reports/README_20261020.md",
@@ -171,6 +172,24 @@
     "alter_authoritative_sources": "3 user-confirmed native Koikatsu Party cards; NO Alter FBX/GLB/Blender files in source ZIP",
     "alter_converter_status": "CLOTHED real PMX hash verified; Blender 5.2.2 import interrupted to prevent out-of-memory; no accepted exported Alter asset",
     "alter_approved_kit_exact_payload": "NOT_LOCATED_IN_THIS_GATE00_BASE_V6_SOURCE",
-    "note": "Do not reopen finished character art; work with confirmed existing sources and carry forward already committed native imports."
+    "note": "Do not reopen finished character art; work with confirmed existing sources and carry forward already committed native imports.",
+    "gate09_head": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
+    "gate12_uncommitted_state": "TWO_KOIKATSU_CPP_HEADER_TRACKED_MODIFIED_PLUS_MANY_PROTECTED_UNTRACKED_NATIVE_ASSETS_AND_SCRIPTS; not to be cleaned, stashed, replaced",
+    "gate12_native_combined_build": "PENDING_PER_SESSION_CHECKPOINT; NO NEW PASS ASSUMED",
+    "gate09_additional": "THREE_UE_QA_SWING_CLIPS_AND_FANTASM_STATIC_MESH_AND_FACIAL_QA_NOT_GAMEPLAY_ACCEPTED"
+  },
+  "authority_transfer_20261020": {
+    "gate00_active": true,
+    "gate11_operational_status": "RETIRED_NO_DEPENDENCY",
+    "gate12_technical_validation": "AUTOMATED_AND_IMMEDIATE_WITH_EXISTING_APPROVED_SOURCES",
+    "registry_v2_historical_records_preserved": 31,
+    "registry_historical_branch": "content/master-integration",
+    "registry_historical_branch_head": "973d8506c249338b540565e1f54796af248db910",
+    "old_registry_delta": "registry/gate11/2026-10-20/registry_intake_delta.json",
+    "canonical_mutation": "NONE_THIS_TRANSFER",
+    "command": "docs/production/gate00/GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md",
+    "original_ids_and_source_provenance": "PRESERVE",
+    "alter_kit": "APPROVED_BUT_EXACT_SOURCE_NOT_LOCATED",
+    "release_authorized": false
   }
 }
