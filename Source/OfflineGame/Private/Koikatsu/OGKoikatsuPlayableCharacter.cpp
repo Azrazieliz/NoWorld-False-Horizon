@@ -56,6 +56,27 @@ void AOGKoikatsuPlayableCharacter::BeginPlay()
                NativeParts.Num());
         return;
     }
+    // Resolve an actual source-to-Unreal +Z(gltf) -> +Y(UE) face conversion:
+    // the frozen Blueprint import has yaw 0 while UE capsule moves +X forward.
+    // Apply the measured, fixture-specific -90 deg around UE Z to all 19
+    // submeshes consistently; do not alter CharacterMovement input axes.
+    int32 CalibratedParts=0;
+    for(USkeletalMeshComponent* Comp : NativeParts)
+    {
+        if(!Comp) continue;
+        const FRotator Before=Comp->GetRelativeRotation();
+        if(!FMath::IsNearlyZero(Before.Yaw,0.25f))
+        {
+            UE_LOG(LogTemp, Error,TEXT("Gate12 MotionV3: existing component yaw nonzero %s: %f; refusing guessed correction"),
+                   *Comp->GetName(),Before.Yaw);
+            continue;
+        }
+        Comp->SetRelativeRotation(FRotator(Before.Pitch,
+            Before.Yaw+FixtureVisualForwardYawCorrectionDegrees,Before.Roll));
+        ++CalibratedParts;
+    }
+    UE_LOG(LogTemp, Display,TEXT("Gate12 MotionV3: calibrated fixture visual axis yaw=%f count=%d/%d; UE actor forward +X"),
+           FixtureVisualForwardYawCorrectionDegrees,CalibratedParts,NativeParts.Num());
     if (GetMesh()) GetMesh()->SetHiddenInGame(true);
     LastYaw = GetActorRotation().Yaw;
     bAllPartsHaveNativeQualityV2=IsQualityV2Complete();
@@ -88,6 +109,8 @@ UAnimSequence* AOGKoikatsuPlayableCharacter::LoadNativeClip(
       case EOGKKVisualState::Action: Name=TEXT("Action"); break;
       case EOGKKVisualState::Swim: Name=TEXT("Swim"); break;
       case EOGKKVisualState::SwimIdle: Name=TEXT("SwimIdle"); break;
+      case EOGKKVisualState::Flying: Name=TEXT("Flying"); break;
+      case EOGKKVisualState::FlyingIdle: Name=TEXT("FlyingIdle"); break;
       default: break;
     }
     const FString Asset=bQualityV2
@@ -130,6 +153,8 @@ UAnimSequence* AOGKoikatsuPlayableCharacter::ResolveNativeClip(int32 Index,EOGKK
         Clip=LoadNativeClip(Index,State,true);
     // Old fixture lacks a swim clip: a safe rest pose is preferable to
     // erroneously cycling through giant ground-running strides underwater.
+    if(!Clip && (State==EOGKKVisualState::Flying||State==EOGKKVisualState::FlyingIdle))
+        Clip=LoadNativeClip(Index,EOGKKVisualState::Idle,false);
     if(!Clip && (State==EOGKKVisualState::Swim||State==EOGKKVisualState::SwimIdle))
         Clip=LoadNativeClip(Index,EOGKKVisualState::Idle,false);
     if(!Clip) Clip=LoadNativeClip(Index,State,false);
@@ -148,7 +173,8 @@ bool AOGKoikatsuPlayableCharacter::Loops(EOGKKVisualState State)
     return State == EOGKKVisualState::Idle || State == EOGKKVisualState::Walk ||
            State == EOGKKVisualState::Run || State == EOGKKVisualState::Fall ||
            State == EOGKKVisualState::TurnLeft || State == EOGKKVisualState::TurnRight ||
-           State == EOGKKVisualState::Swim || State == EOGKKVisualState::SwimIdle;
+           State == EOGKKVisualState::Swim || State == EOGKKVisualState::SwimIdle ||
+           State == EOGKKVisualState::Flying || State == EOGKKVisualState::FlyingIdle;
 }
 
 void AOGKoikatsuPlayableCharacter::ApplyState(EOGKKVisualState Next)
@@ -180,6 +206,12 @@ EOGKKVisualState AOGKoikatsuPlayableCharacter::ComputeState() const
 {
     if (bOverride) return ForcedState;
     const UCharacterMovementComponent* Movement=GetCharacterMovement();
+    // Airborne flight is NOT ground gait, even with high horizontal velocity.
+    // V3 provisional fallback uses neutral/rest pose until actual mocap flying
+    // is authored; never replay twisted V1/V2 walk/run while flying.
+    if(Movement && Movement->IsFlying())
+        return SmoothedHorizontalSpeed<=WalkThresholdCmPerSecond
+            ? EOGKKVisualState::FlyingIdle : EOGKKVisualState::Flying;
     if(Movement && Movement->IsSwimming())
         return SmoothedHorizontalSpeed<=WalkThresholdCmPerSecond
             ? EOGKKVisualState::SwimIdle : EOGKKVisualState::Swim;
@@ -208,6 +240,26 @@ void AOGKoikatsuPlayableCharacter::Tick(float DeltaSeconds)
     YawDegreesPerSecond=DeltaSeconds>0.0001f
         ? FMath::FindDeltaAngleDegrees(LastYaw,Yaw)/DeltaSeconds : 0.f;
     LastYaw=Yaw;
+    // A two-dimensional velocity in actor-local coordinates is the correct
+    // driving signal for a directional Blend Space; world X/Y must NEVER be
+    // treated as mesh-bone X/Y. The source mesh's -90 facing correction is
+    // handled independently above.
+    const FVector V=GetVelocity();
+    const FVector Horizontal(V.X,V.Y,0.f);
+    const FVector Local=GetActorTransform().InverseTransformVectorNoScale(Horizontal);
+    ForwardVelocityCmS=Local.X;
+    RightVelocityCmS=Local.Y;
+    FacingRelativeVelocityAngleDegrees=FMath::RadiansToDegrees(
+        FMath::Atan2(RightVelocityCmS,ForwardVelocityCmS));
+    if(Horizontal.Size2D()<=WalkThresholdCmPerSecond)
+        CurrentTravelDirection=EOGKKTravelDirection::Idle;
+    else if(FMath::Abs(ForwardVelocityCmS)>=FMath::Abs(RightVelocityCmS))
+        CurrentTravelDirection=ForwardVelocityCmS>=0.f
+            ? EOGKKTravelDirection::Forward : EOGKKTravelDirection::Backward;
+    else
+        CurrentTravelDirection=RightVelocityCmS>=0.f
+            ? EOGKKTravelDirection::Right : EOGKKTravelDirection::Left;
+
     SmoothedHorizontalSpeed=FMath::FInterpTo(SmoothedHorizontalSpeed,
         GetVelocity().Size2D(),DeltaSeconds,FMath::Max(0.5f,MotionSpeedSmoothing));
     const EOGKKVisualState Next=ComputeState();

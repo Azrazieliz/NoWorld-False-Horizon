@@ -10,7 +10,13 @@ class USkeletalMeshComponent;
 UENUM(BlueprintType)
 enum class EOGKKVisualState : uint8
 {
-    Idle, Walk, Run, Jump, Fall, Land, TurnLeft, TurnRight, Dodge, Action, SwimIdle, Swim
+    Idle, Walk, Run, Jump, Fall, Land, TurnLeft, TurnRight, Dodge, Action, SwimIdle, Swim, FlyingIdle, Flying
+};
+
+UENUM(BlueprintType)
+enum class EOGKKTravelDirection : uint8
+{
+    Idle, Forward, Backward, Left, Right
 };
 
 // Reuses the already authored 19 skeletal mesh components in the fixture
@@ -39,6 +45,29 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category="Koikatsu|Motion")
     bool bAllPartsHaveNativeQualityV2 = false;
+
+    // Calibrated against the exact imported source GLB and 21 native UE bone
+    // reference transforms. Original fixture import gives character +Y as
+    // geometric facing, whereas the capsule moves forward along +X.
+    // Fixture-only calibration; per-character export must be independently
+    // checked before using this rotation on a different character.
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|MotionV3")
+    float FixtureVisualForwardYawCorrectionDegrees = -90.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Koikatsu|MotionV3")
+    EOGKKTravelDirection CurrentTravelDirection = EOGKKTravelDirection::Idle;
+
+    UPROPERTY(BlueprintReadOnly, Category="Koikatsu|MotionV3")
+    float ForwardVelocityCmS = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Koikatsu|MotionV3")
+    float RightVelocityCmS = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Koikatsu|MotionV3")
+    float FacingRelativeVelocityAngleDegrees = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Koikatsu|MotionV3")
+    bool bMotionV3MocapReady = false; // cannot be true until authored retargeted clips pass rig/cook QA
 
     UFUNCTION(BlueprintCallable, Category="Koikatsu|Facial")
     bool PulseExpressionMorph(FName MorphName, float PeakWeight = 1.f, float RiseSeconds = 0.14f, float HoldSeconds = 0.35f, float FadeSeconds = 0.20f);
