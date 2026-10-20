@@ -462,11 +462,18 @@ bool FOGTurnBattle::ApplyResolvedAction(
                 State.CurrentActionValue,
                 Source->NextActionValue);
 
-        Source->NextActionValue =
-            State.CurrentActionValue +
-            FMath::Max<int64>(
-                1,
-                Action.ActionDelay);
+        int64 AuthoredDelay=FMath::Max<int64>(1,Action.ActionDelay);
+        if(Action.SkillId==FOGContentId(
+                TEXT("combat:luminous_valentine.base.skill.scarlet_cadence")))
+            if(FLuminousBaseBattleRuntime* S=
+                   LuminousBaseStates.Find(Source->UnitEntityId))
+                if(S->bNextScarletCadenceDelayReduction)
+                {
+                    AuthoredDelay=FMath::Max<int64>(1,
+                        AuthoredDelay*9000/10000);
+                    S->bNextScarletCadenceDelayReduction=false;
+                }
+        Source->NextActionValue=State.CurrentActionValue+AuthoredDelay;
     }
 
     // The ordinary combat executor now dispatches the exact authored Base

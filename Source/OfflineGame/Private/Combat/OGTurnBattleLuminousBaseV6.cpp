@@ -292,11 +292,24 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                  int32 SiphonBps,bool bMarkOnEligible,
                  bool bHemorrhageOnEligible)->bool
     {
+        // No previous contact may count as this individual hit's HP damage.
+        // Especially important for A2 mark consumption after a miss or shield.
+        LastEffectiveHpDamage.Remove(TargetId);
         FOGCombatUnitState* Target=FindMutableUnit(TargetId);
         if(!Target || !Target->IsAlive())return true;
+        FOGCombatStats EffectiveAttacker=Source.Stats;
+        if(StateOfOwner.HemalMarks.FindRef(TargetId)>=2)
+            EffectiveAttacker.CritDamageBonusBps+=1800; // Scarlet Rhythm P2
+        if(StateOfOwner.bAttunementActive &&
+           !StateOfOwner.bDayAttunement)
+        {
+            EffectiveAttacker.Speed=EffectiveAttacker.Speed*10800/10000;
+            if(StateOfOwner.HemorrhageStacks.FindRef(TargetId)>0)
+                EffectiveAttacker.DefensePenetrationBps+=1500;
+        }
         FOGDamageRequest Request;
         Request.BaseDamage=FOGLargeNumber::ScaleByBasisPoints(
-            Source.Stats.Attack,AtkBps);
+            EffectiveAttacker.Attack,AtkBps);
         Request.DefenseReference=Source.Stats.Attack;
         Request.bAllowHitOverflowReplication=false;
         Request.bCanCrit=true;
@@ -304,7 +317,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
            !StateOfOwner.bDayAttunement)
             Request.AdditionalMultiplierBps.Add(11000);
         const FOGDamageResolution Damage=FOGCombatMath::ResolveDamage(
-            Request,Source.Stats,Target->Stats,Rng);
+            Request,EffectiveAttacker,Target->Stats,Rng);
         if(Damage.TotalDamage.IsZero())return true;
         const FOGLargeNumber Before=Target->CurrentHp;
         if(!ApplyDamage(Source.UnitEntityId,TargetId,
@@ -321,8 +334,13 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(BloodEligible.Contains(TargetId))
         {
             if(bMarkOnEligible)
-                StateOfOwner.HemalMarks.FindOrAdd(TargetId)=
-                    FMath::Min(4,StateOfOwner.HemalMarks.FindRef(TargetId)+1);
+            {
+                const int32 BeforeMarks=StateOfOwner.HemalMarks.FindRef(TargetId);
+                const int32 AfterMarks=FMath::Min(4,BeforeMarks+1);
+                StateOfOwner.HemalMarks.Add(TargetId,AfterMarks);
+                if(BeforeMarks<4 && AfterMarks==4)
+                    StateOfOwner.PendingFourMarkTargetBonus.Add(TargetId);
+            }
             if(bHemorrhageOnEligible)
             {
                 StateOfOwner.HemorrhageStacks.FindOrAdd(TargetId)=
@@ -341,11 +359,21 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
     if(bA1)
     {
         const FOGEntityId Id=Action.TargetUnitIds[0];
+        const bool bHadBleedBeforeA1=
+            StateOfOwner.HemorrhageStacks.FindRef(Id)>0;
         for(int32 HitIndex=0;HitIndex<3;++HitIndex)
         {
             constexpr int32 AtkBps[]={4000,6000,9000};
             if(!Hit(Id,AtkBps[HitIndex],2400,HitIndex<2,HitIndex==2))
                 return false;
+            if(HitIndex==2 &&
+               FOGLargeNumber::Compare(GetLastEffectiveHpDamage(Id),
+                                        FOGLargeNumber())>0)
+            {
+                StateOfOwner.bNextScarletCadenceDelayReduction=true;
+                if(bHadBleedBeforeA1)
+                    StateOfOwner.DiscountNextA2Reserve=5;
+            }
         }
     }
     else if(bA2)
@@ -355,10 +383,28 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             const FOGEntityId Id=Action.TargetUnitIds[I];
             const int32 Marks=StateOfOwner.HemalMarks.FindRef(Id);
             const bool bConsume=I==0 && Marks>=3;
+            const bool bFourMarkBonus=bConsume &&
+                StateOfOwner.PendingFourMarkTargetBonus.Contains(Id);
+            // Check each independently critting hit for ACTUAL HP damage;
+            // refund mark costs on a wholly blocked/missed cast, never
+            // manufacture an Eclipse Claim from shield-only contact.
             if(bConsume)StateOfOwner.HemalMarks.Add(Id,Marks-3);
-            if(!Hit(Id,11500,2400,false,false) ||
-               !Hit(Id,12500+(bConsume?10000:0),2400,false,false))
-                return false;
+            if(!Hit(Id,11500,2400,false,false))return false;
+            bool bActualContact=FOGLargeNumber::Compare(
+                GetLastEffectiveHpDamage(Id),FOGLargeNumber())>0;
+            if(!Hit(Id,12500+(bConsume?10000:0)+
+                    (bFourMarkBonus?2500:0),2400,false,false))return false;
+            bActualContact=bActualContact ||
+                FOGLargeNumber::Compare(GetLastEffectiveHpDamage(Id),
+                                         FOGLargeNumber())>0;
+            if(bConsume && bActualContact)
+            {
+                StateOfOwner.EclipseClaimTargets.Add(Id);
+                if(bFourMarkBonus)
+                    StateOfOwner.PendingFourMarkTargetBonus.Remove(Id);
+            }
+            else if(bConsume)
+                StateOfOwner.HemalMarks.Add(Id,Marks);
         }
         StateOfOwner.bDayAttunement=false;
         StateOfOwner.bAttunementActive=true;
@@ -414,12 +460,18 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         // Four independently resolved strikes. Night 25% siphon replaces
         // the ordinary 24% passive; never apply both to the same hit.
         constexpr int32 Strokes[]={9000,12000,15000,18000};
+        const FOGEntityId Primary=Action.TargetUnitIds[0];
+        const bool bEclipseClaim=
+            StateOfOwner.EclipseClaimTargets.Contains(Primary);
         for(int32 K=0;K<4;++K)
             for(int32 I=0;I<Action.TargetUnitIds.Num();++I)
                 if(!Hit(Action.TargetUnitIds[I],
-                        I==0?Strokes[K]:Strokes[K]*6000/10000,
+                        I==0?Strokes[K]+(K==3 && bEclipseClaim?9000:0):
+                             Strokes[K]*6000/10000,
                         2500,false,K==3))
                     return false;
+        if(bEclipseClaim)
+            StateOfOwner.EclipseClaimTargets.Remove(Primary);
         // Both Ultimates are independently selectable and preserve existing
         // attunement: they do NOT force the owner into Night.
     }

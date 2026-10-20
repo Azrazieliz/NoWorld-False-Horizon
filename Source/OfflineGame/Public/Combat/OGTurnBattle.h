@@ -257,7 +257,10 @@ private:
         int32 NextA2ReadyOwnerAction = 0;
         int32 NextA3ReadyOwnerAction = 0;
         int32 DiscountNextA2Reserve = 0;
+        bool bNextScarletCadenceDelayReduction = false;
         int32 LastBleedReserveOwnerAction = INDEX_NONE;
+        TSet<FOGEntityId> PendingFourMarkTargetBonus;
+        TSet<FOGEntityId> EclipseClaimTargets;
         bool bAllyRevivalSpent = false;
         FOGEntityId PreparedCovenantTarget;
         int32 CovenantExpiryOwnerAction = -1;
