@@ -1,3 +1,5 @@
+> **NEW Gate00 authority (2026-10-20):** Read [GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md](GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md) FIRST. Gate11 is retired. Gate00 handles canonical Registry v2 intake; Gate12 performs automated technical/native acceptance without Gate11 waiting. All references below to starting/consulting Gate11 are historical only. Preserve remote-vs-local branch divergence, protected dirty Gate12 files, accepted art and old Registry sources.
+
 # Gate 00 — Crash-safe recovery, session checkpoint and single-message activation
 
 **Last known coordination point:** 16 October 2026. Read [ACTIVE_OPERATING_RULES_20261016.md](ACTIVE_OPERATING_RULES_20261016.md) and [LIVE_EXECUTION_BOARD_20261016.md](LIVE_EXECUTION_BOARD_20261016.md). Structured values in [execution_state.json](execution_state.json). User is not required to say `migration required`.
