@@ -84,6 +84,7 @@ public:
 
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override;
 
     virtual bool IsInsidePlayableBoundary_Implementation(
         const FVector& WorldLocation) const override;
@@ -105,6 +106,7 @@ public:
     UFUNCTION(BlueprintPure, Category = "OfflineGame|World|Generation")
     float GetPlayableHalfExtent() const
     {
+        if (bGate02R1RegionSource) return 160000.0f;
         return FMath::Clamp(TerrainCellsPerSide, 24, 128) *
             FMath::Clamp(TerrainCellSize, 400.0f, 2400.0f) *
             0.5f;
@@ -112,6 +114,12 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OfflineGame|World|Generation")
     int32 EditorPreviewSeed = 731942;
+
+    /** Reuses THIS generator's ProceduralMesh/HISM pipeline, replacing the
+     * disposable fixture geometry with actual Gate02 R1 513-height source.
+     * Never author legacy random settlement/faction/dungeon on this path. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="OfflineGame|World|Gate02")
+    bool bGate02R1RegionSource = false;
 
     UPROPERTY(Transient)
     TWeakObjectPtr<AActor> FoundationIntegrationBoundary;
@@ -161,6 +169,29 @@ private:
         FVector2D TerritorialCreatureRange = FVector2D::ZeroVector;
         float RotationRadians = 0.0f;
     };
+
+    struct FR1Placement
+    {
+        FString PersistentId;
+        FVector PositionCm = FVector::ZeroVector;
+        float YawDegrees = 0.f;
+        float UniformScale = 1.f;
+        int32 TypeIndex = INDEX_NONE;
+        FIntPoint TileIndex = FIntPoint::ZeroValue;
+    };
+
+    // Actual Gate02 R1 authored data; no invented runtime layouts.
+    TArray<float> R1HeightMeters;
+    TArray<float> R1SoilMask;
+    TArray<float> R1RockMask;
+    TMap<FIntPoint,TArray<FR1Placement>> R1TilePlacements;
+    FIntPoint LastR1StreamTile = FIntPoint(MIN_int32,MIN_int32);
+    bool bR1DatasetLoaded = false;
+    bool LoadR1MetricData();
+    void BuildR1SourceTerrain();
+    void LoadR1SourceScatter();
+    void RefreshR1StreamedTiles(bool bForce);
+    float R1HeightAt(int32 X,int32 Y) const;
 
     static constexpr int32 GeneratorVersion = 1;
 
@@ -684,6 +715,9 @@ protected:
     UPROPERTY() TObjectPtr<ACharacter> ProtagonistRepresentation;
     UPROPERTY() TObjectPtr<USoundMix> OwnedDynamicRangeMix;
     bool bIntegrationCourseBuilt = false;
+    // First World needs a real UI/interaction runtime, not fixture actors.
+    // Guard against invoking the diagnostic course on every World tick.
+    bool bNativeFirstWorldRuntimeInitialized = false;
     float LastDiagnosticFacingYaw = 0.0f;
     bool bHasDiagnosticFacingSample = false;
 
@@ -969,6 +1003,9 @@ private:
     bool HandleFoundationDiagnosticClick(FName, AOGWorldPrototypeCharacter*);
     bool bDiagnosticMenuOpen = false;
     bool bInteractionMenuOpen = false;
+    // Visible genuine Koikatsu motions for the actually possessed Luminous,
+    // not a standalone costume-test pawn or fictional approved animation.
+    bool bLuminousAuthoredEmotesExpanded = false;
     bool DrawCanonicalTurnSurface(AOGWorldPrototypeCharacter* Character, float Scale);
     void DrawFoundationText(const FString& Text, FLinearColor Color,
         float X, float Y, UFont* Font = nullptr, float TextScale = 1.0f,

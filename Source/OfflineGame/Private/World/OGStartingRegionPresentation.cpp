@@ -1,4 +1,9 @@
 #include "World/OGStartingRegionPresentation.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Misc/SecureHash.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonReader.h"
 #include "Components/SkinnedMeshComponent.h"
 #include "Components/InputComponent.h"
 
@@ -48,6 +53,7 @@
 #include "OfflineGame.h"
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
 
 #include "UI/OGGate12CharacterVisualCatalog.h"
@@ -166,7 +172,8 @@ float Smooth01(float Value)
 
 AOGStartingRegionGenerator::AOGStartingRegionGenerator()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = false;
 
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     SetRootComponent(SceneRoot);
@@ -271,6 +278,9 @@ bool AOGStartingRegionGenerator::IsInsideStableGroundRegion_Implementation(
 void AOGStartingRegionGenerator::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
+    // The existing Blueprint/source-map actor tag can be authored now in UE,
+    // without requiring a destructive recompilation before source asset work.
+    if (Tags.Contains(TEXT("Gate02R1Source"))) bGate02R1RegionSource = true;
 
     if (GetWorld() && !GetWorld()->IsGameWorld())
     {
@@ -282,6 +292,7 @@ void AOGStartingRegionGenerator::OnConstruction(const FTransform& Transform)
 void AOGStartingRegionGenerator::BeginPlay()
 {
     Super::BeginPlay();
+    if (Tags.Contains(TEXT("Gate02R1Source"))) bGate02R1RegionSource = true;
 
     if (UGameInstance* GameInstance = GetGameInstance())
     {
@@ -293,11 +304,15 @@ void AOGStartingRegionGenerator::BeginPlay()
     }
 
     int32 Seed = EditorPreviewSeed;
-    ResolveCanonicalSeed(Seed);
+    // R1 is a protected candidate region source, NOT yet accepted as canonical
+    // locations. Do not write candidate IDs, locations or random settlements.
+    if (!bGate02R1RegionSource) ResolveCanonicalSeed(Seed);
+    else Seed = 1412; // Original authored Gate02 ecology seed.
     ActiveSeed = Seed;
-
     GenerateRegion(Seed);
-    PersistCanonicalLocations(Seed);
+    if (!bGate02R1RegionSource)
+        PersistCanonicalLocations(Seed);
+    SetActorTickEnabled(bGate02R1RegionSource && bR1DatasetLoaded);
 
     UE_LOG(
         LogOfflineGame,
@@ -489,6 +504,21 @@ void AOGStartingRegionGenerator::PersistCanonicalLocations(int32 Seed)
 void AOGStartingRegionGenerator::GenerateRegion(int32 Seed)
 {
     ClearGeneratedContent();
+    if (bGate02R1RegionSource)
+    {
+        // Do not silently replace a missing/invalid Gate02 source with a
+        // grey primitive playground; preserve the failure and real project.
+        if (!LoadR1MetricData())
+        {
+            UE_LOG(LogOfflineGame,Error,TEXT("Gate02 R1 source region unavailable: refusing dummy terrain"));
+            return;
+        }
+        ApplyPresentationMaterials();
+        BuildR1SourceTerrain();
+        LoadR1SourceScatter();
+        RefreshR1StreamedTiles(true);
+        return;
+    }
     BuildLayout(Seed);
     ApplyPresentationMaterials();
     BuildTerrain(Seed);
@@ -546,6 +576,17 @@ FVector2D AOGStartingRegionGenerator::RotateLocal(const FVector2D& Local) const
 
 float AOGStartingRegionGenerator::SampleHeight(float X, float Y, int32 Seed) const
 {
+    if (bGate02R1RegionSource && R1HeightMeters.Num() == 513*513)
+    {
+        const float SampleX = FMath::Clamp((X+160000.f)/625.f,0.f,512.f);
+        const float SampleY = FMath::Clamp((Y+160000.f)/625.f,0.f,512.f);
+        const int32 X0=FMath::FloorToInt(SampleX), Y0=FMath::FloorToInt(SampleY);
+        const int32 X1=FMath::Min(512,X0+1), Y1=FMath::Min(512,Y0+1);
+        const float TX=SampleX-X0,TY=SampleY-Y0;
+        const float A=FMath::Lerp(R1HeightAt(X0,Y0),R1HeightAt(X1,Y0),TX);
+        const float B=FMath::Lerp(R1HeightAt(X0,Y1),R1HeightAt(X1,Y1),TX);
+        return FMath::Lerp(A,B,TY)*100.f;
+    }
     const float Phase = static_cast<float>(Seed % 4093) * 0.0037f;
 
     float Height =
@@ -4173,7 +4214,8 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
 
     RefreshFoundationInputState();
-    if (!IntegrationWorld) InitializeFoundationIntegration();
+    if (!IntegrationWorld && !bNativeFirstWorldRuntimeInitialized)
+        InitializeFoundationIntegration();
     UpdateDiagnosticAnimationState();
 
     if (TraversalCapabilities && GetCharacterMovement())
@@ -5426,10 +5468,25 @@ void AOGWorldPresentationGameMode::StartPlay()
 
     if (UWorld* World = GetWorld())
     {
-        // StartingWorld is the disposable Foundation integration course.
-        if (AOGWorldPrototypeCharacter* Character = Cast<AOGWorldPrototypeCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
-        { Character->InitializeFoundationIntegration(); }
-        if (AreFoundationDebugFixturesEnabled() && !UGameplayStatics::GetPlayerCharacter(World, 0))
+        // Real first World is selected explicitly by its source-backed R1
+        // generator. Never spawn the old box/fake-NPC/flight-station fixture
+        // into a production environment. Preserve StartingWorld itself for
+        // non-destructive regression/reference use until full World signoff.
+        bool bHasGate02FirstWorld = false;
+        for (TActorIterator<AOGStartingRegionGenerator> It(World); It; ++It)
+            if (It->bGate02R1RegionSource)
+            {
+                bHasGate02FirstWorld = true;
+                break;
+            }
+        // The native character initializer now distinguishes the authored
+        // Gate02 World from the diagnostic fixture. Always initialize the
+        // real runtime, HUD interaction host and canonical presentation;
+        // never silently abandon these services in the production World.
+        if (AOGWorldPrototypeCharacter* Character =
+                Cast<AOGWorldPrototypeCharacter>(UGameplayStatics::GetPlayerCharacter(World,0)))
+            Character->InitializeFoundationIntegration();
+        if (!bHasGate02FirstWorld && AreFoundationDebugFixturesEnabled() && !UGameplayStatics::GetPlayerCharacter(World, 0))
         {
             if (AOGWorldPrototypeCharacter* Character =
                     Cast<AOGWorldPrototypeCharacter>(
@@ -9999,6 +10056,30 @@ void AOGWorldPresentationHud::DrawHUD()
         }
     }
 
+    // Source-authentic Gate09 clips now reachable from the REAL World HUD
+    // only when the exact native Luminous playable pawn is possessed. The
+    // four clips never play on the Ruler or a non-compatible body/skeleton.
+    if (bWorldSurface && Cast<AOGLuminousV3PlayableCharacter>(Character))
+    {
+        const float W=FMath::Min(156.f*Scale,Canvas->ClipX*.24f);
+        const float X=18.f*Scale;
+        const float Y=Canvas->ClipY*.26f;
+        DrawGameButton(
+            bLuminousAuthoredEmotesExpanded ? TEXT("CLOSE POSES") : TEXT("POSES"),
+            TEXT("OG.Gate09.Emotes.Toggle"),X,Y,W,46.f*Scale,false,true,112);
+        if (bLuminousAuthoredEmotesExpanded)
+        {
+            static const TCHAR* Names[] = {
+                TEXT("Thoughtful"),TEXT("Greeting"),TEXT("Expressive"),TEXT("Bow")
+            };
+            for(int32 I=0;I<4;++I)
+                DrawGameButton(Names[I],
+                    FName(*FString::Printf(TEXT("OG.Gate09.Emote.%d"),I)),
+                    X,Y+(I+1)*50.f*Scale,W,44.f*Scale,false,true,112);
+        }
+    }
+    else bLuminousAuthoredEmotesExpanded=false;
+
     DrawFoundationDiagnosticSurface(Character, Scale, false);
     if (Character)
     {
@@ -10047,6 +10128,33 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
             : nullptr;
     if (!Character)
     {
+        return;
+    }
+    if (FoundationSurface == FName(TEXT("world")) &&
+        BoxName == TEXT("OG.Gate09.Emotes.Toggle"))
+    {
+        bLuminousAuthoredEmotesExpanded =
+            Cast<AOGLuminousV3PlayableCharacter>(Character) &&
+            !bLuminousAuthoredEmotesExpanded;
+        return;
+    }
+    if (FoundationSurface == FName(TEXT("world")) &&
+        BoxName.ToString().StartsWith(TEXT("OG.Gate09.Emote.")))
+    {
+        if (AOGLuminousV3PlayableCharacter* Luminous =
+            Cast<AOGLuminousV3PlayableCharacter>(Character))
+        {
+            const FString Suffix=BoxName.ToString().Mid(16);
+            int32 Index=INDEX_NONE;
+            if (LexTryParseString(Index,*Suffix) && Index>=0 && Index<4)
+            {
+                if (!Luminous->PlayGate09AuthoredEmote(
+                    static_cast<EOGLuminousV3AuthoredEmote>(Index)))
+                    FoundationStatusMessage=Luminous->GetLastLuminousError();
+                else FoundationStatusMessage.Reset();
+            }
+        }
+        bLuminousAuthoredEmotesExpanded=false;
         return;
     }
 
@@ -11216,6 +11324,22 @@ void AOGWorldPrototypeCharacter::InitializeFoundationIntegration()
     GetWorld()->GetWorldSettings()->bEnableWorldBoundsChecks = false;
     if (DiagnosticAnimations) DiagnosticAnimations->BindMesh(GetMesh());
     bHasDiagnosticFacingSample = false;
+
+    // Native First World: retain the same persistent Ruler, actual ground
+    // snapping, movement, camera, Gate10 UI and interaction services.
+    // No integration test obstacle course, artificial party/NPC, forced
+    // teleport, or synthetic opening combat is permitted in this map.
+    for(TActorIterator<AOGStartingRegionGenerator> It(GetWorld());It;++It)
+        if(It->bGate02R1RegionSource)
+        {
+            if (DiagnosticMenu) DiagnosticMenu->Initialize();
+            if (InteractionHost) InteractionHost->Initialize();
+            bNativeFirstWorldRuntimeInitialized = true;
+            UE_LOG(LogOfflineGame,Display,
+                   TEXT("Gate02 R1 first World: genuine gameplay services initialized without diagnostic fixture"));
+            return;
+        }
+
     if (!IntegrationWorld) IntegrationWorld = GetWorld()->SpawnActor<AOGFoundationIntegrationWorld>(FVector::ZeroVector, FRotator::ZeroRotator);
     if (!IntegrationWorld) return;
     for (TActorIterator<AOGStartingRegionGenerator> It(GetWorld()); It; ++It)
@@ -11461,6 +11585,7 @@ void AOGWorldPrototypeCharacter::ShutdownFoundationRuntime()
     // boundary rather than retaining old store references after import/clear.
     if (IntegrationWorld) { IntegrationWorld->Destroy(); IntegrationWorld = nullptr; }
     bIntegrationCourseBuilt = false;
+    bNativeFirstWorldRuntimeInitialized = false;
     bHasDiagnosticFacingSample = false;
     if (DiagnosticCombat) DiagnosticCombat->ReleaseCanonicalStore();
     if (ProtagonistRepresentation) { ProtagonistRepresentation->Destroy(); ProtagonistRepresentation = nullptr; }
