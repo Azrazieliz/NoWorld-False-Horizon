@@ -79,6 +79,15 @@ public:
 
     IOGWorldStore* GetWorldStore() const { return WorldStore.Get(); }
 
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Combat")
+    bool StartApprovedLuminousEncounter(const FOGTurnBattleState& State,
+        const FOGEntityId& RulerId,FString& OutError);
+
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Combat")
+    bool ApplyApprovedLuminousResolvedAction(
+        const FOGResolvedCombatAction& Action,FString& OutError);
+
+
     /** Production encounter integration: bind the EXISTING FOGTurnBattle to
      * real Registry, World and soul/blood providers. No fabricated defaults. */
     bool BindOwnedLuminousCombatAuthority(
