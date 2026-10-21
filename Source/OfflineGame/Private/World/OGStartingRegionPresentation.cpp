@@ -4248,6 +4248,7 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
         }
     }
     UpdateClimbSurface();
+    UpdateNativeGate02R1WaterTraversal();
 
     if (TraversalCapabilities)
     {

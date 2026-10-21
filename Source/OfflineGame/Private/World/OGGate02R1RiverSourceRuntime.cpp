@@ -80,3 +80,44 @@ void AOGStartingRegionGenerator::BuildR1SourceRiver()
     UE_LOG(LogTemp,Display,TEXT("GATE02_R1 native water: %d original mask cells %d independent render sections, no collision or fabricated water levels"),
            WaterCells,Sections);
 }
+
+bool AOGStartingRegionGenerator::QueryGate02R1SourceWaterSurface(
+    const FVector& WorldPosition,float& OutWaterSurfaceWorldZCm) const
+{
+    OutWaterSurfaceWorldZCm=0.f;
+    constexpr int32 Side=513;
+    constexpr float HalfCm=160000.f;
+    constexpr float StepCm=625.f;
+    if(!bGate02R1RegionSource || !bR1DatasetLoaded ||
+       R1RiverMask.Num()!=Side*Side ||
+       R1HeightMeters.Num()!=Side*Side)return false;
+
+    const FVector Local=GetActorTransform().InverseTransformPosition(WorldPosition);
+    if(!FMath::IsFinite(Local.X) || !FMath::IsFinite(Local.Y) ||
+       Local.X<-HalfCm || Local.Y<-HalfCm ||
+       Local.X>HalfCm || Local.Y>HalfCm)return false;
+
+    const float U=(Local.X+HalfCm)/StepCm;
+    const float V=(Local.Y+HalfCm)/StepCm;
+    const int32 X=FMath::Clamp(FMath::FloorToInt(U),0,Side-2);
+    const int32 Y=FMath::Clamp(FMath::FloorToInt(V),0,Side-2);
+    const float Tx=FMath::Clamp(U-static_cast<float>(X),0.f,1.f);
+    const float Ty=FMath::Clamp(V-static_cast<float>(Y),0.f,1.f);
+    const int32 A=Y*Side+X,B=A+1,C=A+Side,D=C+1;
+    const float SourceCoverage=(
+        R1RiverMask[A]+R1RiverMask[B]+R1RiverMask[C]+R1RiverMask[D])*.25f;
+    if(SourceCoverage<.5f)return false;
+    const auto SourceSurfaceZ=[this](int32 Xi,int32 Yi)
+    {
+        // Same relief-derived vertex formula as BuildR1SourceRiver.
+        return FMath::Max(-17.85f,R1HeightAt(Xi,Yi)+.12f)*100.f;
+    };
+    const float Near=FMath::Lerp(SourceSurfaceZ(X,Y),
+                                 SourceSurfaceZ(X+1,Y),Tx);
+    const float Far=FMath::Lerp(SourceSurfaceZ(X,Y+1),
+                                SourceSurfaceZ(X+1,Y+1),Tx);
+    const float WaterLocalZ=FMath::Lerp(Near,Far,Ty);
+    OutWaterSurfaceWorldZCm=GetActorTransform().TransformPosition(
+        FVector(Local.X,Local.Y,WaterLocalZ)).Z;
+    return FMath::IsFinite(OutWaterSurfaceWorldZCm);
+}

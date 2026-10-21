@@ -112,6 +112,12 @@ public:
     bool TryResolveGate02SourceScatterHit(
         const FHitResult& Hit,FString& OutStableSourceId,FString& OutError) const;
 
+    /** Query the actual 513x513 authored RiverVale mask/relief; no generated
+     * global water plane or false volume. Shared with native swimming/hazards. */
+    UFUNCTION(BlueprintPure, Category="OfflineGame|FirstWorld|Water")
+    bool QueryGate02R1SourceWaterSurface(
+        const FVector& WorldPosition,float& OutWaterSurfaceWorldZCm) const;
+
     UFUNCTION(BlueprintPure, Category = "OfflineGame|World|Generation")
     int32 GetActiveSeed() const { return ActiveSeed; }
 
@@ -917,6 +923,9 @@ private:
     void RestoreR1ExplorationFromWorldStore();
     void RecordR1ExplorationAndSaveIfDue(const FVector& WorldLocation);
     bool SaveR1ExplorationToWorldStore(FString& OutError);
+    TWeakObjectPtr<AOGStartingRegionGenerator> R1SourceWaterActor;
+    bool bR1SourceWaterSwimActive = false;
+    void UpdateNativeGate02R1WaterTraversal();
     bool bControlledResourceVisible = false;
     FName ControlledResourceLabel = NAME_None;
     float ControlledResourceCurrent = 0.0f;
