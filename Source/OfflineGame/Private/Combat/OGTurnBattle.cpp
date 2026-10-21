@@ -409,6 +409,29 @@ bool FOGTurnBattle::ApplyResolvedAction(
     const FOGResolvedCombatAction& Action,
     FString& OutError)
 {
+    // Existing FOGTurnBattle copy semantics are used by the deterministic
+    // diagnostic encounter and replay path. Execute on a detached snapshot,
+    // then move only successful results into the real combat state.
+    // Critical for multi-strike costs, Dawn barriers, OnDefeat reactions,
+    // field contests, event queues and action-value timeline consistency.
+    FOGTurnBattle Candidate=*this;
+    FString CandidateError;
+    if(!Candidate.ApplyResolvedActionMutating(Action,CandidateError))
+    {
+        OutError=CandidateError.IsEmpty()
+            ?TEXT("Resolved action rejected; no battle state was committed.")
+            :MoveTemp(CandidateError);
+        return false;
+    }
+    *this=MoveTemp(Candidate);
+    OutError.Reset();
+    return true;
+}
+
+bool FOGTurnBattle::ApplyResolvedActionMutating(
+    const FOGResolvedCombatAction& Action,
+    FString& OutError)
+{
     OutError.Reset();
 
     if (State.Status != EOGTurnBattleStatus::Running)

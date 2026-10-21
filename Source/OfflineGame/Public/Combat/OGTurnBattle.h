@@ -246,6 +246,13 @@ public:
         FString& OutError);
 
 private:
+    // Atomic action transaction: the currently committed Battle must never
+    // retain partial HP, resource, trigger or log changes from a rejected
+    // authored multi-hit or revival action.
+    bool ApplyResolvedActionMutating(
+        const FOGResolvedCombatAction& Action,
+        FString& OutError);
+
     struct FLuminousFieldState
     {
         FOGContentId OwnerFantasmId;
