@@ -69,8 +69,13 @@ void AOGStartingRegionGenerator::BuildR1SourceRiver()
             ++WaterCells;
         }
         if(Vertices.IsEmpty()) continue;
+        const int32 SectionId=Sections++;
         R1RiverSurface->CreateMeshSection_LinearColor(
-            Sections++,Vertices,Triangles,Normals,UVs,Colors,Tangents,false);
+            SectionId,Vertices,Triangles,Normals,UVs,Colors,Tangents,false);
+        // ProceduralMesh materials are indexed by section, not globally.
+        // Otherwise 63 of 64 real river sections render with an unwanted
+        // fallback material even though the first section looks correct.
+        if(Water)R1RiverSurface->SetMaterial(SectionId,Water);
     }
     UE_LOG(LogTemp,Display,TEXT("GATE02_R1 native water: %d original mask cells %d independent render sections, no collision or fabricated water levels"),
            WaterCells,Sections);
