@@ -2,6 +2,9 @@
 #include "Persistence/OGWorldStore.h"
 #include "Combat/OGApprovedLuminousSourceKit.h"
 #include "Combat/OGLuminousAlterV1Projection.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 namespace
 {
@@ -97,9 +100,35 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
         Sources.RegisteredBleedFamilyId=FOGContentId(
             TEXT("combat:luminous_valentine.base.status.hemorrhage"));
     if(!Sources.ReadNativeBloodEligibility)
-        Sources.ReadNativeBloodEligibility=[](
-            const FOGCombatUnitState&,const FOGCombatUnitState&,
-            const FOGContentId&){return false;};
+        Sources.ReadNativeBloodEligibility=[&Store](
+            const FOGCombatUnitState&,const FOGCombatUnitState& Target,
+            const FOGContentId&)
+        {
+            if(!Target.UnitEntityId.IsValid() ||
+               Target.Presence==EOGCombatPresence::Removed ||
+               !Target.IsAlive())return false;
+            // The genuine canonical entity state, not a player input packet,
+            // must explicitly declare flowing blood or equivalent tissue.
+            // Unknown, bloodless, immune and absent anatomy fail closed.
+            bool bFound=false;
+            FName Kind;
+            FString Saved;
+            int64 CreationTick=0;
+            FString Error;
+            if(!Store.TryReadEntity(Target.UnitEntityId,bFound,Kind,
+                 Saved,CreationTick,Error) || !bFound)return false;
+            TSharedPtr<FJsonObject> Json;
+            if(!FJsonSerializer::Deserialize(
+                  TJsonReaderFactory<>::Create(Saved),Json) || !Json.IsValid())
+                return false;
+            bool bImmune=false;
+            if(Json->TryGetBoolField(TEXT("bleed_immune"),bImmune) && bImmune)
+                return false;
+            bool bBlood=false,bEquivalent=false;
+            Json->TryGetBoolField(TEXT("has_flowing_blood"),bBlood);
+            Json->TryGetBoolField(TEXT("blood_equivalent_tissue"),bEquivalent);
+            return bBlood || bEquivalent;
+        };
     if(!Sources.ReadNativeSoulContinuity)
         Sources.ReadNativeSoulContinuity=[](
             const FOGCombatUnitState& Restoring,const FOGCombatUnitState& Target,
