@@ -108,6 +108,7 @@ public:
     /** Resolve an ACTUAL terrain ecology instance hit to its authored stable
      * population ID. Does not award loot or authorize a destructive harvest;
      * the game action executor must verify tool/ownership before Persist*. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|FirstWorld|SourceEcology")
     bool TryResolveGate02SourceScatterHit(
         const FHitResult& Hit,FString& OutStableSourceId,FString& OutError) const;
 

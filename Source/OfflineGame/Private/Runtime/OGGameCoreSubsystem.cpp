@@ -1,6 +1,8 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
+#include "Combat/OGApprovedLuminousSourceKit.h"
+#include "Combat/OGLuminousAlterV1Projection.h"
 
 #if PLATFORM_ANDROID
 #include "AndroidPermissionFunctionLibrary.h"
@@ -870,6 +872,56 @@ bool UOGGameCoreSubsystem::ApplyApprovedLuminousResolvedAction(
     const FOGResolvedCombatAction& Action,FString& OutError)
 {
     return ApplyOwnedLuminousTurnAction(Action,OutError);
+}
+
+FOGTurnBattleState UOGGameCoreSubsystem::GetApprovedLuminousEncounterState() const
+{
+    return OwnedLuminousTurnBattle ? OwnedLuminousTurnBattle->GetState()
+        : FOGTurnBattleState();
+}
+
+bool UOGGameCoreSubsystem::ReadOwnedApprovedLuminousSkills(
+    const FOGEntityId& ManifestationId,const FOGEntityId& RulerId,
+    FOGResolvedSkillSet& OutSkills,FString& OutError) const
+{
+    OutSkills=FOGResolvedSkillSet();
+    OutError.Reset();
+    if(!bCoreReady || !WorldStore || !WorldStore->IsOpen() ||
+       !ManifestationId.IsValid() || !RulerId.IsValid())
+    {
+        OutError=TEXT("No live owned Luminous Manifestation or canonical WorldStore.");
+        return false;
+    }
+    FOGCharacterManifestationRecord Record;
+    bool bFound=false;
+    if(!WorldStore->TryReadCharacterManifestation(
+         ManifestationId,bFound,Record,OutError))
+        return false;
+    if(!bFound || Record.ManifestationId!=ManifestationId ||
+       Record.OwningRulerId!=RulerId ||
+       Record.LifecycleState!=FName(TEXT("active")) ||
+       Record.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")))
+    {
+        OutError=TEXT("Manifestation is not an active, exact Luminous belonging to the Ruler.");
+        return false;
+    }
+    FOGApprovedLuminousSourceKitView BaseKit;
+    FOGLuminousAlterV1Projection AlterKit;
+    if(!FOGApprovedLuminousSourceKit::LoadBaseV6(BaseKit,OutError) ||
+       !FOGLuminousAlterV1Projection::LoadApprovedV1(AlterKit,OutError))
+        return false;
+    if(Record.ActiveVersionId==BaseKit.VersionId)
+        OutSkills=BaseKit.CoreSkills;
+    else if(Record.ActiveVersionId==AlterKit.DraftVersionId)
+        OutSkills=AlterKit.Skills;
+    else
+    {
+        OutError=TEXT("This Manifestation uses neither approved Luminous Base nor Alter Version.");
+        return false;
+    }
+    return OutSkills.CurrentForm==Record.ActiveVersionId &&
+           OutSkills.ActiveSkills.Num()==3 && OutSkills.PassiveSkills.Num()==6 &&
+           OutSkills.UltimateSkill.IsValid();
 }
 
 bool UOGGameCoreSubsystem::BindOwnedLuminousCombatAuthority(

@@ -87,6 +87,16 @@ public:
     bool ApplyApprovedLuminousResolvedAction(
         const FOGResolvedCombatAction& Action,FString& OutError);
 
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|Combat")
+    FOGTurnBattleState GetApprovedLuminousEncounterState() const;
+
+    /** Resolve the exact version's full 3A/6P kit from owned WorldStore data
+     * without creating a new character, changing equipment or inventing Rank. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Combat")
+    bool ReadOwnedApprovedLuminousSkills(
+        const FOGEntityId& ManifestationId,const FOGEntityId& RulerId,
+        FOGResolvedSkillSet& OutSkills,FString& OutError) const;
+
 
     /** Production encounter integration: bind the EXISTING FOGTurnBattle to
      * real Registry, World and soul/blood providers. No fabricated defaults. */
