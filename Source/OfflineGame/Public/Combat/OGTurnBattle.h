@@ -307,6 +307,8 @@ private:
         int32 ScarletReserve = 35;
         int32 UltimateChargePercent = 0;
         bool bRevivalUsed = false;
+        int32 RevivalAfterglowExpiresOwnerAction = INDEX_NONE;
+        int32 LastNightExecutionChargeOwnerAction = INDEX_NONE;
         bool bDayAttunement = false;
         bool bAttunementActive = true; // Initial Night from approved Base v6.
         int32 AttunementExpiryAction = 2;

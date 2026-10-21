@@ -172,6 +172,44 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         OutError=TEXT("A3 Covenant requires 75 actual Scarlet Reserve at preparation.");
         return false;
     }
+    // A2 Bloodless Cost is lawful only when a selected enemy lacks the
+    // canonical blood family and Luminous has no already stored valid blood.
+    // The 2% current MaxHP sacrificial cost cannot itself defeat the caster.
+    bool bA2NeedsBloodlessCost=false;
+    if(bA2)
+    {
+        bool bStoredBlood=false;
+        for(const auto& Row:StateOfOwner.HemalMarks)
+            if(Row.Value>0 &&
+               StateOfOwner.HemalMarkExpiryOwnerAction.FindRef(Row.Key)>=
+                   NextOwnerAction){bStoredBlood=true;break;}
+        if(!bStoredBlood)
+            for(const auto& Row:StateOfOwner.HemorrhageStacks)
+                if(Row.Value>0 &&
+                   StateOfOwner.HemorrhageEndOwnerAction.FindRef(Row.Key)>=
+                       NextOwnerAction){bStoredBlood=true;break;}
+        if(!bStoredBlood)
+            for(const FOGEntityId& Id:Action.TargetUnitIds)
+                if(!IsLuminousBloodStatusEligible(
+                    Source.UnitEntityId,Id,AcceptedBleedFamilyId))
+                {
+                    bA2NeedsBloodlessCost=true;
+                    break;
+                }
+        if(bA2NeedsBloodlessCost)
+        {
+            const FOGLargeNumber SelfCost=FOGLargeNumber::ScaleByBasisPoints(
+                Source.Stats.MaxHp,200);
+            const FOGLargeNumber Remaining=FOGLargeNumber::Add(
+                Source.CurrentHp,Minus(SelfCost));
+            if(FOGLargeNumber::Compare(Remaining,FOGLargeNumber())<=0)
+            {
+                OutError=TEXT("Bloodless Hematic Crucible cannot sacrifice lethal HP.");
+                return false;
+            }
+            Source.CurrentHp=Remaining;
+        }
+    }
     if(bA3Covenant)
     {
         // Both portions, 30 + 45, are committed at preparation (not death).
@@ -183,6 +221,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         StateOfOwner.AttunementExpiryAction=StateOfOwner.OwnerActions+3;
     }
     if(bUlt)StateOfOwner.UltimateChargePercent-=ChargeCost;
+    const bool bNightBeforeA2=StateOfOwner.bAttunementActive &&
+        !StateOfOwner.bDayAttunement;
     if(bA2)
     {
         StateOfOwner.ScarletReserve-=BaseReserveCost;
@@ -310,6 +350,9 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                 (10000+DawnSpd)/10000;
         if(StateOfOwner.HemalMarks.FindRef(TargetId)>=2)
             EffectiveAttacker.CritDamageBonusBps+=1800; // Scarlet Rhythm P2
+        if(CurrentOwnerAction<=StateOfOwner.RevivalAfterglowExpiresOwnerAction)
+            EffectiveAttacker.Attack=FOGLargeNumber::ScaleByBasisPoints(
+                EffectiveAttacker.Attack,11200); // Reconstitution P4
         if(StateOfOwner.bAttunementActive &&
            !StateOfOwner.bDayAttunement)
         {
@@ -388,12 +431,20 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             {
                 StateOfOwner.bNextScarletCadenceDelayReduction=true;
                 if(bHadBleedBeforeA1)
+                {
                     StateOfOwner.DiscountNextA2Reserve=5;
+                    // A1 Targeted Execution may extend its existing
+                    // source Hemorrhage by ONE owner turn, never beyond 3.
+                    if(StateOfOwner.HemorrhageStacks.FindRef(Id)>0)
+                        StateOfOwner.HemorrhageEndOwnerAction.Add(
+                            Id,CurrentOwnerAction+3);
+                }
             }
         }
     }
     else if(bA2)
     {
+        bool bA2DefeatedActualEnemy=false;
         for(int32 I=0;I<Action.TargetUnitIds.Num();++I)
         {
             const FOGEntityId Id=Action.TargetUnitIds[I];
@@ -423,6 +474,23 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             }
             else if(bConsume)
                 StateOfOwner.HemalMarks.Add(Id,Marks);
+            if(bNightBeforeA2 && bActualContact)
+            {
+                const FOGCombatUnitState* After=FindUnit(Id);
+                if(After && !After->IsAlive())
+                    bA2DefeatedActualEnemy=true;
+            }
+        }
+        // Queen of Nightfall P3: a Night A2 must genuinely defeat an enemy;
+        // one +12 percentage-point charge grant per owner's action.
+        if(bA2DefeatedActualEnemy &&
+           StateOfOwner.LastNightExecutionChargeOwnerAction!=
+               CurrentOwnerAction)
+        {
+            StateOfOwner.UltimateChargePercent=FMath::Min(
+                200,StateOfOwner.UltimateChargePercent+12);
+            StateOfOwner.LastNightExecutionChargeOwnerAction=
+                CurrentOwnerAction;
         }
         StateOfOwner.bDayAttunement=false;
         StateOfOwner.bAttunementActive=true;
@@ -570,6 +638,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousBaseRevival(
         return;
     Runtime->ScarletReserve-=40;
     Runtime->bRevivalUsed=true;
+    Runtime->RevivalAfterglowExpiresOwnerAction=Runtime->OwnerActions+1;
 }
 
 
