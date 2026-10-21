@@ -212,6 +212,28 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
     if(StateOfOwner.bAttunementActive &&
        CurrentOwnerAction>StateOfOwner.AttunementExpiryAction)
         StateOfOwner.bAttunementActive=false; // Neutral, neither Night nor Day.
+    // Source-authoritative Base v6 status lifetimes: Hemal Marks 3 owner
+    // turns, Eclipse Claim 2, Dawn Oath 2. Never retain a hidden expired
+    // mark after an enemy switches lane or the owner exits Day/Night.
+    for(auto It=StateOfOwner.HemalMarks.CreateIterator();It;++It)
+        if(StateOfOwner.HemalMarkExpiryOwnerAction.FindRef(It.Key())<
+           CurrentOwnerAction)
+        {
+            StateOfOwner.HemalMarkExpiryOwnerAction.Remove(It.Key());
+            StateOfOwner.PendingFourMarkTargetBonus.Remove(It.Key());
+            It.RemoveCurrent();
+        }
+    for(auto It=StateOfOwner.EclipseClaimTargets.CreateIterator();It;++It)
+        if(StateOfOwner.EclipseClaimExpiryOwnerAction.FindRef(*It)<
+           CurrentOwnerAction)
+        {
+            StateOfOwner.EclipseClaimExpiryOwnerAction.Remove(*It);
+            It.RemoveCurrent();
+        }
+    for(auto It=StateOfOwner.DawnOathByBeneficiary.CreateIterator();It;++It)
+        if(It.Value()<CurrentOwnerAction)
+            It.RemoveCurrent();
+
     // Status effects belong to this Manifestation, never all characters who
     // share the Luminous Identity. Resolve actual HP damage before any siphon.
     TArray<FOGEntityId> Expired;
@@ -295,6 +317,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(StateOfOwner.bAttunementActive &&
            !StateOfOwner.bDayAttunement)
             Request.AdditionalMultiplierBps.Add(11000);
+        // Night Ultimate's +20% penetration is confined to its own four
+        // independently rolled strokes. No global passive is fabricated.
+        if(bUlt && UltimateBranch==TEXT("night"))
+            EffectiveAttacker.DefensePenetrationBps+=2000;
         const FOGDamageResolution Damage=FOGCombatMath::ResolveDamage(
             Request,EffectiveAttacker,Target->Stats,Rng);
         if(Damage.TotalDamage.IsZero())return true;
@@ -317,6 +343,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                 const int32 BeforeMarks=StateOfOwner.HemalMarks.FindRef(TargetId);
                 const int32 AfterMarks=FMath::Min(4,BeforeMarks+1);
                 StateOfOwner.HemalMarks.Add(TargetId,AfterMarks);
+                StateOfOwner.HemalMarkExpiryOwnerAction.Add(
+                    TargetId,CurrentOwnerAction+3);
                 if(BeforeMarks<4 && AfterMarks==4)
                     StateOfOwner.PendingFourMarkTargetBonus.Add(TargetId);
             }
@@ -324,7 +352,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             {
                 StateOfOwner.HemorrhageStacks.FindOrAdd(TargetId)=
                     FMath::Min(2,StateOfOwner.HemorrhageStacks.FindRef(TargetId)+1);
-                StateOfOwner.HemorrhageEndOwnerAction.Add(TargetId,CurrentOwnerAction+3);
+                StateOfOwner.HemorrhageEndOwnerAction.Add(TargetId,CurrentOwnerAction+2);
             }
             if(SiphonBps>0)
             {
@@ -379,6 +407,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             if(bConsume && bActualContact)
             {
                 StateOfOwner.EclipseClaimTargets.Add(Id);
+                StateOfOwner.EclipseClaimExpiryOwnerAction.Add(
+                    Id,CurrentOwnerAction+2);
                 if(bFourMarkBonus)
                     StateOfOwner.PendingFourMarkTargetBonus.Remove(Id);
             }
@@ -404,6 +434,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             FOGLargeNumber Heal=FOGLargeNumber::ScaleByBasisPoints(
                 Source.Stats.Attack,Scale);
             Heal=FOGLargeNumber::ScaleByBasisPoints(Heal,12400);
+            const bool bConsumeDawnOath=bDayUltimate &&
+                StateOfOwner.DawnOathByBeneficiary.FindRef(Id)>=CurrentOwnerAction;
+            if(bConsumeDawnOath)
+                Heal=FOGLargeNumber::ScaleByBasisPoints(Heal,12000);
             if(StateOfOwner.bAttunementActive && StateOfOwner.bDayAttunement)
                 Heal=FOGLargeNumber::ScaleByBasisPoints(Heal,11200);
             const FOGLargeNumber UncappedHeal=Heal;
@@ -419,6 +453,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             StateOfOwner.BlessingExpiry.Add(Id,CurrentOwnerAction+2);
             if(bA3 && !Heal.IsZero())
                 StateOfOwner.DawnOathByBeneficiary.Add(Id,CurrentOwnerAction+2);
+            if(bConsumeDawnOath && !Heal.IsZero())
+                StateOfOwner.DawnOathByBeneficiary.Remove(Id);
             if(!Heal.IsZero() && !bGrantedOnHpDamage)
             {
                 StateOfOwner.ScarletReserve=FMath::Min(
@@ -450,7 +486,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
                         2500,false,K==3))
                     return false;
         if(bEclipseClaim)
+        {
             StateOfOwner.EclipseClaimTargets.Remove(Primary);
+            StateOfOwner.EclipseClaimExpiryOwnerAction.Remove(Primary);
+        }
         // Both Ultimates are independently selectable and preserve existing
         // attunement: they do NOT force the owner into Night.
     }

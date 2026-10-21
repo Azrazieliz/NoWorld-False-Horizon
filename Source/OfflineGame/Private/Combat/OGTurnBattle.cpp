@@ -495,6 +495,13 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
                 Source->NextActionValue);
 
         int64 AuthoredDelay=FMath::Max<int64>(1,Action.ActionDelay);
+        // Base v6 Queen of Nightfall P3 is an 8% owner Speed bonus while
+        // the owner's Night attunement is active. Apply it to the actual
+        // next-action timeline, never merely to a temporary damage stat.
+        if(const FLuminousBaseBattleRuntime* S=
+               LuminousBaseStates.Find(Source->UnitEntityId))
+            if(S->bAttunementActive && !S->bDayAttunement)
+                AuthoredDelay=FMath::Max<int64>(1,AuthoredDelay*10000/10800);
         if(Action.SkillId==FOGContentId(
                 TEXT("combat:luminous_valentine.base.skill.scarlet_cadence")))
             if(FLuminousBaseBattleRuntime* S=

@@ -317,11 +317,13 @@ private:
         int32 LastBleedReserveOwnerAction = INDEX_NONE;
         TSet<FOGEntityId> PendingFourMarkTargetBonus;
         TSet<FOGEntityId> EclipseClaimTargets;
+        TMap<FOGEntityId,int32> EclipseClaimExpiryOwnerAction;
         bool bAllyRevivalSpent = false;
         FOGEntityId PreparedCovenantTarget;
         int32 CovenantExpiryOwnerAction = -1;
         int32 OwnerActions = 0;
         TMap<FOGEntityId,int32> HemalMarks;
+        TMap<FOGEntityId,int32> HemalMarkExpiryOwnerAction;
         TMap<FOGEntityId,int32> HemorrhageStacks;
         TMap<FOGEntityId,int32> HemorrhageEndOwnerAction;
         TMap<FOGEntityId,int32> BlessingExpiry;
