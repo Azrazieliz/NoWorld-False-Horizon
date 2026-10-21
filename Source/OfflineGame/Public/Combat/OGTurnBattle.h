@@ -328,10 +328,6 @@ private:
         // a prepared reaction, NOT free post-succession active resurrection.
         FOGEntityId PreparedDayUltimateRevivalTarget;
         int32 DayUltimateRevivalExpiryOwnerAction = -1;
-        // Approved Day Ultimate 35 Reserve/30% ally self-continuity rescue:
-        // a prepared reaction, NOT free post-succession active resurrection.
-        FOGEntityId PreparedDayUltimateRevivalTarget;
-        int32 DayUltimateRevivalExpiryOwnerAction = -1;
         int32 OwnerActions = 0;
         TMap<FOGEntityId,int32> HemalMarks;
         TMap<FOGEntityId,int32> HemalMarkExpiryOwnerAction;
