@@ -42,7 +42,7 @@ bool FOGTurnBattle::TryActivateLuminousAuthoredField(
     const bool bBase=ExactFantasmId ==
        FOGContentId(TEXT("combat:luminous_valentine.base.fantasm.sovereign_eclipse"));
     const bool bAlter=ExactFantasmId ==
-       FOGContentId(TEXT("draft:luminous_valentine.alter.world_fantasm.cathedral"));
+       FOGContentId(TEXT("combat:luminous_valentine.alter.world_fantasm.cathedral"));
     if(!bBase && !bAlter)
     {
         OutError=TEXT("Unregistered Luminous Fantasm is not executable.");

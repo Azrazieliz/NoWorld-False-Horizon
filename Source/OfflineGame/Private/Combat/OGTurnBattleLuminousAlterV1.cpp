@@ -20,12 +20,12 @@ bool IsAlter(const FOGCombatUnitState& C)
 {
     return C.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))
         && C.SkillSet.ActiveSkills.Contains(
-            FOGContentId(TEXT("draft:luminous_valentine.alter.active_1")));
+            FOGContentId(TEXT("combat:luminous_valentine.alter.active_1")));
 }
-const FOGContentId A1(TEXT("draft:luminous_valentine.alter.active_1"));
-const FOGContentId A2(TEXT("draft:luminous_valentine.alter.active_2"));
-const FOGContentId A3(TEXT("draft:luminous_valentine.alter.active_3"));
-const FOGContentId Ultimate(TEXT("draft:luminous_valentine.alter.ultimate.black_mass"));
+const FOGContentId A1(TEXT("combat:luminous_valentine.alter.active_1"));
+const FOGContentId A2(TEXT("combat:luminous_valentine.alter.active_2"));
+const FOGContentId A3(TEXT("combat:luminous_valentine.alter.active_3"));
+const FOGContentId Ultimate(TEXT("combat:luminous_valentine.alter.ultimate.black_mass"));
 }
 
 bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
@@ -63,12 +63,12 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         return false;
     }
     static const TCHAR* Passives[]={
-        TEXT("draft:luminous_valentine.alter.passive_1"),
-        TEXT("draft:luminous_valentine.alter.passive_2"),
-        TEXT("draft:luminous_valentine.alter.passive_3"),
-        TEXT("draft:luminous_valentine.alter.passive_4"),
-        TEXT("draft:luminous_valentine.alter.passive_5"),
-        TEXT("draft:luminous_valentine.alter.passive_6")
+        TEXT("combat:luminous_valentine.alter.passive_1"),
+        TEXT("combat:luminous_valentine.alter.passive_2"),
+        TEXT("combat:luminous_valentine.alter.passive_3"),
+        TEXT("combat:luminous_valentine.alter.passive_4"),
+        TEXT("combat:luminous_valentine.alter.passive_5"),
+        TEXT("combat:luminous_valentine.alter.passive_6")
     };
     for(const TCHAR* Id:Passives)
         if(!Source.SkillSet.PassiveSkills.Contains(FOGContentId(Id)))
@@ -487,7 +487,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousAlterRevival(
     FString Error;
     if(Restore.IsZero() ||
        !ApplyApprovedLuminousRevivalHealing(UnitId,UnitId,Restore,
-            FOGContentId(TEXT("draft:luminous_valentine.alter.passive_5")),Error))
+            FOGContentId(TEXT("combat:luminous_valentine.alter.passive_5")),Error))
         return;
     if(!ChangePresence(UnitId,EOGCombatPresence::Active,Error))return;
     R->RedTithe-=75;

@@ -8,7 +8,7 @@ namespace
 {
 const FOGContentId BaseIdentity(TEXT("character:luminous_valentine.identity"));
 const FOGContentId BaseCoreSkill(TEXT("combat:luminous_valentine.base.skill.scarlet_cadence"));
-const FOGContentId AlterCoreSkill(TEXT("draft:luminous_valentine.alter.active_1"));
+const FOGContentId AlterCoreSkill(TEXT("combat:luminous_valentine.alter.active_1"));
 bool FailPreflight(FString& Error,const TCHAR* Reason)
 {
     Error=Reason;

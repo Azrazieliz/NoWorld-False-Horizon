@@ -11,6 +11,9 @@ struct OFFLINEGAME_API FOGLuminousAlterV1Projection
     FOGCombatStats HeroLevelOne;
     FOGResolvedSkillSet Skills;
     FOGContentId DraftVersionId;
+    // Stable executable ID for the independently approved Alter v1.
+    // Its exact source JSON still retains the historical draft source key.
+    FOGContentId NativeVersionId;
     FOGContentId WorldFantasmId;
     int32 InitialRedTithe=0;
     int32 RedTitheMaximum=0;

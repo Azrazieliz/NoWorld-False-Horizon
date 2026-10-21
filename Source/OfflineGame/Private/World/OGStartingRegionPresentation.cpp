@@ -3899,6 +3899,14 @@ void AOGWorldPrototypeCharacter::PrimaryAttackPressed()
     {
         return;
     }
+    if(HasNativeOwnedLuminousEncounter())
+    {
+        FString Error;
+        if(!SubmitApprovedLuminousWorldAction(0,NAME_None,Error))
+            UE_LOG(LogOfflineGame,Warning,
+                TEXT("Luminous A1 native action rejected without fallback: %s"),*Error);
+        return;
+    }
 
     if (UOGDiagnosticCombatComponent* Combat = FindComponentByClass<UOGDiagnosticCombatComponent>())
     {
@@ -4051,16 +4059,39 @@ void AOGWorldPrototypeCharacter::RequestSkillSlot(
 
 void AOGWorldPrototypeCharacter::Skill1Pressed()
 {
+    if(HasNativeOwnedLuminousEncounter())
+    {
+        FString Error;
+        if(!SubmitApprovedLuminousWorldAction(1,NAME_None,Error))
+            UE_LOG(LogOfflineGame,Warning,TEXT("Luminous A2 rejected: %s"),*Error);
+        return;
+    }
     RequestSkillSlot(0);
 }
 
 void AOGWorldPrototypeCharacter::Skill2Pressed()
 {
+    if(HasNativeOwnedLuminousEncounter())
+    {
+        FString Error;
+        if(!SubmitApprovedLuminousWorldAction(2,NAME_None,Error))
+            UE_LOG(LogOfflineGame,Warning,TEXT("Luminous A3 rejected: %s"),*Error);
+        return;
+    }
     RequestSkillSlot(1);
 }
 
 void AOGWorldPrototypeCharacter::UltimatePressed()
 {
+    if(HasNativeOwnedLuminousEncounter())
+    {
+        // Never infer a Day/Night or Ruin/Harvest branch from the time of day.
+        // HUD/Blueprint submits its explicit branch through the native action
+        // method. This visual request MUST NOT apply an invented effect.
+        OnUltimateRequested(HardLockedTarget.IsValid()
+            ? HardLockedTarget.Get():FindBestTarget());
+        return;
+    }
     if (!PrepareActionCancel(
             EOGActionCancelDestination::Ultimate))
     {

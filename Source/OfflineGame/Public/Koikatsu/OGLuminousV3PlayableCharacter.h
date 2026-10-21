@@ -155,6 +155,17 @@ public:
 
     UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|Wardrobe")
     int32 GetActiveLuminousPartCount() const { return ActivePartCount; }
+    /** Live ownership proof for attack dispatch, never inferred from visual
+     * resemblance or a selected UI portrait. Includes exact active Version. */
+    bool IsBoundToOwnedLuminousCombatUnit(const FOGEntityId& RulerId,
+        const FOGEntityId& ManifestationId,
+        const FOGContentId& VersionId) const
+    {
+        return bLuminousReady && bNativeOwnedCharacterBound &&
+            BoundOwnedRuler==RulerId &&
+            BoundOwnedManifestation==ManifestationId &&
+            BoundOwnedVersion==VersionId;
+    }
 
     /** Explicit visual refresh; never writes the canonical store or alters actual clothing. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Presentation")

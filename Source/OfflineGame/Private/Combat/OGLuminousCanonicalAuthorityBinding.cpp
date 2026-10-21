@@ -58,7 +58,7 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
     // no missing package install or synthesized Registry record is required.
     const TMap<FOGContentId,FOGContentId> AuthoredFantasmByVersion={
         {BaseKit.VersionId,BaseKit.WorldFantasmId},
-        {AlterKit.DraftVersionId,AlterKit.WorldFantasmId}
+        {AlterKit.NativeVersionId,AlterKit.WorldFantasmId}
     };
     if(Sources.FantasmByRegisteredVersion.IsEmpty())
         Sources.FantasmByRegisteredVersion=AuthoredFantasmByVersion;
@@ -179,7 +179,7 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
         }
         const bool bBase=Record.ActiveVersionId==BaseKit.VersionId &&
             MatchesKit(Unit.SkillSet,BaseKit.CoreSkills);
-        const bool bAlter=Record.ActiveVersionId==AlterKit.DraftVersionId &&
+        const bool bAlter=Record.ActiveVersionId==AlterKit.NativeVersionId &&
             MatchesKit(Unit.SkillSet,AlterKit.Skills);
         if(bBase==bAlter)
         {

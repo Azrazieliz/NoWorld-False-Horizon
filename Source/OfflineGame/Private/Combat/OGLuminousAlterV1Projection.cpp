@@ -50,6 +50,14 @@ bool FOGLuminousAlterV1Projection::LoadApprovedV1(
     const TSharedPtr<FJsonObject>& Charge=Resources->GetObjectField(TEXT("ultimate_charge"));
 
     Out.DraftVersionId=FOGContentId(Authority->GetStringField(TEXT("version_id")));
+    // Gate11 no longer exists: this user-approved v1 is installed directly
+    // under a unique native Alter Version without changing the locked JSON.
+    if(Out.DraftVersionId!=FOGContentId(TEXT("draft:character.luminous_valentine.alter")))
+    {
+        OutError=TEXT("Approved Alter design carries a different immutable source Version.");
+        return false;
+    }
+    Out.NativeVersionId=FOGContentId(TEXT("character:luminous_valentine.version_alter_v1"));
     auto Read=[&](const TCHAR* Id)->int32
     {
         return static_cast<int32>(Stats->GetIntegerField(Id));
@@ -72,22 +80,33 @@ bool FOGLuminousAlterV1Projection::LoadApprovedV1(
     S.DamageTakenMultiplierBps=Read(TEXT("damage_taken"));
     S.TrueDamageResistanceBps=Read(TEXT("true_damage_resist"));
 
+    // Exact approved frozen source still uses draft identifiers; convert
+    // their namespace one-to-one to stable native executable content IDs.
+    // This is a technical identifier projection, NOT an edited ability design.
+    const auto NativeAlterId=[](const FString& Source)->FOGContentId
+    {
+        const FString Prefix(TEXT("draft:luminous_valentine.alter."));
+        if(!Source.StartsWith(Prefix,ESearchCase::CaseSensitive) ||
+           Source.Len()<=Prefix.Len())return FOGContentId();
+        return FOGContentId(TEXT("combat:luminous_valentine.alter.")+
+            Source.RightChop(Prefix.Len()));
+    };
     for(const TSharedPtr<FJsonValue>& Entry:J->GetArrayField(TEXT("actives")))
         Out.Skills.ActiveSkills.Add(
-            FOGContentId(Entry->AsObject()->GetStringField(TEXT("id"))));
+            NativeAlterId(Entry->AsObject()->GetStringField(TEXT("id"))));
     for(const TSharedPtr<FJsonValue>& Entry:J->GetArrayField(TEXT("passives")))
         Out.Skills.PassiveSkills.Add(
-            FOGContentId(Entry->AsObject()->GetStringField(TEXT("id"))));
-    Out.Skills.UltimateSkill=FOGContentId(
+            NativeAlterId(Entry->AsObject()->GetStringField(TEXT("id"))));
+    Out.Skills.UltimateSkill=NativeAlterId(
         J->GetObjectField(TEXT("ultimate"))->GetStringField(TEXT("id")));
-    Out.WorldFantasmId=FOGContentId(
+    Out.WorldFantasmId=NativeAlterId(
         J->GetObjectField(TEXT("world_fantasm"))->GetStringField(TEXT("id")));
-    Out.Skills.CurrentForm=Out.DraftVersionId;
+    Out.Skills.CurrentForm=Out.NativeVersionId;
     Out.InitialRedTithe=static_cast<int32>(Tithe->GetIntegerField(TEXT("initial")));
     Out.RedTitheMaximum=static_cast<int32>(Tithe->GetIntegerField(TEXT("maximum")));
     Out.UltimateChargeCapPercent=static_cast<int32>(
         Charge->GetIntegerField(TEXT("maximum_percent")));
-    if(!Out.DraftVersionId.IsValid() ||
+    if(!Out.DraftVersionId.IsValid() || !Out.NativeVersionId.IsValid() ||
        Out.Skills.ActiveSkills.Num()!=3 ||
        Out.Skills.PassiveSkills.Num()!=6 ||
        !Out.Skills.UltimateSkill.IsValid() ||

@@ -563,7 +563,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
             Capacity=16; // Observation capacity != copied-technique limit 1.
         }
         else if(Observer->SkillSet.ActiveSkills.Contains(FOGContentId(
-            TEXT("draft:luminous_valentine.alter.active_1"))))
+            TEXT("combat:luminous_valentine.alter.active_1"))))
         {
             Witnessed=&LuminousAlterStates.FindOrAdd(
                 BeneficiaryId).ObservedEnemyContentIds;

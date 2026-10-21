@@ -27,7 +27,7 @@ bool FOGTurnBattle::SetResolvedLuminousUltimateCharge(
         return true;
     }
     if(Unit->SkillSet.ActiveSkills.Contains(
-        FOGContentId(TEXT("draft:luminous_valentine.alter.active_1"))))
+        FOGContentId(TEXT("combat:luminous_valentine.alter.active_1"))))
     {
         LuminousAlterStates.FindOrAdd(ManifestationId).UltimateChargePercent=
             ChargePercent;

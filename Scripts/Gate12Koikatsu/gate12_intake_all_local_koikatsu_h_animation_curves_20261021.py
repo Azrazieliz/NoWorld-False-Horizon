@@ -10,15 +10,16 @@ DST=R/"SourceAssets/Gate12/Animations20261021/KoikatsuHOriginalSourceCurves"
 sys.path.insert(0,str(R/"Scripts/Gate12Koikatsu"))
 from gate12_import_all_gate09_koikatsu_unity_source_curves_20261021 import (
     load_env,sha_bytes,sha_file,serialize_clip,atomic_gzip)
-def run(limit=0):
+def run(start=0,end=0,shard=''):
     sources=sorted(ROOT.rglob("*.unity3d"),key=lambda p:str(p).lower())
     if not sources:raise RuntimeError("Installed Koikatsu H animation sources are absent")
     DST.mkdir(parents=True,exist_ok=True)
-    output=DST/"GATE12_INSTALLED_H_ANIMATION_SOURCE_CURVE_INDEX.json"
+    output=DST/("GATE12_INSTALLED_H_ANIMATION_SOURCE_CURVE_INDEX"+("_"+shard if shard else "")+".json")
     rows=[]
     stats=collections.Counter()
     for i,source in enumerate(sources):
-        if limit and i>=limit:break
+        if i<start:continue
+        if end and i>=end:break
         source_path=str(source)
         print("SOURCE",i+1,"/",len(sources),source.name,flush=True)
         try:
@@ -57,13 +58,15 @@ def run(limit=0):
             gc.collect()
         index={"schema":"noworld.gate12.koikatsu_native_h_original_source_curves.v1",
             "source_directory":str(ROOT),"discovered_bundles":len(sources),
-            "bundles_processed":i+1,"native_clip_objects":sum(
+            "bundles_processed":i+1,"shard_start_index":start,
+            "shard_end_index":end or len(sources),
+            "native_clip_objects":sum(
               1 for row in rows if "curve_file" in row),
             "counts":dict(stats),
             "only_original_clips":True,"rendered_scenes_created":False,
             "unreal_native_sequences_created":False,
             "source_bundles_mutated":False,
-            "status":"SOURCE_INTAKE_COMPLETE" if i+1==len(sources) and
+            "status":"SHARD_COMPLETE" if i+1==(end or len(sources)) and
                 stats["BUNDLE_FAILED"]==0 else "SOURCE_INTAKE_PARTIAL",
             "clips":rows}
         temp=output.with_suffix(".tmp")
@@ -73,5 +76,8 @@ def run(limit=0):
               dict(stats),flush=True)
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
-    parser.add_argument("--max-bundles",type=int,default=0)
-    run(parser.parse_args().max_bundles)
+    parser.add_argument("--from-index",type=int,default=0)
+    parser.add_argument("--to-index",type=int,default=0)
+    parser.add_argument("--shard",type=str,default="")
+    args=parser.parse_args()
+    run(args.from_index,args.to_index,args.shard)

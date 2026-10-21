@@ -655,6 +655,14 @@ public:
     void TriggerQteFromHud(int32 SlotIndex);
     void TriggerSkillFromHud(int32 SkillSlot);
     void TriggerUltimateFromHud();
+    /** Slot 0..2 is approved 3A; -1 is the approved Ultimate and requires
+     * explicit day/night or ruin/harvest selection from gameplay UI.
+     * Executes ONLY for the actually possessed owned Luminous Manifestation,
+     * next legal turn and actual target entity in native GameCore snapshot. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
+    bool SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,
+        FString& OutError);
+    bool HasNativeOwnedLuminousEncounter() const;
     bool HasSkillSlotForHud(int32 SkillSlot) const;
     bool HasUltimateForHud() const;
 

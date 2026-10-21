@@ -912,7 +912,7 @@ bool UOGGameCoreSubsystem::ReadOwnedApprovedLuminousSkills(
         return false;
     if(Record.ActiveVersionId==BaseKit.VersionId)
         OutSkills=BaseKit.CoreSkills;
-    else if(Record.ActiveVersionId==AlterKit.DraftVersionId)
+    else if(Record.ActiveVersionId==AlterKit.NativeVersionId)
         OutSkills=AlterKit.Skills;
     else
     {
