@@ -200,10 +200,20 @@ private:
     TMap<FIntPoint,TArray<FR1Placement>> R1TilePlacements;
     FIntPoint LastR1StreamTile = FIntPoint(MIN_int32,MIN_int32);
     bool bR1DatasetLoaded = false;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UStaticMeshComponent>> R1MarketSectionComponents;
+    TSharedPtr<class FStreamableHandle> R1MarketStreamHandle;
+    int32 R1MarketNextSection = 0;
+    bool bR1MarketSourceAssetUnavailable = false;
     bool LoadR1MetricData();
     void BuildR1SourceTerrain();
     void BuildR1SourceRiver();
     void LoadR1SourceScatter();
+    // Exact original Eastern Market assets are loaded on demand by source
+    // section. The protected art-assembly level retains all 12 source actors.
+    void UpdateR1MarketStreaming();
+    void OnR1MarketSectionLoaded();
+    void UnloadR1MarketSections();
     void RefreshR1StreamedTiles(bool bForce);
     float R1HeightAt(int32 X,int32 Y) const;
     // One shared stable-ID resolver for streaming reads and canonical writes.

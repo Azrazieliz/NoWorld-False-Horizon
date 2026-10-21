@@ -282,5 +282,9 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
 void AOGStartingRegionGenerator::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if(bGate02R1RegionSource)RefreshR1StreamedTiles(false);
+    if(bGate02R1RegionSource)
+    {
+        RefreshR1StreamedTiles(false);
+        UpdateR1MarketStreaming();
+    }
 }
