@@ -836,6 +836,42 @@ void UOGGameCoreSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
+bool UOGGameCoreSubsystem::StartApprovedLuminousEncounter(
+    const FOGTurnBattleState& InitialState,
+    const FOGEntityId& RulerId,FString& OutError)
+{
+    OutError.Reset();
+    if(!bCoreReady || bReleasingCanonicalRuntime || !WorldStore ||
+       !WorldStore->IsOpen() || !RulerId.IsValid())
+    {
+        OutError=TEXT("No active canonical WorldStore or real Ruler identity.");
+        return false;
+    }
+    if(OwnedLuminousTurnBattle &&
+       OwnedLuminousTurnBattle->GetState().Status==EOGTurnBattleStatus::Running)
+    {
+        OutError=TEXT("Cannot replace a running world encounter.");
+        return false;
+    }
+    // World encounter supplies the real roster and legal action timeline.
+    // Existing battle executor owns the damage, healing, succession,
+    // cooldowns and ultimate mechanics; no duplicate diagnostic executor.
+    TUniquePtr<FOGTurnBattle> Next=MakeUnique<FOGTurnBattle>();
+    if(!Next->Initialize(InitialState,OutError))
+        return false;
+    if(!FOGLuminousCanonicalAuthorityBinding::Bind(
+         *Next,*WorldStore,RulerId,FOGLuminousCanonicalSources(),OutError))
+        return false;
+    OwnedLuminousTurnBattle=MoveTemp(Next);
+    return true;
+}
+
+bool UOGGameCoreSubsystem::ApplyApprovedLuminousResolvedAction(
+    const FOGResolvedCombatAction& Action,FString& OutError)
+{
+    return ApplyOwnedLuminousTurnAction(Action,OutError);
+}
+
 bool UOGGameCoreSubsystem::BindOwnedLuminousCombatAuthority(
     FOGTurnBattle& Battle,
     const FOGEntityId& RulerId,
