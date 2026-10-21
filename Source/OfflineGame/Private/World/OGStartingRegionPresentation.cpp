@@ -4278,6 +4278,9 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
         }
     }
 
+    // Restored source-backed exploration is read before recording new movement;
+    // an existing player's map progress must not be replaced at login.
+    RestoreR1ExplorationFromWorldStore();
     const FVector Location = GetActorLocation();
     const FVector2D MapPoint(Location.X, Location.Y);
     if (!bHasMapTrailSample ||
@@ -4286,6 +4289,8 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
             LastMapTrailSample) >= 280.0f)
     {
         VisitedMapTrail.Add(MapPoint);
+        if(bR1ExplorationLoaded && IsFoundationWorldInputAllowed())
+            bR1ExplorationDirty=true;
         LastMapTrailSample = MapPoint;
         bHasMapTrailSample = true;
         if (VisitedMapTrail.Num() > 96)
@@ -4297,6 +4302,9 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
         }
     }
 
+    // Observe actual authored 128m ecology tiles and persist the player map
+    // into the canonical WorldStore at a bounded interval.
+    RecordR1ExplorationAndSaveIfDue(Location);
     RefreshFoundationTouchInterfaceIfNeeded();
     EndDodgeIfNeeded();
     UpdateFoundationCombatPresentation();
@@ -11589,6 +11597,12 @@ void AOGWorldPrototypeCharacter::UpdateProtagonistRepresentation(const FOGEntity
 
 void AOGWorldPrototypeCharacter::ShutdownFoundationRuntime()
 {
+    if(bR1ExplorationLoaded && bR1ExplorationDirty)
+    {
+        FString Error;
+        if(!SaveR1ExplorationToWorldStore(Error) && !Error.IsEmpty())
+            UE_LOG(LogTemp,Warning,TEXT("GATE02_R1 exploration boundary save deferred: %s"),*Error);
+    }
     if (InteractionHost) InteractionHost->Cancel(TEXT("canonical_store_release"));
     if (DiagnosticAnimations) DiagnosticAnimations->UnbindMesh();
     if (CanonicalPresentation) CanonicalPresentation->ClearBinding();

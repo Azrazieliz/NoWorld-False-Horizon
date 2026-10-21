@@ -896,6 +896,17 @@ private:
     TArray<FVector2D> VisitedMapTrail;
     FVector2D LastMapTrailSample = FVector2D::ZeroVector;
     bool bHasMapTrailSample = false;
+    // Persist actual source-backed R1 exploration into the same canonical
+    // WorldStore. No invented Location, NPC or World creation is authorized.
+    FOGEntityId R1ExplorationRuler;
+    TSet<FIntPoint> R1ExploredSourceTiles;
+    bool bR1ExplorationLoaded = false;
+    bool bR1ExplorationRestoreRejected = false;
+    bool bR1ExplorationDirty = false;
+    double R1NextExplorationSaveSeconds = 0.0;
+    void RestoreR1ExplorationFromWorldStore();
+    void RecordR1ExplorationAndSaveIfDue(const FVector& WorldLocation);
+    bool SaveR1ExplorationToWorldStore(FString& OutError);
     bool bControlledResourceVisible = false;
     FName ControlledResourceLabel = NAME_None;
     float ControlledResourceCurrent = 0.0f;

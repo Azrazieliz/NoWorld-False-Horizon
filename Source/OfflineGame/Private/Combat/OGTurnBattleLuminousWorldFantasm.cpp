@@ -153,6 +153,16 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
         OutError=TEXT("Luminous Base and Alter Fantasm rules cannot be mixed.");
         return false;
     }
+    // A World authority entitlement can be revoked while its field is active.
+    // Re-read canonical Registry/current MR/World ownership at every contest;
+    // successful activation is not permanent permission for later effects.
+    if(!LuminousFieldEligibility ||
+       !LuminousFieldEligibility(*Owner,Field->OwnerFantasmId,OutError))
+    {
+        if(OutError.IsEmpty())
+            OutError=TEXT("Fantasm authority or World ownership no longer valid.");
+        return false;
+    }
     const int32 CurrentAction=bBase
         ? LuminousBaseStates.FindRef(Contest.OwnerManifestationId).OwnerActions
         : LuminousAlterStates.FindRef(Contest.OwnerManifestationId).OwnerActions;
@@ -312,7 +322,23 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
         if(bBase)BaseState->ScarletReserve-=Cost;
         else AlterState->RedTithe-=Cost;
     }
-    if(!bOutWonSpecificContest)return true;
+    if(!bOutWonSpecificContest)
+    {
+        // An Authority defeat is a genuine resolved gameplay outcome. Alter
+        // still pays its approved unsuccessful contest cost; no registered
+        // target effect is removed and no successful-rule ledger advances.
+        FOGCombatLogEvent Failed;
+        Failed.Type=EOGCombatLogEventType::ActionResolved;
+        Failed.SourceUnitId=Contest.OwnerManifestationId;
+        Failed.TargetUnitId=Contest.TargetUnitId;
+        Failed.SkillId=Field->OwnerFantasmId;
+        Failed.PayloadJson=FString::Printf(
+            TEXT("{\"fantasm_contest_won\":false,\"registered_effect_instance\":\"%s\",\"rule\":%d,\"failed_contest_resource_cost\":%d,\"reason\":\"higher_effective_authority\"}"),
+            *Contest.RegisteredEffectInstanceId.ToString(),
+            static_cast<int32>(Contest.Rule),bChargeOnFailedContest?Cost:0);
+        Log.Append(MoveTemp(Failed));
+        return true;
+    }
 
     switch(Contest.Rule)
     {
