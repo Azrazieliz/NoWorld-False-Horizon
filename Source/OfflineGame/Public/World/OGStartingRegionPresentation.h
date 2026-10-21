@@ -202,7 +202,7 @@ private:
     bool bR1DatasetLoaded = false;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> R1MarketSectionComponents;
-    TSharedPtr<class FStreamableHandle> R1MarketStreamHandle;
+    TSharedPtr<struct FStreamableHandle> R1MarketStreamHandle;
     int32 R1MarketNextSection = 0;
     bool bR1MarketSourceAssetUnavailable = false;
     bool LoadR1MetricData();
