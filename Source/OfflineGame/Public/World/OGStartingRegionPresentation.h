@@ -145,6 +145,10 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OfflineGame|World")
     TObjectPtr<UProceduralMeshComponent> Terrain;
 
+    /** Original Gate02 river mask surfaced above the authored collidable terrain. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="OfflineGame|World|Gate02")
+    TObjectPtr<UProceduralMeshComponent> R1RiverSurface;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OfflineGame|World")
     TObjectPtr<UHierarchicalInstancedStaticMeshComponent> RockInstances;
 
@@ -192,11 +196,13 @@ private:
     TArray<float> R1HeightMeters;
     TArray<float> R1SoilMask;
     TArray<float> R1RockMask;
+    TArray<float> R1RiverMask;
     TMap<FIntPoint,TArray<FR1Placement>> R1TilePlacements;
     FIntPoint LastR1StreamTile = FIntPoint(MIN_int32,MIN_int32);
     bool bR1DatasetLoaded = false;
     bool LoadR1MetricData();
     void BuildR1SourceTerrain();
+    void BuildR1SourceRiver();
     void LoadR1SourceScatter();
     void RefreshR1StreamedTiles(bool bForce);
     float R1HeightAt(int32 X,int32 Y) const;

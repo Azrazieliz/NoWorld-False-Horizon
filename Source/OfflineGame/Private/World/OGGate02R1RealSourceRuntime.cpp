@@ -92,10 +92,11 @@ float AOGStartingRegionGenerator::R1HeightAt(int32 X,int32 Y) const
 bool AOGStartingRegionGenerator::LoadR1MetricData()
 {
     bR1DatasetLoaded=false;
-    R1HeightMeters.Reset();R1SoilMask.Reset();R1RockMask.Reset();
+    R1HeightMeters.Reset();R1SoilMask.Reset();R1RockMask.Reset();R1RiverMask.Reset();
     if (!LoadR1FloatGrid(TEXT("height_513_float32.raw"),R1HeightMeters) ||
         !LoadR1FloatGrid(TEXT("soil_mask_513_float32.raw"),R1SoilMask) ||
-        !LoadR1FloatGrid(TEXT("rock_mask_513_float32.raw"),R1RockMask))
+        !LoadR1FloatGrid(TEXT("rock_mask_513_float32.raw"),R1RockMask) ||
+        !LoadR1FloatGrid(TEXT("river_mask_513_float32.raw"),R1RiverMask))
     {
         UE_LOG(LogTemp,Error,TEXT("Gate02 source metric RAW missing/invalid; refuses fixture substitute"));
         return false;

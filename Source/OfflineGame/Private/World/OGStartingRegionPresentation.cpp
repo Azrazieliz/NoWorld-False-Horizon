@@ -183,6 +183,11 @@ AOGStartingRegionGenerator::AOGStartingRegionGenerator()
     Terrain->bUseComplexAsSimpleCollision = true;
     Terrain->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
+    R1RiverSurface=CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Gate02R1River"));
+    R1RiverSurface->SetupAttachment(SceneRoot);
+    R1RiverSurface->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    R1RiverSurface->SetCastShadow(false);
+
     RockInstances = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("Rocks"));
     RockInstances->SetupAttachment(SceneRoot);
     RockInstances->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -515,6 +520,7 @@ void AOGStartingRegionGenerator::GenerateRegion(int32 Seed)
         }
         ApplyPresentationMaterials();
         BuildR1SourceTerrain();
+        BuildR1SourceRiver();
         LoadR1SourceScatter();
         RefreshR1StreamedTiles(true);
         return;
@@ -535,6 +541,8 @@ void AOGStartingRegionGenerator::ClearGeneratedContent()
     {
         Terrain->ClearAllMeshSections();
     }
+    if(R1RiverSurface)
+        R1RiverSurface->ClearAllMeshSections();
 
     UHierarchicalInstancedStaticMeshComponent* Components[] =
     {
