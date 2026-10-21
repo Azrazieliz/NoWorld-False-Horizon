@@ -88,6 +88,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
     FString A3Mode;
     if(bA3)Context->TryGetStringField(TEXT("mode"),A3Mode);
     const bool bA3Covenant=bA3 && A3Mode==TEXT("covenant");
+    FString UltimateMode;
+    if(bUlt)Context->TryGetStringField(TEXT("mode"),UltimateMode);
     const int32 MaxTargets=bA1?1:bA2?3:bA3Covenant?1:3;
     if(Action.TargetUnitIds.IsEmpty() || Action.TargetUnitIds.Num()>MaxTargets)
     {
@@ -137,6 +139,19 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         }
     }
 
+    const bool bDayRevivalPrepare=bUlt &&
+        UltimateBranch==TEXT("day") &&
+        UltimateMode==TEXT("revival_prepare");
+    if(bDayRevivalPrepare)
+    {
+        if(Action.TargetUnitIds.Num()!=1 ||
+           !IsLuminousRevivalEligible(Source.UnitEntityId,
+                Action.TargetUnitIds[0],true))
+        {
+            OutError=TEXT("Day Ultimate revival must select one living soul-continuous authorized ally BEFORE defeat.");
+            return false;
+        }
+    }
     FLuminousBaseBattleRuntime& StateOfOwner=
         LuminousBaseStates.FindOrAdd(Source.UnitEntityId);
     const int32 ChargeCost=bUlt
@@ -162,9 +177,15 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         OutError=TEXT("Base v6 insufficient Scarlet Reserve for actual skill cost.");
         return false;
     }
-    if(bA3Covenant && StateOfOwner.bAllyRevivalSpent)
+    if((bA3Covenant || bDayRevivalPrepare) &&
+       StateOfOwner.bAllyRevivalSpent)
     {
         OutError=TEXT("The shared ally revival ledger was already consumed in this encounter.");
+        return false;
+    }
+    if(bDayRevivalPrepare && StateOfOwner.ScarletReserve<35)
+    {
+        OutError=TEXT("Day Ultimate prepared revival needs 35 Scarlet Reserve in addition to its Ultimate charge.");
         return false;
     }
     if(bA3Covenant && StateOfOwner.ScarletReserve<75)
@@ -221,8 +242,14 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         StateOfOwner.AttunementExpiryAction=StateOfOwner.OwnerActions+3;
     }
     if(bUlt)StateOfOwner.UltimateChargePercent-=ChargeCost;
-    const bool bNightBeforeA2=StateOfOwner.bAttunementActive &&
-        !StateOfOwner.bDayAttunement;
+    if(bDayRevivalPrepare)
+    {
+        StateOfOwner.ScarletReserve-=35;
+        StateOfOwner.PreparedDayUltimateRevivalTarget=
+            Action.TargetUnitIds[0];
+        StateOfOwner.DayUltimateRevivalExpiryOwnerAction=
+            NextOwnerAction+2;
+    }
     if(bA2)
     {
         StateOfOwner.ScarletReserve-=BaseReserveCost;
@@ -249,6 +276,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
 
     ++StateOfOwner.OwnerActions;
     const int32 CurrentOwnerAction=StateOfOwner.OwnerActions;
+    if(bDayRevivalPrepare)
+        return true; // One legal preparedness action, no simultaneous AoE heal.
     if(StateOfOwner.bAttunementActive &&
        CurrentOwnerAction>StateOfOwner.AttunementExpiryAction)
         StateOfOwner.bAttunementActive=false; // Neutral, neither Night nor Day.
@@ -662,23 +691,32 @@ void FOGTurnBattle::TryResolveApprovedLuminousAllyCovenant(
         if(!S || !Owner || !Owner->IsAlive() || !IsBaseLuminous(*Owner) ||
            S->bAllyRevivalSpent ||
            !IsLuminousRevivalEligible(OwnerId,TargetUnitId,true) ||
-           S->PreparedCovenantTarget!=TargetUnitId ||
-           S->CovenantExpiryOwnerAction<S->OwnerActions ||
            Owner->TeamIndex!=Target->TeamIndex)continue;
+        const bool bA3Prepared=
+            S->PreparedCovenantTarget==TargetUnitId &&
+            S->CovenantExpiryOwnerAction>=S->OwnerActions;
+        const bool bUltPrepared=
+            S->PreparedDayUltimateRevivalTarget==TargetUnitId &&
+            S->DayUltimateRevivalExpiryOwnerAction>=S->OwnerActions;
+        if(!bA3Prepared && !bUltPrepared)continue;
         const FOGLargeNumber Restore=FOGLargeNumber::ScaleByBasisPoints(
-            Target->Stats.MaxHp,1800);
+            Target->Stats.MaxHp,bUltPrepared?3000:1800);
         if(Restore.IsZero())return;
         FString Error;
         if(!ApplyApprovedLuminousRevivalHealing(OwnerId,TargetUnitId,Restore,
-                FOGContentId(TEXT("combat:luminous_valentine.base.skill.crimson_benediction")),
+                bUltPrepared
+                    ? FOGContentId(TEXT("combat:luminous_valentine.base.ultimate.twin_principles"))
+                    : FOGContentId(TEXT("combat:luminous_valentine.base.skill.crimson_benediction")),
                 Error))return;
         if(!ChangePresence(TargetUnitId,EOGCombatPresence::Active,Error))
             return;
         S->bAllyRevivalSpent=true;
         S->PreparedCovenantTarget=FOGEntityId();
         S->CovenantExpiryOwnerAction=-1;
+        S->PreparedDayUltimateRevivalTarget=FOGEntityId();
+        S->DayUltimateRevivalExpiryOwnerAction=-1;
         S->BlessingExpiry.Add(TargetUnitId,S->OwnerActions+2);
-        S->BlessingCategory.Add(TargetUnitId,1);
+        S->BlessingCategory.Add(TargetUnitId,bUltPrepared?2:1);
         return;
     }
 }

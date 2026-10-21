@@ -136,9 +136,11 @@ bool FOGTurnBattle::PrevalidateLuminousActionWithoutSideEffects(
             return FailPreflight(OutError,TEXT("Invalid explicit Luminous ultimate branch."));
     }
     FString Mode;
-    if(bBase && bA3)
+    if(bBase && (bA3 || bUlt))
         Context->TryGetStringField(TEXT("mode"),Mode);
     const bool bCovenant=bBase && bA3 && Mode==TEXT("covenant");
+    const bool bDayRevivalPrepare=bBase && bUlt &&
+        Branch==TEXT("day") && Mode==TEXT("revival_prepare");
     const int32 MaxTargets=bBase
         ? (bA1?1:bA2?3:bCovenant?1:3)
         : (bA1?1:bA2?4:bA3?1:
@@ -171,10 +173,14 @@ bool FOGTurnBattle::PrevalidateLuminousActionWithoutSideEffects(
              bCovenant?75:bA3?30:0;
         if(BaseCurrentReserve<ReserveCost)
             return FailPreflight(OutError,TEXT("Insufficient Scarlet Reserve."));
-        if(bCovenant && (bAllyRevivalSpent ||
-           !IsLuminousRevivalEligible(Source.UnitEntityId,
+        if((bCovenant || bDayRevivalPrepare) &&
+           (bAllyRevivalSpent ||
+            (bDayRevivalPrepare && Action.TargetUnitIds.Num()!=1) ||
+            !IsLuminousRevivalEligible(Source.UnitEntityId,
                                      Action.TargetUnitIds[0],true)))
-            return FailPreflight(OutError,TEXT("Covenant is used or soul/Authority gate rejected preparation."));
+            return FailPreflight(OutError,TEXT("Prepared ally revival is used or denied by registered Soul/Authority gate."));
+        if(bDayRevivalPrepare && BaseCurrentReserve<35)
+            return FailPreflight(OutError,TEXT("Day Ultimate revival preparation costs 35 Reserve in addition to 100% charge."));
         const int32 ChargeCost=bUlt?(Branch==TEXT("day")?100:150):0;
         if(CurrentCharge<ChargeCost)
             return FailPreflight(OutError,TEXT("Insufficient Base Ultimate charge."));
@@ -190,11 +196,16 @@ bool FOGTurnBattle::PrevalidateLuminousActionWithoutSideEffects(
             (Branch==TEXT("ruin")?100:150):0;
         const int32 SelfCostBps=bA1?200:bA2?400:bA3?800:bUlt?
             (Branch==TEXT("ruin")?500:800):0;
-        const int32 Threshold=bA1||bA2?800:bA3?1500:0;
+        const int32 Threshold=bA1||bA2?800:0;
+        const bool bA3SourceHpEligible=!bA3 ||
+            FOGLargeNumber::Compare(Source.CurrentHp,
+                FOGLargeNumber::ScaleByBasisPoints(
+                    Source.Stats.MaxHp,1500))>0;
         const FOGLargeNumber Remaining=FOGLargeNumber::Add(
             Source.CurrentHp,FOGLargeNumber::ScaleByBasisPoints(
                 Source.Stats.MaxHp,-SelfCostBps));
         if(AlterCurrentTithe<TitheCost || CurrentCharge<ChargeCost ||
+           !bA3SourceHpEligible ||
            FOGLargeNumber::Compare(Remaining,
                FOGLargeNumber::ScaleByBasisPoints(
                    Source.Stats.MaxHp,Threshold))<=0)

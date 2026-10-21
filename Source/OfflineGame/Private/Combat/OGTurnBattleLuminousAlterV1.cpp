@@ -139,12 +139,17 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     const int32 CostCharge=bUlt?(Branch==TEXT("ruin")?100:150):0;
     const int32 SelfCostBps=bA1?200:bA2?400:bA3?800:
         bUlt?(Branch==TEXT("ruin")?500:800):0;
-    const int32 MinRemainingBps=bA1||bA2?800:bA3?1500:0;
+    const int32 MinRemainingBps=bA1||bA2?800:0;
     const FOGLargeNumber SelfCost=FOGLargeNumber::ScaleByBasisPoints(
         Source.Stats.MaxHp,SelfCostBps);
     const FOGLargeNumber PostPayment=FOGLargeNumber::Add(
         Source.CurrentHp,AlterMinus(SelfCost));
+    const bool bA3SourceHpEligible=!bA3 ||
+        FOGLargeNumber::Compare(Source.CurrentHp,
+            FOGLargeNumber::ScaleByBasisPoints(
+                Source.Stats.MaxHp,1500))>0;
     if(Own.RedTithe<CostRed || Own.UltimateChargePercent<CostCharge ||
+       !bA3SourceHpEligible ||
        FOGLargeNumber::Compare(PostPayment,
            FOGLargeNumber::ScaleByBasisPoints(Source.Stats.MaxHp,
                                               MinRemainingBps))<=0)
@@ -256,8 +261,12 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         }
         FOGCombatUnitState* T=FindMutableUnit(It.Key());
         if(!T || !T->IsAlive())continue;
-        const FOGLargeNumber Tick=FOGLargeNumber::ScaleByBasisPoints(
+        FOGLargeNumber Tick=FOGLargeNumber::ScaleByBasisPoints(
             Source.Stats.Attack,1600*It.Value());
+        // Martyr Crown P2: stance raises only the proven registered
+        // Bleed-derived Severing Wound potency, never generic DoT.
+        if(Current<=Own.MartyrStanceExpires)
+            Tick=FOGLargeNumber::ScaleByBasisPoints(Tick,12200);
         if(!Tick.IsZero())
         {
             const FOGLargeNumber Before=T->CurrentHp;
@@ -294,6 +303,19 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         if(DawnSpd>0)
             Attacker.Speed=Attacker.Speed*(10000+DawnSpd)/10000;
         Attacker.CritDamageBonusBps+=Own.MartyrMomentum*800;
+        if(Current<=Own.MartyrStanceExpires)
+        {
+            // Source A3 Martyr Crown: +26% ATK is a stat effect, not an
+            // unrelated +26% generic damage multiplier. Crit +18%, SPD
+            // +12%, and Bleed-specific penetration remain independent.
+            Attacker.Attack=FOGLargeNumber::ScaleByBasisPoints(
+                Attacker.Attack,12600);
+            Attacker.CritRateBps+=1800;
+            Attacker.Speed=Attacker.Speed*11200/10000;
+            if(Own.SeveringWounds.FindRef(Id)>0 &&
+               Own.WoundExpiryOwnerAction.FindRef(Id)>=Current)
+                Attacker.DefensePenetrationBps+=1200;
+        }
         if(Current<=Own.DeathPriceExpiresOwnerAction)
             Attacker.CritDamageBonusBps+=2000;
         FOGDamageRequest Req;
@@ -301,12 +323,9 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
             Attacker.Attack,AtkBps);
         Req.DefenseReference=Source.Stats.Attack;
         Req.bAllowHitOverflowReplication=false;
-        if(Current<=Own.MartyrStanceExpires)
-        {
-            Req.AdditionalMultiplierBps.Add(12600);
-            Attacker.Speed=Attacker.Speed*11200/10000;
-            Attacker.CritRateBps+=1800;
-        }
+        // Martyr Crown is already included in Attacker's actual ATK,
+        // CritRate, Speed and conditional Bleed penetration; don't apply
+        // a second duplicate +26% damage multiplier.
         if(Own.SeveringWounds.FindRef(Id)>=2)
             Req.AdditionalMultiplierBps.Add(11400);
         if(FOGLargeNumber::Compare(Source.CurrentHp,
