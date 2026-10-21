@@ -204,6 +204,9 @@ private:
     TArray<TObjectPtr<UStaticMeshComponent>> R1MarketSectionComponents;
     TSharedPtr<struct FStreamableHandle> R1MarketStreamHandle;
     int32 R1MarketNextSection = 0;
+    // Increment on every new request and unload. Late async callbacks are
+    // discarded rather than attaching source meshes after leaving the area.
+    int32 R1MarketRequestGeneration = 0;
     bool bR1MarketSourceAssetUnavailable = false;
     bool LoadR1MetricData();
     void BuildR1SourceTerrain();
@@ -212,7 +215,7 @@ private:
     // Exact original Eastern Market assets are loaded on demand by source
     // section. The protected art-assembly level retains all 12 source actors.
     void UpdateR1MarketStreaming();
-    void OnR1MarketSectionLoaded();
+    void OnR1MarketSectionLoaded(int32 RequestGeneration,int32 RequestedSection);
     void UnloadR1MarketSections();
     void RefreshR1StreamedTiles(bool bForce);
     float R1HeightAt(int32 X,int32 Y) const;

@@ -57,28 +57,52 @@ void AOGStartingRegionGenerator::UpdateR1MarketStreaming()
     // Serial asynchronous mesh load: never build 12 huge Gate02 meshes at
     // once on an 8 GB workstation or an Android phone. Meshes are the
     // original source exports and preserve their original materials.
-    const FSoftObjectPath Source=ExactMarketSourcePath(R1MarketNextSection);
-    R1MarketStreamHandle=UAssetManager::GetStreamableManager().
-        RequestAsyncLoad(Source,
-            FStreamableDelegate::CreateUObject(
-                this,&AOGStartingRegionGenerator::OnR1MarketSectionLoaded));
-    if(!R1MarketStreamHandle.IsValid())
+    const int32 Section=R1MarketNextSection;
+    const int32 Generation=++R1MarketRequestGeneration;
+    const FSoftObjectPath Source=ExactMarketSourcePath(Section);
+    // RequestAsyncLoad may complete inline when a mesh is already cached.
+    // Never overwrite a successful inline callback's Reset() with a stale
+    // completed handle that would block loading the next source section.
+    TSharedPtr<FStreamableHandle> NewHandle=
+        UAssetManager::GetStreamableManager().RequestAsyncLoad(
+            Source,FStreamableDelegate::CreateUObject(
+                this,&AOGStartingRegionGenerator::OnR1MarketSectionLoaded,
+                Generation,Section));
+    if(Generation==R1MarketRequestGeneration &&
+       Section==R1MarketNextSection)
+        R1MarketStreamHandle=MoveTemp(NewHandle);
+    if(!R1MarketStreamHandle.IsValid() &&
+       Generation==R1MarketRequestGeneration &&
+       Section==R1MarketNextSection)
     {
         bR1MarketSourceAssetUnavailable=true;
         UE_LOG(LogTemp,Error,
-            TEXT("Gate02 authentic market section %d async request failed, no fabricated replacement"),
-            R1MarketNextSection);
+            TEXT("Gate02 market original section %d async request failed; no replacement mesh"),
+            Section);
     }
 }
 
-void AOGStartingRegionGenerator::OnR1MarketSectionLoaded()
+void AOGStartingRegionGenerator::OnR1MarketSectionLoaded(
+    const int32 RequestGeneration,const int32 RequestedSection)
 {
-    if(!bGate02R1RegionSource || !GetWorld() ||
+    if(RequestGeneration!=R1MarketRequestGeneration ||
+       RequestedSection!=R1MarketNextSection ||
+       !bGate02R1RegionSource || !GetWorld() ||
        !GetWorld()->IsGameWorld() ||
        R1MarketNextSection>=MarketSourceSectionCount)
         return;
-
-    const int32 Section=R1MarketNextSection;
+    const APlayerController* PC=GetWorld()->GetFirstPlayerController();
+    const APawn* Pawn=PC?PC->GetPawn():nullptr;
+    if(!Pawn ||
+       FVector::DistSquared2D(
+           GetActorTransform().InverseTransformPosition(
+               Pawn->GetActorLocation()),
+           MarketSourceOriginCm)>FMath::Square(StopLoadingRangeCm))
+    {
+        UnloadR1MarketSections();
+        return; // Player left while the large original section was loading.
+    }
+    const int32 Section=RequestedSection;
     UStaticMesh* Mesh=Cast<UStaticMesh>(
         ExactMarketSourcePath(Section).ResolveObject());
     if(!Mesh)
@@ -117,6 +141,7 @@ void AOGStartingRegionGenerator::OnR1MarketSectionLoaded()
 
 void AOGStartingRegionGenerator::UnloadR1MarketSections()
 {
+    ++R1MarketRequestGeneration;
     if(R1MarketStreamHandle.IsValid())
     {
         R1MarketStreamHandle->CancelHandle();
