@@ -63,8 +63,12 @@ bool FOGTurnBattle::TryActivateLuminousAuthoredField(
             return false;
         }
         bool bPrepared=false;
+        // A mark that already expired by the activation action does not
+        // satisfy the source's actual preparation requirement.
         for(const auto& Row:Owner.HemalMarks)
-            if(Row.Value>0){bPrepared=true;break;}
+            if(Row.Value>0 &&
+               Owner.HemalMarkExpiryOwnerAction.FindRef(Row.Key)>=ActionNumber)
+            {bPrepared=true;break;}
         if(!bPrepared)
             for(const auto& Row:Owner.DawnOathByBeneficiary)
                 if(Row.Value>=ActionNumber){bPrepared=true;break;}
@@ -186,6 +190,8 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
     case EOGLuminousFieldRule::BaseNocturneSeverance:
         if(Owner->TeamIndex==Target->TeamIndex ||
            BaseState->HemalMarks.FindRef(Contest.TargetUnitId)<3 ||
+           BaseState->HemalMarkExpiryOwnerAction.FindRef(
+               Contest.TargetUnitId)<CurrentAction ||
            Field->NocturneConsumedTargets.Contains(Contest.TargetUnitId))
         {
             OutError=TEXT("Nocturne requires three source marks and one eligible temporary enemy effect.");
@@ -194,7 +200,9 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
         break;
     case EOGLuminousFieldRule::BaseRekindlingEdict:
         if(Owner->TeamIndex!=Target->TeamIndex ||
-           BaseState->DawnOathByBeneficiary.FindRef(Contest.TargetUnitId)<CurrentAction ||
+           !BaseState->DawnOathByBeneficiary.Contains(Contest.TargetUnitId) ||
+           BaseState->DawnOathByBeneficiary.FindRef(
+               Contest.TargetUnitId)<CurrentAction ||
            Field->RekindledAllies.Contains(Contest.TargetUnitId) ||
            FOGLargeNumber::Compare(
                Target->CurrentHp,
@@ -221,6 +229,8 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
         Cost=15;bChargeOnFailedContest=true;
         if(Owner->TeamIndex==Target->TeamIndex ||
            AlterState->SeveringWounds.FindRef(Contest.TargetUnitId)<2 ||
+           AlterState->WoundExpiryOwnerAction.FindRef(
+               Contest.TargetUnitId)<CurrentAction ||
            Field->AlterBloodReversalSuccessCount>=2 ||
            !Contest.bCooldownElapsed)
         {
@@ -232,6 +242,8 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
         Cost=20;bChargeOnFailedContest=true;
         if(Owner->TeamIndex==Target->TeamIndex ||
            AlterState->RuptureSeals.FindRef(Contest.TargetUnitId)<3 ||
+           AlterState->SealExpiryOwnerAction.FindRef(
+               Contest.TargetUnitId)<CurrentAction ||
            Field->AlterThornConsumedTargets.Contains(Contest.TargetUnitId))
         {
             OutError=TEXT("Thorn Unbinding requires three owned seals and one eligible tether.");
@@ -285,7 +297,17 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
     switch(Contest.Rule)
     {
     case EOGLuminousFieldRule::BaseNocturneSeverance:
+        // Deplete source-owned eligible marks only AFTER the callback has
+        // actually removed the one authority-approved registered effect.
         BaseState->HemalMarks.FindOrAdd(Contest.TargetUnitId)-=3;
+        if(BaseState->HemalMarks.FindRef(Contest.TargetUnitId)<=0)
+        {
+            BaseState->HemalMarks.Remove(Contest.TargetUnitId);
+            BaseState->HemalMarkExpiryOwnerAction.Remove(
+                Contest.TargetUnitId);
+            BaseState->PendingFourMarkTargetBonus.Remove(
+                Contest.TargetUnitId);
+        }
         Field->NocturneConsumedTargets.Add(Contest.TargetUnitId);
         break;
     case EOGLuminousFieldRule::BaseRekindlingEdict:
