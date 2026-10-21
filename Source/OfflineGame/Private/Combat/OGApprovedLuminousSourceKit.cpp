@@ -150,6 +150,9 @@ bool FOGApprovedLuminousSourceKit::LoadBaseV6(
         OutError=TEXT("Base v6 source resource schedule differs from approved contract.");
         return false;
     }
+    // The exact design Version is also the resolved Base form. Never
+    // produce a form-less combat snapshot that can inherit Alter skills.
+    Out.CoreSkills.CurrentForm=Out.VersionId;
     // All per-action mechanics, triggers, restoration/revival, World
     // Negation and target rules stay available as the EXACT original JSON,
     // not summarized into a fictitious generic skill handler.

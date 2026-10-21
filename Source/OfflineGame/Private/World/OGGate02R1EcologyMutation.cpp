@@ -3,6 +3,7 @@
 #include "Persistence/OGWorldStore.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -108,4 +109,57 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
     // actors, the player's transform, original terrain, and unmodified assets.
     RefreshR1StreamedTiles(true);
     return true;
+}
+
+// Translate a REAL physics hit on one visible HISM ecology instance into its
+// original Gate02 stable authored population record. This is a read-only
+// identity resolver: permissions, tool requirements and loot are owned by
+// higher-level action rules. An instance index without the matching current
+// streaming component cannot mutate the canonical WorldStore.
+bool AOGStartingRegionGenerator::TryResolveGate02SourceScatterHit(
+    const FHitResult& Hit,FString& OutStableSourceId,
+    FString& OutError) const
+{
+    OutStableSourceId.Reset();
+    OutError.Reset();
+    if(!bGate02R1RegionSource || !bR1DatasetLoaded || !GetWorld() ||
+       !GetWorld()->IsGameWorld() || Hit.GetActor()!=this ||
+       Hit.Item<0 || R1VisibleScatterSourceIdByType.Num()!=4)
+    {
+        OutError=TEXT("Interaction did not hit an active Gate02 source ecology instance.");
+        return false;
+    }
+    const UPrimitiveComponent* Component=Hit.GetComponent();
+    const UHierarchicalInstancedStaticMeshComponent* Components[]={
+        RockInstances,TrunkInstances,CanopyInstances,AccentInstances};
+    for(int32 Type=0;Type<4;++Type)
+    {
+        if(Components[Type]!=Component)continue;
+        const TArray<FString>& Records=R1VisibleScatterSourceIdByType[Type];
+        if(!Records.IsValidIndex(Hit.Item) || Records[Hit.Item].IsEmpty())
+        {
+            OutError=TEXT("The visible source instance has no stable Gate02 record.");
+            return false;
+        }
+        const FString& Stable=Records[Hit.Item];
+        // A stale HISM index cannot refer to a newly invented record:
+        // verify the exact original source population, not a random GUID.
+        bool bOriginal=false;
+        for(const auto& Tile:R1TilePlacements)
+        {
+            for(const FR1Placement& Placement:Tile.Value)
+                if(Placement.PersistentId==Stable && Placement.TypeIndex==Type)
+                {bOriginal=true;break;}
+            if(bOriginal)break;
+        }
+        if(!bOriginal)
+        {
+            OutError=TEXT("Streamed hit identity is not present in original Gate02 ecology.");
+            return false;
+        }
+        OutStableSourceId=Stable;
+        return true;
+    }
+    OutError=TEXT("Hit component is not one of the four real Gate02 ecology components.");
+    return false;
 }

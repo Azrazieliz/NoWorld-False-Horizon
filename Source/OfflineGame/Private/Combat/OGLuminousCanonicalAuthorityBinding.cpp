@@ -1,5 +1,7 @@
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
 #include "Persistence/OGWorldStore.h"
+#include "Combat/OGApprovedLuminousSourceKit.h"
+#include "Combat/OGLuminousAlterV1Projection.h"
 
 namespace
 {
@@ -22,6 +24,7 @@ bool ReadOwnedActiveManifestation(
            Out.IdentityId==LuminousIdentity &&
            Out.IdentityId==Unit.IdentityId &&
            Out.ActiveVersionId.IsValid() &&
+           Out.ActiveVersionId==Unit.SkillSet.CurrentForm &&
            Out.LifecycleState==ActiveLifecycle;
 }
 }
@@ -49,6 +52,26 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
         return false;
     }
 
+    // A unit may never borrow the other approved version's actions, resource
+    // account or World Fantasm. The immutable design is a validation source,
+    // not an unregistered package grant.
+    FOGApprovedLuminousSourceKitView BaseKit;
+    FOGLuminousAlterV1Projection AlterKit;
+    if(!FOGApprovedLuminousSourceKit::LoadBaseV6(BaseKit,OutError) ||
+       !FOGLuminousAlterV1Projection::LoadApprovedV1(AlterKit,OutError))
+        return false;
+    auto MatchesKit=[](const FOGResolvedSkillSet& Owned,
+                       const FOGResolvedSkillSet& Approved)
+    {
+        if(Owned.ActiveSkills.Num()!=3 || Owned.PassiveSkills.Num()!=6 ||
+           Owned.UltimateSkill!=Approved.UltimateSkill ||
+           Owned.HasDuplicateSkills())return false;
+        for(const FOGContentId& Skill:Approved.ActiveSkills)
+            if(!Owned.ActiveSkills.Contains(Skill))return false;
+        for(const FOGContentId& Skill:Approved.PassiveSkills)
+            if(!Owned.PassiveSkills.Contains(Skill))return false;
+        return true;
+    };
     // Refuse fabricated Manifestation IDs before installing any battle gates.
     bool bFoundLuminous=false;
     for(const FOGCombatUnitState& Unit: Battle.GetState().Units)
@@ -61,9 +84,22 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
             OutError=TEXT("Luminous battle unit has no live, owned Registry Manifestation.");
             return false;
         }
-        if(!Sources.FantasmByRegisteredVersion.Contains(Record.ActiveVersionId))
+        const bool bBase=Record.ActiveVersionId==BaseKit.VersionId &&
+            MatchesKit(Unit.SkillSet,BaseKit.CoreSkills);
+        const bool bAlter=Record.ActiveVersionId==AlterKit.DraftVersionId &&
+            MatchesKit(Unit.SkillSet,AlterKit.Skills);
+        if(bBase==bAlter)
         {
-            OutError=TEXT("Luminous Manifestation version has no installed approved Fantasm registration.");
+            OutError=TEXT("Luminous live version, skillset and exactly one approved 3A/6P kit disagree; no cross-version abilities.");
+            return false;
+        }
+        const FOGContentId ExpectedFantasm=bBase
+            ? BaseKit.WorldFantasmId:AlterKit.WorldFantasmId;
+        const FOGContentId* InstalledFantasm=
+            Sources.FantasmByRegisteredVersion.Find(Record.ActiveVersionId);
+        if(!InstalledFantasm || *InstalledFantasm!=ExpectedFantasm)
+        {
+            OutError=TEXT("Luminous active version has no exact installed Base/Alter World Fantasm registration.");
             return false;
         }
     }

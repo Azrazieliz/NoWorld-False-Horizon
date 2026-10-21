@@ -542,6 +542,49 @@ bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
         Index,*Clip->GetPathName());
     return true;
 }
+void AOGLuminousV3PlayableCharacter::OnGate09CanonicalCombatAction(
+    const FOGEntityId& SourceManifestationId,
+    const FOGContentId& ApprovedSkillId)
+{
+    // Gameplay animations respond to a combat action that ALREADY succeeded
+    // in GameCore; a button press or fabricated source ID cannot play this.
+    if(!bNativeOwnedCharacterBound || !BoundOwnedManifestation.IsValid() ||
+       SourceManifestationId!=BoundOwnedManifestation ||
+       BoundOwnedVersion.ToString()!=CanonicalLuminousVersionId ||
+       CanonicalLuminousVersionId!=TEXT("character:luminous_valentine.version_ln_base") ||
+       ApprovedSkillId!=FOGContentId(
+           TEXT("combat:luminous_valentine.base.skill.scarlet_cadence")) ||
+       !bLuminousReady || !GetWorld() ||
+       EffectiveAppearance.EffectiveRenderedWardrobe!=EOGLuminousV3Wardrobe::Clothed ||
+       !bGate09GroundedA1VisuallyAccepted)
+        return;
+    const UCharacterMovementComponent* Move=GetCharacterMovement();
+    if(!Move || !Move->IsMovingOnGround())
+        return; // Source choreography is grounded and cannot become flight.
+    // Gate09 v9 physically grounded Scarlet Cadence: authored 0.18/0.39/0.65s
+    // hit accents and source 0.52s cancel; combat itself already applied
+    // all Rule Priority, bleeding, revival and damage through FOGTurnBattle.
+    const TCHAR* Path=TEXT(
+        "/Game/NoWorld/Combat/Animations/Gate09Intake/"
+        "G09_LuminousV3_Base_A1_ScarletCadence_Grounded_v9."
+        "G09_LuminousV3_Base_A1_ScarletCadence_Grounded_v9");
+    UAnimSequence* Clip=LoadObject<UAnimSequence>(nullptr,Path);
+    if(bGate09EmotePlaying)
+        InterruptGate09AuthoredEmote();
+    if(!Clip || Clip->GetPlayLength()<0.65f ||
+       !SetLuminousNativeMotionClip(Clip,false))
+    {
+        UE_LOG(LogTemp,Warning,
+            TEXT("GATE09_A1_AUTHORED_COMBAT_VISUAL_NOT_READY: %s"),
+            *LastLuminousError);
+        return;
+    }
+    bGate09CombatVisualPlaying=true;
+    const float Now=GetWorld()->GetTimeSeconds();
+    Gate09CombatVisualEndsAt=Now+Clip->GetPlayLength();
+    Gate09CombatVisualEarliestCancelAt=Now+0.52f;
+}
+
 void AOGLuminousV3PlayableCharacter::InterruptGate09AuthoredEmote()
 {
     if (!bGate09EmotePlaying) return;
@@ -786,6 +829,10 @@ void AOGLuminousV3PlayableCharacter::BeginPlay()
     // Only applies if the selected saved canonical character is *actually*
     // this Gate11 Luminous identity; it cannot overwrite a Ruler/another copy.
     RestoreCanonicalWardrobe();
+    if(UGameInstance* GI=GetGameInstance())
+        if(UOGGameCoreSubsystem* Core=GI->GetSubsystem<UOGGameCoreSubsystem>())
+            Core->OnLuminousCombatActionResolved.AddUObject(
+                this,&AOGLuminousV3PlayableCharacter::OnGate09CanonicalCombatAction);
     if ((bRunNonPersistentWardrobeQACycle || bEnterWorldModeOnIsolatedQAStartup) &&
         bLuminousReady && GetWorld())
         GetWorldTimerManager().SetTimer(QAWorldModeTimer, this,
@@ -836,6 +883,20 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
         }
     }
     const float Now = GetWorld()->GetTimeSeconds();
+    if (bGate09CombatVisualPlaying)
+    {
+        const UCharacterMovementComponent* Move = GetCharacterMovement();
+        const bool bMoved=Move &&
+            (!Move->IsMovingOnGround() ||
+             GetVelocity().SizeSquared2D()>FMath::Square(12.f));
+        if(Now<Gate09CombatVisualEndsAt &&
+           (!bMoved || Now<Gate09CombatVisualEarliestCancelAt))
+            return; // Keep authentic authored hit frames; cancel only after source window.
+        bGate09CombatVisualPlaying=false;
+        Gate09CombatVisualEndsAt=0.f;
+        Gate09CombatVisualEarliestCancelAt=0.f;
+        CurrentMotionPhase=EOGLuminousV3MotionPhase::Fall;
+    }
     if (bGate09EmotePlaying)
     {
         const UCharacterMovementComponent* Move = GetCharacterMovement();
@@ -896,6 +957,12 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
         WardrobeQAWidget = nullptr;
     }
     GetWorldTimerManager().ClearTimer(QAWorldModeTimer);
+    if(UGameInstance* GI=GetGameInstance())
+        if(UOGGameCoreSubsystem* Core=GI->GetSubsystem<UOGGameCoreSubsystem>())
+            Core->OnLuminousCombatActionResolved.RemoveAll(this);
+    bGate09CombatVisualPlaying=false;
+    Gate09CombatVisualEndsAt=0.f;
+    Gate09CombatVisualEarliestCancelAt=0.f;
     CurrentNativeClip = nullptr;
     bGate09EmotePlaying = false;
     ActiveMotionLeaderIndex = INDEX_NONE;

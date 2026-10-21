@@ -105,6 +105,12 @@ public:
         const FString& Gate02StableScatterId,
         FString& OutError);
 
+    /** Resolve an ACTUAL terrain ecology instance hit to its authored stable
+     * population ID. Does not award loot or authorize a destructive harvest;
+     * the game action executor must verify tool/ownership before Persist*. */
+    bool TryResolveGate02SourceScatterHit(
+        const FHitResult& Hit,FString& OutStableSourceId,FString& OutError) const;
+
     UFUNCTION(BlueprintPure, Category = "OfflineGame|World|Generation")
     int32 GetActiveSeed() const { return ActiveSeed; }
 
@@ -198,6 +204,9 @@ private:
     TArray<float> R1RockMask;
     TArray<float> R1RiverMask;
     TMap<FIntPoint,TArray<FR1Placement>> R1TilePlacements;
+    // Per-HISM instance index -> actual source record, reconstructed on every
+    // streaming window swap. Never infer an instance's identity from position.
+    TArray<TArray<FString>> R1VisibleScatterSourceIdByType;
     FIntPoint LastR1StreamTile = FIntPoint(MIN_int32,MIN_int32);
     bool bR1DatasetLoaded = false;
     UPROPERTY(Transient)

@@ -223,6 +223,8 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
     LastR1StreamTile=Center;
     UHierarchicalInstancedStaticMeshComponent* Targets[]={
         RockInstances,TrunkInstances,CanopyInstances,AccentInstances};
+    R1VisibleScatterSourceIdByType.Reset();
+    R1VisibleScatterSourceIdByType.SetNum(4);
     for(int32 T=0;T<4;++T)
     {
         if (!Targets[T])continue;
@@ -271,8 +273,15 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
             const FTransform LocalTransform(
                 FRotator(0.f,P.YawDegrees,0.f),P.PositionCm,
                 FVector(P.UniformScale));
-            Targets[P.TypeIndex]->AddInstance(LocalTransform);
-            ++Count;
+            const int32 PlacedIndex=Targets[P.TypeIndex]->AddInstance(LocalTransform);
+            if(PlacedIndex!=INDEX_NONE)
+            {
+                TArray<FString>& IndexedSource=R1VisibleScatterSourceIdByType[P.TypeIndex];
+                if(IndexedSource.Num()<=PlacedIndex)
+                    IndexedSource.SetNum(PlacedIndex+1);
+                IndexedSource[PlacedIndex]=P.PersistentId;
+                ++Count;
+            }
         }
     }
     UE_LOG(LogTemp,Verbose,TEXT("Gate02 R1 streamed tile %d,%d instances=%d"),

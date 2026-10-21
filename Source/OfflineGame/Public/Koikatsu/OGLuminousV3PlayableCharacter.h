@@ -212,6 +212,15 @@ private:
     bool bLuminousReady = false;
     bool bGate09EmotePlaying = false;
     float Gate09EmoteEndTime = 0.f;
+    // Gate09 grounded A1 motion exists as source, but cannot silently become
+    // an accepted gameplay animation before the full 45-part visual signoff.
+    UPROPERTY(EditDefaultsOnly, Category="OfflineGame|Luminous|Gate09")
+    bool bGate09GroundedA1VisuallyAccepted = false;
+    bool bGate09CombatVisualPlaying = false;
+    float Gate09CombatVisualEndsAt = 0.f;
+    float Gate09CombatVisualEarliestCancelAt = 0.f;
+    void OnGate09CanonicalCombatAction(const FOGEntityId& SourceManifestationId,
+        const FOGContentId& ApprovedSkillId);
     // Gate09's authentic flight-start clip is a one-shot takeoff, NEVER a
     // cyclic airborne locomotion replacement. Hover has its own loop.
     bool bGate09TakeoffAlreadyPlayedThisFlight = false;

@@ -897,7 +897,12 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
         OutError=TEXT("No active GameCore-owned Luminous encounter.");
         return false;
     }
-    return OwnedLuminousTurnBattle->ApplyResolvedAction(Action,OutError);
+    if(!OwnedLuminousTurnBattle->ApplyResolvedAction(Action,OutError))
+        return false;
+    // This is a non-authoritative visual notification, emitted ONLY after
+    // the existing source-approved battle executor accepted the action.
+    OnLuminousCombatActionResolved.Broadcast(Action.SourceUnitId,Action.SkillId);
+    return true;
 }
 
 bool UOGGameCoreSubsystem::ResolveOwnedLuminousRegisteredContest(

@@ -16,6 +16,10 @@ class FOGLocallyInstalledPackageProvider;
 struct FOGTrustedOptionalPackageInstall;
 
 DECLARE_MULTICAST_DELEGATE(FOGCanonicalRuntimeReleasing);
+// Presentation-only signal AFTER an authentic, successful native turn action.
+// No gameplay executor may infer a hit or award a resource from this event.
+DECLARE_MULTICAST_DELEGATE_TwoParams(
+    FOGLuminousCombatActionResolvedEvent,const FOGEntityId&,const FOGContentId&);
 
 /**
  * Application-level owner of the authoritative game-core lifetime.
@@ -31,6 +35,7 @@ class OFFLINEGAME_API UOGGameCoreSubsystem : public UGameInstanceSubsystem
 
 public:
     FOGCanonicalRuntimeReleasing OnCanonicalRuntimeReleasing;
+    FOGLuminousCombatActionResolvedEvent OnLuminousCombatActionResolved;
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
