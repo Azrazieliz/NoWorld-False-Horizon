@@ -522,6 +522,22 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
         !ExecuteApprovedLuminousAlterAction(Action,*Source,OutError))
         return false;
 
+    // Alter v1 Eclipse Harrier P4: apply only after verified final HP damage
+    // by Alter to an actively source-bleeding enemy, once per owner action.
+    // The executor runs after timeline scheduling: adjust the real recorded
+    // NextActionValue here (never a cosmetic Cobalt speed variable).
+    if(!bInterrupt)
+        if(FLuminousAlterBattleRuntime* Alter=
+               LuminousAlterStates.Find(Source->UnitEntityId))
+            if(Alter->bPursuitDelayPending)
+            {
+                const int64 Remaining=FMath::Max<int64>(
+                    1,Source->NextActionValue-State.CurrentActionValue);
+                Source->NextActionValue=State.CurrentActionValue+
+                    FMath::Max<int64>(1,Remaining*9200/10000);
+                Alter->bPursuitDelayPending=false;
+            }
+
     FOGCombatLogEvent Resolved;
     Resolved.Type = EOGCombatLogEventType::ActionResolved;
     Resolved.SourceUnitId = Action.SourceUnitId;

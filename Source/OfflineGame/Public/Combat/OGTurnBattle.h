@@ -371,6 +371,11 @@ private:
         int32 EucharistNextAvailableAction = 0;
         int32 CommunionNextAvailableAction = 0;
         bool bSelfRevived = false;
+        // Eclipse Harrier P4 Pursuit: once per owner turn after a genuinely
+        // defeated, source-owned bleeding target. Applies to next legal
+        // native action-value scheduling, never generic death events.
+        int32 LastPursuitOwnerAction = -1;
+        bool bPursuitDelayPending = false;
         TMap<FOGEntityId,int32> RuptureSeals;
         TMap<FOGEntityId,int32> SealExpiryOwnerAction;
         TMap<FOGEntityId,int32> SeveringWounds;
