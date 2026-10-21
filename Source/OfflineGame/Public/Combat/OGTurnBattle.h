@@ -389,6 +389,16 @@ private:
     void TryResolveApprovedLuminousAlterRevival(
         const FOGEntityId& UnitId);
 
+    // Normal healing cannot revive defeated units; only already-authorized
+    // Base or Alter resurrection handlers enter this narrow restoration scope.
+    bool bApprovedRevivalHealInProgress = false;
+    bool ApplyApprovedLuminousRevivalHealing(
+        const FOGEntityId& SourceId,
+        const FOGEntityId& DefeatedTargetId,
+        const FOGLargeNumber& Amount,
+        const FOGContentId& ResurrectionSkill,
+        FString& OutError);
+
     // Dry legal-action check before writing any timeline, battle log or HP.
     bool PrevalidateLuminousActionWithoutSideEffects(
         const FOGResolvedCombatAction& Action,

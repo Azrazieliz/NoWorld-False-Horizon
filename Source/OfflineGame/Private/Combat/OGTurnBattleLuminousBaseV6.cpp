@@ -532,7 +532,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousBaseRevival(
     const FOGLargeNumber Restoration=FOGLargeNumber::ScaleByBasisPoints(
         Unit->Stats.MaxHp,2200);
     FString Error;
-    if(Restoration.IsZero() || !ApplyHealing(
+    if(Restoration.IsZero() || !ApplyApprovedLuminousRevivalHealing(
             UnitId,UnitId,Restoration,
             FOGContentId(TEXT("combat:luminous_valentine.base.skill.crimson_reconstitution")),
             Error))
@@ -571,7 +571,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousAllyCovenant(
             Target->Stats.MaxHp,1800);
         if(Restore.IsZero())return;
         FString Error;
-        if(!ApplyHealing(OwnerId,TargetUnitId,Restore,
+        if(!ApplyApprovedLuminousRevivalHealing(OwnerId,TargetUnitId,Restore,
                 FOGContentId(TEXT("combat:luminous_valentine.base.skill.crimson_benediction")),
                 Error))return;
         if(!ChangePresence(TargetUnitId,EOGCombatPresence::Active,Error))

@@ -70,6 +70,7 @@ bool FOGTurnBattle::Initialize(
     LuminousFieldEligibility=FOGLuminousAcceptedFieldEligibility();
     LuminousBloodEligibility=FOGLuminousNativeBloodEligibility();
     LuminousRevivalEligibility=FOGLuminousNativeRevivalEligibility();
+    bApprovedRevivalHealInProgress=false;
     AcceptedBleedFamilyId=FOGContentId();
     IdentityContext =
         MoveTemp(InIdentityContext);
@@ -710,10 +711,18 @@ bool FOGTurnBattle::ApplyHealing(
         FindMutableUnit(TargetUnitId);
 
     if (!Target ||
-        Target->Presence ==
-            EOGCombatPresence::Removed)
+        Target->Presence == EOGCombatPresence::Removed)
     {
         OutError = TEXT("Healing target is missing or removed.");
+        return false;
+    }
+    // Plain healing cannot create a living-HP/defeated-presence zombie or
+    // sidestep Soul/Authority proof. All three approved Luminous revivals
+    // must pass through the internal one-call restoration scope.
+    if(Target->Presence == EOGCombatPresence::Defeated &&
+       !bApprovedRevivalHealInProgress)
+    {
+        OutError=TEXT("Defeated target requires authorized resurrection, not ordinary healing.");
         return false;
     }
 

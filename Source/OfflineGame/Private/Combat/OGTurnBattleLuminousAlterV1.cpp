@@ -465,7 +465,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousAlterRevival(
         U->Stats.MaxHp,1800);
     FString Error;
     if(Restore.IsZero() ||
-       !ApplyHealing(UnitId,UnitId,Restore,
+       !ApplyApprovedLuminousRevivalHealing(UnitId,UnitId,Restore,
             FOGContentId(TEXT("draft:luminous_valentine.alter.passive_5")),Error))
         return;
     if(!ChangePresence(UnitId,EOGCombatPresence::Active,Error))return;
