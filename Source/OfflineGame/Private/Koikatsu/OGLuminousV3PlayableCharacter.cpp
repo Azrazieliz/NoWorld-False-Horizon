@@ -42,7 +42,8 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
     if (!A || !B) return false;
     const FReferenceSkeleton& Left = A->GetRefSkeleton();
     const FReferenceSkeleton& Right = B->GetRefSkeleton();
-    if (Left.GetNum() != 975 || Right.GetNum() != 975) return false;
+    if (Left.GetNum() != Right.GetNum() ||
+        (Left.GetNum() != 975 && Left.GetNum() != 1131)) return false;
     for (int32 Index = 0; Index < Left.GetNum(); ++Index)
     {
         if (Left.GetBoneName(Index) != Right.GetBoneName(Index) ||
@@ -110,8 +111,16 @@ const TArray<FSoftObjectPath>& AOGLuminousV3PlayableCharacter::PartsFor(EOGLumin
     }
 }
 
-int32 AOGLuminousV3PlayableCharacter::ExpectedPartsFor(EOGLuminousV3Wardrobe State)
+int32 AOGLuminousV3PlayableCharacter::ExpectedNativeBoneCount() const
 {
+    return CanonicalLuminousVersionId == TEXT("character:luminous_valentine.version_alter_v1")
+        ? 1131 : 975;
+}
+
+int32 AOGLuminousV3PlayableCharacter::ExpectedPartsFor(EOGLuminousV3Wardrobe State) const
+{
+    if (CanonicalLuminousVersionId == TEXT("character:luminous_valentine.version_alter_v1"))
+        return State == EOGLuminousV3Wardrobe::Clothed ? 6 : 0;
     switch (State)
     {
     case EOGLuminousV3Wardrobe::Clothed: return 45;
@@ -125,7 +134,8 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
     EOGLuminousV3Wardrobe Desired, FString& Error) const
 {
     const TArray<FSoftObjectPath>& Paths = PartsFor(Desired);
-    if (Paths.Num() != ExpectedPartsFor(Desired))
+    if (ExpectedPartsFor(Desired) <= 0 ||
+        Paths.Num() != ExpectedPartsFor(Desired))
     {
         Error = FString::Printf(TEXT("Luminous V3: wardrobe %s requires %d exact parts, got %d"),
             WardrobeName(Desired), ExpectedPartsFor(Desired), Paths.Num());
@@ -141,7 +151,13 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
             return false;
         }
         UniquePaths.Add(AssetPath);
-        if (!AssetPath.StartsWith(TEXT("/Game/Experimental/LuminousValentineV3/")))
+        const bool bBaseSource=CanonicalLuminousVersionId==
+            TEXT("character:luminous_valentine.version_ln_base") &&
+            AssetPath.StartsWith(TEXT("/Game/Experimental/LuminousValentineV3/"));
+        const bool bAlterSource=CanonicalLuminousVersionId==
+            TEXT("character:luminous_valentine.version_alter_v1") &&
+            AssetPath.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/"));
+        if (!bBaseSource && !bAlterSource)
         {
             Error = TEXT("Luminous V3: refusing an unexpected or cross-character asset namespace");
             return false;
@@ -162,7 +178,8 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     for (int32 Index = 0; Index < Paths.Num(); ++Index)
     {
         USkeletalMesh* NativeMesh = Cast<USkeletalMesh>(Paths[Index].TryLoad());
-        if (!NativeMesh || !NativeMesh->GetSkeleton() || NativeMesh->GetRefSkeleton().GetNum() != 975)
+        if (!NativeMesh || !NativeMesh->GetSkeleton() ||
+            NativeMesh->GetRefSkeleton().GetNum() != ExpectedNativeBoneCount())
         {
             Error = FString::Printf(TEXT("Luminous V3: missing/invalid 975-bone mesh at index %d state %s"),
                 Index, WardrobeName(Desired));
@@ -172,7 +189,7 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     }
     // One component pool reused for all three states. Never instantiate 121
     // simultaneous 975-bone character parts or touch imported source UAssets.
-    while (RuntimeParts.Num() < 45)
+    while (RuntimeParts.Num() < ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed))
     {
         const int32 Index = RuntimeParts.Num();
         const FName Name(*FString::Printf(TEXT("LuminousV3NativePart_%02d"), Index));
@@ -214,8 +231,8 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     Gate09EmoteEndTime = 0.f;
     bLuminousReady = true;
     if (GetMesh()) GetMesh()->SetHiddenInGame(true);
-    UE_LOG(LogTemp, Display, TEXT("Gate12 Luminous: native wardrobe=%s parts=%d/45 skeletons=975"),
-        WardrobeName(Desired), ActivePartCount);
+    UE_LOG(LogTemp, Display, TEXT("Gate12 Luminous: native wardrobe=%s parts=%d skeleton=%d"),
+        WardrobeName(Desired), ActivePartCount,ExpectedNativeBoneCount());
     return true;
 }
 
@@ -244,7 +261,11 @@ bool AOGLuminousV3PlayableCharacter::RefreshPrivacyRenderedAppearance()
     // completely untouched by this method.
     const bool bPrivacy = bNativeOwnedCharacterBound
         ? bOwnedPresentationSfw : GetSfwPresentation();
-    const bool bQAAuthorized = IsIsolatedWardrobeQAContext();
+    // Real owned Manifestations may choose the available authentic source
+    // wardrobe, while an explicit SFW presentation preference continues to
+    // mask non-clothed appearance without modifying actual clothing state.
+    const bool bQAAuthorized = bNativeOwnedCharacterBound ||
+        IsIsolatedWardrobeQAContext();
     const bool bHasSafeBase = ClothedNativeParts.Num() ==
         ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed);
     const FOGLuminousV3AppearanceProjection Decision =
@@ -407,10 +428,10 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousWardrobe(
     // character lore/asset contracts. No writable Blueprint override or guessed
     // maturity flag is trusted. Only isolated engineering QA may preview them.
     if (Desired != EOGLuminousV3Wardrobe::Clothed &&
-        !IsIsolatedWardrobeQAContext())
+        !bNativeOwnedCharacterBound && !IsIsolatedWardrobeQAContext())
     {
         LastLuminousError =
-            TEXT("Explicit outfit selection requires approved canonical adult context; only isolated QA can preview it.");
+            TEXT("Outfit selection requires an actual owned Character or isolated engineering QA.");
         return false;
     }
     if (!ValidateWardrobeAssets(Desired, LastLuminousError)) return false;
@@ -816,7 +837,7 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
     const bool bEffectiveSfw = bNativeOwnedCharacterBound
         ? bOwnedPresentationSfw : GetSfwPresentation();
     if (bEffectiveSfw != bLastAppliedPrivacy ||
-        IsIsolatedWardrobeQAContext() != bLastAppliedExplicitContext)
+        (bNativeOwnedCharacterBound || IsIsolatedWardrobeQAContext()) != bLastAppliedExplicitContext)
     {
         // Device Privacy is non-authoritative, so toggling it cannot call
         // SetLuminousWardrobe(bPersist=true) or modify the canonical store.

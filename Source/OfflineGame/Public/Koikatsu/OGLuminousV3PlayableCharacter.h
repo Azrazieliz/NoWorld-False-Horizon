@@ -239,7 +239,8 @@ private:
     UAnimSequence* ResolveAuthoredMotionClip(EOGLuminousV3MotionPhase Phase) const;
 
     const TArray<FSoftObjectPath>& PartsFor(EOGLuminousV3Wardrobe State) const;
-    static int32 ExpectedPartsFor(EOGLuminousV3Wardrobe State);
+    int32 ExpectedPartsFor(EOGLuminousV3Wardrobe State) const;
+    int32 ExpectedNativeBoneCount() const;
     bool ValidateWardrobeAssets(EOGLuminousV3Wardrobe Desired, FString& Error) const;
     bool ApplyVisualWardrobe(EOGLuminousV3Wardrobe Desired, FString& Error);
     bool IsIsolatedWardrobeQAContext() const;
