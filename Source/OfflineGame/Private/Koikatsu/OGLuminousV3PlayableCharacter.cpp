@@ -836,20 +836,6 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
         }
     }
     const float Now = GetWorld()->GetTimeSeconds();
-    if (bGate09CombatVisualPlaying)
-    {
-        const UCharacterMovementComponent* Move = GetCharacterMovement();
-        const bool bMoved=Move &&
-            (!Move->IsMovingOnGround() ||
-             GetVelocity().SizeSquared2D()>FMath::Square(12.f));
-        if(Now<Gate09CombatVisualEndsAt &&
-           (!bMoved || Now<Gate09CombatVisualEarliestCancelAt))
-            return; // Keep authentic authored hit frames; cancel only after source window.
-        bGate09CombatVisualPlaying=false;
-        Gate09CombatVisualEndsAt=0.f;
-        Gate09CombatVisualEarliestCancelAt=0.f;
-        CurrentMotionPhase=EOGLuminousV3MotionPhase::Fall;
-    }
     if (bGate09EmotePlaying)
     {
         const UCharacterMovementComponent* Move = GetCharacterMovement();
@@ -910,9 +896,6 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
         WardrobeQAWidget = nullptr;
     }
     GetWorldTimerManager().ClearTimer(QAWorldModeTimer);
-    bGate09CombatVisualPlaying=false;
-    Gate09CombatVisualEndsAt=0.f;
-    Gate09CombatVisualEarliestCancelAt=0.f;
     CurrentNativeClip = nullptr;
     bGate09EmotePlaying = false;
     ActiveMotionLeaderIndex = INDEX_NONE;
