@@ -308,6 +308,7 @@ private:
         int32 UltimateChargePercent = 0;
         bool bRevivalUsed = false;
         int32 RevivalAfterglowExpiresOwnerAction = INDEX_NONE;
+        int32 MercifulEdgeExpiresOwnerAction = INDEX_NONE;
         int32 LastNightExecutionChargeOwnerAction = INDEX_NONE;
         bool bDayAttunement = false;
         bool bAttunementActive = true; // Initial Night from approved Base v6.

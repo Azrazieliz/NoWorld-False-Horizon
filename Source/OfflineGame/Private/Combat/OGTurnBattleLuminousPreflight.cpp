@@ -112,7 +112,9 @@ bool FOGTurnBattle::PrevalidateLuminousActionWithoutSideEffects(
                 return FailPreflight(OutError,TEXT("Base Eclipse requires 60 Scarlet Reserve and legal field cooldown."));
             bool bPrepared=false;
             for(const auto& Entry:Own.HemalMarks)
-                if(Entry.Value>0){bPrepared=true;break;}
+                if(Entry.Value>0 &&
+                   Own.HemalMarkExpiryOwnerAction.FindRef(Entry.Key)>=
+                       OwnerAction+1){bPrepared=true;break;}
             if(!bPrepared)
                 for(const auto& Entry:Own.DawnOathByBeneficiary)
                     if(Entry.Value>=OwnerAction+1){bPrepared=true;break;}

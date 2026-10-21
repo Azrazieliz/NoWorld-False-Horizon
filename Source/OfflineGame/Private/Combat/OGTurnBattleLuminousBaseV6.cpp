@@ -276,6 +276,11 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
 
     ++StateOfOwner.OwnerActions;
     const int32 CurrentOwnerAction=StateOfOwner.OwnerActions;
+    const bool bMercifulEdgeForThisCast=
+        (bA1 || bA2 || (bUlt && UltimateBranch==TEXT("night"))) &&
+        StateOfOwner.MercifulEdgeExpiresOwnerAction>=CurrentOwnerAction;
+    if(bMercifulEdgeForThisCast)
+        StateOfOwner.MercifulEdgeExpiresOwnerAction=INDEX_NONE;
     if(bDayRevivalPrepare)
         return true; // One legal preparedness action, no simultaneous AoE heal.
     if(StateOfOwner.bAttunementActive &&
@@ -382,6 +387,9 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(CurrentOwnerAction<=StateOfOwner.RevivalAfterglowExpiresOwnerAction)
             EffectiveAttacker.Attack=FOGLargeNumber::ScaleByBasisPoints(
                 EffectiveAttacker.Attack,11200); // Reconstitution P4
+        if(bMercifulEdgeForThisCast)
+            EffectiveAttacker.Attack=FOGLargeNumber::ScaleByBasisPoints(
+                EffectiveAttacker.Attack,11000); // Dawn Sanctification P5
         if(StateOfOwner.bAttunementActive &&
            !StateOfOwner.bDayAttunement)
         {
@@ -585,8 +593,20 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             StateOfOwner.BlessingCategory.Add(Id,bDayUltimate?2:1);
             if(bA3 && FOGLargeNumber::Compare(
                 RealRestored,FOGLargeNumber())>0)
+            {
                 StateOfOwner.DawnOathByBeneficiary.Add(
                     Id,CurrentOwnerAction+2);
+                // P5 Merciful Edge requires an actual A3 rescue that moves
+                // the ally from <=35% HP to >=35%. Ordinary full-HP buff
+                // casts, self-only lifesteal and failed heals never grant it.
+                const FOGLargeNumber Threshold=FOGLargeNumber::ScaleByBasisPoints(
+                    T->Stats.MaxHp,3500);
+                if(FOGLargeNumber::Compare(
+                        BeforeHealing,Threshold)<=0 &&
+                   FOGLargeNumber::Compare(T->CurrentHp,Threshold)>=0)
+                    StateOfOwner.MercifulEdgeExpiresOwnerAction=
+                        CurrentOwnerAction+1;
+            }
             if(bConsumeDawnOath && FOGLargeNumber::Compare(
                 RealRestored,FOGLargeNumber())>0)
                 StateOfOwner.DawnOathByBeneficiary.Remove(Id);
