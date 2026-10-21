@@ -327,6 +327,8 @@ private:
         TMap<FOGEntityId,int32> HemorrhageStacks;
         TMap<FOGEntityId,int32> HemorrhageEndOwnerAction;
         TMap<FOGEntityId,int32> BlessingExpiry;
+        // 1=A3 Benediction/Covenant; 2=Day Ultimate; 2 owner turns.
+        TMap<FOGEntityId,uint8> BlessingCategory;
         int32 DawnOathExpiry = 0;
         TMap<FOGEntityId,int32> DawnOathByBeneficiary;
         int32 NextFantasmReadyOwnerAction = 0;
@@ -344,6 +346,13 @@ private:
     };
     TArray<FLuminousDawnBarrier> LuminousDawnBarriers;
     TMap<FOGEntityId,FOGLargeNumber> LastEffectiveHpDamage;
+    void GetApprovedDawnBlessingBps(
+        const FOGEntityId& BeneficiaryId,
+        int32& OutAttackBonusBps,
+        int32& OutSpeedBonusBps,
+        int32& OutHealingReceivedBonusBps,
+        int32& OutDamageReductionBps) const;
+
     void GrantAuthoredDawnOverhealBarrier(
         const FOGEntityId& OwnerId,
         const FOGEntityId& BeneficiaryId,

@@ -234,12 +234,20 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         FOGCombatUnitState* T=FindMutableUnit(Id);
         if(!T || !T->IsAlive())return true;
         FOGCombatStats Attacker=Source.Stats;
+        int32 DawnAtk=0,DawnSpd=0,DawnHeal=0,DawnReduction=0;
+        GetApprovedDawnBlessingBps(Source.UnitEntityId,
+            DawnAtk,DawnSpd,DawnHeal,DawnReduction);
+        if(DawnAtk>0)
+            Attacker.Attack=FOGLargeNumber::ScaleByBasisPoints(
+                Attacker.Attack,10000+DawnAtk);
+        if(DawnSpd>0)
+            Attacker.Speed=Attacker.Speed*(10000+DawnSpd)/10000;
         Attacker.CritDamageBonusBps+=Own.MartyrMomentum*800;
         if(Current<=Own.DeathPriceExpiresOwnerAction)
             Attacker.CritDamageBonusBps+=2000;
         FOGDamageRequest Req;
         Req.BaseDamage=FOGLargeNumber::ScaleByBasisPoints(
-            Source.Stats.Attack,AtkBps);
+            Attacker.Attack,AtkBps);
         Req.DefenseReference=Source.Stats.Attack;
         Req.bAllowHitOverflowReplication=false;
         if(Current<=Own.MartyrStanceExpires)

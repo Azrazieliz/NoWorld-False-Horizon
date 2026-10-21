@@ -299,6 +299,15 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         FOGCombatUnitState* Target=FindMutableUnit(TargetId);
         if(!Target || !Target->IsAlive())return true;
         FOGCombatStats EffectiveAttacker=Source.Stats;
+        int32 DawnAtk=0,DawnSpd=0,DawnHeal=0,DawnReduction=0;
+        GetApprovedDawnBlessingBps(Source.UnitEntityId,
+            DawnAtk,DawnSpd,DawnHeal,DawnReduction);
+        if(DawnAtk>0)
+            EffectiveAttacker.Attack=FOGLargeNumber::ScaleByBasisPoints(
+                EffectiveAttacker.Attack,10000+DawnAtk);
+        if(DawnSpd>0)
+            EffectiveAttacker.Speed=EffectiveAttacker.Speed*
+                (10000+DawnSpd)/10000;
         if(StateOfOwner.HemalMarks.FindRef(TargetId)>=2)
             EffectiveAttacker.CritDamageBonusBps+=1800; // Scarlet Rhythm P2
         if(StateOfOwner.bAttunementActive &&
@@ -451,6 +460,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             if(!Overheal.IsZero())
                 GrantAuthoredDawnOverhealBarrier(Source.UnitEntityId,Id,Overheal);
             StateOfOwner.BlessingExpiry.Add(Id,CurrentOwnerAction+2);
+            StateOfOwner.BlessingCategory.Add(Id,bDayUltimate?2:1);
             if(bA3 && !Heal.IsZero())
                 StateOfOwner.DawnOathByBeneficiary.Add(Id,CurrentOwnerAction+2);
             if(bConsumeDawnOath && !Heal.IsZero())
@@ -570,6 +580,7 @@ void FOGTurnBattle::TryResolveApprovedLuminousAllyCovenant(
         S->PreparedCovenantTarget=FOGEntityId();
         S->CovenantExpiryOwnerAction=-1;
         S->BlessingExpiry.Add(TargetUnitId,S->OwnerActions+2);
+        S->BlessingCategory.Add(TargetUnitId,1);
         return;
     }
 }

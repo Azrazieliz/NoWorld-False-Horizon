@@ -569,7 +569,12 @@ bool FOGTurnBattle::ApplyDamage(
     // barrier capped at 8% target MaxHP, NOT a generic shield added to all
     // actors. Consume only live, unexpired layers; sorted per source GUID for
     // deterministic replay when two distinct Base Manifestations buff one ally.
-    FOGLargeNumber EffectiveAmount=Amount;
+    int32 DawnAtk=0,DawnSpeed=0,DawnHealing=0,DawnReduction=0;
+    GetApprovedDawnBlessingBps(TargetUnitId,
+        DawnAtk,DawnSpeed,DawnHealing,DawnReduction);
+    // Day Ultimate typed 14% mitigation acts before Dawn barriers.
+    FOGLargeNumber EffectiveAmount=DawnReduction>0
+        ?FOGLargeNumber::ScaleByBasisPoints(Amount,10000-DawnReduction):Amount;
     FOGLargeNumber Absorbed;
     TArray<int32> BarrierIndices;
     for(int32 I=0;I<LuminousDawnBarriers.Num();++I)
@@ -705,7 +710,12 @@ bool FOGTurnBattle::ApplyHealing(
         return false;
     }
     const FOGLargeNumber HpBefore=Target->CurrentHp;
-    const FOGLargeNumber NominalRestored=FOGLargeNumber::Add(HpBefore,Amount);
+    int32 DawnAtk=0,DawnSpeed=0,DawnHealing=0,DawnReduction=0;
+    GetApprovedDawnBlessingBps(TargetUnitId,
+        DawnAtk,DawnSpeed,DawnHealing,DawnReduction);
+    const FOGLargeNumber Received=DawnHealing>0
+        ?FOGLargeNumber::ScaleByBasisPoints(Amount,10000+DawnHealing):Amount;
+    const FOGLargeNumber NominalRestored=FOGLargeNumber::Add(HpBefore,Received);
     Target->CurrentHp=FOGLargeNumber::Compare(
         NominalRestored,Target->Stats.MaxHp)>0
         ? Target->Stats.MaxHp : NominalRestored;
