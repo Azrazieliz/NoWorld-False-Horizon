@@ -416,6 +416,8 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousWardrobe(
     if (!ValidateWardrobeAssets(Desired, LastLuminousError)) return false;
 
     const EOGLuminousV3Wardrobe Before = CurrentWardrobe;
+    if (bGate09EmotePlaying)
+        InterruptGate09AuthoredEmote();
     CurrentWardrobe = Desired;
     if (!RefreshPrivacyRenderedAppearance())
     {
@@ -498,6 +500,17 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousNativeMotionClip(UAnimSequence* 
 bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
     EOGLuminousV3AuthoredEmote Emote)
 {
+    // The user explicitly rejected the dance's current artistic motion
+    // quality. Keep its native source in the isolated existing Gate09 QA map
+    // instead of marketing unaccepted choreography as a gameplay animation.
+    if(Emote==EOGLuminousV3AuthoredEmote::DancePerformance &&
+       !IsIsolatedWardrobeQAContext())
+    {
+        LastLuminousError=TEXT(
+            "Gate09 dance source is imported but awaits visual acceptance; "
+            "only native QA can preview it.");
+        return false;
+    }
     if (!bLuminousReady ||
         EffectiveAppearance.EffectiveRenderedWardrobe != EOGLuminousV3Wardrobe::Clothed ||
         (GetCharacterMovement() &&
@@ -603,18 +616,60 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
                     EOGLuminousV3MotionPhase::Run : EOGLuminousV3MotionPhase::Walk;
         }
     }
-    if (Desired == CurrentMotionPhase)
+    // Gate09 verified flight-start, hover and swim are three distinct
+    // Koikatsu source clips, not a single looping generic traversal gait.
+    if(Desired==EOGLuminousV3MotionPhase::Flying)
     {
-        // Flying has separate moving and hovering source motions. Update the
-        // native sequence on velocity change without changing World state.
-        if (Desired == EOGLuminousV3MotionPhase::Flying)
+        const float Now=GetWorld()?GetWorld()->GetTimeSeconds():0.f;
+        if(!bGate09TakeoffAlreadyPlayedThisFlight)
         {
-            if (UAnimSequence* FlightClip = ResolveAuthoredMotionClip(Desired))
-                if (FlightClip != CurrentNativeClip)
-                    SetLuminousNativeMotionClip(FlightClip, true);
+            bGate09TakeoffAlreadyPlayedThisFlight=true;
+            // Exact original character rig and Koikatsu asset; never synthesize
+            // flight from a generic Walk, Run, ground Jump or dance.
+            UAnimSequence* Takeoff=LoadObject<UAnimSequence>(nullptr,
+                TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/"
+                     "G12_LuminousV3_Koikatsu_Flight_Start."
+                     "G12_LuminousV3_Koikatsu_Flight_Start"));
+            if(Takeoff && SetLuminousNativeMotionClip(Takeoff,false))
+                Gate09TakeoffEndsAt=Now+Takeoff->GetPlayLength();
+            else
+            {
+                Gate09TakeoffEndsAt=Now;
+                UE_LOG(LogTemp,Warning,
+                    TEXT("GATE09_FLIGHT_TAKEOFF_NOT_PLAYABLE native clip missing or mismatch: %s"),
+                    *LastLuminousError);
+            }
+            CurrentMotionPhase=Desired;
+            return;
         }
+        if(Now<Gate09TakeoffEndsAt)
+            return; // Preserve the real single flight-start motion to its end.
+
+        if(GetVelocity().SizeSquared()<FMath::Square(35.f))
+        {
+            if(UAnimSequence* Hover=ResolveAuthoredMotionClip(Desired))
+                if(Hover!=CurrentNativeClip)
+                    SetLuminousNativeMotionClip(Hover,true);
+        }
+        else if(RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) &&
+                RuntimeParts[ActiveMotionLeaderIndex] &&
+                CurrentNativeClip)
+        {
+            // No approved moving-flight loop exists yet. Do not repeat
+            // takeoff, or depict fake forward flight using stationary hover.
+            RuntimeParts[ActiveMotionLeaderIndex]->Stop();
+            CurrentNativeClip=nullptr;
+        }
+        CurrentMotionPhase=Desired;
         return;
     }
+    if(bGate09TakeoffAlreadyPlayedThisFlight)
+    {
+        bGate09TakeoffAlreadyPlayedThisFlight=false;
+        Gate09TakeoffEndsAt=0.f; // Landing, fall or actual swimming ends flight.
+    }
+    if (Desired == CurrentMotionPhase)
+        return;
     CurrentMotionPhase = Desired;
     if (Desired == EOGLuminousV3MotionPhase::Idle ||
         Desired == EOGLuminousV3MotionPhase::Fall)
@@ -845,6 +900,8 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
     bGate09EmotePlaying = false;
     ActiveMotionLeaderIndex = INDEX_NONE;
     Gate09EmoteEndTime = 0.f;
+    bGate09TakeoffAlreadyPlayedThisFlight=false;
+    Gate09TakeoffEndsAt=0.f;
     RuntimeParts.Reset();
     bCompatibleNativeMotion = false;
     bLuminousReady = false;

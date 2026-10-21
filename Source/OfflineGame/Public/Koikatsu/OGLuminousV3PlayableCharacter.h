@@ -212,6 +212,10 @@ private:
     bool bLuminousReady = false;
     bool bGate09EmotePlaying = false;
     float Gate09EmoteEndTime = 0.f;
+    // Gate09's authentic flight-start clip is a one-shot takeoff, NEVER a
+    // cyclic airborne locomotion replacement. Hover has its own loop.
+    bool bGate09TakeoffAlreadyPlayedThisFlight = false;
+    float Gate09TakeoffEndsAt = 0.f;
     int32 QACycleStep = 0;
     int32 QAMotionCycleStep = 0;
     float QANextCycleSeconds = 0.f;
