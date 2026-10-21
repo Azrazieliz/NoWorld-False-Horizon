@@ -539,6 +539,43 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
                 Alter->bPursuitDelayPending=false;
             }
 
+    // P6 observed-technique ledger: only actually resolved, enemy-owned,
+    // explicitly targeting actions. Never infer invisible casts from a
+    // globally enumerated skill library or observe on a rejected action.
+    // An observed ContentId confers neither copying permission nor victory.
+    for(const FOGEntityId& BeneficiaryId:Action.TargetUnitIds)
+    {
+        const FOGCombatUnitState* Observer=FindUnit(BeneficiaryId);
+        if(!Observer || !Observer->IsAlive() ||
+           Observer->TeamIndex==Source->TeamIndex ||
+           !Action.SkillId.IsValid() ||
+           Observer->IdentityId!=FOGContentId(
+               TEXT("character:luminous_valentine.identity")))
+            continue;
+        TArray<FOGContentId>* Witnessed=nullptr;
+        int32 Capacity=0;
+        if(Observer->SkillSet.ActiveSkills.Contains(FOGContentId(
+            TEXT("combat:luminous_valentine.base.skill.scarlet_cadence"))))
+        {
+            Witnessed=&LuminousBaseStates.FindOrAdd(
+                BeneficiaryId).ObservedEnemyContentIds;
+            Capacity=16; // Observation capacity != copied-technique limit 1.
+        }
+        else if(Observer->SkillSet.ActiveSkills.Contains(FOGContentId(
+            TEXT("draft:luminous_valentine.alter.active_1"))))
+        {
+            Witnessed=&LuminousAlterStates.FindOrAdd(
+                BeneficiaryId).ObservedEnemyContentIds;
+            Capacity=3;
+        }
+        if(Witnessed && !Witnessed->Contains(Action.SkillId))
+        {
+            Witnessed->Add(Action.SkillId);
+            if(Witnessed->Num()>Capacity)
+                Witnessed->RemoveAt(0,Witnessed->Num()-Capacity);
+        }
+    }
+
     FOGCombatLogEvent Resolved;
     Resolved.Type = EOGCombatLogEventType::ActionResolved;
     Resolved.SourceUnitId = Action.SourceUnitId;

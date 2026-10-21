@@ -188,7 +188,9 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
     switch(Contest.Rule)
     {
     case EOGLuminousFieldRule::BaseNocturneSeverance:
-        if(Owner->TeamIndex==Target->TeamIndex ||
+        if(!BaseState->bAttunementActive ||
+           BaseState->bDayAttunement ||
+           Owner->TeamIndex==Target->TeamIndex ||
            BaseState->HemalMarks.FindRef(Contest.TargetUnitId)<3 ||
            BaseState->HemalMarkExpiryOwnerAction.FindRef(
                Contest.TargetUnitId)<CurrentAction ||
@@ -199,7 +201,9 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
         }
         break;
     case EOGLuminousFieldRule::BaseRekindlingEdict:
-        if(Owner->TeamIndex!=Target->TeamIndex ||
+        if(!BaseState->bAttunementActive ||
+           !BaseState->bDayAttunement ||
+           Owner->TeamIndex!=Target->TeamIndex ||
            !BaseState->DawnOathByBeneficiary.Contains(Contest.TargetUnitId) ||
            BaseState->DawnOathByBeneficiary.FindRef(
                Contest.TargetUnitId)<CurrentAction ||
@@ -216,7 +220,9 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
         Cost=20;
         if((Target && Owner->TeamIndex==Target->TeamIndex) ||
            Field->bLastRoseUsed || !Contest.bProjectionCopyNotOriginal ||
-           !Contest.bPreviouslyRecordedSameContentEffect)
+           !Contest.bPreviouslyRecordedSameContentEffect ||
+           !BaseState->ObservedEnemyContentIds.Contains(
+               Contest.RegisteredEffectId))
         {
             OutError=TEXT("Last Rose applies once to a recorded projection, never an original spell.");
             return false;
@@ -253,7 +259,9 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
     case EOGLuminousFieldRule::AlterMirrorDebt:
         Cost=20;bChargeOnFailedContest=true;
         if(Field->bAlterMirrorDebtUsed || !Contest.bProjectionCopyNotOriginal ||
-           Contest.TargetUnitId!=Contest.OwnerManifestationId)
+           Contest.TargetUnitId!=Contest.OwnerManifestationId ||
+           !AlterState->ObservedEnemyContentIds.Contains(
+               Contest.RegisteredEffectId))
         {
             OutError=TEXT("Mirror Debt only contests a reflected copy directed at Alter, never the original.");
             return false;

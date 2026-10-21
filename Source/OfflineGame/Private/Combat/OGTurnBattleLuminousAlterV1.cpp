@@ -173,15 +173,9 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
     }
     if(bA2)Own.EucharistNextAvailableAction=Current+3;
     if(bA3)Own.CommunionNextAvailableAction=Current+4;
-    // The source's exact self-sacrificial standing buff never makes Alter
-    // a substitute for Base's healer or player Ruler.
-    if(bA3)
-    {
-        Own.MartyrStanceExpires=Current+2;
-        Own.bMartyrNextFinisherPending=true;
-        return true;
-    }
-
+    // A3 is an owner action too: its previously inflicted, registered
+    // Severing Wounds must still tick this turn. Returning early here used
+    // to skip source P2 and P1, incorrectly extending enemy wound timers.
     TSet<FOGEntityId> Eligible;
     for(const FOGEntityId& TargetId:Action.TargetUnitIds)
         if(IsLuminousBloodStatusEligible(Source.UnitEntityId,TargetId,
@@ -281,6 +275,14 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
                 Actual,900);
             if(!SiphonWithinAllowance(Heal))return false;
         }
+    }
+    // Only after genuine wound-start damage/siphon has resolved can A3
+    // establish its 2-turn Martyr Crown; it causes no free sword attack.
+    if(bA3)
+    {
+        Own.MartyrStanceExpires=Current+2;
+        Own.bMartyrNextFinisherPending=true;
+        return true;
     }
     FOGDeterministicRng Rng(static_cast<uint64>(
         HashCombine(GetTypeHash(State.BattleId.ToString()),

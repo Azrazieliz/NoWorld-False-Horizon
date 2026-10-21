@@ -342,6 +342,10 @@ private:
         int32 DawnOathExpiry = 0;
         TMap<FOGEntityId,int32> DawnOathByBeneficiary;
         int32 NextFantasmReadyOwnerAction = 0;
+        // P6 Twilight Lawkeeper: source ContentIds from actually resolved
+        // enemy actions targeted at this living Manifestation. Observing
+        // is NOT acquiring permission to copy or automatically negate.
+        TArray<FOGContentId> ObservedEnemyContentIds;
     };
 
     // Per-Manifestation, per-battle state. Never a shared identity/global meter.
@@ -386,6 +390,8 @@ private:
         // native action-value scheduling, never generic death events.
         int32 LastPursuitOwnerAction = -1;
         bool bPursuitDelayPending = false;
+        // P6 Witness Ledger: last three verified enemy effect ContentIds.
+        TArray<FOGContentId> ObservedEnemyContentIds;
         TMap<FOGEntityId,int32> RuptureSeals;
         TMap<FOGEntityId,int32> SealExpiryOwnerAction;
         TMap<FOGEntityId,int32> SeveringWounds;
