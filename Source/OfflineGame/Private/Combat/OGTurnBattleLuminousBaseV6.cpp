@@ -241,6 +241,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         StateOfOwner.bAttunementActive=true;
         StateOfOwner.AttunementExpiryAction=StateOfOwner.OwnerActions+3;
     }
+    // Snapshot the previous owner attunement before A2 itself switches Night;
+    // only a genuine already-Night execution earns the +12% charge bonus.
+    const bool bNightBeforeA2=StateOfOwner.bAttunementActive &&
+        !StateOfOwner.bDayAttunement;
     if(bUlt)StateOfOwner.UltimateChargePercent-=ChargeCost;
     if(bDayRevivalPrepare)
     {
