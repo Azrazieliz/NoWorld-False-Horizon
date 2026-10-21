@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
 #include "Persistence/OGWorldStore.h"
+#include "Combat/OGLuminousCanonicalAuthorityBinding.h"
 #include "Runtime/OGPerformanceTelemetry.h"
 #include "Runtime/OGCanonicalClockRuntime.h"
 #include "Runtime/OGFoundationStrategicRuntime.h"
@@ -73,6 +74,33 @@ public:
 
     IOGWorldStore* GetWorldStore() const { return WorldStore.Get(); }
 
+    /** Production encounter integration: bind the EXISTING FOGTurnBattle to
+     * real Registry, World and soul/blood providers. No fabricated defaults. */
+    bool BindOwnedLuminousCombatAuthority(
+        FOGTurnBattle& Battle,
+        const FOGEntityId& RulerId,
+        FOGLuminousCanonicalSources TrustedProviders,
+        FString& OutError);
+
+    /** Real GameCore-owned turn session. Requires registered formations,
+     * triggers, installed effect providers and native World truth. */
+    bool StartOwnedLuminousTurnBattle(
+        const FOGTurnBattleState& InitialState,
+        TArray<FOGCombatTriggerBinding> RegisteredTriggers,
+        FOGCombatConditionEvaluator NativeConditions,
+        FOGIdentityExclusivityContext IdentityContext,
+        FOGRankSuppressionResolver RankResolver,
+        const FOGEntityId& RulerId,
+        FOGLuminousCanonicalSources TrustedProviders,
+        FString& OutError);
+    bool ApplyOwnedLuminousTurnAction(const FOGResolvedCombatAction& Action,
+        FString& OutError);
+    bool ResolveOwnedLuminousRegisteredContest(
+        const FOGLuminousRegisteredEffectContest& Contest,
+        const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
+        bool& bOutWon, FString& OutError);
+    const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
+
     UFUNCTION(BlueprintPure, Category = "OfflineGame|Core")
     int64 GetCanonicalWorldTick() const
     {
@@ -120,6 +148,8 @@ private:
     void VerifyCoreAfterResume(const TCHAR* BoundaryName);
 
     TUniquePtr<IOGWorldStore> WorldStore;
+    // Owned solely by canonical GameCore; torn down before replacing Store.
+    TUniquePtr<FOGTurnBattle> OwnedLuminousTurnBattle;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;

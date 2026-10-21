@@ -95,6 +95,8 @@ struct FOGLuminousRegisteredEffectContest
     FOGEntityId OwnerManifestationId;
     FOGEntityId TargetUnitId;
     FOGContentId RegisteredEffectId;
+    // Exact runtime instance; a content definition alone is not a removable effect.
+    FOGEntityId RegisteredEffectInstanceId;
     FOGEntityId EffectSourceId;
     FOGRulePriority AttackingPriority;
     FOGRulePriority DefendingPriority;
@@ -124,6 +126,9 @@ using FOGLuminousNativeRevivalEligibility = TFunction<bool(
     bool bAllyCovenant)>;
 
 using FOGLuminousRegisteredEffectRemoval = TFunction<
+    bool(const FOGLuminousRegisteredEffectContest&,FString&)>;
+// Read-only native effect/provenance/spatial/priority proof, not caller flags.
+using FOGLuminousRegisteredContestEvidence = TFunction<
     bool(const FOGLuminousRegisteredEffectContest&,FString&)>;
 
 class OFFLINEGAME_API FOGTurnBattle
@@ -175,6 +180,12 @@ public:
         FOGLuminousAcceptedFieldEligibility InGate)
     {
         LuminousFieldEligibility=MoveTemp(InGate);
+    }
+
+    void BindLuminousRegisteredContestEvidence(
+        FOGLuminousRegisteredContestEvidence InValidator)
+    {
+        LuminousRegisteredContestEvidence=MoveTemp(InValidator);
     }
 
     // Registered effect engine supplies one concrete effect instance and a
@@ -269,6 +280,7 @@ private:
     };
     TMap<FOGEntityId,FLuminousFieldState> LuminousFields;
     FOGLuminousAcceptedFieldEligibility LuminousFieldEligibility;
+    FOGLuminousRegisteredContestEvidence LuminousRegisteredContestEvidence;
     FOGLuminousNativeBloodEligibility LuminousBloodEligibility;
     FOGLuminousNativeRevivalEligibility LuminousRevivalEligibility;
     FOGContentId AcceptedBleedFamilyId;

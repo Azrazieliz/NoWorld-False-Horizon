@@ -137,6 +137,8 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
        (!bBoundary && (!Target || !Target->IsAlive())) || !Field ||
        !Contest.bInAuthorizedFieldFootprint ||
        !Contest.bPerceptuallyObserved ||
+       !LuminousRegisteredContestEvidence ||
+       (!bBoundary && !Contest.RegisteredEffectInstanceId.IsValid()) ||
        !Contest.AttackingPriority.SourceRuleId.IsValid() ||
        !Contest.DefendingPriority.SourceRuleId.IsValid() ||
        !RemoveOneEligibleEffect ||
@@ -170,6 +172,16 @@ bool FOGTurnBattle::TryResolveLuminousRegisteredFieldContest(
     if(bBoundary && !Contest.bBoundaryOverlapSegment)
     {
         OutError=TEXT("Boundary overlap must be an observed exact spatial segment.");
+        return false;
+    }
+
+    // Native registered-effect source must re-derive provenance, instance,
+    // spatial footprint, observation, rule family and both priority values.
+    // Caller-supplied booleans and priorities are not authority by themselves.
+    if(!LuminousRegisteredContestEvidence(Contest,OutError))
+    {
+        if(OutError.IsEmpty())
+            OutError=TEXT("No live registered instance/World priority proof for this contest.");
         return false;
     }
 

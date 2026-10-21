@@ -68,6 +68,7 @@ bool FOGTurnBattle::Initialize(
     LuminousAlterStates.Reset();
     LuminousFields.Reset();
     LuminousFieldEligibility=FOGLuminousAcceptedFieldEligibility();
+    LuminousRegisteredContestEvidence=FOGLuminousRegisteredContestEvidence();
     LuminousBloodEligibility=FOGLuminousNativeBloodEligibility();
     LuminousRevivalEligibility=FOGLuminousNativeRevivalEligibility();
     bApprovedRevivalHealInProgress=false;

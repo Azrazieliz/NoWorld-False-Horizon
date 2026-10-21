@@ -1,5 +1,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
+#include "Combat/OGLuminousCanonicalAuthorityBinding.h"
 
 #if PLATFORM_ANDROID
 #include "AndroidPermissionFunctionLibrary.h"
@@ -284,6 +285,8 @@ bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
 {
     bReleasingCanonicalRuntime = true;
     OnCanonicalRuntimeReleasing.Broadcast();
+    // Combat callbacks borrow live canonical Registry/WorldStore authority.
+    OwnedLuminousTurnBattle.Reset();
     bReleasingCanonicalRuntime = false;
     if (OptionalPackageHost)
     {
@@ -831,4 +834,85 @@ void UOGGameCoreSubsystem::Deinitialize()
     UE_LOG(LogOfflineGame, Log, TEXT("Authoritative game core subsystem deinitialized."));
     OGAndroidMediaVolumeBridge::Stop();
     Super::Deinitialize();
+}
+
+bool UOGGameCoreSubsystem::BindOwnedLuminousCombatAuthority(
+    FOGTurnBattle& Battle,
+    const FOGEntityId& RulerId,
+    FOGLuminousCanonicalSources TrustedProviders,
+    FString& OutError)
+{
+    if(!bCoreReady || bReleasingCanonicalRuntime || !WorldStore || !WorldStore->IsOpen())
+    {
+        OutError=TEXT("Canonical GameCore is unavailable for combat binding.");
+        return false;
+    }
+    return FOGLuminousCanonicalAuthorityBinding::Bind(
+        Battle,*WorldStore,RulerId,MoveTemp(TrustedProviders),OutError);
+}
+
+// Production GameCore owns only the session; all combat actions execute in the
+// EXISTING FOGTurnBattle and registered content providers.
+bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
+    const FOGTurnBattleState& InitialState,
+    TArray<FOGCombatTriggerBinding> RegisteredTriggers,
+    FOGCombatConditionEvaluator NativeConditions,
+    FOGIdentityExclusivityContext IdentityContext,
+    FOGRankSuppressionResolver RankResolver,
+    const FOGEntityId& RulerId,
+    FOGLuminousCanonicalSources TrustedProviders,
+    FString& OutError)
+{
+    if(OwnedLuminousTurnBattle &&
+       OwnedLuminousTurnBattle->GetState().Status==EOGTurnBattleStatus::Running)
+    {
+        OutError=TEXT("Cannot replace a running canonical Luminous encounter.");
+        return false;
+    }
+    if(!bCoreReady || bReleasingCanonicalRuntime || !WorldStore ||
+       !WorldStore->IsOpen())
+    {
+        OutError=TEXT("Canonical WorldStore is unavailable; no encounter created.");
+        return false;
+    }
+    TUniquePtr<FOGTurnBattle> Candidate=MakeUnique<FOGTurnBattle>();
+    if(!Candidate->Initialize(InitialState,MoveTemp(RegisteredTriggers),
+        MoveTemp(NativeConditions),MoveTemp(IdentityContext),
+        MoveTemp(RankResolver),OutError))
+        return false;
+    if(!BindOwnedLuminousCombatAuthority(
+        *Candidate,RulerId,MoveTemp(TrustedProviders),OutError))
+        return false;
+    OwnedLuminousTurnBattle=MoveTemp(Candidate);
+    return true;
+}
+
+bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
+    const FOGResolvedCombatAction& Action,FString& OutError)
+{
+    if(!bCoreReady || bReleasingCanonicalRuntime ||
+       !OwnedLuminousTurnBattle ||
+       OwnedLuminousTurnBattle->GetState().Status!=EOGTurnBattleStatus::Running)
+    {
+        OutError=TEXT("No active GameCore-owned Luminous encounter.");
+        return false;
+    }
+    return OwnedLuminousTurnBattle->ApplyResolvedAction(Action,OutError);
+}
+
+bool UOGGameCoreSubsystem::ResolveOwnedLuminousRegisteredContest(
+    const FOGLuminousRegisteredEffectContest& Contest,
+    const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
+    bool& bOutWon,FString& OutError)
+{
+    bOutWon=false;
+    if(!bCoreReady || bReleasingCanonicalRuntime ||
+       !OwnedLuminousTurnBattle ||
+       OwnedLuminousTurnBattle->GetState().Status!=EOGTurnBattleStatus::Running)
+    {
+        OutError=TEXT("No active GameCore-owned Luminous World Fantasm.");
+        return false;
+    }
+    return OwnedLuminousTurnBattle->TryResolveLuminousRegisteredFieldContest(
+        Contest,RemoveExactRegisteredInstance,bOutWon,OutError);
 }
