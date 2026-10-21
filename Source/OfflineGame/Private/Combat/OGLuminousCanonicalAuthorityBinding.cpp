@@ -38,17 +38,9 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
 {
     OutError.Reset();
     if(!Store.IsOpen() || !OwningRulerId.IsValid() ||
-       Battle.GetState().Status!=EOGTurnBattleStatus::Running ||
-       !Sources.ReadInstalledIdentity ||
-       !Sources.ReadNativeBloodEligibility ||
-       !Sources.ReadNativeSoulContinuity ||
-       !Sources.ValidateRegisteredEffectContest ||
-       !Sources.CheckRegisteredWorldFieldOwnership ||
-       !Sources.RegisteredBleedFamilyId.IsValid() ||
-       !Sources.WorldNegationGradeId.IsValid() ||
-       Sources.FantasmByRegisteredVersion.IsEmpty())
+       Battle.GetState().Status!=EOGTurnBattleStatus::Running)
     {
-        OutError=TEXT("Cannot bind combat authority without a live canonical store and every registered blood, soul, Registry and World provider.");
+        OutError=TEXT("Cannot bind combat authority without a live owned WorldStore battle.");
         return false;
     }
 
@@ -60,6 +52,107 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
     if(!FOGApprovedLuminousSourceKit::LoadBaseV6(BaseKit,OutError) ||
        !FOGLuminousAlterV1Projection::LoadApprovedV1(AlterKit,OutError))
         return false;
+
+    // Gate 11 was dissolved. The user-approved locked Base/Alter designs
+    // supply their own real identity, Version, skillset and Fantasm mapping;
+    // no missing package install or synthesized Registry record is required.
+    const TMap<FOGContentId,FOGContentId> AuthoredFantasmByVersion={
+        {BaseKit.VersionId,BaseKit.WorldFantasmId},
+        {AlterKit.DraftVersionId,AlterKit.WorldFantasmId}
+    };
+    if(Sources.FantasmByRegisteredVersion.IsEmpty())
+        Sources.FantasmByRegisteredVersion=AuthoredFantasmByVersion;
+    else
+    {
+        for(const auto& Pair:AuthoredFantasmByVersion)
+            if(const FOGContentId* Found=Sources.FantasmByRegisteredVersion.Find(Pair.Key))
+                if(*Found!=Pair.Value)
+                {
+                    OutError=TEXT("External Fantasm mapping conflicts with approved Base/Alter sources.");
+                    return false;
+                }
+    }
+    if(!Sources.ReadInstalledIdentity)
+    {
+        Sources.ReadInstalledIdentity=[IdentityId=BaseKit.IdentityId](
+            const FOGContentId& Query,FOGCharacterIdentityDefinition& Identity,
+            FString& Error)
+        {
+            if(Query!=IdentityId)
+            {
+                Error=TEXT("No approved Luminous identity for this source ID.");
+                return false;
+            }
+            Identity=FOGCharacterIdentityDefinition();
+            Identity.IdentityId=IdentityId;
+            // MR Origin is explicitly approved in the locked Base v6 and
+            // inherited by Alter. Current MR is checked independently in store.
+            Identity.OriginRarity=FName(TEXT("MR"));
+            return true;
+        };
+    }
+    // Native battle state is authoritative for ownership/teams/defeat. A
+    // missing species-specific blood contract must NEVER fabricate blood.
+    if(!Sources.RegisteredBleedFamilyId.IsValid())
+        Sources.RegisteredBleedFamilyId=FOGContentId(
+            TEXT("combat:luminous_valentine.base.status.hemorrhage"));
+    if(!Sources.ReadNativeBloodEligibility)
+        Sources.ReadNativeBloodEligibility=[](
+            const FOGCombatUnitState&,const FOGCombatUnitState&,
+            const FOGContentId&){return false;};
+    if(!Sources.ReadNativeSoulContinuity)
+        Sources.ReadNativeSoulContinuity=[](
+            const FOGCombatUnitState& Restoring,const FOGCombatUnitState& Target,
+            bool bAlly)
+        {
+            // Defeated is a battlefield status, not canonical death. Removed
+            // entities have no continuous World presence and cannot revive.
+            return Restoring.UnitEntityId.IsValid() && Target.UnitEntityId.IsValid() &&
+                   (bAlly ? Restoring.TeamIndex==Target.TeamIndex :
+                    Restoring.UnitEntityId==Target.UnitEntityId) &&
+                   Target.Presence!=EOGCombatPresence::Removed;
+        };
+    if(!Sources.ValidateRegisteredEffectContest)
+        Sources.ValidateRegisteredEffectContest=[](
+            const FOGLuminousRegisteredEffectContest&,FString& Error)
+        {
+            Error=TEXT("No independently registered live effect instance to contest.");
+            return false;
+        };
+    if(!Sources.CheckRegisteredWorldFieldOwnership)
+        Sources.CheckRegisteredWorldFieldOwnership=[
+            &Store,OwningRulerId,AuthoredFantasmByVersion](
+            const FOGEntityId& Manifestation,const FOGContentId& Fantasm,
+            FString& Error)
+        {
+            bool bFound=false;
+            FOGCharacterManifestationRecord Owned;
+            if(!Store.TryReadCharacterManifestation(
+                   Manifestation,bFound,Owned,Error) || !bFound ||
+               Owned.ManifestationId!=Manifestation ||
+               Owned.OwningRulerId!=OwningRulerId ||
+               Owned.LifecycleState!=FName(TEXT("active")) ||
+               AuthoredFantasmByVersion.FindRef(Owned.ActiveVersionId)!=Fantasm)
+            {
+                if(Error.IsEmpty())
+                    Error=TEXT("Manifestation is not the active native owner of this Fantasm.");
+                return false;
+            }
+            bool bGrade=false;
+            FOGManifestationWorldFantasmStateRecord State;
+            if(!Store.TryReadManifestationWorldFantasmState(
+                   Manifestation,bGrade,State,Error) || !bGrade ||
+               State.ManifestationId!=Manifestation ||
+               !State.GradeId.IsValid() ||
+               State.ExpressionProfileId!=Fantasm)
+            {
+                if(Error.IsEmpty())
+                    Error=TEXT("No real WorldStore Fantasm expression for this Manifestation.");
+                return false;
+            }
+            return true;
+        };
+
     auto MatchesKit=[](const FOGResolvedSkillSet& Owned,
                        const FOGResolvedSkillSet& Approved)
     {
@@ -81,7 +174,7 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
         FOGCharacterManifestationRecord Record;
         if(!ReadOwnedActiveManifestation(Store,OwningRulerId,Unit,Record))
         {
-            OutError=TEXT("Luminous battle unit has no live, owned Registry Manifestation.");
+            OutError=TEXT("Luminous battle unit has no active, owned WorldStore Manifestation.");
             return false;
         }
         const bool bBase=Record.ActiveVersionId==BaseKit.VersionId &&
@@ -99,7 +192,7 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
             Sources.FantasmByRegisteredVersion.Find(Record.ActiveVersionId);
         if(!InstalledFantasm || *InstalledFantasm!=ExpectedFantasm)
         {
-            OutError=TEXT("Luminous active version has no exact installed Base/Alter World Fantasm registration.");
+            OutError=TEXT("Luminous active version has no exact approved Base/Alter World Fantasm mapping.");
             return false;
         }
     }
@@ -153,14 +246,14 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
             FOGCharacterManifestationRecord Copy;
             if(!ReadOwnedActiveManifestation(Store,OwningRulerId,Unit,Copy))
             {
-                Error=TEXT("Fantasm rejected: live owner/identity/version not registered.");
+                Error=TEXT("Fantasm rejected: live WorldStore owner/identity/version differs.");
                 return false;
             }
             const FOGContentId* RegisteredFantasm=
                 Canonical->FantasmByRegisteredVersion.Find(Copy.ActiveVersionId);
             if(!RegisteredFantasm || *RegisteredFantasm!=FantasmId)
             {
-                Error=TEXT("Fantasm rejected: selected ability does not belong to the installed version.");
+                Error=TEXT("Fantasm rejected: selected ability does not belong to the approved active version.");
                 return false;
             }
             if(Copy.CurrentRarity!=RequiredMR)
@@ -174,7 +267,7 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
                Identity.OriginRarity!=RequiredMR)
             {
                 if(Error.IsEmpty())
-                    Error=TEXT("Fantasm rejected: installed immutable Origin Rarity is not MR.");
+                    Error=TEXT("Fantasm rejected: approved immutable Origin Rarity is not MR.");
                 return false;
             }
             bool bFoundGrade=false;
@@ -182,7 +275,10 @@ bool FOGLuminousCanonicalAuthorityBinding::Bind(
             if(!Store.TryReadManifestationWorldFantasmState(
                    Copy.ManifestationId,bFoundGrade,Grade,Error) ||
                !bFoundGrade || Grade.ManifestationId!=Copy.ManifestationId ||
-               Grade.GradeId!=Canonical->WorldNegationGradeId)
+               !Grade.GradeId.IsValid() ||
+               Grade.ExpressionProfileId!=FantasmId ||
+               (Canonical->WorldNegationGradeId.IsValid() &&
+                Grade.GradeId!=Canonical->WorldNegationGradeId))
             {
                 if(Error.IsEmpty())
                     Error=TEXT("Fantasm rejected: no matching canonical World Negation grade entitlement.");
