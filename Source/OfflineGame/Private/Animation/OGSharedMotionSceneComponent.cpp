@@ -18,7 +18,6 @@ bool UOGSharedMotionSceneComponent::StartSynchronizedScene(
     // A failed preflight must not interrupt a currently valid scene.
     TSet<UOGSharedMotionControllerComponent*> UniqueControllers;
     TSet<FName> UniqueRoles;
-    FName CommonSource = NAME_None;
     TArray<UOGSharedMotionControllerComponent*> Ready;
     Ready.Reserve(Count);
     for (const FOGSharedMotionParticipant& Participant : Participants)
@@ -32,15 +31,16 @@ bool UOGSharedMotionSceneComponent::StartSynchronizedScene(
         UniqueControllers.Add(Controller);
         UniqueRoles.Add(Role);
         FName Source = NAME_None;
+        // Each original participant animation may have a DISTINCT Unity
+        // source clip ID. The canonical scene action, context and role form
+        // their common scene identity; never demand one clip for all bodies.
         if (!Controller->PreviewSourceClipId(Action, Context,
-                bAuthorizedAdultContext, Count, Role, Source) ||
-            (!CommonSource.IsNone() && CommonSource != Source))
+                bAuthorizedAdultContext, Count, Role, Source) || Source.IsNone())
             return false;
-        CommonSource = Source;
         Ready.Add(Controller);
     }
-    // All participants resolve one original source identity before starting.
-    // One absolute time origin removes sequential PlayAction call drift.
+    // Each participant resolves its own authentic source clip for the same
+    // authored scene and its unique role; one clock removes startup drift.
     if (bScenePlaying) StopSynchronizedScene();
     const float StartTime = GetWorld()->GetTimeSeconds();
     for (int32 I = 0; I < Ready.Num(); ++I)
