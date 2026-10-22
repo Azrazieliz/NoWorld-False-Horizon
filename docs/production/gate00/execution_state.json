@@ -332,7 +332,7 @@
     "Gate02": "AUTHORED_WORLD_ANCHORS_ONLY",
     "Gate11": "RETIRED_NO_CANONICAL_APPROVAL_QUEUE"
   },
-  "latest_authoritative_production_handoff": "docs/production/gate00/received_reports/GATE04_APPROVED_V4_ORIGINAL_SOURCE_VERIFIED_20261022.md",
+  "latest_authoritative_production_handoff": "docs/production/gate00/GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md",
   "gate04_v4_user_approved_20261022": {
     "reference_zip": "Gate04_Luminous_v4_APPROVED_Gate00_20261022.zip",
     "approval": "USER_APPROVED_LATEST",
@@ -398,7 +398,12 @@
       "native_unreal_v4_implemented": false,
       "source_json_original_numeric_untouched": true,
       "gp_native_benchmark_calibrated": false,
-      "gp_live_persistent_not_authorized_until_calibration": true
+      "gp_live_persistent_not_authorized_until_calibration": true,
+      "original_zip_library_id": "libfile_519f400629448191a12f4af94249819f",
+      "original_zip_library_path": "/Offline-Game Production/04_Skills_Kits_Stats_Combat/Gate04_Luminous_v4_APPROVED_Gate00_20261022.zip",
+      "github_roundtrip_windows_SHA256_verified": true,
+      "github_five_form_json_SHA256_verified": "0bf7cba8d05764ea21a01aa413176dd28ac05915c0540db0d37c4ca333eca500",
+      "github_gp_contract_SHA256_verified": "8dac4f8f0d4b1e790f47935a12abe27e431e09bad68d48a9ba01856292b31a87"
     }
   },
   "native_gate12_20261022": {
@@ -437,5 +442,6 @@
     "standalone_win64_game": "NOT_ACCEPTED",
     "unreleased_untracked_sources": "PRESERVE",
     "user_modified_config": "Config/DefaultEditor.ini PROTECTED"
-  }
+  },
+  "latest_original_v4_source_receipt": "docs/production/gate00/received_reports/GATE04_APPROVED_V4_ORIGINAL_SOURCE_VERIFIED_20261022.md"
 }
