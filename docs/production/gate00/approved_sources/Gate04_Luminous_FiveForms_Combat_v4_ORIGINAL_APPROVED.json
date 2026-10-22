@@ -1,0 +1,1281 @@
+{
+  "schema": "gate04.luminous.fiveforms.gameplay_proposals_v4",
+  "generated_date": "2026-10-22",
+  "reference": {
+    "original": "Shoujo Kaisen UR+ skill density (study design pattern, not copied)",
+    "foundation_commit": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+    "light_novel": "Tensura Volume 23"
+  },
+  "approval": {
+    "Base": "Approved v6 retained; v4 proposed amendments only",
+    "Alter": "Approved v1 retained; v4 proposed amendments only",
+    "Awakened": "Proposed v4",
+    "Berserker": "Proposed v4",
+    "Grand": "Proposed v4"
+  },
+  "ranks": [
+    "Mortal",
+    "Awakened",
+    "Elite",
+    "Champion",
+    "Hero",
+    "Sage",
+    "Saint",
+    "Legend",
+    "Mythic",
+    "Astral",
+    "Celestial",
+    "Divine",
+    "Cosmic",
+    "Dimensional",
+    "Immortal",
+    "Eternal",
+    "Primordial"
+  ],
+  "forms": {
+    "Base": {
+      "status": "APPROVED_v6_WITH_OPTIONAL_V4_AMENDMENTS_UNAPPROVED",
+      "mode": "Offensive vampiric duelist and situational healer",
+      "color": "#b84573",
+      "accent": "#efbd86",
+      "stats": {
+        "max_hp": 8455,
+        "attack": 4103,
+        "defense": 1219,
+        "speed": 136,
+        "crit_rate_bps": 3200,
+        "crit_damage_bonus_bps": 12000,
+        "crit_rate_resistance_bps": 800,
+        "crit_damage_resistance_bps": 1000,
+        "hit_bps": 12000,
+        "dodge_bps": 1600,
+        "block_rate_bps": 400,
+        "block_reduction_bps": 2000,
+        "defense_penetration_bps": 1200,
+        "damage_dealt_multiplier_bps": 10000,
+        "damage_taken_multiplier_bps": 10000,
+        "true_damage_resistance_bps": 0
+      },
+      "alpha": {
+        "max_hp": 1.35,
+        "attack": 1.4,
+        "defense": 1.2
+      },
+      "resource": "Scarlet Reserve 0–100",
+      "scaling_identity": "ATK-led direct sword and blood; actual HP damage feeds vampirism",
+      "basic": "Dharma sword chain, three hits; legal equipped sword required; 40%+60%+90% ATK.",
+      "actives": [
+        {
+          "name": "Dharma — Blood Rose",
+          "kind": "active",
+          "target": "ST",
+          "scaling": "40% + 60% + 90% ATK",
+          "effects": [
+            "Strike the selected enemy three times. Each hit may crit independently; blade contact builds up to 2 Hemal Marks (maximum 4).",
+            "At four Marks, immediately burst them for an additional 160% ATK and inflict 2 Hemorrhage stacks (Bleed family).",
+            "Heal 24% of actual direct HP damage through Vampiric Sovereignty. This invokes its single lifesteal event; it is not additional healing."
+          ],
+          "cost": "0 Scarlet Reserve",
+          "cooldown": "Basic chain",
+          "visual": "Three steel-white slashes with scarlet arterial curves.",
+          "notes": ""
+        },
+        {
+          "name": "Hematic Crucible",
+          "kind": "active",
+          "target": "AoE: 3 enemies, primary indicated",
+          "scaling": "115% + 125% ATK per enemy",
+          "effects": [
+            "Strike up to three enemies twice with blood lances; each hit can crit, and inflicts one Hemal Mark (maximum 4).",
+            "Detonate existing four-Mark enemies for +200% ATK each, and heal Luminous for 20% of the *actual* resulting HP damage.",
+            "Grant Night Attunement for two owner turns: +18% damage dealt and +15% DEF Penetration. Refresh duration, do not stack."
+          ],
+          "cost": "30 Reserve",
+          "cooldown": "2 owner turns / 12 s",
+          "visual": "Blood lances rise through a red rose-circle.",
+          "notes": ""
+        },
+        {
+          "name": "Rose of Morning",
+          "kind": "active",
+          "target": "Ally AoE: up to 3 OR ST Covenant",
+          "scaling": "Heal 100% ATK primary, 50% ATK other allies",
+          "effects": [
+            "Restore wounded allies and grant +30% ATK, +12% SPD, and +30% Healing Received for two turns.",
+            "Remove up to two ordinary Bleed stacks per ally. Overheal creates a shield equal to 40% of eligible excess, capped at 15% target Max HP.",
+            "Alternate ST cast: prepare one allied Covenant. If that ally is incapacitated within three turns, restore 30% Max HP in the defeat window before succession (once per encounter, soul-continuity check). This alternate cast does not perform the AoE heal."
+          ],
+          "cost": "30 Reserve heal / 75 Covenant",
+          "cooldown": "3 owner turns / 16 s",
+          "visual": "Gold-white rose ribbons with distinct Covenant halo.",
+          "notes": ""
+        }
+      ],
+      "passives": [
+        {
+          "name": "Vampiric Sovereignty",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "24% direct sword/blood lifesteal and 12% Hemorrhage lifesteal from actual HP damage. Total per owner action capped at 18% Luminous Max HP.",
+            "Gain +10 Scarlet Reserve on first real damaging sword or blood hit and +6 on the first genuine Hemorrhage tick each owner action.",
+            "Against enemies at 50% HP or less, heal 30% of eligible direct damage instead of 24% (not additive); sword damage +20%."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Vampiric Sovereignty event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Rosebound Sword",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Crit Rate +20 percentage points while attacking Bleeding enemies; Crit Damage bonus +35 percentage points when hitting four Hemal Marks.",
+            "At the end of any completed three-hit basic chain, inflict a free 70% ATK follow-up on a marked enemy (once per owner action).",
+            "On eliminating a Bleeding enemy, spread two Hemal Marks to the nearest other blood-bearing opponent."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Rosebound Sword event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Unbowed Queen",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Permanent +18% Dodge and +15% Crit Damage Resistance (character-specific resolved bonuses).",
+            "On a successful perfect dodge, immediately counter for 160% ATK and gain +15 Reserve (once per owner action).",
+            "If counter damages HP, reduce Hematic Crucible remaining cooldown by one owner turn."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Unbowed Queen event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Crimson Reconstitution",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Restore 6% missing HP at the start of each owner action, increased to 12% if bleeding at least one enemy.",
+            "Once per encounter self-revive at 25% Max HP if soul continuity is valid and 35 Reserve can be paid at the defeat window.",
+            "After revival gain +50% ATK and 20% damage taken reduction for one owner turn."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Crimson Reconstitution event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Dawn Sanctification",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "All healing done +30%; healing an ally below 35% HP grants both parties +30% ATK for two turns.",
+            "When an overheal shield breaks, heal the protected ally for 60% ATK and remove one ordinary Bleed stack (once per ally per owner turn).",
+            "Healed allies deal 15% additional actual damage on their next attack; no free recursive healing proc."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Dawn Sanctification event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Night and Day",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Using an offensive active grants Night Attunement (+18% damage for two turns); using Rose of Morning instead grants Day Attunement (+20% healing for two turns). These buffs are mutually exclusive.",
+            "Night Ultimate consumes Night Attunement to add a fifth 100% ATK sword strike; Day Ultimate consumes Day Attunement to grant a 30%-Max-HP shield per recipient.",
+            "Whenever either Ultimate activates, generate 20 Reserve after its effects resolve, once per Ultimate use."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Night and Day event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        }
+      ],
+      "ultimates": [
+        {
+          "name": "Ahura Mazda — Day of Returning Life",
+          "kind": "ultimate",
+          "target": "All allies, up to 6",
+          "scaling": "Heal 250% caster ATK + 15% recipient missing HP",
+          "effects": [
+            "Heal all valid active allies; restore full ordinary Bleed cleansing and grant +50% ATK, +25% SPD, and 25% damage-taken reduction for three turns.",
+            "Once per encounter, immediately revive one defeated soul-valid ally at 50% Max HP *within the active defeat window* instead of normal healing; shares the Covenant rescue ledger.",
+            "Overheal creates a shield capped at 30% each recipient Max HP."
+          ],
+          "cost": "100% charge",
+          "cooldown": "Character-specific charge generation",
+          "visual": "Radiant gold cathedral arch; restoration everywhere.",
+          "notes": ""
+        },
+        {
+          "name": "Angra Mainyu — Night of the Final Rose",
+          "kind": "ultimate",
+          "target": "ST + splash to 2",
+          "scaling": "Four hits totaling 650% ATK; 65% splash",
+          "effects": [
+            "Deliver four independently critting sword strikes; on the final hit detonate Hemal Marks for another 200% ATK.",
+            "Apply maximum two Hemorrhage stacks to all enemies actually hit; siphon 30% of HP damage (replaces ordinary lifesteal).",
+            "Gain 25% Crit Rate and 25% DEF Penetration during this cast; overflow Crit obeys frozen 1:2 conversion."
+          ],
+          "cost": "150% charge",
+          "cooldown": "Character-specific charge generation",
+          "visual": "Four black-red horizontal sword cuts and a rose collapse.",
+          "notes": ""
+        }
+      ],
+      "world": {
+        "name": "Sovereign Eclipse — The Rose Between Life and Nothing",
+        "grade": "World Negation",
+        "field_visual": "A dividing night/day rose cathedral, alive with blood-vines and gold reliquaries.",
+        "on_activate": "Immediately apply four Hemal Marks and maximum two Hemorrhage stacks to every blood-valid enemy in the field. Heal all allies 150% ATK and apply Restoration (HoT) equal to 70% ATK at each allied turn start.",
+        "while_active": "All Base sword attacks hit twice (second hit at 65% original damage); ally outgoing damage +40%; enemy ordinary healing reduced by 60%. Night enemies bleed twice per turn; Day allies get 25% damage-taken reduction. The effects are field-owned, not permanent status tags.",
+        "on_end": "Each remaining enemy takes 400% ATK ordinary damage; surviving allies heal 100% ATK. Temporary cathedral terrain fades; actual wounds persist.",
+        "scope": "All eligible combatants in field, 24m initial radius / whole current turn battlefield",
+        "duration": "3 owner turns / 18 s",
+        "counterplay": "Higher-priority protection and enemy World Fantasms can contest the specific overlay and field boundary. No unconditional deletion of protected identities.",
+        "mechanics": [
+          "AoE max-Bleed effect",
+          "party HoT",
+          "secondary strikes",
+          "healing pressure",
+          "finisher damage"
+        ],
+        "unlocks": "Current Rarity MR; Origin Rarity MR determines grade"
+      },
+      "core_count": {
+        "active": 3,
+        "passive": 6
+      },
+      "stats_benchmark": {
+        "st_6turn_atk": 9.0,
+        "aoe_6turn_atk": 5.5,
+        "heal_6turn_atk": 5.0
+      },
+      "origin_rarity": "MR approved",
+      "identity": "Luminous Valentine",
+      "version_key": "Base"
+    },
+    "Alter": {
+      "status": "APPROVED_v1_WITH_OPTIONAL_V4_AMENDMENTS_UNAPPROVED",
+      "mode": "Blood executioner; voluntary HP spending and lethal ATK burst",
+      "color": "#866cba",
+      "accent": "#e99bac",
+      "stats": {
+        "max_hp": 7650,
+        "attack": 4830,
+        "defense": 1040,
+        "speed": 151,
+        "crit_rate_bps": 3700,
+        "crit_damage_bonus_bps": 13200,
+        "crit_rate_resistance_bps": 600,
+        "crit_damage_resistance_bps": 700,
+        "hit_bps": 12400,
+        "dodge_bps": 1900,
+        "block_rate_bps": 300,
+        "block_reduction_bps": 1400,
+        "defense_penetration_bps": 1700,
+        "damage_dealt_multiplier_bps": 10000,
+        "damage_taken_multiplier_bps": 10000,
+        "true_damage_resistance_bps": 0
+      },
+      "alpha": {
+        "max_hp": 1.31,
+        "attack": 1.45,
+        "defense": 1.18
+      },
+      "resource": "Red Tithe 0–100",
+      "scaling_identity": "ATK & actual vampirism; self-paid HP creates burst window",
+      "basic": "Vesperblade: 48% + 64% + 105% ATK; spend 2% own Max HP for empowered finisher, if legal.",
+      "actives": [
+        {
+          "name": "Vesperblade — Litany of Thorns",
+          "kind": "active",
+          "target": "ST",
+          "scaling": "48% + 64% + 105% ATK",
+          "effects": [
+            "Strike three times, marking the enemy with a Rupture Seal after the first and third HP-damaging contacts. Maximum 3 Seals.",
+            "Spend 2% Max HP to release an additional 200% ATK impalement; this offering cannot reduce HP to 0.",
+            "While below 50% Max HP, the finishing impalement automatically critically strikes unless crit is barred by an explicit counter."
+          ],
+          "cost": "2% Max HP offering",
+          "cooldown": "Basic action",
+          "visual": "Fast cutting slashes and corporeal crimson barbs.",
+          "notes": ""
+        },
+        {
+          "name": "Black Eucharist — Rain of Thorns",
+          "kind": "active",
+          "target": "AoE up to 4 enemies",
+          "scaling": "150% + 150% ATK per target",
+          "effects": [
+            "Strike all selected enemies twice and apply maximum two Severing Wounds (derived from Bleed) on eligible blood-bearing targets.",
+            "Every target with three Rupture Seals takes an additional 250% ATK impalement, independently critting, consuming the Seals.",
+            "Siphon 25% of actual direct HP damage from this active instead of the usual 18% lifesteal."
+          ],
+          "cost": "35 Tithe + 4% Max HP",
+          "cooldown": "2 owner turns / 14 s",
+          "visual": "Four showers of needles converge at a black-red cathedral point.",
+          "notes": ""
+        },
+        {
+          "name": "Scarlet Apostasy",
+          "kind": "active",
+          "target": "Self — 1 combatant",
+          "scaling": "ATK +60%, SPD +25%, Crit Rate +30 points",
+          "effects": [
+            "Enter Martyr Crown for three turns. ATK +60%, SPD +25%, Crit Rate +30 points and outgoing skill damage +35%.",
+            "Lose 8% Max HP on entry without allowing self-defeat. Each direct damaging attack grants a second 45%-damage impact at the same target.",
+            "After the stance ends, heal 20% missing HP and gain 40 Tithe; no stacking refresh while active."
+          ],
+          "cost": "25 Tithe + 8% Max HP",
+          "cooldown": "4 owner turns / 20 s",
+          "visual": "Floating red martyr crown transforms into spear fragments.",
+          "notes": ""
+        }
+      ],
+      "passives": [
+        {
+          "name": "Blood’s Accounting",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Direct sword/Blood damage restores 18% of real HP damage; Severing Wound restores 9% (shared 16% Max-HP cap per owner action).",
+            "Self-offering produces Red Tithe: +8 from Vesperblade, +15 from Eucharist, +20 from Apostasy, once per matching cast.",
+            "At or below 35% HP, increase lifesteal to 30% of direct damage instead of 18% and self-offering damage bonus +30%."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Blood’s Accounting event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Anatomy of Ruin",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Rupture Seals max 3; each Seal increases Alter damage to that target by 8%, up to 24%.",
+            "All active attacks inflict Severing Wound (Bleed, 16% ATK per stack, max two); existing Wound stacks extend by one tick on a crit.",
+            "Severing Wound ticks cause an additional 65% ATK shadow cut once per owner turn."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Anatomy of Ruin event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Ecstasy of Attrition",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "After genuine self-HP payment, gain Martyr Momentum +16% Crit Damage per stack (3 stacks max, 2 turns).",
+            "While below 50% HP gain 20% damage dealt; below 25% HP gain an additional +30% DEF penetration.",
+            "On each lethal enemy hit, restore 25% missing HP and instantly generate +30 Tithe."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Ecstasy of Attrition event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Eclipse Harrier",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "First perfect dodge per owner action grants +12 Tithe and a 200% ATK sword counter.",
+            "Switch entry launches a free 125% ATK attack against one selected enemy and applies one Rupture Seal.",
+            "Successful counter reduces Black Eucharist cooldown by one action."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Eclipse Harrier event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "The Unfinished Death",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Once per encounter and only while soul-valid, self-revive at 18% Max HP by paying 75 Tithe; occurs before succession.",
+            "On return, gain +100% Crit Damage and +50% ATK for one owner turn, but healing received -35% for that turn.",
+            "If this return defeats an enemy, gain one free Vesperblade chain (once per encounter)."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct The Unfinished Death event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Last Debt",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "During Martyr Crown every successful melee hit deals an additional 40% ATK Bleed-family direct wound, once per original hit.",
+            "Targets with two Severing Wounds take 30% increased damage from Alter Ultimates.",
+            "First enemy shield broken by Alter each turn grants 20 Tithe."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Last Debt event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        }
+      ],
+      "ultimates": [
+        {
+          "name": "Black Mass — Rite of Ruin",
+          "kind": "ultimate",
+          "target": "AoE: up to 4 enemies",
+          "scaling": "5 attacks × 130% ATK each",
+          "effects": [
+            "Deal five independent sword/blood hits to each target; inflict maximum two Severing Wounds.",
+            "Enemies already Bleeding take 50% additional damage from the final two hits.",
+            "On a kill, launch one bonus 300% ATK thorn wave to remaining enemies; once per cast."
+          ],
+          "cost": "100% charge + 25 Tithe + 5% Max HP",
+          "cooldown": "Character-specific charge generation",
+          "visual": "A storm of suspended black needles.",
+          "notes": ""
+        },
+        {
+          "name": "Black Mass — Rite of the Hollow Crown",
+          "kind": "ultimate",
+          "target": "ST",
+          "scaling": "6 hits total 900% ATK + conditional 300%",
+          "effects": [
+            "Make six independent strikes; while below 50% own HP, the last three receive +50% damage.",
+            "Consume all Rupture Seals for +100% ATK per consumed Seal as one finishing cut.",
+            "Restore 28% of this Ultimate’s direct HP damage, replacing normal lifesteal, not adding it."
+          ],
+          "cost": "150% charge + 40 Tithe + 8% Max HP",
+          "cooldown": "Character-specific charge generation",
+          "visual": "Close-quarters execution through a cobalt inverse halo.",
+          "notes": ""
+        }
+      ],
+      "world": {
+        "name": "Cathedral of the Unwritten Death",
+        "grade": "World Negation",
+        "field_visual": "Black-glass cathedral ribs and inverted cobalt rose windows; the floor becomes living arterial writing.",
+        "on_activate": "Enemies receive two maximum Severing Wound stacks. Alter immediately receives Martyr Crown without paying self-HP again, and gains 50 Red Tithe.",
+        "while_active": "Enemies lose 50% ordinary healing and take 250% Alter ATK damage whenever they attempt healing (once per target per owner turn); enemy regeneration is contested/disabled while field-owned. Alter gains +100% Crit Damage, her HP costs become free, and each original attack gains an extra equal 100%-damage echo. Ordinary cooldown restrictions still apply.",
+        "on_end": "A single 900% ATK bloodfall strikes all remaining enemies; a higher-priority contest may preserve specific protected targets.",
+        "scope": "Field, 22m radius / all occupied lanes",
+        "duration": "3 owner turns / 18 s",
+        "counterplay": "An opposed Authority may contest its field-owned healing prohibition and damage echoes. No blanket removal of inherent immortality or real soul essence.",
+        "mechanics": [
+          "AoE Bleed max stacks",
+          "wound-triggered retaliation",
+          "critical escalation",
+          "echo attacks",
+          "cathedral finisher"
+        ],
+        "unlocks": "Current Rarity MR; Origin Rarity MR determines grade"
+      },
+      "core_count": {
+        "active": 3,
+        "passive": 6
+      },
+      "stats_benchmark": {
+        "st_6turn_atk": 13.5,
+        "aoe_6turn_atk": 9.0,
+        "heal_6turn_atk": 2.0
+      },
+      "origin_rarity": "MR approved",
+      "identity": "Luminous Valentine",
+      "version_key": "Alter"
+    },
+    "Awakened": {
+      "status": "PROPOSED_v4",
+      "mode": "Team hypercarry amplifier, primary healer and emergency reviver; almost no personal DPS",
+      "color": "#72bceb",
+      "accent": "#dff9ff",
+      "stats": {
+        "max_hp": 8900,
+        "attack": 3650,
+        "defense": 1470,
+        "speed": 142,
+        "crit_rate_bps": 2000,
+        "crit_damage_bonus_bps": 6500,
+        "crit_rate_resistance_bps": 1400,
+        "crit_damage_resistance_bps": 1800,
+        "hit_bps": 11200,
+        "dodge_bps": 1400,
+        "block_rate_bps": 1000,
+        "block_reduction_bps": 2400,
+        "defense_penetration_bps": 400,
+        "damage_dealt_multiplier_bps": 10000,
+        "damage_taken_multiplier_bps": 10000,
+        "true_damage_resistance_bps": 0
+      },
+      "alpha": {
+        "max_hp": 1.36,
+        "attack": 1.3,
+        "defense": 1.29
+      },
+      "resource": "Grace 0–100 (starts 30)",
+      "scaling_identity": "HP/DEF for shields and damage prevention; ATK for healing. Different stats matter.",
+      "basic": "One 75% ATK sword hit; generates 12 Grace and applies a 50% ATK heal to the most wounded ally.",
+      "actives": [
+        {
+          "name": "Morning Office",
+          "kind": "active",
+          "target": "Ally AoE, max 6",
+          "scaling": "Healing 130% ATK + 10% recipient missing HP",
+          "effects": [
+            "Heal every ally in range. Grant +65% recipient ATK, +25% recipient SPD, and +40% damage dealt for three turns.",
+            "Grant Benediction: the first two attacks by every buffed ally deal an extra 45% of that ally’s resolved ATK.",
+            "Advance the next action of the ally with the highest ATK by 15% of its remaining action delay (not a free turn)."
+          ],
+          "cost": "25 Grace",
+          "cooldown": "3 turns / 14s",
+          "visual": "Six white petals bloom over party weapons.",
+          "notes": ""
+        },
+        {
+          "name": "Sunlit Sanctuary",
+          "kind": "active",
+          "target": "Ally AoE, max 6",
+          "scaling": "Shield 45% Luminous Max HP; cap 60% recipient Max HP",
+          "effects": [
+            "Shield every ally and grant 45% damage-taken reduction for two turns.",
+            "When any shield absorbs damage, immediately heal that ally for 75% Luminous ATK; once per ally per owner turn.",
+            "If the shield is still present at expiry, convert 60% of its remaining amount into a direct heal."
+          ],
+          "cost": "35 Grace",
+          "cooldown": "3 turns / 16s",
+          "visual": "Six translucent cathedral shields with azure central roses.",
+          "notes": ""
+        },
+        {
+          "name": "Second Dawn",
+          "kind": "active",
+          "target": "Single ally (living or incapacitated, soul valid)",
+          "scaling": "Revive 70% target Max HP or heal 250% Luminous ATK",
+          "effects": [
+            "If the selected ally is incapacitated but valid before succession, revive immediately at 70% Max HP; one ally revival per encounter with this skill.",
+            "Otherwise heal 250% Luminous ATK +20% target missing HP and remove up to three ordinary removable debuffs.",
+            "Grant +50% DEF and 25% damage-taken reduction for two turns after either result."
+          ],
+          "cost": "50 Grace",
+          "cooldown": "4 turns / 24s",
+          "visual": "A blue-white crown lifts the ally from the floor.",
+          "notes": ""
+        },
+        {
+          "name": "Procession of the Blue Rose",
+          "kind": "active",
+          "target": "Ally AoE; persistent ceremonial field",
+          "scaling": "HoT 80% caster ATK per allied action; +35% ATK and +20% SPD",
+          "effects": [
+            "For three owner turns place a traveling field on all active allies: restore 80% caster ATK after each ally finishes a normal action.",
+            "While present, allies deal 35% extra damage and their normal debuff durations are reduced by one turn when applied, minimum one turn.",
+            "The first heal from each ally’s field resolves to a second 40% ATK burst on the lowest-HP ally; once per ally per field."
+          ],
+          "cost": "40 Grace",
+          "cooldown": "5 turns / 25s",
+          "visual": "A mobile azure flower halo links all allies.",
+          "notes": ""
+        }
+      ],
+      "passives": [
+        {
+          "name": "Queen of Benedictions",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Permanent +40% Healing Done and +55% shield strength based on her actual HP/DEF resolved values.",
+            "All party members gain +18% ATK while Awakened is alive and participating; additional +15% ATK while her support field exists.",
+            "Whenever an ally receives a buff from her, that ally gains 10% action advance, once per ally per owner turn."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Queen of Benedictions event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Mercy Beyond Measure",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Every overheal becomes a shield at 70% of eligible excess, capped at 35% recipient Max HP.",
+            "If an ally falls below 30% Max HP, automatically heal them for 130% Luminous ATK +12% their missing HP; once per ally every two Luminous turns.",
+            "Emergency healing also removes one removable damaging DoT stack from the ally."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Mercy Beyond Measure event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Angel’s Reprieve",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "First ally who would fall to zero HP each encounter instead remains at 1 HP and gains shield equal to 45% Luminous Max HP, unless the attack has a valid superior bypass.",
+            "At that moment also grant the survivor +30% SPD and +50% healing received for two turns.",
+            "Does not replace or duplicate the separate true revive ledger."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Angel’s Reprieve event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Hymn of the Vanguard",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "The highest-ATK living ally gains +50% Crit Damage and +15% DEF Penetration while Awakened is active.",
+            "Their first active attack each owner turn repeats its final hit at 50% original magnitude (no recursive triggers).",
+            "When this repeated hit damages enemy HP, restore 30% caster ATK to the lowest-HP ally."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Hymn of the Vanguard event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Lasting Grace",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "For each buff owned by Awakened on allies (maximum 6 counted), her healing increases by 8% and shield power by 5%.",
+            "Each time an ally ends a turn with her buff, gain +6 Grace; maximum +24 per Awakened owner turn.",
+            "At the end of the third Awakened owner turn, extend one shortest remaining *Awakened-owned* buff on each ally by one turn; once per field cycle."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Lasting Grace event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        }
+      ],
+      "ultimates": [
+        {
+          "name": "Resurrection of the Azure Dawn",
+          "kind": "ultimate",
+          "target": "All allies",
+          "scaling": "Heal 400% ATK + 30% of each target missing HP",
+          "effects": [
+            "Heal every living ally and remove all removable ordinary afflictions. Grant +100% ATK, +35% SPD and 45% damage-taken reduction for three owner turns.",
+            "Immediately revive up to two soul-valid incapacitated allies in the active defeat window at 60% their Max HP, respecting one revival resolution per source/target.",
+            "Apply Restoration HoT 120% Luminous ATK every allied action for three turns."
+          ],
+          "cost": "120% personal Ultimate charge",
+          "cooldown": "Character-specific charge generation",
+          "visual": "An enormous blue-white sun opens through an eight-petal crown.",
+          "notes": ""
+        }
+      ],
+      "world": {
+        "name": "Garden of the Second Dawn",
+        "grade": "World Negation",
+        "field_visual": "Azure-winged cathedral opens overhead; flowers of luminous crystal grow from all allied shadows.",
+        "on_activate": "Immediately restore every allied unit to full HP, remove removable debuffs and revive up to three eligible allies in active defeat windows, subject to actual soul validity. Grant 80% Max-HP shields and +100% ATK/+50% SPD for four turns.",
+        "while_active": "For four owner turns, allied HP cannot fall below 1 from ordinary damage once per ally per owner turn; each ally heals 15% Max HP on taking an action; +75% outgoing damage. Debuff attempts against allies have their duration halved, rounded up. Field owns these rules; stronger specific Authority can counter a protection instance.",
+        "on_end": "Every allied living unit heals 50% Max HP and gains a one-action +100% ATK blessing; unspent field protections expire.",
+        "scope": "All allies within 45m / entire turn-party",
+        "duration": "4 owner turns / 24s",
+        "counterplay": "Priority contests can override a specific survival event or seal, but the mass healing and boost are immediately tangible even in bad matchups.",
+        "mechanics": [
+          "full party heal",
+          "prepared valid revival",
+          "large shield",
+          "per-action restoration",
+          "team survival floor"
+        ],
+        "unlocks": "Current Rarity MR; Origin Rarity MR determines grade"
+      },
+      "core_count": {
+        "active": 4,
+        "passive": 5
+      },
+      "stats_benchmark": {
+        "st_6turn_atk": 1.6,
+        "aoe_6turn_atk": 1.0,
+        "heal_6turn_atk": 16.0
+      },
+      "origin_rarity": "MR approved",
+      "identity": "Luminous Valentine",
+      "version_key": "Awakened"
+    },
+    "Berserker": {
+      "status": "PROPOSED_v4",
+      "mode": "HP-scaling critical burst and frenzy automation; no ally heals, no resurrection",
+      "color": "#ae5a99",
+      "accent": "#ea9bcd",
+      "stats": {
+        "max_hp": 7900,
+        "attack": 5200,
+        "defense": 880,
+        "speed": 164,
+        "crit_rate_bps": 4300,
+        "crit_damage_bonus_bps": 14600,
+        "crit_rate_resistance_bps": 400,
+        "crit_damage_resistance_bps": 550,
+        "hit_bps": 12300,
+        "dodge_bps": 1850,
+        "block_rate_bps": 200,
+        "block_reduction_bps": 1100,
+        "defense_penetration_bps": 2050,
+        "damage_dealt_multiplier_bps": 10000,
+        "damage_taken_multiplier_bps": 10000,
+        "true_damage_resistance_bps": 0
+      },
+      "alpha": {
+        "max_hp": 1.32,
+        "attack": 1.49,
+        "defense": 1.16
+      },
+      "resource": "Fury 0–100 (starts 25)",
+      "scaling_identity": "OWN Max HP + Crit Damage + Hit; ATK is secondary; actual damage to her feeds Fury.",
+      "basic": "Four savage claw/sword hits, each 5% own Max HP + 12% ATK as authored physical damage, DEF-resolved.",
+      "actives": [
+        {
+          "name": "Thorn Rend",
+          "kind": "active",
+          "target": "ST",
+          "scaling": "12 × (6% own Max HP + 25% ATK)",
+          "effects": [
+            "Unleash twelve brutal strikes on one target; each can critically hit. Consume 35 Fury.",
+            "Each critical hit additionally inflicts a 1% target Max HP Rupture affliction tick, capped at 6% target Max HP per cast and subject to target affliction defenses / HP-loss caps (never generic direct max-HP damage).",
+            "After the sequence, spend all Fury above 60 to gain +5% damage to this cast per 10 excess Fury, retroactively resolved on final three hits only."
+          ],
+          "cost": "35 Fury",
+          "cooldown": "2 turns / 10s",
+          "visual": "Purple-black thorns slash in different directions, with red crown flashes.",
+          "notes": ""
+        },
+        {
+          "name": "Crownshatter",
+          "kind": "active",
+          "target": "Enemy AoE up to 6",
+          "scaling": "8 × (4% own Max HP + 18% ATK) per target",
+          "effects": [
+            "Smash every selected enemy eight times; final two hits deal double magnitude against targets below 50% HP.",
+            "Consume 50 Fury. Every enemy killed by this cast generates one extra 100% own Max-HP-centered shockwave (max two bonus waves per cast).",
+            "Shatter ordinary shield HP with 50% bonus damage; the shield-only bonus cannot increase HP damage when a target has no shield."
+          ],
+          "cost": "50 Fury",
+          "cooldown": "3 turns / 16s",
+          "visual": "Red-violet crown crashes onto the ground; giant radial spikes.",
+          "notes": ""
+        }
+      ],
+      "passives": [
+        {
+          "name": "Thorn Crown",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Start every encounter at 25 Fury. Each actual enemy HP attack received grants +12 Fury (up to +24 per owner turn); each enemy defeated grants +20 Fury.",
+            "Fury tiers: at 30 gain +40% Crit Damage; at 60 gain +35% Max HP and +30% damage dealt; at 90 gain +50% Crit Rate; at 100 enter Frenzy for two turns with +100% damage dealt.",
+            "While Frenzy is active, damage taken +40% and ordinary healing received -50%; thresholds are recalculated when Fury is spent."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Thorn Crown event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Blood as Steel",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Gain +45% Max HP at all times; each 1% of max HP lost in the current encounter grants +1.2% Crit Damage, capped +90%.",
+            "Own Max HP damage scaling uses the current resolved Max HP including this passive, but excludes temporary overheal.",
+            "Below 50% HP, ignore 25% of target DEF during ordinary physical hits."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Blood as Steel event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Predator’s Reflex",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "On perfect dodge counterattack for 10% own Max HP + 100% ATK, and gain 20 Fury once per owner turn.",
+            "When hit by an enemy active, instantly retaliate with three hits each 3% own Max HP if still able to act; once per owner turn.",
+            "Counterattack hits cannot generate further counterattacks."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Predator’s Reflex event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Crownless Mercy",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Every third ordinary hit during one combo repeats that hit at 150% magnitude.",
+            "Against enemies at or below 40% HP, all crits deal an extra damage packet of 5% own Max HP, DEF-resolved.",
+            "Critical hits increase SPD +5%, stacking 6 times for the encounter; stacks persist through damage but end with the encounter."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Crownless Mercy event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Devour the Line",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "On a confirmed kill, execute a free Crownshatter shockwave for 12% own Max HP to up to four nearby enemies; once per owner turn.",
+            "Every enemy killed grants +15% damage dealt for the encounter, stacking up to five times.",
+            "If the free shockwave kills a second enemy, it does not recursively activate itself."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Devour the Line event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Unspent Wrath",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "When Fury reaches 100, immediately restore 25% missing HP and grant +30% Crit Damage, then lock Fury gain for the next one owner action.",
+            "On Frenzy expiration convert remaining Fury into a shield equal to 0.5% own Max HP per Fury point, capped at 35% Max HP.",
+            "The shield lasts two turns; Berserker does not gain resurrection."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Unspent Wrath event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "No Retreat",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "While Fury >=60, attack actions cannot be interrupted by ordinary stagger and gain +40% Hit; higher-order restraints can still apply.",
+            "After completing Thorn Rend, gain 20% action advance; after Crownshatter, gain 10% advance.",
+            "While airborne, movement attacks become an eight-hit aerial sequence totaling 40% own Max HP before crit, replacing—not adding to—the ordinary aerial basic."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct No Retreat event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        }
+      ],
+      "ultimates": [
+        {
+          "name": "The Crown Breaks",
+          "kind": "ultimate",
+          "target": "ST primary + full enemy AoE",
+          "scaling": "Primary: 20 × (8% own Max HP + 35% ATK); others take 45% primary total",
+          "effects": [
+            "Consume all Fury (minimum 100), unleash 20 independently critting strikes on the primary target and a battlefield shockwave.",
+            "During cast Crit Rate +50 points and Crit Damage +150 points, resolved using frozen overflow rules.",
+            "If the primary target is defeated, the final six hits retarget the surviving enemy with the most HP; if none remain, stop. No infinite chain.",
+            "At the end Berserker falls to 1 HP unless already below 1 or protected by higher-priority effect; the post-cast collapse cannot count as self-sacrifice to generate Fury."
+          ],
+          "cost": "100% charge + 100 Fury",
+          "cooldown": "Character-specific charge generation",
+          "visual": "A thirty-meter colossal purple thorn crown collapses like a meteor.",
+          "notes": ""
+        }
+      ],
+      "world": {
+        "name": "Crown of the Final Wound",
+        "grade": "World Negation",
+        "field_visual": "The ground tears into a vast violet thorn sea; a cathedral-scale blood crown pins the moon.",
+        "on_activate": "Instantly enter 100 Fury and Frenzy, dealing 800% caster Max-HP-centered physical damage as a shockwave to every enemy in the field (ordinary DEF and authorized caps apply).",
+        "while_active": "For two owner turns, Berserker cannot be reduced below 1 HP by ordinary damage, all basic hits are doubled, Crit Damage bonus +200 points and SPD +70%. Every enemy action triggers a free 8% own Max HP retaliatory shockwave (once per enemy action). Berserker cannot receive healing while field active.",
+        "on_end": "All enemies take a final 1000% own Max-HP-centered physical cataclysm. Field ends and Berserker loses 60% of current HP (cannot be self-lethal); gain Exhaustion: outgoing damage -50% for one owner turn.",
+        "scope": "All enemies within 55m / entire turn battlefield",
+        "duration": "2 owner turns / 14s",
+        "counterplay": "Specific superior authority can bypass 1-HP floor; imprisonment/control can stop offensive actions. The field is immense but not absolute against stronger existences.",
+        "mechanics": [
+          "temporary no-death floor",
+          "enemy-action retaliation",
+          "maximum crit",
+          "massive entry and end blasts",
+          "post-field exhaustion"
+        ],
+        "unlocks": "Current Rarity MR; Origin Rarity MR determines grade"
+      },
+      "core_count": {
+        "active": 2,
+        "passive": 7
+      },
+      "stats_benchmark": {
+        "st_6turn_atk": 6.5,
+        "aoe_6turn_atk": 5.0,
+        "st_6turn_hp": 2.2,
+        "aoe_6turn_hp": 1.1,
+        "heal_6turn_atk": 0.1
+      },
+      "origin_rarity": "MR approved",
+      "identity": "Luminous Valentine",
+      "version_key": "Berserker"
+    },
+    "Grand": {
+      "status": "PROPOSED_v4_FINAL_MANIFESTATION_ONLY",
+      "mode": "Final apex of five fully reinforced Manifestations; unparalleled within Luminous family, not globally strongest",
+      "color": "#d7ae6b",
+      "accent": "#b8affb",
+      "stats": {
+        "max_hp": 52000,
+        "attack": 33000,
+        "defense": 11600,
+        "speed": 231,
+        "crit_rate_bps": 5100,
+        "crit_damage_bonus_bps": 19500,
+        "crit_rate_resistance_bps": 1700,
+        "crit_damage_resistance_bps": 2200,
+        "hit_bps": 14500,
+        "dodge_bps": 2200,
+        "block_rate_bps": 1200,
+        "block_reduction_bps": 3000,
+        "defense_penetration_bps": 2300,
+        "damage_dealt_multiplier_bps": 10000,
+        "damage_taken_multiplier_bps": 10000,
+        "true_damage_resistance_bps": 0
+      },
+      "alpha": {
+        "max_hp": 1.54,
+        "attack": 1.57,
+        "defense": 1.42
+      },
+      "resource": "Imperial Writ 0–300 (starts 100)",
+      "scaling_identity": "Composite ATK + Max HP + DEF + provenance, no simple copy of lesser form multipliers",
+      "basic": "Six airborne sword cuts, each 60% ATK + 6% own Max HP + 20% DEF; each may crit, weapon requirement remains real.",
+      "actives": [
+        {
+          "name": "Edict of the Rose",
+          "kind": "active",
+          "target": "ST; last cut radiates to nearby 3",
+          "scaling": "8 × (90% ATK + 5% Max HP + 35% DEF)",
+          "effects": [
+            "Eight unavoidable-by-ordinary-dodge sword strikes only if Hit actually overcomes Dodge; the ability remains contestable by superior rules. Each strike may crit.",
+            "Final strike explodes for 350% ATK + 20% own Max HP to three secondary targets; all packets resolve their declared DEF references.",
+            "Heal Luminous for 35% of actual HP damage and grant one Imperial Seal, maximum three."
+          ],
+          "cost": "0 Writ",
+          "cooldown": "Basic/normal action",
+          "visual": "A wing feather becomes an enormous double-edged rose blade.",
+          "notes": ""
+        },
+        {
+          "name": "Roses of the Last Age",
+          "kind": "active",
+          "target": "Enemy AoE, up to 6",
+          "scaling": "6 × (75% ATK + 6% Max HP) per enemy",
+          "effects": [
+            "Six massive petals slash each enemy, inflicting maximum two authored Bleed stacks and maximum two Rupture stacks (if target eligible).",
+            "After all hits, deal 400% ATK + 15% own Max HP as a field explosion to every living struck enemy.",
+            "All allied characters restore 100% Grand ATK after the explosion. Grant Grand one Imperial Seal for every distinct enemy defeated (maximum 3 per cast)."
+          ],
+          "cost": "80 Writ",
+          "cooldown": "3 turns / 18s",
+          "visual": "A solar system of white and purple roses slices across the field.",
+          "notes": ""
+        },
+        {
+          "name": "Final Sanctuary",
+          "kind": "active",
+          "target": "Ally AoE + world-zone shield",
+          "scaling": "Heal 250% ATK + 35% recipient missing HP; shield 50% Grand Max HP",
+          "effects": [
+            "Heal all allies, grant 50%-Grand-HP shields capped at each target Max HP and +80% ATK/+30% SPD for three turns.",
+            "For three turns, once per allied owner turn, the ally’s first attack deals a second 100% magnitude copy hit, with independent target defense.",
+            "Grand may instead deploy one currently soul-valid ally revival at 75% HP; this rescues in the defeat window and consumes one per-encounter revival allowance for Final Sanctuary."
+          ],
+          "cost": "100 Writ",
+          "cooldown": "4 turns / 22s",
+          "visual": "Six giant wing shadows shelter the team beneath a white rose vault.",
+          "notes": ""
+        }
+      ],
+      "passives": [
+        {
+          "name": "Crown of Five Histories",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Grand gains +120% Max HP, +120% ATK and +90% DEF as **post-breakthrough** multipliers derived from five recorded fully reinforced source Manifestations; present values cannot stack with the pre-convergence versions as independent party contributions.",
+            "All Grand hits heal her for 25% of actual HP damage (shared per-owner-action cap 45% Max HP).",
+            "At the beginning of each encounter, grant 100 Writ and one Imperial Seal."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Crown of Five Histories event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Sovereign Immunity",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "While HP >0, gain +40% damage-taken reduction and reduce each received ordinary damage packet to at most 35% Grand Max HP.",
+            "First potential fatal ordinary hit each encounter leaves Grand at 1 HP, instantly restores 60% Max HP and cancels one removable debuff; genuine superior Authority bypasses may contest.",
+            "After this restoration, for two turns all Grand outgoing damage +50%."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Sovereign Immunity event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Winged Supremacy",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Grand can fly where physical/world conditions allow. Aerial and grounded combat have the same substantive attack access.",
+            "Airborne: +40% SPD and +20% Hit; attacks deal one extra 50%-magnitude feather strike once per original active hit, maximum 8 follow-ups per owner action.",
+            "Landing creates a 300% ATK shockwave to nearby enemies; once per owner action."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Winged Supremacy event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "World of Borrowed Suns",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "Every completed Grand active grants 30 Writ and every Ultimate grants 50 Writ after completion; 300 cap.",
+            "For each distinct Grand Ultimate cast in the current encounter (up to 3), increase damage dealt +25%, healing +25%, and DEF +25% respectively, once each.",
+            "Upon using all three different Ultimates, activate Coronation: ATK +100%, healing +50%, and damage received -25% for three turns; cannot self-refresh."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct World of Borrowed Suns event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Rose Covenant",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "All allies gain +35% ATK and +25% healing received while Grand is alive and deployed.",
+            "When any allied shield breaks, immediately heal that ally 100% Grand ATK and counter the damaging enemy for 250% Grand ATK, once per ally per Grand owner turn.",
+            "The first allied defeat per encounter triggers one automatic prepared soul-valid revival at 35% target Max HP during the defeat window; tracked separately from Final Sanctuary."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Rose Covenant event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        },
+        {
+          "name": "Last Sovereignty",
+          "kind": "passive",
+          "target": "AUTOMATIC",
+          "scaling": "Explicit scaling in each clause",
+          "effects": [
+            "World Fantasm duration +1 Grand owner turn and radius +40%; this is a Grand-specific upgrade, not generic World Negation.",
+            "Any enemy attack that removes at least 20% of Grand Max HP causes a 300% Grand ATK retaliatory strike to the attacker, max one per enemy owner action.",
+            "Under Grand Fantasm, her normal attacks add a follow-up packet equal to 15% own Max HP (ordinary damage), and her healing applies Restoration HoT equal to 100% ATK for two ally actions."
+          ],
+          "cost": "Always",
+          "cooldown": "Passive",
+          "visual": "A brief distinct Last Sovereignty event glyph and character reaction on the actual trigger; no separate selectable cast.",
+          "notes": ""
+        }
+      ],
+      "ultimates": [
+        {
+          "name": "Genesis — The First Rose",
+          "kind": "ultimate",
+          "target": "All allies, including currently eligible defeated",
+          "scaling": "Heal 600% ATK + 50% recipient missing HP",
+          "effects": [
+            "Restore all allies to full HP where not blocked by a superior source, cleanse ordinary removable negative effects, and revive up to three soul-valid fallen allies in their currently eligible defeat windows at 80% Max HP.",
+            "Grant shields of 100% Grand Max HP capped 120% recipient Max HP and +100% ATK, +60% SPD, +50% outgoing damage for four turns.",
+            "For four turns, heal each ally 15% their Max HP after each owner action and protect one ordinary fatal hit per ally by leaving 1 HP."
+          ],
+          "cost": "120% Ultimate charge + 80 Writ",
+          "cooldown": "Character-specific charge generation",
+          "visual": "A second sun blooms above a limitless sea of luminous roses.",
+          "notes": ""
+        },
+        {
+          "name": "Ruin — The Last Rose",
+          "kind": "ultimate",
+          "target": "ST main target + enemy AoE up to 6",
+          "scaling": "12 × (150% ATK + 10% Max HP + 40% DEF) main; 70% to other enemies",
+          "effects": [
+            "Strike the primary enemy 12 times; every living other enemy receives an authored 70%-magnitude copy of each hit. Each real damage instance resolves its own defenses.",
+            "Consume up to three Imperial Seals: each adds a 600% ATK + 30% Max-HP physical strike to all targets.",
+            "After the last hit, burst every eligible ordinary Bleed at maximum stack with one additional instant tick; no recursive status triggers."
+          ],
+          "cost": "160% Ultimate charge + 100 Writ",
+          "cooldown": "Character-specific charge generation",
+          "visual": "The sky fractures into twelve giant blades and collapses across the battlefield.",
+          "notes": ""
+        },
+        {
+          "name": "Verdict — The Final Name",
+          "kind": "ultimate",
+          "target": "Enemy AoE + rule claim field",
+          "scaling": "All enemies: 600% ATK + 35% own Max HP, followed by status cancellation",
+          "effects": [
+            "Inflict one huge real damage hit to each enemy, then remove all *ordinary dispellable* temporary enemy buffs inside the field; specific protected buff effects use normal Authority contests.",
+            "For three turns, all enemies deal 50% less damage, receive 50% less ordinary healing and suffer one 200% Grand ATK retaliatory light strike after each hostile active (once per enemy owner action).",
+            "For the next three turns, Grand receives +80% ATK, +50% Hit and +35% action advance on the first action only."
+          ],
+          "cost": "200% Ultimate charge + 130 Writ",
+          "cooldown": "Character-specific charge generation",
+          "visual": "An enormous wing quill strikes one name across the battlefield; no tiny single-shield cancellation.",
+          "notes": ""
+        }
+      ],
+      "world": {
+        "name": "Eternal Rose — The Last Horizon",
+        "grade": "World Negation",
+        "field_visual": "Hundreds of giant rose constellations, rotating black-white suns, violet divine wings, planet-scale horizon illusion over a genuine 120m battlefield field.",
+        "on_activate": "Immediately deal 1000% Grand ATK + 60% Grand Max HP to all enemies (ordinary/Authority resolution); apply maximum Bleed stacks where applicable. Restore all living allies to full HP and apply Restoration HoT 15% Max HP per allied action.",
+        "while_active": "For four Grand turns, Grand cannot fall below 1 HP from ordinary damage, attacks are doubled, Crit Damage +250 points, and all allies gain +100% damage dealt and 50% damage-taken reduction. Each allied active triggers a 250% Grand ATK rose-strike on one enemy; once per ally owner action. Enemy temporary nonprotected buffs are removed on application; superior-source effects contest normally.",
+        "on_end": "On end, strike all surviving enemies for 1800% Grand ATK +100% Grand Max HP (ordinary damage, large-number safe). Heal all allies 60% Max HP. Temporary field disappears, physical consequences remain.",
+        "scope": "120m base radius × Grand-specific +40%, expands with actual attained Rank/Authority; entire turn battlefield",
+        "duration": "4 owner turns +1 from Grand passive / 32 s equivalent",
+        "counterplay": "World Negation permits supremacy, not mathematical omnipotence. Comparable/higher Authority can counter individual protection, buff-removal or boundary effects; those defenses do not nullify the entire damage/heal field unless justified.",
+        "mechanics": [
+          "uncapped-appearance battlefield transformation",
+          "massive entry AoE",
+          "party full heal and HoT",
+          "temporary no-death floor",
+          "double attacks",
+          "team hypercarry buffs",
+          "huge exit finisher"
+        ],
+        "unlocks": "Current Rarity MR; Origin Rarity MR determines grade"
+      },
+      "core_count": {
+        "active": 3,
+        "passive": 6
+      },
+      "stats_benchmark": {
+        "st_6turn_atk": 23.0,
+        "aoe_6turn_atk": 30.0,
+        "st_6turn_hp": 2.0,
+        "aoe_6turn_hp": 1.6,
+        "heal_6turn_atk": 15.0
+      },
+      "origin_rarity": "MR approved",
+      "identity": "Luminous Valentine",
+      "version_key": "Grand"
+    }
+  },
+  "gp": {
+    "status": "PROPOSED_FROZEN_ARCHITECTURE_COMPATIBLE_NOT_NATIVE",
+    "name": "General Power (GP), cumulative Ruler strength",
+    "frozen_separations": [
+      "Existence Rank != GP",
+      "Origin/Current Rarity != Rank",
+      "GP is not Overlord title eligibility by itself",
+      "Ruler/Overlord determined by actual sovereignty and sufficient personal Authority"
+    ],
+    "manifestation_rule": "For every Character Identity, use MAX Current Available Manifestation GP among ALL owned eligible versions; never sum copies or count consumed convergence source copies.",
+    "sample_character_formula": "StatGP = (0.30*MaxHP + 1.30*ATK + 0.90*DEF + 6*SPD) * (1 + min(CritRate,100)/100 * max(CritDamageBonus,0)/100 * 0.20) * (0.70 + min(Hit,180)/100*0.30) * (1+min(DEFpenetration,100)/100*0.15) * (1 + (Dodge/100)*(0.12) + (BlockRate/100)*(BlockReduction/100)*0.10). SixActionGP = 0.40*ExpectedSTDamage6 + 0.22*ExpectedAoEDamage6 + 0.30*EffectiveHealing6 + 0.15*EffectiveShieldAbsorption6, measured on a fixed comparable disclosed benchmark set and normalized per action. CharacterGP = round(StatGP + SixActionGP). Until native benchmark engine exists, the dashboard uses authored pre-mitigation reference coefficients only, not final combat GP.",
+    "account_formula": "AccountGP = ProtagonistCurrentPersonalGP + SUM_{unique CharacterIdentity}(MAX available owned manifestation GP) + SUM_{unique controlled Territory}(TerritoryOwnStructuralGP + DomainCoreGP + unique controlled non-roster military assets GP) + SUM_{activated distinct-identity links}(LinkBonusGP) + SUM_{other uniquely-owned independently effective resources}(AdditionalGP).",
+    "territory_ledger": "Territory and Domain Core strength come from actual control, defenses, supply, population where meaningful, effective Authority and autonomous assets, never mere acreage multiplier. Contested control credited proportionately by actual effective control, source-ownership stable ID; stationing a counted character cannot add GP again.",
+    "link_rule": "Each verified authored relationship links DISTINCT Character Identities (or Ruler/Identity) and requires actual history, affinity or milestone; each link owns its own authorized GP bonus plus independent runtime team bonuses, if any. Linking copies of one Identity gives no GP. Never apply a GP link to already link-amplified values; compute once on raw selected identity GP.",
+    "link_reference_proposal": "LinkBonusGP = authored_rate * MIN(rawGP(identityA),rawGP(identityB)) where authored_rate depends on earned stages: recognized 2%, proven 5%, legendary 10%; only one best stage per unique unordered relationship; no default links exist.",
+    "gp_and_title": "GP is descriptive/strategic and may inform estimated standing; there are only Ruler and Overlord universal titles, bestowed/revoked by actual personal/existential capability plus high-order sovereignty. Numerical GP alone never grants them.",
+    "numerical_representation": "FOGLargeNumber / deterministic fixed-point data for intrinsic huge numbers; no float GP in runtime; normalized significand/exponent representation, stable addition and ID ordering. Client uses JS Number approximate only for review.",
+    "benchmark_note": "Pre-mitigation fixtures cannot capture authority counters or real multi-enemy battles; definitive character GP needs native deterministic combat fixtures per Rank/role and is not yet available.",
+    "no_stat_double_count": "Do not multiply a combat-stat-derived GP by Rank or Rarity a second time. Class, Factors and gear are reflected via resolved stats and runtime ability outcomes, not extra flat bonuses, unless the mechanic creates new objectively independent strategic power."
+  },
+  "convergence": {
+    "identity": "Luminous Valentine",
+    "form": "Grand",
+    "status": "VISUAL_CARD_EXISTS; GAMEPLAY_ELIGIBILITY_REQUIRES_ACTUAL_EVENT",
+    "user_commission_requirement": "Five separately acquired and maximally reinforced Manifestations of Luminous Valentine across the four required Versions: Base, Alter, Awakened and Berserker; the fifth must satisfy a distinct lineage requirement to be authoritatively specified. Then fulfill character-specific convergence conditions.",
+    "mechanical_guards": [
+      "Do not assume owning 4 Versions creates Grand",
+      "Five copies are consumed/merged with complete provenance preserved",
+      "No five-times additive roster GP; one Grand replaces source copies for counting",
+      "Grand current Rank, equipment, progression and acquired learned skills remain actual resultant state; design equal-Rank comparison is hypothetical",
+      "Grand may be numerically x10+ stronger than lesser forms and is not necessarily globally strongest character"
+    ],
+    "unresolved_authority": "Exact fifth lineage and full set of character-specific convergence proofs await Gate00/user and cannot be fabricated."
+  },
+  "native_contract": {
+    "native_stats": [
+      "max_hp",
+      "attack",
+      "defense",
+      "speed",
+      "crit_rate_bps",
+      "crit_damage_bonus_bps",
+      "crit_rate_resistance_bps",
+      "crit_damage_resistance_bps",
+      "hit_bps",
+      "dodge_bps",
+      "block_rate_bps",
+      "block_reduction_bps",
+      "defense_penetration_bps",
+      "damage_dealt_multiplier_bps",
+      "damage_taken_multiplier_bps",
+      "true_damage_resistance_bps"
+    ],
+    "effect_ancestry": "Status families (Bleed, Burn, shield, heal-block etc) are referenced only when already registered; new effect IDs require real engine handler registration",
+    "world_negation": "Contests real typed effect instances by existing Authority, Specificity, SourceRank, source ContentId",
+    "trigger_ledger": "No proc from recursive passive follow-ups unless specifically authored; per-owner-turn bounds persisted across executors",
+    "enemy_defense": "Positive DEF: Ref/(Ref+effectiveDEF); Ref is mandatory authored per damaging skill (caster resolved ATK for specified Luminous attacks, NEVER a universal engine fallback); negative DEF: 2^(-effectiveDEF/Ref)",
+    "critical": "Crit chance after resistance; +1% overflow Crit Rate -> +2% Crit Damage bonus; hit/dodge may replicate eligible hits unless skill marked indivisible",
+    "shared_combat": "One authoritative character state for turn and action combat; 18 turn roster with 6 active; World Mode protagonist and up to 2 companions",
+    "rank_math": "R(r)=10^(0.4*r+0.04*r^2) with stat alpha 1.10-2.50; 35% of log step through Levels 1-100; 65% next breakthrough"
+  },
+  "fx_policy": "Effects must be powerful in player copy; resolver-only validation and rare counter conditions are in separate technical notes; statuses use real ancestry; no invented resistances",
+  "example_links": [
+    {
+      "id": "demo:bond.ruler.companion_a",
+      "label": "Ruler & Companion A — Demonstration only",
+      "member_a": "Ruler",
+      "member_b": "Companion A",
+      "stage": "proven",
+      "rate": 0.05,
+      "status": "DEMO_NOT_CANONICAL"
+    },
+    {
+      "id": "demo:bond.luminous.companion_a",
+      "label": "Luminous & Companion A — Demonstration only",
+      "member_a": "Luminous Valentine",
+      "member_b": "Companion A",
+      "stage": "legendary",
+      "rate": 0.1,
+      "status": "DEMO_NOT_CANONICAL"
+    }
+  ]
+}
