@@ -1,4 +1,5 @@
 #include "Koikatsu/OGKoikatsuPlayableCharacter.h"
+#include "Animation/OGSharedMotionLibrary.h"
 
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimSingleNodeInstance.h"
@@ -10,6 +11,8 @@
 AOGKoikatsuPlayableCharacter::AOGKoikatsuPlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
+    SharedMotionCapabilities = {TEXT("grounded"), TEXT("swimming"),
+        TEXT("flying"), TEXT("emote"), TEXT("combat")};
 }
 
 bool AOGKoikatsuPlayableCharacter::ParsePartId(
@@ -147,7 +150,42 @@ bool AOGKoikatsuPlayableCharacter::IsQualityV2Complete() const
 UAnimSequence* AOGKoikatsuPlayableCharacter::ResolveNativeClip(int32 Index,EOGKKVisualState State)
 {
     UAnimSequence* Clip=nullptr;
-    if(bAllPartsHaveNativeQualityV2 &&
+    // The actual rig component owns compatibility; never use a semantic name
+    // alone to force foreign motion onto a different 19-part source skeleton.
+    if (NativeParts.IsValidIndex(Index) && NativeParts[Index])
+    {
+        FName Action = NAME_None;
+        FName Context(TEXT("Traversal"));
+        switch(State)
+        {
+        case EOGKKVisualState::Idle: Action=TEXT("Traversal.Idle"); break;
+        case EOGKKVisualState::Walk: Action=TEXT("Traversal.Walk"); break;
+        case EOGKKVisualState::Run: Action=TEXT("Traversal.Run"); break;
+        case EOGKKVisualState::Jump: Action=TEXT("Traversal.Jump"); break;
+        case EOGKKVisualState::Fall: Action=TEXT("Traversal.Fall"); break;
+        case EOGKKVisualState::Land: Action=TEXT("Traversal.Land"); break;
+        case EOGKKVisualState::TurnLeft: Action=TEXT("Traversal.TurnLeft"); break;
+        case EOGKKVisualState::TurnRight: Action=TEXT("Traversal.TurnRight"); break;
+        case EOGKKVisualState::Dodge: Action=TEXT("Combat.Dodge"); Context=TEXT("Combat"); break;
+        case EOGKKVisualState::Action: Action=TEXT("Interaction.Action"); Context=TEXT("Interaction"); break;
+        case EOGKKVisualState::SwimIdle: Action=TEXT("Traversal.SwimIdle"); break;
+        case EOGKKVisualState::Swim: Action=TEXT("Traversal.Swim"); break;
+        case EOGKKVisualState::FlyingIdle: Action=TEXT("Traversal.FlightHover"); break;
+        case EOGKKVisualState::Flying: Action=TEXT("Traversal.Fly"); break;
+        }
+        if(!Action.IsNone())
+        {
+            const UOGSharedMotionLibrary* Library=SharedMotionLibrary.IsNull()
+                ? nullptr : SharedMotionLibrary.LoadSynchronous();
+            if(!Library) Library=FOGSharedMotionResolver::GetInstalledLibrary();
+            TArray<TObjectPtr<USkeletalMeshComponent>> ExactPart;
+            ExactPart.Add(NativeParts[Index]);
+            Clip=FOGSharedMotionResolver::Resolve(Library,Action,
+                SharedMotionRigProfile,SharedMotionAnatomy,SharedOutfitProfile,
+                Context,SharedMotionCapabilities,ExactPart,false,1);
+        }
+    }
+    if(!Clip && bAllPartsHaveNativeQualityV2 &&
        (State==EOGKKVisualState::Walk||State==EOGKKVisualState::Run||
         State==EOGKKVisualState::Swim||State==EOGKKVisualState::SwimIdle))
         Clip=LoadNativeClip(Index,State,true);

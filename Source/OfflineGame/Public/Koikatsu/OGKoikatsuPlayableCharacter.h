@@ -5,6 +5,7 @@
 #include "OGKoikatsuPlayableCharacter.generated.h"
 
 class UAnimSequence;
+class UOGSharedMotionLibrary;
 class USkeletalMeshComponent;
 
 UENUM(BlueprintType)
@@ -27,6 +28,23 @@ class OFFLINEGAME_API AOGKoikatsuPlayableCharacter : public AOGWorldPrototypeCha
     GENERATED_BODY()
 public:
     AOGKoikatsuPlayableCharacter();
+
+    /** Shared semantics, per-actual-skeleton motion. New characters register a rig
+     * profile and compatible source assets; they never clone the entire library. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
+    TSoftObjectPtr<UOGSharedMotionLibrary> SharedMotionLibrary;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
+    FName SharedMotionRigProfile = TEXT("koikatsu_fixture_21");
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
+    FName SharedMotionAnatomy = TEXT("humanoid");
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
+    FName SharedOutfitProfile = TEXT("CLOTHED");
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
+    TArray<FName> SharedMotionCapabilities;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|Motion")
     float WalkThresholdCmPerSecond = 7.f;
