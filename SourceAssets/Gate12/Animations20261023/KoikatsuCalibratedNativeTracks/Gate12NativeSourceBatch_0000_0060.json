@@ -1,0 +1,418 @@
+{
+  "schema": "noworld.gate12.native_source_conversion_batch.v1",
+  "start": 0,
+  "end": 60,
+  "results": [
+    {
+      "index": 0,
+      "clip": "f_defense_00_00_00",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 79,
+      "frames": 46
+    },
+    {
+      "index": 1,
+      "clip": "f_defense_00_00_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 41
+    },
+    {
+      "index": 2,
+      "clip": "f_reaction_00_00_M",
+      "state": "PRESERVED_VERIFIED"
+    },
+    {
+      "index": 3,
+      "clip": "f_reaction_00_01_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 56,
+      "frames": 448
+    },
+    {
+      "index": 4,
+      "clip": "f_reaction_00_02_M",
+      "state": "PRESERVED_VERIFIED"
+    },
+    {
+      "index": 5,
+      "clip": "f_reaction_00_03_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 74,
+      "frames": 246
+    },
+    {
+      "index": 6,
+      "clip": "f_reaction_00_04_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 72,
+      "frames": 276
+    },
+    {
+      "index": 7,
+      "clip": "f_reaction_00_05_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 74,
+      "frames": 341
+    },
+    {
+      "index": 8,
+      "clip": "f_reaction_00_06_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 72,
+      "frames": 371
+    },
+    {
+      "index": 9,
+      "clip": "f_reaction_00_07_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 72,
+      "frames": 361
+    },
+    {
+      "index": 10,
+      "clip": "f_reaction_00_08_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 57,
+      "frames": 331
+    },
+    {
+      "index": 11,
+      "clip": "f_reaction_00_09_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 73,
+      "frames": 351
+    },
+    {
+      "index": 12,
+      "clip": "f_reaction_00_10_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 74,
+      "frames": 311
+    },
+    {
+      "index": 13,
+      "clip": "f_Land_00_00",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 46,
+      "frames": 23
+    },
+    {
+      "index": 14,
+      "clip": "f_hasiru_00_00_01",
+      "state": "PRESERVED_VERIFIED"
+    },
+    {
+      "index": 15,
+      "clip": "f_hasiru_00_01_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 23
+    },
+    {
+      "index": 16,
+      "clip": "f_hasiru_00_02_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 41
+    },
+    {
+      "index": 17,
+      "clip": "f_suiei_00_00",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 42,
+      "frames": 231
+    },
+    {
+      "index": 18,
+      "clip": "f_suiei_00_01_L",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 17,
+      "frames": 41
+    },
+    {
+      "index": 19,
+      "clip": "f_suiei_00_01_M",
+      "state": "PRESERVED_VERIFIED"
+    },
+    {
+      "index": 20,
+      "clip": "f_suiei_00_01_S",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 18,
+      "frames": 41
+    },
+    {
+      "index": 21,
+      "clip": "f_suiei_00_02_00_L",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 46,
+      "frames": 41
+    },
+    {
+      "index": 22,
+      "clip": "f_suiei_00_02_00_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 46,
+      "frames": 41
+    },
+    {
+      "index": 23,
+      "clip": "f_suiei_00_02_00_S",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 46,
+      "frames": 41
+    },
+    {
+      "index": 24,
+      "clip": "f_suiei_00_02_02_L",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 51
+    },
+    {
+      "index": 25,
+      "clip": "f_suiei_00_02_02_M",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 51
+    },
+    {
+      "index": 26,
+      "clip": "f_suiei_00_02_02_S",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 51
+    },
+    {
+      "index": 27,
+      "clip": "f_aruki_00_00_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 45,
+      "frames": 63
+    },
+    {
+      "index": 28,
+      "clip": "f_aruki_00_01_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 23
+    },
+    {
+      "index": 29,
+      "clip": "f_cheer_00_00",
+      "state": "PRESERVED_VERIFIED"
+    },
+    {
+      "index": 30,
+      "clip": "f_cheer_00_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 201
+    },
+    {
+      "index": 31,
+      "clip": "f_cheer_00_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 74,
+      "frames": 201
+    },
+    {
+      "index": 32,
+      "clip": "f_cheer_00_03",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 42,
+      "frames": 148
+    },
+    {
+      "index": 33,
+      "clip": "Idle_00_00",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 53,
+      "frames": 41
+    },
+    {
+      "index": 34,
+      "clip": "Idle_00_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 41,
+      "frames": 41
+    },
+    {
+      "index": 35,
+      "clip": "Idle_00_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 42,
+      "frames": 41
+    },
+    {
+      "index": 36,
+      "clip": "Idle_00_03",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 54,
+      "frames": 41
+    },
+    {
+      "index": 37,
+      "clip": "Idle_01_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 42,
+      "frames": 41
+    },
+    {
+      "index": 38,
+      "clip": "Idle_01_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 41,
+      "frames": 41
+    },
+    {
+      "index": 39,
+      "clip": "Idle_01_03",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 53,
+      "frames": 41
+    },
+    {
+      "index": 40,
+      "clip": "Idle_02_00",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 40,
+      "frames": 41
+    },
+    {
+      "index": 41,
+      "clip": "Idle_02_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 41,
+      "frames": 41
+    },
+    {
+      "index": 42,
+      "clip": "Idle_02_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 54,
+      "frames": 41
+    },
+    {
+      "index": 43,
+      "clip": "Idle_03_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 41,
+      "frames": 41
+    },
+    {
+      "index": 44,
+      "clip": "Idle_03_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 55,
+      "frames": 41
+    },
+    {
+      "index": 45,
+      "clip": "Idle_03_03",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 44,
+      "frames": 41
+    },
+    {
+      "index": 46,
+      "clip": "Idle_03_04",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 42,
+      "frames": 41
+    },
+    {
+      "index": 47,
+      "clip": "Idle_04_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 61,
+      "frames": 41
+    },
+    {
+      "index": 48,
+      "clip": "Idle_04_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 38,
+      "frames": 41
+    },
+    {
+      "index": 49,
+      "clip": "Idle_05_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 40,
+      "frames": 41
+    },
+    {
+      "index": 50,
+      "clip": "Idle_05_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 36,
+      "frames": 41
+    },
+    {
+      "index": 51,
+      "clip": "Idle_06_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 57,
+      "frames": 41
+    },
+    {
+      "index": 52,
+      "clip": "Idle_06_02",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 52,
+      "frames": 41
+    },
+    {
+      "index": 53,
+      "clip": "Idle_06_03",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 40,
+      "frames": 41
+    },
+    {
+      "index": 54,
+      "clip": "Idle_07_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 42,
+      "frames": 41
+    },
+    {
+      "index": 55,
+      "clip": "Idle_08_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 37,
+      "frames": 41
+    },
+    {
+      "index": 56,
+      "clip": "Idle_09_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 26,
+      "frames": 41
+    },
+    {
+      "index": 57,
+      "clip": "Idle_10_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 40,
+      "frames": 46
+    },
+    {
+      "index": 58,
+      "clip": "Idle_12_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 50,
+      "frames": 41
+    },
+    {
+      "index": 59,
+      "clip": "Idle_13_01",
+      "state": "SOURCE_BONE_TRACKS_CALIBRATED",
+      "moving_bones": 40,
+      "frames": 41
+    }
+  ],
+  "status": "SOURCE_SHARD_DONE"
+}
