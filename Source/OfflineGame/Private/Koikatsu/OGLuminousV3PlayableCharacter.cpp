@@ -43,7 +43,8 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
     const FReferenceSkeleton& Left = A->GetRefSkeleton();
     const FReferenceSkeleton& Right = B->GetRefSkeleton();
     if (Left.GetNum() != Right.GetNum() ||
-        (Left.GetNum() != 975 && Left.GetNum() != 1131)) return false;
+        (Left.GetNum() != 975 && Left.GetNum() != 1131 &&
+         Left.GetNum() != 1123)) return false;
     for (int32 Index = 0; Index < Left.GetNum(); ++Index)
     {
         if (Left.GetBoneName(Index) != Right.GetBoneName(Index) ||
@@ -111,16 +112,24 @@ const TArray<FSoftObjectPath>& AOGLuminousV3PlayableCharacter::PartsFor(EOGLumin
     }
 }
 
-int32 AOGLuminousV3PlayableCharacter::ExpectedNativeBoneCount() const
+int32 AOGLuminousV3PlayableCharacter::ExpectedNativeBoneCount(
+    EOGLuminousV3Wardrobe State) const
 {
-    return CanonicalLuminousVersionId == TEXT("character:luminous_valentine.version_alter_v1")
-        ? 1131 : 975;
+    // The accepted original Nude Koikatsu native export has an independent
+    // 1122-bone authoring rig (1123 after FBX root); it MUST NOT borrow
+    // CLOTHED or UNDERWEAR's 1131-bone source skeleton.
+    if (CanonicalLuminousVersionId ==
+        TEXT("character:luminous_valentine.version_alter_v1"))
+        return State == EOGLuminousV3Wardrobe::Nude ? 1123 : 1131;
+    return 975;
 }
 
 int32 AOGLuminousV3PlayableCharacter::ExpectedPartsFor(EOGLuminousV3Wardrobe State) const
 {
     if (CanonicalLuminousVersionId == TEXT("character:luminous_valentine.version_alter_v1"))
-        return State == EOGLuminousV3Wardrobe::Clothed ? 6 : 0;
+        return State == EOGLuminousV3Wardrobe::Clothed ||
+               State == EOGLuminousV3Wardrobe::Underwear ||
+               State == EOGLuminousV3Wardrobe::Nude ? 6 : 0;
     switch (State)
     {
     case EOGLuminousV3Wardrobe::Clothed: return 45;
@@ -156,7 +165,12 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
             AssetPath.StartsWith(TEXT("/Game/Experimental/LuminousValentineV3/"));
         const bool bAlterSource=CanonicalLuminousVersionId==
             TEXT("character:luminous_valentine.version_alter_v1") &&
-            AssetPath.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/"));
+            ((Desired == EOGLuminousV3Wardrobe::Clothed &&
+              AssetPath.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/"))) ||
+             (Desired == EOGLuminousV3Wardrobe::Underwear &&
+              AssetPath.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/"))) ||
+             (Desired == EOGLuminousV3Wardrobe::Nude &&
+              AssetPath.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/"))));
         if (!bBaseSource && !bAlterSource)
         {
             Error = TEXT("Luminous V3: refusing an unexpected or cross-character asset namespace");
@@ -179,10 +193,10 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     {
         USkeletalMesh* NativeMesh = Cast<USkeletalMesh>(Paths[Index].TryLoad());
         if (!NativeMesh || !NativeMesh->GetSkeleton() ||
-            NativeMesh->GetRefSkeleton().GetNum() != ExpectedNativeBoneCount())
+            NativeMesh->GetRefSkeleton().GetNum() != ExpectedNativeBoneCount(Desired))
         {
-            Error = FString::Printf(TEXT("Luminous V3: missing/invalid 975-bone mesh at index %d state %s"),
-                Index, WardrobeName(Desired));
+            Error = FString::Printf(TEXT("Luminous V3: missing/invalid source rig %d bones at index %d state %s"),
+                ExpectedNativeBoneCount(Desired), Index, WardrobeName(Desired));
             return false;
         }
         Prepared.Add(NativeMesh);
@@ -232,7 +246,7 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     bLuminousReady = true;
     if (GetMesh()) GetMesh()->SetHiddenInGame(true);
     UE_LOG(LogTemp, Display, TEXT("Gate12 Luminous: native wardrobe=%s parts=%d skeleton=%d"),
-        WardrobeName(Desired), ActivePartCount,ExpectedNativeBoneCount());
+        WardrobeName(Desired), ActivePartCount,ExpectedNativeBoneCount(Desired));
     return true;
 }
 
@@ -606,9 +620,18 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     // can differ from the real clothing state under Privacy/SFW masking.
     const int32 State = static_cast<int32>(EffectiveAppearance.EffectiveRenderedWardrobe);
     if (!Clips || Clips->Num() != 3 || !Clips->IsValidIndex(State)) return nullptr;
-    if (!(*Clips)[State].ToString().StartsWith(
-        TEXT("/Game/Experimental/LuminousValentineV3/NativeMocapV3/"))) return nullptr;
-    return Cast<UAnimSequence>((*Clips)[State].TryLoad());
+    const bool bAlter = CanonicalLuminousVersionId ==
+        TEXT("character:luminous_valentine.version_alter_v1");
+    const TCHAR* ExpectedNamespace = bAlter
+        ? TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/")
+        : TEXT("/Game/Experimental/LuminousValentineV3/NativeMocapV3/");
+    if (!(*Clips)[State].ToString().StartsWith(ExpectedNamespace))
+        return nullptr;
+    UAnimSequence* Sequence = Cast<UAnimSequence>((*Clips)[State].TryLoad());
+    if (!Sequence || !Sequence->GetSkeleton()) return nullptr;
+    // Actual source-authored Alter states own separate 1131/1123 native rigs;
+    // runtime will only animate when a matching original Skeleton is present.
+    return Sequence;
 }
 
 void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()

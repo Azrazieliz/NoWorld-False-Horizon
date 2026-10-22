@@ -240,7 +240,7 @@ private:
 
     const TArray<FSoftObjectPath>& PartsFor(EOGLuminousV3Wardrobe State) const;
     int32 ExpectedPartsFor(EOGLuminousV3Wardrobe State) const;
-    int32 ExpectedNativeBoneCount() const;
+    int32 ExpectedNativeBoneCount(EOGLuminousV3Wardrobe State) const;
     bool ValidateWardrobeAssets(EOGLuminousV3Wardrobe Desired, FString& Error) const;
     bool ApplyVisualWardrobe(EOGLuminousV3Wardrobe Desired, FString& Error);
     bool IsIsolatedWardrobeQAContext() const;
