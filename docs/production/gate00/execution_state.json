@@ -69,7 +69,7 @@
       "id": "P0-ALTER",
       "owner": "Gate12",
       "status": "THREE_ORIGINAL_WARDROBES_NATIVE_IMPORTED_AND_COLD_VERIFIED_18_PARTS__VISUAL_ACCEPTANCE_PENDING",
-      "next": "Do not reimport/replace 3 confirmed native Alter wardrobes (CLOTHED/UNDERWEAR/NUDE, 6 skeletal parts each, 1131/1131/1123 bones reported). Investigate 4 real unmatched sexfaces/kuti_nose morph names per UNDERWEAR/NUDE after 13/17 casefold crosspart resolved; verify maj/min and rendered deformation against originals. Preserve old v1 kit native work until exact approved v4 numerical archive arrives; v4 design replaces older kit only in authored source and after genuine native integration. No new 3D geometry from scratch."
+      "next": "Three original native Alter wardrobes (6 mesh parts each, 1131/1131/1123 skeleton bones) cold verified—preserve and DO NOT reimport. Close remaining 4 shape keys/wardrobe after casefold+crosspart (sexfaces/l-sided/kuti_nose) by 'maj/min' source name variants and actual source-vs-render morph movement. New v4 Alter kit numbers now exact-source verified; only replace v1 currently working native behavior when source-accurate v4 and both executors verified. No artwork remake."
     },
     {
       "id": "P0-MOTION",
@@ -81,8 +81,8 @@
     {
       "id": "P1-KIT",
       "owner": "Gate12 (native execution), Gate04 (approved source), Gate00 (canon)",
-      "status": "USER_APPROVED_20261022_G04_V4_FIVE_FORM_DESIGN__EXACT_V4_ZIP_NOT_YET_LOCATED__NO_NATIVE_V4_KIT_ACCEPTANCE",
-      "next": "Five separately approved v4 forms: Base3A6P2U, Alter3A6P2U, Awakened4A5P1U, Berserker2A7P1U, Grand3A6P3U. v4 supersedes not stacks historical Base v6/Alter v1; preserve existing code until original v4 authoritative numerical package is found and SHA verified. Distinct v4 effects and World Fantasm must be major battlefield effects. Grand 5 separate max reinforced Manifestations incl bespoke eligibility; fifth lineage unresolved: never invent."
+      "status": "GATE04_V4_ALL_FIVE_USER_APPROVED_EXACT_JSON_AND_GP_CONTRACT_SHA_VERIFIED__GATE12_NATIVE_V4_PENDING",
+      "next": "Full original v4 ZIP is now authenticated (SHA256 b0f513ef1fa4a648cdc687e8c4b89a1390f0efe1fe2c3fffe2e31c9e4f278ea9), 18/18 outer and 14/14 inner hashes pass. Original numerical JSON and GP rules available directly on coordination Git branch and personal Library; implement all five v4 forms into existing two executors without rewriting or stacking historical Base v6/Alter v1 source. Preserve native Base/Alter until exact replacement is tested. Five World Fantasms major actual effects, strongest Grand never art-ready by design-only. GP coefficients require native six-action/high-rank calibration before live save values. Fifth Grand lineage and bespoke proofs unresolved; no invention. Gate09 dismissed, Gate11 retired."
     },
     {
       "id": "P1-REGISTRY",
@@ -185,12 +185,15 @@
         "not_ordinary_version": true,
         "approved_design": true,
         "eligibility_fifth_lineage": "UNRESOLVED",
-        "requires_five_distinct_max_reinforced_manifestations": true
+        "requires_five_distinct_max_reinforced_manifestations": true,
+        "design_approved_v4": true
       },
       "prior_Base_v6_and_Alter_v1": "HISTORICAL_SUPERSEDED_DESIGNS_PRESERVE_EXISTING_NATIVE_SOURCE_UNTIL_EXACT_V4_REPLACEMENT",
       "approved_20261022": true,
-      "exact_v4_zip_bytes_verified": false,
-      "future_character_creation_3d_assets_not_approved_by_combat_data": true
+      "exact_v4_zip_bytes_verified": true,
+      "future_character_creation_3d_assets_not_approved_by_combat_data": true,
+      "new_5form_v4_source_json_sha256": "0bf7cba8d05764ea21a01aa413176dd28ac05915c0540db0d37c4ca333eca500",
+      "gp_coefficients_reference_approved_but_native_uncalibrated": true
     },
     "common_movement_policy": "Reusable independently authored variations of walk/run/swim/fly/etc, mapped by character abilities, anatomy and physics; not wholly bespoke per character."
   },
@@ -200,7 +203,7 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "The approved Gate04 v4 ZIP is referenced in a 22-Oct message but its original bytes were not present/located in current project context/Library/PC scan; recover authentic ZIP to implement precise v4 coefficients. No other creative approval round or Gate09/Gate11 dependency. Gate12 proceeds with accepted 24 native QA clip gameplay binding, original Alter morph fix, full first World and standalone Win64 packaging.",
+  "next_user_action": "All five Luminous v4 kits are design-approved and the original numerical ZIP+GP contract are now accessible and verified; Gate12 can implement from Git source immediately. Owner still needs to define Grand's distinct fifth lineage and remaining Convergence proofs before canonical Grand eligibility, but native mechanics, morph fidelity, Koikatsu gameplay bindings and first World should proceed without waiting. Gate09/Gate11 remain retired; no additional source reupload required.",
   "received_reports_20261020": {
     "status": "FOUR_GATE_REPORTS_COMMITTED_ON_GATE00_COORDINATION_BRANCH",
     "index": "docs/production/gate00/received_reports/README_20261020.md",
@@ -209,7 +212,8 @@
       "Gate04": "docs/production/gate00/received_reports/GATE04_APPROVED_LUMINOUS_BASE_V6_20261019.md",
       "Gate07": "docs/production/gate00/received_reports/GATE07_USER_REVIEWED_ECONOMY_20261019.md",
       "Gate09": "docs/production/gate00/received_reports/GATE09_NATIVE_ANIMATIONS_20261019.md",
-      "Gate04Alter": "docs/production/gate00/received_reports/GATE04_ALTER_V1_VERIFIED_SOURCE_INTAKE_20261020.md"
+      "Gate04Alter": "docs/production/gate00/received_reports/GATE04_ALTER_V1_VERIFIED_SOURCE_INTAKE_20261020.md",
+      "Gate04_v4_20261022": "docs/production/gate00/received_reports/GATE04_APPROVED_V4_ORIGINAL_SOURCE_VERIFIED_20261022.md"
     },
     "note": "Historical four-report 13-accepted+5-deferred intake is superseded on decisions by 20-Oct user approval of all 18; original reports preserved unchanged. Exact Alter approved original ZIP now received via 2026-10-20 project attachment; previous missing ZIP status superseded."
   },
@@ -328,12 +332,12 @@
     "Gate02": "AUTHORED_WORLD_ANCHORS_ONLY",
     "Gate11": "RETIRED_NO_CANONICAL_APPROVAL_QUEUE"
   },
-  "latest_authoritative_production_handoff": "docs/production/gate00/GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md",
+  "latest_authoritative_production_handoff": "docs/production/gate00/received_reports/GATE04_APPROVED_V4_ORIGINAL_SOURCE_VERIFIED_20261022.md",
   "gate04_v4_user_approved_20261022": {
     "reference_zip": "Gate04_Luminous_v4_APPROVED_Gate00_20261022.zip",
     "approval": "USER_APPROVED_LATEST",
-    "status": "FIVE_FORM_V4_DESIGN_BINDING_NUMERICAL_SOURCE_ZIP_NOT_YET_LOCATED_OR_HASHED",
-    "source_equations": "AWAIT_EXACT_ORIGINAL_PACKAGE__DO_NOT_RECONSTRUCT",
+    "status": "FIVE_FORM_V4_USER_APPROVED_ORIGINAL_EXACT_ZIP_SHA_AND_32_MANIFEST_ENTRIES_VERIFIED_NATIVE_NOT_IMPLEMENTED",
+    "source_equations": "EXACT_ORIGINAL_JSON_AND_GP_CONTRACT_VERIFIED_AND_STORED_IN_COORDINATION_GIT_AND_PERSONAL_LIBRARY__NATIVE_BENCHMARK_CALIBRATION_PENDING",
     "forms": {
       "BASE": {
         "active": 3,
@@ -367,11 +371,35 @@
     },
     "combat_rules": "no universal active/passive/Ultimate count, mechanically substantive clear effects, ATK/HP/DEF/Crit/SPD/mixed actual sourced scaling, no fictitious resistances",
     "world_fantasm": "substantial battlefield-wide/region concrete visual and mechanical effect; real World Negation grade contested Authority",
-    "gp": "ACCOUNT_RULER_DETERMINISTIC_LARGE_NUMBER_ONE_STRONGEST_MANIFESTATION_PER_IDENTITY+PERSONAL+CONTROLLED_DOMAINS+NON_DUPLICATED_MILITARY+EARNED_UNIQUE_LINKS; exact coefficient formula requires source and calibration before save",
+    "gp": "APPROVED_INITIAL_NUMERICAL_REFERENCE_Coefficients_IN_EXACT_ORIGINAL_GP_CONTRACT__CALIBRATION_ON_NATIVE_6_ACTION_AND_HIGH_RANK_BENCHMARK_BEFORE_CANONICAL_SAVES__NO_AUTOMATIC_RULER_PROMOTION",
     "enemy": "AUTHORED_RANK_LEVEL_SPECIALIZED_BOSSES_AND_WORLD_POWER_WITHOUT_AUTO_LEVEL_SCALING_OR_ARTIFICIAL_IMMUNITY",
     "grand_requirements": "5 separately acquired max reinforced manifestations, requisite four version development, further authentic bespoke proofs and genuine fifth lineage unresolved; no fabricated new canon",
     "v4_gameplay_native_status": "NOT_IMPLEMENTED_OR_VALIDATED",
-    "handoff": "docs/production/gate00/GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md"
+    "handoff": "docs/production/gate00/GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md",
+    "source_packet": {
+      "original_zip": "Gate04_Luminous_v4_APPROVED_Gate00_20261022.zip",
+      "user_uploaded_file_id": "file_00000000d2a482439afbc8e9bab1cffe",
+      "archive_bytes": 124949,
+      "archive_sha256": "b0f513ef1fa4a648cdc687e8c4b89a1390f0efe1fe2c3fffe2e31c9e4f278ea9",
+      "zip_crc_pass": true,
+      "outer_packet_hashes_valid": 18,
+      "outer_packet_hashes_total": 18,
+      "inner_source_hashes_valid": 14,
+      "inner_source_hashes_total": 14,
+      "exact_five_form_json_sha256": "0bf7cba8d05764ea21a01aa413176dd28ac05915c0540db0d37c4ca333eca500",
+      "exact_gp_contract_sha256": "8dac4f8f0d4b1e790f47935a12abe27e431e09bad68d48a9ba01856292b31a87",
+      "user_approved_receipt_sha256": "6b5aae79d1dc5c9206bb55635bdff2fc4468819f1e5502c618d985bb922d6ef0",
+      "original_full_json_git_path": "docs/production/gate00/approved_sources/Gate04_Luminous_FiveForms_Combat_v4_ORIGINAL_APPROVED.json",
+      "original_gp_contract_git_path": "docs/production/gate00/approved_sources/Gate04_GP_AND_CHARACTER_LINKS_CONTRACT_v4_ORIGINAL_APPROVED.md",
+      "original_full_json_library_id": "libfile_4f87c1d16adc81918a33f264dddeefaa",
+      "original_gp_contract_library_id": "libfile_bc6e78c22d08819190d7dd0deabe2c2d",
+      "intake_receipt": "docs/production/gate00/received_reports/GATE04_APPROVED_V4_ORIGINAL_SOURCE_VERIFIED_20261022.md",
+      "source_design_status": "ALL_FIVE_USER_APPROVED_BY_LATER_USER_APPROVAL_RECEIPT_SUPERSEDING_PROPOSED_METADATA",
+      "native_unreal_v4_implemented": false,
+      "source_json_original_numeric_untouched": true,
+      "gp_native_benchmark_calibrated": false,
+      "gp_live_persistent_not_authorized_until_calibration": true
+    }
   },
   "native_gate12_20261022": {
     "branch": "production/gate12-koikatsu-ue583-fixture-20261010",
