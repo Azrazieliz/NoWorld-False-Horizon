@@ -1,8 +1,8 @@
 {
   "schema": "NOWORLD_GATE00_EXECUTION_BOARD_V1",
-  "updated_local_date": "2026-10-20",
+  "updated_local_date": "2026-10-22",
   "timezone": "Europe/Paris",
-  "authority": "Gate00 after Gate11 retirement; latest 2026-10-20 direct user approval of Alter v1, all Gate07 A-proposals and procedural World/shared movement motion source pipeline controls",
+  "authority": "LATEST_20261022_USER_APPROVED_G04_V4_FIVE_FORM_COMBAT_AND_G12_BE736CC_NATIVE_CHECKPOINT; GATE09_AND_GATE11_RETIRED",
   "single_issue": "https://github.com/Azrazieliz/Offline-Game/issues/25",
   "coordination_branch": "coordination/gate00-live-ops-20261016",
   "frozen_foundation_sha": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
@@ -29,7 +29,7 @@
     "device_connection_may_change": true
   },
   "verified_git_heads": {
-    "Gate12": "f5f2345cfce41d332d097daeb89eeb10bfd247fe",
+    "Gate12": "be736cc1fa6cea9b38d50fad9bfb7ed0d55014ae",
     "SoftwareMastery": "4f636a14098fb63f9b4b31228c53393a5e3702dc",
     "Gate09": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
     "Gate00_prior": "1cf31aba0e3a3e45ff34c62d7b18a6a4510ffd74",
@@ -41,7 +41,7 @@
       "owner": "Gate12",
       "status": "ACTIVE",
       "acceptance": "Actual iterative dev APK built/cooked/installed and physically tested with evidence for Ruler/World/roster/persistence/Adult Mode; no production release authorization",
-      "next": "Combined 20 October OfflineGameEditor Win64 Development UBT build is confirmed SUCCEEDED 17/17 from existing log; do not rebuild it just for a pass. Run changed-feature Gate07 economy/09 animation native tests and actual Unreal visual/runtime playback, fix remaining real R1 QA road-actor/PCG and Alter original-source conversion; then progress 18 families and Android physical device when available. Preserve dirty source; Gate11 retired.",
+      "next": "October 22 Gate12 head be736cc1 has native three Alter wardrobes (18 skeletal mesh parts) and 24 new cold QA Koikatsu Studio AnimSequences but not full gameplay deployment, first World acceptance or standalone Win64 game. Implement real semantic gameplay bindings, high-detail streamed World and changed feature validation/Win64 package with non-destructive source preservation. Current v4 kit source must be retrieved before authored numeric replacement.",
       "source_sha": "f5f2345cfce41d332d097daeb89eeb10bfd247fe"
     },
     {
@@ -68,21 +68,21 @@
     {
       "id": "P0-ALTER",
       "owner": "Gate12",
-      "status": "APPROVED_KIT_FULL_SOURCE_VERIFIED_NATIVE_NOT_READY",
-      "next": "Exact user-approved original ZIP now received and CRC+17 SHA checks PASS (archive SHA256 063be65715a86bd994ae906f144242b544ca635844cc33ab7ec87108e472e30c; JSON SHA256 2c6474548541df55b036eaa5a605805f64bba6fe212d4c91c4013c7fdd1a254c). Retrieve project Library file ID libfile_34e1ff025a70819193e7444e40b9e855, verify source before native use; create exact independent Alter handler and real three-state UE conversion, no remake, no fabricated Registry acceptance."
+      "status": "THREE_ORIGINAL_WARDROBES_NATIVE_IMPORTED_AND_COLD_VERIFIED_18_PARTS__VISUAL_ACCEPTANCE_PENDING",
+      "next": "Do not reimport/replace 3 confirmed native Alter wardrobes (CLOTHED/UNDERWEAR/NUDE, 6 skeletal parts each, 1131/1131/1123 bones reported). Investigate 4 real unmatched sexfaces/kuti_nose morph names per UNDERWEAR/NUDE after 13/17 casefold crosspart resolved; verify maj/min and rendered deformation against originals. Preserve old v1 kit native work until exact approved v4 numerical archive arrives; v4 design replaces older kit only in authored source and after genuine native integration. No new 3D geometry from scratch."
     },
     {
       "id": "P0-MOTION",
       "owner": "Gate12 (Gate09 dismissed)",
-      "status": "GATE09_DISMISSED_GATE12_NATIVE_IMPORT_FROM_KOIKATSU_MODS_CURRENT_FOUR_ANDROID_NOT_TESTED",
+      "status": "GATE12_24_REAL_ORIGINAL_KOIKATSU_QA_ANIMSEQUENCES_COLD_VERIFIED_8_CLIPS_TIMES_3_WARDROBES__LIVE_BINDINGS_UNAPPROVED",
       "source_sha": "6db52bc4b543d94dca9d8ec86fc48c29b48f81f6",
-      "next": "Preserve 4 old authentic source clips. Gate12 implement actual playable character/AnimBP binding, compile current Android, install on physical device and verify all four. After PASS Gate12 directly catalogs/imports eligible real authentic Koikatsu/mod movement, poses, intimacy, facial, character-version-specific attacks; no new bespoke original author, no fabricated generic motion; mark source missing for unsupported rigs. Preserve existing Gate09 historical assets."
+      "next": "63,309 exact unique captured Koikatsu/mod original AnimationClip objects, 63,301 identities not native converted. Native now has 9 CMU walk/run/jump on 3 Alter wardrobes and 24 cold QA original Studio AnimSequences (8 sources x CLOTHED/UNDERWEAR/NUDE). Reuse originals; semantically classify and select source clips; retarget/materially bind genuine UE gameplay with rig/rights/privacy checks, device/render acceptance. Do not count source indexed as native gameplay, do not automatically bind rejected dance or Scarlet Cadence. Gate09 dismissed, Gate12 solely owns."
     },
     {
       "id": "P1-KIT",
-      "owner": "Gate04",
-      "status": "BASE_V6_AND_ALTER_V1_USER_APPROVED_ALTER_V1_FULL_SOURCE_NOW_VERIFIED_NATIVE_NOT_ACCEPTED",
-      "next": "Both Base v6 and exact-source Alter v1 combat kit approved. Gate12 owns native two-executor mechanics, animation adaptation and existing VFX/audio source integration; Gate09 dismissed, do not await them. Actual Alter native assets not yet accepted."
+      "owner": "Gate12 (native execution), Gate04 (approved source), Gate00 (canon)",
+      "status": "USER_APPROVED_20261022_G04_V4_FIVE_FORM_DESIGN__EXACT_V4_ZIP_NOT_YET_LOCATED__NO_NATIVE_V4_KIT_ACCEPTANCE",
+      "next": "Five separately approved v4 forms: Base3A6P2U, Alter3A6P2U, Awakened4A5P1U, Berserker2A7P1U, Grand3A6P3U. v4 supersedes not stacks historical Base v6/Alter v1; preserve existing code until original v4 authoritative numerical package is found and SHA verified. Distinct v4 effects and World Fantasm must be major battlefield effects. Grand 5 separate max reinforced Manifestations incl bespoke eligibility; fifth lineage unresolved: never invent."
     },
     {
       "id": "P1-REGISTRY",
@@ -93,8 +93,8 @@
     {
       "id": "P1-WORLD",
       "owner": "Gate12 (procedural remainder); Gate02 (authored anchors)",
-      "status": "GATE02_REAL_R1_ANCHORS_QA_STAGED_GATE12_OWNS_REST_OF_WORLD_NOT_COMPLETE",
-      "next": "Gate12 directly build full first World procedural native UE5.8.3 around Gate02-authored R1 anchors (seed-stable persistent Landscape/PCG/World Partition, collision/nav, art-constrained biome, hydrology, settlements, caves/interiors, original persistent consequences). Gate02 refines/creates only authored anchors and modules; its partial R1 is not intended as entirety."
+      "status": "FIRST_WORLD_PARTITION_AND_RUNTIME_NOT_ACCEPTED__GATE02_HIGH_DETAIL_ANCHORS_PRESERVED",
+      "next": "Gate12 continues real streaming/world partition and persistent seed-stable procedural world around Gate02 authored R1 anchors, preserve approved high detail and original player saves, standalone Win64 package not yet accepted. Do not rebuild geometry or mark whole first World complete."
     },
     {
       "id": "P1-UI-DESIGN",
@@ -156,9 +156,41 @@
         "ALTER",
         "BERSERKER"
       ],
-      "kit_each_when_character_considered_finished": true,
-      "grand_convergence": "SEPARATE_PENDING_USER_APPROVAL_AND_ELIGIBILITY",
-      "do_not_invent_future_versions": true
+      "version_kit_counts_approved_v4": {
+        "BASE": {
+          "active": 3,
+          "passive": 6,
+          "ultimate": 2
+        },
+        "ALTER": {
+          "active": 3,
+          "passive": 6,
+          "ultimate": 2
+        },
+        "AWAKENED": {
+          "active": 4,
+          "passive": 5,
+          "ultimate": 1
+        },
+        "BERSERKER": {
+          "active": 2,
+          "passive": 7,
+          "ultimate": 1
+        }
+      },
+      "grand_convergence": {
+        "active": 3,
+        "passive": 6,
+        "ultimate": 3,
+        "not_ordinary_version": true,
+        "approved_design": true,
+        "eligibility_fifth_lineage": "UNRESOLVED",
+        "requires_five_distinct_max_reinforced_manifestations": true
+      },
+      "prior_Base_v6_and_Alter_v1": "HISTORICAL_SUPERSEDED_DESIGNS_PRESERVE_EXISTING_NATIVE_SOURCE_UNTIL_EXACT_V4_REPLACEMENT",
+      "approved_20261022": true,
+      "exact_v4_zip_bytes_verified": false,
+      "future_character_creation_3d_assets_not_approved_by_combat_data": true
     },
     "common_movement_policy": "Reusable independently authored variations of walk/run/swim/fly/etc, mapped by character abilities, anatomy and physics; not wholly bespoke per character."
   },
@@ -168,7 +200,7 @@
   },
   "protected_private_luminous_base_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_V3_GATE11_GATE12_APPROVED_3D_BASELINE_20261011.zip",
   "protected_private_base_alter_path": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
-  "next_user_action": "All 18 Gate07 choices approved; Alter exact source verified; Android last physically connected. Gate12 should execute, not request another plan or commission Gate09. Only genuine source missing or physical/device/tool errors are concrete blockers.",
+  "next_user_action": "The approved Gate04 v4 ZIP is referenced in a 22-Oct message but its original bytes were not present/located in current project context/Library/PC scan; recover authentic ZIP to implement precise v4 coefficients. No other creative approval round or Gate09/Gate11 dependency. Gate12 proceeds with accepted 24 native QA clip gameplay binding, original Alter morph fix, full first World and standalone Win64 packaging.",
   "received_reports_20261020": {
     "status": "FOUR_GATE_REPORTS_COMMITTED_ON_GATE00_COORDINATION_BRANCH",
     "index": "docs/production/gate00/received_reports/README_20261020.md",
@@ -199,7 +231,8 @@
     "gate12_native_combined_build": "VERIFIED_EDITOR_BUILD_SUCCEEDED_17_OF_17_FROM_EXISTING_LOG; changed-feature tests/visual gameplay/Android still pending",
     "gate09_additional": "THREE_UE_QA_SWING_CLIPS_AND_FANTASM_STATIC_MESH_AND_FACIAL_QA_NOT_GAMEPLAY_ACCEPTED",
     "gate12_native_editor_build_log": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Gate12_20261020_EconomyAndAnimation_Incremental_Build.log",
-    "gate12_native_editor_build_command": "UnrealBuildTool OfflineGameEditor Win64 Development -MaxParallelActions=1"
+    "gate12_native_editor_build_command": "UnrealBuildTool OfflineGameEditor Win64 Development -MaxParallelActions=1",
+    "superseded_by": "docs/production/gate00/GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md"
   },
   "authority_transfer_20261020": {
     "gate00_active": true,
@@ -289,9 +322,92 @@
     "handoff": "docs/production/gate00/GATE00_20261020_GATE09_REMOVAL_GATE12_FULL_NATIVE_COMMISSION.md"
   },
   "gate_ownership_override": {
-    "Gate09": "DISMISSED_ALL_FUTURE_ANIMATION_WORK",
+    "Gate09": "DISMISSED_FOR_ALL_NEW_ANIMATION_VFX_AUDIO_MOTION_ART_PRODUCTION__OLD_ASSETS_PRESERVED",
     "Gate12": "SOLE_NEW_NATIVE_KOIKATSU_MOD_MOTION_IMPORT_RETARGET_BIND_QUALIFY",
     "Gate00": "CANONICAL_REGISTRY_INTAKE",
-    "Gate02": "AUTHORED_WORLD_ANCHORS_ONLY"
+    "Gate02": "AUTHORED_WORLD_ANCHORS_ONLY",
+    "Gate11": "RETIRED_NO_CANONICAL_APPROVAL_QUEUE"
+  },
+  "latest_authoritative_production_handoff": "docs/production/gate00/GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md",
+  "gate04_v4_user_approved_20261022": {
+    "reference_zip": "Gate04_Luminous_v4_APPROVED_Gate00_20261022.zip",
+    "approval": "USER_APPROVED_LATEST",
+    "status": "FIVE_FORM_V4_DESIGN_BINDING_NUMERICAL_SOURCE_ZIP_NOT_YET_LOCATED_OR_HASHED",
+    "source_equations": "AWAIT_EXACT_ORIGINAL_PACKAGE__DO_NOT_RECONSTRUCT",
+    "forms": {
+      "BASE": {
+        "active": 3,
+        "passive": 6,
+        "ultimate": 2
+      },
+      "ALTER": {
+        "active": 3,
+        "passive": 6,
+        "ultimate": 2
+      },
+      "AWAKENED": {
+        "active": 4,
+        "passive": 5,
+        "ultimate": 1
+      },
+      "BERSERKER": {
+        "active": 2,
+        "passive": 7,
+        "ultimate": 1
+      }
+    },
+    "grand_kit": {
+      "active": 3,
+      "passive": 6,
+      "ultimate": 3,
+      "not_ordinary_version": true,
+      "approved_design": true,
+      "eligibility_fifth_lineage": "UNRESOLVED",
+      "requires_five_distinct_max_reinforced_manifestations": true
+    },
+    "combat_rules": "no universal active/passive/Ultimate count, mechanically substantive clear effects, ATK/HP/DEF/Crit/SPD/mixed actual sourced scaling, no fictitious resistances",
+    "world_fantasm": "substantial battlefield-wide/region concrete visual and mechanical effect; real World Negation grade contested Authority",
+    "gp": "ACCOUNT_RULER_DETERMINISTIC_LARGE_NUMBER_ONE_STRONGEST_MANIFESTATION_PER_IDENTITY+PERSONAL+CONTROLLED_DOMAINS+NON_DUPLICATED_MILITARY+EARNED_UNIQUE_LINKS; exact coefficient formula requires source and calibration before save",
+    "enemy": "AUTHORED_RANK_LEVEL_SPECIALIZED_BOSSES_AND_WORLD_POWER_WITHOUT_AUTO_LEVEL_SCALING_OR_ARTIFICIAL_IMMUNITY",
+    "grand_requirements": "5 separately acquired max reinforced manifestations, requisite four version development, further authentic bespoke proofs and genuine fifth lineage unresolved; no fabricated new canon",
+    "v4_gameplay_native_status": "NOT_IMPLEMENTED_OR_VALIDATED",
+    "handoff": "docs/production/gate00/GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md"
+  },
+  "native_gate12_20261022": {
+    "branch": "production/gate12-koikatsu-ue583-fixture-20261010",
+    "verified_local_remote_sha": "be736cc1fa6cea9b38d50fad9bfb7ed0d55014ae",
+    "source_catalog_path": "SourceAssets/Gate12/Animations20261022/GATE12_ALL_INSTALLED_KK_ORIGINAL_ANIMATION_NATIVE_INGESTION_20261022.json",
+    "verified_unique_original_unity_animationclips": 63309,
+    "source_clip_identifiers_remaining_native_conversion": 63301,
+    "native_original_studio_qa_animsequences": 24,
+    "distinct_original_studio_qa_source_clips": 8,
+    "original_studio_animseq_across_alter_wardrobes": 3,
+    "actual_gameplay_assignments": "NOT_APPROVED_FOR_24",
+    "existing_cmu_walk_run_jump": "9 across 3 Alter wardrobes reported",
+    "alter_wardrobes": [
+      "CLOTHED",
+      "UNDERWEAR",
+      "NUDE"
+    ],
+    "alter_skeletal_parts_by_wardrobe": [
+      6,
+      6,
+      6
+    ],
+    "alter_skeleton_bones_reported": [
+      1131,
+      1131,
+      1123
+    ],
+    "alter_morph_source_nonzero_each_new_state": 242,
+    "morph_unmatched_initial_per_state": 17,
+    "morph_missed_explained_by_crosspart_per_state": 13,
+    "morph_genuine_unmatched_after_all_casefold_crosspart_per_state": 4,
+    "morph_unmatched_family": "sexfaces.lsided.*.kuti_nose.nl00n Small/Big",
+    "independent_visual_acceptance": false,
+    "full_first_world_acceptance": false,
+    "standalone_win64_game": "NOT_ACCEPTED",
+    "unreleased_untracked_sources": "PRESERVE",
+    "user_modified_config": "Config/DefaultEditor.ini PROTECTED"
   }
 }
