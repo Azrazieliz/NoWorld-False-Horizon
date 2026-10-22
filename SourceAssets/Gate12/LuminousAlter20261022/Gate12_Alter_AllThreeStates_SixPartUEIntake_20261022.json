@@ -1,0 +1,95 @@
+﻿{
+    "schema":  "noworld.gate12.alter.approved.native.wardrobe.ue583.v1",
+    "status":  "TWELVE_GENUINE_ALTER_WARDROBE_NATIVE_SKELETAL_MESHES_IMPORT_RECEIPTS_CONFIRMED",
+    "base_source_substituted":  false,
+    "original_source_geometry_replaced":  false,
+    "missing_states":  [
+
+                       ],
+    "parts":  [
+                  {
+                      "source_bones":  1130,
+                      "native_bones":  1131,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00",
+                      "part":  0,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "source_bones":  1130,
+                      "native_bones":  1131,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_01.SK_Luminous_Alter_UNDERWEAR_OriginalPart_01",
+                      "part":  1,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "source_bones":  1130,
+                      "native_bones":  1131,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_02.SK_Luminous_Alter_UNDERWEAR_OriginalPart_02",
+                      "part":  2,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "source_bones":  1130,
+                      "native_bones":  1131,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_03.SK_Luminous_Alter_UNDERWEAR_OriginalPart_03",
+                      "part":  3,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "source_bones":  1130,
+                      "native_bones":  1131,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_04.SK_Luminous_Alter_UNDERWEAR_OriginalPart_04",
+                      "part":  4,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "source_bones":  1130,
+                      "native_bones":  1131,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_05.SK_Luminous_Alter_UNDERWEAR_OriginalPart_05",
+                      "part":  5,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "source_bones":  1122,
+                      "native_bones":  1123,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00.SK_Luminous_Alter_NUDE_OriginalPart_00",
+                      "part":  0,
+                      "state":  "NUDE"
+                  },
+                  {
+                      "source_bones":  1122,
+                      "native_bones":  1123,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_01.SK_Luminous_Alter_NUDE_OriginalPart_01",
+                      "part":  1,
+                      "state":  "NUDE"
+                  },
+                  {
+                      "source_bones":  1122,
+                      "native_bones":  1123,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_02.SK_Luminous_Alter_NUDE_OriginalPart_02",
+                      "part":  2,
+                      "state":  "NUDE"
+                  },
+                  {
+                      "source_bones":  1122,
+                      "native_bones":  1123,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_03.SK_Luminous_Alter_NUDE_OriginalPart_03",
+                      "part":  3,
+                      "state":  "NUDE"
+                  },
+                  {
+                      "source_bones":  1122,
+                      "native_bones":  1123,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_04.SK_Luminous_Alter_NUDE_OriginalPart_04",
+                      "part":  4,
+                      "state":  "NUDE"
+                  },
+                  {
+                      "source_bones":  1122,
+                      "native_bones":  1123,
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_05.SK_Luminous_Alter_NUDE_OriginalPart_05",
+                      "part":  5,
+                      "state":  "NUDE"
+                  }
+              ]
+}

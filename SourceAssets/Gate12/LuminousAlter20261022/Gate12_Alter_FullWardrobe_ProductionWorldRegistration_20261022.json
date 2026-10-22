@@ -1,0 +1,61 @@
+{
+  "schema": "noworld.gate12.alter.fullwardrobe.owned.world.v1",
+  "status": "ALL_THREE_APPROVED_ALTER_SOURCE_WARDROBES_BOUND_TO_REAL_WORLD_ACTOR_AND_CATALOG",
+  "identity": "character:luminous_valentine.identity",
+  "version": "character:luminous_valentine.version_alter_v1",
+  "blueprint": "/Game/NoWorld/Characters/Luminous/Alter/BP_Luminous_Alter_Production",
+  "approved_sources_replaced": false,
+  "base_character_modified": false,
+  "new_manifestation_created": false,
+  "real_mesh_states": [
+    {
+      "state": "CLOTHED",
+      "original_parts": 6,
+      "bones": 1131,
+      "paths": [
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_01",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_02",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_03",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_04",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_05"
+      ]
+    },
+    {
+      "state": "UNDERWEAR",
+      "original_parts": 6,
+      "bones": 1131,
+      "paths": [
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_01",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_02",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_03",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_04",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_05"
+      ]
+    },
+    {
+      "state": "NUDE",
+      "original_parts": 6,
+      "bones": 1123,
+      "paths": [
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_01",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_02",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_03",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_04",
+        "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_05"
+      ]
+    }
+  ],
+  "gameloop_runtime_verified": false,
+  "original_clothed_source_preserved": true,
+  "underwear_native_parts_existing_complete_preserved": true,
+  "nude_native_parts_existing_complete_preserved": true,
+  "catalog_index": 1,
+  "catalog_choices": [
+    "CLOTHED",
+    "UNDERWEAR",
+    "NUDE"
+  ]
+}

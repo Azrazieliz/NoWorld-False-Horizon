@@ -1,0 +1,62 @@
+﻿{
+    "schema":  "noworld.gate12.luminous_alter.allwardrobe.genuine_mocap.v1",
+    "status":  "NINE_GENUINE_CMU_NATIVE_ALTER_CLIPS_ALL_THREE_SOURCE_WARDROBE_RIGS",
+    "approved_source_geometry_unchanged":  true,
+    "visual_quality_acceptance":  "NOT_YET_INSPECTED_ON_ACTUAL_GAME",
+    "clips":  [
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Walk.AN_G12_Alter_CLOTHED_RealCMU_Walk",
+                      "motion":  "Walk",
+                      "tracks":  21,
+                      "state":  "CLOTHED"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Run.AN_G12_Alter_CLOTHED_RealCMU_Run",
+                      "motion":  "Run",
+                      "tracks":  21,
+                      "state":  "CLOTHED"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Jump.AN_G12_Alter_CLOTHED_RealCMU_Jump",
+                      "motion":  "Jump",
+                      "tracks":  21,
+                      "state":  "CLOTHED"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Walk.AN_G12_Alter_UNDERWEAR_RealCMU_Walk",
+                      "motion":  "Walk",
+                      "tracks":  21,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Run.AN_G12_Alter_UNDERWEAR_RealCMU_Run",
+                      "motion":  "Run",
+                      "tracks":  21,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Jump.AN_G12_Alter_UNDERWEAR_RealCMU_Jump",
+                      "motion":  "Jump",
+                      "tracks":  21,
+                      "state":  "UNDERWEAR"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Walk.AN_G12_Alter_NUDE_RealCMU_Walk",
+                      "motion":  "Walk",
+                      "tracks":  21,
+                      "state":  "NUDE"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Run.AN_G12_Alter_NUDE_RealCMU_Run",
+                      "motion":  "Run",
+                      "tracks":  21,
+                      "state":  "NUDE"
+                  },
+                  {
+                      "asset":  "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Jump.AN_G12_Alter_NUDE_RealCMU_Jump",
+                      "motion":  "Jump",
+                      "tracks":  21,
+                      "state":  "NUDE"
+                  }
+              ]
+}

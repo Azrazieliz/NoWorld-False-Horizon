@@ -1,0 +1,27 @@
+{
+  "schema": "noworld.gate12.luminous_alter.real_cmu_gameplay_motion_binding.v1",
+  "status": "NINE_REAL_SOURCE_ALTER_ANIMSEQUENCES_NATIVE_WARDROBE_MOTION_BOUND",
+  "blueprint": "/Game/NoWorld/Characters/Luminous/Alter/BP_Luminous_Alter_Production",
+  "source_meshes_modified": false,
+  "scarlet_cadence_rejected_animation_enabled": false,
+  "rejected_dance_enabled": false,
+  "correct_source_wardrobe_rigs": true,
+  "visual_motion_approval": "REQUIRES_IN_GAME_VISUAL_INSPECTION",
+  "motion_array": {
+    "Walk": [
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Walk",
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Walk",
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Walk"
+    ],
+    "Run": [
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Run",
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Run",
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Run"
+    ],
+    "Jump": [
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Jump",
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Jump",
+      "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Jump"
+    ]
+  }
+}
