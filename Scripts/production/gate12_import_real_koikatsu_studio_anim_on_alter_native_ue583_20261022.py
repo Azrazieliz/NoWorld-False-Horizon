@@ -10,6 +10,8 @@ CLIP=os.environ["G12_KK_SOURCE_CLIP"]
 assert STATE in ("CLOTHED","UNDERWEAR","NUDE")
 assert CLIP.replace("_","").isalnum()
 INPUT=R/"Saved/Gate12Readiness/KoikatsuGenuineNativeStudioMotion"/(CLIP+".genuine_unity_kk_stream_native_deltas.json.gz")
+if not INPUT.exists():
+ INPUT=R/"SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks"/(CLIP+".genuine_unity_kk_stream_native_deltas.json.gz")
 TARGET_DIR="/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA"
 NAME=f"AN_G12_KK_Original_{STATE}_{CLIP}"
 RECEIPT=R/"Saved/Gate12Readiness"/f"GATE12_NATIVE_KOIKATSU_STUDIO_{STATE}_{CLIP}_20261022.json"
