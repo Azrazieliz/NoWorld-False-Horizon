@@ -1,3 +1,5 @@
+> **SUPERSEDED ON 22 OCTOBER 2026 FOR COMBAT ONLY:** [Latest five-form approved v4 combat, GP/enemy scaling, be736cc Gate12 production checkpoint](GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md) controls new kit implementation and supersedes Base v6/Alter v1 design without stacking. Other user instructions here remain binding, especially **Gate09 dismissed**, **Gate11 retired**, Gate02 world anchors/Gate12 procedural world, authentic eligible Koikatsu/mod sources, Gate07 all 18 approved. Do not reinstate Gate09 from later Gate04 handoff template.
+
 # Gate 00 → Gate 12 — full native execution order; Gate09 dismissed
 **Project:** NoWorld: False Horizon · **Effective:** 2026-10-20 · **Priority:** P0 · **Authority:** User's latest direct instruction, overriding older owner/deferred status.
 
