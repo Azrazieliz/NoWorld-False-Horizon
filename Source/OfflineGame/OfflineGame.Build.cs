@@ -41,6 +41,12 @@ public class OfflineGame : ModuleRules
             "$(ProjectDir)/Config/Foundation/CharacterVisualDiagnostic.json",
             StagedFileType.UFS);
 
+        // Shared native animation definitions must be available offline in
+        // packaged Win64 and Android builds, not only inside the Editor.
+        RuntimeDependencies.Add(
+            "$(ProjectDir)/Content/NoWorld/Animation/SharedMotionCatalog.json",
+            StagedFileType.UFS);
+
         if (Target.Platform == UnrealTargetPlatform.Android)
         {
             AdditionalPropertiesForReceipt.Add(

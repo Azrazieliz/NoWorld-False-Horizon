@@ -10,6 +10,7 @@ class USkeletalMesh;
 class USkeletalMeshComponent;
 class UAnimSequence;
 class UOGSharedMotionLibrary;
+class UOGSharedMotionControllerComponent;
 struct FOGSharedMotionEntry;
 class UInputComponent;
 class UOGLuminousV3WardrobeQAWidget;
@@ -217,6 +218,9 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="OfflineGame|Motion|Shared", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UOGSharedMotionControllerComponent> SharedMotionController;
+
     UPROPERTY(Transient)
     TArray<TObjectPtr<USkeletalMeshComponent>> RuntimeParts;
 

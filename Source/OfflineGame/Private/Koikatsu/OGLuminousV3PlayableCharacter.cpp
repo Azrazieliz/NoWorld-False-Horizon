@@ -1,6 +1,7 @@
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 #include "Koikatsu/OGLuminousV3WardrobeQAWidget.h"
 #include "Animation/OGSharedMotionLibrary.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
 
 #include "Animation/AnimSequence.h"
 #include "Blueprint/UserWidget.h"
@@ -96,6 +97,9 @@ FOGLuminousV3AppearanceProjection FOGLuminousV3AppearancePolicy::Resolve(
 AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
+    SharedMotionController = CreateDefaultSubobject<UOGSharedMotionControllerComponent>(TEXT("NativeSharedMotionController"));
+    SharedMotionController->RigProfile = TEXT("koikatsu_original");
+    SharedMotionController->bUseIdenticalTopologyLeaderPose = true;
     // Existing Gate11 allocated DESIGN identifiers, verified from the original
     // preserved intake. Assignment here does NOT install a Registry package,
     // grant a Manifestation or declare this asset production-accepted.
@@ -237,6 +241,23 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
         Component->SetVisibility(Prepared.IsValidIndex(Index), true);
     }
     ActivePartCount = Prepared.Num();
+    // Register the exact current wardrobe under one reusable character-independent
+    // motion controller; changing clothes never duplicates the catalog.
+    if (SharedMotionController)
+    {
+        TArray<USkeletalMeshComponent*> Native;
+        for (int32 I = 0; I < ActivePartCount; ++I) Native.Add(RuntimeParts[I]);
+        SharedMotionController->RigProfile = MotionRigProfile;
+        SharedMotionController->AnatomyProfile = MotionAnatomyProfile;
+        SharedMotionController->Capabilities = MotionCapabilities;
+        SharedMotionController->SharedLibrary = SharedMotionLibrary;
+        SharedMotionController->SetCurrentOutfit(FName(WardrobeName(Desired)));
+        if (!SharedMotionController->RegisterNativeParts(Native))
+        {
+            Error = TEXT("Shared motion component could not register actual wardrobe meshes");
+            return false;
+        }
+    }
     // Assign only the rendered geometry. Actual selected clothing is owned by
     // CurrentWardrobe, never by the Privacy/SFW presentation resolver.
     EffectiveAppearance.EffectiveRenderedWardrobe = Desired;
@@ -459,6 +480,7 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousWardrobe(
     // Wardrobe skeleton changes invalidate any current native clip binding.
     bSharedActionPlaying = false;
     SharedActionEndTime = 0.f;
+    if (SharedMotionController) SharedMotionController->StopAction();
     CurrentWardrobe = Desired;
     if (!RefreshPrivacyRenderedAppearance())
     {
@@ -523,6 +545,9 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousNativeMotionClip(UAnimSequence* 
             return false;
         }
     }
+    // Release any shared-controller action before the established direct native path.
+    if (SharedMotionController && SharedMotionController->IsPlayingAction())
+        SharedMotionController->StopAction();
     // Release a former leader before assigning the current clip's actual driver.
     Leader->SetLeaderPoseComponent(nullptr);
     for (int32 Index = 0; Index < ActivePartCount; ++Index)
@@ -568,11 +593,25 @@ bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
         ? FName(TEXT("Combat")) : FName(TEXT("Interaction"));
     UAnimSequence* Clip = ResolveSharedMotion(GameplayAction, Context,
         bAuthorizedAdultContext, ParticipantCount, &Entry);
-    if (!Clip || !Entry || !SetLuminousNativeMotionClip(Clip, Entry->bLoop))
+    if (!Clip || !Entry) return false;
+    // All character Versions use one source-authoritative native controller.
+    // If the reusable controller cannot bind an approved exact-rig derivative,
+    // retain the established working Luminous driver as a safe fallback.
+    const bool bControllerPlayed = SharedMotionController &&
+        SharedMotionController->PlayAction(GameplayAction, Context,
+            bAuthorizedAdultContext && EffectiveAppearance.bExplicitContextAuthorized &&
+                !EffectiveAppearance.bPrivacySfwEnabled, ParticipantCount);
+    if (!bControllerPlayed && !SetLuminousNativeMotionClip(Clip, Entry->bLoop))
         return false;
+    if (bControllerPlayed)
+    {
+        CurrentNativeClip = Clip;
+        ActiveMotionLeaderIndex = INDEX_NONE;
+        bCompatibleNativeMotion = true;
+    }
     bSharedActionPlaying = true;
     SharedActionEndTime = GetWorld()->GetTimeSeconds() +
-        FMath::Max(0.02f, Clip->GetPlayLength());
+        FMath::Max(0.02f, Clip->GetPlayLength() / FMath::Max(0.01f, Entry->PlayRate));
     UE_LOG(LogTemp, Display,
         TEXT("G12_SHARED_ACTION_PLAYED=%s source=%s native=%s"),
         *GameplayAction.ToString(), *Entry->SourceClipId.ToString(),
@@ -624,10 +663,20 @@ bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
         if (UAnimSequence* Shared = ResolveSharedMotion(
             SharedEmotes[Index], FName(TEXT("Interaction")), false, 1, &Entry))
         {
-            if (SetLuminousNativeMotionClip(Shared, Entry && Entry->bLoop))
+            const bool bControllerPlayed = SharedMotionController &&
+                SharedMotionController->PlayAction(SharedEmotes[Index],
+                    TEXT("Interaction"), false, 1);
+            if (bControllerPlayed || SetLuminousNativeMotionClip(Shared, Entry && Entry->bLoop))
             {
+                if (bControllerPlayed)
+                {
+                    CurrentNativeClip = Shared;
+                    ActiveMotionLeaderIndex = INDEX_NONE;
+                    bCompatibleNativeMotion = true;
+                }
                 bGate09EmotePlaying = true;
-                Gate09EmoteEndTime = GetWorld()->GetTimeSeconds() + Shared->GetPlayLength();
+                Gate09EmoteEndTime = GetWorld()->GetTimeSeconds() +
+                    Shared->GetPlayLength() / FMath::Max(0.01f, Entry ? Entry->PlayRate : 1.f);
                 return true;
             }
         }
@@ -649,6 +698,8 @@ bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
 void AOGLuminousV3PlayableCharacter::InterruptGate09AuthoredEmote()
 {
     if (!bGate09EmotePlaying) return;
+    if (SharedMotionController && SharedMotionController->IsPlayingAction())
+        SharedMotionController->StopAction();
     if (RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) && RuntimeParts[ActiveMotionLeaderIndex])
         RuntimeParts[ActiveMotionLeaderIndex]->Stop();
     bGate09EmotePlaying = false;
@@ -985,6 +1036,8 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
             return; // Do not let traversal overwrite an accepted gameplay action.
         bSharedActionPlaying = false;
         SharedActionEndTime = 0.f;
+        if (SharedMotionController && SharedMotionController->IsPlayingAction())
+            SharedMotionController->StopAction();
         CurrentNativeClip = nullptr;
         CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
     }
@@ -1046,6 +1099,7 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
     Gate09EmoteEndTime = 0.f;
     bGate09TakeoffAlreadyPlayedThisFlight=false;
     Gate09TakeoffEndsAt=0.f;
+    if (SharedMotionController) SharedMotionController->StopAction();
     RuntimeParts.Reset();
     bCompatibleNativeMotion = false;
     bLuminousReady = false;

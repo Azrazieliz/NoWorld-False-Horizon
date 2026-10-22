@@ -6,6 +6,7 @@
 
 class UAnimSequence;
 class UOGSharedMotionLibrary;
+class UOGSharedMotionControllerComponent;
 class USkeletalMeshComponent;
 
 UENUM(BlueprintType)
@@ -113,6 +114,9 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Koikatsu|SharedMotion", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UOGSharedMotionControllerComponent> SharedMotionController;
+
     UPROPERTY(Transient)
     TArray<TObjectPtr<USkeletalMeshComponent>> NativeParts;
 
@@ -126,6 +130,7 @@ private:
     EOGKKVisualState CurrentState = EOGKKVisualState::Idle;
     EOGKKVisualState ForcedState = EOGKKVisualState::Idle;
     bool bOverride = false;
+    bool bSharedControllerWasPlaying = false;
     float LandUntilTime = 0.f;
     float ActionUntilTime = 0.f;
     float LastYaw = 0.f;

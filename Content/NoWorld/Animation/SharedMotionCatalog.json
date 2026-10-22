@@ -1,0 +1,294 @@
+{
+  "schema": "noworld.shared_motion_catalog.v1",
+  "description": "Authorable native animation catalog. Source hashes and bundle identities are intentionally not invented; verified importers must populate them. Authored assets require exact skeleton compatibility and real gameplay approval.",
+  "motions": [
+    {
+      "motion_id": "cmu.alter.CLOTHED.Walk",
+      "source_clip_id": "cmu.humanoid.Walk",
+      "action": "Traversal.Walk",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Walk.AN_G12_Alter_CLOTHED_RealCMU_Walk",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.CLOTHED.Run",
+      "source_clip_id": "cmu.humanoid.Run",
+      "action": "Traversal.Run",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Run.AN_G12_Alter_CLOTHED_RealCMU_Run",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.CLOTHED.Jump",
+      "source_clip_id": "cmu.humanoid.Jump",
+      "action": "Traversal.Jump",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Jump.AN_G12_Alter_CLOTHED_RealCMU_Jump",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.UNDERWEAR.Walk",
+      "source_clip_id": "cmu.humanoid.Walk",
+      "action": "Traversal.Walk",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Walk.AN_G12_Alter_UNDERWEAR_RealCMU_Walk",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.UNDERWEAR.Run",
+      "source_clip_id": "cmu.humanoid.Run",
+      "action": "Traversal.Run",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Run.AN_G12_Alter_UNDERWEAR_RealCMU_Run",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.UNDERWEAR.Jump",
+      "source_clip_id": "cmu.humanoid.Jump",
+      "action": "Traversal.Jump",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Jump.AN_G12_Alter_UNDERWEAR_RealCMU_Jump",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.NUDE.Walk",
+      "source_clip_id": "cmu.humanoid.Walk",
+      "action": "Traversal.Walk",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Walk.AN_G12_Alter_NUDE_RealCMU_Walk",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.NUDE.Run",
+      "source_clip_id": "cmu.humanoid.Run",
+      "action": "Traversal.Run",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Run.AN_G12_Alter_NUDE_RealCMU_Run",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "cmu.alter.NUDE.Jump",
+      "source_clip_id": "cmu.humanoid.Jump",
+      "action": "Traversal.Jump",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Jump.AN_G12_Alter_NUDE_RealCMU_Jump",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.base.Flight_Hover",
+      "source_clip_id": "koikatsu.Flight_Hover",
+      "action": "Traversal.FlightHover",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "flying"
+      ],
+      "native_sequence": "/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Flight_Hover.G12_LuminousV3_Koikatsu_Flight_Hover",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.base.Flight_Start",
+      "source_clip_id": "koikatsu.Flight_Start",
+      "action": "Traversal.FlightTakeoff",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "flying"
+      ],
+      "native_sequence": "/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Flight_Start.G12_LuminousV3_Koikatsu_Flight_Start",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.base.Swimming_Stroke",
+      "source_clip_id": "koikatsu.Swimming_Stroke",
+      "action": "Traversal.Swim",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "swimming"
+      ],
+      "native_sequence": "/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Swimming_Stroke.G12_LuminousV3_Koikatsu_Swimming_Stroke",
+      "loop": true,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.base.G09_LuminousV3_Idle_01_Thoughtful",
+      "source_clip_id": "kk.base.G09_LuminousV3_Idle_01_Thoughtful",
+      "action": "Emote.Thoughtful",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/Gate09_QA_20261019/TestSingle/G09_LuminousV3_Idle_01_Thoughtful.G09_LuminousV3_Idle_01_Thoughtful",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.base.G09_LuminousV3_Idle_02_Greeting",
+      "source_clip_id": "kk.base.G09_LuminousV3_Idle_02_Greeting",
+      "action": "Emote.Greeting",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_02_Greeting.G09_LuminousV3_Idle_02_Greeting",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.base.G09_LuminousV3_Idle_03_Expressive",
+      "source_clip_id": "kk.base.G09_LuminousV3_Idle_03_Expressive",
+      "action": "Emote.Expressive",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Idle_03_Expressive.G09_LuminousV3_Idle_03_Expressive",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.base.G09_LuminousV3_Emote_Bow_Source",
+      "source_clip_id": "kk.base.G09_LuminousV3_Emote_Bow_Source",
+      "action": "Emote.Bow",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/Gate09_QA_20261019/NativeKoikatsu/G09_LuminousV3_Emote_Bow_Source.G09_LuminousV3_Emote_Bow_Source",
+      "loop": false,
+      "approved_for_gameplay": true,
+      "participants": 1,
+      "play_rate": 1
+    }
+  ]
+}

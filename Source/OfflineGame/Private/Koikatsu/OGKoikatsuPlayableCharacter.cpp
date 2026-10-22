@@ -1,5 +1,6 @@
 #include "Koikatsu/OGKoikatsuPlayableCharacter.h"
 #include "Animation/OGSharedMotionLibrary.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
 
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimSingleNodeInstance.h"
@@ -11,6 +12,8 @@
 AOGKoikatsuPlayableCharacter::AOGKoikatsuPlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
+    SharedMotionController = CreateDefaultSubobject<UOGSharedMotionControllerComponent>(TEXT("NativeSharedMotionController"));
+    SharedMotionController->RigProfile = TEXT("koikatsu_fixture_21");
     SharedMotionCapabilities = {TEXT("grounded"), TEXT("swimming"),
         TEXT("flying"), TEXT("emote"), TEXT("combat")};
 }
@@ -58,6 +61,21 @@ void AOGKoikatsuPlayableCharacter::BeginPlay()
         UE_LOG(LogTemp, Error, TEXT("Gate12 KK: expected 19 exact imported Blueprint mesh parts, found %d"),
                NativeParts.Num());
         return;
+    }
+    // Register existing 19 mesh components for character-independent semantic
+    // playback. Per-part legacy sequences remain the fallback for incompatible
+    // skeleton derivatives and are not rebuilt or discarded.
+    if (SharedMotionController)
+    {
+        TArray<USkeletalMeshComponent*> Native;
+        for (USkeletalMeshComponent* Part : NativeParts) Native.Add(Part);
+        SharedMotionController->RigProfile = SharedMotionRigProfile;
+        SharedMotionController->AnatomyProfile = SharedMotionAnatomy;
+        SharedMotionController->OutfitProfile = SharedOutfitProfile;
+        SharedMotionController->Capabilities = SharedMotionCapabilities;
+        SharedMotionController->SharedLibrary = SharedMotionLibrary;
+        if (!SharedMotionController->RegisterNativeParts(Native))
+            UE_LOG(LogTemp, Warning, TEXT("Shared motion rig registration unavailable for Koikatsu fixture"));
     }
     // Resolve an actual source-to-Unreal +Z(gltf) -> +Y(UE) face conversion:
     // the frozen Blueprint import has yaw 0 while UE capsule moves +X forward.
@@ -300,6 +318,20 @@ void AOGKoikatsuPlayableCharacter::Tick(float DeltaSeconds)
 
     SmoothedHorizontalSpeed=FMath::FInterpTo(SmoothedHorizontalSpeed,
         GetVelocity().Size2D(),DeltaSeconds,FMath::Max(0.5f,MotionSpeedSmoothing));
+    // External gameplay/cinematic actions own their actual registered clip
+    // until completion; locomotion must not replace them the next frame.
+    if (SharedMotionController && SharedMotionController->IsPlayingAction())
+    {
+        bSharedControllerWasPlaying = true;
+        UpdateExpressionPulses(GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f);
+        return;
+    }
+    if (bSharedControllerWasPlaying)
+    {
+        bSharedControllerWasPlaying = false;
+        for (TObjectPtr<UAnimSequence>& OldClip : ActiveClips) OldClip = nullptr;
+        ApplyState(ComputeState()); // Restore the original per-part locomotion driver.
+    }
     const EOGKKVisualState Next=ComputeState();
     const bool bGaitCurrent=CurrentState==EOGKKVisualState::Walk||CurrentState==EOGKKVisualState::Run;
     const bool bGaitNext=Next==EOGKKVisualState::Walk||Next==EOGKKVisualState::Run;
@@ -343,6 +375,7 @@ void AOGKoikatsuPlayableCharacter::SetExpressionMorph(FName Name,float Weight)
 
 void AOGKoikatsuPlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
+    if (SharedMotionController) SharedMotionController->StopAction();
     NativeParts.Reset();
     ActiveClips.Reset();
     LoadedClips.Reset();

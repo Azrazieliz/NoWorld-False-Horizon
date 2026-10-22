@@ -3,6 +3,11 @@
 #include "Animation/AnimSequence.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Dom/JsonObject.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 namespace
 {
@@ -91,6 +96,84 @@ void Install(UOGSharedMotionLibrary* Library)
     // not claimed as usable gameplay assets. Eligible future adult assets
     // require explicit approval, privacy gating and a real native sequence.
 }
+
+// Packaged, editable shared catalog. New converted source derivatives can be
+// registered here without adding per-Version hardcoded C++ bindings. The
+// built-in registrations above remain a recovery fallback for this checkout.
+void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
+{
+    const FString ManifestPath = FPaths::Combine(FPaths::ProjectContentDir(),
+        TEXT("NoWorld/Animation/SharedMotionCatalog.json"));
+    FString Source;
+    if (!FFileHelper::LoadFileToString(Source, *ManifestPath)) return;
+    TSharedPtr<FJsonObject> Root;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Source);
+    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid()) return;
+    FString Schema;
+    if (!Root->TryGetStringField(TEXT("schema"), Schema) ||
+        Schema != TEXT("noworld.shared_motion_catalog.v1")) return;
+    const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+    if (!Root->TryGetArrayField(TEXT("motions"), Items) || !Items) return;
+
+    for (const TSharedPtr<FJsonValue>& ItemValue : *Items)
+    {
+        const TSharedPtr<FJsonObject> Item = ItemValue.IsValid()
+            ? ItemValue->AsObject() : nullptr;
+        if (!Item.IsValid()) continue;
+        const auto ReadName = [&Item](const TCHAR* Key) -> FName
+        {
+            FString Value;
+            return Item->TryGetStringField(Key, Value) ? FName(*Value) : NAME_None;
+        };
+        FOGSharedMotionEntry Entry;
+        Entry.MotionId = ReadName(TEXT("motion_id"));
+        Entry.SourceClipId = ReadName(TEXT("source_clip_id"));
+        Entry.GameplayAction = ReadName(TEXT("action"));
+        Entry.MotionCategory = ReadName(TEXT("category"));
+        Entry.GameplayContext = ReadName(TEXT("context"));
+        Entry.CompatibleRigProfile = ReadName(TEXT("rig"));
+        Entry.AnatomyProfile = ReadName(TEXT("anatomy"));
+        Entry.OutfitProfile = ReadName(TEXT("outfit"));
+        Entry.RetargetProfile = ReadName(TEXT("retarget"));
+        Entry.ContactNotify = ReadName(TEXT("contact_notify"));
+        Item->TryGetStringField(TEXT("source_hash"), Entry.SourceObjectHash);
+        Item->TryGetStringField(TEXT("source_bundle"), Entry.SourceUnityBundle);
+        FString Native;
+        Item->TryGetStringField(TEXT("native_sequence"), Native);
+        if (Entry.MotionId.IsNone() || Entry.SourceClipId.IsNone() ||
+            Entry.GameplayAction.IsNone() || Entry.GameplayContext.IsNone() ||
+            Entry.CompatibleRigProfile.IsNone() ||
+            !Native.StartsWith(TEXT("/Game/")) || !Native.Contains(TEXT(".")) ||
+            Native.Contains(TEXT(".."))) continue;
+        Entry.NativeSequence = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(Native));
+        const TArray<TSharedPtr<FJsonValue>>* Caps = nullptr;
+        if (Item->TryGetArrayField(TEXT("capabilities"), Caps) && Caps)
+            for (const TSharedPtr<FJsonValue>& V : *Caps)
+                if (V.IsValid() && V->Type == EJson::String)
+                    Entry.RequiredCapabilities.Add(FName(*V->AsString()));
+        Item->TryGetBoolField(TEXT("approved_for_gameplay"), Entry.bApprovedForGameplay);
+        Item->TryGetBoolField(TEXT("adult_restricted"), Entry.bAdultRestricted);
+        Item->TryGetBoolField(TEXT("loop"), Entry.bLoop);
+        Item->TryGetBoolField(TEXT("root_motion"), Entry.bUsesRootMotion);
+        double Number = 0.;
+        if (Item->TryGetNumberField(TEXT("participants"), Number))
+            Entry.RequiredParticipants = FMath::Clamp(FMath::RoundToInt(Number), 1, 13);
+        if (Item->TryGetNumberField(TEXT("priority"), Number))
+            Entry.Priority = FMath::RoundToInt(Number);
+        if (Item->TryGetNumberField(TEXT("play_rate"), Number))
+            Entry.PlayRate = FMath::Clamp(static_cast<float>(Number), 0.01f, 8.f);
+        if (Item->TryGetNumberField(TEXT("contact_seconds"), Number))
+            Entry.ContactSeconds = static_cast<float>(Number);
+        if (Item->TryGetNumberField(TEXT("movement_speed_cm_s"), Number))
+            Entry.MovementSpeedCmPerSecond = static_cast<float>(Number);
+
+        // Manifest approvals replace precisely the matching installed entry.
+        // De-approved definitions suppress the fallback instead of reviving it.
+        Library->Motions.RemoveAll([Id = Entry.MotionId](const FOGSharedMotionEntry& Existing)
+            { return Existing.MotionId == Id; });
+        if (Entry.bApprovedForGameplay) Library->Motions.Add(MoveTemp(Entry));
+    }
+}
 }
 
 const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetInstalledLibrary()
@@ -103,6 +186,7 @@ const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetInstalledLibrary()
         Installed = NewObject<UOGSharedMotionLibrary>(GetTransientPackage());
         Installed->AddToRoot();
         Install(Installed);
+        ReadPackagedCatalog(Installed);
     }
     return Installed;
 }
