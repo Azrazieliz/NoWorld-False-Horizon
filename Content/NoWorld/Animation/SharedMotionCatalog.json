@@ -289,6 +289,462 @@
       "approved_for_gameplay": true,
       "participants": 1,
       "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.f_action_00_00",
+      "source_clip_id": "koikatsu.original.f_action_00_00",
+      "action": "Interaction.Action",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_action_00_00.AN_G12_KK_Original_CLOTHED_f_action_00_00",
+      "loop": false,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.f_Land_00_00",
+      "source_clip_id": "koikatsu.original.f_Land_00_00",
+      "action": "Traversal.Land",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_Land_00_00.AN_G12_KK_Original_CLOTHED_f_Land_00_00",
+      "loop": false,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.f_sleep_00_03_L",
+      "source_clip_id": "koikatsu.original.f_sleep_00_03_L",
+      "action": "Interaction.Sleep",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_sleep_00_03_L.AN_G12_KK_Original_CLOTHED_f_sleep_00_03_L",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.f_talk_00_13_01",
+      "source_clip_id": "koikatsu.original.f_talk_00_13_01",
+      "action": "Interaction.Talk",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_talk_00_13_01.AN_G12_KK_Original_CLOTHED_f_talk_00_13_01",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.Idle_00_00",
+      "source_clip_id": "koikatsu.original.Idle_00_00",
+      "action": "Traversal.Idle",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Idle_00_00.AN_G12_KK_Original_CLOTHED_Idle_00_00",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.Idle_03_01",
+      "source_clip_id": "koikatsu.original.Idle_03_01",
+      "action": "Traversal.IdleAlternate",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Idle_03_01.AN_G12_KK_Original_CLOTHED_Idle_03_01",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.live_dance",
+      "source_clip_id": "koikatsu.original.live_dance",
+      "action": "Emote.Dance",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_live_dance.AN_G12_KK_Original_CLOTHED_live_dance",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "rejected_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.CLOTHED.Stand_Oth_00",
+      "source_clip_id": "koikatsu.original.Stand_Oth_00",
+      "action": "Interaction.StandAlternate",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "CLOTHED",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Stand_Oth_00.AN_G12_KK_Original_CLOTHED_Stand_Oth_00",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.f_action_00_00",
+      "source_clip_id": "koikatsu.original.f_action_00_00",
+      "action": "Interaction.Action",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_action_00_00.AN_G12_KK_Original_UNDERWEAR_f_action_00_00",
+      "loop": false,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.f_Land_00_00",
+      "source_clip_id": "koikatsu.original.f_Land_00_00",
+      "action": "Traversal.Land",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_Land_00_00.AN_G12_KK_Original_UNDERWEAR_f_Land_00_00",
+      "loop": false,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.f_sleep_00_03_L",
+      "source_clip_id": "koikatsu.original.f_sleep_00_03_L",
+      "action": "Interaction.Sleep",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_sleep_00_03_L.AN_G12_KK_Original_UNDERWEAR_f_sleep_00_03_L",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.f_talk_00_13_01",
+      "source_clip_id": "koikatsu.original.f_talk_00_13_01",
+      "action": "Interaction.Talk",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_talk_00_13_01.AN_G12_KK_Original_UNDERWEAR_f_talk_00_13_01",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.Idle_00_00",
+      "source_clip_id": "koikatsu.original.Idle_00_00",
+      "action": "Traversal.Idle",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Idle_00_00.AN_G12_KK_Original_UNDERWEAR_Idle_00_00",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.Idle_03_01",
+      "source_clip_id": "koikatsu.original.Idle_03_01",
+      "action": "Traversal.IdleAlternate",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Idle_03_01.AN_G12_KK_Original_UNDERWEAR_Idle_03_01",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.live_dance",
+      "source_clip_id": "koikatsu.original.live_dance",
+      "action": "Emote.Dance",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_live_dance.AN_G12_KK_Original_UNDERWEAR_live_dance",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "rejected_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.UNDERWEAR.Stand_Oth_00",
+      "source_clip_id": "koikatsu.original.Stand_Oth_00",
+      "action": "Interaction.StandAlternate",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "UNDERWEAR",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Stand_Oth_00.AN_G12_KK_Original_UNDERWEAR_Stand_Oth_00",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.f_action_00_00",
+      "source_clip_id": "koikatsu.original.f_action_00_00",
+      "action": "Interaction.Action",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_action_00_00.AN_G12_KK_Original_NUDE_f_action_00_00",
+      "loop": false,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.f_Land_00_00",
+      "source_clip_id": "koikatsu.original.f_Land_00_00",
+      "action": "Traversal.Land",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_Land_00_00.AN_G12_KK_Original_NUDE_f_Land_00_00",
+      "loop": false,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.f_sleep_00_03_L",
+      "source_clip_id": "koikatsu.original.f_sleep_00_03_L",
+      "action": "Interaction.Sleep",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_sleep_00_03_L.AN_G12_KK_Original_NUDE_f_sleep_00_03_L",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.f_talk_00_13_01",
+      "source_clip_id": "koikatsu.original.f_talk_00_13_01",
+      "action": "Interaction.Talk",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_talk_00_13_01.AN_G12_KK_Original_NUDE_f_talk_00_13_01",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.Idle_00_00",
+      "source_clip_id": "koikatsu.original.Idle_00_00",
+      "action": "Traversal.Idle",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Idle_00_00.AN_G12_KK_Original_NUDE_Idle_00_00",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.Idle_03_01",
+      "source_clip_id": "koikatsu.original.Idle_03_01",
+      "action": "Traversal.IdleAlternate",
+      "category": "Traversal",
+      "context": "Traversal",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "grounded"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Idle_03_01.AN_G12_KK_Original_NUDE_Idle_03_01",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.live_dance",
+      "source_clip_id": "koikatsu.original.live_dance",
+      "action": "Emote.Dance",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_live_dance.AN_G12_KK_Original_NUDE_live_dance",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "rejected_visual_qa",
+      "participants": 1,
+      "play_rate": 1
+    },
+    {
+      "motion_id": "kk.alter.original.qa.NUDE.Stand_Oth_00",
+      "source_clip_id": "koikatsu.original.Stand_Oth_00",
+      "action": "Interaction.StandAlternate",
+      "category": "Interaction",
+      "context": "Interaction",
+      "rig": "koikatsu_original",
+      "anatomy": "humanoid",
+      "outfit": "NUDE",
+      "capabilities": [
+        "emote"
+      ],
+      "native_sequence": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Stand_Oth_00.AN_G12_KK_Original_NUDE_Stand_Oth_00",
+      "loop": true,
+      "approved_for_gameplay": false,
+      "review_state": "pending_visual_qa",
+      "participants": 1,
+      "play_rate": 1
     }
   ]
 }
