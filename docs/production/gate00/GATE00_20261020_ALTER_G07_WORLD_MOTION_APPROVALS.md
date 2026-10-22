@@ -1,3 +1,5 @@
+> **LATEST 22 OCTOBER 2026 OVERRIDE:** [Gate00 authoritative Gate12/Combat v4 supersession](GATE00_20261022_GATE12_GATE04_V4_CANONICAL_PRODUCTION_HANDOFF.md) supersedes the *combat v1/v6 specific numbers* in this 20-Oct original approvals file. Five user-approved v4 designs including Awakened, Berserker, Grand; do not stack old kit effects. Grand fifth lineage and bespoke proofs require proper original source/creative resolution. **Gate09 remains dismissed; Gate11 retired; Gate07 18/18 approved; Gate02 anchor/12 procedural remainder remain unchanged.** Historical 20-Oct text below preserved for provenance. Exact v4 ZIP referenced but not yet located/hashed; do not infer numeric v4 coefficients from this metadata.
+
 # Gate00 — Binding approvals and implementation amendments
 **Date:** 2026-10-20 (Europe/Paris). **Priority:** P0.
 **Authority:** Latest direct user instruction. Supersedes conflicting passages in Issue #25, earlier Gate00 orders and historical Gate11/deferred status descriptions. **Gate11 is retired.**
