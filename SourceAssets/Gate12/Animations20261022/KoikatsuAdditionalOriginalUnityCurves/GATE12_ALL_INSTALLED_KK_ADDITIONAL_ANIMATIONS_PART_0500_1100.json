@@ -1,0 +1,1416 @@
+{
+ "schema": "noworld.gate12.all_installed_kk_original_additional_clips.v1",
+ "source_directory": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\abdata",
+ "installed_unity_bundles": 1685,
+ "already_ingested_h_animation_bundles": 288,
+ "additional_bundles": 1397,
+ "batch_start": 500,
+ "batch_end": 1100,
+ "progress_next_index": 1100,
+ "counts": {
+  "BUNDLE_READ_OK": 600,
+  "IMPORTED_SOURCE_CURVES": 155
+ },
+ "clip_count": 155,
+ "status": "SOURCE_ARCHIVE_COMPLETE_NOT_NATIVE_UNREAL",
+ "playable_ue_animsequence_created": 0,
+ "retarget_authorized": false,
+ "original_bundles_unchanged": true,
+ "clips": [
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Other_00",
+   "path_id": -8866789825777819715,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\45ccf19ecd9651eb1b6aacc6.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Pose_H_02",
+   "path_id": -8558587027545407907,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\126282dae626ae3db4b21728.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Pose_H_04",
+   "path_id": -8241679718155870375,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\7801fe12fe8d0783a74bb7b3.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_D_01",
+   "path_id": -8017152178776048589,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\0561c23bce8dd351b63e3cbb.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Mstand_01",
+   "path_id": -6964797440618968976,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\c596b129d971e7c95f90bc94.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSit_00",
+   "path_id": -6661565335448014593,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\49a38df4950d70b82cf99d1a.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_D_00",
+   "path_id": -6542521323027908182,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\2032e34d13792fedea9ebbaf.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_06_00",
+   "path_id": -6243681301464090216,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\6d4b94da8a7de707505bcfdf.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_10_00",
+   "path_id": -6158241229257620981,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\947ce06d821a6f9e56e457e8.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSleep_02",
+   "path_id": -5668745546656269062,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\03c7bec70e895aefaf979d48.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_28_00",
+   "path_id": -4965084847030716874,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\6f70da67f21ef7a9f78d1048.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_14_00",
+   "path_id": -4542057999716449209,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\e95e86b30a729b0c68b18f3c.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_24_00",
+   "path_id": -4311551336984916301,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\736234547d7f02d02aee02a3.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_26_00",
+   "path_id": -4268893614624691429,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\dff21a178ac5eec6003d78ba.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Mstand_00",
+   "path_id": -3917564421548740044,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\092ec4f0b4f171862e00db08.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Mstand_02",
+   "path_id": -3579436028663499255,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\a3b87a02880d114b23f142d6.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSleep_04",
+   "path_id": -3413769128045030781,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\bcf94504348788b38937ea8f.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_19_00",
+   "path_id": -3098341826813310705,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\efaf3fee0538da8bd81da046.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_20_00",
+   "path_id": -2989450956813546274,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\13e602e652dba9507652d360.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Pose_H_00",
+   "path_id": -2915143819483856647,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\a9b6bcd3f260fdcf33b0cad8.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Other_04",
+   "path_id": -2869294320530833289,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\48d52163fdaea6e3c9c71114.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_01_00",
+   "path_id": -2739652043035154435,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\9667c7fe7ad01bfdf9ba1c51.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Mstand_04",
+   "path_id": -2365502015610207885,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\8c52c35e440e9bb715831620.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Other_03",
+   "path_id": -2285322470221749158,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\307acda17d185fa3e97b5e56.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Other_02",
+   "path_id": -2252578885181385471,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\c76036baf5403cfa3eed7225.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_09_00",
+   "path_id": -2136093159862665432,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\c7eeb5e1672bcf0f38ec2431.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSleep_01",
+   "path_id": -1974955117680787232,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\e33dbeaf4dc13a1bad451fb2.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSit_04",
+   "path_id": -1492987392018278903,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\5898604d55c2e129e5529305.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_17_00",
+   "path_id": -972488823534387226,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\873ae2c106f63a48330d152f.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Mstand_03",
+   "path_id": -265232416381680779,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\cd6a1cae19d25cfba325d97f.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_00_00",
+   "path_id": 12690842692024675,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\709e7fefc115efb54af9bb11.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_15_00",
+   "path_id": 121019260836836897,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\8b4bc4f76d8d9c10bf5b7c81.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_22_00",
+   "path_id": 138211184596275809,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\a1fc3ef3f0c8fe1bf80497e4.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_18_00",
+   "path_id": 359159180364413281,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\cf41220ed2519f483e52ed30.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSit_03",
+   "path_id": 532978800407885741,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\332814a038b9bd78fb2c9f5a.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSit_02",
+   "path_id": 1136555646415970999,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\36cb85c081417a756f038daa.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSleep_00",
+   "path_id": 1289138656291172811,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\cd47cbc299b513202aba1b24.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_11_00",
+   "path_id": 1444926170229366230,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\ebca8a9677b53e882690587d.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_27_00",
+   "path_id": 2882807490262217176,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\75fe204658510e60fc70acab.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSleep_03",
+   "path_id": 3374402207567120683,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\0efa62397052ee8314711e19.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_05_00",
+   "path_id": 3518425657779731433,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\c0381a4e17b70867ba8cbffe.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_12_00",
+   "path_id": 3799037367787028922,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\bf1359ecb4ee49c3b5f7be7b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_16_00",
+   "path_id": 4295393613569434329,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\60d4e79043b967630ac4f734.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Mmannequin_00",
+   "path_id": 4404901794754545406,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\4e63db18e4e457023e14f987.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "GSit_01",
+   "path_id": 4878299827892403592,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\f766e2363c06d1e1434b0b5a.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_02_00",
+   "path_id": 5403685505856332315,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\8f4a838c53f887a465716f25.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_08_00",
+   "path_id": 5452917376049477489,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\6a20ba8743d9d22d958ff5b7.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Fmannequin_00",
+   "path_id": 5464384272574003296,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\421cbd5c07b78241beee4453.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_23_00",
+   "path_id": 5659139436206768892,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\a6a157ff7a737205123ce347.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_13_00",
+   "path_id": 5781951719936652401,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\b544e4ae93fdc3df3c6543e8.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_29_00",
+   "path_id": 6243220457899056167,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\e81a1b967838e60406bf27ce.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_25_00",
+   "path_id": 6258377879945626584,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\74ede407c43be7aeb44246db.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Pose_H_03",
+   "path_id": 6475069494016714165,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\885f3df88587df3c4e3211d2.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_03_00",
+   "path_id": 6773749606109047594,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\1e8b51632ef7f3fdc0785282.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_21_00",
+   "path_id": 7092511386820064347,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\7cc558c1e79d9e439a9ec5de.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Pose_H_01",
+   "path_id": 7705165515308691581,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\22ea579ab4f66b28877066b4.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_07_00",
+   "path_id": 8097777611424384073,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\e99348665af4eccbb11190ad.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Other_01",
+   "path_id": 8151660298542251411,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\025dc167614b79b10030f099.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 670,
+   "source_bundle": "custom/custompose.unity3d",
+   "source_bundle_sha256": "97318a3dcaf8e250fe750ff3e496e8e5a958b041084a381646974af2c6ebd5b4",
+   "name": "Stand_04_00",
+   "path_id": 8305549052174672974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0670\\51dacdebc5a4df288d59d1f0.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 671,
+   "source_bundle": "custom/custompose_14.unity3d",
+   "source_bundle_sha256": "2b2130a39ad4c74781d46119d4280101885782cf7626bd01f19db9f4c4d3da73",
+   "name": "Stand_30_00",
+   "path_id": -3714017253221503102,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0671\\b4aaee42e62e0d7cc2eeba6b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 685,
+   "source_bundle": "h/common/00_00.unity3d",
+   "source_bundle_sha256": "4f3ac0ab877b5f415165a0441e1c774a2477b960cd00d701b0ccb0a890e2090a",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0685\\6532067b6df00ece111e706b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 685,
+   "source_bundle": "h/common/00_00.unity3d",
+   "source_bundle_sha256": "4f3ac0ab877b5f415165a0441e1c774a2477b960cd00d701b0ccb0a890e2090a",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0685\\49c195926792468d2591709b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 685,
+   "source_bundle": "h/common/00_00.unity3d",
+   "source_bundle_sha256": "4f3ac0ab877b5f415165a0441e1c774a2477b960cd00d701b0ccb0a890e2090a",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0685\\8a08c678fb0a1ab51af395dd.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 685,
+   "source_bundle": "h/common/00_00.unity3d",
+   "source_bundle_sha256": "4f3ac0ab877b5f415165a0441e1c774a2477b960cd00d701b0ccb0a890e2090a",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0685\\a754d22630be5ff4d14c55bf.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 687,
+   "source_bundle": "h/common/10_00.unity3d",
+   "source_bundle_sha256": "54d14c7c76891775b752a459fef11233ffea837289e2ca6ae78abc02d2666dc8",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0687\\5b768a6ef0feabee80f3baad.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 687,
+   "source_bundle": "h/common/10_00.unity3d",
+   "source_bundle_sha256": "54d14c7c76891775b752a459fef11233ffea837289e2ca6ae78abc02d2666dc8",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0687\\a77f3c215623d858e247f1fa.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 687,
+   "source_bundle": "h/common/10_00.unity3d",
+   "source_bundle_sha256": "54d14c7c76891775b752a459fef11233ffea837289e2ca6ae78abc02d2666dc8",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0687\\1f435844f2e90a0bf12ca949.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 687,
+   "source_bundle": "h/common/10_00.unity3d",
+   "source_bundle_sha256": "54d14c7c76891775b752a459fef11233ffea837289e2ca6ae78abc02d2666dc8",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0687\\28d94ecdb32f76e0fb9fed04.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 688,
+   "source_bundle": "h/common/12_00.unity3d",
+   "source_bundle_sha256": "20609a1c3c66dfed4eb74ce38b483f342b750f3a091b1724156ed3e39caf0c7c",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0688\\2f97c399c8fd34d2cc5b3785.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 688,
+   "source_bundle": "h/common/12_00.unity3d",
+   "source_bundle_sha256": "20609a1c3c66dfed4eb74ce38b483f342b750f3a091b1724156ed3e39caf0c7c",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0688\\29890666ec3c40d48214dde8.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 688,
+   "source_bundle": "h/common/12_00.unity3d",
+   "source_bundle_sha256": "20609a1c3c66dfed4eb74ce38b483f342b750f3a091b1724156ed3e39caf0c7c",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0688\\3a1c53a55cbfafd6db96d3cc.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 688,
+   "source_bundle": "h/common/12_00.unity3d",
+   "source_bundle_sha256": "20609a1c3c66dfed4eb74ce38b483f342b750f3a091b1724156ed3e39caf0c7c",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0688\\1619df98226bfa87a229b757.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 689,
+   "source_bundle": "h/common/13_00.unity3d",
+   "source_bundle_sha256": "5d5c3d54607f29046cdf9c5fed9401ea328fd13cfe435c89ec26c8da050a95a8",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0689\\2c47f0746641c4ebd0c893d1.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 689,
+   "source_bundle": "h/common/13_00.unity3d",
+   "source_bundle_sha256": "5d5c3d54607f29046cdf9c5fed9401ea328fd13cfe435c89ec26c8da050a95a8",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0689\\8e9db9443e952cb082589a3a.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 689,
+   "source_bundle": "h/common/13_00.unity3d",
+   "source_bundle_sha256": "5d5c3d54607f29046cdf9c5fed9401ea328fd13cfe435c89ec26c8da050a95a8",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0689\\8d741cd727b7e72694d3ded0.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 689,
+   "source_bundle": "h/common/13_00.unity3d",
+   "source_bundle_sha256": "5d5c3d54607f29046cdf9c5fed9401ea328fd13cfe435c89ec26c8da050a95a8",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0689\\6dbea0bd8d510697fd7065b7.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 690,
+   "source_bundle": "h/common/80_00.unity3d",
+   "source_bundle_sha256": "3c9522f0e606a2514f68b4a4efdf0acb8f713b7f6c468abea0208d51b96375d1",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0690\\d7e618aaed1575f21aac0275.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 690,
+   "source_bundle": "h/common/80_00.unity3d",
+   "source_bundle_sha256": "3c9522f0e606a2514f68b4a4efdf0acb8f713b7f6c468abea0208d51b96375d1",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0690\\8b36b76f35a4c4f7bc4ccc9c.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 690,
+   "source_bundle": "h/common/80_00.unity3d",
+   "source_bundle_sha256": "3c9522f0e606a2514f68b4a4efdf0acb8f713b7f6c468abea0208d51b96375d1",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0690\\d1fbd3f8446990c21aff83e5.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 690,
+   "source_bundle": "h/common/80_00.unity3d",
+   "source_bundle_sha256": "3c9522f0e606a2514f68b4a4efdf0acb8f713b7f6c468abea0208d51b96375d1",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0690\\5a62eba6282755e7a37dbe5b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 691,
+   "source_bundle": "h/common/97_00.unity3d",
+   "source_bundle_sha256": "c6e7856d80c61dac75be4f012bbb0047151213d1006b09b20971ad83598dc8a3",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0691\\03e02d026574784dfd12e21f.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 691,
+   "source_bundle": "h/common/97_00.unity3d",
+   "source_bundle_sha256": "c6e7856d80c61dac75be4f012bbb0047151213d1006b09b20971ad83598dc8a3",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0691\\de0c7900511c8d143af4e511.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 691,
+   "source_bundle": "h/common/97_00.unity3d",
+   "source_bundle_sha256": "c6e7856d80c61dac75be4f012bbb0047151213d1006b09b20971ad83598dc8a3",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0691\\4023b6d9acc261b015088373.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 691,
+   "source_bundle": "h/common/97_00.unity3d",
+   "source_bundle_sha256": "c6e7856d80c61dac75be4f012bbb0047151213d1006b09b20971ad83598dc8a3",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0691\\ca169bc811647e93bfbae922.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 692,
+   "source_bundle": "h/common/98_00.unity3d",
+   "source_bundle_sha256": "f71b20ddec3868e61b7423ed8a6065322dcce71a68e3171f1ae26a9521166143",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0692\\ac883725f759c794e709ccd0.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 692,
+   "source_bundle": "h/common/98_00.unity3d",
+   "source_bundle_sha256": "f71b20ddec3868e61b7423ed8a6065322dcce71a68e3171f1ae26a9521166143",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0692\\895faaa06f2a33371e8ac519.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 692,
+   "source_bundle": "h/common/98_00.unity3d",
+   "source_bundle_sha256": "f71b20ddec3868e61b7423ed8a6065322dcce71a68e3171f1ae26a9521166143",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0692\\e41482ad1f7b8ef45dd33a33.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 692,
+   "source_bundle": "h/common/98_00.unity3d",
+   "source_bundle_sha256": "f71b20ddec3868e61b7423ed8a6065322dcce71a68e3171f1ae26a9521166143",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0692\\41e722836e4740e95092b271.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 693,
+   "source_bundle": "h/common/99_00.unity3d",
+   "source_bundle_sha256": "e5e6499fa64f4bf84550e7e2b21bb2e23eadd9d7dfb9114f9d4ad71444840dec",
+   "name": "upidle",
+   "path_id": -6268671406065088599,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0693\\0dac4efe2990bbf44c947f54.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 693,
+   "source_bundle": "h/common/99_00.unity3d",
+   "source_bundle_sha256": "e5e6499fa64f4bf84550e7e2b21bb2e23eadd9d7dfb9114f9d4ad71444840dec",
+   "name": "up",
+   "path_id": 571625507903772631,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0693\\59ccf37c58999e6ca7a095ef.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 693,
+   "source_bundle": "h/common/99_00.unity3d",
+   "source_bundle_sha256": "e5e6499fa64f4bf84550e7e2b21bb2e23eadd9d7dfb9114f9d4ad71444840dec",
+   "name": "down",
+   "path_id": 4244454111319990367,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0693\\0a92868bbdcefe5ff116df96.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 693,
+   "source_bundle": "h/common/99_00.unity3d",
+   "source_bundle_sha256": "e5e6499fa64f4bf84550e7e2b21bb2e23eadd9d7dfb9114f9d4ad71444840dec",
+   "name": "idle",
+   "path_id": 6892042348700534974,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0693\\0e23611c95ecd1204d103f02.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 694,
+   "source_bundle": "h/common/beachball.unity3d",
+   "source_bundle_sha256": "f909df2117d3346abf84a00a94965354bd206488e00f4ed2984df616e4d798ff",
+   "name": "ptn01",
+   "path_id": 1559808247265301772,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0694\\09dd97c6b0ef87105616366b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 694,
+   "source_bundle": "h/common/beachball.unity3d",
+   "source_bundle_sha256": "f909df2117d3346abf84a00a94965354bd206488e00f4ed2984df616e4d798ff",
+   "name": "ptn02",
+   "path_id": 6187861680792840132,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0694\\52f441331226b0dfd3da72cb.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 711,
+   "source_bundle": "h/common/dildo.unity3d",
+   "source_bundle_sha256": "f0ac9eddc85146f25b3fffb8aa26eef612a7bea56f9c75b59593a9f59b09302b",
+   "name": "ptn01",
+   "path_id": 1559808247265301772,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0711\\f94eb0edac48eba32a61b718.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 711,
+   "source_bundle": "h/common/dildo.unity3d",
+   "source_bundle_sha256": "f0ac9eddc85146f25b3fffb8aa26eef612a7bea56f9c75b59593a9f59b09302b",
+   "name": "ptn02",
+   "path_id": 6187861680792840132,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0711\\2b14b4a687b9d59ec151da40.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 712,
+   "source_bundle": "h/common/rotor_L.unity3d",
+   "source_bundle_sha256": "ac2dff6fa14af9e82940c71c3ec161eeecab4eb4f55e6e3def3d1979f9339c4c",
+   "name": "ptn01",
+   "path_id": 1559808247265301772,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0712\\c7b88e5753ba42d1ea31af41.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 712,
+   "source_bundle": "h/common/rotor_L.unity3d",
+   "source_bundle_sha256": "ac2dff6fa14af9e82940c71c3ec161eeecab4eb4f55e6e3def3d1979f9339c4c",
+   "name": "ptn02",
+   "path_id": 6187861680792840132,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0712\\39832ca9067b8673eefbe589.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 713,
+   "source_bundle": "h/common/rotor_R.unity3d",
+   "source_bundle_sha256": "217d6fe45a6b3a200fee44db25ca64abedb2243de92c0145ad9c74eb5b2125f0",
+   "name": "ptn01",
+   "path_id": 1559808247265301772,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0713\\d5cc957802b052b58237d4a1.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 713,
+   "source_bundle": "h/common/rotor_R.unity3d",
+   "source_bundle_sha256": "217d6fe45a6b3a200fee44db25ca64abedb2243de92c0145ad9c74eb5b2125f0",
+   "name": "ptn02",
+   "path_id": 6187861680792840132,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0713\\5ea10a079a484a6f31c3ab58.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 714,
+   "source_bundle": "h/common/ukiwa.unity3d",
+   "source_bundle_sha256": "382d00b3b01aa495826f832c57fa39a7cce0d733e250523fea4684c452b44582",
+   "name": "ptn01",
+   "path_id": 1559808247265301772,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0714\\d26a313d57f1c8c749dec387.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 714,
+   "source_bundle": "h/common/ukiwa.unity3d",
+   "source_bundle_sha256": "382d00b3b01aa495826f832c57fa39a7cce0d733e250523fea4684c452b44582",
+   "name": "ptn02",
+   "path_id": 6187861680792840132,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0714\\dbef45c9d649e926e600f408.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1048,
+   "source_bundle": "map/object/00.unity3d",
+   "source_bundle_sha256": "15643f95fecd0ec981363fb0549ea6a11301200101e1d77eb24f5bca442b97d2",
+   "name": "HideTextItem",
+   "path_id": -6491646072903215493,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1048\\e43daa3baa7b1042a8ca5de2.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1048,
+   "source_bundle": "map/object/00.unity3d",
+   "source_bundle_sha256": "15643f95fecd0ec981363fb0549ea6a11301200101e1d77eb24f5bca442b97d2",
+   "name": "Pulsing",
+   "path_id": -3079916992741104749,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1048\\5047d0879f3096f3eb6f5393.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1048,
+   "source_bundle": "map/object/00.unity3d",
+   "source_bundle_sha256": "15643f95fecd0ec981363fb0549ea6a11301200101e1d77eb24f5bca442b97d2",
+   "name": "OpenTextItem",
+   "path_id": -2849306772685387114,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1048\\8e28d9549124cfc915b9018b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1048,
+   "source_bundle": "map/object/00.unity3d",
+   "source_bundle_sha256": "15643f95fecd0ec981363fb0549ea6a11301200101e1d77eb24f5bca442b97d2",
+   "name": "Fade",
+   "path_id": 785678982378960807,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1048\\f007c803449cd54a49e8ed91.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1050,
+   "source_bundle": "map/playeractionpoint/00.unity3d",
+   "source_bundle_sha256": "8ea5503793470249833c97d0c7d4c33d8e92f3d2d103215bcc287f7fc68e6d05",
+   "name": "icon_action",
+   "path_id": -3657383982916039057,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1050\\93172067e00a2dedaf7c3c64.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1050,
+   "source_bundle": "map/playeractionpoint/00.unity3d",
+   "source_bundle_sha256": "8ea5503793470249833c97d0c7d4c33d8e92f3d2d103215bcc287f7fc68e6d05",
+   "name": "icon_stop",
+   "path_id": -3309917347433630968,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1050\\755853e3afd6fd0d68f5dab3.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1053,
+   "source_bundle": "map/scene/1ftoilet.unity3d",
+   "source_bundle_sha256": "c855abdea689852b333a4d94c6b4594c0f9bf164a5796dca645e8184e1488508",
+   "name": "Fix_-90_Yaw",
+   "path_id": 138,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1053\\736d1dabfb2d792dc3d5ec7e.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1053,
+   "source_bundle": "map/scene/1ftoilet.unity3d",
+   "source_bundle_sha256": "c855abdea689852b333a4d94c6b4594c0f9bf164a5796dca645e8184e1488508",
+   "name": "Fix_0_Yaw",
+   "path_id": 139,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1053\\506b5e8cde502c297c8e4973.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1053,
+   "source_bundle": "map/scene/1ftoilet.unity3d",
+   "source_bundle_sha256": "c855abdea689852b333a4d94c6b4594c0f9bf164a5796dca645e8184e1488508",
+   "name": "Fix_90_Yaw",
+   "path_id": 140,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1053\\2de3d66282bf983c8a9c5d4f.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1053,
+   "source_bundle": "map/scene/1ftoilet.unity3d",
+   "source_bundle_sha256": "c855abdea689852b333a4d94c6b4594c0f9bf164a5796dca645e8184e1488508",
+   "name": "Spin_0_-90_Yaw",
+   "path_id": 141,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1053\\d9f3bb440e71446316becc28.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1053,
+   "source_bundle": "map/scene/1ftoilet.unity3d",
+   "source_bundle_sha256": "c855abdea689852b333a4d94c6b4594c0f9bf164a5796dca645e8184e1488508",
+   "name": "Spin_0_90_Yaw",
+   "path_id": 142,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1053\\9eccb4cc12c6f6c9028e8e06.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1057,
+   "source_bundle": "map/scene/2ftoilet.unity3d",
+   "source_bundle_sha256": "266da9206921447a2717fc3c8901ae16423e72ba8ba26b042738ade5969ed760",
+   "name": "Fix_-90_Yaw",
+   "path_id": 138,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1057\\574beb18d58a06bdafece0c9.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1057,
+   "source_bundle": "map/scene/2ftoilet.unity3d",
+   "source_bundle_sha256": "266da9206921447a2717fc3c8901ae16423e72ba8ba26b042738ade5969ed760",
+   "name": "Fix_0_Yaw",
+   "path_id": 139,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1057\\6f8df9ecc54e33c267691626.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1057,
+   "source_bundle": "map/scene/2ftoilet.unity3d",
+   "source_bundle_sha256": "266da9206921447a2717fc3c8901ae16423e72ba8ba26b042738ade5969ed760",
+   "name": "Fix_90_Yaw",
+   "path_id": 140,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1057\\174573cc3af37dfb20288515.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1057,
+   "source_bundle": "map/scene/2ftoilet.unity3d",
+   "source_bundle_sha256": "266da9206921447a2717fc3c8901ae16423e72ba8ba26b042738ade5969ed760",
+   "name": "Spin_0_-90_Yaw",
+   "path_id": 141,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1057\\9e59cf6f39b2f35ee9c4a350.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1057,
+   "source_bundle": "map/scene/2ftoilet.unity3d",
+   "source_bundle_sha256": "266da9206921447a2717fc3c8901ae16423e72ba8ba26b042738ade5969ed760",
+   "name": "Spin_0_90_Yaw",
+   "path_id": 142,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1057\\c6d73ea45bf9ff87f663c56c.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1060,
+   "source_bundle": "map/scene/3ftoilet.unity3d",
+   "source_bundle_sha256": "48552f02c73d81d4036e4db6d20946ebbe1318182276fbf943c93fb34913b11c",
+   "name": "Fix_-90_Yaw",
+   "path_id": 138,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1060\\3f7c0f1e0590f6768929bfb1.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1060,
+   "source_bundle": "map/scene/3ftoilet.unity3d",
+   "source_bundle_sha256": "48552f02c73d81d4036e4db6d20946ebbe1318182276fbf943c93fb34913b11c",
+   "name": "Fix_0_Yaw",
+   "path_id": 139,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1060\\6f5cea9ec1e4a5467bf6c571.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1060,
+   "source_bundle": "map/scene/3ftoilet.unity3d",
+   "source_bundle_sha256": "48552f02c73d81d4036e4db6d20946ebbe1318182276fbf943c93fb34913b11c",
+   "name": "Fix_90_Yaw",
+   "path_id": 140,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1060\\899a2ec00c274c0f1dc9d3c8.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1060,
+   "source_bundle": "map/scene/3ftoilet.unity3d",
+   "source_bundle_sha256": "48552f02c73d81d4036e4db6d20946ebbe1318182276fbf943c93fb34913b11c",
+   "name": "Spin_0_-90_Yaw",
+   "path_id": 141,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1060\\5a78545df649f784473bdd5b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1060,
+   "source_bundle": "map/scene/3ftoilet.unity3d",
+   "source_bundle_sha256": "48552f02c73d81d4036e4db6d20946ebbe1318182276fbf943c93fb34913b11c",
+   "name": "Spin_0_90_Yaw",
+   "path_id": 142,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1060\\0a01cf73cfc942a6b5cfbaa7.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "New Animation",
+   "path_id": 638,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\0a26e2c14579d4915081a1cb.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "stageModel_emission",
+   "path_id": 639,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\457bd26b73c694b7e50fba68.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "SpotLaser_beam_visibility",
+   "path_id": 640,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\a09491d32451935fc1309fad.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "SpotLaser_rotation",
+   "path_id": 641,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\5e150ee27572049c9449f4eb.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "spotLaser",
+   "path_id": 642,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\f7e59deaf16364ff9f49b080.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "spotLight_164p_rotation",
+   "path_id": 643,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\4a1d21b0097531ed83bd3cf2.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "vl_center_intensity",
+   "path_id": 644,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\ebce4a53d9d1684938510cd7.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "vl_center_spot_intensity",
+   "path_id": 645,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\69c8cb91d23fda6efdce0938.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1071,
+   "source_bundle": "map/scene/livestage_s.unity3d",
+   "source_bundle_sha256": "5e6429d50045f97a10d54eefc862964ddcd2bf51ea110a28deaa483744f4807f",
+   "name": "vl_center_spot_rotation",
+   "path_id": 646,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1071\\0d6800327e218dccdcdd4d92.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1075,
+   "source_bundle": "map/scene/pool.unity3d",
+   "source_bundle_sha256": "aa1fc663f1b0c60f15a5901fa0be3a274b4fd28df84b0b5eabb0166b58803495",
+   "name": "f_suiei_00_00",
+   "path_id": 182,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1075\\935b841e13844218079a7d02.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1075,
+   "source_bundle": "map/scene/pool.unity3d",
+   "source_bundle_sha256": "aa1fc663f1b0c60f15a5901fa0be3a274b4fd28df84b0b5eabb0166b58803495",
+   "name": "move_00_00",
+   "path_id": 183,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1075\\1b5b40de0cdbc5ae37fe0031.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1075,
+   "source_bundle": "map/scene/pool.unity3d",
+   "source_bundle_sha256": "aa1fc663f1b0c60f15a5901fa0be3a274b4fd28df84b0b5eabb0166b58803495",
+   "name": "move_00_01",
+   "path_id": 184,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1075\\39520c34318fffc5dd292592.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1077,
+   "source_bundle": "map/scene/shawerroom.unity3d",
+   "source_bundle_sha256": "724e4deeaf0205864f525c496b3d7acdf67aeed1267a55e6834e368901df109b",
+   "name": "Fix_-90_Yaw",
+   "path_id": 105,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1077\\68eaa8ac86e963320ce441fb.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1077,
+   "source_bundle": "map/scene/shawerroom.unity3d",
+   "source_bundle_sha256": "724e4deeaf0205864f525c496b3d7acdf67aeed1267a55e6834e368901df109b",
+   "name": "Fix_0_Yaw",
+   "path_id": 106,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1077\\24ba35f3c1a32621dc8f9979.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1077,
+   "source_bundle": "map/scene/shawerroom.unity3d",
+   "source_bundle_sha256": "724e4deeaf0205864f525c496b3d7acdf67aeed1267a55e6834e368901df109b",
+   "name": "Fix_90_Yaw",
+   "path_id": 107,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1077\\40a8066ccf07a1d39bab2b83.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1077,
+   "source_bundle": "map/scene/shawerroom.unity3d",
+   "source_bundle_sha256": "724e4deeaf0205864f525c496b3d7acdf67aeed1267a55e6834e368901df109b",
+   "name": "Spin_0_-90_Yaw",
+   "path_id": 108,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1077\\96391b3e30cf5a55c49db12a.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1077,
+   "source_bundle": "map/scene/shawerroom.unity3d",
+   "source_bundle_sha256": "724e4deeaf0205864f525c496b3d7acdf67aeed1267a55e6834e368901df109b",
+   "name": "Spin_0_90_Yaw",
+   "path_id": 109,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1077\\182b66d7a64ce8cc870207e1.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1081,
+   "source_bundle": "map/scene/staffroom.unity3d",
+   "source_bundle_sha256": "6ab659fed7a8cfaff052680945a73f0f60e592787bfb18ddf5c410d731d98f23",
+   "name": "icon_action",
+   "path_id": 526,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1081\\02da908aa464401d08235216.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1081,
+   "source_bundle": "map/scene/staffroom.unity3d",
+   "source_bundle_sha256": "6ab659fed7a8cfaff052680945a73f0f60e592787bfb18ddf5c410d731d98f23",
+   "name": "icon_stop",
+   "path_id": 527,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1081\\473344398e5f0d9a0edf4ace.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1082,
+   "source_bundle": "map/scene/thebeach.unity3d",
+   "source_bundle_sha256": "72b12265af050749ddc57f3c4bdbd7cc320b0bf6f3d5c11a435b981452234782",
+   "name": "icon_action",
+   "path_id": 526,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1082\\b02976760b2ef5cd9b180d9e.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1082,
+   "source_bundle": "map/scene/thebeach.unity3d",
+   "source_bundle_sha256": "72b12265af050749ddc57f3c4bdbd7cc320b0bf6f3d5c11a435b981452234782",
+   "name": "icon_stop",
+   "path_id": 527,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1082\\9f75af7b600f8e17f98e4c28.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1083,
+   "source_bundle": "map/scene/thegirlroom.unity3d",
+   "source_bundle_sha256": "456ded991c2a90534519922e6ee3f5770893c46cb107c2444d16dad22d284015",
+   "name": "Fix_-90_Yaw",
+   "path_id": 112,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1083\\8b6bcc4de14fb20e83644045.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1083,
+   "source_bundle": "map/scene/thegirlroom.unity3d",
+   "source_bundle_sha256": "456ded991c2a90534519922e6ee3f5770893c46cb107c2444d16dad22d284015",
+   "name": "Fix_0_Yaw",
+   "path_id": 113,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1083\\802570290095b0391e4c18e1.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1083,
+   "source_bundle": "map/scene/thegirlroom.unity3d",
+   "source_bundle_sha256": "456ded991c2a90534519922e6ee3f5770893c46cb107c2444d16dad22d284015",
+   "name": "Spin_0_-90_Yaw",
+   "path_id": 114,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1083\\097688ee172f77d5dd739c8a.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1084,
+   "source_bundle": "map/scene/thehotsprings.unity3d",
+   "source_bundle_sha256": "000351315ac358cefe270a7ee26d5a63abf73b7536f4dc0b8181bd9e91d9f168",
+   "name": "icon_action",
+   "path_id": 526,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1084\\40d237ed55c604fc86be7179.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1084,
+   "source_bundle": "map/scene/thehotsprings.unity3d",
+   "source_bundle_sha256": "000351315ac358cefe270a7ee26d5a63abf73b7536f4dc0b8181bd9e91d9f168",
+   "name": "icon_stop",
+   "path_id": 527,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1084\\37c2155b3e27c91f38eb5260.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1085,
+   "source_bundle": "map/scene/toiletmale.unity3d",
+   "source_bundle_sha256": "cab61ec52a6e295bfa7e5e09ac413e30c4f36bf0b4627cdd6967a61dab84026d",
+   "name": "Fix_-90_Yaw",
+   "path_id": 112,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1085\\2e170b3b6ddbd6ee50bb84b8.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1085,
+   "source_bundle": "map/scene/toiletmale.unity3d",
+   "source_bundle_sha256": "cab61ec52a6e295bfa7e5e09ac413e30c4f36bf0b4627cdd6967a61dab84026d",
+   "name": "Fix_0_Yaw",
+   "path_id": 113,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1085\\a4bc708664e6f989a0031b50.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1085,
+   "source_bundle": "map/scene/toiletmale.unity3d",
+   "source_bundle_sha256": "cab61ec52a6e295bfa7e5e09ac413e30c4f36bf0b4627cdd6967a61dab84026d",
+   "name": "Spin_0_-90_Yaw",
+   "path_id": 114,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1085\\53c0f8e10ca8cbc38fd3cbf8.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1086,
+   "source_bundle": "map/scene/toiletpeep.unity3d",
+   "source_bundle_sha256": "822ac9240b48412eb36f8ddeb3d6f031d340259ae4a8437c5cdcb18257cc6d64",
+   "name": "Take 001",
+   "path_id": 105,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1086\\5af8c5306041b014cb96c235.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1086,
+   "source_bundle": "map/scene/toiletpeep.unity3d",
+   "source_bundle_sha256": "822ac9240b48412eb36f8ddeb3d6f031d340259ae4a8437c5cdcb18257cc6d64",
+   "name": "Take 001",
+   "path_id": 106,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1086\\110ba110bc57630c1d3ecbc6.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 1086,
+   "source_bundle": "map/scene/toiletpeep.unity3d",
+   "source_bundle_sha256": "822ac9240b48412eb36f8ddeb3d6f031d340259ae4a8437c5cdcb18257cc6d64",
+   "name": "Take 001",
+   "path_id": 107,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_1086\\7b62d9827c1181436b38725b.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  }
+ ]
+}

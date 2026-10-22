@@ -1,0 +1,57 @@
+{
+ "schema": "noworld.gate12.all_installed_kk_original_additional_clips.v1",
+ "source_directory": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\abdata",
+ "installed_unity_bundles": 1685,
+ "already_ingested_h_animation_bundles": 288,
+ "additional_bundles": 1397,
+ "batch_start": 80,
+ "batch_end": 500,
+ "progress_next_index": 500,
+ "counts": {
+  "BUNDLE_READ_OK": 420,
+  "IMPORTED_SOURCE_CURVES": 4
+ },
+ "clip_count": 4,
+ "status": "SOURCE_ARCHIVE_COMPLETE_NOT_NATIVE_UNREAL",
+ "playable_ue_animsequence_created": 0,
+ "retarget_authorized": false,
+ "original_bundles_unchanged": true,
+ "clips": [
+  {
+   "bundle_index": 456,
+   "source_bundle": "chara/oo_base.unity3d",
+   "source_bundle_sha256": "2915e62ed7663a797701b445b5f7574cc57d2dc13411d907d2dda2b2f78ec38e",
+   "name": "ptn01",
+   "path_id": 1559808247265301772,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0456\\b1a636639a04fde7775c1aba.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 456,
+   "source_bundle": "chara/oo_base.unity3d",
+   "source_bundle_sha256": "2915e62ed7663a797701b445b5f7574cc57d2dc13411d907d2dda2b2f78ec38e",
+   "name": "ptn02",
+   "path_id": 6187861680792840132,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0456\\efdba7d6aee248f7ed0ee79a.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 457,
+   "source_bundle": "chara/oo_baseOri.unity3d",
+   "source_bundle_sha256": "f345d16d24bb427467d0bf7997bf1c5f09e4fb6c3321a23f02302da4551af625",
+   "name": "ptn01",
+   "path_id": 1559808247265301772,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0457\\1887c6dd1564cd087cc40913.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  },
+  {
+   "bundle_index": 457,
+   "source_bundle": "chara/oo_baseOri.unity3d",
+   "source_bundle_sha256": "f345d16d24bb427467d0bf7997bf1c5f09e4fb6c3321a23f02302da4551af625",
+   "name": "ptn02",
+   "path_id": 6187861680792840132,
+   "native_curve_path": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\bundle_0457\\0aebd5a4dc4d0ce8dcf5620f.unitycurves.json.gz",
+   "result": "IMPORTED_SOURCE_CURVES"
+  }
+ ]
+}
