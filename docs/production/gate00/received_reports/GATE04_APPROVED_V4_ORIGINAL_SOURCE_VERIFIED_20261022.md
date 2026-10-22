@@ -1,3 +1,5 @@
+> **SOURCE PRESERVATION VERIFIED:** Full original v4 ZIP is persisted in the owner's personal Library at `/Offline-Game Production/04_Skills_Kits_Stats_Combat/Gate04_Luminous_v4_APPROVED_Gate00_20261022.zip` (Library ID `libfile_519f400629448191a12f4af94249819f`). The original five-form JSON and GP/link contract were added to the coordination Git branch without numerical edits; their Git worktree SHA-256 digests were independently rechecked on Windows and match the original zipped members EXACTLY. GP contract's final LF was retained. Gate12 may consume either source directly; no further user relay required.
+
 # Gate 00 — APPROVED Gate04 v4 exact-source verified intake
 **Project:** NoWorld: False Horizon · **Date:** 2026-10-22 · **Authority:** direct user approval, Gate04 approval record · **P0**
 **Status:** USER-APPROVED DESIGN · EXACT ORIGINAL ZIP HASH VERIFIED · NO NATIVE v4 GAMEPLAY/REGISTRY ACCEPTANCE
