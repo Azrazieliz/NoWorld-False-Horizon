@@ -9,6 +9,8 @@
 class USkeletalMesh;
 class USkeletalMeshComponent;
 class UAnimSequence;
+class UOGSharedMotionLibrary;
+struct FOGSharedMotionEntry;
 class UInputComponent;
 class UOGLuminousV3WardrobeQAWidget;
 
@@ -111,6 +113,19 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|MotionV3")
     TArray<FSoftObjectPath> NativeJumpByWardrobe;
 
+    /** Shared across identities and Versions, with exact native skeleton matching. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Motion|Shared")
+    TSoftObjectPtr<UOGSharedMotionLibrary> SharedMotionLibrary;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Motion|Shared")
+    FName MotionRigProfile = TEXT("koikatsu_original");
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Motion|Shared")
+    FName MotionAnatomyProfile = TEXT("humanoid");
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Motion|Shared")
+    TArray<FName> MotionCapabilities;
+
     UPROPERTY(BlueprintReadOnly, Category="OfflineGame|Luminous|MotionV3")
     EOGLuminousV3MotionPhase CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
 
@@ -181,6 +196,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|MotionV3")
     bool SetLuminousNativeMotionClip(UAnimSequence* Clip, bool bLoop);
 
+    /** Presentation only. Caller must resolve and accept the actual combat/action first. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Motion|Shared")
+    bool PlaySharedGameplayAction(FName GameplayAction, bool bAuthorizedAdultContext = false,
+        int32 ParticipantCount = 1);
+
     UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|MotionV3")
     bool HasCompatibleLuminousMotion() const { return bCompatibleNativeMotion; }
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|Emotes")
@@ -223,6 +243,8 @@ private:
     bool bLuminousReady = false;
     bool bGate09EmotePlaying = false;
     float Gate09EmoteEndTime = 0.f;
+    float SharedActionEndTime = 0.f;
+    bool bSharedActionPlaying = false;
     // Gate09's authentic flight-start clip is a one-shot takeoff, NEVER a
     // cyclic airborne locomotion replacement. Hover has its own loop.
     bool bGate09TakeoffAlreadyPlayedThisFlight = false;
@@ -237,6 +259,9 @@ private:
     void ActivateNativeQAWorldMode();
     void UpdateNativeMotionFromTraversal();
     UAnimSequence* ResolveAuthoredMotionClip(EOGLuminousV3MotionPhase Phase) const;
+    UAnimSequence* ResolveSharedMotion(FName GameplayAction, FName Context,
+        bool bAuthorizedAdultContext, int32 ParticipantCount,
+        const FOGSharedMotionEntry** OutEntry = nullptr) const;
 
     const TArray<FSoftObjectPath>& PartsFor(EOGLuminousV3Wardrobe State) const;
     int32 ExpectedPartsFor(EOGLuminousV3Wardrobe State) const;

@@ -1,5 +1,6 @@
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 #include "Koikatsu/OGLuminousV3WardrobeQAWidget.h"
+#include "Animation/OGSharedMotionLibrary.h"
 
 #include "Animation/AnimSequence.h"
 #include "Blueprint/UserWidget.h"
@@ -100,6 +101,8 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
     // grant a Manifestation or declare this asset production-accepted.
     CanonicalLuminousIdentityId = TEXT("character:luminous_valentine.identity");
     CanonicalLuminousVersionId = TEXT("character:luminous_valentine.version_ln_base");
+    MotionCapabilities = {TEXT("grounded"), TEXT("swimming"), TEXT("flying"),
+        TEXT("combat"), TEXT("emote")};
 }
 
 const TArray<FSoftObjectPath>& AOGLuminousV3PlayableCharacter::PartsFor(EOGLuminousV3Wardrobe State) const
@@ -453,6 +456,9 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousWardrobe(
     const EOGLuminousV3Wardrobe Before = CurrentWardrobe;
     if (bGate09EmotePlaying)
         InterruptGate09AuthoredEmote();
+    // Wardrobe skeleton changes invalidate any current native clip binding.
+    bSharedActionPlaying = false;
+    SharedActionEndTime = 0.f;
     CurrentWardrobe = Desired;
     if (!RefreshPrivacyRenderedAppearance())
     {
@@ -532,6 +538,48 @@ bool AOGLuminousV3PlayableCharacter::SetLuminousNativeMotionClip(UAnimSequence* 
     return true;
 }
 
+UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveSharedMotion(
+    FName GameplayAction, FName Context, bool bAuthorizedAdultContext,
+    int32 ParticipantCount, const FOGSharedMotionEntry** OutEntry) const
+{
+    if (!bLuminousReady || RuntimeParts.IsEmpty()) return nullptr;
+    // One content asset for every character; retarget derivatives remain
+    // separate records pointing back to the same original SourceClipId.
+    const UOGSharedMotionLibrary* Library = SharedMotionLibrary.IsNull()
+        ? nullptr : SharedMotionLibrary.LoadSynchronous();
+    if (!Library)
+        Library = FOGSharedMotionResolver::GetInstalledLibrary();
+    if (!Library) return nullptr;
+    const bool bAllowed = bAuthorizedAdultContext &&
+        EffectiveAppearance.bExplicitContextAuthorized &&
+        !EffectiveAppearance.bPrivacySfwEnabled;
+    return FOGSharedMotionResolver::Resolve(
+        Library, GameplayAction, MotionRigProfile, MotionAnatomyProfile,
+        FName(WardrobeName(EffectiveAppearance.EffectiveRenderedWardrobe)),
+        Context, MotionCapabilities, RuntimeParts, bAllowed, ParticipantCount,
+        OutEntry);
+}
+
+bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
+    FName GameplayAction, bool bAuthorizedAdultContext, int32 ParticipantCount)
+{
+    const FOGSharedMotionEntry* Entry = nullptr;
+    const FName Context = GameplayAction.ToString().StartsWith(TEXT("Combat."))
+        ? FName(TEXT("Combat")) : FName(TEXT("Interaction"));
+    UAnimSequence* Clip = ResolveSharedMotion(GameplayAction, Context,
+        bAuthorizedAdultContext, ParticipantCount, &Entry);
+    if (!Clip || !Entry || !SetLuminousNativeMotionClip(Clip, Entry->bLoop))
+        return false;
+    bSharedActionPlaying = true;
+    SharedActionEndTime = GetWorld()->GetTimeSeconds() +
+        FMath::Max(0.02f, Clip->GetPlayLength());
+    UE_LOG(LogTemp, Display,
+        TEXT("G12_SHARED_ACTION_PLAYED=%s source=%s native=%s"),
+        *GameplayAction.ToString(), *Entry->SourceClipId.ToString(),
+        *Clip->GetPathName());
+    return true;
+}
+
 bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
     EOGLuminousV3AuthoredEmote Emote)
 {
@@ -563,6 +611,27 @@ bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
         TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/G12_LuminousV3_Koikatsu_Dance_Performance.G12_LuminousV3_Koikatsu_Dance_Performance"),
     };
     const int32 Index = static_cast<int32>(Emote);
+    static const FName SharedEmotes[] = {
+        TEXT("Emote.Thoughtful"), TEXT("Emote.Greeting"),
+        TEXT("Emote.Expressive"), TEXT("Emote.Bow"), TEXT("Emote.Dance")
+    };
+    // Shared library takes priority once a source passes actual gameplay
+    // approval; existing native emotes stay as a conservative fallback.
+    if (Index >= 0 && Index < UE_ARRAY_COUNT(SharedEmotes) &&
+        Emote != EOGLuminousV3AuthoredEmote::DancePerformance)
+    {
+        const FOGSharedMotionEntry* Entry = nullptr;
+        if (UAnimSequence* Shared = ResolveSharedMotion(
+            SharedEmotes[Index], FName(TEXT("Interaction")), false, 1, &Entry))
+        {
+            if (SetLuminousNativeMotionClip(Shared, Entry && Entry->bLoop))
+            {
+                bGate09EmotePlaying = true;
+                Gate09EmoteEndTime = GetWorld()->GetTimeSeconds() + Shared->GetPlayLength();
+                return true;
+            }
+        }
+    }
     if (Index < 0 || Index >= UE_ARRAY_COUNT(Paths))
     {
         LastLuminousError = TEXT("Unknown Gate09 native emote");
@@ -590,6 +659,23 @@ void AOGLuminousV3PlayableCharacter::InterruptGate09AuthoredEmote()
 UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     EOGLuminousV3MotionPhase Phase) const
 {
+    // Shared source action resolves to an exact native skeletal derivative.
+    FName SharedAction = NAME_None;
+    switch (Phase)
+    {
+    case EOGLuminousV3MotionPhase::Walk: SharedAction = TEXT("Traversal.Walk"); break;
+    case EOGLuminousV3MotionPhase::Run: SharedAction = TEXT("Traversal.Run"); break;
+    case EOGLuminousV3MotionPhase::Jump: SharedAction = TEXT("Traversal.Jump"); break;
+    case EOGLuminousV3MotionPhase::Swimming: SharedAction = TEXT("Traversal.Swim"); break;
+    case EOGLuminousV3MotionPhase::Flying: SharedAction = TEXT("Traversal.FlightHover"); break;
+    default: break;
+    }
+    if (!SharedAction.IsNone())
+        if (UAnimSequence* Shared = ResolveSharedMotion(
+                SharedAction, FName(TEXT("Traversal")), false, 1))
+            return Shared;
+
+    // Existing genuine per-wardrobe clips remain functional as fallback.
     // These are genuine installed Koikatsu-compatible source animations
     // imported onto the exact 975-bone CLOTHED Luminous skeleton.
     // Wardrobe-skeleton mismatch never falls through to another appearance.
@@ -670,10 +756,13 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
             bGate09TakeoffAlreadyPlayedThisFlight=true;
             // Exact original character rig and Koikatsu asset; never synthesize
             // flight from a generic Walk, Run, ground Jump or dance.
-            UAnimSequence* Takeoff=LoadObject<UAnimSequence>(nullptr,
-                TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/"
-                     "G12_LuminousV3_Koikatsu_Flight_Start."
-                     "G12_LuminousV3_Koikatsu_Flight_Start"));
+            UAnimSequence* Takeoff=ResolveSharedMotion(
+                FName(TEXT("Traversal.FlightTakeoff")), FName(TEXT("Traversal")), false, 1);
+            if(!Takeoff)
+                Takeoff=LoadObject<UAnimSequence>(nullptr,
+                    TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/"
+                         "G12_LuminousV3_Koikatsu_Flight_Start."
+                         "G12_LuminousV3_Koikatsu_Flight_Start"));
             if(Takeoff && SetLuminousNativeMotionClip(Takeoff,false))
                 Gate09TakeoffEndsAt=Now+Takeoff->GetPlayLength();
             else
@@ -890,6 +979,15 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
         else
             return; // Allow the entire authored pose to play, without Idle resetting it.
     }
+    if (bSharedActionPlaying)
+    {
+        if (Now < SharedActionEndTime)
+            return; // Do not let traversal overwrite an accepted gameplay action.
+        bSharedActionPlaying = false;
+        SharedActionEndTime = 0.f;
+        CurrentNativeClip = nullptr;
+        CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
+    }
     if (bRunNonPersistentWardrobeQACycle && QACycleStep < 3 &&
         Now >= QANextCycleSeconds)
     {
@@ -942,6 +1040,8 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
     GetWorldTimerManager().ClearTimer(QAWorldModeTimer);
     CurrentNativeClip = nullptr;
     bGate09EmotePlaying = false;
+    bSharedActionPlaying = false;
+    SharedActionEndTime = 0.f;
     ActiveMotionLeaderIndex = INDEX_NONE;
     Gate09EmoteEndTime = 0.f;
     bGate09TakeoffAlreadyPlayedThisFlight=false;

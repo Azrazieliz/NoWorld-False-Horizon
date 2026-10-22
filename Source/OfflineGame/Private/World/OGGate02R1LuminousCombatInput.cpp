@@ -45,7 +45,7 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
     if(!Core->ReadOwnedApprovedLuminousSkills(
          Manifestation,Ruler,ApprovedSkills,OutError))
         return false;
-    const AOGLuminousV3PlayableCharacter* ActiveLuminous=
+    AOGLuminousV3PlayableCharacter* ActiveLuminous=
         Cast<AOGLuminousV3PlayableCharacter>(this);
     if(!ActiveLuminous ||
        !ActiveLuminous->IsBoundToOwnedLuminousCombatUnit(
@@ -124,5 +124,17 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
     Action.ResolutionJson=Resolution;
     Action.ActionDelay=FMath::Max<int64>(1,Source->DefaultActionDelay);
     Action.InterruptPriority=0;
-    return Core->ApplyApprovedLuminousResolvedAction(Action,OutError);
+    // Preserve the authoritative executor as the only source of gameplay truth.
+    // Presentation is attempted only after the action has been accepted.
+    const bool bApplied = Core->ApplyApprovedLuminousResolvedAction(Action, OutError);
+    if (bApplied && ActiveLuminous)
+    {
+        const FName Semantic = Slot == -1
+            ? FName(TEXT("Combat.Ultimate")) : FName(TEXT("Combat.Skill"));
+        if (!ActiveLuminous->PlaySharedGameplayAction(Semantic))
+            UE_LOG(LogTemp, Warning,
+                TEXT("Gate12 combat accepted but no approved exact-rig native clip for %s; not substituting unrelated motion"),
+                *Semantic.ToString());
+    }
+    return bApplied;
 }
