@@ -135,6 +135,7 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
         Entry.AnatomyProfile = ReadName(TEXT("anatomy"));
         Entry.OutfitProfile = ReadName(TEXT("outfit"));
         Entry.RetargetProfile = ReadName(TEXT("retarget"));
+        Entry.SceneRole = ReadName(TEXT("scene_role"));
         Entry.ContactNotify = ReadName(TEXT("contact_notify"));
         Item->TryGetStringField(TEXT("source_hash"), Entry.SourceObjectHash);
         Item->TryGetStringField(TEXT("source_bundle"), Entry.SourceUnityBundle);
@@ -167,6 +168,47 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
         if (Item->TryGetNumberField(TEXT("movement_speed_cm_s"), Number))
             Entry.MovementSpeedCmPerSecond = static_cast<float>(Number);
 
+        // Optional authored morph curves survive cooking as pure data. They
+        // are evaluated alongside the skeletal track without an AnimBP swap.
+        const TArray<TSharedPtr<FJsonValue>>* TrackValues = nullptr;
+        if (Item->TryGetArrayField(TEXT("morph_tracks"), TrackValues) && TrackValues)
+        for (const TSharedPtr<FJsonValue>& TrackValue : *TrackValues)
+        {
+            const TSharedPtr<FJsonObject> TrackData =
+                TrackValue.IsValid() ? TrackValue->AsObject() : nullptr;
+            if (!TrackData.IsValid()) continue;
+            FOGSharedMorphTrack Track;
+            FString Name;
+            if (TrackData->TryGetStringField(TEXT("layer"), Name))
+                Track.Layer = FName(*Name);
+            if (TrackData->TryGetStringField(TEXT("morph"), Name))
+                Track.Morph = FName(*Name);
+            if (Track.Layer.IsNone() || Track.Morph.IsNone()) continue;
+            const TArray<TSharedPtr<FJsonValue>>* Keys = nullptr;
+            if (!TrackData->TryGetArrayField(TEXT("keys"), Keys) || !Keys) continue;
+            bool bValid = true;
+            float PreviousTime = -1.f;
+            for (const TSharedPtr<FJsonValue>& KeyValue : *Keys)
+            {
+                const TSharedPtr<FJsonObject> Key =
+                    KeyValue.IsValid() ? KeyValue->AsObject() : nullptr;
+                double Time = 0., Weight = 0.;
+                if (!Key.IsValid() ||
+                    !Key->TryGetNumberField(TEXT("time"), Time) ||
+                    !Key->TryGetNumberField(TEXT("weight"), Weight) ||
+                    !FMath::IsFinite(Time) || !FMath::IsFinite(Weight) ||
+                    Time < 0. || Time <= PreviousTime)
+                { bValid = false; break; }
+                FOGSharedMorphKey Frame;
+                Frame.TimeSeconds = static_cast<float>(Time);
+                Frame.Weight = FMath::Clamp(static_cast<float>(Weight), -1.f, 1.f);
+                Track.Keys.Add(Frame);
+                PreviousTime = Frame.TimeSeconds;
+            }
+            if (bValid && !Track.Keys.IsEmpty())
+                Entry.MorphTracks.Add(MoveTemp(Track));
+        }
+
         // Manifest approvals replace precisely the matching installed entry.
         // De-approved definitions suppress the fallback instead of reviving it.
         Library->Motions.RemoveAll([Id = Entry.MotionId](const FOGSharedMotionEntry& Existing)
@@ -198,7 +240,7 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
     const TArray<FName>& Capabilities,
     const TArray<TObjectPtr<USkeletalMeshComponent>>& ActiveParts,
     bool bAdultContextAuthorized, int32 ParticipantCount,
-    const FOGSharedMotionEntry** OutEntry)
+    const FOGSharedMotionEntry** OutEntry, FName SceneRole)
 {
     if (OutEntry) *OutEntry = nullptr;
     if (!Library || Action.IsNone() || RigProfile.IsNone() ||
@@ -218,7 +260,10 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
             (!Entry.OutfitProfile.IsNone() && Entry.OutfitProfile != OutfitProfile) ||
             (!Entry.GameplayContext.IsNone() && Entry.GameplayContext != Context) ||
             (Entry.bAdultRestricted && !bAdultContextAuthorized) ||
-            Entry.RequiredParticipants != ParticipantCount)
+            Entry.RequiredParticipants != ParticipantCount ||
+            (ParticipantCount > 1
+                ? (SceneRole.IsNone() || Entry.SceneRole != SceneRole)
+                : !Entry.SceneRole.IsNone()))
             continue;
 
         bool bMissingCapability = false;

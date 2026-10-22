@@ -7,6 +7,35 @@
 class UAnimSequence;
 class USkeletalMeshComponent;
 
+/** Native morph-channel animation key sampled alongside body AnimSequences. */
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGSharedMorphKey
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Morph")
+    float TimeSeconds = 0.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Morph")
+    float Weight = 0.f;
+};
+
+/** Facial or secondary blendshape track, independent of the main skeletal pose. */
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGSharedMorphTrack
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Morph")
+    FName Layer = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Morph")
+    FName Morph = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Morph")
+    TArray<FOGSharedMorphKey> Keys;
+};
+
 /** Canonical semantic source identity. Retargeted clips share a SourceClipId. */
 USTRUCT(BlueprintType)
 struct OFFLINEGAME_API FOGSharedMotionEntry
@@ -44,6 +73,10 @@ struct OFFLINEGAME_API FOGSharedMotionEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Rig")
     FName RetargetProfile = NAME_None;
 
+    /** Distinguishes synchronized scene participant tracks; None for single-actor motions. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Rig")
+    FName SceneRole = NAME_None;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Rig")
     FName OutfitProfile = NAME_None; // None = applicable across wardrobes if skeleton matches.
 
@@ -57,7 +90,10 @@ struct OFFLINEGAME_API FOGSharedMotionEntry
     float MovementSpeedCmPerSecond = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Native")
-    float ContactSeconds = -1.f; // -1 means no authored contact marker.
+    float ContactSeconds = -1.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Morph")
+    TArray<FOGSharedMorphTrack> MorphTracks; // -1 means no authored contact marker.
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Native")
     FName ContactNotify = NAME_None;
@@ -112,5 +148,6 @@ public:
         const TArray<TObjectPtr<USkeletalMeshComponent>>& ActiveParts,
         bool bAdultContextAuthorized,
         int32 ParticipantCount,
-        const FOGSharedMotionEntry** OutEntry = nullptr);
+        const FOGSharedMotionEntry** OutEntry = nullptr,
+        FName SceneRole = NAME_None);
 };

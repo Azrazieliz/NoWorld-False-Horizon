@@ -48,6 +48,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
     bool bPhaseLockIndependentParts = true;
 
+    /** Required to apply authored root movement to the owning Character's
+     * movement component using collision sweeps; never implicitly authorized. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Root")
+    bool bPermitAuthoritativeRootMotion = false;
+
     /** A presentation-only contact signal; the combat executor remains authoritative. */
     UPROPERTY(BlueprintAssignable, Category="Motion|Events")
     FOGSharedMotionSignal OnAuthoredContact;
@@ -74,7 +79,30 @@ public:
     /** Caller must have completed gameplay authority checks and adult context authorization. */
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     bool PlayAction(FName GameplayAction, FName Context, bool bAdultContextAuthorized = false,
-        int32 ParticipantCount = 1);
+        int32 ParticipantCount = 1, FName ParticipantRole = NAME_None);
+
+    /** Pure preflight for synchronized scene start. No actor or animation state changes. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Shared")
+    bool CanPlayAction(FName GameplayAction, FName Context,
+        bool bAdultContextAuthorized = false, int32 ParticipantCount = 1,
+        FName ParticipantRole = NAME_None) const;
+
+    /** Scene preflight: exposes original source identity, never a guessed role match. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Shared")
+    bool PreviewSourceClipId(FName GameplayAction, FName Context,
+        bool bAdultContextAuthorized, int32 ParticipantCount,
+        FName ParticipantRole, FName& OutSourceClipId) const;
+
+    /** One global time origin for every participant. Each actor remains independently animated. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Shared")
+    void SynchronizeToWorldTime(float SceneStartTime);
+
+    /** An authored facial/secondary morph layer that does not replace body animation. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Layers")
+    bool SetMorphLayer(FName Layer, FName Morph, float Weight);
+
+    UFUNCTION(BlueprintCallable, Category="Motion|Layers")
+    void ClearMorphLayer(FName Layer);
 
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     void StopAction();
@@ -116,6 +144,26 @@ private:
     float SequenceSeconds = 0.f;
     float PlaybackRate = 1.f;
     int32 LastContactCycle = -1;
+    bool bApplyingRootMotion = false;
+    bool bSceneTimeLocked = false;
+    float SceneWorldStartTime = 0.f;
+
+    struct FMorphOverlay
+    {
+        FName Layer = NAME_None;
+        FName Morph = NAME_None;
+        float Weight = 0.f;
+    };
+    TArray<FMorphOverlay> MorphOverlays;
+    TSet<FName> AppliedMorphs;
+    TArray<FOGSharedMorphTrack> AuthoredMorphTracks;
+
+    void ApplyMorphOverlays();
+    bool ResolveForPart(const UOGSharedMotionLibrary* Library,
+        USkeletalMeshComponent* Part, FName Action, FName Context,
+        bool bAuthorizedAdult, int32 ParticipantCount, FName ParticipantRole,
+        UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry) const;
+    void ApplyAuthoredRootMotion(float PreviousSourceTime, float SourceTime);
 
     static bool HaveIdenticalReferencePose(const USkeletalMeshComponent* A,
         const USkeletalMeshComponent* B);

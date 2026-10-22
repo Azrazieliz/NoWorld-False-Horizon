@@ -9,6 +9,38 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+namespace
+{
+FName SharedActionForState(EOGKKVisualState State)
+{
+    switch (State)
+    {
+    case EOGKKVisualState::Idle: return TEXT("Traversal.Idle");
+    case EOGKKVisualState::Walk: return TEXT("Traversal.Walk");
+    case EOGKKVisualState::Run: return TEXT("Traversal.Run");
+    case EOGKKVisualState::Jump: return TEXT("Traversal.Jump");
+    case EOGKKVisualState::Fall: return TEXT("Traversal.Fall");
+    case EOGKKVisualState::Land: return TEXT("Traversal.Land");
+    case EOGKKVisualState::TurnLeft: return TEXT("Traversal.TurnLeft");
+    case EOGKKVisualState::TurnRight: return TEXT("Traversal.TurnRight");
+    case EOGKKVisualState::Dodge: return TEXT("Combat.Dodge");
+    case EOGKKVisualState::Action: return TEXT("Interaction.Action");
+    case EOGKKVisualState::SwimIdle: return TEXT("Traversal.SwimIdle");
+    case EOGKKVisualState::Swim: return TEXT("Traversal.Swim");
+    case EOGKKVisualState::FlyingIdle: return TEXT("Traversal.FlightHover");
+    case EOGKKVisualState::Flying: return TEXT("Traversal.Fly");
+    }
+    return NAME_None;
+}
+FName SharedContextForAction(FName Action)
+{
+    const FString Name = Action.ToString();
+    if (Name.StartsWith(TEXT("Combat."))) return TEXT("Combat");
+    if (Name.StartsWith(TEXT("Interaction."))) return TEXT("Interaction");
+    return TEXT("Traversal");
+}
+}
+
 AOGKoikatsuPlayableCharacter::AOGKoikatsuPlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -236,6 +268,21 @@ bool AOGKoikatsuPlayableCharacter::Loops(EOGKKVisualState State)
 void AOGKoikatsuPlayableCharacter::ApplyState(EOGKKVisualState Next)
 {
     if (NativeParts.Num()!=19) return;
+    const FName Action = SharedActionForState(Next);
+    if (!Action.IsNone() && SharedMotionController &&
+        SharedMotionController->PlayAction(Action,
+            SharedContextForAction(Action), false, 1))
+    {
+        // Shared exact-source derivatives can animate all 19 parts in phase.
+        // Individual fallback sequences are retained for incomplete imports.
+        for (TObjectPtr<UAnimSequence>& Previous : ActiveClips) Previous = nullptr;
+        CurrentState = Next;
+        ActiveStateSeconds = 0.f;
+        LastMotionSwitchTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+        return;
+    }
+    if (SharedMotionController && SharedMotionController->IsPlayingAction())
+        SharedMotionController->StopAction();
     int32 Replaced=0;
     for (int32 Index=0;Index<NativeParts.Num();++Index)
     {
@@ -320,7 +367,11 @@ void AOGKoikatsuPlayableCharacter::Tick(float DeltaSeconds)
         GetVelocity().Size2D(),DeltaSeconds,FMath::Max(0.5f,MotionSpeedSmoothing));
     // External gameplay/cinematic actions own their actual registered clip
     // until completion; locomotion must not replace them the next frame.
-    if (SharedMotionController && SharedMotionController->IsPlayingAction())
+    const bool bControllerPlaying = SharedMotionController &&
+        SharedMotionController->IsPlayingAction();
+    const bool bSharedTraversal = bControllerPlaying &&
+        SharedMotionController->CurrentAction.ToString().StartsWith(TEXT("Traversal."));
+    if (bControllerPlaying && !bSharedTraversal)
     {
         bSharedControllerWasPlaying = true;
         UpdateExpressionPulses(GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f);
@@ -339,7 +390,8 @@ void AOGKoikatsuPlayableCharacter::Tick(float DeltaSeconds)
     if(Next!=CurrentState && (!bGaitCurrent||!bGaitNext||
         Now-LastMotionSwitchTime>=MotionStateMinHoldSeconds))
         ApplyState(Next);
-    SyncPartPhases(DeltaSeconds);
+    if (!SharedMotionController || !SharedMotionController->IsPlayingAction())
+        SyncPartPhases(DeltaSeconds);
     UpdateExpressionPulses(Now);
 }
 

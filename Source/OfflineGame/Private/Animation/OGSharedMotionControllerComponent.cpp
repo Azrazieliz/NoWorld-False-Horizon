@@ -4,6 +4,10 @@
 #include "Animation/Skeleton.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/World.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Animation/AnimationAsset.h"
 
 UOGSharedMotionControllerComponent::UOGSharedMotionControllerComponent()
 {
@@ -58,12 +62,244 @@ void UOGSharedMotionControllerComponent::SetCurrentOutfit(FName InOutfitProfile)
     }
 }
 
+bool UOGSharedMotionControllerComponent::ResolveForPart(
+    const UOGSharedMotionLibrary* Library, USkeletalMeshComponent* Part,
+    FName Action, FName Context, bool bAuthorizedAdult,
+    int32 ParticipantCount, FName ParticipantRole,
+    UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry) const
+{
+    OutSequence = nullptr;
+    OutEntry = nullptr;
+    if (!Part) return false;
+    TArray<TObjectPtr<USkeletalMeshComponent>> SearchParts;
+    if (bUseIdenticalTopologyLeaderPose)
+        SearchParts = RegisteredParts;
+    else SearchParts.Add(Part);
+    OutSequence = FOGSharedMotionResolver::Resolve(
+        Library, Action, RigProfile, AnatomyProfile, OutfitProfile,
+        Context, Capabilities, SearchParts, bAuthorizedAdult,
+        ParticipantCount, &OutEntry, ParticipantRole);
+    return OutSequence && OutEntry && OutSequence->GetSkeleton() &&
+        (!OutEntry->bUsesRootMotion ||
+            (bPermitAuthoritativeRootMotion && GetOwner() &&
+             GetOwner()->HasAuthority() && Cast<ACharacter>(GetOwner())));
+}
+
+bool UOGSharedMotionControllerComponent::CanPlayAction(
+    FName GameplayAction, FName Context, bool bAdultContextAuthorized,
+    int32 ParticipantCount, FName ParticipantRole) const
+{
+    if (RigProfile.IsNone() || GameplayAction.IsNone() || Context.IsNone() ||
+        RegisteredParts.IsEmpty() || ParticipantCount < 1 || ParticipantCount > 13)
+        return false;
+    const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
+        ? nullptr : SharedLibrary.LoadSynchronous();
+    if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
+    FName SourceId = NAME_None;
+    bool bInitialLoop = false;
+    USkeletalMeshComponent* Leader = nullptr;
+    int32 ValidCount = 0;
+    for (USkeletalMeshComponent* Part : RegisteredParts)
+    {
+        UAnimSequence* Clip = nullptr;
+        const FOGSharedMotionEntry* Entry = nullptr;
+        if (!ResolveForPart(Library, Part, GameplayAction, Context,
+            bAdultContextAuthorized, ParticipantCount, ParticipantRole, Clip, Entry))
+            return false;
+        if (!SourceId.IsNone() &&
+            (SourceId != Entry->SourceClipId || bInitialLoop != Entry->bLoop))
+            return false;
+        SourceId = Entry->SourceClipId;
+        bInitialLoop = Entry->bLoop;
+        if (bUseIdenticalTopologyLeaderPose)
+        {
+            for (USkeletalMeshComponent* Candidate : RegisteredParts)
+                if (Candidate && Candidate->GetSkeletalMeshAsset() &&
+                    Candidate->GetSkeletalMeshAsset()->GetSkeleton() == Clip->GetSkeleton())
+                { Leader = Candidate; break; }
+            if (!Leader) return false;
+            for (USkeletalMeshComponent* Candidate : RegisteredParts)
+                if (!HaveIdenticalReferencePose(Leader, Candidate)) return false;
+            return true;
+        }
+        ++ValidCount;
+    }
+    return ValidCount == RegisteredParts.Num();
+}
+
+bool UOGSharedMotionControllerComponent::PreviewSourceClipId(
+    FName GameplayAction, FName Context, bool bAdultContextAuthorized,
+    int32 ParticipantCount, FName ParticipantRole, FName& OutSourceClipId) const
+{
+    OutSourceClipId = NAME_None;
+    if (!CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
+        ParticipantCount, ParticipantRole)) return false;
+    const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
+        ? nullptr : SharedLibrary.LoadSynchronous();
+    if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
+    UAnimSequence* Sequence = nullptr;
+    const FOGSharedMotionEntry* Entry = nullptr;
+    if (!ResolveForPart(Library, RegisteredParts[0], GameplayAction, Context,
+        bAdultContextAuthorized, ParticipantCount, ParticipantRole, Sequence, Entry))
+        return false;
+    OutSourceClipId = Entry->SourceClipId;
+    return !OutSourceClipId.IsNone();
+}
+
+void UOGSharedMotionControllerComponent::SynchronizeToWorldTime(float SceneStartTime)
+{
+    if (!bPlaying || !GetWorld()) return;
+    bSceneTimeLocked = true;
+    SceneWorldStartTime = SceneStartTime;
+    ElapsedSeconds = FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime);
+}
+
+bool UOGSharedMotionControllerComponent::SetMorphLayer(
+    FName Layer, FName Morph, float Weight)
+{
+    if (Layer.IsNone() || Morph.IsNone() || RegisteredParts.IsEmpty()) return false;
+    bool bHasNativeMorph = false;
+    for (USkeletalMeshComponent* Part : RegisteredParts)
+        if (Part && Part->GetSkeletalMeshAsset() &&
+            Part->GetSkeletalMeshAsset()->FindMorphTarget(Morph))
+            { bHasNativeMorph = true; break; }
+    if (!bHasNativeMorph) return false;
+    for (FMorphOverlay& Overlay : MorphOverlays)
+    {
+        if (Overlay.Layer == Layer && Overlay.Morph == Morph)
+        {
+            Overlay.Weight = FMath::Clamp(Weight, -1.f, 1.f);
+            SetComponentTickEnabled(true);
+            ApplyMorphOverlays();
+            return true;
+        }
+    }
+    FMorphOverlay& New = MorphOverlays.AddDefaulted_GetRef();
+    New.Layer = Layer;
+    New.Morph = Morph;
+    New.Weight = FMath::Clamp(Weight, -1.f, 1.f);
+    SetComponentTickEnabled(true);
+    ApplyMorphOverlays();
+    return true;
+}
+
+void UOGSharedMotionControllerComponent::ClearMorphLayer(FName Layer)
+{
+    MorphOverlays.RemoveAll([Layer](const FMorphOverlay& M)
+        { return M.Layer == Layer; });
+    ApplyMorphOverlays();
+    if (!bPlaying && MorphOverlays.IsEmpty()) SetComponentTickEnabled(false);
+}
+
+void UOGSharedMotionControllerComponent::ApplyMorphOverlays()
+{
+    // A facial/secondary blendshape channel leaves full-body native playback
+    // intact. Absent morph targets never trigger guessed skeletal retargeting.
+    TMap<FName, float> Combined;
+    for (const FMorphOverlay& Overlay : MorphOverlays)
+        Combined.FindOrAdd(Overlay.Morph) += Overlay.Weight;
+    const float RawTime = ElapsedSeconds * PlaybackRate;
+    const float AuthoredTime = bPlaying && bLooping && SequenceSeconds > SMALL_NUMBER
+        ? FMath::Fmod(RawTime, SequenceSeconds) : RawTime;
+    if (bPlaying)
+    for (const FOGSharedMorphTrack& Track : AuthoredMorphTracks)
+    {
+        if (Track.Morph.IsNone() || Track.Keys.IsEmpty()) continue;
+        float Weight = Track.Keys[0].Weight;
+        if (AuthoredTime >= Track.Keys.Last().TimeSeconds)
+            Weight = Track.Keys.Last().Weight;
+        else for (int32 K = 1; K < Track.Keys.Num(); ++K)
+        {
+            if (AuthoredTime <= Track.Keys[K].TimeSeconds)
+            {
+                const float Span = FMath::Max(Track.Keys[K].TimeSeconds -
+                    Track.Keys[K-1].TimeSeconds, KINDA_SMALL_NUMBER);
+                const float T = FMath::Clamp((AuthoredTime -
+                    Track.Keys[K-1].TimeSeconds) / Span, 0.f, 1.f);
+                Weight = FMath::Lerp(Track.Keys[K-1].Weight,
+                    Track.Keys[K].Weight, T);
+                break;
+            }
+        }
+        Combined.FindOrAdd(Track.Morph) += Weight;
+    }
+    for (USkeletalMeshComponent* Part : RegisteredParts)
+    {
+        if (!Part || !Part->GetSkeletalMeshAsset()) continue;
+        for (FName PreviouslyApplied : AppliedMorphs)
+            if (!Combined.Contains(PreviouslyApplied) &&
+                Part->GetSkeletalMeshAsset()->FindMorphTarget(PreviouslyApplied))
+                Part->SetMorphTarget(PreviouslyApplied, 0.f);
+        for (const auto& Pair : Combined)
+            if (Part->GetSkeletalMeshAsset()->FindMorphTarget(Pair.Key))
+                Part->SetMorphTarget(Pair.Key, FMath::Clamp(Pair.Value, -1.f, 1.f));
+    }
+    AppliedMorphs.Reset();
+    for (const auto& Pair : Combined) AppliedMorphs.Add(Pair.Key);
+}
+
+void UOGSharedMotionControllerComponent::ApplyAuthoredRootMotion(
+    float PreviousSourceTime, float SourceTime)
+{
+    if (!bApplyingRootMotion || !CurrentSequence || SourceTime <= PreviousSourceTime)
+        return;
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character || !Character->HasAuthority() ||
+        !Character->GetCharacterMovement()) return;
+
+    const float Length = SequenceSeconds;
+    const FAnimExtractContext Extraction(0., true);
+    auto ApplySegment = [Character, this, &Extraction](float Start, float End)
+    {
+        if (End <= Start) return;
+        const FTransform Delta =
+            CurrentSequence->ExtractRootMotionFromRange(Start, End, Extraction);
+        if (Delta.Equals(FTransform::Identity, KINDA_SMALL_NUMBER)) return;
+        // Original Koikatsu meshes use a measured visual-axis correction.
+        // Root displacement follows the selected actual skeletal component
+        // relative orientation rather than blindly following the capsule X.
+        const USkeletalMeshComponent* Driver = CurrentLeader
+            ? CurrentLeader.Get() : (PlayingParts.IsEmpty() ? nullptr : PlayingParts[0].Get());
+        const FQuat VisualToActor = Driver ? Driver->GetRelativeRotation().Quaternion()
+            : FQuat::Identity;
+        const FQuat ActorQuat = Character->GetActorQuat();
+        const FVector WorldDelta = ActorQuat.RotateVector(
+            VisualToActor.RotateVector(Delta.GetTranslation()));
+        const FQuat WorldRotation = ActorQuat *
+            (VisualToActor * Delta.GetRotation() * VisualToActor.Inverse());
+        FHitResult Hit;
+        Character->GetCharacterMovement()->MoveUpdatedComponent(
+            WorldDelta, WorldRotation, true, &Hit);
+        if (Hit.IsValidBlockingHit())
+        {
+            UE_LOG(LogTemp, Verbose,
+                TEXT("Shared root motion collision blocked action=%s"), *CurrentAction.ToString());
+        }
+    };
+    if (!bLooping)
+    {
+        ApplySegment(FMath::Min(PreviousSourceTime, Length),
+            FMath::Min(SourceTime, Length));
+        return;
+    }
+    float Cursor = PreviousSourceTime;
+    const float Stop = FMath::Min(SourceTime, Cursor + Length * 4.f);
+    while (Cursor < Stop)
+    {
+        const float CycleStart = FMath::FloorToFloat(Cursor / Length) * Length;
+        const float End = FMath::Min(Stop, CycleStart + Length);
+        ApplySegment(Cursor - CycleStart, End - CycleStart);
+        if (End <= Cursor + SMALL_NUMBER) break;
+        Cursor = End;
+    }
+}
+
 bool UOGSharedMotionControllerComponent::PlayAction(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
-    int32 ParticipantCount)
+    int32 ParticipantCount, FName ParticipantRole)
 {
-    if (RigProfile.IsNone() || GameplayAction.IsNone() ||
-        Context.IsNone() || RegisteredParts.IsEmpty()) return false;
+    if (!CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
+        ParticipantCount, ParticipantRole)) return false;
 
     const UOGSharedMotionLibrary* Library =
         SharedLibrary.IsNull() ? nullptr : SharedLibrary.LoadSynchronous();
@@ -88,9 +324,8 @@ bool UOGSharedMotionControllerComponent::PlayAction(
         UAnimSequence* Sequence = FOGSharedMotionResolver::Resolve(
             Library, GameplayAction, RigProfile, AnatomyProfile, OutfitProfile,
             Context, Capabilities, SearchParts, bAdultContextAuthorized,
-            ParticipantCount, &Entry);
-        if (!Sequence || !Entry || !Sequence->GetSkeleton() ||
-            Entry->bUsesRootMotion) return false;
+            ParticipantCount, &Entry, ParticipantRole);
+        if (!Sequence || !Entry || !Sequence->GetSkeleton()) return false;
 
         if (!Sequences.IsEmpty() &&
             (Entry->SourceClipId != Entries[0]->SourceClipId ||
@@ -125,9 +360,26 @@ bool UOGSharedMotionControllerComponent::PlayAction(
     CurrentLeader = Leader;
     PlayingParts = RegisteredParts;
     bPlaying = true;
+    bApplyingRootMotion = PrimaryEntry->bUsesRootMotion;
+    AuthoredMorphTracks = PrimaryEntry->MorphTracks;
+    bSceneTimeLocked = false;
     bLooping = PrimaryEntry->bLoop;
     bHasContact = PrimaryEntry->ContactSeconds >= 0.f;
     SourceContactSeconds = PrimaryEntry->ContactSeconds;
+    if (!bHasContact && !PrimaryEntry->ContactNotify.IsNone())
+    {
+        // Native authored animation notifies take precedence over guessed
+        // generic contact timing. No notify means no contact event.
+        for (const FAnimNotifyEvent& Notify : Sequences[0]->Notifies)
+        {
+            if (Notify.NotifyName == PrimaryEntry->ContactNotify)
+            {
+                SourceContactSeconds = Notify.GetTriggerTime();
+                bHasContact = true;
+                break;
+            }
+        }
+    }
     SequenceSeconds = FMath::Max(Sequences[0]->GetPlayLength(), 0.001f);
     PlaybackRate = FMath::Clamp(PrimaryEntry->PlayRate, 0.01f, 8.f);
     ElapsedSeconds = 0.f;
@@ -168,7 +420,7 @@ bool UOGSharedMotionControllerComponent::PlayAction(
 
 void UOGSharedMotionControllerComponent::StopAction()
 {
-    SetComponentTickEnabled(false);
+    SetComponentTickEnabled(!MorphOverlays.IsEmpty());
     for (USkeletalMeshComponent* Part : PlayingParts)
     {
         if (Part) Part->SetLeaderPoseComponent(nullptr);
@@ -185,24 +437,36 @@ void UOGSharedMotionControllerComponent::StopAction()
     CurrentAction = NAME_None;
     CurrentMotionId = NAME_None;
     CurrentSourceClipId = NAME_None;
+    AuthoredMorphTracks.Reset();
     bPlaying = false;
+    bApplyingRootMotion = false;
+    bSceneTimeLocked = false;
     bLooping = false;
     bHasContact = false;
     SourceContactSeconds = -1.f;
     ElapsedSeconds = 0.f;
     SequenceSeconds = 0.f;
     LastContactCycle = -1;
+    ApplyMorphOverlays();
 }
 
 void UOGSharedMotionControllerComponent::TickComponent(
     float DeltaSeconds, ELevelTick TickType, FActorComponentTickFunction* TickFunction)
 {
     Super::TickComponent(DeltaSeconds, TickType, TickFunction);
-    if (!bPlaying || DeltaSeconds <= 0.f) return;
-    ElapsedSeconds += DeltaSeconds;
+    if (DeltaSeconds <= 0.f) return;
+    if (!bPlaying)
+    {
+        ApplyMorphOverlays();
+        return;
+    }
+    const float Before = ElapsedSeconds * PlaybackRate;
+    ElapsedSeconds = bSceneTimeLocked && GetWorld()
+        ? FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime)
+        : ElapsedSeconds + DeltaSeconds;
     const float SourceTime = ElapsedSeconds * PlaybackRate;
-    const int32 Cycle = bLooping
-        ? FMath::FloorToInt(SourceTime / SequenceSeconds) : 0;
+    ApplyAuthoredRootMotion(Before, SourceTime);
+    ApplyMorphOverlays();
     if (!CurrentLeader && bPhaseLockIndependentParts)
     {
         // Synchronize independently imported part skeletons by normalized
@@ -243,6 +507,8 @@ void UOGSharedMotionControllerComponent::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
     StopAction();
+    MorphOverlays.Reset();
+    ApplyMorphOverlays();
     RegisteredParts.Reset();
     Super::EndPlay(EndPlayReason);
 }

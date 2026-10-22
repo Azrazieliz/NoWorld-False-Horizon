@@ -263,6 +263,8 @@ private:
     void ActivateNativeQAWorldMode();
     void UpdateNativeMotionFromTraversal();
     UAnimSequence* ResolveAuthoredMotionClip(EOGLuminousV3MotionPhase Phase) const;
+    bool PlayResolvedTraversal(EOGLuminousV3MotionPhase Phase,
+        UAnimSequence* Clip, bool bLoop);
     UAnimSequence* ResolveSharedMotion(FName GameplayAction, FName Context,
         bool bAuthorizedAdultContext, int32 ParticipantCount,
         const FOGSharedMotionEntry** OutEntry = nullptr) const;

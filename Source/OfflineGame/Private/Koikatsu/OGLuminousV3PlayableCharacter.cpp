@@ -707,6 +707,37 @@ void AOGLuminousV3PlayableCharacter::InterruptGate09AuthoredEmote()
     CurrentNativeClip = nullptr;
     CurrentMotionPhase = EOGLuminousV3MotionPhase::Idle;
 }
+bool AOGLuminousV3PlayableCharacter::PlayResolvedTraversal(
+    EOGLuminousV3MotionPhase Phase, UAnimSequence* Clip, bool bLoop)
+{
+    if (!Clip) return false;
+    FName Action = NAME_None;
+    switch (Phase)
+    {
+    case EOGLuminousV3MotionPhase::Walk: Action = TEXT("Traversal.Walk"); break;
+    case EOGLuminousV3MotionPhase::Run: Action = TEXT("Traversal.Run"); break;
+    case EOGLuminousV3MotionPhase::Jump: Action = TEXT("Traversal.Jump"); break;
+    case EOGLuminousV3MotionPhase::Swimming: Action = TEXT("Traversal.Swim"); break;
+    case EOGLuminousV3MotionPhase::Flying:
+        Action = bLoop ? FName(TEXT("Traversal.FlightHover")) :
+            FName(TEXT("Traversal.FlightTakeoff"));
+        break;
+    default: break;
+    }
+    // One animation controller is shared by every version and wardrobe. The
+    // existing native direct driver remains for authentic old clips not yet
+    // catalogued; exact skeleton checks apply in both paths.
+    if (!Action.IsNone() && SharedMotionController &&
+        SharedMotionController->PlayAction(Action, TEXT("Traversal"), false, 1))
+    {
+        CurrentNativeClip = Clip;
+        ActiveMotionLeaderIndex = INDEX_NONE;
+        bCompatibleNativeMotion = true;
+        return true;
+    }
+    return SetLuminousNativeMotionClip(Clip, bLoop);
+}
+
 UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     EOGLuminousV3MotionPhase Phase) const
 {
@@ -814,7 +845,7 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
                     TEXT("/Game/Gate12NativeKoikatsu20261020/FlightDanceSwimming/"
                          "G12_LuminousV3_Koikatsu_Flight_Start."
                          "G12_LuminousV3_Koikatsu_Flight_Start"));
-            if(Takeoff && SetLuminousNativeMotionClip(Takeoff,false))
+            if(Takeoff && PlayResolvedTraversal(EOGLuminousV3MotionPhase::Flying,Takeoff,false))
                 Gate09TakeoffEndsAt=Now+Takeoff->GetPlayLength();
             else
             {
@@ -833,15 +864,16 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
         {
             if(UAnimSequence* Hover=ResolveAuthoredMotionClip(Desired))
                 if(Hover!=CurrentNativeClip)
-                    SetLuminousNativeMotionClip(Hover,true);
+                    PlayResolvedTraversal(EOGLuminousV3MotionPhase::Flying,Hover,true);
         }
-        else if(RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) &&
-                RuntimeParts[ActiveMotionLeaderIndex] &&
-                CurrentNativeClip)
+        else if(CurrentNativeClip)
         {
             // No approved moving-flight loop exists yet. Do not repeat
             // takeoff, or depict fake forward flight using stationary hover.
-            RuntimeParts[ActiveMotionLeaderIndex]->Stop();
+            if (SharedMotionController && SharedMotionController->IsPlayingAction())
+                SharedMotionController->StopAction();
+            if (RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) && RuntimeParts[ActiveMotionLeaderIndex])
+                RuntimeParts[ActiveMotionLeaderIndex]->Stop();
             CurrentNativeClip=nullptr;
         }
         CurrentMotionPhase=Desired;
@@ -858,16 +890,19 @@ void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
     if (Desired == EOGLuminousV3MotionPhase::Idle ||
         Desired == EOGLuminousV3MotionPhase::Fall)
     {
+        if (SharedMotionController && SharedMotionController->IsPlayingAction())
+            SharedMotionController->StopAction();
         if (RuntimeParts.IsValidIndex(ActiveMotionLeaderIndex) && RuntimeParts[ActiveMotionLeaderIndex])
             RuntimeParts[ActiveMotionLeaderIndex]->Stop();
+        CurrentNativeClip = nullptr;
         UE_LOG(LogTemp, Display,
             TEXT("G12_LUMINOUS_MOTION_STATE_NEUTRAL=%d no_wrong_ground_gait_in_flight_or_swim"),
             static_cast<int32>(Desired));
         return;
     }
     UAnimSequence* Sequence = ResolveAuthoredMotionClip(Desired);
-    if (!Sequence || !SetLuminousNativeMotionClip(
-        Sequence, Desired != EOGLuminousV3MotionPhase::Jump))
+    if (!Sequence || !PlayResolvedTraversal(
+        Desired, Sequence, Desired != EOGLuminousV3MotionPhase::Jump))
     {
         // Safe fallback if currently worn wardrobe does not share this native
         // skeleton. Never animate a different 975-bone skeleton by mistake.
@@ -1066,8 +1101,8 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
                 EOGLuminousV3MotionPhase::Walk : QAMotionCycleStep == 1 ?
                 EOGLuminousV3MotionPhase::Run : EOGLuminousV3MotionPhase::Jump;
             UAnimSequence* Clip = ResolveAuthoredMotionClip(Phase);
-            const bool bValid = Clip && SetLuminousNativeMotionClip(
-                Clip, Phase != EOGLuminousV3MotionPhase::Jump);
+            const bool bValid = Clip && PlayResolvedTraversal(
+                Phase, Clip, Phase != EOGLuminousV3MotionPhase::Jump);
             CurrentMotionPhase = Phase;
             UE_LOG(LogTemp, Display,
                 TEXT("G12_LUMINOUS_NATIVE_MOTION_QA_STEP=%d motion=%d result=%s active_native_part_count=%d clip=%s error=%s"),
