@@ -3,6 +3,8 @@
 // fake enemies, invent Manifestations or bypass selected player's version.
 #include "World/OGStartingRegionPresentation.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
@@ -106,29 +108,37 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         OutError=TEXT("The owned Luminous unit is not a legal active battle participant.");
         return false;
     }
-    if(!bHasTargetHudProjection || !TargetHudProjection.TargetEntityId.IsValid())
+    TArray<FOGEntityId> Chosen;
+    if(SelectedCanonicalBattleId==Battle.BattleId &&
+       !SelectedCanonicalTurnTargets.IsEmpty())
+        Chosen=SelectedCanonicalTurnTargets;
+    else if(bHasTargetHudProjection && TargetHudProjection.TargetEntityId.IsValid())
+        Chosen.Add(TargetHudProjection.TargetEntityId);
+    if(Chosen.IsEmpty())
     {
-        OutError=TEXT("A real target must be selected for the authored Luminous skill.");
+        OutError=TEXT("Select actual battle target(s) for the authored Luminous skill.");
         return false;
     }
-    bool bLegalTarget=false;
-    for(const FOGCombatUnitState& Target:Battle.Units)
-        if(Target.UnitEntityId==TargetHudProjection.TargetEntityId &&
-           Target.TeamIndex!=Source->TeamIndex && Target.CanAct())
-        {
-            bLegalTarget=true;
-            break;
-        }
-    if(!bLegalTarget)
+    // UI is only a selection surface: actual max target count, allegiance,
+    // self/ally heal and cost are checked in the frozen Gate04 preflight.
+    TMap<FOGEntityId,FOGLargeNumber> HpBefore;
+    for(const FOGEntityId& Selected:Chosen)
     {
-        OutError=TEXT("Target must be a living opponent in the real active native encounter.");
-        return false;
+        const FOGCombatUnitState* Actual=Battle.Units.FindByPredicate(
+            [&Selected](const FOGCombatUnitState& U)
+            { return U.UnitEntityId==Selected; });
+        if(!Actual || !Actual->CanAct() || HpBefore.Contains(Selected))
+        {
+            OutError=TEXT("An actual active, nonduplicated battle target is required.");
+            return false;
+        }
+        HpBefore.Add(Selected,Actual->CurrentHp);
     }
     FOGResolvedCombatAction Action;
     Action.ActionId=FOGEntityId::NewId();
     Action.SourceUnitId=Manifestation;
     Action.SkillId=Skill;
-    Action.TargetUnitIds.Add(TargetHudProjection.TargetEntityId);
+    Action.TargetUnitIds=Chosen;
     Action.ResolutionJson=Resolution;
     Action.ActionDelay=FMath::Max<int64>(1,Source->DefaultActionDelay);
     Action.InterruptPriority=0;
@@ -137,6 +147,45 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
     const bool bApplied = Core->ApplyApprovedLuminousResolvedAction(Action, OutError);
     if (bApplied && ActiveLuminous)
     {
+        ClearSelectedCanonicalTurnTargets();
+        // Actual actor facing and reactions are presentation of a committed
+        // native action. The selected physical target must be a source-backed
+        // embodied participant, never an inferred temporary mesh or proxy.
+        if (const FOGTurnBattle* Updated=Core->GetOwnedLuminousTurnBattle())
+        {
+            AActor* FirstActualTarget=nullptr;
+            for(const FOGEntityId& TargetId:Chosen)
+            {
+                AActor* TargetActor=
+                    UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                        GetWorld(),Battle.BattleId,TargetId);
+                if(!TargetActor) continue;
+                if(!FirstActualTarget) FirstActualTarget=TargetActor;
+                const FOGCombatUnitState* After=Updated->GetState().Units.FindByPredicate(
+                    [&TargetId](const FOGCombatUnitState& U)
+                    { return U.UnitEntityId==TargetId; });
+                const FOGLargeNumber* Before=HpBefore.Find(TargetId);
+                if(!After || !Before) continue;
+                const int32 Change=FOGLargeNumber::Compare(After->CurrentHp,*Before);
+                if(Change!=0)
+                    if(UOGSharedMotionControllerComponent* Motion=
+                        TargetActor->FindComponentByClass<UOGSharedMotionControllerComponent>())
+                    {
+                        const FName Reaction=After->IsAlive()
+                            ? (Change<0 ? FName(TEXT("Combat.Reaction.Hit")) :
+                               FName(TEXT("Combat.Reaction.Heal")))
+                            : FName(TEXT("Combat.Reaction.Death"));
+                        // No registered exact-rig clip = NO fake reaction.
+                        Motion->PlayAction(Reaction,TEXT("Combat"),false,1);
+                    }
+            }
+            if(FirstActualTarget && FirstActualTarget!=ActiveLuminous)
+            {
+                const FVector Delta=FirstActualTarget->GetActorLocation()-GetActorLocation();
+                if(Delta.SizeSquared2D()>FMath::Square(5.f))
+                    SetActorRotation(FRotator(0.f,Delta.Rotation().Yaw,0.f));
+            }
+        }
         // Central semantic keys identify the ACTUAL approved skill and
         // Ultimate branch, not one generic Luminous pose for every Version.
         // Content artists register exact-rig derivatives globally under the

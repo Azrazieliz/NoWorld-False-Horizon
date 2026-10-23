@@ -2,6 +2,8 @@
 #include "Koikatsu/OGLuminousV3WardrobeQAWidget.h"
 #include "Animation/OGSharedMotionLibrary.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Combat/OGTurnBattle.h"
 
 #include "Animation/AnimSequence.h"
 #include "Blueprint/UserWidget.h"
@@ -147,6 +149,7 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
     SharedMotionController = CreateDefaultSubobject<UOGSharedMotionControllerComponent>(TEXT("NativeSharedMotionController"));
+    CanonicalCombatBody = CreateDefaultSubobject<UOGCanonicalCombatActorBindingComponent>(TEXT("CanonicalCombatNativeBody"));
     SharedMotionController->RigProfile = TEXT("koikatsu_original");
     SharedMotionController->bUseIdenticalTopologyLeaderPose = true;
     // Existing Gate11 allocated DESIGN identifiers, verified from the original
@@ -1201,6 +1204,29 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
         }
     }
     const float Now = GetWorld()->GetTimeSeconds();
+    // An owned Luminous whose native geometry is already loaded becomes the
+    // physical actor of the existing GameCore battle when one starts later.
+    // The binding remains purely visual and never creates combat units.
+    if (bNativeOwnedCharacterBound && CanonicalCombatBody &&
+        Now>=NextCanonicalCombatBodySyncSeconds)
+    {
+        NextCanonicalCombatBodySyncSeconds=Now+0.6f;
+        UGameInstance* GI=GetGameInstance();
+        const UOGGameCoreSubsystem* Core=GI
+            ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+        const FOGTurnBattle* Battle=Core?Core->GetOwnedLuminousTurnBattle():nullptr;
+        if (Battle && Battle->GetState().Status==EOGTurnBattleStatus::Running &&
+            !CanonicalCombatBody->IsBoundTo(Battle->GetState().BattleId,
+                BoundOwnedManifestation))
+        {
+            FString Error;
+            if (!CanonicalCombatBody->BindActualNativeUnit(
+                BoundOwnedManifestation,BoundOwnedIdentity,Error))
+                UE_LOG(LogTemp,Verbose,TEXT("Owned Luminous combat visual binding pending: %s"),*Error);
+        }
+        else if (!Battle || Battle->GetState().Status!=EOGTurnBattleStatus::Running)
+            CanonicalCombatBody->UnbindVisual();
+    }
     if (bGate09EmotePlaying)
     {
         const UCharacterMovementComponent* Move = GetCharacterMovement();

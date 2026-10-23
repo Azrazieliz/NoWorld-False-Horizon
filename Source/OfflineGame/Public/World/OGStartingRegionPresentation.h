@@ -666,6 +666,12 @@ public:
     /** Selects one existing canonical active enemy from the real battle roster.
      * Uses no spawned target, fabricated entity ID, or new combat ledger. */
     bool SelectOwnedLuminousBattleTarget(int32 UnitIndex, FString& OutError);
+    bool IsOwnedBattleTargetSelected(const FOGEntityId& UnitId) const
+    { return SelectedCanonicalTurnTargets.Contains(UnitId); }
+    const TArray<FOGEntityId>& GetSelectedCanonicalTurnTargets() const
+    { return SelectedCanonicalTurnTargets; }
+    void ClearSelectedCanonicalTurnTargets()
+    { SelectedCanonicalTurnTargets.Reset(); SelectedCanonicalBattleId=FOGEntityId(); }
     bool HasSkillSlotForHud(int32 SkillSlot) const;
     bool HasUltimateForHud() const;
 
@@ -944,6 +950,12 @@ private:
     bool bHasTargetHudProjection = false;
     FOGWorldTargetViewModel TargetHudProjection;
     TArray<FOGWorldTargetViewModel> SecondaryTargetHudProjections;
+    /** UI-only target selection. Final targeting/allegiance/maximum/eligibility
+     * comes from Gate04's existing action preflight, not invented HUD rules. */
+    UPROPERTY(Transient)
+    TArray<FOGEntityId> SelectedCanonicalTurnTargets;
+    UPROPERTY(Transient)
+    FOGEntityId SelectedCanonicalBattleId;
     FVector ClimbSurfaceNormal = FVector::ZeroVector;
     TWeakObjectPtr<AActor> CurrentCarrier;
 
@@ -1080,6 +1092,11 @@ private:
     /** Live canonical Luminous battle controls over visible 3D World, never a
      * diagnostic stand-in render or second independent battle state. */
     bool DrawOwnedLuminousCombatSurface(AOGWorldPrototypeCharacter* Character, float Scale);
+    /** Read-only weak native actor cache keyed by the EXISTING canonical battle.
+     * Refreshes intermittently, never owns/spawns/proxies NPC bodies. */
+    TMap<FOGEntityId,TWeakObjectPtr<AActor>> NativeBattleWorldActors;
+    FOGEntityId NativeBattleCacheBattleId;
+    double NativeBattleLastActorScanSeconds = -1000.0;
     void DrawFoundationText(const FString& Text, FLinearColor Color,
         float X, float Y, UFont* Font = nullptr, float TextScale = 1.0f,
         bool bScalePosition = false);

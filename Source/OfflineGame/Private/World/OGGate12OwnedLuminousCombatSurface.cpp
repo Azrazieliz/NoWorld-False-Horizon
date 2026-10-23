@@ -6,6 +6,8 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "EngineUtils.h"
 #include "Engine/Canvas.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -48,19 +50,34 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
     if (!Luminous || Source.UnitEntityId != Session->SelectedManifestationId ||
         !Luminous->IsBoundToOwnedLuminousCombatUnit(Session->BoundRulerId,
             Session->SelectedManifestationId, Source.SkillSet.CurrentForm) ||
-        !Source.CanAct() || !Target.CanAct() ||
-        Source.TeamIndex == Target.TeamIndex)
+        !Source.CanAct() || !Target.CanAct())
     {
-        OutError = TEXT("Select a live opposing unit during the actual possessed Luminous turn.");
+        // Ally, self and enemy targets are all meaningful in the approved
+        // Base/Alter skills. Gate04's exact skill preflight, not this UI,
+        // determines allegiance, number, revival and target eligibility.
+        OutError = TEXT("Select a live canonical battle participant on the actual possessed Luminous turn.");
         return false;
     }
+    // Support actual authored AoE/multi-target skills (up to four targets in
+    // the current approved kit), while Gate04 independently validates exact
+    // skill max/ally/self rules on submission. Tap again to deselect.
+    if (SelectedCanonicalBattleId!=State.BattleId)
+    { SelectedCanonicalTurnTargets.Reset(); SelectedCanonicalBattleId=State.BattleId; }
+    if (SelectedCanonicalTurnTargets.Contains(Target.UnitEntityId))
+        SelectedCanonicalTurnTargets.Remove(Target.UnitEntityId);
+    else if (SelectedCanonicalTurnTargets.Num() < 4)
+        SelectedCanonicalTurnTargets.Add(Target.UnitEntityId);
+    else
+    { OutError=TEXT("The accepted Luminous abilities support at most four targets."); return false; }
     // Keep the established knowledge/privacy projection for an already
     // observed target; NEVER reveal undiscovered HP/identity from battle math.
     FOGWorldTargetViewModel Projection;
     if (HasTargetHudProjectionForHud() &&
         GetTargetHudProjectionForHud().TargetEntityId == Target.UnitEntityId)
         Projection = GetTargetHudProjectionForHud();
-    Projection.TargetEntityId = Target.UnitEntityId;
+    if (SelectedCanonicalTurnTargets.IsEmpty())
+    { ClearTargetHudProjection(); return true; }
+    Projection.TargetEntityId = SelectedCanonicalTurnTargets.Last();
     Projection.bPrincipalTarget = true;
     SetTargetHudProjection(Projection);
     return true;
@@ -99,6 +116,33 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const bool bOwnTurn =
         Acting.UnitEntityId == Owned->UnitEntityId && Acting.CanAct();
 
+    // Track REAL native visual actors separately from the executor roster.
+    // World streaming may replace source actor instances: cache only weak refs.
+    const double Now=GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    if (State.BattleId != NativeBattleCacheBattleId ||
+        Now < NativeBattleLastActorScanSeconds ||
+        Now - NativeBattleLastActorScanSeconds > 1.0)
+    {
+        NativeBattleWorldActors.Reset();
+        NativeBattleCacheBattleId=State.BattleId;
+        NativeBattleLastActorScanSeconds=Now;
+        if (UWorld* World=GetWorld())
+        for (TActorIterator<AActor> It(World); It; ++It)
+        {
+            AActor* Actor=*It;
+            if (!IsValid(Actor)) continue;
+            const UOGCanonicalCombatActorBindingComponent* Binding=
+                Actor->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+            if (!Binding) continue;
+            for (const FOGCombatUnitState& Unit:State.Units)
+                if (Binding->IsBoundTo(State.BattleId,Unit.UnitEntityId))
+                {
+                    NativeBattleWorldActors.Add(Unit.UnitEntityId,Actor);
+                    break;
+                }
+        }
+    }
+
     const float W = Canvas->ClipX, H = Canvas->ClipY;
     const float S = FMath::Clamp(FMath::Min(W/1280.f,H/720.f), .52f, 1.30f);
     const float Edge = 14.f*S;
@@ -125,30 +169,61 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const float CardW = FMath::Min(166.f*S,(W-2.f*Edge-16.f*S)/6.f);
     const float CardH = 64.f*S;
     const float Top = Edge+HeaderHeight+7.f*S;
-    int32 EnemyOrdinal=0;
+    int32 ParticipantOrdinal=0;
     for (int32 I=0; I<State.Units.Num(); ++I)
     {
         const FOGCombatUnitState& Unit = State.Units[I];
-        if (Unit.TeamIndex == Owned->TeamIndex || EnemyOrdinal>=6) continue;
-        const float X = Edge+EnemyOrdinal*(CardW+5.f*S);
-        const bool bSelected = Character->HasTargetHudProjectionForHud() &&
-            Character->GetTargetHudProjectionForHud().TargetEntityId==Unit.UnitEntityId;
+        if (Unit.Presence!=EOGCombatPresence::Active || ParticipantOrdinal>=12)
+            continue;
+        const float X = Edge+(ParticipantOrdinal%6)*(CardW+5.f*S);
+        const float CardTop = Top+(ParticipantOrdinal/6)*(CardH+7.f*S);
+        const bool bSelected = Character->IsOwnedBattleTargetSelected(Unit.UnitEntityId) &&
+            Character->HasNativeOwnedLuminousEncounter();
         const FLinearColor Border = bSelected ? Accent : Dim;
-        DrawGamePanel(Panel,X,Top,CardW,CardH);
-        DrawLine(X,Top,X+CardW,Top,Border,bSelected?2.5f:1.f);
-        DrawGameText(FString::Printf(TEXT("Opponent %d"),EnemyOrdinal+1),
-            X+7.f*S,Top+7.f*S,17.f*S,Pale,CardW-14.f*S);
-        DrawGameText(Unit.CanAct() ?
-            (bSelected ? TEXT("TARGET SELECTED") : TEXT("SELECT TARGET")) :
-            TEXT("DEFEATED"),X+7.f*S,Top+35.f*S,12.f*S,
-            Unit.CanAct()?Border:Dim,CardW-14.f*S);
+        DrawGamePanel(Panel,X,CardTop,CardW,CardH);
+        DrawLine(X,CardTop,X+CardW,CardTop,Border,bSelected?2.5f:1.f);
+        const FString Allegiance=Unit.UnitEntityId==Owned->UnitEntityId
+            ? TEXT("SELF") :
+            Unit.TeamIndex==Owned->TeamIndex ? TEXT("ALLY") : TEXT("OPPONENT");
+        DrawGameText(FString::Printf(TEXT("%s %d"),*Allegiance,I+1),
+            X+7.f*S,CardTop+7.f*S,17.f*S,Pale,CardW-14.f*S);
+        const TWeakObjectPtr<AActor>* Presence=
+            NativeBattleWorldActors.Find(Unit.UnitEntityId);
+        AActor* ActualBody=Presence ? Presence->Get() : nullptr;
+        DrawGameText(!Unit.IsAlive() ? TEXT("DEFEATED") :
+            !ActualBody ? TEXT("BODY NOT YET BOUND") :
+            bSelected ? TEXT("TARGET SELECTED") : TEXT("SELECT TARGET"),
+            X+7.f*S,CardTop+35.f*S,12.f*S,Unit.IsAlive()?Border:Dim,CardW-14.f*S);
+        if (ActualBody && Unit.IsAlive() && PlayerOwner)
+        {
+            FVector Origin, Extent;
+            ActualBody->GetActorBounds(false,Origin,Extent);
+            const FVector MarkerWorld=Origin+FVector(0.f,0.f,Extent.Z+28.f);
+            FVector2D AtScreen;
+            if (PlayerOwner->ProjectWorldLocationToScreen(MarkerWorld,AtScreen,true) &&
+                AtScreen.X>12.f*S && AtScreen.X<W-12.f*S &&
+                AtScreen.Y>100.f*S && AtScreen.Y<H-85.f*S)
+            {
+                const float R=19.f*S;
+                DrawLine(AtScreen.X-R,AtScreen.Y,AtScreen.X+R,AtScreen.Y,Border,2.f);
+                DrawLine(AtScreen.X,AtScreen.Y-R,AtScreen.X,AtScreen.Y+R,Border,2.f);
+                DrawGameText(FString::Printf(TEXT("%d"),I+1),
+                    AtScreen.X-5.f*S,AtScreen.Y-34.f*S,17.f*S,Border,24.f*S);
+                if (bOwnTurn)
+                    AddFoundationHitBox(
+                        FVector2D(AtScreen.X-R,AtScreen.Y-R),
+                        FVector2D(R*2.f,R*2.f),
+                        FName(*FString::Printf(TEXT("OG.Battle.Target.%d"),I)),
+                        true,163);
+            }
+        }
         if (bOwnTurn && Unit.CanAct())
         {
-            AddFoundationHitBox(FVector2D(X,Top),FVector2D(CardW,CardH),
+            AddFoundationHitBox(FVector2D(X,CardTop),FVector2D(CardW,CardH),
                 FName(*FString::Printf(TEXT("OG.Battle.Target.%d"),I)),
                 true,162);
         }
-        ++EnemyOrdinal;
+        ++ParticipantOrdinal;
     }
 
     // Buttons map to the real approved ActiveSkill slots, not diagnostic
@@ -156,6 +231,9 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const float ButtonW = FMath::Min(140.f*S,(W-2.f*Edge)/5.5f);
     const float ButtonH = 54.f*S;
     const float Bottom = H-ButtonH-Edge;
+    DrawGameText(FString::Printf(TEXT("SELECTED %d  |  tap a target again to remove"),
+        Character->GetSelectedCanonicalTurnTargets().Num()),
+        Edge+6.f*S,Bottom-58.f*S,14.f*S,Accent,W*.77f);
     for (int32 Slot=0; Slot<3; ++Slot)
     {
         const FString Label = FString::Printf(TEXT("ACTIVE %d"),Slot+1);

@@ -242,6 +242,12 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="OfflineGame|Motion|Shared", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UOGSharedMotionControllerComponent> SharedMotionController;
 
+    /** The physical native body of this EXISTING owned Manifestation in
+     * canonical turns. Does not create an enemy, new ID, or character Version. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="OfflineGame|Combat|World", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<class UOGCanonicalCombatActorBindingComponent> CanonicalCombatBody;
+    float NextCanonicalCombatBodySyncSeconds = 0.f;
+
     UPROPERTY(Transient)
     TArray<TObjectPtr<USkeletalMeshComponent>> RuntimeParts;
 
