@@ -13,7 +13,7 @@ plan=json.loads(source.read_text(encoding="utf8"))["motions"]
 motions=json.loads(catalog.read_text(encoding="utf8"))["motions"]
 catalog_by_asset={e["native_sequence"]:e for e in motions}
 active=[m for m in motions if m["approved_for_gameplay"]]
-verified=[];issues=[];families=collections.Counter()
+verified=[];issues=[];families=collections.Counter();legacy_without_catalog_hash=[]
 for row in plan:
     clip=row["source_clip"]
     families[row["context"]]+=1
@@ -35,20 +35,30 @@ for row in plan:
         if not registered:
             issues.append({"clip":clip,"outfit":outfit,"issue":"NOT_IN_SHARED_CATALOG"})
             continue
-        if (registered["approved_for_gameplay"] or
-            registered.get("native_uasset_sha256")!=hashlib.sha256(uasset.read_bytes()).hexdigest()):
-            issues.append({"clip":clip,"outfit":outfit,"issue":"QA_POLICY_OR_ASSET_HASH_MISMATCH"})
+        actual_hash=hashlib.sha256(uasset.read_bytes()).hexdigest()
+        if registered["approved_for_gameplay"]:
+            issues.append({"clip":clip,"outfit":outfit,"issue":"QA_POLICY_VIOLATION"})
             continue
+        known_hash=registered.get("native_uasset_sha256")
+        if known_hash and known_hash!=actual_hash:
+            issues.append({"clip":clip,"outfit":outfit,"issue":"NATIVE_ASSET_HASH_MISMATCH"})
+            continue
+        if not known_hash:
+            # Twenty-one legacy QA entries predate hash registration: verify
+            # their REAL file & source receipt without inventing a catalog hash.
+            legacy_without_catalog_hash.append({"clip":clip,"outfit":outfit,
+                "actual_file_sha256":actual_hash})
         verified.append({"clip":clip,"wardrobe":outfit,"native_asset":asset,
             "source_path_id":info["source_unity_path_id"],
-            "asset_sha256":registered["native_uasset_sha256"]})
+            "asset_sha256":actual_hash,"catalog_hash_present":bool(known_hash)})
 result={"schema":"noworld.gate12.original_native_animation_checkpoint.v1",
         "source_motions":len(plan),"native_expected":len(plan)*3,
         "native_verified":len(verified),"source_families":dict(families),
         "shared_catalog_entries":len(motions),
         "gameplay_enabled_entry_count":len(active),
         "qa_gated_entries":len(motions)-len(active),
-        "native_issues":issues,"visual_acceptance":"NOT_VERIFIED",
+        "native_issues":issues,"legacy_qa_assets_without_catalog_hash":legacy_without_catalog_hash,
+        "visual_acceptance":"NOT_VERIFIED",
         "paired_scene_playback":"NOT_VERIFIED",
         "root_motion_visual_acceptance":"NOT_VERIFIED",
         "original_game_bundles_untouched":True,
