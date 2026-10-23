@@ -141,11 +141,13 @@ void AOGStartingRegionGenerator::BuildR1SourceTerrain()
                 -R1HalfExtentCm+GY*R1PointSpacingCm,Height*100.f));
             N.Add(FVector(-DX,-DY,1.f).GetSafeNormal());
             UV.Add(FVector2D(GX/512.f,GY/512.f));
-            // Source biome mask drives vertex tint; real artist materials
-            // may override this via approved layer material, not grey boxes.
-            C.Add(FLinearColor(.19f+.16f*Soil+.17f*Rock,
-                .24f+.20f*Soil-.10f*Rock,
-                .15f+.12f*Soil+.11f*Rock,1.f));
+            // Carry exact original Gate02 authoring weights into each of the
+            // 64 source terrain sections: R=soil biome, G=escarpment rock,
+            // B=normalized authored elevation. The native ground material
+            // combines original P03 mud/forest/cliff textures from these
+            // weights. Neither weights nor terrain are randomized at runtime.
+            C.Add(FLinearColor(Soil,Rock,
+                FMath::Clamp((Height+20.f)/770.f,0.f,1.f),1.f));
             Tan.Add(FProcMeshTangent(FVector(1.f,0.f,DX),false));
         }
         for(int32 Y=0;Y<64;++Y)
@@ -155,8 +157,15 @@ void AOGStartingRegionGenerator::BuildR1SourceTerrain()
             Indices.Add(A);Indices.Add(B);Indices.Add(C0);
             Indices.Add(B);Indices.Add(D);Indices.Add(C0);
         }
-        Terrain->CreateMeshSection_LinearColor(SectionIndex++,
+        // UProceduralMeshComponent uses one material slot PER section.
+        // Applying material slot 0 only left 63/64 source terrain sections
+        // rendering with Unreal's default grey fallback, hiding Gate02's
+        // actual authored biome colors across almost the entire landscape.
+        const int32 CurrentSection=SectionIndex++;
+        Terrain->CreateMeshSection_LinearColor(CurrentSection,
             V,Indices,N,UV,C,Tan,true);
+        if(TerrainMaterial)
+            Terrain->SetMaterial(CurrentSection,TerrainMaterial);
     }
     UE_LOG(LogTemp,Display,TEXT("GATE02_R1 source terrain: 513 grid, 64 collision sections, 3200m"));
 }

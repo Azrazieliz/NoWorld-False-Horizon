@@ -972,10 +972,19 @@ void AOGStartingRegionGenerator::ApplyPresentationMaterials()
         return;
     }
 
-    TerrainMaterial = CreateTintedMaterial(
-        Parent,
-        FLinearColor(0.19f, 0.22f, 0.17f, 1.0f),
-        0.92f);
+    // Preserve the non-Gate02 presentation material. The ACTUAL Gate02
+    // 513-grid has authored soil/rock masks and original P03 ground sources:
+    // use the native material generated from those sources, not the generic
+    // BasicShapes tint that flattened all three genuine biome surfaces.
+    TerrainMaterial = nullptr;
+    if (bGate02R1RegionSource)
+        if (UMaterialInterface* OriginalGround=LoadObject<UMaterialInterface>(
+            nullptr,TEXT("/Game/NoWorld/FirstWorld/R1/Terrain/"
+                         "M_R1_Gate02_SourceBiomes.M_R1_Gate02_SourceBiomes")))
+            TerrainMaterial=UMaterialInstanceDynamic::Create(OriginalGround,this);
+    if (!TerrainMaterial)
+        TerrainMaterial=CreateTintedMaterial(
+            Parent,FLinearColor(0.19f,0.22f,0.17f,1.0f),0.92f);
     RockMaterial = CreateTintedMaterial(
         Parent,
         FLinearColor(0.25f, 0.28f, 0.30f, 1.0f),
