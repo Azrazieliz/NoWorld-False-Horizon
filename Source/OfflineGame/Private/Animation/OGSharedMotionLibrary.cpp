@@ -136,6 +136,7 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
         Entry.AnatomyProfile = ReadName(TEXT("anatomy"));
         Entry.OutfitProfile = ReadName(TEXT("outfit"));
         Entry.RetargetProfile = ReadName(TEXT("retarget"));
+        Entry.AuthoredSceneId = ReadName(TEXT("scene_id"));
         Entry.SceneRole = ReadName(TEXT("scene_role"));
         Entry.ContactNotify = ReadName(TEXT("contact_notify"));
         Item->TryGetStringField(TEXT("source_hash"), Entry.SourceObjectHash);
@@ -273,7 +274,8 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
             (!Entry.GameplayContext.IsNone() && Entry.GameplayContext != Context) ||
             Entry.RequiredParticipants != ParticipantCount ||
             (ParticipantCount > 1
-                ? (SceneRole.IsNone() || Entry.SceneRole != SceneRole)
+                ? (SceneRole.IsNone() || Entry.SceneRole != SceneRole ||
+                   Entry.AuthoredSceneId.IsNone())
                 : !Entry.SceneRole.IsNone()))
             continue;
 

@@ -93,6 +93,13 @@ public:
         bool bAdultContextAuthorized, int32 ParticipantCount,
         FName ParticipantRole, FName& OutSourceClipId) const;
 
+    /** Authored scene group, not the individual source clip ID. Required to
+     * prove synchronized roles are from the SAME genuine source scene. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Scene")
+    bool PreviewAuthoredSceneId(FName GameplayAction, FName Context,
+        bool bAdultContextAuthorized, int32 ParticipantCount,
+        FName ParticipantRole, FName& OutSceneId) const;
+
     /** One global time origin for every participant. Each actor remains independently animated. */
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     void SynchronizeToWorldTime(float SceneStartTime);

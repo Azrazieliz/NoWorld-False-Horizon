@@ -73,6 +73,11 @@ struct OFFLINEGAME_API FOGSharedMotionEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Rig")
     FName RetargetProfile = NAME_None;
 
+    /** Original authored multi-participant scene identity. Distinct role
+     * tracks may have different source clip IDs but must share this group. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Scene")
+    FName AuthoredSceneId = NAME_None;
+
     /** Distinguishes synchronized scene participant tracks; None for single-actor motions. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Rig")
     FName SceneRole = NAME_None;

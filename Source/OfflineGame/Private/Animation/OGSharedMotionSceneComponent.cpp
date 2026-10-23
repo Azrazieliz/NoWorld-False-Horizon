@@ -18,6 +18,7 @@ bool UOGSharedMotionSceneComponent::StartSynchronizedScene(
     // A failed preflight must not interrupt a currently valid scene.
     TSet<UOGSharedMotionControllerComponent*> UniqueControllers;
     TSet<FName> UniqueRoles;
+    FName SharedAuthoredSceneId=NAME_None;
     TArray<UOGSharedMotionControllerComponent*> Ready;
     Ready.Reserve(Count);
     for (const FOGSharedMotionParticipant& Participant : Participants)
@@ -37,6 +38,12 @@ bool UOGSharedMotionSceneComponent::StartSynchronizedScene(
         if (!Controller->PreviewSourceClipId(Action, Context,
                 bAuthorizedAdultContext, Count, Role, Source) || Source.IsNone())
             return false;
+        FName Scene=NAME_None;
+        if (!Controller->PreviewAuthoredSceneId(Action, Context,
+                bAuthorizedAdultContext, Count, Role, Scene) || Scene.IsNone() ||
+            (!SharedAuthoredSceneId.IsNone() && SharedAuthoredSceneId!=Scene))
+            return false;
+        SharedAuthoredSceneId=Scene;
         Ready.Add(Controller);
     }
     // Each participant resolves its own authentic source clip for the same

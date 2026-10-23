@@ -146,6 +146,26 @@ bool UOGSharedMotionControllerComponent::PreviewSourceClipId(
     return !OutSourceClipId.IsNone();
 }
 
+bool UOGSharedMotionControllerComponent::PreviewAuthoredSceneId(
+    FName GameplayAction, FName Context, bool bAdultContextAuthorized,
+    int32 ParticipantCount, FName ParticipantRole, FName& OutSceneId) const
+{
+    OutSceneId = NAME_None;
+    if (ParticipantCount < 2 ||
+        !CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
+            ParticipantCount, ParticipantRole)) return false;
+    const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
+        ? nullptr : SharedLibrary.LoadSynchronous();
+    if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
+    UAnimSequence* Sequence = nullptr;
+    const FOGSharedMotionEntry* Entry = nullptr;
+    if (!ResolveForPart(Library, RegisteredParts[0], GameplayAction, Context,
+            bAdultContextAuthorized, ParticipantCount, ParticipantRole,
+            Sequence, Entry) || !Entry) return false;
+    OutSceneId = Entry->AuthoredSceneId;
+    return !OutSceneId.IsNone();
+}
+
 void UOGSharedMotionControllerComponent::SynchronizeToWorldTime(float SceneStartTime)
 {
     if (!bPlaying || !GetWorld()) return;

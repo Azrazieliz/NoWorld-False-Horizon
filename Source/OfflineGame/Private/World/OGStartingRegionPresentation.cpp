@@ -8593,6 +8593,8 @@ void AOGWorldPresentationHud::DrawHUD()
     }
 
     if (!bSettingsOpen && DrawFoundationDiagnosticSurface(Character, Scale, true)) return;
+    if (!bSettingsOpen && FoundationSurface == TEXT("world") &&
+        DrawOwnedLuminousCombatSurface(Character, Scale)) return;
     if (!bSettingsOpen && FoundationSurface == TEXT("world") && DrawCanonicalTurnSurface(Character, Scale)) return;
 
     if (!bSettingsOpen &&
@@ -10178,6 +10180,42 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
             : nullptr;
     if (!Character)
     {
+        return;
+    }
+    // The only battle selection input is a real FOGTurnBattle roster index;
+    // never synthesize a target actor or a standalone HP/turn resolver.
+    if (FoundationSurface == TEXT("world") &&
+        BoxName.ToString().StartsWith(TEXT("OG.Battle.")))
+    {
+        FString Error;
+        const FString Hit = BoxName.ToString();
+        const FString Prefix(TEXT("OG.Battle.Target."));
+        if (Hit.StartsWith(Prefix))
+        {
+            int32 Index = INDEX_NONE;
+            if (!LexTryParseString(Index, *Hit.Mid(Prefix.Len())) ||
+                !Character->SelectOwnedLuminousBattleTarget(Index, Error))
+                FoundationStatusMessage = Error.IsEmpty() ?
+                    TEXT("Invalid canonical target selection.") : Error;
+            else FoundationStatusMessage.Reset();
+        }
+        else
+        {
+            int32 Slot = INDEX_NONE;
+            FName Branch = NAME_None;
+            if (Hit == TEXT("OG.Battle.A1")) Slot = 0;
+            else if (Hit == TEXT("OG.Battle.A2")) Slot = 1;
+            else if (Hit == TEXT("OG.Battle.A3")) Slot = 2;
+            else if (Hit == TEXT("OG.Battle.Ultimate.Day")) { Slot=-1;Branch=TEXT("day"); }
+            else if (Hit == TEXT("OG.Battle.Ultimate.Night")) { Slot=-1;Branch=TEXT("night"); }
+            else if (Hit == TEXT("OG.Battle.Ultimate.Ruin")) { Slot=-1;Branch=TEXT("ruin"); }
+            else if (Hit == TEXT("OG.Battle.Ultimate.Harvest")) { Slot=-1;Branch=TEXT("harvest"); }
+            if (Slot == INDEX_NONE ||
+                !Character->SubmitApprovedLuminousWorldAction(Slot, Branch, Error))
+                FoundationStatusMessage = Error.IsEmpty() ?
+                    TEXT("The selected battle action is unavailable.") : Error;
+            else FoundationStatusMessage.Reset();
+        }
         return;
     }
     if (FoundationSurface == FName(TEXT("world")) &&

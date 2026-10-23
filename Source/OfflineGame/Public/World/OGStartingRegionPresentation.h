@@ -663,6 +663,9 @@ public:
     bool SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,
         FString& OutError);
     bool HasNativeOwnedLuminousEncounter() const;
+    /** Selects one existing canonical active enemy from the real battle roster.
+     * Uses no spawned target, fabricated entity ID, or new combat ledger. */
+    bool SelectOwnedLuminousBattleTarget(int32 UnitIndex, FString& OutError);
     bool HasSkillSlotForHud(int32 SkillSlot) const;
     bool HasUltimateForHud() const;
 
@@ -1074,6 +1077,9 @@ private:
     // not a standalone costume-test pawn or fictional approved animation.
     bool bLuminousAuthoredEmotesExpanded = false;
     bool DrawCanonicalTurnSurface(AOGWorldPrototypeCharacter* Character, float Scale);
+    /** Live canonical Luminous battle controls over visible 3D World, never a
+     * diagnostic stand-in render or second independent battle state. */
+    bool DrawOwnedLuminousCombatSurface(AOGWorldPrototypeCharacter* Character, float Scale);
     void DrawFoundationText(const FString& Text, FLinearColor Color,
         float X, float Y, UFont* Font = nullptr, float TextScale = 1.0f,
         bool bScalePosition = false);

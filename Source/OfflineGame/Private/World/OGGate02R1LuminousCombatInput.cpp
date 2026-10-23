@@ -90,6 +90,13 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         return false;
     }
     const FOGTurnBattleState& Battle=Encounter->GetState();
+    const int32 ActingIndex=Encounter->SelectNextActingUnitIndex();
+    if(!Battle.Units.IsValidIndex(ActingIndex) ||
+       Battle.Units[ActingIndex].UnitEntityId!=Manifestation)
+    {
+        OutError=TEXT("Only the canonical next acting possessed Manifestation may submit a turn.");
+        return false;
+    }
     const FOGCombatUnitState* Source=nullptr;
     for(const FOGCombatUnitState& Unit:Battle.Units)
         if(Unit.UnitEntityId==Manifestation){Source=&Unit;break;}
@@ -104,16 +111,17 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         OutError=TEXT("A real target must be selected for the authored Luminous skill.");
         return false;
     }
-    bool bTargetInEncounter=false;
+    bool bLegalTarget=false;
     for(const FOGCombatUnitState& Target:Battle.Units)
-        if(Target.UnitEntityId==TargetHudProjection.TargetEntityId)
+        if(Target.UnitEntityId==TargetHudProjection.TargetEntityId &&
+           Target.TeamIndex!=Source->TeamIndex && Target.CanAct())
         {
-            bTargetInEncounter=true;
+            bLegalTarget=true;
             break;
         }
-    if(!bTargetInEncounter)
+    if(!bLegalTarget)
     {
-        OutError=TEXT("HUD target does not belong to the active native encounter.");
+        OutError=TEXT("Target must be a living opponent in the real active native encounter.");
         return false;
     }
     FOGResolvedCombatAction Action;
@@ -129,8 +137,15 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
     const bool bApplied = Core->ApplyApprovedLuminousResolvedAction(Action, OutError);
     if (bApplied && ActiveLuminous)
     {
-        const FName Semantic = Slot == -1
-            ? FName(TEXT("Combat.Ultimate")) : FName(TEXT("Combat.Skill"));
+        // Central semantic keys identify the ACTUAL approved skill and
+        // Ultimate branch, not one generic Luminous pose for every Version.
+        // Content artists register exact-rig derivatives globally under the
+        // same action. Missing approved combat clips never trigger a fake pose.
+        const FString MotionKey = Slot == -1
+            ? FString::Printf(TEXT("Combat.Ultimate.%s.%s"),
+                *Skill.ToString(),*Branch.ToString().ToLower())
+            : FString::Printf(TEXT("Combat.Skill.%s"),*Skill.ToString());
+        const FName Semantic(*MotionKey);
         if (!ActiveLuminous->PlaySharedGameplayAction(Semantic))
             UE_LOG(LogTemp, Warning,
                 TEXT("Gate12 combat accepted but no approved exact-rig native clip for %s; not substituting unrelated motion"),
