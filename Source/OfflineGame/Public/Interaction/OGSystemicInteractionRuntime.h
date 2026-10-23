@@ -34,6 +34,14 @@ struct OFFLINEGAME_API FOGInteractionAnimationBinding
     FOGEntityId ManifestationId;
     FOGContentId VersionId;
     FOGOptionalAssetReference Animation;
+    // Game-wide native semantic motion, resolved by actual rig and shared
+    // SourceClipId, never by character Version or wardrobe display name.
+    // Optional package clips remain valid when these fields are empty.
+    FName SharedGameplayAction = NAME_None;
+    FName SharedGameplayContext = NAME_None;
+    // Only populated by an authored 2+ participant scene role. This is
+    // a source-track role, distinct from the canonical world participant role.
+    FName SharedSceneRole = NAME_None;
     FOGOptionalAssetReference Expression;
     FOGOptionalAssetReference Reaction;
 };
@@ -52,6 +60,11 @@ struct OFFLINEGAME_API FOGInteractionActionNode
     TArray<FName> RequiredRoles;
     TArray<FName> NextNodes;
     TArray<FOGInteractionAnimationBinding> AnimationBindings;
+    // Original authored shared scene; the participant's individual rig role
+    // is provided by AnimationBindings[].SharedSceneRole.
+    // Empty means ordinary single-actor interaction playback.
+    FName SharedSceneAction = NAME_None;
+    FName SharedSceneContext = NAME_None;
     TArray<FOGInteractionConstraint> Constraints;
     FOGInteractionAuthoredConsequences Consequences;
     FName EnvironmentAnchorTag = NAME_None;
@@ -96,6 +109,12 @@ public:
     virtual void SetSignificance(const FOGEntityId&, bool bActionRelevant, bool bCameraRelevant) = 0;
     virtual void ApplyConstraint(const FOGInteractionConstraint&, const TArray<FOGInteractionParticipantState>&) = 0;
     virtual void ApplyAnimation(const FOGEntityId&, UObject* Animation) = 0;
+    // Native semantic playback is presentation-only: the authored action graph
+    // and persisted world consequences remain the sole gameplay authority.
+    virtual bool PlaySharedAction(const FOGEntityId&, FName, FName) { return false; }
+    virtual bool PlaySharedScene(const FOGInteractionActionNode&,
+        const TArray<FOGInteractionParticipantState>&) { return false; }
+    virtual void StopSharedScene() {}
     virtual void ApplyReaction(const FOGEntityId&, UObject* Expression, UObject* Reaction) = 0;
     virtual void SetPrivacy(bool bPrivacy) = 0;
     virtual void RestoreGameplay() = 0;

@@ -11,6 +11,7 @@
 class UOGGameCoreSubsystem;
 class UOGDiagnosticCombatComponent;
 class UOGDiagnosticAnimationPresentation;
+class UOGSharedMotionSceneComponent;
 class USkeletalMeshComponent;
 
 struct OFFLINEGAME_API FOGFoundationInteractionRow
@@ -56,6 +57,10 @@ public:
     virtual void SetSignificance(const FOGEntityId&, bool, bool) override;
     virtual void ApplyConstraint(const FOGInteractionConstraint&, const TArray<FOGInteractionParticipantState>&) override;
     virtual void ApplyAnimation(const FOGEntityId&, UObject*) override;
+    virtual bool PlaySharedAction(const FOGEntityId&, FName, FName) override;
+    virtual bool PlaySharedScene(const FOGInteractionActionNode&,
+        const TArray<FOGInteractionParticipantState>&) override;
+    virtual void StopSharedScene() override;
     virtual void ApplyReaction(const FOGEntityId&, UObject*, UObject*) override;
     virtual void SetPrivacy(bool) override;
     virtual void RestoreGameplay() override;
@@ -93,6 +98,8 @@ private:
     TArray<FOGInteractionParticipant> SelectedParticipants;
     TMap<FOGEntityId, TWeakObjectPtr<AActor>> BoundActors;
     TMap<FOGEntityId, FMeshRestore> MeshRestores;
+    UPROPERTY(Transient)
+    TObjectPtr<UOGSharedMotionSceneComponent> ActiveSharedScene = nullptr;
     FOGInteractionActionGraph ActiveGraph;
     FString Status = TEXT("Choose participants and an entry context.");
     int64 LastTick = -1;

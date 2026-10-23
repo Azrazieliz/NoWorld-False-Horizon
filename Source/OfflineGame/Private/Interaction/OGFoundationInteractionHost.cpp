@@ -6,6 +6,9 @@
 #include "World/OGStartingRegionPresentation.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/OGSharedMotionLibrary.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
+#include "Animation/OGSharedMotionSceneComponent.h"
 #include "Animation/Skeleton.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Misc/CoreDelegates.h"
@@ -379,10 +382,103 @@ void UOGFoundationInteractionHost::ApplyConstraint(const FOGInteractionConstrain
     const TArray<FOGInteractionParticipantState>& Participants)
 { OnConstraintPresentation.Broadcast(Constraint, Participants); }
 
+bool UOGFoundationInteractionHost::PlaySharedAction(
+    const FOGEntityId& Entity, FName Action, FName Context)
+{
+    AActor* Physical = FindBoundActor(Entity);
+    if (!Physical || Action.IsNone() || Context.IsNone()) return false;
+    // The actual possessed/embodied participant owns its compatible part set.
+    // The exact source/rig/quality decision belongs to the GAME-WIDE resolver;
+    // no Luminous Version, wardrobe or content category is hardcoded here.
+    UOGSharedMotionControllerComponent* Motion =
+        Physical->FindComponentByClass<UOGSharedMotionControllerComponent>();
+    return Motion && Motion->PlayAction(Action, Context, false, 1);
+}
+
+bool UOGFoundationInteractionHost::PlaySharedScene(
+    const FOGInteractionActionNode& Node,
+    const TArray<FOGInteractionParticipantState>& SourceParticipants)
+{
+    if (!GetWorld() || !GetOwner() || Node.SharedSceneAction.IsNone() ||
+        Node.SharedSceneContext.IsNone() || SourceParticipants.Num() < 2 ||
+        SourceParticipants.Num() > 13) return false;
+
+    TArray<FOGSharedMotionParticipant> Roles;
+    Roles.Reserve(SourceParticipants.Num());
+    for (const FOGInteractionParticipantState& Participant : SourceParticipants)
+    {
+        const FOGInteractionAnimationBinding* Authored = nullptr;
+        for (const FOGInteractionAnimationBinding& Binding : Node.AnimationBindings)
+        {
+            // Shared scene assets declare a real source role. The global
+            // controller tests actual native Skeletons, so no synthetic
+            // per-Version RigFamilyId is required to discover this role.
+            if (Binding.Role != Participant.Binding.Role ||
+                (Binding.RigFamilyId.IsValid() &&
+                 Binding.RigFamilyId != Participant.Binding.RigFamilyId))
+                continue;
+            const FOGEntityId RealManifestation =
+                Participant.Character.bHasManifestation
+                ? Participant.Character.Manifestation.ManifestationId
+                : Participant.Binding.Character.ManifestationId;
+            if (Binding.ManifestationId.IsValid() &&
+                Binding.ManifestationId != RealManifestation) continue;
+            if (!Binding.VersionId.IsEmpty() &&
+                (!Participant.Character.bHasManifestation ||
+                 Binding.VersionId !=
+                    Participant.Character.Manifestation.ActiveVersionId))
+                continue;
+            if (!Authored || Binding.ManifestationId.IsValid())
+                Authored = &Binding;
+        }
+        if (!Authored || Authored->SharedSceneRole.IsNone()) return false;
+        AActor* Actor = FindBoundActor(Participant.Binding.Character.EntityId);
+        if (!Actor || Actor->GetWorld() != GetWorld()) return false;
+        UOGSharedMotionControllerComponent* Controller =
+            Actor->FindComponentByClass<UOGSharedMotionControllerComponent>();
+        if (!Controller) return false;
+        FOGSharedMotionParticipant& Role = Roles.AddDefaulted_GetRef();
+        Role.Controller = Controller;
+        Role.SourceRole = Authored->SharedSceneRole;
+    }
+
+    if (!IsValid(ActiveSharedScene))
+    {
+        ActiveSharedScene = NewObject<UOGSharedMotionSceneComponent>(GetOwner());
+        if (!ActiveSharedScene) return false;
+        ActiveSharedScene->RegisterComponent();
+    }
+    ActiveSharedScene->Participants = MoveTemp(Roles);
+    // Existing shared scene component preflights ALL authored source roles,
+    // native Skeletons and grouped original scene IDs atomically. A rejected
+    // clip is not silently substituted, including for mature interactions.
+    return ActiveSharedScene->StartSynchronizedScene(
+        Node.SharedSceneAction, Node.SharedSceneContext, false);
+}
+
+void UOGFoundationInteractionHost::StopSharedScene()
+{
+    if (IsValid(ActiveSharedScene))
+        ActiveSharedScene->StopSynchronizedScene();
+}
+
 void UOGFoundationInteractionHost::ApplyAnimation(const FOGEntityId& Entity, UObject* Asset)
 {
-    FMeshRestore* Saved = MeshRestores.Find(Entity);
     UAnimSequence* Sequence = Cast<UAnimSequence>(Asset);
+    // Existing authored optional source-clip bindings also run through the
+    // central multi-part rig controller when their exact native source is
+    // already gameplay accepted; preserve legacy animation as fallback.
+    if (Sequence)
+        if (const UOGSharedMotionLibrary* Library =
+                FOGSharedMotionResolver::GetInstalledLibrary())
+            for (const FOGSharedMotionEntry& Entry : Library->Motions)
+                if (Entry.bApprovedForGameplay &&
+                    Entry.NativeSequence.ToSoftObjectPath().ToString() ==
+                        Sequence->GetPathName() &&
+                    PlaySharedAction(Entity, Entry.GameplayAction,
+                        Entry.GameplayContext))
+                    return;
+    FMeshRestore* Saved = MeshRestores.Find(Entity);
     if (!Saved || !Saved->Mesh.IsValid() || !Saved->Animation.IsValid() || !Sequence ||
         !Saved->Mesh->GetSkeletalMeshAsset() ||
         Sequence->GetSkeleton() != Saved->Mesh->GetSkeletalMeshAsset()->GetSkeleton()) return;
@@ -416,6 +512,13 @@ void UOGFoundationInteractionHost::UpdateAnimationPacing()
 
 void UOGFoundationInteractionHost::RestoreGameplay()
 {
+    // Restore ALL participant native motion tracks before the canonical
+    // interaction returns the characters to ordinary World control.
+    if (IsValid(ActiveSharedScene))
+    {
+        ActiveSharedScene->StopSynchronizedScene();
+        ActiveSharedScene->Participants.Reset();
+    }
     for (auto& Pair : MeshRestores)
     {
         FMeshRestore& Saved = Pair.Value;

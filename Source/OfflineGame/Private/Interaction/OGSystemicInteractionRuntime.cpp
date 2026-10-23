@@ -94,6 +94,8 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
             if (!Roles.Contains(Constraint.ParticipantRole) || !Roles.Contains(Constraint.TargetRole) ||
                 Constraint.TargetOffset.ContainsNaN())
                 return Fail(Error, TEXT("Constraints require bound roles and finite target offsets."));
+        if (Node.SharedSceneAction.IsNone() != Node.SharedSceneContext.IsNone())
+            return Fail(Error, TEXT("A shared scene requires both authored semantic action and context."));
         for (const auto& Binding : Node.AnimationBindings)
             if (!Roles.Contains(Binding.Role))
                 return Fail(Error, TEXT("Animation bindings must reference an existing participant role."));
@@ -345,13 +347,29 @@ void FOGSystemicInteractionRuntime::UpdatePresentation(const FOGInteractionActio
             if (auto* Montage = Cast<UAnimMontage>(Pair.Value.Get()))
                 if (auto* Anim = Character->GetMesh()->GetAnimInstance()) Anim->Montage_Stop(0.1f, Montage);
     PlayedMontages.Reset();
+    // Never let a previous scene continue into a different authored action
+    // (including a privacy-masked or non-scene node).
+    if (Presentation) Presentation->StopSharedScene();
+    // Apply the original multi-actor action as a single synchronized native
+    // scene. The presentation bridge verifies all compatible source roles,
+    // approved clips and active actor rigs BEFORE any participant plays.
+    const bool bSharedSceneStarted = Presentation &&
+        !Entry.bPrivacyPresentation &&
+        !Node.SharedSceneAction.IsNone() &&
+        !Node.SharedSceneContext.IsNone() &&
+        Presentation->PlaySharedScene(Node, Participants);
     for (auto& Participant : Participants)
     {
         Participant.bAnimationCompatible = false; Participant.bHasOptionalPresentation = false; Participant.PresentationReason.Reset();
         const FOGInteractionAnimationBinding* Binding = nullptr;
         for (const auto& Candidate : Node.AnimationBindings)
         {
-            if (Candidate.Role != Participant.Binding.Role || !Candidate.RigFamilyId.IsValid() || Candidate.RigFamilyId != Participant.Binding.RigFamilyId) continue;
+            const bool bSharedSource = !Candidate.SharedGameplayAction.IsNone() ||
+                !Candidate.SharedSceneRole.IsNone();
+            if (Candidate.Role != Participant.Binding.Role ||
+                (Candidate.RigFamilyId.IsValid()
+                    ? Candidate.RigFamilyId != Participant.Binding.RigFamilyId
+                    : !bSharedSource)) continue;
             const FOGEntityId ActualManifestation = Participant.Character.bHasManifestation ?
                 Participant.Character.Manifestation.ManifestationId : Participant.Binding.Character.ManifestationId;
             if (Candidate.ManifestationId.IsValid() && Candidate.ManifestationId != ActualManifestation) continue;
@@ -362,8 +380,21 @@ void FOGSystemicInteractionRuntime::UpdatePresentation(const FOGInteractionActio
         if (!Binding) { Participant.PresentationReason = TEXT("No compatible optional rig binding; current character state retained."); continue; }
         Participant.bAnimationCompatible = true;
         if (Entry.bPrivacyPresentation) { Participant.PresentationReason = TEXT("Privacy framing uses the same logical action and consequences."); continue; }
+        // A declared shared scene is atomic: never fall back to a solo clip
+        // for one participant when another role/rig failed to preflight.
+        const bool bSceneRole = !Node.SharedSceneAction.IsNone();
+        const bool bNativePlayed = bSceneRole ? bSharedSceneStarted :
+            (Presentation && !Binding->SharedGameplayAction.IsNone() &&
+             !Binding->SharedGameplayContext.IsNone() &&
+             Presentation->PlaySharedAction(Participant.Binding.Character.EntityId,
+                 Binding->SharedGameplayAction, Binding->SharedGameplayContext));
+        if (bNativePlayed) Participant.bHasOptionalPresentation = true;
+        // Never play only one participant of a failed synchronized scene.
+        // Standalone source clips and existing optional-asset behavior remain
+        // available when this node does not request an authored scene.
         UObject* Animation = nullptr;
-        if (LoadOptional(Binding->Animation, Animation, Participant.PresentationReason))
+        if (!bSceneRole && !bNativePlayed &&
+            LoadOptional(Binding->Animation, Animation, Participant.PresentationReason))
         {
             if (auto* Character = Cast<ACharacter>(Participant.Binding.Actor.Get()))
             {
