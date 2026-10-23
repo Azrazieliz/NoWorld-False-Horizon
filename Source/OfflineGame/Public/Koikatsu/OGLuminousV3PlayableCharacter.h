@@ -171,6 +171,11 @@ public:
 
     UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|Wardrobe")
     int32 GetActiveLuminousPartCount() const { return ActivePartCount; }
+
+    /** Editor world only. Calls the unchanged production wardrobe loader on
+     * the real native BP character, never grants ownership or persists state. */
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="OfflineGame|Luminous|QA")
+    bool InitializeNativeWardrobeForIsolatedQA(EOGLuminousV3Wardrobe Desired);
     /** Live ownership proof for attack dispatch, never inferred from visual
      * resemblance or a selected UI portrait. Includes exact active Version. */
     bool IsBoundToOwnedLuminousCombatUnit(const FOGEntityId& RulerId,
@@ -201,6 +206,19 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Motion|Shared")
     bool PlaySharedGameplayAction(FName GameplayAction, bool bAuthorizedAdultContext = false,
         int32 ParticipantCount = 1);
+
+    /** Isolated non-shipping visual review of real source-backed native motions.
+     * Excludes adult-restricted scenes, never approves or authorizes gameplay.
+     * Does not modify the catalog, persistent character or equipment state. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|QA")
+    TArray<FName> GetNativeQAPreviewMotionIds() const;
+
+    /** Display labels correspond one-for-one to the restricted QA preview IDs. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|QA")
+    TArray<FString> GetNativeQAPreviewMotionNames() const;
+
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|QA")
+    bool PreviewNativeQAMotionById(FName MotionId);
 
     UFUNCTION(BlueprintPure, Category="OfflineGame|Luminous|MotionV3")
     bool HasCompatibleLuminousMotion() const { return bCompatibleNativeMotion; }

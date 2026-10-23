@@ -6,6 +6,7 @@
 
 class AOGLuminousV3PlayableCharacter;
 class UButton;
+class UTextBlock;
 
 /** Temporary real mobile-interactive engineering control only; Gate10 retains visual UI authority. */
 UCLASS()
@@ -21,6 +22,18 @@ protected:
 private:
     UPROPERTY(Transient)
     TObjectPtr<AOGLuminousV3PlayableCharacter> TargetCharacter;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UTextBlock> NativePreviewLabel;
+
+    TArray<FName> NativePreviewIds;
+    TArray<FString> NativePreviewNames;
+    int32 NativePreviewIndex = 0;
+
+    void RefreshNativeMotionPreview();
+    UFUNCTION() void OnPreviousNativeMotionClicked();
+    UFUNCTION() void OnPlayNativeMotionClicked();
+    UFUNCTION() void OnNextNativeMotionClicked();
 
     UFUNCTION() void OnClothedClicked();
     UFUNCTION() void OnUnderwearClicked();

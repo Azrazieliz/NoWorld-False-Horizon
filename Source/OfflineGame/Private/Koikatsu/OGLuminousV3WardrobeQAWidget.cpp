@@ -13,6 +13,7 @@ void UOGLuminousV3WardrobeQAWidget::SetTargetCharacter(
     AOGLuminousV3PlayableCharacter* InCharacter)
 {
     TargetCharacter = InCharacter;
+    RefreshNativeMotionPreview();
 }
 
 void UOGLuminousV3WardrobeQAWidget::NativeOnInitialized()
@@ -92,6 +93,110 @@ void UOGLuminousV3WardrobeQAWidget::NativeOnInitialized()
     if (Greeting) Greeting->OnClicked.AddDynamic(this, &ThisClass::OnGreetingClicked);
     if (Expressive) Expressive->OnClicked.AddDynamic(this, &ThisClass::OnExpressiveClicked);
     if (Bow) Bow->OnClicked.AddDynamic(this, &ThisClass::OnBowClicked);
+
+    // Review genuine source-derived native clips on the actual six-part pawn,
+    // never as gameplay-authorized animations. Preview IDs are filtered in
+    // the production character by outfit, native source and privacy policy.
+    UHorizontalBox* NativeRow =
+        WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    if (!NativeRow) return;
+    UCanvasPanelSlot* NativeSlot = Root->AddChildToCanvas(NativeRow);
+    NativeSlot->SetAnchors(FAnchors(0.5f, 0.0f));
+    NativeSlot->SetAlignment(FVector2D(0.5f, 0.0f));
+    NativeSlot->SetPosition(FVector2D(0.f, 164.f));
+    NativeSlot->SetSize(FVector2D(820.f, 58.f));
+    auto AddPreviewButton = [this, NativeRow](const TCHAR* Title) -> UButton*
+    {
+        UButton* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+        UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        if (!Button || !Text) return nullptr;
+        Text->SetText(FText::FromString(Title));
+        Text->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+        Text->SetJustification(ETextJustify::Center);
+        Button->SetBackgroundColor(FLinearColor(0.1f, 0.18f, 0.24f));
+        Button->AddChild(Text);
+        if (UHorizontalBoxSlot* Slot = NativeRow->AddChildToHorizontalBox(Button))
+        {
+            Slot->SetPadding(FMargin(3.f));
+            Slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        }
+        return Button;
+    };
+    UButton* Previous = AddPreviewButton(TEXT("PREVIOUS"));
+    UButton* Play = AddPreviewButton(TEXT("PLAY SOURCE"));
+    UButton* Next = AddPreviewButton(TEXT("NEXT"));
+    NativePreviewLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    if (NativePreviewLabel)
+    {
+        NativePreviewLabel->SetText(FText::FromString(TEXT("QA source browser")));
+        NativePreviewLabel->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+        NativePreviewLabel->SetAutoWrapText(true);
+        if (UHorizontalBoxSlot* PreviewTextSlot = NativeRow->AddChildToHorizontalBox(NativePreviewLabel))
+        {
+            PreviewTextSlot->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
+            PreviewTextSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        }
+    }
+    if (Previous) Previous->OnClicked.AddDynamic(this, &ThisClass::OnPreviousNativeMotionClicked);
+    if (Play) Play->OnClicked.AddDynamic(this, &ThisClass::OnPlayNativeMotionClicked);
+    if (Next) Next->OnClicked.AddDynamic(this, &ThisClass::OnNextNativeMotionClicked);
+}
+
+void UOGLuminousV3WardrobeQAWidget::RefreshNativeMotionPreview()
+{
+    NativePreviewIds.Reset();
+    NativePreviewNames.Reset();
+    NativePreviewIndex = 0;
+    if (TargetCharacter)
+    {
+        NativePreviewIds = TargetCharacter->GetNativeQAPreviewMotionIds();
+        NativePreviewNames = TargetCharacter->GetNativeQAPreviewMotionNames();
+    }
+    if (NativePreviewLabel)
+    {
+        const FString Label = NativePreviewIds.IsEmpty()
+            ? TEXT("No source-backed QA motion for this wardrobe")
+            : FString::Printf(TEXT("1 / %d: %s"), NativePreviewIds.Num(),
+                NativePreviewNames.IsValidIndex(0)
+                    ? *NativePreviewNames[0] : *NativePreviewIds[0].ToString());
+        NativePreviewLabel->SetText(FText::FromString(Label));
+    }
+}
+void UOGLuminousV3WardrobeQAWidget::OnPreviousNativeMotionClicked()
+{
+    if (NativePreviewIds.IsEmpty()) return;
+    NativePreviewIndex = (NativePreviewIndex + NativePreviewIds.Num() - 1)
+        % NativePreviewIds.Num();
+    if (NativePreviewLabel)
+        NativePreviewLabel->SetText(FText::FromString(FString::Printf(
+            TEXT("%d / %d: %s"), NativePreviewIndex + 1, NativePreviewIds.Num(),
+            NativePreviewNames.IsValidIndex(NativePreviewIndex)
+                ? *NativePreviewNames[NativePreviewIndex]
+                : *NativePreviewIds[NativePreviewIndex].ToString())));
+}
+void UOGLuminousV3WardrobeQAWidget::OnNextNativeMotionClicked()
+{
+    if (NativePreviewIds.IsEmpty()) return;
+    NativePreviewIndex = (NativePreviewIndex + 1) % NativePreviewIds.Num();
+    if (NativePreviewLabel)
+        NativePreviewLabel->SetText(FText::FromString(FString::Printf(
+            TEXT("%d / %d: %s"), NativePreviewIndex + 1, NativePreviewIds.Num(),
+            NativePreviewNames.IsValidIndex(NativePreviewIndex)
+                ? *NativePreviewNames[NativePreviewIndex]
+                : *NativePreviewIds[NativePreviewIndex].ToString())));
+}
+void UOGLuminousV3WardrobeQAWidget::OnPlayNativeMotionClicked()
+{
+    if (!TargetCharacter || !NativePreviewIds.IsValidIndex(NativePreviewIndex))
+        return;
+    const FName Motion = NativePreviewIds[NativePreviewIndex];
+    const bool bPlayed = TargetCharacter->PreviewNativeQAMotionById(Motion);
+    UE_LOG(LogTemp, Display,
+        TEXT("G12_NATIVE_QA_REVIEW_RESULT motion=%s playable_on_actual_parts=%d"),
+        *Motion.ToString(), bPlayed ? 1 : 0);
+    if (!bPlayed && NativePreviewLabel)
+        NativePreviewLabel->SetText(FText::FromString(
+            FString::Printf(TEXT("QA INCOMPATIBLE: %s"), *Motion.ToString())));
 }
 
 void UOGLuminousV3WardrobeQAWidget::ChangeWardrobe(int32 StateIndex)
@@ -100,6 +205,7 @@ void UOGLuminousV3WardrobeQAWidget::ChangeWardrobe(int32 StateIndex)
     const EOGLuminousV3Wardrobe State =
         static_cast<EOGLuminousV3Wardrobe>(StateIndex);
     const bool bChanged = TargetCharacter->SetLuminousWardrobe(State, false);
+    if (bChanged) RefreshNativeMotionPreview();
     UE_LOG(LogTemp, Display, TEXT("G12_LUMINOUS_TOUCH_WARDROBE_UI=%d result=%s parts=%d"),
         StateIndex, bChanged ? TEXT("PASS") : TEXT("FAIL"),
         TargetCharacter->GetActiveLuminousPartCount());

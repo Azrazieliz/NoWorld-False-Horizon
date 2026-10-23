@@ -14,6 +14,8 @@
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Runtime/OGFoundationCharacterRuntime.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
@@ -39,6 +41,55 @@ bool ParseWardrobe(const FString& Value, EOGLuminousV3Wardrobe& Out)
     if (Value == TEXT("NUDE")) { Out = EOGLuminousV3Wardrobe::Nude; return true; }
     return false;
 }
+#if !UE_BUILD_SHIPPING
+struct FNativeQAPreviewRecord
+{
+    FName MotionId = NAME_None;
+    FString NativeAssetPath;
+    FString DisplayName;
+    bool bLoop = false;
+};
+void ReadSourceAuthenticQAMotions(FName Outfit, TArray<FNativeQAPreviewRecord>& Out)
+{
+    Out.Reset();
+    const FString CatalogPath = FPaths::Combine(FPaths::ProjectContentDir(),
+        TEXT("NoWorld/Animation/SharedMotionCatalog.json"));
+    FString Json;
+    if (!FFileHelper::LoadFileToString(Json, *CatalogPath)) return;
+    TSharedPtr<FJsonObject> Root;
+    const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
+    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid()) return;
+    const TArray<TSharedPtr<FJsonValue>>* Entries = nullptr;
+    if (!Root->TryGetArrayField(TEXT("motions"), Entries) || !Entries) return;
+    for (const TSharedPtr<FJsonValue>& Value : *Entries)
+    {
+        const TSharedPtr<FJsonObject> Item =
+            Value.IsValid() ? Value->AsObject() : nullptr;
+        if (!Item.IsValid()) continue;
+        bool bApproved = true;
+        bool bAdult = true;
+        FString Id, Rig, Wardrobe, Native;
+        if (!Item->TryGetBoolField(TEXT("approved_for_gameplay"), bApproved) ||
+            !Item->TryGetBoolField(TEXT("adult_restricted"), bAdult) ||
+            !Item->TryGetStringField(TEXT("motion_id"), Id) ||
+            !Item->TryGetStringField(TEXT("rig"), Rig) ||
+            !Item->TryGetStringField(TEXT("outfit"), Wardrobe) ||
+            !Item->TryGetStringField(TEXT("native_sequence"), Native) ||
+            bApproved || bAdult || Rig != TEXT("koikatsu_original") ||
+            Wardrobe != Outfit.ToString() ||
+            !Native.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/")) ||
+            Native.Contains(TEXT(".."))) continue;
+        FNativeQAPreviewRecord& Record = Out.AddDefaulted_GetRef();
+        Record.MotionId = FName(*Id);
+        Record.NativeAssetPath = Native;
+        if (!Item->TryGetStringField(TEXT("source_original_name"), Record.DisplayName))
+            Item->TryGetStringField(TEXT("action"), Record.DisplayName);
+        if (Record.DisplayName.IsEmpty()) Record.DisplayName = Id;
+        Item->TryGetBoolField(TEXT("loop"), Record.bLoop);
+    }
+}
+#endif
+
 bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
 {
     if (!A || !B) return false;
@@ -185,6 +236,31 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
         }
     }
     return true;
+}
+
+bool AOGLuminousV3PlayableCharacter::InitializeNativeWardrobeForIsolatedQA(
+    EOGLuminousV3Wardrobe Desired)
+{
+#if WITH_EDITOR
+    // No fake test meshes, no Python-only registration, no canonical writes:
+    // the exact production native wardrobe assembly runs on the existing BP.
+    // This entry point cannot initialize an owned character or run in PIE,
+    // regular gameplay worlds or a shipped game.
+    if (bNativeOwnedCharacterBound || !GetWorld() ||
+        GetWorld()->WorldType != EWorldType::Editor) return false;
+    FString Error;
+    if (!ApplyVisualWardrobe(Desired, Error))
+    {
+        LastLuminousError = Error;
+        return false;
+    }
+    CurrentWardrobe = Desired;
+    EffectiveAppearance.ActualWardrobe = Desired;
+    EffectiveAppearance.bRenderable = true;
+    return true;
+#else
+    return false;
+#endif
 }
 
 bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
@@ -589,8 +665,13 @@ bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
     FName GameplayAction, bool bAuthorizedAdultContext, int32 ParticipantCount)
 {
     const FOGSharedMotionEntry* Entry = nullptr;
-    const FName Context = GameplayAction.ToString().StartsWith(TEXT("Combat."))
-        ? FName(TEXT("Combat")) : FName(TEXT("Interaction"));
+    const FString ActionName = GameplayAction.ToString();
+    // The caller's semantic action, not the character Version, determines
+    // the shared native presentation domain. Traversal used to be
+    // incorrectly routed into Interaction and could never resolve.
+    const FName Context = ActionName.StartsWith(TEXT("Combat."))
+        ? FName(TEXT("Combat")) : ActionName.StartsWith(TEXT("Traversal."))
+        ? FName(TEXT("Traversal")) : FName(TEXT("Interaction"));
     UAnimSequence* Clip = ResolveSharedMotion(GameplayAction, Context,
         bAuthorizedAdultContext, ParticipantCount, &Entry);
     if (!Clip || !Entry) return false;
@@ -617,6 +698,66 @@ bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
         *GameplayAction.ToString(), *Entry->SourceClipId.ToString(),
         *Clip->GetPathName());
     return true;
+}
+
+TArray<FName> AOGLuminousV3PlayableCharacter::GetNativeQAPreviewMotionIds() const
+{
+    TArray<FName> Result;
+#if !UE_BUILD_SHIPPING
+    if (!bLuminousReady || !IsIsolatedWardrobeQAContext() ||
+        bNativeOwnedCharacterBound) return Result;
+    TArray<FNativeQAPreviewRecord> Candidates;
+    ReadSourceAuthenticQAMotions(
+        FName(WardrobeName(EffectiveAppearance.EffectiveRenderedWardrobe)), Candidates);
+    Result.Reserve(Candidates.Num());
+    for (const FNativeQAPreviewRecord& Candidate : Candidates)
+        Result.Add(Candidate.MotionId);
+#endif
+    return Result;
+}
+
+TArray<FString> AOGLuminousV3PlayableCharacter::GetNativeQAPreviewMotionNames() const
+{
+    TArray<FString> Result;
+#if !UE_BUILD_SHIPPING
+    if (!bLuminousReady || !IsIsolatedWardrobeQAContext() ||
+        bNativeOwnedCharacterBound) return Result;
+    TArray<FNativeQAPreviewRecord> Candidates;
+    ReadSourceAuthenticQAMotions(
+        FName(WardrobeName(EffectiveAppearance.EffectiveRenderedWardrobe)), Candidates);
+    Result.Reserve(Candidates.Num());
+    for (const FNativeQAPreviewRecord& Candidate : Candidates)
+        Result.Add(Candidate.DisplayName);
+#endif
+    return Result;
+}
+
+bool AOGLuminousV3PlayableCharacter::PreviewNativeQAMotionById(FName MotionId)
+{
+#if !UE_BUILD_SHIPPING
+    if (MotionId.IsNone() || !bLuminousReady ||
+        !IsIsolatedWardrobeQAContext() || bNativeOwnedCharacterBound)
+        return false;
+    TArray<FNativeQAPreviewRecord> Candidates;
+    ReadSourceAuthenticQAMotions(
+        FName(WardrobeName(EffectiveAppearance.EffectiveRenderedWardrobe)), Candidates);
+    for (const FNativeQAPreviewRecord& Candidate : Candidates)
+    {
+        if (Candidate.MotionId != MotionId) continue;
+        UAnimSequence* Clip = LoadObject<UAnimSequence>(
+            nullptr, *Candidate.NativeAssetPath);
+        if (!Clip || !SetLuminousNativeMotionClip(Clip, Candidate.bLoop))
+            return false; // Every actual rendered native part must pass rig topology.
+        bSharedActionPlaying = true;
+        SharedActionEndTime = GetWorld()
+            ? GetWorld()->GetTimeSeconds() + Clip->GetPlayLength() : 0.f;
+        UE_LOG(LogTemp, Display,
+            TEXT("G12_ISOLATED_REAL_MOTION_PREVIEW clip=%s id=%s parts=%d NOT_GAMEPLAY_APPROVED"),
+            *Clip->GetPathName(), *MotionId.ToString(), ActivePartCount);
+        return true;
+    }
+#endif
+    return false;
 }
 
 bool AOGLuminousV3PlayableCharacter::PlayGate09AuthoredEmote(
