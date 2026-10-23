@@ -10,7 +10,8 @@ saved=R/"Saved/Gate12Readiness"
 def run(family,start,end):
     plans={
       "mixamo":R/"SourceAssets/Gate12/Animations20261023/KoikatsuExtendedSourcePlan.json",
-      "h_exact":R/"SourceAssets/Gate12/Animations20261023/KoikatsuHExactSourcePlan.json"}
+      "h_exact":R/"SourceAssets/Gate12/Animations20261023/KoikatsuHExactSourcePlan.json",
+      "dance":R/"SourceAssets/Gate12/Animations20261023/KoikatsuFullDanceSourcePlan.json"}
     assert family in plans
     motions=json.loads(plans[family].read_text("utf8"))["motions"]
     if family=="h_exact" and os.environ.get("G12_H_FULL_ARCHIVE")=="1":
@@ -76,7 +77,9 @@ def run(family,start,end):
           "loop":source_loop,"participants":1,
           "approved_for_gameplay":False,
           "adult_restricted":family=="h_exact",
-          "review_state":"EXACT_H_SOURCE_REQUIRES_PAIR_SCENE_CONSENT_RIG_AND_VISUAL_QA" if family=="h_exact" else "MIXAMO_SOURCED_REDUCED_RIG_REQUIRES_VISUAL_QA",
+          "review_state":("EXACT_H_SOURCE_REQUIRES_PAIR_SCENE_CONSENT_RIG_AND_VISUAL_QA" if family=="h_exact" else
+             "ORIGINAL_FULL_LENGTH_DANCE_REQUIRES_VISUAL_ARTISTIC_QA" if family=="dance" else
+             "MIXAMO_SOURCED_REDUCED_RIG_REQUIRES_VISUAL_QA"),
           "priority_if_approved":1}
         doc["motions"].append(entry);ids.add(key);occupied.add(asset);by_native[asset]=entry
         stats["native_new"]+=1
@@ -87,6 +90,6 @@ def run(family,start,end):
     target.replace(catalog)
     print("EXTENDED_NATIVE_CATALOG",family,start,end,stats,"TOTAL",len(doc["motions"]),flush=True)
 if __name__=="__main__":
-    a=argparse.ArgumentParser();a.add_argument("--family",choices=("mixamo","h_exact"),required=True)
+    a=argparse.ArgumentParser();a.add_argument("--family",choices=("mixamo","h_exact","dance"),required=True)
     a.add_argument("--start",type=int,required=True);a.add_argument("--end",type=int,required=True)
     args=a.parse_args();run(args.family,args.start,args.end)

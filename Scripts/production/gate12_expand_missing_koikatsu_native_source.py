@@ -2,7 +2,7 @@
 object IDs and compatible 93-bone humanoid subset. This is source-derived,
 NOT accepted 3D visual/physical root-motion retargeting. Never replace originals.
 """
-import argparse,collections,hashlib,json,pathlib,sys,gzip
+import argparse,collections,hashlib,json,pathlib,sys,gzip,re
 R=pathlib.Path(r"D:\UnrealProjects\OfflineGame_Gate12_Koikatsu_20261010")
 sys.path.insert(0,str(R/"Scripts/production"))
 import gate12_decode_genuine_koikatsu_studio_to_native_joint_curves_20261022 as core
@@ -11,10 +11,14 @@ root=R/"SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks"
 planfile=R/"SourceAssets/Gate12/Animations20261023/KoikatsuExtendedSourcePlan.json"
 def semantic(row):
   n=row["source_clip_name"];l=n.casefold();fam=row["source_family"]
+  if "dance pose" in l:return "Interaction.DancePose","Interaction","emote",0
   if "dance" in l:return "Interaction.Dance","Interaction","emote",0
   if any(x in l for x in ("flying","flight","hover","takeoff")):return "Traversal.Flight","Traversal","flying",0
   if any(x in l for x in ("sword","dagger","slash","blade","katana")):return "Combat.Sword","Combat","combat",1
-  if any(x in l for x in ("shoot","bow","arrow","pistol","rifle","gun")):return "Combat.Ranged","Combat","combat",1
+  if "wheelbarrow" in l or "formal bow" in l or "informal bow" in l:
+    return "Interaction.Gesture","Interaction","emote",1
+  if re.search(r"\b(?:shoot\w*|bow|archery|arrow\w*|pistol|rifle|gun\w*)\b",l):
+    return "Combat.Ranged","Combat","combat",1
   if any(x in l for x in ("spell","magic","casting","aura")):return "Combat.Cast","Combat","combat",1
   if any(x in l for x in ("kick","punch","attack","fight","melee","uppercut","block","dodge")):return "Combat.Melee","Combat","combat",1
   if "reaction_death"==fam or any(x in l for x in ("death","knockdown","hit by","reacting")):return "Combat.Reaction","Combat","combat",2
@@ -55,7 +59,10 @@ def main(start,end):
   plan=buildplan()
   if planfile.exists():
     prev=json.loads(planfile.read_text("utf8"))["motions"]
-    assert [x["source_clip"] for x in prev]==[x["source_clip"] for x in plan], "Source plan changed"
+    assert {x["source_clip"]:x["source_original_path_id"] for x in prev} == {x["source_clip"]:x["source_original_path_id"] for x in plan}, "Original clip identity set changed"
+    # Frozen indices are used by native batch receipts. Semantic corrections
+    # update metadata, never reorder or overwrite existing native assets.
+    plan=prev
   else:
     planfile.write_text(json.dumps({"schema":"noworld.gate12.mixamo_koikatsu_93bone_QA.v1",
       "motions":plan,"approved_for_gameplay":False,"original_source_unchanged":True},indent=2)+"\n",encoding="utf8")
