@@ -10,7 +10,7 @@ import gate12_decode_genuine_koikatsu_studio_to_native_joint_curves_20261022 as 
 INDEX=ROOT/"SourceAssets/Gate12/Animations20261021/KoikatsuHOriginalSourceCurves/GATE12_INSTALLED_H_ANIMATION_SOURCE_CURVE_INDEX_COMPLETE.json"
 TARGET=ROOT/"SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks"
 PLAN=ROOT/"SourceAssets/Gate12/Animations20261023/KoikatsuHExactSourcePlan.json"
-def createplan():
+def createplan(full=False):
     raw=json.loads(INDEX.read_text("utf8"));items=raw["clip_rows"]
     female=[r for r in items if "\\female\\" in r["source_bundle"].lower()]
     male=[r for r in items if "\\male\\" in r["source_bundle"].lower()]
@@ -19,7 +19,7 @@ def createplan():
     per_bundle=collections.Counter();selected=[]
     for row in female:
         b=row["bundle_index"]
-        if per_bundle[b]>=8:continue
+        if not full and per_bundle[b]>=8:continue
         per_bundle[b]+=1
         number=row["native_path_id"] & ((1<<64)-1)
         alias=f"KKH_F_{b:03d}_{number:016x}"
@@ -35,6 +35,8 @@ def createplan():
           "source_role":"FEMALE_RIG_ONLY","adult_restricted":True,
           "scene_pairing_approved":False,"gameplay_approved":False,
           "priority":0})
+    if full:
+        return selected
     if not PLAN.exists():
         PLAN.write_text(json.dumps({
            "schema":"noworld.gate12.original_kk_h_exact_path_id_plan.v1",
@@ -47,13 +49,13 @@ def createplan():
         previous=json.loads(PLAN.read_text("utf8"))["motions"]
         assert [(r["source_clip"],r["source_original_path_id"]) for r in previous] == [(r["source_clip"],r["source_original_path_id"]) for r in selected]
     return selected
-def main(start,end):
-    plan=createplan()
+def main(start,end,full=False):
+    plan=createplan(full=full)
     assert 0<=start<end<=len(plan)
     core.OUT=TARGET;TARGET.mkdir(parents=True,exist_ok=True)
     rest=core.source_bone_catalog()
     report={"start":start,"end":end,"status":"IN_PROGRESS","results":[]}
-    receipt=TARGET/f"HSourceExact_{start:04d}_{end:04d}.json"
+    receipt=TARGET/(f"HSourceFull_{start:06d}_{end:06d}.json" if full else f"HSourceExact_{start:04d}_{end:04d}.json")
     for index in range(start,end):
         row=plan[index];out=TARGET/row["native_file"]
         try:
@@ -79,4 +81,5 @@ def main(start,end):
     print("H_SOURCE_BATCH_DONE",start,end,"pass",sum(x["status"] in ("CALIBRATED_EXACT_H_SOURCE","PRESERVED") for x in report["results"]),"total_selected",len(plan),flush=True)
 if __name__=="__main__":
     a=argparse.ArgumentParser();a.add_argument("--start",type=int,required=True);a.add_argument("--end",type=int,required=True)
-    n=a.parse_args();main(n.start,n.end)
+    a.add_argument("--full",action="store_true",help="Address every exact original female source object, not eight per bundle")
+    n=a.parse_args();main(n.start,n.end,full=n.full)

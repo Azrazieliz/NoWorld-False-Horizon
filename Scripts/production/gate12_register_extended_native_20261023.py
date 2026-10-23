@@ -1,7 +1,7 @@
 """Register only genuinely created native Unreal sequences from the installed
 Mixamo CharaStudio and exact-ID H sources. Never auto-approve them.
 """
-import argparse,gzip,hashlib,json,pathlib
+import argparse,gzip,hashlib,json,pathlib,os,sys
 R=pathlib.Path(r"D:\UnrealProjects\OfflineGame_Gate12_Koikatsu_20261010")
 catalog=R/"Content/NoWorld/Animation/SharedMotionCatalog.json"
 folder=R/"Content/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA"
@@ -13,6 +13,10 @@ def run(family,start,end):
       "h_exact":R/"SourceAssets/Gate12/Animations20261023/KoikatsuHExactSourcePlan.json"}
     assert family in plans
     motions=json.loads(plans[family].read_text("utf8"))["motions"]
+    if family=="h_exact" and os.environ.get("G12_H_FULL_ARCHIVE")=="1":
+      sys.path.insert(0,str(R/"Scripts/production"))
+      from gate12_h_original_exact_id_source_batch import createplan
+      motions=createplan(full=True)
     assert 0<=start<end<=len(motions)
     doc=json.loads(catalog.read_text("utf8"))
     assert doc["schema"]=="noworld.shared_motion_catalog.v1"

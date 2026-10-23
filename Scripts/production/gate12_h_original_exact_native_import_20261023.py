@@ -8,9 +8,15 @@ SRC=ROOT/"SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks"
 PLAN=ROOT/"SourceAssets/Gate12/Animations20261023/KoikatsuHExactSourcePlan.json"
 S=int(os.environ["G12_BULK_START"]);E=int(os.environ["G12_BULK_END"])
 rows=json.loads(PLAN.read_text(encoding="utf8"))["motions"]
+FULL_ARCHIVE=os.environ.get("G12_H_FULL_ARCHIVE")=="1"
+if FULL_ARCHIVE:
+ import sys
+ sys.path.insert(0,str(ROOT/"Scripts/production"))
+ from gate12_h_original_exact_id_source_batch import createplan
+ rows=createplan(full=True)
 assert 0<=S<E<=len(rows) and E-S<=16
 IMPORTER=ROOT/"Scripts/production/gate12_import_real_koikatsu_studio_anim_on_alter_native_ue583_20261022.py"
-REPORT=ROOT/"Saved/Gate12Readiness"/f"G12_H_EXACT_NATIVE_{S:04d}_{E:04d}.json"
+REPORT=ROOT/"Saved/Gate12Readiness"/(f"G12_H_FULL_NATIVE_{S:06d}_{E:06d}.json" if FULL_ARCHIVE else f"G12_H_EXACT_NATIVE_{S:04d}_{E:04d}.json")
 doc={"schema":"noworld.gate12.true_koikatsu_native_batch.v1",
 "start":S,"end":E,"status":"IN_PROGRESS",
 "native_created_or_preserved":0,"unreal_native_sequences":[],"failures":[],
