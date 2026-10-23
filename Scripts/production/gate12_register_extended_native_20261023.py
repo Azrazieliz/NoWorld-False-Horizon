@@ -16,9 +16,10 @@ def run(family,start,end):
     assert 0<=start<end<=len(motions)
     doc=json.loads(catalog.read_text("utf8"))
     assert doc["schema"]=="noworld.shared_motion_catalog.v1"
-    occupied={x["native_sequence"] for x in doc["motions"]}
+    by_native={x["native_sequence"]:x for x in doc["motions"]}
+    occupied=set(by_native)
     ids={x["motion_id"] for x in doc["motions"]}
-    stats={"native_new":0,"existing":0,"not_native":0,"receipt_rejected":0}
+    stats={"native_new":0,"existing":0,"not_native":0,"receipt_rejected":0,"source_loop_metadata_corrected":0}
     for row in motions[start:end]:
       alias=row["source_clip"]
       src=curves/row["native_file"]
@@ -26,6 +27,10 @@ def run(family,start,end):
         stats["not_native"]+=3;continue
       with gzip.open(src,"rt",encoding="utf8")as f:data=json.load(f)
       assert data["clip"]==alias and data["source_path_id"]==row["source_original_path_id"]
+      with gzip.open(row["source_curve_path"],"rt",encoding="utf8") as raw_file:
+        original_unity=json.load(raw_file)
+      assert original_unity["original_unity_path_id"]==row["source_original_path_id"]
+      source_loop=original_unity.get("unity_clip_attributes",{}).get("m_WrapMode")==2
       for outfit in ("CLOTHED","UNDERWEAR","NUDE"):
         name=f"AN_G12_KK_Original_{outfit}_{alias}"
         asset=f"/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/{name}.{name}"
@@ -36,7 +41,14 @@ def run(family,start,end):
         rep=json.loads(receipt.read_text("utf8"))
         if rep.get("status")!="TRUE_ORIGINAL_KK_STUDIO_CLIP_IMPORTED_AS_NATIVE_ANIMSEQUENCE_PRE_VISUAL" or rep.get("source_unity_path_id")!=row["source_original_path_id"]:
           stats["receipt_rejected"]+=1;continue
-        if asset in occupied:stats["existing"]+=1;continue
+        if asset in occupied:
+          old=by_native[asset]
+          assert not old["approved_for_gameplay"]
+          if old.get("loop")!=source_loop:
+            old["loop"]=source_loop
+            stats["source_loop_metadata_corrected"]+=1
+          stats["existing"]+=1
+          continue
         key=f"kk.{family}.qa.{outfit}.{alias}"
         assert key not in ids
         action=row["action"]
@@ -57,12 +69,12 @@ def run(family,start,end):
           "action":action,"category":category,"context":context,
           "rig":"koikatsu_original","anatomy":"humanoid","outfit":outfit,
           "capabilities":[row["capability"]],
-          "loop":False,"participants":1,
+          "loop":source_loop,"participants":1,
           "approved_for_gameplay":False,
           "adult_restricted":family=="h_exact",
           "review_state":"EXACT_H_SOURCE_REQUIRES_PAIR_SCENE_CONSENT_RIG_AND_VISUAL_QA" if family=="h_exact" else "MIXAMO_SOURCED_REDUCED_RIG_REQUIRES_VISUAL_QA",
           "priority_if_approved":1}
-        doc["motions"].append(entry);ids.add(key);occupied.add(asset)
+        doc["motions"].append(entry);ids.add(key);occupied.add(asset);by_native[asset]=entry
         stats["native_new"]+=1
     assert len(ids)==len(doc["motions"])
     target=catalog.with_suffix(".json.tmp")
