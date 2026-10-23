@@ -127,11 +127,11 @@ void AOGWorldPresentationHud::DrawNativeCombatImpacts(float Scale)
                Screen.Y>0 && Screen.Y<Canvas->ClipY)
             {
                 const float Alpha=FMath::Clamp(1.f-static_cast<float>(Age/1.5),0.f,1.f);
-                FLinearColor Ink=Cue.bRestoration
+                const FLinearColor ImpactTint=Cue.bRestoration
                     ?FLinearColor(.43f,.94f,.68f,Alpha)
                     :FLinearColor(.95f,.45f,.46f,Alpha);
                 DrawGameText(Cue.Number,Screen.X-32.f*Scale,
-                    Screen.Y,22.f*Scale,Ink,155.f*Scale);
+                    Screen.Y,22.f*Scale,ImpactTint,155.f*Scale);
             }
         }
     }
