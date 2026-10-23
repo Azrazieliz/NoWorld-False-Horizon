@@ -207,9 +207,9 @@ public:
     bool PlaySharedGameplayAction(FName GameplayAction, bool bAuthorizedAdultContext = false,
         int32 ParticipantCount = 1);
 
-    /** Isolated non-shipping visual review of real source-backed native motions.
-     * Excludes adult-restricted scenes, never approves or authorizes gameplay.
-     * Does not modify the catalog, persistent character or equipment state. */
+    /** Isolated non-shipping visual review of source-backed native motions,
+     * including mature-tagged QA candidates. Never approves gameplay or writes
+     * to the canonical character, catalog, wardrobe or equipment state. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Luminous|QA")
     TArray<FName> GetNativeQAPreviewMotionIds() const;
 
@@ -236,6 +236,9 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:
+    /** Set only by InitializeNativeWardrobeForIsolatedQA on a transient editor
+     * World actor. No Blueprint default or persistent asset state is changed. */
+    bool bTransientEditorNativeQASession = false;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="OfflineGame|Motion|Shared", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UOGSharedMotionControllerComponent> SharedMotionController;
 

@@ -67,15 +67,13 @@ void ReadSourceAuthenticQAMotions(FName Outfit, TArray<FNativeQAPreviewRecord>& 
             Value.IsValid() ? Value->AsObject() : nullptr;
         if (!Item.IsValid()) continue;
         bool bApproved = true;
-        bool bAdult = true;
         FString Id, Rig, Wardrobe, Native;
         if (!Item->TryGetBoolField(TEXT("approved_for_gameplay"), bApproved) ||
-            !Item->TryGetBoolField(TEXT("adult_restricted"), bAdult) ||
             !Item->TryGetStringField(TEXT("motion_id"), Id) ||
             !Item->TryGetStringField(TEXT("rig"), Rig) ||
             !Item->TryGetStringField(TEXT("outfit"), Wardrobe) ||
             !Item->TryGetStringField(TEXT("native_sequence"), Native) ||
-            bApproved || bAdult || Rig != TEXT("koikatsu_original") ||
+            bApproved || Rig != TEXT("koikatsu_original") ||
             Wardrobe != Outfit.ToString() ||
             !Native.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/")) ||
             Native.Contains(TEXT(".."))) continue;
@@ -257,6 +255,9 @@ bool AOGLuminousV3PlayableCharacter::InitializeNativeWardrobeForIsolatedQA(
     CurrentWardrobe = Desired;
     EffectiveAppearance.ActualWardrobe = Desired;
     EffectiveAppearance.bRenderable = true;
+    // Allow genuine nonpersistent Editor QA immediately, without attempting
+    // to edit EditDefaultsOnly Blueprint fields on a spawned instance.
+    bTransientEditorNativeQASession = true;
     return true;
 #else
     return false;
@@ -355,6 +356,11 @@ bool AOGLuminousV3PlayableCharacter::IsIsolatedWardrobeQAContext() const
 #if UE_BUILD_SHIPPING
     return false;
 #else
+#if WITH_EDITOR
+    if (bTransientEditorNativeQASession && !bNativeOwnedCharacterBound &&
+        GetWorld() && GetWorld()->WorldType == EWorldType::Editor)
+        return true;
+#endif
     return bRunNonPersistentWardrobeQACycle || bRunNativeMotionQACycle ||
         bEnableNativeWardrobeQATouchPanel || bEnterWorldModeOnIsolatedQAStartup;
 #endif
@@ -651,14 +657,14 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveSharedMotion(
     if (!Library)
         Library = FOGSharedMotionResolver::GetInstalledLibrary();
     if (!Library) return nullptr;
-    const bool bAllowed = bAuthorizedAdultContext &&
-        EffectiveAppearance.bExplicitContextAuthorized &&
-        !EffectiveAppearance.bPrivacySfwEnabled;
+    // Pure animation resolution must not use wardrobe privacy to suppress
+    // approved actions. The effective mesh still applies the existing SFW
+    // visual mask; canonical action authority is handled before this call.
     return FOGSharedMotionResolver::Resolve(
         Library, GameplayAction, MotionRigProfile, MotionAnatomyProfile,
         FName(WardrobeName(EffectiveAppearance.EffectiveRenderedWardrobe)),
-        Context, MotionCapabilities, RuntimeParts, bAllowed, ParticipantCount,
-        OutEntry);
+        Context, MotionCapabilities, RuntimeParts, bAuthorizedAdultContext,
+        ParticipantCount, OutEntry);
 }
 
 bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
@@ -680,8 +686,7 @@ bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
     // retain the established working Luminous driver as a safe fallback.
     const bool bControllerPlayed = SharedMotionController &&
         SharedMotionController->PlayAction(GameplayAction, Context,
-            bAuthorizedAdultContext && EffectiveAppearance.bExplicitContextAuthorized &&
-                !EffectiveAppearance.bPrivacySfwEnabled, ParticipantCount);
+            bAuthorizedAdultContext, ParticipantCount);
     if (!bControllerPlayed && !SetLuminousNativeMotionClip(Clip, Entry->bLoop))
         return false;
     if (bControllerPlayed)

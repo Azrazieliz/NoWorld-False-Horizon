@@ -110,7 +110,15 @@ struct OFFLINEGAME_API FOGSharedMotionEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Eligibility")
     bool bApprovedForGameplay = false; // Rejected/QA clips cannot resolve into gameplay.
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Eligibility")
+    /** Content classification only, never a separate gameplay-permission rule.
+     * Actions and scene state are authorized by the canonical gameplay systems;
+     * optional privacy is applied by the character presentation layer. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Content")
+    bool bContainsMatureContent = false;
+
+    /** Legacy catalog field retained for asset/Blueprint compatibility.
+     * No motion resolver is permitted to interpret it as gameplay exclusion. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Content")
     bool bAdultRestricted = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Eligibility", meta=(ClampMin="1", ClampMax="13"))

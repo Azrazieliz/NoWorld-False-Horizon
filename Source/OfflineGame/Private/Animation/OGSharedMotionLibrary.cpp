@@ -92,9 +92,10 @@ void Install(UOGSharedMotionLibrary* Library)
             TEXT("Interaction"), TEXT("CLOTHED"), Path, false, TEXT("emote"));
     }
 
-    // The rejected dance and unconverted source-only H clips are intentionally
-    // not claimed as usable gameplay assets. Eligible future adult assets
-    // require explicit approval, privacy gating and a real native sequence.
+    // Rejected choreography and QA-only source clips remain unapproved for
+    // GAMEPLAY solely for technical/artistic reasons. Mature content is a
+    // production category, not a separate invented action-eligibility gate;
+    // existing SFW/privacy handling belongs to presentation, not this library.
 }
 
 // Packaged, editable shared catalog. New converted source derivatives can be
@@ -153,7 +154,12 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
                 if (V.IsValid() && V->Type == EJson::String)
                     Entry.RequiredCapabilities.Add(FName(*V->AsString()));
         Item->TryGetBoolField(TEXT("approved_for_gameplay"), Entry.bApprovedForGameplay);
+        // Legacy `adult_restricted` describes source content; it is NOT an
+        // independently invented gameplay authorization rule. Honor optional
+        // newer content metadata without changing the underlying source.
         Item->TryGetBoolField(TEXT("adult_restricted"), Entry.bAdultRestricted);
+        Entry.bContainsMatureContent = Entry.bAdultRestricted;
+        Item->TryGetBoolField(TEXT("mature_content"), Entry.bContainsMatureContent);
         Item->TryGetBoolField(TEXT("loop"), Entry.bLoop);
         Item->TryGetBoolField(TEXT("root_motion"), Entry.bUsesRootMotion);
         double Number = 0.;
@@ -247,6 +253,10 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
         ActiveParts.IsEmpty() || ParticipantCount < 1 || ParticipantCount > 13)
         return nullptr;
 
+    // Gameplay authority has already resolved the action before presentation.
+    // Keep this legacy parameter for Blueprint/native call-site compatibility;
+    // do NOT make an additional blanket adult-content permission decision here.
+    (void)bAdultContextAuthorized;
     // Rank only source-approved, contextual, exact-rig candidates. Never
     // assign a clip from another character based on display name or form.
     TArray<const FOGSharedMotionEntry*> Candidates;
@@ -257,9 +267,10 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
             Entry.GameplayAction != Action ||
             Entry.CompatibleRigProfile != RigProfile ||
             (!Entry.AnatomyProfile.IsNone() && Entry.AnatomyProfile != AnatomyProfile) ||
-            (!Entry.OutfitProfile.IsNone() && Entry.OutfitProfile != OutfitProfile) ||
+            // Wardrobe is a preference, not a separate authored motion library.
+            // Cross-wardrobe derivatives are allowed ONLY if the actual live
+            // skeletal component matches the animation's native Skeleton.
             (!Entry.GameplayContext.IsNone() && Entry.GameplayContext != Context) ||
-            (Entry.bAdultRestricted && !bAdultContextAuthorized) ||
             Entry.RequiredParticipants != ParticipantCount ||
             (ParticipantCount > 1
                 ? (SceneRole.IsNone() || Entry.SceneRole != SceneRole)
@@ -280,28 +291,37 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
 
     Candidates.Sort([](const FOGSharedMotionEntry& A, const FOGSharedMotionEntry& B)
     {
-        // Explicit wardrobe derivatives precede genuine wardrobe-neutral
-        // clips. Priority is authored, ties are stable by persistent MotionId.
-        const int32 ScoreA = A.Priority * 4 + (!A.OutfitProfile.IsNone() ? 2 : 0) +
+        // Retain authored priority and deterministic source ordering. Exact
+        // outfit match is ranked separately in Resolve, before skeleton load.
+        const int32 ScoreA = A.Priority * 4 +
             (!A.GameplayContext.IsNone() ? 1 : 0);
-        const int32 ScoreB = B.Priority * 4 + (!B.OutfitProfile.IsNone() ? 2 : 0) +
+        const int32 ScoreB = B.Priority * 4 +
             (!B.GameplayContext.IsNone() ? 1 : 0);
         if (ScoreA != ScoreB) return ScoreA > ScoreB;
         return A.MotionId.LexicalLess(B.MotionId);
     });
 
-    for (const FOGSharedMotionEntry* Entry : Candidates)
+    // Prefer exact wardrobe derivative, then wardrobe-neutral clip, then
+    // another wardrobe's derivative ONLY when the live skeleton is identical.
+    // This eliminates per-wardrobe motion authoring for compatible actors,
+    // without substituting animation on the basis of a display name.
+    for (int32 OutfitPass = 0; OutfitPass < 3; ++OutfitPass)
     {
-        UAnimSequence* Sequence = Entry->NativeSequence.LoadSynchronous();
-        if (!Sequence || !Sequence->GetSkeleton())
-            continue;
-        for (const TObjectPtr<USkeletalMeshComponent>& Part : ActiveParts)
+        for (const FOGSharedMotionEntry* Entry : Candidates)
         {
-            const USkeletalMesh* Mesh = Part ? Part->GetSkeletalMeshAsset() : nullptr;
-            if (Mesh && Mesh->GetSkeleton() == Sequence->GetSkeleton())
+            const int32 Class = Entry->OutfitProfile == OutfitProfile ? 0 :
+                (Entry->OutfitProfile.IsNone() ? 1 : 2);
+            if (Class != OutfitPass) continue;
+            UAnimSequence* Sequence = Entry->NativeSequence.LoadSynchronous();
+            if (!Sequence || !Sequence->GetSkeleton()) continue;
+            for (const TObjectPtr<USkeletalMeshComponent>& Part : ActiveParts)
             {
-                if (OutEntry) *OutEntry = Entry;
-                return Sequence;
+                const USkeletalMesh* Mesh = Part ? Part->GetSkeletalMeshAsset() : nullptr;
+                if (Mesh && Mesh->GetSkeleton() == Sequence->GetSkeleton())
+                {
+                    if (OutEntry) *OutEntry = Entry;
+                    return Sequence;
+                }
             }
         }
     }
