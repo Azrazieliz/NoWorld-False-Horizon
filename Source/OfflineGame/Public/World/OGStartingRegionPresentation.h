@@ -1092,6 +1092,23 @@ private:
     /** Live canonical Luminous battle controls over visible 3D World, never a
      * diagnostic stand-in render or second independent battle state. */
     bool DrawOwnedLuminousCombatSurface(AOGWorldPrototypeCharacter* Character, float Scale);
+public:
+    /** Actual successful GameCore HP change on an existing source actor.
+     * Read-only rendered combat feedback, never an alternative damage ledger. */
+    void RegisterCanonicalCombatImpact(AActor* Target,
+        const FOGLargeNumber& Before, const FOGLargeNumber& After);
+private:
+    struct FCanonicalCombatImpact
+    {
+        TWeakObjectPtr<AActor> ActualActor;
+        FString Number;
+        bool bRestoration=false;
+        double StartAt=0.0;
+    };
+    TArray<FCanonicalCombatImpact> NativeCombatImpacts;
+    FOGEntityId CompletedCombatBannerId;
+    double CompletedCombatBannerExpires=0.0;
+    void DrawNativeCombatImpacts(float Scale);
     /** Read-only weak native actor cache keyed by the EXISTING canonical battle.
      * Refreshes intermittently, never owns/spawns/proxies NPC bodies. */
     TMap<FOGEntityId,TWeakObjectPtr<AActor>> NativeBattleWorldActors;

@@ -84,10 +84,63 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
     return true;
 }
 
+void AOGWorldPresentationHud::RegisterCanonicalCombatImpact(
+    AActor* Target, const FOGLargeNumber& Before,
+    const FOGLargeNumber& After)
+{
+    if (!IsValid(Target) || !GetWorld()) return;
+    if (FOGLargeNumber::Compare(Before,After)==0) return;
+    FCanonicalCombatImpact Cue;
+    Cue.ActualActor=Target;
+    Cue.bRestoration=FOGLargeNumber::Compare(After,Before)>0;
+    // Display only verified real post-commit HP movement, never inferred
+    // attack damage, private opponent MaxHP or guessed status consequences.
+    const FOGLargeNumber NegativeBefore(-Before.Significand,Before.Exponent10);
+    const FOGLargeNumber Delta=FOGLargeNumber::Add(After,NegativeBefore);
+    Cue.Number=FString::Printf(TEXT("%s%s"),
+        Cue.bRestoration?TEXT("+"):TEXT(""),*Delta.ToDebugString());
+    Cue.StartAt=GetWorld()->GetTimeSeconds();
+    NativeCombatImpacts.Add(MoveTemp(Cue));
+    if(NativeCombatImpacts.Num()>32)
+        NativeCombatImpacts.RemoveAt(0,NativeCombatImpacts.Num()-32);
+}
+
+void AOGWorldPresentationHud::DrawNativeCombatImpacts(float Scale)
+{
+    if (!Canvas || !PlayerOwner || !GetWorld()) return;
+    const double Now=GetWorld()->GetTimeSeconds();
+    for(int32 I=NativeCombatImpacts.Num()-1;I>=0;--I)
+    {
+        const FCanonicalCombatImpact& Cue=NativeCombatImpacts[I];
+        AActor* Target=Cue.ActualActor.Get();
+        const double Age=Now-Cue.StartAt;
+        if(!Target || Age>1.5 || Age<0)
+        { NativeCombatImpacts.RemoveAtSwap(I);continue; }
+        FVector Center,Extents;
+        Target->GetActorBounds(false,Center,Extents);
+        FVector2D Screen;
+        if(PlayerOwner->ProjectWorldLocationToScreen(
+            Center+FVector(0,0,Extents.Z+30),Screen,true))
+        {
+            Screen.Y-=static_cast<float>(Age)*42.f*Scale;
+            if(Screen.X>0 && Screen.X<Canvas->ClipX &&
+               Screen.Y>0 && Screen.Y<Canvas->ClipY)
+            {
+                const float Alpha=FMath::Clamp(1.f-static_cast<float>(Age/1.5),0.f,1.f);
+                FLinearColor Ink=Cue.bRestoration
+                    ?FLinearColor(.43f,.94f,.68f,Alpha)
+                    :FLinearColor(.95f,.45f,.46f,Alpha);
+                DrawGameText(Cue.Number,Screen.X-32.f*Scale,
+                    Screen.Y,22.f*Scale,Ink,155.f*Scale);
+            }
+        }
+    }
+}
+
 bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     AOGWorldPrototypeCharacter* Character, float Scale)
 {
-    if (!Canvas || !Character || !Character->HasNativeOwnedLuminousEncounter() ||
+    if (!Canvas || !Character ||
         !Cast<AOGLuminousV3PlayableCharacter>(Character))
         return false;
     UGameInstance* GI = GetGameInstance();
@@ -99,6 +152,46 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     if (!Battle || !Session || !Session->IsBoundToStoredRuler())
         return false;
     const FOGTurnBattleState& State = Battle->GetState();
+    // A completed battle may outlive possession; don't display an old
+    // Ruler's private battle results over a different character.
+    const FOGCombatUnitState* ActualOwned=State.Units.FindByPredicate(
+        [Session](const FOGCombatUnitState& Unit)
+        { return Unit.UnitEntityId==Session->SelectedManifestationId; });
+    const AOGLuminousV3PlayableCharacter* ActualLuminous=
+        Cast<AOGLuminousV3PlayableCharacter>(Character);
+    if(!ActualOwned || !ActualLuminous ||
+       !ActualLuminous->IsBoundToOwnedLuminousCombatUnit(
+           Session->BoundRulerId,Session->SelectedManifestationId,
+           ActualOwned->SkillSet.CurrentForm))return false;
+    if (State.Status == EOGTurnBattleStatus::Completed)
+    {
+        const double Now=GetWorld()?GetWorld()->GetTimeSeconds():0.;
+        if(CompletedCombatBannerId!=State.BattleId)
+        { CompletedCombatBannerId=State.BattleId; CompletedCombatBannerExpires=Now+6.; }
+        DrawNativeCombatImpacts(Scale);
+        if(Now>CompletedCombatBannerExpires)return false;
+        const bool bOwnedSurvived=State.Units.ContainsByPredicate(
+            [Session](const FOGCombatUnitState& Unit)
+            { return Unit.UnitEntityId==Session->SelectedManifestationId && Unit.IsAlive(); });
+        const bool bEnemySurvived=State.Units.ContainsByPredicate(
+            [Session,&State](const FOGCombatUnitState& Unit)
+            {
+                const FOGCombatUnitState* Owned=State.Units.FindByPredicate(
+                    [Session](const FOGCombatUnitState& O)
+                    { return O.UnitEntityId==Session->SelectedManifestationId; });
+                return Owned && Unit.TeamIndex!=Owned->TeamIndex && Unit.IsAlive() &&
+                    Unit.Presence!=EOGCombatPresence::Removed;
+            });
+        const FString Outcome=bOwnedSurvived && !bEnemySurvived
+            ?TEXT("VICTORY") :!bOwnedSurvived && bEnemySurvived
+            ?TEXT("DEFEAT") :TEXT("ENCOUNTER RESOLVED");
+        const float W=Canvas->ClipX,S=FMath::Clamp(Scale,.52f,1.3f);
+        DrawGamePanel(FLinearColor(.02f,.018f,.028f,.86f),
+            W*.22f,20.f*S,W*.56f,65.f*S);
+        DrawGameText(Outcome,W*.32f,33.f*S,25.f*S,
+            FLinearColor(.89f,.83f,.96f,1.f),W*.38f);
+        return true;
+    }
     if (State.Status != EOGTurnBattleStatus::Running)
         return false;
     const int32 ActingIndex = Battle->SelectNextActingUnitIndex();
@@ -153,6 +246,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const FLinearColor Dim(.49f,.48f,.55f,1.f);
     const FLinearColor Panel(.018f,.014f,.031f,.88f);
 
+    DrawNativeCombatImpacts(Scale);
     // Keep the REAL rendered level and actual native actors visible between
     // bands. Never DrawGameBackdrop or DrawFoundationCharacterStandIn here.
     DrawGamePanel(Panel,Edge,Edge,W-2.f*Edge,HeaderHeight);

@@ -9,6 +9,7 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 
 bool AOGWorldPrototypeCharacter::HasNativeOwnedLuminousEncounter() const
 {
@@ -180,6 +181,14 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
                 const FOGLargeNumber* Before=HpBefore.Find(TargetId);
                 if(!After || !Before) continue;
                 const int32 Change=FOGLargeNumber::Compare(After->CurrentHp,*Before);
+                if(Change!=0)
+                {
+                    if (APlayerController* PC=Cast<APlayerController>(GetController()))
+                        if (AOGWorldPresentationHud* NativeHud=
+                            Cast<AOGWorldPresentationHud>(PC->GetHUD()))
+                            NativeHud->RegisterCanonicalCombatImpact(
+                                TargetActor,*Before,After->CurrentHp);
+                }
                 if(Change!=0)
                     if(UOGSharedMotionControllerComponent* Motion=
                         TargetActor->FindComponentByClass<UOGSharedMotionControllerComponent>())
