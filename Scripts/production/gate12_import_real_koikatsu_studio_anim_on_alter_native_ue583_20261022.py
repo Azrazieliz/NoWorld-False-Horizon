@@ -27,8 +27,9 @@ try:
  with gzip.open(INPUT,"rt",encoding="utf8") as f:source=json.load(f)
  assert source["status"]=="SOURCE_AUTHENTIC_QUATERNION_TRACKS_CALIBRATED_FOR_NATIVE_UE_REST_BASIS"
  assert source["clip"]==CLIP and source["relative_source_pose_only"] is True
- assert source["animated_rotation_bone_count"]>=12
- assert source["resolved_rotation_bone_count"]>=140
+ assert source["animated_rotation_bone_count"]>=10
+ min_bones=80 if source.get("rig_family")=="mixamo_koikatsu_compatible" else 140
+ assert source["resolved_rotation_bone_count"]>=min_bones
  frame_count=source["frame_count"]
  assert 5<=frame_count<15000 and source["frame_rate"]==30.0
  path=f"/Game/NoWorld/Characters/Luminous/Alter/NativeOriginal{STATE.title()}/SK_Luminous_Alter_{STATE}_OriginalPart_00_Skeleton"
@@ -43,7 +44,7 @@ try:
   assert len(track["deltas"])==frame_count
   mapped.append(track)
  distinct={x["target_bone"]for x in mapped}
- assert len(mapped)==len(distinct) and len(mapped)>=140,("Native rig compatibility too low",len(mapped))
+ assert len(mapped)==len(distinct) and len(mapped)>=min_bones,("Native rig compatibility too low",len(mapped))
  changed=sum(x["angular_span_deg"]>.05 for x in mapped)
  assert changed>=10
  output=TARGET_DIR+"/"+NAME
@@ -76,7 +77,7 @@ try:
    written.append(bone)
  finally:
   ctl.close_bracket(False)
- assert len(written)>=140
+ assert len(written)>=min_bones
  actual=set(str(v).casefold() for v in ctl.get_model_interface().get_bone_track_names())
  written_folded=set(v.casefold() for v in written)
  rep["written_track_count"]=len(written_folded)
@@ -85,7 +86,7 @@ try:
  rep["unexpected_model_bones"]=sorted(actual-written_folded)[:45]
  # Unreal FName's case-insensitive identity is authoritative; comparing
  # its display names case-sensitively previously gave 187 false mismatches.
- assert len(actual)>=120 and actual==written_folded,rep
+ assert len(actual)>=min_bones and actual==written_folded,rep
  assert abs(seq.get_play_length()-(frame_count-1)/30.0)<.07
  assert unreal.EditorAssetLibrary.save_loaded_asset(seq)
  rep.update({"native_animsequence":seq.get_path_name(),"original_source_curve":source["source_curve_path"],

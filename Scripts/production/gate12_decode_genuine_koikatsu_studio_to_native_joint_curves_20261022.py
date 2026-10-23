@@ -23,6 +23,17 @@ EXTRA={
 "cf_j_arm00_R":"Right-arm","cf_j_forearm01_R":"Right-elbow","cf_j_hand_R":"Right-wrist",
 "cf_j_shoulder_L":"Left-shoulder","cf_j_shoulder_R":"Right-shoulder"
 }
+# Measured from the original Alter Unreal Skeleton (not inferred generic Mixamo
+# aliases). Preserves original source identities and restores finger articulation.
+for _side in ("L","R"):
+ for _family,_target in (("index","IndexFinger"),("little","LittleFinger"),
+                          ("middle","MiddleFinger"),("ring","RingFinger")):
+  for _joint in (1,2,3):
+   EXTRA[f"cf_j_{_family}{_joint:02d}_{_side}"]=f"{_target}{_joint}_{_side}"
+ for _joint in (1,2,3):
+  EXTRA[f"cf_j_thumb{_joint:02d}_{_side}"]=f"Thumb{_joint-1}_{_side}"
+ EXTRA[f"cf_j_toes_{_side}"]="Left-toe" if _side=="L" else "Right-toe"
+
 def uint_float(n):return struct.unpack("<f",struct.pack("<I",n))[0]
 def norm(q):
  z=math.sqrt(sum(v*v for v in q))
@@ -79,9 +90,10 @@ def widths(b):
  tid=int(b.get("typeID",0));attr=int(b.get("attribute",0))
  if tid==4:return 3 if attr in (1,3) else 4 if attr==2 else 1
  return 1
-def convert(clipname,rest):
- rows=[f for f in INDEX["source_files"] if f["source_clip_name"]==clipname and
-       f["source_bundle_index"]<10]
+def convert(clipname,rest,source_row=None,output_alias=None,rig_family="koikatsu_full"):
+ rows=([source_row] if source_row is not None else
+       [f for f in INDEX["source_files"] if f["source_clip_name"]==clipname and
+        f["source_bundle_index"]<10])
  assert len(rows)==1,("Choose one exact bundled source",clipname,len(rows))
  row=rows[0]
  raw=pathlib.Path(row["raw_curve_path"])
@@ -141,13 +153,24 @@ def convert(clipname,rest):
   if r["target_bone"] in seen:continue
   seen.add(r["target_bone"]);channels.append(r)
  changed=sum(x["angular_span_deg"]>.05 for x in channels)
- assert len(channels)>=140 and changed>=12,(len(channels),changed)
- output=OUT/(clipname+".genuine_unity_kk_stream_native_deltas.json.gz")
+ if rig_family=="mixamo_koikatsu_compatible":
+  # Original Mixamo-for-CharaStudio sources only animate a documented 93-bone
+  # reduced rig. Never misrepresent it as full Koikatsu facial/secondary data.
+  essentials={"Center","Hips","Spine","Chest","Upper-Chest","Neck","Head",
+   "Left-arm","Right-arm","Left-elbow","Right-elbow","Left-wrist","Right-wrist",
+   "Left-leg","Right-leg","Left-knee","Right-knee","Left-ankle","Right-ankle"}
+  assert len(channels)>=80 and changed>=10 and essentials.issubset(seen),(len(channels),changed,sorted(essentials-seen))
+ else:
+  assert len(channels)>=140 and changed>=12,(len(channels),changed)
+ assert output_alias is None or re.fullmatch(r"[A-Za-z0-9_]{3,100}",output_alias)
+ output=OUT/((output_alias or clipname)+".genuine_unity_kk_stream_native_deltas.json.gz")
  assert not output.exists(),"Do not overwrite extracted source motion"
  result={
    "schema":"noworld.gate12.koikatsu.uncooked_original_studio_unity_native_motion.v1",
    "status":"SOURCE_AUTHENTIC_QUATERNION_TRACKS_CALIBRATED_FOR_NATIVE_UE_REST_BASIS",
-   "clip":clipname,"source_path_id":obj["original_unity_path_id"],
+   "clip":output_alias or clipname,"original_source_clip":clipname,
+   "rig_family":rig_family,
+   "source_path_id":obj["original_unity_path_id"],
    "source_bundle":obj["source_bundle"],"source_sha256":row["source_hash"],
    "source_clip_sha256":hashlib.sha256(raw.read_bytes()).hexdigest(),
    "source_curve_path":str(raw),"frame_rate":rate,
