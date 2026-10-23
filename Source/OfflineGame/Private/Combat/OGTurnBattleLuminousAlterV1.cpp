@@ -95,8 +95,10 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         OutError=TEXT("Black Mass requires explicit Ruin or Hollow Crown selection.");
         return false;
     }
-    const int32 MaxTargets=bA1?1:bA2?4:bA3?1:
-        (Branch==TEXT("ruin")?4:1);
+    // Area strike / Ruin hits every eligible active enemy in the field;
+    // Martyr Communion and Hollow Crown stay specifically single target.
+    const int32 MaxTargets=(bA1 || bA3 ||
+        (bUlt && Branch!=TEXT("ruin")))?1:State.Units.Num();
     if(Action.TargetUnitIds.Num()<1 ||
        Action.TargetUnitIds.Num()>MaxTargets)
     {

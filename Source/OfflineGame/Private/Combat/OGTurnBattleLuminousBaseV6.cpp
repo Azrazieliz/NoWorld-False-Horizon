@@ -90,7 +90,9 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
     const bool bA3Covenant=bA3 && A3Mode==TEXT("covenant");
     FString UltimateMode;
     if(bUlt)Context->TryGetStringField(TEXT("mode"),UltimateMode);
-    const int32 MaxTargets=bA1?1:bA2?3:bA3Covenant?1:3;
+    // Director-approved AoE covers all eligible active field participants,
+    // never a fixed 3-target slice. Single-target Covenant remains single.
+    const int32 MaxTargets=(bA1 || bA3Covenant)?1:State.Units.Num();
     if(Action.TargetUnitIds.IsEmpty() || Action.TargetUnitIds.Num()>MaxTargets)
     {
         OutError=TEXT("Luminous action target count violates its approved targeting rule.");

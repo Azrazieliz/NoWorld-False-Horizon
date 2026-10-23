@@ -143,10 +143,12 @@ bool FOGTurnBattle::PrevalidateLuminousActionWithoutSideEffects(
     const bool bCovenant=bBase && bA3 && Mode==TEXT("covenant");
     const bool bDayRevivalPrepare=bBase && bUlt &&
         Branch==TEXT("day") && Mode==TEXT("revival_prepare");
-    const int32 MaxTargets=bBase
-        ? (bA1?1:bA2?3:bCovenant?1:3)
-        : (bA1?1:bA2?4:bA3?1:
-           Branch==TEXT("ruin")?4:1);
+    // Area skills operate on ALL active eligible field units; eliminate
+    // earlier 3/4-target ceilings. The executor itself expands targets before
+    // this preflight, ensuring UI and non-UI callers behave identically.
+    const bool bSingle=bBase ? (bA1||bCovenant||bDayRevivalPrepare)
+        : (bA1||bA3||(bUlt&&Branch!=TEXT("ruin")));
+    const int32 MaxTargets=bSingle?1:State.Units.Num();
     if(Action.TargetUnitIds.IsEmpty() || Action.TargetUnitIds.Num()>MaxTargets)
         return FailPreflight(OutError,TEXT("Luminous action target count invalid."));
     TSet<FOGEntityId> Unique;

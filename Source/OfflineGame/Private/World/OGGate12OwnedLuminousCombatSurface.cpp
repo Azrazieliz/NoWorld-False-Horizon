@@ -58,17 +58,18 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
         OutError = TEXT("Select a live canonical battle participant on the actual possessed Luminous turn.");
         return false;
     }
-    // Support actual authored AoE/multi-target skills (up to four targets in
-    // the current approved kit), while Gate04 independently validates exact
-    // skill max/ally/self rules on submission. Tap again to deselect.
+    // Tap selects only a PRIMARY focus for primary-specific skill bonuses;
+    // AoE auto-expands to every eligible active field participant in the
+    // canonical executor. No manual cap or cherry-picking of AoE victims.
     if (SelectedCanonicalBattleId!=State.BattleId)
     { SelectedCanonicalTurnTargets.Reset(); SelectedCanonicalBattleId=State.BattleId; }
     if (SelectedCanonicalTurnTargets.Contains(Target.UnitEntityId))
         SelectedCanonicalTurnTargets.Remove(Target.UnitEntityId);
-    else if (SelectedCanonicalTurnTargets.Num() < 4)
-        SelectedCanonicalTurnTargets.Add(Target.UnitEntityId);
     else
-    { OutError=TEXT("The accepted Luminous abilities support at most four targets."); return false; }
+    {
+        SelectedCanonicalTurnTargets.Reset();
+        SelectedCanonicalTurnTargets.Add(Target.UnitEntityId);
+    }
     // Keep the established knowledge/privacy projection for an already
     // observed target; NEVER reveal undiscovered HP/identity from battle math.
     FOGWorldTargetViewModel Projection;
@@ -173,7 +174,9 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     for (int32 I=0; I<State.Units.Num(); ++I)
     {
         const FOGCombatUnitState& Unit = State.Units[I];
-        if (Unit.Presence!=EOGCombatPresence::Active || ParticipantOrdinal>=12)
+        // Never hide an eligible thirteenth (or later) unit from the field
+        // just because an earlier prototype assumed two six-member teams.
+        if (Unit.Presence!=EOGCombatPresence::Active)
             continue;
         const float X = Edge+(ParticipantOrdinal%6)*(CardW+5.f*S);
         const float CardTop = Top+(ParticipantOrdinal/6)*(CardH+7.f*S);
@@ -231,9 +234,8 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const float ButtonW = FMath::Min(140.f*S,(W-2.f*Edge)/5.5f);
     const float ButtonH = 54.f*S;
     const float Bottom = H-ButtonH-Edge;
-    DrawGameText(FString::Printf(TEXT("SELECTED %d  |  tap a target again to remove"),
-        Character->GetSelectedCanonicalTurnTargets().Num()),
-        Edge+6.f*S,Bottom-58.f*S,14.f*S,Accent,W*.77f);
+    DrawGameText(TEXT("AoE hits ALL eligible field allies/enemies automatically. Tap to set primary."),
+        Edge+6.f*S,Bottom-58.f*S,14.f*S,Accent,W*.85f);
     for (int32 Slot=0; Slot<3; ++Slot)
     {
         const FString Label = FString::Printf(TEXT("ACTIVE %d"),Slot+1);

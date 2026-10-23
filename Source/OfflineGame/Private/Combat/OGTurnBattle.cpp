@@ -416,9 +416,13 @@ bool FOGTurnBattle::ApplyResolvedAction(
     // then move only successful results into the real combat state.
     // Critical for multi-strike costs, Dawn barriers, OnDefeat reactions,
     // field contests, event queues and action-value timeline consistency.
+    FOGResolvedCombatAction CompleteAction;
+    bool bArea=false;
+    if(!ExpandApprovedFieldTargets(Action,CompleteAction,bArea,OutError))
+        return false;
     FOGTurnBattle Candidate=*this;
     FString CandidateError;
-    if(!Candidate.ApplyResolvedActionMutating(Action,CandidateError))
+    if(!Candidate.ApplyResolvedActionMutating(CompleteAction,CandidateError))
     {
         OutError=CandidateError.IsEmpty()
             ?TEXT("Resolved action rejected; no battle state was committed.")

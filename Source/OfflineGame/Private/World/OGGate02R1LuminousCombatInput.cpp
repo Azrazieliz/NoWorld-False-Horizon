@@ -114,13 +114,26 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         Chosen=SelectedCanonicalTurnTargets;
     else if(bHasTargetHudProjection && TargetHudProjection.TargetEntityId.IsValid())
         Chosen.Add(TargetHudProjection.TargetEntityId);
+    // The central executor, not the HUD, classifies an AoE and expands it
+    // to EVERY eligible on-field enemy/ally (with no 3/4 target ceiling).
+    // Optional manual focus is only the primary strike's bonus recipient.
+    FOGResolvedCombatAction Proposed;
+    Proposed.SourceUnitId=Manifestation;
+    Proposed.SkillId=Skill;
+    Proposed.TargetUnitIds=Chosen;
+    Proposed.ResolutionJson=Resolution;
+    FOGResolvedCombatAction Expanded;
+    bool bArea=false;
+    if (!Encounter->ExpandApprovedFieldTargets(Proposed,Expanded,bArea,OutError))
+        return false;
+    Chosen=Expanded.TargetUnitIds;
     if(Chosen.IsEmpty())
     {
-        OutError=TEXT("Select actual battle target(s) for the authored Luminous skill.");
+        OutError=TEXT("Select a legal target for single-target actions; area skills use all eligible active participants.");
         return false;
     }
-    // UI is only a selection surface: actual max target count, allegiance,
-    // self/ally heal and cost are checked in the frozen Gate04 preflight.
+    // No presentation-side target count/allegiance restrictions: the exact
+    // approved Gate04 preflight still validates every native gameplay action.
     TMap<FOGEntityId,FOGLargeNumber> HpBefore;
     for(const FOGEntityId& Selected:Chosen)
     {

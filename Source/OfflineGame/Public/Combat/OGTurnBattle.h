@@ -198,6 +198,13 @@ public:
 
     int32 SelectNextActingUnitIndex() const;
 
+    /** Expands authored AoE abilities to every eligible living active field
+     * ally/enemy. Caller-selected primary keeps any primary-specific bonuses.
+     * Applied AGAIN inside the authoritative executor: UI cannot omit units. */
+    bool ExpandApprovedFieldTargets(const FOGResolvedCombatAction& Original,
+        FOGResolvedCombatAction& Expanded, bool& bOutArea,
+        FString& OutError) const;
+
     bool ApplyResolvedAction(
         const FOGResolvedCombatAction& Action,
         FString& OutError);
