@@ -7,14 +7,18 @@ import unreal,os,json,gzip,pathlib,hashlib,math,traceback
 R=pathlib.Path(r"D:\UnrealProjects\OfflineGame_Gate12_Koikatsu_20261010")
 STATE=os.environ["G12_KK_SOURCE_STATE"]
 CLIP=os.environ["G12_KK_SOURCE_CLIP"]
+# Backward-compatible extension: other actual Koikatsu character skeletons
+# reuse the ORIGINAL source motion but receive an independent native derivative.
+FORM=os.environ.get("G12_KK_SOURCE_FORM","Alter")
+assert FORM in ("Alter","Awakened","Berserker","Grand")
 assert STATE in ("CLOTHED","UNDERWEAR","NUDE")
 assert CLIP.replace("_","").isalnum()
 INPUT=R/"Saved/Gate12Readiness/KoikatsuGenuineNativeStudioMotion"/(CLIP+".genuine_unity_kk_stream_native_deltas.json.gz")
 if not INPUT.exists():
  INPUT=R/"SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks"/(CLIP+".genuine_unity_kk_stream_native_deltas.json.gz")
-TARGET_DIR="/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA"
-NAME=f"AN_G12_KK_Original_{STATE}_{CLIP}"
-RECEIPT=R/"Saved/Gate12Readiness"/f"GATE12_NATIVE_KOIKATSU_STUDIO_{STATE}_{CLIP}_20261022.json"
+TARGET_DIR=f"/Game/NoWorld/Characters/Luminous/{FORM}/KoikatsuOriginalStudioMotionQA"
+NAME=f"AN_G12_KK_Original_{STATE}_{CLIP}" if FORM=="Alter" else f"AN_G12_KK_{FORM}_{STATE}_{CLIP}"
+RECEIPT=R/"Saved/Gate12Readiness"/(f"GATE12_NATIVE_KOIKATSU_STUDIO_{STATE}_{CLIP}_20261022.json" if FORM=="Alter" else f"GATE12_{FORM}_{STATE}_{CLIP}_ORIGINAL_NATIVE_20261023.json")
 rep={"state":STATE,"source_clip":CLIP,
      "status":"STARTED","original_koikatsu_sourced":True,
      "source_geometry_unchanged":True,"prior_mocap_unchanged":True,
@@ -32,12 +36,12 @@ try:
  assert source["resolved_rotation_bone_count"]>=min_bones
  frame_count=source["frame_count"]
  assert 5<=frame_count<15000 and source["frame_rate"]==30.0
- path=f"/Game/NoWorld/Characters/Luminous/Alter/NativeOriginal{STATE.title()}/SK_Luminous_Alter_{STATE}_OriginalPart_00_Skeleton"
+ path=f"/Game/NoWorld/Characters/Luminous/{FORM}/NativeOriginal{STATE.title()}/SK_Luminous_{FORM}_{STATE}_OriginalPart_00_Skeleton"
  sk=unreal.load_asset(path)
  assert isinstance(sk,unreal.Skeleton)
  pose=sk.get_reference_pose()
  bone_names=set(str(b)for b in pose.get_bone_names())
- assert len(bone_names)==(1123 if STATE=="NUDE" else 1131)
+ assert len(bone_names)==((1123 if STATE=="NUDE" else 1131) if FORM=="Alter" else 886)
  mapped=[]
  for track in source["bones"]:
   if track["target_bone"] not in bone_names:continue

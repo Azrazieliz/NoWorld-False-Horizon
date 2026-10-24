@@ -36,6 +36,19 @@ const TCHAR* WardrobeName(EOGLuminousV3Wardrobe State)
     }
     return TEXT("INVALID");
 }
+// The additional three approved Koikatsu character Versions have real,
+// independently exported source rigs, never the frozen Base/Alter meshes.
+// These identifiers do not grant canonical ownership or fabricate content.
+FString AdditionalLuminousSourceFolder(const FString& Version)
+{
+    if (Version == TEXT("character:luminous_valentine.version_awakened_v4"))
+        return TEXT("Awakened");
+    if (Version == TEXT("character:luminous_valentine.version_berserker_v4"))
+        return TEXT("Berserker");
+    if (Version == TEXT("character:luminous_valentine.version_grand_v4"))
+        return TEXT("Grand");
+    return FString();
+}
 bool ParseWardrobe(const FString& Value, EOGLuminousV3Wardrobe& Out)
 {
     if (Value == TEXT("CLOTHED")) { Out = EOGLuminousV3Wardrobe::Clothed; return true; }
@@ -158,7 +171,7 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
     CanonicalLuminousIdentityId = TEXT("character:luminous_valentine.identity");
     CanonicalLuminousVersionId = TEXT("character:luminous_valentine.version_ln_base");
     MotionCapabilities = {TEXT("grounded"), TEXT("swimming"), TEXT("flying"),
-        TEXT("combat"), TEXT("emote")};
+        TEXT("combat"), TEXT("emote"), TEXT("adult_interaction")};
 }
 
 const TArray<FSoftObjectPath>& AOGLuminousV3PlayableCharacter::PartsFor(EOGLuminousV3Wardrobe State) const
@@ -180,6 +193,12 @@ int32 AOGLuminousV3PlayableCharacter::ExpectedNativeBoneCount(
     if (CanonicalLuminousVersionId ==
         TEXT("character:luminous_valentine.version_alter_v1"))
         return State == EOGLuminousV3Wardrobe::Nude ? 1123 : 1131;
+    if (!AdditionalLuminousSourceFolder(CanonicalLuminousVersionId).IsEmpty())
+    {
+        const int32 Index = static_cast<int32>(State);
+        return AdditionalVersionNativeSkeletonBones.IsValidIndex(Index)
+            ? AdditionalVersionNativeSkeletonBones[Index] : 0;
+    }
     return 975;
 }
 
@@ -189,6 +208,12 @@ int32 AOGLuminousV3PlayableCharacter::ExpectedPartsFor(EOGLuminousV3Wardrobe Sta
         return State == EOGLuminousV3Wardrobe::Clothed ||
                State == EOGLuminousV3Wardrobe::Underwear ||
                State == EOGLuminousV3Wardrobe::Nude ? 6 : 0;
+    if (!AdditionalLuminousSourceFolder(CanonicalLuminousVersionId).IsEmpty())
+    {
+        const int32 Index = static_cast<int32>(State);
+        return AdditionalVersionNativePartCounts.IsValidIndex(Index)
+            ? FMath::Max(0, AdditionalVersionNativePartCounts[Index]) : 0;
+    }
     switch (State)
     {
     case EOGLuminousV3Wardrobe::Clothed: return 45;
@@ -230,7 +255,16 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
               AssetPath.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/"))) ||
              (Desired == EOGLuminousV3Wardrobe::Nude &&
               AssetPath.StartsWith(TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/"))));
-        if (!bBaseSource && !bAlterSource)
+        const FString Form = AdditionalLuminousSourceFolder(CanonicalLuminousVersionId);
+        const TCHAR* StateFolder = Desired == EOGLuminousV3Wardrobe::Clothed
+            ? TEXT("Clothed") : Desired == EOGLuminousV3Wardrobe::Underwear
+            ? TEXT("Underwear") : TEXT("Nude");
+        const FString VersionNamespace = Form.IsEmpty() ? FString() :
+            FString::Printf(TEXT("/Game/NoWorld/Characters/Luminous/%s/NativeOriginal%s/"),
+                *Form, StateFolder);
+        const bool bNewOriginalSource = !VersionNamespace.IsEmpty() &&
+            AssetPath.StartsWith(VersionNamespace);
+        if (!bBaseSource && !bAlterSource && !bNewOriginalSource)
         {
             Error = TEXT("Luminous V3: refusing an unexpected or cross-character asset namespace");
             return false;
@@ -290,7 +324,11 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     }
     // One component pool reused for all three states. Never instantiate 121
     // simultaneous 975-bone character parts or touch imported source UAssets.
-    while (RuntimeParts.Num() < ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed))
+    const int32 RequiredPartPool = FMath::Max3(
+        ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed),
+        ExpectedPartsFor(EOGLuminousV3Wardrobe::Underwear),
+        ExpectedPartsFor(EOGLuminousV3Wardrobe::Nude));
+    while (RuntimeParts.Num() < RequiredPartPool)
     {
         const int32 Index = RuntimeParts.Num();
         const FName Name(*FString::Printf(TEXT("LuminousV3NativePart_%02d"), Index));
@@ -389,8 +427,12 @@ bool AOGLuminousV3PlayableCharacter::RefreshPrivacyRenderedAppearance()
     // mask non-clothed appearance without modifying actual clothing state.
     const bool bQAAuthorized = bNativeOwnedCharacterBound ||
         IsIsolatedWardrobeQAContext();
-    const bool bHasSafeBase = ClothedNativeParts.Num() ==
-        ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed);
+    // Zero existing parts is never a valid safe wardrobe. Partial authentic
+    // imports may exist for a newly authored Version; never substitute a
+    // naked/underwear part when its clothed source has not been imported.
+    const int32 RequiredClothed = ExpectedPartsFor(EOGLuminousV3Wardrobe::Clothed);
+    const bool bHasSafeBase = RequiredClothed > 0 &&
+        ClothedNativeParts.Num() == RequiredClothed;
     const FOGLuminousV3AppearanceProjection Decision =
         FOGLuminousV3AppearancePolicy::Resolve(
             CurrentWardrobe, bPrivacy, bQAAuthorized, bHasSafeBase);
@@ -680,7 +722,10 @@ bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
     // incorrectly routed into Interaction and could never resolve.
     const FName Context = ActionName.StartsWith(TEXT("Combat."))
         ? FName(TEXT("Combat")) : ActionName.StartsWith(TEXT("Traversal."))
-        ? FName(TEXT("Traversal")) : FName(TEXT("Interaction"));
+        ? FName(TEXT("Traversal")) :
+          (ActionName.StartsWith(TEXT("AdultInteraction.")) ||
+           ActionName.StartsWith(TEXT("Adult.")))
+        ? FName(TEXT("AdultInteraction")) : FName(TEXT("Interaction"));
     UAnimSequence* Clip = ResolveSharedMotion(GameplayAction, Context,
         bAuthorizedAdultContext, ParticipantCount, &Entry);
     if (!Clip || !Entry) return false;

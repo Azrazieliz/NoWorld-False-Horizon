@@ -104,6 +104,16 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|Native Assets")
     TArray<FSoftObjectPath> NudeNativeParts;
 
+    /** Additional, genuinely authored Koikatsu Versions use their own real
+     * meshes and skeletons, independently for CLOTHED/UNDERWEAR/NUDE.
+     * Zero means the original wardrobe was not exported and is not renderable.
+     * Base and Alter retain their existing locked part/bone contracts. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|Native Assets")
+    TArray<int32> AdditionalVersionNativePartCounts;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|Native Assets")
+    TArray<int32> AdditionalVersionNativeSkeletonBones;
+
     /** In order CLOTHED, UNDERWEAR, NUDE; each native clip has own exact 975 skeleton. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|MotionV3")
     TArray<FSoftObjectPath> NativeWalkByWardrobe;

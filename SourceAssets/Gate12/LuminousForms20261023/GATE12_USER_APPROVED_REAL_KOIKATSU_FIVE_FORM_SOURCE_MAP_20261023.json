@@ -1,0 +1,91 @@
+{
+  "schema": "noworld.gate12.luminous.koikatsu.approved_native_source_map.v1",
+  "date": "2026-10-23",
+  "approval": "USER_EXPLICIT_20261023",
+  "character": "Luminous Valentine",
+  "policy": "PRESERVE_ALL_UNMODIFIED_SOURCE_CARDS",
+  "forms": {
+    "Awakened": {
+      "approved_character_version": true,
+      "origin": "ORIGINAL_KOIKATSU_CHARACTER_MAKER_SAVED_CARD",
+      "states": {
+        "CLOTHED": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020163646604_Valentine Luminous.png",
+          "sha256": "e6b53e82c0d87ecdbd0ff8bf510ce93a1d7e557b436382271fcfed6451897bd5",
+          "bytes": 14481304,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        },
+        "UNDERWEAR": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020163254893_Valentine Luminous.png",
+          "sha256": "a570ac519b7dc0a578f9987189d4c6bcf3b2f922ef697c087e1dd25b8aba8851",
+          "bytes": 14469209,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        },
+        "NUDE": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020164224738_Valentine Luminous.png",
+          "sha256": "d8c4d17aaa5432d05e536942ec42814e5c7745f7bc9f51f6c38160caefba1b9e",
+          "bytes": 14461065,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        }
+      }
+    },
+    "Berserker": {
+      "approved_character_version": true,
+      "origin": "ORIGINAL_KOIKATSU_CHARACTER_MAKER_SAVED_CARD",
+      "states": {
+        "CLOTHED": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020181953705_Valentine Luminous.png",
+          "sha256": "820307ce971382af9b620fa8610af60918ad01cc7267994ba9ac5cde96070862",
+          "bytes": 14452380,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        },
+        "UNDERWEAR": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020190327674_Valentine Luminous.png",
+          "sha256": "7a77d3f035bdb4e5a4fc07f769e37a415d11a82c298550106cd9c145b72f17f7",
+          "bytes": 14462376,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        },
+        "NUDE": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020190405616_Valentine Luminous.png",
+          "sha256": "1c20c52a62812ec8d407fe04f266ae9076f272fb9b2edfac839ad4f96d689299",
+          "bytes": 14453772,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        }
+      }
+    },
+    "Grand": {
+      "approved_character_version": true,
+      "origin": "ORIGINAL_KOIKATSU_CHARACTER_MAKER_SAVED_CARD",
+      "states": {
+        "CLOTHED": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020202050734_Valentine Luminous.png",
+          "sha256": "26c48e1c03c154f9f39a0b06afaade53423c11dbd079604e430162eb4cae5353",
+          "bytes": 14454719,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        },
+        "UNDERWEAR": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020200911508_Valentine Luminous.png",
+          "sha256": "fb476c483dbba99d2712bc7369765c2ce25514e23a602852ea97a7249fd0eb05",
+          "bytes": 14469761,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        },
+        "NUDE": {
+          "source_card": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female\\Koikatu_F_20261020200119808_Valentine Luminous.png",
+          "sha256": "35555ee04eef670a705eb9d7dc09bf7d9eae4a66768aae2a571b40cf4399f159",
+          "bytes": 14460366,
+          "native_geometry": "REQUIRES_REAL_KKBP_EXPORT",
+          "wardrobe_is_not_a_version": true
+        }
+      }
+    }
+  },
+  "imported_native_assets": []
+}
