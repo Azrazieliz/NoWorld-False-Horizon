@@ -663,6 +663,9 @@ public:
     bool SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,
         FString& OutError);
     bool HasNativeOwnedLuminousEncounter() const;
+    // Advance non-player participants on the REAL canonical encounter timeline,
+    // using their existing approved skills and world actors. Never spawn foes.
+    void AdvanceCanonicalNonPlayerBattleTurn();
     /** Selects one existing canonical active enemy from the real battle roster.
      * Uses no spawned target, fabricated entity ID, or new combat ledger. */
     bool SelectOwnedLuminousBattleTarget(int32 UnitIndex, FString& OutError);
@@ -956,6 +959,8 @@ private:
     TArray<FOGEntityId> SelectedCanonicalTurnTargets;
     UPROPERTY(Transient)
     FOGEntityId SelectedCanonicalBattleId;
+    FOGEntityId AutonomousCombatBattleId;
+    double NextCanonicalOpponentActionAt = 0.0;
     FVector ClimbSurfaceNormal = FVector::ZeroVector;
     TWeakObjectPtr<AActor> CurrentCarrier;
 

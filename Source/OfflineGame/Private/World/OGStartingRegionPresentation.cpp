@@ -4266,6 +4266,9 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
     if (!IntegrationWorld && !bNativeFirstWorldRuntimeInitialized)
         InitializeFoundationIntegration();
     UpdateDiagnosticAnimationState();
+    // Real non-player combatants act using only their existing native skills
+    // on GameCore's authoritative action timeline; no diagnostic NPC actors.
+    AdvanceCanonicalNonPlayerBattleTurn();
 
     if (TraversalCapabilities && GetCharacterMovement())
     {
