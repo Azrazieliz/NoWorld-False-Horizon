@@ -173,16 +173,8 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
     // grant a Manifestation or declare this asset production-accepted.
     CanonicalLuminousIdentityId = TEXT("character:luminous_valentine.identity");
     CanonicalLuminousVersionId = TEXT("character:luminous_valentine.version_ln_base");
-    // Exact measured contracts from the preserved source-authentic exports,
-    // ordered CLOTHED / UNDERWEAR / NUDE. These defaults keep a Blueprint
-    // from silently falling back to a zero-part/zero-bone additional form.
-    // They do not grant ownership or claim Unreal asset admission by
-    // themselves; every path is still validated against its form namespace.
-    AdditionalVersionNativePartCounts = {6, 6, 6};
-    // Canonical Awakened/Berserker/Grand counts are resolved by VersionId in
-    // ExpectedNativeBoneCount; keep this legacy staging fallback empty rather
-    // than pretending a wardrobe-indexed array can represent three forms.
-    AdditionalVersionNativeSkeletonBones = {0, 0, 0};
+    // Additional form contracts are populated from each admitted wardrobe's
+    // source package. Export counts never imply that another wardrobe exists.
     MotionCapabilities = {TEXT("grounded"), TEXT("swimming"), TEXT("flying"),
         TEXT("combat"), TEXT("emote"), TEXT("adult_interaction")};
 }
@@ -208,17 +200,8 @@ int32 AOGLuminousV3PlayableCharacter::ExpectedNativeBoneCount(
         return State == EOGLuminousV3Wardrobe::Nude ? 1123 : 1131;
     if (!AdditionalLuminousSourceFolder(CanonicalLuminousVersionId).IsEmpty())
     {
-        // These source-authentic rigs are form-specific, not wardrobe-
-        // specific: each CLOTHED/UNDERWEAR/NUDE export retains the same form
-        // skeleton. Keep the measured contract tied to VersionId; the
-        // editable array remains a compatibility fallback for staged future
-        // source packages that do not yet have a canonical count.
-        if (CanonicalLuminousVersionId ==
-            TEXT("character:luminous_valentine.version_awakened_v4")) return 1131;
-        if (CanonicalLuminousVersionId ==
-            TEXT("character:luminous_valentine.version_berserker_v4")) return 886;
-        if (CanonicalLuminousVersionId ==
-            TEXT("character:luminous_valentine.version_grand_v4")) return 1123;
+        // Each wardrobe retains its own measured source contract. An
+        // unavailable wardrobe remains zero and cannot borrow another rig.
         const int32 Index = static_cast<int32>(State);
         return AdditionalVersionNativeSkeletonBones.IsValidIndex(Index)
             ? AdditionalVersionNativeSkeletonBones[Index] : 0;
