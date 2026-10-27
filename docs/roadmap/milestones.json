@@ -1,0 +1,347 @@
+{
+  "schema": 1,
+  "issued_at": "2026-10-27",
+  "title": "NoWorld: False Horizon — Live Playability Roadmap",
+  "repo": "Azrazieliz/Offline-Game",
+  "source_branch": "production/gate12-full-continuation-20261023",
+  "policy": {
+    "authority": "User is sole phone gameplay acceptance authority; gates can report implementation/build evidence and request phone test, never self-accept on user's behalf.",
+    "completed": "A milestone is complete only if it integrates the real system/subsystem in the game, has real source/commit/build proof, and user confirms phone gameplay when applicable.",
+    "counting": "No tasks smaller than an integrated system or subsystem; source-only files/tests and packaging receipts never imply completion.",
+    "platform": "Phone-first, GitHub-first. PC only for actual Unreal, Koikatsu, Blender, Gaea, compilation or required testing.",
+    "gates": "Gate10 dismissed. Gate12 alone implements premium native UI from accepted nine-scope references and gacha-quality benchmarks. Gate09 dismissed; Gate11 retired.",
+    "canon": "Base + Alter/Awakened/Berserker + exceptional Grand Convergence; no fifth ordinary lineage."
+  },
+  "columns": [
+    "P0 First phone play",
+    "P1 Core game and World",
+    "P2 Content, integration and polish",
+    "P3 Release and owner acceptance"
+  ],
+  "milestones": [
+    {
+      "id": "M01",
+      "title": "Offline mobile startup and free World entry",
+      "area": "Foundation",
+      "phase": "P0",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Native Android app launches offline, provides existing opening/Ruler/World flow without compulsory opening combat; real World entry works on the owner's phone."
+    },
+    {
+      "id": "M02",
+      "title": "Playable character movement, camera and touch traversal",
+      "area": "Gameplay",
+      "phase": "P0",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Approved real character is controllable using phone touch, camera, facing, ground movement, jump, swim and flight when available; anatomy-specific motion is applied in the real World."
+    },
+    {
+      "id": "M03",
+      "title": "Rendered real World battle and autonomous opponent turns",
+      "area": "Gameplay",
+      "phase": "P0",
+      "owner": "12+04+08",
+      "baseline": "partial",
+      "acceptance": "Real player and opponent rigs visibly alternate decisions/actions, change genuine HP/status, react and resolve win/loss within the actual World, not a test runner."
+    },
+    {
+      "id": "M04",
+      "title": "Five-form original Luminous rigs, wardrobes and transformations",
+      "area": "Characters",
+      "phase": "P0",
+      "owner": "01-3D+12",
+      "baseline": "partial",
+      "acceptance": "Base, Alter, Awakened, Berserker and Grand Convergence use source-faithful real playable models, original wardrobes, facial morphs and transformations on the phone; no fifth ordinary lineage."
+    },
+    {
+      "id": "M05",
+      "title": "Shared authentic animation and expression runtime",
+      "area": "Characters",
+      "phase": "P0",
+      "owner": "12+01-3D",
+      "baseline": "partial",
+      "acceptance": "Native source-derived animations actually drive real gameplay traversal, combat, facial expression, anatomy/wardrobe and state transitions via a shared semantic rig resolver."
+    },
+    {
+      "id": "M06",
+      "title": "Exact approved five-form v4 combat kits",
+      "area": "Combat",
+      "phase": "P0",
+      "owner": "04+12",
+      "baseline": "source",
+      "acceptance": "All 45 approved core active/passive skills, nine Ultimate branches and five Fantasms apply actual v4 effects using existing two executors; all-field AoE and true costs, QTE, statuses work."
+    },
+    {
+      "id": "M07",
+      "title": "Weapons, projectiles, physical hits and combat VFX",
+      "area": "Combat",
+      "phase": "P0",
+      "owner": "12+04",
+      "baseline": "partial",
+      "acceptance": "Native weapon/magic families, collisions, hit contact, reactions, ability cues, Fantasm presentation and combat effects visibly match source-authentic character actions."
+    },
+    {
+      "id": "M08",
+      "title": "Character identity, Versions and individual Manifestations",
+      "area": "Characters",
+      "phase": "P0",
+      "owner": "07+12",
+      "baseline": "partial",
+      "acceptance": "Canonical Identity, four conventional Version kits plus exceptional Grand, distinct independently owned Manifestation instances, duplicates and roster selection work without character chips."
+    },
+    {
+      "id": "M09",
+      "title": "Premium native in-World interface and combat HUD",
+      "area": "UI",
+      "phase": "P0",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Gate12 integrates polished gacha-grade Unreal native UI based on accepted nine-scope references: World/Ruler navigation, action selection, HP/status, targeting, battle results, authentic character visuals."
+    },
+    {
+      "id": "M10",
+      "title": "Persistent offline profile and local save/load",
+      "area": "Foundation",
+      "phase": "P0",
+      "owner": "12+07",
+      "baseline": "partial",
+      "acceptance": "World, roster, transformations, progression, wallet, possessions and decisions persist across real app exits/restarts using safe canonical SQLite identities and migrations."
+    },
+    {
+      "id": "M11",
+      "title": "First World terrain, deterministic streaming and navigation",
+      "area": "World",
+      "phase": "P1",
+      "owner": "02+12",
+      "baseline": "partial",
+      "acceptance": "The real coherent 100×100 km first World has functioning Landscape/World Partition/PCG navigation and persistent seeded streaming around the accepted source anchors."
+    },
+    {
+      "id": "M12",
+      "title": "World landmarks, geography, settlements and interiors",
+      "area": "World",
+      "phase": "P1",
+      "owner": "02+12",
+      "baseline": "partial",
+      "acceptance": "Citadel, towns, farmlands, roads, water, forest, caves, interiors and authored locations have original painterly-anime PBR quality, navigation/collision and playable interactions."
+    },
+    {
+      "id": "M13",
+      "title": "Ecology, resources, water and environmental simulation",
+      "area": "World",
+      "phase": "P1",
+      "owner": "02+12+06",
+      "baseline": "partial",
+      "acceptance": "Persistent biome ecology, gatherable resources, water/terrain effects, wildlife, time and relevant environmental variation function as integrated simulation rather than scenery only."
+    },
+    {
+      "id": "M14",
+      "title": "Enemy AI, high-rank combat and encounter balancing",
+      "area": "Combat",
+      "phase": "P1",
+      "owner": "08+04+12",
+      "baseline": "partial",
+      "acceptance": "Enemies make differentiated world/battle decisions, use authentic capabilities, varied ranks/telegraphs and relevant counterplay; no arbitrary global level scaling."
+    },
+    {
+      "id": "M15",
+      "title": "GP, domains and high-rank progression rules",
+      "area": "Combat",
+      "phase": "P1",
+      "owner": "04+07+12",
+      "baseline": "source",
+      "acceptance": "Exact approved GP strength, one strongest eligible Manifestation per identity, realm links, controlled territories, large-number safe rank math and Grand Convergence rules function in combat and save."
+    },
+    {
+      "id": "M16",
+      "title": "Rarity banners, weighted gacha, pity and atomic pulling",
+      "area": "Economy",
+      "phase": "P1",
+      "owner": "07+12",
+      "baseline": "partial",
+      "acceptance": "Actually eligible accepted character banners, rare/featured odds, 10-pull floor, pity/guarantee, tickets, earned currency, atomic idempotent pulls and distinct duplicates work offline."
+    },
+    {
+      "id": "M17",
+      "title": "Inventory, anatomical storage and equipped gear",
+      "area": "Economy",
+      "phase": "P1",
+      "owner": "07+12",
+      "baseline": "partial",
+      "acceptance": "Stack/provenance inventory, real anatomy-dependent physical capacity, functional equipment/weapon slots, appearance and item ownership operate consistently during exploration and combat."
+    },
+    {
+      "id": "M18",
+      "title": "Loot, rewards, consumables and earned currency",
+      "area": "Economy",
+      "phase": "P1",
+      "owner": "07+12+08",
+      "baseline": "partial",
+      "acceptance": "Real World encounters/resources and quests grant legitimate items/currency/rewards; food/consumables have functional consequences and change retained inventory/wallet."
+    },
+    {
+      "id": "M19",
+      "title": "Crafting, invention, enhancement, durability and repairs",
+      "area": "Economy",
+      "phase": "P1",
+      "owner": "07+12",
+      "baseline": "source",
+      "acceptance": "Approved original recipes/materials/invention, crafting, equipment improvement, wear/durability and repair consume/produce actual persistent items with gameplay effects."
+    },
+    {
+      "id": "M20",
+      "title": "Settlement trade, markets and regional economics",
+      "area": "Economy",
+      "phase": "P1",
+      "owner": "07+06+12",
+      "baseline": "source",
+      "acceptance": "Authored merchant/market inventories, pricing, regional resources and causal settlement trade actually affect currency, NPCs and persistent World supply."
+    },
+    {
+      "id": "M21",
+      "title": "Character growth, affinity, proficiency and statistics",
+      "area": "Characters",
+      "phase": "P1",
+      "owner": "07+04+12",
+      "baseline": "partial",
+      "acceptance": "Rank/experience, rarity, skills, proficiency, affinity, derived stats and equipment changes affect real gameplay with consistent persistence and no fabricated ownership."
+    },
+    {
+      "id": "M22",
+      "title": "Premium roster, character details and wardrobe UI",
+      "area": "UI",
+      "phase": "P1",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Native user-quality roster, character Version details, full 2D/3D presentation, wardrobe, progression and equipment screens integrate real data and preserve accepted visual direction."
+    },
+    {
+      "id": "M23",
+      "title": "Premium home, gacha, records and territory UI",
+      "area": "UI",
+      "phase": "P1",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Gate12 builds refined responsive premium native Home, Records, Gacha, Territory, opening/icons/rarities and coherent mobile navigation based on accepted art plus relevant gacha-quality conventions."
+    },
+    {
+      "id": "M24",
+      "title": "Native NPC life, relationships and faction systems",
+      "area": "World",
+      "phase": "P2",
+      "owner": "06+12",
+      "baseline": "source",
+      "acceptance": "Physical NPCs with schedules, ecology, dialogue context, relationships, factions, deaths/absence and causal persistent population/world reactions act within the real World."
+    },
+    {
+      "id": "M25",
+      "title": "Branching quests, story events and consequences",
+      "area": "Narrative",
+      "phase": "P2",
+      "owner": "05+12",
+      "baseline": "source",
+      "acceptance": "Authentic user-approved lore and playable non-forced open-World quests/dialogue branch on choices, race/species/context and update real characters, factions, rewards and World state."
+    },
+    {
+      "id": "M26",
+      "title": "Chronicle, Codex, knowledge and narrative memory",
+      "area": "Narrative",
+      "phase": "P2",
+      "owner": "05+12",
+      "baseline": "source",
+      "acceptance": "Player knowledge, Chronicle, Codex and time-based missed-events record actual world/quest events without spoilers or simulated general autobiographical memory."
+    },
+    {
+      "id": "M27",
+      "title": "Bosses, optional encounters and dungeon progression",
+      "area": "Combat",
+      "phase": "P2",
+      "owner": "08+12",
+      "baseline": "source",
+      "acceptance": "Optional authored world encounters, real high-rank boss phases, persistent dungeons/events and meaningful victory/retreat/missed-event outcomes are playable without forced opening encounters."
+    },
+    {
+      "id": "M28",
+      "title": "Territories, Ruler powers and changing civilization",
+      "area": "World",
+      "phase": "P2",
+      "owner": "07+06+12",
+      "baseline": "source",
+      "acceptance": "Ruler mode, influence/domains, land control, governance/factions and persistent territorial consequences visibly change settlements, GP and game actions."
+    },
+    {
+      "id": "M29",
+      "title": "Synchronized source-authentic multi-participant interactions",
+      "area": "Interaction",
+      "phase": "P2",
+      "owner": "12+01-3D",
+      "baseline": "partial",
+      "acceptance": "Real compatible participant rigs and semantically approved synchronized source animations execute in-game with reliable role/clock/contact/privacy/state; architecture supports up to 13 roles where genuinely sourced."
+    },
+    {
+      "id": "M30",
+      "title": "Adaptive music, original audio and game-event SFX",
+      "area": "Audio",
+      "phase": "P2",
+      "owner": "03+12",
+      "baseline": "source",
+      "acceptance": "Original licensed/owned soundtrack and approved Japanese vocal cues when sourced, adaptive stems, ambience, authentic hit/interface/world sound events and mixes function in actual gameplay."
+    },
+    {
+      "id": "M31",
+      "title": "Character and environmental visual polish",
+      "area": "Presentation",
+      "phase": "P2",
+      "owner": "01-3D+02+12",
+      "baseline": "partial",
+      "acceptance": "Original accepted painterly-anime PBR art direction, skin/hair/cloth physics, morphological fidelity, light/VFX readability and atmosphere visibly hold in the actual mobile-rendered game."
+    },
+    {
+      "id": "M32",
+      "title": "Persistent events, migration and recovery integrity",
+      "area": "Foundation",
+      "phase": "P2",
+      "owner": "12+07",
+      "baseline": "partial",
+      "acceptance": "Offline save migration, consistent atomic transactions, recovery snapshots and safe resume protect real Manifestations, quests, World changes, items and user data after app restart/crash."
+    },
+    {
+      "id": "M33",
+      "title": "Mobile settings, touch ergonomics and accessibility",
+      "area": "UI",
+      "phase": "P2",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Functional touch sizing, scalable UI, portrait/landscape where required, graphics/audio options, language/settings, legibility and accessibility behave correctly in the native phone app."
+    },
+    {
+      "id": "M34",
+      "title": "Android packaging, performance and device-ready delivery",
+      "area": "Release",
+      "phase": "P3",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Current installable Android build packages authentic assets, uses viable memory/rendering/streaming/performance, survives lifecycle transitions and is handed to the owner for direct phone gameplay testing."
+    },
+    {
+      "id": "M35",
+      "title": "Windows standalone parity and reproducible native packaging",
+      "area": "Release",
+      "phase": "P3",
+      "owner": "12",
+      "baseline": "partial",
+      "acceptance": "Current standalone Windows release builds from production code with the full World, native UI, correct assets and save compatibility; compilation alone cannot close mobile gameplay acceptance."
+    },
+    {
+      "id": "M36",
+      "title": "Complete integrated full-game phone acceptance",
+      "area": "Release",
+      "phase": "P3",
+      "owner": "12+all",
+      "baseline": "unverified",
+      "acceptance": "Owner plays current Android release through open World, all forms, combat, quests, NPCs, economy, gacha, interactions, UI, persistence, visuals and audio and explicitly confirms the complete approved playable game."
+    }
+  ]
+}
