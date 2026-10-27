@@ -108,9 +108,12 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
     if (!A || !B) return false;
     const FReferenceSkeleton& Left = A->GetRefSkeleton();
     const FReferenceSkeleton& Right = B->GetRefSkeleton();
+    // The source-authentic additional forms use their own exported rigs:
+    // Awakened 1131, Berserker 886, and Grand 1123 bones after the FBX root
+    // is admitted. Never compare them through Base/Alter's 975-bone proxy.
     if (Left.GetNum() != Right.GetNum() ||
-        (Left.GetNum() != 975 && Left.GetNum() != 1131 &&
-         Left.GetNum() != 1123)) return false;
+        (Left.GetNum() != 975 && Left.GetNum() != 886 &&
+         Left.GetNum() != 1131 && Left.GetNum() != 1123)) return false;
     for (int32 Index = 0; Index < Left.GetNum(); ++Index)
     {
         if (Left.GetBoneName(Index) != Right.GetBoneName(Index) ||
@@ -170,6 +173,8 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
     // grant a Manifestation or declare this asset production-accepted.
     CanonicalLuminousIdentityId = TEXT("character:luminous_valentine.identity");
     CanonicalLuminousVersionId = TEXT("character:luminous_valentine.version_ln_base");
+    // Additional form contracts are populated from each admitted wardrobe's
+    // source package. Export counts never imply that another wardrobe exists.
     MotionCapabilities = {TEXT("grounded"), TEXT("swimming"), TEXT("flying"),
         TEXT("combat"), TEXT("emote"), TEXT("adult_interaction")};
 }
@@ -195,6 +200,8 @@ int32 AOGLuminousV3PlayableCharacter::ExpectedNativeBoneCount(
         return State == EOGLuminousV3Wardrobe::Nude ? 1123 : 1131;
     if (!AdditionalLuminousSourceFolder(CanonicalLuminousVersionId).IsEmpty())
     {
+        // Each wardrobe retains its own measured source contract. An
+        // unavailable wardrobe remains zero and cannot borrow another rig.
         const int32 Index = static_cast<int32>(State);
         return AdditionalVersionNativeSkeletonBones.IsValidIndex(Index)
             ? AdditionalVersionNativeSkeletonBones[Index] : 0;
@@ -953,7 +960,7 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
 
     // Existing genuine per-wardrobe clips remain functional as fallback.
     // These are genuine installed Koikatsu-compatible source animations
-    // imported onto the exact 975-bone CLOTHED Luminous skeleton.
+    // imported onto the exact skeleton of the currently rendered form.
     // Wardrobe-skeleton mismatch never falls through to another appearance.
     // Flight and swimming do not borrow Walk/Run ground gait.
     if (Phase == EOGLuminousV3MotionPhase::Flying ||
@@ -978,7 +985,7 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     case EOGLuminousV3MotionPhase::Jump: Clips = &NativeJumpByWardrobe; break;
     default: return nullptr;
     }
-    // Animation must follow the ACTUALLY RENDERED 975-bone skeleton, which
+    // Animation must follow the ACTUALLY RENDERED form skeleton, which
     // can differ from the real clothing state under Privacy/SFW masking.
     const int32 State = static_cast<int32>(EffectiveAppearance.EffectiveRenderedWardrobe);
     if (!Clips || Clips->Num() != 3 || !Clips->IsValidIndex(State)) return nullptr;
@@ -991,8 +998,8 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
         return nullptr;
     UAnimSequence* Sequence = Cast<UAnimSequence>((*Clips)[State].TryLoad());
     if (!Sequence || !Sequence->GetSkeleton()) return nullptr;
-    // Actual source-authored Alter states own separate 1131/1123 native rigs;
-    // runtime will only animate when a matching original Skeleton is present.
+    // Every source-authored form state owns its matching native skeleton;
+    // runtime will only animate when that original Skeleton is present.
     return Sequence;
 }
 
