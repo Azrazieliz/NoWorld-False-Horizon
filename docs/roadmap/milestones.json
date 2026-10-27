@@ -26,7 +26,8 @@
       "phase": "P0",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Native Android app launches offline, provides existing opening/Ruler/World flow without compulsory opening combat; real World entry works on the owner's phone."
+      "acceptance": "Native Android app launches offline, provides existing opening/Ruler/World flow without compulsory opening combat; real World entry works on the owner's phone.",
+      "issue": 27
     },
     {
       "id": "M02",
@@ -35,7 +36,8 @@
       "phase": "P0",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Approved real character is controllable using phone touch, camera, facing, ground movement, jump, swim and flight when available; anatomy-specific motion is applied in the real World."
+      "acceptance": "Approved real character is controllable using phone touch, camera, facing, ground movement, jump, swim and flight when available; anatomy-specific motion is applied in the real World.",
+      "issue": 28
     },
     {
       "id": "M03",
@@ -44,7 +46,8 @@
       "phase": "P0",
       "owner": "12+04+08",
       "baseline": "partial",
-      "acceptance": "Real player and opponent rigs visibly alternate decisions/actions, change genuine HP/status, react and resolve win/loss within the actual World, not a test runner."
+      "acceptance": "Real player and opponent rigs visibly alternate decisions/actions, change genuine HP/status, react and resolve win/loss within the actual World, not a test runner.",
+      "issue": 30
     },
     {
       "id": "M04",
@@ -53,7 +56,8 @@
       "phase": "P0",
       "owner": "01-3D+12",
       "baseline": "partial",
-      "acceptance": "Base, Alter, Awakened, Berserker and Grand Convergence use source-faithful real playable models, original wardrobes, facial morphs and transformations on the phone; no fifth ordinary lineage."
+      "acceptance": "Base, Alter, Awakened, Berserker and Grand Convergence use source-faithful real playable models, original wardrobes, facial morphs and transformations on the phone; no fifth ordinary lineage.",
+      "issue": 31
     },
     {
       "id": "M05",
@@ -62,7 +66,8 @@
       "phase": "P0",
       "owner": "12+01-3D",
       "baseline": "partial",
-      "acceptance": "Native source-derived animations actually drive real gameplay traversal, combat, facial expression, anatomy/wardrobe and state transitions via a shared semantic rig resolver."
+      "acceptance": "Native source-derived animations actually drive real gameplay traversal, combat, facial expression, anatomy/wardrobe and state transitions via a shared semantic rig resolver.",
+      "issue": 32
     },
     {
       "id": "M06",
@@ -71,7 +76,8 @@
       "phase": "P0",
       "owner": "04+12",
       "baseline": "source",
-      "acceptance": "All 45 approved core active/passive skills, nine Ultimate branches and five Fantasms apply actual v4 effects using existing two executors; all-field AoE and true costs, QTE, statuses work."
+      "acceptance": "All 45 approved core active/passive skills, nine Ultimate branches and five Fantasms apply actual v4 effects using existing two executors; all-field AoE and true costs, QTE, statuses work.",
+      "issue": 33
     },
     {
       "id": "M07",
@@ -80,7 +86,8 @@
       "phase": "P0",
       "owner": "12+04",
       "baseline": "partial",
-      "acceptance": "Native weapon/magic families, collisions, hit contact, reactions, ability cues, Fantasm presentation and combat effects visibly match source-authentic character actions."
+      "acceptance": "Native weapon/magic families, collisions, hit contact, reactions, ability cues, Fantasm presentation and combat effects visibly match source-authentic character actions.",
+      "issue": 34
     },
     {
       "id": "M08",
@@ -89,7 +96,8 @@
       "phase": "P0",
       "owner": "07+12",
       "baseline": "partial",
-      "acceptance": "Canonical Identity, four conventional Version kits plus exceptional Grand, distinct independently owned Manifestation instances, duplicates and roster selection work without character chips."
+      "acceptance": "Canonical Identity, four conventional Version kits plus exceptional Grand, distinct independently owned Manifestation instances, duplicates and roster selection work without character chips.",
+      "issue": 35
     },
     {
       "id": "M09",
@@ -98,7 +106,8 @@
       "phase": "P0",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Gate12 integrates polished gacha-grade Unreal native UI based on accepted nine-scope references: World/Ruler navigation, action selection, HP/status, targeting, battle results, authentic character visuals."
+      "acceptance": "Gate12 integrates polished gacha-grade Unreal native UI based on accepted nine-scope references: World/Ruler navigation, action selection, HP/status, targeting, battle results, authentic character visuals.",
+      "issue": 36
     },
     {
       "id": "M10",
@@ -107,7 +116,8 @@
       "phase": "P0",
       "owner": "12+07",
       "baseline": "partial",
-      "acceptance": "World, roster, transformations, progression, wallet, possessions and decisions persist across real app exits/restarts using safe canonical SQLite identities and migrations."
+      "acceptance": "World, roster, transformations, progression, wallet, possessions and decisions persist across real app exits/restarts using safe canonical SQLite identities and migrations.",
+      "issue": 37
     },
     {
       "id": "M11",
@@ -116,7 +126,8 @@
       "phase": "P1",
       "owner": "02+12",
       "baseline": "partial",
-      "acceptance": "The real coherent 100×100 km first World has functioning Landscape/World Partition/PCG navigation and persistent seeded streaming around the accepted source anchors."
+      "acceptance": "The real coherent 100×100 km first World has functioning Landscape/World Partition/PCG navigation and persistent seeded streaming around the accepted source anchors.",
+      "issue": 38
     },
     {
       "id": "M12",
@@ -125,7 +136,8 @@
       "phase": "P1",
       "owner": "02+12",
       "baseline": "partial",
-      "acceptance": "Citadel, towns, farmlands, roads, water, forest, caves, interiors and authored locations have original painterly-anime PBR quality, navigation/collision and playable interactions."
+      "acceptance": "Citadel, towns, farmlands, roads, water, forest, caves, interiors and authored locations have original painterly-anime PBR quality, navigation/collision and playable interactions.",
+      "issue": 39
     },
     {
       "id": "M13",
@@ -134,7 +146,8 @@
       "phase": "P1",
       "owner": "02+12+06",
       "baseline": "partial",
-      "acceptance": "Persistent biome ecology, gatherable resources, water/terrain effects, wildlife, time and relevant environmental variation function as integrated simulation rather than scenery only."
+      "acceptance": "Persistent biome ecology, gatherable resources, water/terrain effects, wildlife, time and relevant environmental variation function as integrated simulation rather than scenery only.",
+      "issue": 40
     },
     {
       "id": "M14",
@@ -143,7 +156,8 @@
       "phase": "P1",
       "owner": "08+04+12",
       "baseline": "partial",
-      "acceptance": "Enemies make differentiated world/battle decisions, use authentic capabilities, varied ranks/telegraphs and relevant counterplay; no arbitrary global level scaling."
+      "acceptance": "Enemies make differentiated world/battle decisions, use authentic capabilities, varied ranks/telegraphs and relevant counterplay; no arbitrary global level scaling.",
+      "issue": 41
     },
     {
       "id": "M15",
@@ -152,7 +166,8 @@
       "phase": "P1",
       "owner": "04+07+12",
       "baseline": "source",
-      "acceptance": "Exact approved GP strength, one strongest eligible Manifestation per identity, realm links, controlled territories, large-number safe rank math and Grand Convergence rules function in combat and save."
+      "acceptance": "Exact approved GP strength, one strongest eligible Manifestation per identity, realm links, controlled territories, large-number safe rank math and Grand Convergence rules function in combat and save.",
+      "issue": 42
     },
     {
       "id": "M16",
@@ -161,7 +176,8 @@
       "phase": "P1",
       "owner": "07+12",
       "baseline": "partial",
-      "acceptance": "Actually eligible accepted character banners, rare/featured odds, 10-pull floor, pity/guarantee, tickets, earned currency, atomic idempotent pulls and distinct duplicates work offline."
+      "acceptance": "Actually eligible accepted character banners, rare/featured odds, 10-pull floor, pity/guarantee, tickets, earned currency, atomic idempotent pulls and distinct duplicates work offline.",
+      "issue": 43
     },
     {
       "id": "M17",
@@ -170,7 +186,8 @@
       "phase": "P1",
       "owner": "07+12",
       "baseline": "partial",
-      "acceptance": "Stack/provenance inventory, real anatomy-dependent physical capacity, functional equipment/weapon slots, appearance and item ownership operate consistently during exploration and combat."
+      "acceptance": "Stack/provenance inventory, real anatomy-dependent physical capacity, functional equipment/weapon slots, appearance and item ownership operate consistently during exploration and combat.",
+      "issue": 44
     },
     {
       "id": "M18",
@@ -179,7 +196,8 @@
       "phase": "P1",
       "owner": "07+12+08",
       "baseline": "partial",
-      "acceptance": "Real World encounters/resources and quests grant legitimate items/currency/rewards; food/consumables have functional consequences and change retained inventory/wallet."
+      "acceptance": "Real World encounters/resources and quests grant legitimate items/currency/rewards; food/consumables have functional consequences and change retained inventory/wallet.",
+      "issue": 45
     },
     {
       "id": "M19",
@@ -188,7 +206,8 @@
       "phase": "P1",
       "owner": "07+12",
       "baseline": "source",
-      "acceptance": "Approved original recipes/materials/invention, crafting, equipment improvement, wear/durability and repair consume/produce actual persistent items with gameplay effects."
+      "acceptance": "Approved original recipes/materials/invention, crafting, equipment improvement, wear/durability and repair consume/produce actual persistent items with gameplay effects.",
+      "issue": 46
     },
     {
       "id": "M20",
@@ -197,7 +216,8 @@
       "phase": "P1",
       "owner": "07+06+12",
       "baseline": "source",
-      "acceptance": "Authored merchant/market inventories, pricing, regional resources and causal settlement trade actually affect currency, NPCs and persistent World supply."
+      "acceptance": "Authored merchant/market inventories, pricing, regional resources and causal settlement trade actually affect currency, NPCs and persistent World supply.",
+      "issue": 47
     },
     {
       "id": "M21",
@@ -206,7 +226,8 @@
       "phase": "P1",
       "owner": "07+04+12",
       "baseline": "partial",
-      "acceptance": "Rank/experience, rarity, skills, proficiency, affinity, derived stats and equipment changes affect real gameplay with consistent persistence and no fabricated ownership."
+      "acceptance": "Rank/experience, rarity, skills, proficiency, affinity, derived stats and equipment changes affect real gameplay with consistent persistence and no fabricated ownership.",
+      "issue": 48
     },
     {
       "id": "M22",
@@ -215,7 +236,8 @@
       "phase": "P1",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Native user-quality roster, character Version details, full 2D/3D presentation, wardrobe, progression and equipment screens integrate real data and preserve accepted visual direction."
+      "acceptance": "Native user-quality roster, character Version details, full 2D/3D presentation, wardrobe, progression and equipment screens integrate real data and preserve accepted visual direction.",
+      "issue": 49
     },
     {
       "id": "M23",
@@ -224,7 +246,8 @@
       "phase": "P1",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Gate12 builds refined responsive premium native Home, Records, Gacha, Territory, opening/icons/rarities and coherent mobile navigation based on accepted art plus relevant gacha-quality conventions."
+      "acceptance": "Gate12 builds refined responsive premium native Home, Records, Gacha, Territory, opening/icons/rarities and coherent mobile navigation based on accepted art plus relevant gacha-quality conventions.",
+      "issue": 50
     },
     {
       "id": "M24",
@@ -233,7 +256,8 @@
       "phase": "P2",
       "owner": "06+12",
       "baseline": "source",
-      "acceptance": "Physical NPCs with schedules, ecology, dialogue context, relationships, factions, deaths/absence and causal persistent population/world reactions act within the real World."
+      "acceptance": "Physical NPCs with schedules, ecology, dialogue context, relationships, factions, deaths/absence and causal persistent population/world reactions act within the real World.",
+      "issue": 51
     },
     {
       "id": "M25",
@@ -242,7 +266,8 @@
       "phase": "P2",
       "owner": "05+12",
       "baseline": "source",
-      "acceptance": "Authentic user-approved lore and playable non-forced open-World quests/dialogue branch on choices, race/species/context and update real characters, factions, rewards and World state."
+      "acceptance": "Authentic user-approved lore and playable non-forced open-World quests/dialogue branch on choices, race/species/context and update real characters, factions, rewards and World state.",
+      "issue": 52
     },
     {
       "id": "M26",
@@ -251,7 +276,8 @@
       "phase": "P2",
       "owner": "05+12",
       "baseline": "source",
-      "acceptance": "Player knowledge, Chronicle, Codex and time-based missed-events record actual world/quest events without spoilers or simulated general autobiographical memory."
+      "acceptance": "Player knowledge, Chronicle, Codex and time-based missed-events record actual world/quest events without spoilers or simulated general autobiographical memory.",
+      "issue": 53
     },
     {
       "id": "M27",
@@ -260,7 +286,8 @@
       "phase": "P2",
       "owner": "08+12",
       "baseline": "source",
-      "acceptance": "Optional authored world encounters, real high-rank boss phases, persistent dungeons/events and meaningful victory/retreat/missed-event outcomes are playable without forced opening encounters."
+      "acceptance": "Optional authored world encounters, real high-rank boss phases, persistent dungeons/events and meaningful victory/retreat/missed-event outcomes are playable without forced opening encounters.",
+      "issue": 54
     },
     {
       "id": "M28",
@@ -269,7 +296,8 @@
       "phase": "P2",
       "owner": "07+06+12",
       "baseline": "source",
-      "acceptance": "Ruler mode, influence/domains, land control, governance/factions and persistent territorial consequences visibly change settlements, GP and game actions."
+      "acceptance": "Ruler mode, influence/domains, land control, governance/factions and persistent territorial consequences visibly change settlements, GP and game actions.",
+      "issue": 55
     },
     {
       "id": "M29",
@@ -278,7 +306,8 @@
       "phase": "P2",
       "owner": "12+01-3D",
       "baseline": "partial",
-      "acceptance": "Real compatible participant rigs and semantically approved synchronized source animations execute in-game with reliable role/clock/contact/privacy/state; architecture supports up to 13 roles where genuinely sourced."
+      "acceptance": "Real compatible participant rigs and semantically approved synchronized source animations execute in-game with reliable role/clock/contact/privacy/state; architecture supports up to 13 roles where genuinely sourced.",
+      "issue": 56
     },
     {
       "id": "M30",
@@ -287,7 +316,8 @@
       "phase": "P2",
       "owner": "03+12",
       "baseline": "source",
-      "acceptance": "Original licensed/owned soundtrack and approved Japanese vocal cues when sourced, adaptive stems, ambience, authentic hit/interface/world sound events and mixes function in actual gameplay."
+      "acceptance": "Original licensed/owned soundtrack and approved Japanese vocal cues when sourced, adaptive stems, ambience, authentic hit/interface/world sound events and mixes function in actual gameplay.",
+      "issue": 57
     },
     {
       "id": "M31",
@@ -296,7 +326,8 @@
       "phase": "P2",
       "owner": "01-3D+02+12",
       "baseline": "partial",
-      "acceptance": "Original accepted painterly-anime PBR art direction, skin/hair/cloth physics, morphological fidelity, light/VFX readability and atmosphere visibly hold in the actual mobile-rendered game."
+      "acceptance": "Original accepted painterly-anime PBR art direction, skin/hair/cloth physics, morphological fidelity, light/VFX readability and atmosphere visibly hold in the actual mobile-rendered game.",
+      "issue": 58
     },
     {
       "id": "M32",
@@ -305,7 +336,8 @@
       "phase": "P2",
       "owner": "12+07",
       "baseline": "partial",
-      "acceptance": "Offline save migration, consistent atomic transactions, recovery snapshots and safe resume protect real Manifestations, quests, World changes, items and user data after app restart/crash."
+      "acceptance": "Offline save migration, consistent atomic transactions, recovery snapshots and safe resume protect real Manifestations, quests, World changes, items and user data after app restart/crash.",
+      "issue": 59
     },
     {
       "id": "M33",
@@ -314,7 +346,8 @@
       "phase": "P2",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Functional touch sizing, scalable UI, portrait/landscape where required, graphics/audio options, language/settings, legibility and accessibility behave correctly in the native phone app."
+      "acceptance": "Functional touch sizing, scalable UI, portrait/landscape where required, graphics/audio options, language/settings, legibility and accessibility behave correctly in the native phone app.",
+      "issue": 60
     },
     {
       "id": "M34",
@@ -323,7 +356,8 @@
       "phase": "P3",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Current installable Android build packages authentic assets, uses viable memory/rendering/streaming/performance, survives lifecycle transitions and is handed to the owner for direct phone gameplay testing."
+      "acceptance": "Current installable Android build packages authentic assets, uses viable memory/rendering/streaming/performance, survives lifecycle transitions and is handed to the owner for direct phone gameplay testing.",
+      "issue": 61
     },
     {
       "id": "M35",
@@ -332,7 +366,8 @@
       "phase": "P3",
       "owner": "12",
       "baseline": "partial",
-      "acceptance": "Current standalone Windows release builds from production code with the full World, native UI, correct assets and save compatibility; compilation alone cannot close mobile gameplay acceptance."
+      "acceptance": "Current standalone Windows release builds from production code with the full World, native UI, correct assets and save compatibility; compilation alone cannot close mobile gameplay acceptance.",
+      "issue": 62
     },
     {
       "id": "M36",
@@ -341,7 +376,8 @@
       "phase": "P3",
       "owner": "12+all",
       "baseline": "unverified",
-      "acceptance": "Owner plays current Android release through open World, all forms, combat, quests, NPCs, economy, gacha, interactions, UI, persistence, visuals and audio and explicitly confirms the complete approved playable game."
+      "acceptance": "Owner plays current Android release through open World, all forms, combat, quests, NPCs, economy, gacha, interactions, UI, persistence, visuals and audio and explicitly confirms the complete approved playable game.",
+      "issue": 63
     }
   ]
 }
