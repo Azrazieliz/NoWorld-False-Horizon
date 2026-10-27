@@ -10284,6 +10284,7 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
             if (Hit == TEXT("OG.Battle.A1")) Slot = 0;
             else if (Hit == TEXT("OG.Battle.A2")) Slot = 1;
             else if (Hit == TEXT("OG.Battle.A3")) Slot = 2;
+            else if (Hit == TEXT("OG.Battle.A4")) Slot = 3;
             else if (Hit == TEXT("OG.Battle.Ultimate.Day")) { Slot=-1;Branch=TEXT("day"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.Night")) { Slot=-1;Branch=TEXT("night"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.Ruin")) { Slot=-1;Branch=TEXT("ruin"); }

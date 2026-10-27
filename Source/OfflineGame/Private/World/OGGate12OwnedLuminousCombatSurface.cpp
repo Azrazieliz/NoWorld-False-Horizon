@@ -325,12 +325,16 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
 
     // Buttons map to the real approved ActiveSkill slots, not diagnostic
     // Basic/Skill1/Skill2 placeholders. Ultimate selection is always explicit.
-    const float ButtonW = FMath::Min(140.f*S,(W-2.f*Edge)/5.5f);
+    const int32 ActiveCount = Owned->SkillSet.ActiveSkills.Num();
+    const int32 ButtonCount = ActiveCount + 2; // Authored actives + two existing Ultimate choices.
+    const float ButtonGap = 8.f*S;
+    const float ButtonW = FMath::Min(140.f*S,
+        (W-2.f*Edge-(ButtonCount-1)*ButtonGap)/FMath::Max(1,ButtonCount));
     const float ButtonH = 54.f*S;
     const float Bottom = H-ButtonH-Edge;
     DrawGameText(TEXT("AoE hits ALL eligible field allies/enemies automatically. Tap to set primary."),
         Edge+6.f*S,Bottom-58.f*S,14.f*S,Accent,W*.85f);
-    for (int32 Slot=0; Slot<3; ++Slot)
+    for (int32 Slot=0; Slot<ActiveCount; ++Slot)
     {
         const FString Label = FString::Printf(TEXT("ACTIVE %d"),Slot+1);
         DrawGameButton(Label,
@@ -346,10 +350,10 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const FName RightId = bBase ? TEXT("OG.Battle.Ultimate.Night") :
         TEXT("OG.Battle.Ultimate.Harvest");
     DrawGameButton(bBase ? TEXT("DAY") : TEXT("RUIN"),LeftId,
-        Edge+3*(ButtonW+8.f*S),Bottom,ButtonW,ButtonH,
+        Edge+ActiveCount*(ButtonW+ButtonGap),Bottom,ButtonW,ButtonH,
         false,bOwnTurn && Owned->SkillSet.UltimateSkill.IsValid(),158);
     DrawGameButton(bBase ? TEXT("NIGHT") : TEXT("HOLLOW CROWN"),RightId,
-        Edge+4*(ButtonW+8.f*S),Bottom,ButtonW,ButtonH,
+        Edge+(ActiveCount+1)*(ButtonW+ButtonGap),Bottom,ButtonW,ButtonH,
         false,bOwnTurn && Owned->SkillSet.UltimateSkill.IsValid(),158);
 
     // Error messages are actual canonical preflight errors, not invented
