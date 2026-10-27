@@ -244,10 +244,12 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         // Ultimate branch, not one generic Luminous pose for every Version.
         // Content artists register exact-rig derivatives globally under the
         // same action. Missing approved combat clips never trigger a fake pose.
-        const FString MotionKey = Slot == -1
-            ? FString::Printf(TEXT("Combat.Ultimate.%s.%s"),
-                *Skill.ToString(),*Branch.ToString().ToLower())
-            : FString::Printf(TEXT("Combat.Skill.%s"),*Skill.ToString());
+        const FString MotionKey = Slot != -1
+            ? FString::Printf(TEXT("Combat.Skill.%s"),*Skill.ToString())
+            : Branch.IsNone()
+                ? FString::Printf(TEXT("Combat.Ultimate.%s"),*Skill.ToString())
+                : FString::Printf(TEXT("Combat.Ultimate.%s.%s"),
+                    *Skill.ToString(),*Branch.ToString().ToLower());
         const FName Semantic(*MotionKey);
         if (!ActiveLuminous->PlaySharedGameplayAction(Semantic))
             UE_LOG(LogTemp, Warning,
