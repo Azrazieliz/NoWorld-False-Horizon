@@ -5566,7 +5566,6 @@ void AOGWorldPresentationGameMode::StartPlay()
             // Configure the carrier for SOURCE mode even if data is missing:
             // otherwise its old generator would render legacy random fixtures
             // and falsely appear to be the approved First World.
-
             AOGStartingRegionGenerator* Region = nullptr;
             for (TActorIterator<AOGStartingRegionGenerator> It(World); It; ++It)
             {
@@ -5587,8 +5586,9 @@ void AOGWorldPresentationGameMode::StartPlay()
             {
                 Region->bGate02R1RegionSource = true;
                 Region->Tags.AddUnique(FName(TEXT("Gate02R1Source")));
-                UE_LOG(LogOfflineGame, Log,
-                    TEXT("Native startup bound original authored Gate02 R1 source to the playable World."));
+                if (bAllOriginalSourcesPresent)
+                    UE_LOG(LogOfflineGame, Log,
+                        TEXT("Native startup bound original authored Gate02 R1 source to the playable World."));
             }
             else
             {
