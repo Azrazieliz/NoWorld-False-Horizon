@@ -1,6 +1,7 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
+#include "Combat/OGCombatActionJournal.h"
 #include "Combat/OGApprovedLuminousSourceKit.h"
 #include "Combat/OGLuminousAlterV1Projection.h"
 
@@ -865,6 +866,7 @@ bool UOGGameCoreSubsystem::StartApprovedLuminousEncounter(
          *Next,*WorldStore,RulerId,FOGLuminousCanonicalSources(),OutError))
         return false;
     OwnedLuminousTurnBattle=MoveTemp(Next);
+    ActiveCombatRulerId=RulerId;
     return true;
 }
 
@@ -972,6 +974,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         *Candidate,RulerId,MoveTemp(TrustedProviders),OutError))
         return false;
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
+    ActiveCombatRulerId=RulerId;
     return true;
 }
 
@@ -985,10 +988,26 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
         OutError=TEXT("No active GameCore-owned Luminous encounter.");
         return false;
     }
-    if(!OwnedLuminousTurnBattle->ApplyResolvedAction(Action,OutError))
+    const FOGTurnBattleState Before = OwnedLuminousTurnBattle->GetState();
+    FOGTurnBattle Candidate = *OwnedLuminousTurnBattle;
+    if(!Candidate.ApplyResolvedAction(Action,OutError))
         return false;
+
+    const int64 WorldTick = CanonicalClock
+        ? CanonicalClock->GetCanonicalWorldTick()
+        : -1;
+    FOGWorldEvent ActionEvent;
+    if(!FOGCombatActionJournal::BuildResolvedActionEvent(
+         Before, Candidate.GetState(), Action, ActiveCombatRulerId,
+         WorldTick, ActionEvent, OutError))
+        return false;
+    if(!WorldStore->AppendWorldEvent(ActionEvent,OutError))
+        return false;
+
+    *OwnedLuminousTurnBattle=MoveTemp(Candidate);
     // This is a non-authoritative visual notification, emitted ONLY after
-    // the existing source-approved battle executor accepted the action.
+    // the existing source-approved battle executor and canonical event ledger
+    // accepted the action.
     OnLuminousCombatActionResolved.Broadcast(Action.SourceUnitId,Action.SkillId);
     return true;
 }

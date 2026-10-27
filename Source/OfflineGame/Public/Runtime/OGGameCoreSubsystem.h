@@ -174,6 +174,7 @@ private:
     TUniquePtr<IOGWorldStore> WorldStore;
     // Owned solely by canonical GameCore; torn down before replacing Store.
     TUniquePtr<FOGTurnBattle> OwnedLuminousTurnBattle;
+    FOGEntityId ActiveCombatRulerId;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;
