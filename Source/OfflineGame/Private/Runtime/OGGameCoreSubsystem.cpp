@@ -1,4 +1,5 @@
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Progression/OGCharacterDevelopmentService.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
 #include "Combat/OGApprovedLuminousSourceKit.h"
@@ -859,7 +860,10 @@ bool UOGGameCoreSubsystem::StartApprovedLuminousEncounter(
     // Existing battle executor owns the damage, healing, succession,
     // cooldowns and ultimate mechanics; no duplicate diagnostic executor.
     TUniquePtr<FOGTurnBattle> Next=MakeUnique<FOGTurnBattle>();
-    if(!Next->Initialize(InitialState,OutError))
+    FOGTurnBattleState DevelopedState = InitialState;
+    for (FOGCombatUnitState& Unit : DevelopedState.Units)
+        if (!FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
+    if(!Next->Initialize(DevelopedState,OutError))
         return false;
     if(!FOGLuminousCanonicalAuthorityBinding::Bind(
          *Next,*WorldStore,RulerId,FOGLuminousCanonicalSources(),OutError))
@@ -964,7 +968,10 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         return false;
     }
     TUniquePtr<FOGTurnBattle> Candidate=MakeUnique<FOGTurnBattle>();
-    if(!Candidate->Initialize(InitialState,MoveTemp(RegisteredTriggers),
+    FOGTurnBattleState DevelopedState = InitialState;
+    for (FOGCombatUnitState& Unit : DevelopedState.Units)
+        if (!FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
+    if(!Candidate->Initialize(DevelopedState,MoveTemp(RegisteredTriggers),
         MoveTemp(NativeConditions),MoveTemp(IdentityContext),
         MoveTemp(RankResolver),OutError))
         return false;

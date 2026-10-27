@@ -1,7 +1,21 @@
 #include "Combat/OGWorldActionRuntime.h"
 #include "Combat/OGActionCombatAdapter.h"
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
+#include "Runtime/OGGameCoreSubsystem.h"
+#include "Progression/OGCharacterDevelopmentService.h"
 #include "World/OGTraversalFramework.h"
+
+namespace
+{
+bool ProjectLiveDevelopment(UWorld* World, FOGCombatUnitState& Unit, FString& Error)
+{
+    UOGGameCoreSubsystem* Core = World && World->GetGameInstance()
+        ? World->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    return !Core || !Core->IsCoreReady() || !Core->GetWorldStore() ||
+        FOGCharacterDevelopmentService(*Core->GetWorldStore()).ProjectCombatUnit(Unit, Error);
+}
+}
 
 bool FOGActionCancelWindow::Allows(float ElapsedSeconds, EOGActionCancelDestination Destination) const
 {
@@ -70,11 +84,31 @@ UOGWorldPartyRuntimeComponent::UOGWorldPartyRuntimeComponent()
     PrimaryComponentTick.bCanEverTick = false;
 }
 
+bool UOGWorldPartyRuntimeComponent::RefreshDevelopmentStats(FString& Error)
+{
+    Error.Reset();
+    UOGGameCoreSubsystem* Core = GetWorld() && GetWorld()->GetGameInstance()
+        ? GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    if (!Core || !Core->IsCoreReady() || !Core->GetWorldStore())
+    { Error = TEXT("Canonical development service is unavailable."); return false; }
+    TArray<FOGWorldPartySlot> Candidate = Slots;
+    for (FOGWorldPartySlot& Slot : Candidate)
+        if (!FOGCharacterDevelopmentService(*Core->GetWorldStore()).ProjectCombatUnit(Slot.Unit, Error)) return false;
+    Slots = MoveTemp(Candidate);
+    return true;
+}
+
 bool UOGWorldPartyRuntimeComponent::ConfigureParty(const TArray<FOGCombatUnitState>& Units, FString& OutError)
 {
     if (!FOGActionCombatAdapter::ValidateSwitchParty(Units, OutError)) return false;
+    TArray<FOGCombatUnitState> Developed = Units;
+    UOGGameCoreSubsystem* Core = GetWorld() && GetWorld()->GetGameInstance()
+        ? GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    if (Core && Core->IsCoreReady() && Core->GetWorldStore())
+        for (FOGCombatUnitState& Unit : Developed)
+            if (!FOGCharacterDevelopmentService(*Core->GetWorldStore()).ProjectCombatUnit(Unit, OutError)) return false;
     Slots.Reset(); ControlledSlot = INDEX_NONE;
-    for (const FOGCombatUnitState& Unit : Units)
+    for (const FOGCombatUnitState& Unit : Developed)
     {
         FOGWorldPartySlot& Slot = Slots.AddDefaulted_GetRef();
         Slot.Unit = FOGActionCombatAdapter::MakeActionSnapshot(Unit);
@@ -180,12 +214,14 @@ bool UOGWorldPartyRuntimeComponent::AssignResolvedCompanion(int32 SlotIndex,
     Error.Reset();
     if (SlotIndex < 1 || SlotIndex > 2 || SlotIndex > Slots.Num() || !Unit.IsAlive())
     { Error = TEXT("Companion assignment requires a living resolved unit in companion slot 1 or 2."); return false; }
+    FOGCombatUnitState Developed = Unit;
+    if (!ProjectLiveDevelopment(GetWorld(), Developed, Error)) return false;
     TArray<FOGCombatUnitState> Candidate;
     for (const FOGWorldPartySlot& Slot : Slots) Candidate.Add(Slot.Unit);
-    if (SlotIndex == Candidate.Num()) Candidate.Add(Unit); else Candidate[SlotIndex] = Unit;
+    if (SlotIndex == Candidate.Num()) Candidate.Add(Developed); else Candidate[SlotIndex] = Developed;
     if (!FOGActionCombatAdapter::ValidateSwitchParty(Candidate, Error)) return false;
     FOGWorldPartySlot Replacement;
-    Replacement.Unit = Unit;
+    Replacement.Unit = Developed;
     Replacement.Unit.Presence = SlotIndex == ControlledSlot ? EOGCombatPresence::Active : EOGCombatPresence::Reserve;
     const bool bSameUnit = Slots.IsValidIndex(SlotIndex) &&
         Slots[SlotIndex].Unit.UnitEntityId == Unit.UnitEntityId;
@@ -219,7 +255,10 @@ bool UOGWorldPartyRuntimeComponent::RestorePresentationParty(
         if (Slot.bDefeated != !Slot.Unit.IsAlive() || (!Slot.Unit.IsAlive() && Slot.bAvailable))
         { Error = TEXT("Saved HP and defeat/availability flags disagree."); return false; }
     }
-    Slots = SavedSlots;
+    TArray<FOGWorldPartySlot> Developed = SavedSlots;
+    for (FOGWorldPartySlot& Slot : Developed)
+        if (!ProjectLiveDevelopment(GetWorld(), Slot.Unit, Error)) return false;
+    Slots = MoveTemp(Developed);
     ControlledSlot = SavedControl;
     for (int32 Index = 0; Index < Slots.Num(); ++Index)
         Slots[Index].Unit.Presence = Slots[Index].bDefeated ? EOGCombatPresence::Defeated :
@@ -232,9 +271,17 @@ bool UOGWorldPartyRuntimeComponent::ApplyResolvedCharacterProjection(int32 SlotI
     if (!Slots.IsValidIndex(SlotIndex) || Slots[SlotIndex].Unit.UnitEntityId != Projection.UnitEntityId ||
         Slots[SlotIndex].Unit.IdentityId != Projection.IdentityId || Projection.Stats.MaxHp.GetSign() <= 0)
     { Error = TEXT("Character projection does not match the current canonical party unit."); return false; }
+    FOGCombatUnitState Developed = Projection;
+    // This entry point receives fresh content/equipment stats. A resolver may
+    // copy the existing live unit before replacing Stats, leaving cache flags
+    // behind. The dedicated refresh path uses the retained base instead.
+    Developed.bHasDevelopmentStatProjection = false;
+    if (!ProjectLiveDevelopment(GetWorld(), Developed, Error)) return false;
     auto& Unit = Slots[SlotIndex].Unit;
-    Unit.Stats = Projection.Stats;
-    Unit.RankProjection = Projection.RankProjection;
-    Unit.SkillSet = Projection.SkillSet;
+    Unit.Stats = Developed.Stats;
+    Unit.DevelopmentBaseStats = Developed.DevelopmentBaseStats;
+    Unit.bHasDevelopmentStatProjection = Developed.bHasDevelopmentStatProjection;
+    Unit.RankProjection = Developed.RankProjection;
+    Unit.SkillSet = Developed.SkillSet;
     return true;
 }

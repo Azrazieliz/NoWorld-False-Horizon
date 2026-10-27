@@ -12,6 +12,11 @@ class UOGGameCoreSubsystem;
 class IOGWorldStore;
 class UOGGate12CharacterVisualCatalog;
 class AOGWorldPrototypeCharacter;
+struct FOGCharacterDevelopmentPreview;
+struct FOGCharacterManifestationRecord;
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOGGate12CharacterDevelopmentApplied,
+    const FOGEntityId&, const FOGContentId&);
 
 /**
  * Post-Android P0: live Ruler navigation and authoritative service projections.
@@ -74,6 +79,30 @@ public:
         const FOGContentId& IdentityId,
         const FOGEntityId& ManifestationId,
         FString& OutError);
+
+    /** Read canonical state even when no authored development choices exist.
+     * None means no reinforcement record, rather than an invented starting tier. */
+    bool ReadOwnedDevelopmentState(const FOGContentId& IdentityId,
+        const FOGEntityId& ManifestationId,
+        FOGCharacterManifestationRecord& OutCurrent,
+        FName& OutReinforcementState, bool& bOutMaxReinforced,
+        FString& OutError);
+
+    /** Only installed choices for this owned Manifestation's exact Identity/Version. */
+    bool ReadOwnedDevelopmentOptions(const FOGContentId& IdentityId,
+        const FOGEntityId& ManifestationId,
+        TArray<FOGCharacterDevelopmentPreview>& OutOptions, FString& OutError);
+
+    /** Re-read content and ownership, then let the canonical service transact.
+     * A true result means Apply succeeded, even if OutError reports a subsequent
+     * projection refresh warning. RequestId belongs to the reviewed command. */
+    bool ConfirmOwnedDevelopment(const FOGContentId& IdentityId,
+        const FOGEntityId& ManifestationId, const FOGContentId& DevelopmentId,
+        const FString& ConfirmationToken, const FOGEntityId& RequestId,
+        FString& OutError);
+
+    // Presentation notification after a new committed transaction; no state authority.
+    FOGGate12CharacterDevelopmentApplied OnCharacterDevelopmentApplied;
 
     /** Writes only an authored, version-exact real wardrobe value in canonical
      * presentation JSON, preserving other physical outfit/equipment/world data.
@@ -157,6 +186,10 @@ private:
         UOGGameCoreSubsystem*& OutCore,
         IOGWorldStore*& OutStore,
         FString& OutError) const;
+
+    bool ValidateOwnedDevelopmentTarget(IOGWorldStore& Store,
+        const FOGContentId& IdentityId, const FOGEntityId& ManifestationId,
+        FOGCharacterManifestationRecord& OutCurrent, FString& OutError) const;
 
     void ClearProjectionAndSelection();
     void HandleCanonicalRuntimeReleasing();

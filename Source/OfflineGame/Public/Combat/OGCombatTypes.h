@@ -92,6 +92,15 @@ struct OFFLINEGAME_API FOGCombatUnitState
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGCombatStats Stats;
 
+    /** Read-only development projection input, retained so refreshing a party
+     * or opening a battle cannot add earned bonuses twice. Content/stat
+     * resolvers supply a fresh unit when the underlying build changes. */
+    UPROPERTY()
+    FOGCombatStats DevelopmentBaseStats;
+
+    UPROPERTY()
+    bool bHasDevelopmentStatProjection = false;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGLargeNumber CurrentHp;
 

@@ -746,6 +746,11 @@ bool UOGDiagnosticCombatComponent::RefreshCanonicalPartyProjection(FString& Erro
         FOGFoundationCharacterProjection Character;
         if (!Characters.Project(Context, Character, Error)) return false;
         FOGCombatUnitState Resolved = Existing;
+        // Character resolvers operate on content/equipment stats; earned
+        // development is projected once by the party adapter after resolution.
+        if (Existing.bHasDevelopmentStatProjection)
+            Resolved.Stats = Existing.DevelopmentBaseStats;
+        Resolved.bHasDevelopmentStatProjection = false;
         if (CharacterCombatResolver)
         { if (!CharacterCombatResolver(Character, Resolved, Error)) return false; }
         else

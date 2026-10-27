@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
+#include "Progression/OGCharacterDevelopmentService.h"
 #include "UI/OGUiViewModels.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
@@ -157,6 +158,19 @@ private:
     int32 SelectedTerritoryOverlayIndex = 0;
     FString LastUiError;
 
+    // In-memory review only: never reflected, serialized, or treated as truth.
+    // Confirmation tokens and request IDs are discarded when context changes.
+    FOGCharacterDevelopmentPreview PendingDevelopmentReview;
+    FOGEntityId PendingDevelopmentRequestId;
+    FOGEntityId DevelopmentContextRulerId;
+    FOGContentId DevelopmentContextIdentityId;
+    FOGEntityId DevelopmentContextManifestationId;
+    FOGContentId DevelopmentSessionIdentityId;
+    FOGEntityId DevelopmentSessionManifestationId;
+    FString DevelopmentFeedback;
+    FString DevelopmentRefreshWarning;
+    bool bDevelopmentFeedbackError = false;
+
     void BuildRoot();
     void RefreshFrozenScene(EOGRulerPrimaryDestination Destination);
     void BuildCurrentPage();
@@ -170,6 +184,15 @@ private:
     UFUNCTION()
     void HandleRosterSearchChanged(const FText& NewText);
     void BuildCharacterDetail();
+    void BuildCharacterDevelopment(const FOGRosterIdentityViewModel& Identity,
+        const FOGRosterManifestationViewModel* Manifestation);
+    void AddDevelopmentPreview(UVerticalBox* Parent,
+        const FOGCharacterDevelopmentPreview& Preview);
+    void HandleDevelopmentAction(const FString& Action,
+        UOGGate12RulerSessionSubsystem& Session);
+    void ClearDevelopmentReview();
+    void ResetCharacterDevelopment();
+    bool SynchronizeDevelopmentContext(const UOGGate12RulerSessionSubsystem* Session);
     void AddCharacterVisual(UVerticalBox* Parent, const FOGRosterIdentityViewModel& Identity, bool bThreeDimensional);
     void ReleasePreviewStage();
     void ReleaseRosterPreviewStages();

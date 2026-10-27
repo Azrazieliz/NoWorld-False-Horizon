@@ -41,6 +41,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/GameInstance.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "Runtime/OGGameCoreSubsystem.h"
 #include "World/OGStartingRegionPresentation.h"
 
 namespace
@@ -139,11 +140,22 @@ void UOGGate12NativeRulerWidget::NativeOnInitialized()
 void UOGGate12NativeRulerWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    if (UOGGameCoreSubsystem* Core = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
+    {
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(
+            this, &UOGGate12NativeRulerWidget::ResetCharacterDevelopment);
+    }
     RefreshFromCanonical();
 }
 
 void UOGGate12NativeRulerWidget::NativeDestruct()
 {
+    ResetCharacterDevelopment();
+    if (UOGGameCoreSubsystem* Core = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
     ReleasePreviewStage();
     Super::NativeDestruct();
 }
@@ -156,6 +168,8 @@ void UOGGate12NativeRulerWidget::NativeTick(
     const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (SynchronizeDevelopmentContext(Session))
+        BuildCurrentPage();
     const FVector2D ViewportSize = MyGeometry.GetLocalSize();
     // Ruler has NO landscape presentation. During the device's asynchronous
     // rotation from World, hide the whole Ruler surface until portrait fits.
@@ -573,6 +587,9 @@ void UOGGate12NativeRulerWidget::BuildNav()
 
 void UOGGate12NativeRulerWidget::RefreshFromCanonical()
 {
+    // An explicit refresh may follow recovery of a world with the same IDs.
+    // Require a fresh review rather than keeping a previous world's quote.
+    ResetCharacterDevelopment();
     if (!Screen) BuildRoot();
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
@@ -615,6 +632,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    SynchronizeDevelopmentContext(Session);
     RefreshFrozenScene(Session ? Session->CurrentDestination
                               : EOGRulerPrimaryDestination::Home);
 
@@ -2240,6 +2258,7 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
             {
                 return M.ManifestationId == Identity.SelectedManifestationId;
             });
+    BuildCharacterDevelopment(Identity, Selected);
     if (VisualCatalog && Selected)
     {
         const FOGGate12CharacterVisualEntry* Art =
@@ -2268,10 +2287,22 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session)
     {
+        ResetCharacterDevelopment();
         LastUiError = TEXT("Canonical Ruler service not loaded.");
         BuildCurrentPage();
         return;
     }
+
+    if (Action.StartsWith(TEXT("development/")))
+    {
+        HandleDevelopmentAction(Action, *Session);
+        return;
+    }
+    // Includes all navigation, copy selection, wardrobe and world transitions.
+    ClearDevelopmentReview();
+    DevelopmentFeedback.Reset();
+    DevelopmentRefreshWarning.Reset();
+    bDevelopmentFeedbackError = false;
 
     FString Error;
     if (Action == TEXT("restore-ruler"))

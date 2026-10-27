@@ -120,6 +120,7 @@ class OFFLINEGAME_API UOGWorldPartyRuntimeComponent : public UActorComponent
 
 public:
     UOGWorldPartyRuntimeComponent();
+    bool RefreshDevelopmentStats(FString& Error);
     bool ApplyResolvedCharacterProjection(int32 SlotIndex, const FOGCombatUnitState& Projection, FString& Error);
     bool ApplyResolvedHp(int32 SlotIndex, const FOGEntityId& ExpectedUnitId,
         const FOGLargeNumber& NewHp, FString& OutError);
