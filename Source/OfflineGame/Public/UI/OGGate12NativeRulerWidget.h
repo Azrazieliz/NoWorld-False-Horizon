@@ -5,6 +5,7 @@
 #include "Components/Button.h"
 #include "Progression/OGCharacterDevelopmentService.h"
 #include "UI/OGUiViewModels.h"
+#include "World/OGOwnedEquipmentService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
@@ -171,6 +172,19 @@ private:
     FString DevelopmentRefreshWarning;
     bool bDevelopmentFeedbackError = false;
 
+    // Inventory utility page and review are transient presentation only.
+    bool bInventoryOpen = false;
+    bool bInventoryTargetPicker = false;
+    FOGEntityId InventorySelectedItemId;
+    FOGEntityId InventoryContextRulerId;
+    FOGContentId InventoryContextIdentityId;
+    FOGEntityId InventoryContextManifestationId;
+    FOGOwnedEquipmentPreview PendingEquipmentReview;
+    FOGEntityId PendingEquipmentRequestId;
+    FString InventoryFeedback;
+    FString InventoryRefreshWarning;
+    bool bInventoryFeedbackError = false;
+
     void BuildRoot();
     void RefreshFrozenScene(EOGRulerPrimaryDestination Destination);
     void BuildCurrentPage();
@@ -193,6 +207,12 @@ private:
     void ClearDevelopmentReview();
     void ResetCharacterDevelopment();
     bool SynchronizeDevelopmentContext(const UOGGate12RulerSessionSubsystem* Session);
+    void BuildInventory();
+    void BuildEquipmentReview(UVerticalBox* Parent, const FOGOwnedEquipmentPreview& Review);
+    void HandleInventoryAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);
+    void ClearInventoryReview();
+    void ResetInventoryUi();
+    bool SynchronizeInventoryContext(const UOGGate12RulerSessionSubsystem* Session);
     void AddCharacterVisual(UVerticalBox* Parent, const FOGRosterIdentityViewModel& Identity, bool bThreeDimensional);
     void ReleasePreviewStage();
     void ReleaseRosterPreviewStages();

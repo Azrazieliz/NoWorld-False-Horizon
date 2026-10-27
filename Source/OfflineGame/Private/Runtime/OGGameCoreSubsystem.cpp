@@ -1,5 +1,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Progression/OGCharacterDevelopmentService.h"
+#include "World/OGOwnedEquipmentService.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
 #include "Combat/OGApprovedLuminousSourceKit.h"
@@ -862,7 +863,8 @@ bool UOGGameCoreSubsystem::StartApprovedLuminousEncounter(
     TUniquePtr<FOGTurnBattle> Next=MakeUnique<FOGTurnBattle>();
     FOGTurnBattleState DevelopedState = InitialState;
     for (FOGCombatUnitState& Unit : DevelopedState.Units)
-        if (!FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
+        if (!FOGOwnedEquipmentService(*WorldStore).ProjectCombatUnit(Unit, OutError) ||
+            !FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
     if(!Next->Initialize(DevelopedState,OutError))
         return false;
     if(!FOGLuminousCanonicalAuthorityBinding::Bind(
@@ -970,7 +972,8 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     TUniquePtr<FOGTurnBattle> Candidate=MakeUnique<FOGTurnBattle>();
     FOGTurnBattleState DevelopedState = InitialState;
     for (FOGCombatUnitState& Unit : DevelopedState.Units)
-        if (!FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
+        if (!FOGOwnedEquipmentService(*WorldStore).ProjectCombatUnit(Unit, OutError) ||
+            !FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
     if(!Candidate->Initialize(DevelopedState,MoveTemp(RegisteredTriggers),
         MoveTemp(NativeConditions),MoveTemp(IdentityContext),
         MoveTemp(RankResolver),OutError))

@@ -1,0 +1,349 @@
+#include "UI/OGGate12NativeRulerWidget.h"
+
+#include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Engine/GameInstance.h"
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "UI/OGGate12GothicChromeWidget.h"
+
+namespace
+{
+const FLinearColor InventorySilver(.77f, .73f, .83f, 1.f);
+const FLinearColor InventoryText(.90f, .90f, .89f, 1.f);
+const FLinearColor InventoryMuted(.55f, .58f, .61f, 1.f);
+const FLinearColor InventoryWarning(.88f, .57f, .43f, 1.f);
+const FLinearColor InventorySuccess(.60f, .79f, .65f, 1.f);
+FString InventoryRecordedId(const FOGContentId& Id)
+{
+    return Id.IsEmpty() ? TEXT("Not recorded") : Id.ToString();
+}
+}
+
+void UOGGate12NativeRulerWidget::ClearInventoryReview()
+{
+    PendingEquipmentReview = FOGOwnedEquipmentPreview();
+    PendingEquipmentRequestId = FOGEntityId();
+}
+
+void UOGGate12NativeRulerWidget::ResetInventoryUi()
+{
+    bInventoryOpen = false;
+    bInventoryTargetPicker = false;
+    InventorySelectedItemId = FOGEntityId();
+    InventoryContextRulerId = FOGEntityId();
+    InventoryContextIdentityId = FOGContentId();
+    InventoryContextManifestationId = FOGEntityId();
+    ClearInventoryReview();
+    InventoryFeedback.Reset();
+    InventoryRefreshWarning.Reset();
+    bInventoryFeedbackError = false;
+}
+
+bool UOGGate12NativeRulerWidget::SynchronizeInventoryContext(
+    const UOGGate12RulerSessionSubsystem* Session)
+{
+    if (!bInventoryOpen) return false;
+    if (!Session || !Session->IsBoundToStoredRuler() ||
+        Session->CurrentDestination != EOGRulerPrimaryDestination::Home)
+    {
+        ResetInventoryUi();
+        return true;
+    }
+    if (InventoryContextRulerId == Session->BoundRulerId &&
+        InventoryContextIdentityId == Session->SelectedIdentityId &&
+        InventoryContextManifestationId == Session->SelectedManifestationId) return false;
+    InventoryContextRulerId = Session->BoundRulerId;
+    InventoryContextIdentityId = Session->SelectedIdentityId;
+    InventoryContextManifestationId = Session->SelectedManifestationId;
+    InventorySelectedItemId = FOGEntityId();
+    ClearInventoryReview();
+    InventoryFeedback.Reset();
+    InventoryRefreshWarning.Reset();
+    bInventoryFeedbackError = false;
+    return true;
+}
+
+void UOGGate12NativeRulerWidget::BuildEquipmentReview(
+    UVerticalBox* Parent, const FOGOwnedEquipmentPreview& Review)
+{
+    AddMessage(Parent, Review.bUnequip ? TEXT("REVIEW UNEQUIP") : TEXT("REVIEW EQUIP"), 24, InventorySilver);
+    AddMessage(Parent, TEXT("Owned copy: ") + Review.Target.ManifestationId.ToString(), 15, InventoryMuted);
+    AddMessage(Parent, Review.SlotName + TEXT(" / ") + Review.ItemName, 20, InventoryText);
+    AddMessage(Parent, TEXT("Item instance: ") + Review.Item.ItemId.ToString(), 15, InventoryMuted);
+    if (Review.bUnequip)
+        AddMessage(Parent, TEXT("Remove this binding. The owned item stays in inventory."), 17, InventoryText);
+    else if (Review.bHasPreviousItem)
+        AddMessage(Parent, TEXT("Replaces ") + Review.PreviousItemName +
+            TEXT(". The previous item stays owned and becomes unequipped."), 17, InventoryWarning);
+    else AddMessage(Parent, TEXT("Equip this owned item in the empty authored slot."), 17, InventoryText);
+
+    AddMessage(Parent, Review.bUnequip ? TEXT("REMOVED ITEM CONTRIBUTIONS") :
+        TEXT("AUTHORED ITEM CONTRIBUTIONS"), 18, InventorySilver);
+    if (!Review.bEffectsKnown)
+        AddMessage(Parent, TEXT("Detailed effects need an approved equipment rule. No stat totals are inferred."),
+            16, InventoryMuted);
+    else if (Review.StatBonuses.IsEmpty())
+        AddMessage(Parent, TEXT("This rule declares no additive stat contributions."), 16, InventoryMuted);
+    else
+    {
+        TArray<FName> Names;
+        Review.StatBonuses.GetKeys(Names);
+        Names.Sort([](FName A, FName B) { return A.ToString() < B.ToString(); });
+        for (FName Name : Names)
+            AddMessage(Parent, Name.ToString() + TEXT(": ") +
+                (Review.bUnequip ? TEXT("-") : TEXT("+")) +
+                FOGUiNumberFormatter::Format(Review.StatBonuses.FindChecked(Name), true, false),
+                16, InventoryText);
+        AddMessage(Parent, TEXT("Item contributions only; these are not total combat stats or a replacement delta."),
+            15, InventoryMuted);
+    }
+    AddMessage(Parent, TEXT("Confirm rechecks ownership, the current slot and installed rules. It does not heal the character."),
+        16, InventoryMuted);
+    AddAction(Parent, Review.bUnequip ? TEXT("CONFIRM UNEQUIP") : TEXT("CONFIRM EQUIP"),
+        TEXT("inventory/confirm"));
+    AddAction(Parent, TEXT("CANCEL"), TEXT("inventory/cancel"));
+}
+
+void UOGGate12NativeRulerWidget::BuildInventory()
+{
+    if (!Content || !WidgetTree) return;
+    UGameInstance* GI = GetGameInstance();
+    UOGGate12RulerSessionSubsystem* Session = GI
+        ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    AddAction(Content, TEXT("BACK TO HOME"), TEXT("inventory/close"));
+    UOverlay* Layers = WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());
+    UBorder* Surface = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+    Surface->SetBrushColor(FLinearColor(.010f, .010f, .014f, .97f));
+    Surface->SetPadding(FMargin(12.f, 18.f));
+    UVerticalBox* Body = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    Surface->AddChild(Body);
+    UOverlaySlot* Background = Layers->AddChildToOverlay(Surface);
+    Background->SetHorizontalAlignment(HAlign_Fill);
+    Background->SetVerticalAlignment(VAlign_Fill);
+    auto* Chrome = WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(UOGGate12GothicChromeWidget::StaticClass());
+    Chrome->Configure(InventorySilver, INDEX_NONE, false);
+    Chrome->SetVisibility(ESlateVisibility::HitTestInvisible);
+    UOverlaySlot* Ornament = Layers->AddChildToOverlay(Chrome);
+    Ornament->SetHorizontalAlignment(HAlign_Fill);
+    Ornament->SetVerticalAlignment(VAlign_Fill);
+    Content->AddChildToVerticalBox(Layers)->SetPadding(FMargin(4.f, 8.f));
+    AddMessage(Body, TEXT("OWNED INVENTORY"), 25, InventorySilver);
+    if (!InventoryFeedback.IsEmpty())
+        AddMessage(Body, InventoryFeedback, 17, bInventoryFeedbackError ? InventoryWarning : InventorySuccess);
+    if (!InventoryRefreshWarning.IsEmpty()) AddMessage(Body, InventoryRefreshWarning, 16, InventoryWarning);
+    if (!Session) return;
+    FOGOwnedInventorySnapshot Snapshot;
+    FString Error;
+    if (!Session->ReadOwnedInventory(Snapshot, Error))
+    {
+        ClearInventoryReview();
+        AddMessage(Body, TEXT("Inventory unavailable: ") + Error, 17, InventoryWarning);
+        return;
+    }
+    if (!Snapshot.Availability.IsEmpty()) AddMessage(Body, Snapshot.Availability, 17, InventoryMuted);
+    AddMessage(Body, TEXT("EQUIPMENT TARGET"), 20, InventorySilver);
+    if (Snapshot.bHasTarget)
+    {
+        AddMessage(Body, Snapshot.Target.BuildLabel.IsEmpty() ? Snapshot.Target.IdentityId.ToString() :
+            Snapshot.Target.BuildLabel, 18, InventoryText);
+        AddMessage(Body, TEXT("Owned copy: ") + Snapshot.Target.ManifestationId.ToString(), 15, InventoryMuted);
+    }
+    else AddMessage(Body, TEXT("No owned Manifestation selected. Inventory can still be browsed."), 17, InventoryMuted);
+    if (!Session->OwnedRoster.IsEmpty())
+        AddAction(Body, bInventoryTargetPicker ? TEXT("CLOSE CHARACTER PICKER") : TEXT("CHOOSE OWNED CHARACTER"),
+            TEXT("inventory/targets"));
+    if (bInventoryTargetPicker)
+    {
+        for (int32 I = 0; I < Session->OwnedRoster.Num(); ++I)
+        {
+            const auto& Identity = Session->OwnedRoster[I];
+            for (int32 J = 0; J < Identity.Manifestations.Num(); ++J)
+            {
+                const auto& Copy = Identity.Manifestations[J];
+                if (Copy.bLocked) continue;
+                const FString Name = Identity.DisplayNameKey.IsEmpty() ? Identity.IdentityId.ToString() : Identity.DisplayNameKey;
+                AddAction(Body, FString::Printf(TEXT("%s / %s / level %d"), *Name,
+                    *(Copy.BuildLabel.IsEmpty() ? Copy.ManifestationId.ToString() : Copy.BuildLabel), Copy.Level),
+                    FString::Printf(TEXT("inventory/target/%d/%d"), I, J));
+            }
+        }
+    }
+
+    if (!PendingEquipmentReview.ConfirmationToken.IsEmpty())
+    {
+        FOGOwnedEquipmentPreview Fresh;
+        if (Session->ReviewOwnedEquipment(PendingEquipmentReview.SlotId,
+                PendingEquipmentReview.Item.ItemId, PendingEquipmentReview.bUnequip, Fresh, Error) &&
+            Fresh.bCanApply && Fresh.ConfirmationToken == PendingEquipmentReview.ConfirmationToken)
+        {
+            BuildEquipmentReview(Body, PendingEquipmentReview);
+            return;
+        }
+        ClearInventoryReview();
+        AddMessage(Body, TEXT("Equipment details changed. Review the current item and slot again."), 17, InventoryWarning);
+    }
+
+    AddMessage(Body, TEXT("EQUIPMENT SLOTS"), 20, InventorySilver);
+    if (!Snapshot.bHasTarget) AddMessage(Body, TEXT("Choose a character to inspect its slots."), 16, InventoryMuted);
+    for (const auto& Slot : Snapshot.Slots)
+    {
+        const auto* Equipped = Snapshot.Items.FindByPredicate([&](const auto& I)
+        { return I.Item.ItemId == Slot.Binding.ItemId; });
+        AddMessage(Body, Slot.DisplayName + TEXT(" / ") + (Slot.bOccupied ?
+            (Equipped ? Equipped->DisplayName : Slot.Binding.ItemId.ToString()) : FString(TEXT("Empty"))),
+            18, InventoryText);
+        if (!Slot.bAuthored)
+            AddMessage(Body, TEXT("Stored binding; no approved slot rule is installed for new equipment."), 15, InventoryMuted);
+        if (Slot.bOccupied)
+        {
+            FOGOwnedEquipmentPreview Removal;
+            if (Session->ReviewOwnedEquipment(Slot.SlotId, Slot.Binding.ItemId, true, Removal, Error) && Removal.bCanApply)
+                AddAction(Body, TEXT("REVIEW UNEQUIP"), TEXT("inventory/unequip/") + Slot.SlotId.ToString());
+            else if (!Error.IsEmpty()) AddMessage(Body, Error, 15, InventoryMuted);
+        }
+    }
+    AddMessage(Body, FString::Printf(TEXT("OWNED ITEMS / %d"), Snapshot.Items.Num()), 20, InventorySilver);
+    if (Snapshot.Items.IsEmpty())
+        AddMessage(Body, TEXT("No owned item instances are recorded for this Ruler or its Manifestations."), 17, InventoryMuted);
+    const auto* Selected = Snapshot.Items.FindByPredicate([&](const auto& I) { return I.Item.ItemId == InventorySelectedItemId; });
+    if (InventorySelectedItemId.IsValid() && !Selected) InventorySelectedItemId = FOGEntityId();
+    for (const auto& Item : Snapshot.Items)
+        AddAction(Body, Item.DisplayName + (Item.Bindings.IsEmpty() ? TEXT("") : TEXT(" [EQUIPPED]")),
+            TEXT("inventory/item/") + Item.Item.ItemId.ToString());
+    if (!Selected) return;
+    AddMessage(Body, TEXT("ITEM INSTANCE"), 21, InventorySilver);
+    AddMessage(Body, Selected->DisplayName, 20, InventoryText);
+    AddMessage(Body, TEXT("Instance: ") + Selected->Item.ItemId.ToString(), 15, InventoryMuted);
+    AddMessage(Body, TEXT("Definition: ") + Selected->Item.DefinitionId.ToString(), 15, InventoryMuted);
+    AddMessage(Body, TEXT("Rank: ") + InventoryRecordedId(Selected->Item.CurrentRankId) +
+        TEXT(" / Quality: ") + InventoryRecordedId(Selected->Item.QualityId), 16, InventoryText);
+    AddMessage(Body, Selected->Item.OwnerEntityId == Session->BoundRulerId ? TEXT("Owned by this Ruler.") :
+        TEXT("Owned by Manifestation ") + Selected->Item.OwnerEntityId.ToString(), 16, InventoryMuted);
+    for (const auto& Modifier : Selected->Modifiers)
+        AddMessage(Body, TEXT("Stored modifier: ") + Modifier.ModifierId.ToString(), 15, InventoryMuted);
+    for (const auto& Binding : Selected->Bindings)
+        AddMessage(Body, TEXT("Equipped by ") + Binding.WearerEntityId.ToString() +
+            TEXT(" / ") + Binding.SlotId.ToString(), 15, InventoryMuted);
+    for (const auto& Slot : Snapshot.Slots)
+    {
+        if (!Slot.bAuthored) continue;
+        FOGOwnedEquipmentPreview Option;
+        if (Session->ReviewOwnedEquipment(Slot.SlotId, Selected->Item.ItemId, false, Option, Error))
+        {
+            if (Option.bCanApply)
+                AddAction(Body, TEXT("REVIEW EQUIP / ") + Slot.DisplayName,
+                    TEXT("inventory/equip/") + Slot.SlotId.ToString() + TEXT("|") + Selected->Item.ItemId.ToString());
+            else AddMessage(Body, Slot.DisplayName + TEXT(": ") + FString::Join(Option.MissingRequirements, TEXT(" ")),
+                15, InventoryMuted);
+        }
+        else if (!Error.IsEmpty()) AddMessage(Body, Slot.DisplayName + TEXT(": ") + Error, 15, InventoryMuted);
+    }
+}
+
+void UOGGate12NativeRulerWidget::HandleInventoryAction(
+    const FString& Action, UOGGate12RulerSessionSubsystem& Session)
+{
+    LastUiError.Reset();
+    InventoryFeedback.Reset();
+    InventoryRefreshWarning.Reset();
+    bInventoryFeedbackError = false;
+    FString Error;
+    if (Action == TEXT("inventory/open"))
+    {
+        ResetInventoryUi();
+        if (Session.Navigate(EOGRulerPrimaryDestination::Home, Error)) bInventoryOpen = true;
+        SynchronizeInventoryContext(&Session);
+    }
+    else if (Action == TEXT("inventory/close")) ResetInventoryUi();
+    else if (!bInventoryOpen || !Session.IsBoundToStoredRuler())
+        Error = TEXT("Open this Ruler's inventory before reviewing equipment.");
+    else if (Action == TEXT("inventory/targets"))
+    {
+        ClearInventoryReview();
+        bInventoryTargetPicker = !bInventoryTargetPicker;
+    }
+    else if (Action.StartsWith(TEXT("inventory/target/")))
+    {
+        ClearInventoryReview();
+        FString IdentityIndex, CopyIndex;
+        int32 I = INDEX_NONE, J = INDEX_NONE;
+        if (Action.Mid(17).Split(TEXT("/"), &IdentityIndex, &CopyIndex) &&
+            LexTryParseString(I, *IdentityIndex) && LexTryParseString(J, *CopyIndex) &&
+            Session.OwnedRoster.IsValidIndex(I) && Session.OwnedRoster[I].Manifestations.IsValidIndex(J))
+        {
+            const FOGContentId Identity = Session.OwnedRoster[I].IdentityId;
+            const FOGEntityId Copy = Session.OwnedRoster[I].Manifestations[J].ManifestationId;
+            if (Session.SelectOwnedManifestation(Identity, Copy, Error))
+            {
+                Session.Navigate(EOGRulerPrimaryDestination::Home, Error);
+                bInventoryTargetPicker = false;
+                SynchronizeInventoryContext(&Session);
+            }
+        }
+        else Error = TEXT("The owned character picker changed. Open it again.");
+    }
+    else if (Action.StartsWith(TEXT("inventory/item/")))
+    {
+        ClearInventoryReview();
+        FGuid Id;
+        FOGOwnedInventorySnapshot Snapshot;
+        if (FGuid::Parse(Action.Mid(15), Id) && Session.ReadOwnedInventory(Snapshot, Error) &&
+            Snapshot.Items.ContainsByPredicate([&](const auto& I) { return I.Item.ItemId == FOGEntityId(Id); }))
+            InventorySelectedItemId = FOGEntityId(Id);
+        else if (Error.IsEmpty()) Error = TEXT("This item instance is no longer in owned inventory.");
+    }
+    else if (Action == TEXT("inventory/cancel")) ClearInventoryReview();
+    else if (Action.StartsWith(TEXT("inventory/equip/")) || Action.StartsWith(TEXT("inventory/unequip/")))
+    {
+        ClearInventoryReview();
+        const bool bUnequip = Action.StartsWith(TEXT("inventory/unequip/"));
+        const FString Payload = Action.Mid(bUnequip ? 18 : 16);
+        FString Slot = Payload, Item;
+        FOGEntityId ItemId;
+        FGuid Guid;
+        if (!bUnequip && (!Payload.Split(TEXT("|"), &Slot, &Item) || !FGuid::Parse(Item, Guid)))
+            Error = TEXT("This equipment choice is invalid. Review an owned item again.");
+        else
+        {
+            if (!bUnequip) ItemId = FOGEntityId(Guid);
+            FOGOwnedEquipmentPreview Review;
+            if (Session.ReviewOwnedEquipment(FOGContentId(Slot), ItemId, bUnequip, Review, Error))
+            {
+                if (!Review.bCanApply) Error = FString::Join(Review.MissingRequirements, TEXT(" "));
+                else
+                {
+                    PendingEquipmentReview = MoveTemp(Review);
+                    PendingEquipmentRequestId = FOGEntityId::NewId();
+                }
+            }
+        }
+    }
+    else if (Action == TEXT("inventory/confirm"))
+    {
+        const FOGOwnedEquipmentPreview Review = PendingEquipmentReview;
+        const FOGEntityId Request = PendingEquipmentRequestId;
+        ClearInventoryReview();
+        if (Review.ConfirmationToken.IsEmpty() || !Request.IsValid())
+            Error = TEXT("Review an equipment change before confirming.");
+        else if (Session.ConfirmOwnedEquipment(Review, Request, Error))
+        {
+            InventoryRefreshWarning = Error;
+            Error.Reset();
+            InventoryFeedback = Review.bUnequip ? TEXT("Unequip saved. The item remains owned.") :
+                TEXT("Equipment change saved for the selected owned copy.");
+        }
+    }
+    else Error = TEXT("Unrecognized inventory action.");
+    if (!Error.IsEmpty())
+    {
+        ClearInventoryReview();
+        InventoryFeedback = Error;
+        bInventoryFeedbackError = true;
+        if (!bInventoryOpen) LastUiError = Error;
+    }
+    BuildCurrentPage();
+}

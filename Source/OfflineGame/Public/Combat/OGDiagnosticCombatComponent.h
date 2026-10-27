@@ -32,6 +32,8 @@ public:
     void ReleaseCanonicalStore();
     bool ApplyResolvedWorldDamage(const FOGLargeNumber& Damage, FString& Error);
     bool RefreshCanonicalPartyProjection(FString& Error);
+    // Supply fresh content/form stats. Native catalog equipment and earned
+    // development contributions are projected once by WorldPartyRuntime.
     using FCharacterCombatResolver = TFunction<bool(const FOGFoundationCharacterProjection&, FOGCombatUnitState&, FString&)>;
     void SetCharacterCombatResolver(FCharacterCombatResolver Resolver) { CharacterCombatResolver = MoveTemp(Resolver); }
     bool IsActive() const { return bActive; }

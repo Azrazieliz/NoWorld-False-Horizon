@@ -146,12 +146,15 @@ void UOGGate12NativeRulerWidget::NativeConstruct()
         Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
             this, &UOGGate12NativeRulerWidget::ResetCharacterDevelopment);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(
+            this, &UOGGate12NativeRulerWidget::ResetInventoryUi);
     }
     RefreshFromCanonical();
 }
 
 void UOGGate12NativeRulerWidget::NativeDestruct()
 {
+    ResetInventoryUi();
     ResetCharacterDevelopment();
     if (UOGGameCoreSubsystem* Core = GetGameInstance()
             ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
@@ -168,7 +171,8 @@ void UOGGate12NativeRulerWidget::NativeTick(
     const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
-    if (SynchronizeDevelopmentContext(Session))
+    const bool bInventoryContextChanged = SynchronizeInventoryContext(Session);
+    if (SynchronizeDevelopmentContext(Session) || bInventoryContextChanged)
         BuildCurrentPage();
     const FVector2D ViewportSize = MyGeometry.GetLocalSize();
     // Ruler has NO landscape presentation. During the device's asynchronous
@@ -590,6 +594,7 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
     // An explicit refresh may follow recovery of a world with the same IDs.
     // Require a fresh review rather than keeping a previous world's quote.
     ResetCharacterDevelopment();
+    ClearInventoryReview();
     if (!Screen) BuildRoot();
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
@@ -633,6 +638,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     SynchronizeDevelopmentContext(Session);
+    SynchronizeInventoryContext(Session);
     RefreshFrozenScene(Session ? Session->CurrentDestination
                               : EOGRulerPrimaryDestination::Home);
 
@@ -679,9 +685,16 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         Content->AddChildToVerticalBox(HeadingHeight)
             ->SetPadding(FMargin(4.f,0.f,4.f,8.f));
     if (!LastUiError.IsEmpty()) AddMessage(Content, LastUiError, 16, TextMuted);
+    if (bInventoryOpen)
+    {
+        BuildInventory();
+        BuildNav();
+        return;
+    }
     switch (Session->CurrentDestination)
     {
     case EOGRulerPrimaryDestination::Home:
+        AddAction(Content, TEXT("INVENTORY & EQUIPMENT"), TEXT("inventory/open"));
         BuildHome();
         break;
     case EOGRulerPrimaryDestination::Characters:
@@ -2287,12 +2300,22 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session)
     {
+        ResetInventoryUi();
         ResetCharacterDevelopment();
         LastUiError = TEXT("Canonical Ruler service not loaded.");
         BuildCurrentPage();
         return;
     }
 
+    if (Action.StartsWith(TEXT("inventory/")))
+    {
+        ClearDevelopmentReview();
+        DevelopmentFeedback.Reset();
+        DevelopmentRefreshWarning.Reset();
+        HandleInventoryAction(Action, *Session);
+        return;
+    }
+    ResetInventoryUi();
     if (Action.StartsWith(TEXT("development/")))
     {
         HandleDevelopmentAction(Action, *Session);

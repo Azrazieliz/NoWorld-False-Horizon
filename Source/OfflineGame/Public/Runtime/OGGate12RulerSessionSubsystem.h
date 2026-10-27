@@ -14,6 +14,8 @@ class UOGGate12CharacterVisualCatalog;
 class AOGWorldPrototypeCharacter;
 struct FOGCharacterDevelopmentPreview;
 struct FOGCharacterManifestationRecord;
+struct FOGOwnedInventorySnapshot;
+struct FOGOwnedEquipmentPreview;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOGGate12CharacterDevelopmentApplied,
     const FOGEntityId&, const FOGContentId&);
@@ -103,6 +105,15 @@ public:
 
     // Presentation notification after a new committed transaction; no state authority.
     FOGGate12CharacterDevelopmentApplied OnCharacterDevelopmentApplied;
+
+    /** Real item instances only; browsing also works before selecting a copy. */
+    bool ReadOwnedInventory(FOGOwnedInventorySnapshot& Out, FString& OutError);
+    bool ReviewOwnedEquipment(const FOGContentId& SlotId, const FOGEntityId& ItemId,
+        bool bUnequip, FOGOwnedEquipmentPreview& Out, FString& OutError);
+    /** A committed command returns true even when OutError contains a later
+     * live-party/projection refresh warning. No UI quote is state authority. */
+    bool ConfirmOwnedEquipment(const FOGOwnedEquipmentPreview& Reviewed,
+        const FOGEntityId& RequestId, FString& OutError);
 
     /** Writes only an authored, version-exact real wardrobe value in canonical
      * presentation JSON, preserving other physical outfit/equipment/world data.
