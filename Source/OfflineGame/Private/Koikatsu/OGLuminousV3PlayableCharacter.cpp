@@ -108,9 +108,12 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
     if (!A || !B) return false;
     const FReferenceSkeleton& Left = A->GetRefSkeleton();
     const FReferenceSkeleton& Right = B->GetRefSkeleton();
+    // The source-authentic additional forms use their own exported rigs:
+    // Awakened 1131, Berserker 886, and Grand 1123 bones after the FBX root
+    // is admitted. Never compare them through Base/Alter's 975-bone proxy.
     if (Left.GetNum() != Right.GetNum() ||
-        (Left.GetNum() != 975 && Left.GetNum() != 1131 &&
-         Left.GetNum() != 1123)) return false;
+        (Left.GetNum() != 975 && Left.GetNum() != 886 &&
+         Left.GetNum() != 1131 && Left.GetNum() != 1123)) return false;
     for (int32 Index = 0; Index < Left.GetNum(); ++Index)
     {
         if (Left.GetBoneName(Index) != Right.GetBoneName(Index) ||
@@ -170,6 +173,13 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
     // grant a Manifestation or declare this asset production-accepted.
     CanonicalLuminousIdentityId = TEXT("character:luminous_valentine.identity");
     CanonicalLuminousVersionId = TEXT("character:luminous_valentine.version_ln_base");
+    // Exact measured contracts from the preserved source-authentic exports,
+    // ordered CLOTHED / UNDERWEAR / NUDE. These defaults keep a Blueprint
+    // from silently falling back to a zero-part/zero-bone additional form.
+    // They do not grant ownership or claim Unreal asset admission by
+    // themselves; every path is still validated against its form namespace.
+    AdditionalVersionNativePartCounts = {6, 6, 6};
+    AdditionalVersionNativeSkeletonBones = {1131, 886, 1123};
     MotionCapabilities = {TEXT("grounded"), TEXT("swimming"), TEXT("flying"),
         TEXT("combat"), TEXT("emote"), TEXT("adult_interaction")};
 }
