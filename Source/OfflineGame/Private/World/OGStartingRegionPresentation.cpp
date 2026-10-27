@@ -5558,37 +5558,44 @@ void AOGWorldPresentationGameMode::StartPlay()
                     bAllOriginalSourcesPresent = false;
                 }
             }
-            if (bAllOriginalSourcesPresent)
+            if (!bAllOriginalSourcesPresent)
             {
-                AOGStartingRegionGenerator* Region = nullptr;
-                for (TActorIterator<AOGStartingRegionGenerator> It(World); It; ++It)
-                {
-                    if (It->bGate02R1RegionSource)
-                    {
-                        Region = *It;
-                        break;
-                    }
-                    if (!Region) Region = *It;
-                }
-                if (!Region)
-                {
-                    Region = World->SpawnActor<AOGStartingRegionGenerator>(
-                        AOGStartingRegionGenerator::StaticClass(),
-                        FVector::ZeroVector, FRotator::ZeroRotator);
-                }
-                if (Region)
-                {
-                    Region->bGate02R1RegionSource = true;
-                    Region->Tags.AddUnique(FName(TEXT("Gate02R1Source")));
-                    UE_LOG(LogOfflineGame, Log,
-                        TEXT("Native startup bound original authored Gate02 R1 source to the playable World."));
-                }
-                else
-                {
-                    UE_LOG(LogOfflineGame, Error,
-                        TEXT("Native First World R1 generator could not be spawned."));
-                }
+                UE_LOG(LogOfflineGame, Error,
+                    TEXT("First World R1 source unavailable. Native generator will refuse diagnostic terrain and settlements."));
             }
+            // Configure the carrier for SOURCE mode even if data is missing:
+            // otherwise its old generator would render legacy random fixtures
+            // and falsely appear to be the approved First World.
+
+            AOGStartingRegionGenerator* Region = nullptr;
+            for (TActorIterator<AOGStartingRegionGenerator> It(World); It; ++It)
+            {
+                if (It->bGate02R1RegionSource)
+                {
+                    Region = *It;
+                    break;
+                }
+                if (!Region) Region = *It;
+            }
+            if (!Region)
+            {
+                Region = World->SpawnActor<AOGStartingRegionGenerator>(
+                    AOGStartingRegionGenerator::StaticClass(),
+                    FVector::ZeroVector, FRotator::ZeroRotator);
+            }
+            if (Region)
+            {
+                Region->bGate02R1RegionSource = true;
+                Region->Tags.AddUnique(FName(TEXT("Gate02R1Source")));
+                UE_LOG(LogOfflineGame, Log,
+                    TEXT("Native startup bound original authored Gate02 R1 source to the playable World."));
+            }
+            else
+            {
+                UE_LOG(LogOfflineGame, Error,
+                    TEXT("Native First World R1 generator could not be spawned."));
+            }
+
         }
     }
     Super::StartPlay();
