@@ -22,6 +22,25 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(
     FOGLuminousCombatActionResolvedEvent,const FOGEntityId&,const FOGContentId&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOGNativeCombatActionResolvedEvent, const FOGResolvedCombatAction&);
 
+/** Read-only provenance of the last successfully journaled native combat action.
+ * EventId is the actual canonical ledger ID, not the action or battle ID.
+ * BattleStatus is the executor's status AFTER that recorded action. */
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGNativeCombatEventProvenance
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly) FOGEntityId EventId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId BattleId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId OwningRulerId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId ActionId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId SourceUnitId;
+    UPROPERTY(BlueprintReadOnly) TArray<FOGEntityId> TargetUnitIds;
+    UPROPERTY(BlueprintReadOnly) FOGContentId SkillId;
+    UPROPERTY(BlueprintReadOnly) int64 WorldTick = -1;
+    UPROPERTY(BlueprintReadOnly) EOGTurnBattleStatus BattleStatus = EOGTurnBattleStatus::NotStarted;
+};
+
 /**
  * Application-level owner of the authoritative game-core lifetime.
  *
@@ -129,6 +148,16 @@ public:
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
     FOGEntityId GetOwnedBattleRulerId() const { return OwnedLuminousTurnBattle ? ActiveCombatRulerId : FOGEntityId(); }
 
+    /** Available before the existing resolved-action notifications fire. Empty
+     * until an actual journal append succeeds; cleared on canonical release
+     * and successful encounter replacement. Failed actions preserve the last
+     * successfully recorded event. Shared by World and Ruler combat entry paths. */
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Combat|Provenance")
+    FOGEntityId GetLastNativeCombatEventId() const { return LastNativeCombatEvent.EventId; }
+
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Combat|Provenance")
+    FOGNativeCombatEventProvenance GetLastNativeCombatEventProvenance() const { return LastNativeCombatEvent; }
+
     UFUNCTION(BlueprintPure, Category = "OfflineGame|Core")
     int64 GetCanonicalWorldTick() const
     {
@@ -158,6 +187,9 @@ public:
     }
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FOGNativeCombatEventProvenanceTest;
+#endif
     bool InitializeCanonicalClock(FString& OutError);
     bool PumpCanonicalClock(FString& OutError);
     bool FlushCanonicalClockBoundary(FString& OutError);
@@ -179,6 +211,7 @@ private:
     // Owned solely by canonical GameCore; torn down before replacing Store.
     TUniquePtr<FOGTurnBattle> OwnedLuminousTurnBattle;
     FOGEntityId ActiveCombatRulerId;
+    FOGNativeCombatEventProvenance LastNativeCombatEvent;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;

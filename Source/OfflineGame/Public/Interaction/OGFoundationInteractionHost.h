@@ -79,6 +79,7 @@ private:
     bool EnsureRuntime();
     void BuildDiagnosticSelection(bool bAll);
     void RefreshProductionSelection();
+    FOGEntityId GetAcceptedContextEvent(bool bCompletedBattle) const;
     UOGSharedMotionControllerComponent* FindMotionController(AActor*) const;
     void OwnMotion(UOGSharedMotionControllerComponent*);
     void UpdateAnimationPacing();

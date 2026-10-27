@@ -243,6 +243,19 @@ bool UOGFoundationInteractionHost::BeginContext(FName Context,
     return EnterAuthored(Entry, Graph);
 }
 
+FOGEntityId UOGFoundationInteractionHost::GetAcceptedContextEvent(bool bCompletedBattle) const
+{
+    if (Core.IsValid())
+    {
+        const auto Event = Core->GetLastNativeCombatEventProvenance();
+        if (Event.EventId.IsValid() && Event.OwningRulerId == BoundRulerId &&
+            Event.WorldTick >= 0 && Event.WorldTick <= Core->GetCanonicalWorldTick() &&
+            (!bCompletedBattle || Event.BattleStatus == EOGTurnBattleStatus::Completed))
+            return Event.EventId;
+    }
+    return Combat.IsValid() && Combat->IsActive() ? Combat->GetResolvedEncounterEventId() : FOGEntityId();
+}
+
 bool UOGFoundationInteractionHost::EnterAuthored(const FOGInteractionEntry& Entry,
     const FOGInteractionActionGraph& Graph)
 {
@@ -339,9 +352,9 @@ TArray<FOGFoundationInteractionRow> UOGFoundationInteractionHost::GetRows() cons
         Rows.Add({TEXT("ruler"), TEXT("Begin Ruler interaction"), bReady && bContent});
         Rows.Add({TEXT("roster"), TEXT("Begin character interaction"), bReady && bContent});
         Rows.Add({TEXT("npc"), TEXT("Begin selected NPC interaction"), bReady && bContent && !SelectedParticipants.IsEmpty()});
-        const bool bEvent = Combat.IsValid() && Combat->IsActive() && Combat->GetResolvedEncounterEventId().IsValid();
+        const bool bEvent = GetAcceptedContextEvent(false).IsValid();
         Rows.Add({TEXT("event"), TEXT("Event interaction"), bContent && bEvent});
-        Rows.Add({TEXT("post_combat"), TEXT("Post-combat interaction"), bContent && bEvent});
+        Rows.Add({TEXT("post_combat"), TEXT("Post-combat interaction"), bContent && GetAcceptedContextEvent(true).IsValid()});
         if (Combat.IsValid() && Combat->IsActive())
         {
             Rows.Add({TEXT("select_next"), TEXT("Diagnostic: next canonical participant"), true});
@@ -393,7 +406,7 @@ bool UOGFoundationInteractionHost::ActivateRow(FName Id)
     }
     if (Id == TEXT("refresh")) { RefreshProductionSelection(); return true; }
     if (Id == TEXT("clear_participants")) { SelectedParticipants.Reset(); return true; }
-    if (IsEntry(Id)) return BeginContext(Id, {}, (Id == TEXT("event") || Id == TEXT("post_combat")) && Combat.IsValid() ? Combat->GetResolvedEncounterEventId() : FOGEntityId());
+    if (IsEntry(Id)) return BeginContext(Id, {}, (Id == TEXT("event") || Id == TEXT("post_combat")) ? GetAcceptedContextEvent(Id == TEXT("post_combat")) : FOGEntityId());
     if (Id == TEXT("select_next") || Id == TEXT("select_all")) { BuildDiagnosticSelection(Id == TEXT("select_all")); return true; }
     if (Id == TEXT("exit")) { Cancel(); return true; }
     FString Error; bool bResult = false;

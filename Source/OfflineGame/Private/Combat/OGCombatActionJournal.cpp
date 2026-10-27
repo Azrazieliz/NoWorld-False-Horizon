@@ -17,7 +17,7 @@ const FOGCombatUnitState* FindUnit(
         });
 }
 
-void AddUnitDelta(
+bool AddUnitDelta(
     const FOGCombatUnitState& Before,
     const FOGCombatUnitState& After,
     TArray<TSharedPtr<FJsonValue>>& OutDeltas)
@@ -27,7 +27,7 @@ void AddUnitDelta(
         Before.NextActionValue == After.NextActionValue &&
         Before.OccupiedLaneIndex == After.OccupiedLaneIndex)
     {
-        return;
+        return false;
     }
 
     TSharedRef<FJsonObject> Delta = MakeShared<FJsonObject>();
@@ -47,6 +47,7 @@ void AddUnitDelta(
     Delta->SetNumberField(TEXT("lane_after"),
         static_cast<double>(After.OccupiedLaneIndex));
     OutDeltas.Add(MakeShared<FJsonValueObject>(Delta));
+    return true;
 }
 }
 
@@ -95,6 +96,9 @@ bool FOGCombatActionJournal::BuildResolvedActionEvent(
         static_cast<double>(Before.CurrentActionValue));
     Payload->SetNumberField(TEXT("action_value_after"),
         static_cast<double>(After.CurrentActionValue));
+    // Preserve the legacy numeric display fields while retaining every int64 digit.
+    Payload->SetStringField(TEXT("action_value_before_exact"), LexToString(Before.CurrentActionValue));
+    Payload->SetStringField(TEXT("action_value_after_exact"), LexToString(After.CurrentActionValue));
 
     TArray<TSharedPtr<FJsonValue>> Targets;
     for (const FOGEntityId& TargetId : Action.TargetUnitIds)
@@ -110,12 +114,14 @@ bool FOGCombatActionJournal::BuildResolvedActionEvent(
     Payload->SetArrayField(TEXT("target_unit_ids"), MoveTemp(Targets));
 
     TArray<TSharedPtr<FJsonValue>> UnitDeltas;
+    TArray<FOGEntityId> AffectedUnits;
     for (const FOGCombatUnitState& BeforeUnit : Before.Units)
     {
         const FOGCombatUnitState* AfterUnit = FindUnit(After, BeforeUnit.UnitEntityId);
         if (AfterUnit)
         {
-            AddUnitDelta(BeforeUnit, *AfterUnit, UnitDeltas);
+            if (AddUnitDelta(BeforeUnit, *AfterUnit, UnitDeltas))
+                AffectedUnits.AddUnique(AfterUnit->UnitEntityId);
         }
     }
     Payload->SetArrayField(TEXT("unit_deltas"), MoveTemp(UnitDeltas));
@@ -138,6 +144,9 @@ bool FOGCombatActionJournal::BuildResolvedActionEvent(
     {
         OutEvent.RelatedEntities.AddUnique(TargetId);
     }
+    // Secondary field/passive/reaction/succession effects also supply factual
+    // subject evidence to quests and systemic interactions, beyond selected targets.
+    for (const FOGEntityId& UnitId : AffectedUnits) OutEvent.RelatedEntities.AddUnique(UnitId);
     OutEvent.PayloadJson = MoveTemp(PayloadJson);
     OutEvent.bChronicleEligible = true;
     return true;

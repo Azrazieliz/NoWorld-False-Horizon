@@ -1,4 +1,5 @@
 #include "Interaction/OGInteractionParticipantComponent.h"
+#include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 #include "Koikatsu/OGLuminousV3WardrobeQAWidget.h"
 #include "Animation/OGSharedMotionLibrary.h"
@@ -1201,6 +1202,8 @@ bool AOGLuminousV3PlayableCharacter::BindOwnedWorldCharacter_Implementation(
         {
             const FString Rig = Motion->RigProfile.ToString().ToLower();
             const FOGContentId Family = FOGContentId(Rig).IsValid() ? FOGContentId(Rig) : FOGContentId(TEXT("rig:") + Rig);
+            if (auto* Presenter = FindComponentByClass<UOGCanonicalCharacterPresentation>())
+                Presenter->bUseNeutralDiagnosticTint = false;
             if (!Participant->BindActualNativeParticipant(ManifestationId, Family, BindingError))
             { LastLuminousError = BindingError; bNativeOwnedCharacterBound = false; return false; }
         }

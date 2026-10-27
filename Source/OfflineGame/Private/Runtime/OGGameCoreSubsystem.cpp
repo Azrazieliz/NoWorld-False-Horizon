@@ -289,9 +289,12 @@ bool UOGGameCoreSubsystem::InstallVerifiedOptionalPackage(
 bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
 {
     bReleasingCanonicalRuntime = true;
+    // Clear causal entry context before consumers observe a world release.
+    LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     OnCanonicalRuntimeReleasing.Broadcast();
     // Combat callbacks borrow live canonical Registry/WorldStore authority.
     OwnedLuminousTurnBattle.Reset();
+    ActiveCombatRulerId = FOGEntityId();
     bReleasingCanonicalRuntime = false;
     if (OptionalPackageHost)
     {
@@ -873,6 +876,7 @@ bool UOGGameCoreSubsystem::StartApprovedLuminousEncounter(
         return false;
     OwnedLuminousTurnBattle=MoveTemp(Next);
     ActiveCombatRulerId=RulerId;
+    LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     return true;
 }
 
@@ -985,6 +989,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         return false;
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
     ActiveCombatRulerId=RulerId;
+    LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     return true;
 }
 
@@ -992,6 +997,7 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
     const FOGResolvedCombatAction& Action,FString& OutError)
 {
     if(!bCoreReady || bReleasingCanonicalRuntime ||
+       !WorldStore || !WorldStore->IsOpen() ||
        !OwnedLuminousTurnBattle ||
        OwnedLuminousTurnBattle->GetState().Status!=EOGTurnBattleStatus::Running)
     {
@@ -1015,6 +1021,18 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
         return false;
 
     *OwnedLuminousTurnBattle=MoveTemp(Candidate);
+    // Publish provenance ONLY after the real journal append succeeded. Both
+    // World/Ruler callers and narrative/interaction consumers read this same
+    // ledger ID; no synthetic encounter event or inferred outcome is created.
+    LastNativeCombatEvent.EventId = ActionEvent.EventId;
+    LastNativeCombatEvent.BattleId = Before.BattleId;
+    LastNativeCombatEvent.OwningRulerId = ActionEvent.PrimaryEntity;
+    LastNativeCombatEvent.ActionId = Action.ActionId;
+    LastNativeCombatEvent.SourceUnitId = Action.SourceUnitId;
+    LastNativeCombatEvent.TargetUnitIds = Action.TargetUnitIds;
+    LastNativeCombatEvent.SkillId = Action.SkillId;
+    LastNativeCombatEvent.WorldTick = ActionEvent.WorldTick;
+    LastNativeCombatEvent.BattleStatus = OwnedLuminousTurnBattle->GetState().Status;
     // This is a non-authoritative visual notification, emitted ONLY after
     // the existing source-approved battle executor and canonical event ledger
     // accepted the action.
