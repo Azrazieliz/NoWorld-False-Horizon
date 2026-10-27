@@ -114,7 +114,8 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|Native Assets")
     TArray<int32> AdditionalVersionNativeSkeletonBones;
 
-    /** In order CLOTHED, UNDERWEAR, NUDE; each native clip has own exact 975 skeleton. */
+    /** In order CLOTHED, UNDERWEAR, NUDE; each native clip must match the
+     * currently rendered form's source skeleton. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Luminous|MotionV3")
     TArray<FSoftObjectPath> NativeWalkByWardrobe;
 

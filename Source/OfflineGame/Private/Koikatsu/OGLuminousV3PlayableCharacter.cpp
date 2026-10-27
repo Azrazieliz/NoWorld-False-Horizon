@@ -179,7 +179,10 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
     // They do not grant ownership or claim Unreal asset admission by
     // themselves; every path is still validated against its form namespace.
     AdditionalVersionNativePartCounts = {6, 6, 6};
-    AdditionalVersionNativeSkeletonBones = {1131, 886, 1123};
+    // Canonical Awakened/Berserker/Grand counts are resolved by VersionId in
+    // ExpectedNativeBoneCount; keep this legacy staging fallback empty rather
+    // than pretending a wardrobe-indexed array can represent three forms.
+    AdditionalVersionNativeSkeletonBones = {0, 0, 0};
     MotionCapabilities = {TEXT("grounded"), TEXT("swimming"), TEXT("flying"),
         TEXT("combat"), TEXT("emote"), TEXT("adult_interaction")};
 }
@@ -205,6 +208,17 @@ int32 AOGLuminousV3PlayableCharacter::ExpectedNativeBoneCount(
         return State == EOGLuminousV3Wardrobe::Nude ? 1123 : 1131;
     if (!AdditionalLuminousSourceFolder(CanonicalLuminousVersionId).IsEmpty())
     {
+        // These source-authentic rigs are form-specific, not wardrobe-
+        // specific: each CLOTHED/UNDERWEAR/NUDE export retains the same form
+        // skeleton. Keep the measured contract tied to VersionId; the
+        // editable array remains a compatibility fallback for staged future
+        // source packages that do not yet have a canonical count.
+        if (CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_awakened_v4")) return 1131;
+        if (CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_berserker_v4")) return 886;
+        if (CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_grand_v4")) return 1123;
         const int32 Index = static_cast<int32>(State);
         return AdditionalVersionNativeSkeletonBones.IsValidIndex(Index)
             ? AdditionalVersionNativeSkeletonBones[Index] : 0;
@@ -963,7 +977,7 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
 
     // Existing genuine per-wardrobe clips remain functional as fallback.
     // These are genuine installed Koikatsu-compatible source animations
-    // imported onto the exact 975-bone CLOTHED Luminous skeleton.
+    // imported onto the exact skeleton of the currently rendered form.
     // Wardrobe-skeleton mismatch never falls through to another appearance.
     // Flight and swimming do not borrow Walk/Run ground gait.
     if (Phase == EOGLuminousV3MotionPhase::Flying ||
@@ -988,7 +1002,7 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     case EOGLuminousV3MotionPhase::Jump: Clips = &NativeJumpByWardrobe; break;
     default: return nullptr;
     }
-    // Animation must follow the ACTUALLY RENDERED 975-bone skeleton, which
+    // Animation must follow the ACTUALLY RENDERED form skeleton, which
     // can differ from the real clothing state under Privacy/SFW masking.
     const int32 State = static_cast<int32>(EffectiveAppearance.EffectiveRenderedWardrobe);
     if (!Clips || Clips->Num() != 3 || !Clips->IsValidIndex(State)) return nullptr;
@@ -1001,8 +1015,8 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
         return nullptr;
     UAnimSequence* Sequence = Cast<UAnimSequence>((*Clips)[State].TryLoad());
     if (!Sequence || !Sequence->GetSkeleton()) return nullptr;
-    // Actual source-authored Alter states own separate 1131/1123 native rigs;
-    // runtime will only animate when a matching original Skeleton is present.
+    // Every source-authored form state owns its matching native skeleton;
+    // runtime will only animate when that original Skeleton is present.
     return Sequence;
 }
 
