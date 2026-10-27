@@ -57,9 +57,12 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         OutError=TEXT("Selected Manifestation is not the actually possessed Luminous World character.");
         return false;
     }
-    if(Slot < -1 || Slot>2)
+    // Different approved forms expose different active-skill counts:
+    // Base/Alter/Grand 3, Awakened 4, Berserker 2. An invalid slot must
+    // never index outside the currently owned canonical skill set.
+    if(Slot < -1 || (Slot >= 0 && !ApprovedSkills.ActiveSkills.IsValidIndex(Slot)))
     {
-        OutError=TEXT("Only the three authored actives or explicit Ultimate exist.");
+        OutError=TEXT("The selected form has no authored active skill in this slot.");
         return false;
     }
     FOGContentId Skill;
