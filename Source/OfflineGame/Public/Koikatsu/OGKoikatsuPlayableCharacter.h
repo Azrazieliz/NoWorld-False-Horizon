@@ -36,13 +36,13 @@ public:
     TSoftObjectPtr<UOGSharedMotionLibrary> SharedMotionLibrary;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
-    FName SharedMotionRigProfile = TEXT("koikatsu_fixture_21");
+    FName SharedMotionRigProfile = FName(TEXT("koikatsu_fixture_21"));
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
-    FName SharedMotionAnatomy = TEXT("humanoid");
+    FName SharedMotionAnatomy = FName(TEXT("humanoid"));
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
-    FName SharedOutfitProfile = TEXT("CLOTHED");
+    FName SharedOutfitProfile = FName(TEXT("CLOTHED"));
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Koikatsu|SharedMotion")
     TArray<FName> SharedMotionCapabilities;
