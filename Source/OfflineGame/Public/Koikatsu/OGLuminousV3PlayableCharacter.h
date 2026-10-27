@@ -129,10 +129,10 @@ public:
     TSoftObjectPtr<UOGSharedMotionLibrary> SharedMotionLibrary;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Motion|Shared")
-    FName MotionRigProfile = TEXT("koikatsu_original");
+    FName MotionRigProfile = FName(TEXT("koikatsu_original"));
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Motion|Shared")
-    FName MotionAnatomyProfile = TEXT("humanoid");
+    FName MotionAnatomyProfile = FName(TEXT("humanoid"));
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="OfflineGame|Motion|Shared")
     TArray<FName> MotionCapabilities;

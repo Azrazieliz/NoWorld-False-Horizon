@@ -31,10 +31,10 @@ public:
     FName RigProfile = NAME_None;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
-    FName AnatomyProfile = TEXT("humanoid");
+    FName AnatomyProfile = FName(TEXT("humanoid"));
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
-    FName OutfitProfile = TEXT("CLOTHED");
+    FName OutfitProfile = FName(TEXT("CLOTHED"));
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
     TArray<FName> Capabilities;
