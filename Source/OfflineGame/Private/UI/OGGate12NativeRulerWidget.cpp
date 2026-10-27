@@ -1,4 +1,5 @@
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "Narrative/OGNarrativeSessionSubsystem.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
@@ -148,12 +149,15 @@ void UOGGate12NativeRulerWidget::NativeConstruct()
             this, &UOGGate12NativeRulerWidget::ResetCharacterDevelopment);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
             this, &UOGGate12NativeRulerWidget::ResetInventoryUi);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(
+            this, &UOGGate12NativeRulerWidget::ResetNarrativePage);
     }
     RefreshFromCanonical();
 }
 
 void UOGGate12NativeRulerWidget::NativeDestruct()
 {
+    ResetNarrativePage();
     ResetInventoryUi();
     ResetCharacterDevelopment();
     if (UOGGameCoreSubsystem* Core = GetGameInstance()
@@ -172,7 +176,10 @@ void UOGGate12NativeRulerWidget::NativeTick(
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     const bool bInventoryContextChanged = SynchronizeInventoryContext(Session);
-    if (SynchronizeDevelopmentContext(Session) || bInventoryContextChanged)
+    const bool bNarrativeContextChanged = NarrativePageRulerId.IsValid() &&
+        (!Session || !Session->IsBoundToStoredRuler() || Session->BoundRulerId != NarrativePageRulerId);
+    if (bNarrativeContextChanged) ResetNarrativePage();
+    if (SynchronizeDevelopmentContext(Session) || bInventoryContextChanged || bNarrativeContextChanged)
         BuildCurrentPage();
     const FVector2D ViewportSize = MyGeometry.GetLocalSize();
     // Ruler has NO landscape presentation. During the device's asynchronous
@@ -595,6 +602,7 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
     // Require a fresh review rather than keeping a previous world's quote.
     ResetCharacterDevelopment();
     ClearInventoryReview();
+    ClearNarrativeReview();
     if (!Screen) BuildRoot();
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
@@ -1799,6 +1807,13 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session) return;
+    UOGNarrativeSessionSubsystem* Narrative = GI ? GI->GetSubsystem<UOGNarrativeSessionSubsystem>() : nullptr;
+    if (bNarrativeJournalOpen || (Narrative && Narrative->HasOpenSubject()))
+    {
+        BuildNarrativeJournal();
+        return;
+    }
+    AddAction(Content, TEXT("QUEST JOURNAL"), TEXT("narrative/open"));
 
     // Frozen Gate10 Records: a 2x2 native UMG section board with independent
     // real buttons and a canonical detail panel. The illustrated mockup
@@ -2307,6 +2322,15 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         return;
     }
 
+    if (Action.StartsWith(TEXT("narrative/")))
+    {
+        ClearDevelopmentReview();
+        ResetInventoryUi();
+        HandleNarrativeAction(Action);
+        return;
+    }
+    ResetNarrativePage();
+    if (UOGNarrativeSessionSubsystem* Narrative = GI->GetSubsystem<UOGNarrativeSessionSubsystem>()) Narrative->CloseSubject();
     if (Action.StartsWith(TEXT("inventory/")))
     {
         ClearDevelopmentReview();

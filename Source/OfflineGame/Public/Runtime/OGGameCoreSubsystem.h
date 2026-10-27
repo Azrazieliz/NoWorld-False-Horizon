@@ -20,6 +20,7 @@ DECLARE_MULTICAST_DELEGATE(FOGCanonicalRuntimeReleasing);
 // No gameplay executor may infer a hit or award a resource from this event.
 DECLARE_MULTICAST_DELEGATE_TwoParams(
     FOGLuminousCombatActionResolvedEvent,const FOGEntityId&,const FOGContentId&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOGNativeCombatActionResolvedEvent, const FOGResolvedCombatAction&);
 
 /**
  * Application-level owner of the authoritative game-core lifetime.
@@ -36,6 +37,8 @@ class OFFLINEGAME_API UOGGameCoreSubsystem : public UGameInstanceSubsystem
 public:
     FOGCanonicalRuntimeReleasing OnCanonicalRuntimeReleasing;
     FOGLuminousCombatActionResolvedEvent OnLuminousCombatActionResolved;
+    // Full accepted branch/target context for generic native character presentation.
+    FOGNativeCombatActionResolvedEvent OnNativeCombatActionResolved;
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
@@ -124,6 +127,7 @@ public:
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
+    FOGEntityId GetOwnedBattleRulerId() const { return OwnedLuminousTurnBattle ? ActiveCombatRulerId : FOGEntityId(); }
 
     UFUNCTION(BlueprintPure, Category = "OfflineGame|Core")
     int64 GetCanonicalWorldTick() const
@@ -174,6 +178,7 @@ private:
     TUniquePtr<IOGWorldStore> WorldStore;
     // Owned solely by canonical GameCore; torn down before replacing Store.
     TUniquePtr<FOGTurnBattle> OwnedLuminousTurnBattle;
+    FOGEntityId ActiveCombatRulerId;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;

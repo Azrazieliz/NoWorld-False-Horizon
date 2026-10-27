@@ -233,6 +233,14 @@ also retains exact skill/Ultimate-branch semantics, actual target facing, native
 hit/defeat reactions and the existing HP-impact HUD. These presentation adapters
 do not implement missing combat executors or activate unregistered v4 kits.
 
+Generic character presentation subscribes to `OnNativeCombatActionResolved`,
+which carries the full accepted action. An Ultimate branch keeps its exact
+`Combat.Ultimate.<skill>.<branch>` semantic. Unbranched skills may use their
+authored mapping, otherwise the exact `Combat.Skill.<skill>` semantic. Repeating
+a skill in a new accepted action restarts its motion; the same action ID is not
+presented twice. The older source/skill notification remains available to existing
+listeners. Neither signal grants damage, rewards or authority to presentation.
+
 ## Native verification still required
 
 Source review checks the existing Store/shared-controller declarations and the

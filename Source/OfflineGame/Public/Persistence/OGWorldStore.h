@@ -373,6 +373,18 @@ public:
     virtual bool ListWorldEvents(
         const FOGEntityId&, FName, bool, int32,
         TArray<FOGWorldEvent>&, FString&) const = 0;
+    /** Optional bounded keyset paging for gameplay evidence beyond the newest window. */
+    virtual bool ListWorldEventsPage(const FOGEntityId& Entity, FName Type, bool bChronicleOnly,
+        int32 Limit, const FOGWorldEventCursor& Before, TArray<FOGWorldEvent>& Out,
+        FOGWorldEventCursor& Next, FString& Error) const
+    {
+        Out.Reset(); Next = FOGWorldEventCursor();
+        if (Before.EventId.IsValid())
+        { Error = TEXT("This world store does not support paged event history."); return false; }
+        if (!ListWorldEvents(Entity, Type, bChronicleOnly, Limit, Out, Error)) return false;
+        if (Out.Num() == Limit && !Out.IsEmpty()) { Next.WorldTick = Out.Last().WorldTick; Next.EventId = Out.Last().EventId; }
+        return true;
+    }
 
     virtual bool BackupTo(const FString&, FString&) = 0;
     virtual bool RestoreFrom(const FString&, FString&) = 0;

@@ -3,6 +3,8 @@
 // invent world-level scaling, or use the diagnostic combat simulator.
 #include "World/OGStartingRegionPresentation.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Characters/OGContentCharacterActors.h"
+#include "Combat/OGNativeTurnAgentComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnBattle.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
@@ -11,6 +13,9 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
 {
@@ -19,7 +24,8 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
         return;
     const AOGLuminousV3PlayableCharacter* Luminous =
         Cast<AOGLuminousV3PlayableCharacter>(this);
-    if (!Luminous) return;
+    const AOGContentPlayableCharacter* ContentCharacter = Cast<AOGContentPlayableCharacter>(this);
+    if (!Luminous && !ContentCharacter) return;
 
     UGameInstance* GI = GetGameInstance();
     UOGGameCoreSubsystem* Core = GI ?
@@ -34,9 +40,10 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     const FOGCombatUnitState* Owned = State.Units.FindByPredicate(
         [Session](const FOGCombatUnitState& U)
         { return U.UnitEntityId == Session->SelectedManifestationId; });
-    if (!Owned || !Luminous->IsBoundToOwnedLuminousCombatUnit(
-        Session->BoundRulerId, Session->SelectedManifestationId,
-        Owned->SkillSet.CurrentForm)) return;
+    if (!Owned || !((Luminous && Luminous->IsBoundToOwnedLuminousCombatUnit(
+        Session->BoundRulerId, Session->SelectedManifestationId, Owned->SkillSet.CurrentForm)) ||
+        (ContentCharacter && ContentCharacter->IsBoundToOwnedCombatUnit(
+            Session->BoundRulerId, Session->SelectedManifestationId, Owned->SkillSet.CurrentForm)))) return;
 
     const double Now = GetWorld()->GetTimeSeconds();
     if (AutonomousCombatBattleId != State.BattleId)
@@ -56,6 +63,11 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     }
     if (Now < NextCanonicalOpponentActionAt) return;
     NextCanonicalOpponentActionAt = Now + 1.20;
+    AActor* ExistingSourceBody = UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+        GetWorld(), ActualBattleId, ActingId);
+    if (!IsValid(ExistingSourceBody)) return; // Do not execute an invisible, unembodied opponent.
+    if (ExistingSourceBody->FindComponentByClass<UOGNativeTurnAgentComponent>())
+        return; // Its exact authored policy owns decisions; never race or bypass it with this fallback.
 
     // All choices are already authored abilities on the actual participating
     // unit. The approved resolver owns targeting, AoE expansion, costs,
@@ -89,6 +101,7 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     {
         const FOGContentId Skill =
             Authored[(Start + Offset) % Authored.Num()];
+        const bool bUltimate = Skill == Acting.SkillSet.UltimateSkill;
         for (const FOGCombatUnitState* Focus : Candidates)
         {
             FOGResolvedCombatAction Proposal;
@@ -173,8 +186,11 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                 if (UOGSharedMotionControllerComponent* Motion =
                     SourceActor->FindComponentByClass<UOGSharedMotionControllerComponent>())
                 {
-                    const FName ActionName(*FString::Printf(
-                        TEXT("Combat.Skill.%s"), *Skill.ToString()));
+                    FString Semantic = FString(bUltimate ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.")) + Skill.ToString();
+                    TSharedPtr<FJsonObject> Resolution; FString Branch;
+                    if (bUltimate && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Expanded.ResolutionJson), Resolution) &&
+                        Resolution && Resolution->TryGetStringField(TEXT("branch"), Branch) && !Branch.IsEmpty()) Semantic += TEXT(".") + Branch.ToLower();
+                    const FName ActionName(*Semantic);
                     Motion->PlayAction(ActionName, TEXT("Combat"), false, 1);
                 }
             }

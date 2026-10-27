@@ -7,6 +7,9 @@
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/GameInstance.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 
@@ -28,7 +31,7 @@ bool AOGContentPlayableCharacter::BindOwnedWorldCharacter_Implementation(
         UE_LOG(LogTemp, Warning, TEXT("Character appearance binding failed: %s"), *Error);
         return false;
     }
-    if (BoundCore.IsValid()) BoundCore->OnLuminousCombatActionResolved.RemoveAll(this);
+    if (BoundCore.IsValid()) BoundCore->OnNativeCombatActionResolved.RemoveAll(this);
     UOGGameCoreSubsystem* Core = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
     BoundCore = Core;
     BoundManifestation = Manifestation;
@@ -36,8 +39,9 @@ bool AOGContentPlayableCharacter::BindOwnedWorldCharacter_Implementation(
     BoundIdentity = Identity;
     BoundVersion = Version;
     FailedTraversalAction = NAME_None;
+    LastPresentedActionId = FOGEntityId();
     LastMotionController.Reset();
-    if (Core) Core->OnLuminousCombatActionResolved.AddUObject(this, &ThisClass::HandleResolvedCombatAction);
+    if (Core) Core->OnNativeCombatActionResolved.AddUObject(this, &ThisClass::HandleResolvedCombatAction);
     return true;
 }
 
@@ -48,16 +52,28 @@ bool AOGContentPlayableCharacter::IsBoundToOwnedCombatUnit(const FOGEntityId& Ru
         Ruler == BoundRuler && Manifestation == BoundManifestation && Version == BoundVersion;
 }
 
-void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGEntityId& Source,
-    const FOGContentId& Skill)
+void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCombatAction& Action)
 {
-    if (Source != BoundManifestation || !Appearance ||
+    if (Action.SourceUnitId != BoundManifestation || !Appearance ||
         !Appearance->MatchesOwnedManifestation(BoundRuler, BoundManifestation)) return;
-    const FName* Semantic = CombatActionSemantics.Find(Skill);
-    if (!Semantic || Semantic->IsNone()) return;
+    if (!Action.ActionId.IsValid() || Action.ActionId == LastPresentedActionId) return;
+    const FOGTurnBattle* Battle = BoundCore.IsValid() ? BoundCore->GetOwnedLuminousTurnBattle() : nullptr;
+    const FOGCombatUnitState* Unit = Battle ? Battle->GetState().Units.FindByPredicate(
+        [this](const FOGCombatUnitState& U) { return U.UnitEntityId == BoundManifestation; }) : nullptr;
+    if (!Unit) return;
+    TSharedPtr<FJsonObject> Resolution;
+    if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson), Resolution) || !Resolution) return;
+    FString Branch;
+    if (Resolution->HasField(TEXT("branch")) && !Resolution->TryGetStringField(TEXT("branch"), Branch)) return;
+    const bool bUltimate = Action.SkillId == Unit->SkillSet.UltimateSkill;
+    const FName* Authored = Branch.IsEmpty() ? CombatActionSemantics.Find(Action.SkillId) : nullptr;
+    FString Key = FString(bUltimate ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.")) + Action.SkillId.ToString();
+    if (bUltimate && !Branch.IsEmpty()) Key += TEXT(".") + Branch.ToLower();
+    const FName Semantic = Authored ? *Authored : FName(*Key);
     FString Error;
-    if (!Appearance->PlaySemanticAction(*Semantic, TEXT("Combat"), false, 1, NAME_None, Error))
-        UE_LOG(LogTemp, Warning, TEXT("Source combat motion %s is unavailable: %s"), *Semantic->ToString(), *Error);
+    if (!Appearance->PlaySemanticAction(Semantic, TEXT("Combat"), false, 1, NAME_None, Error))
+        UE_LOG(LogTemp, Warning, TEXT("Source combat motion %s is unavailable: %s"), *Semantic.ToString(), *Error);
+    else LastPresentedActionId = Action.ActionId;
 }
 
 void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
@@ -113,7 +129,7 @@ void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
 
 void AOGContentPlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
 {
-    if (BoundCore.IsValid()) BoundCore->OnLuminousCombatActionResolved.RemoveAll(this);
+    if (BoundCore.IsValid()) BoundCore->OnNativeCombatActionResolved.RemoveAll(this);
     BoundCore.Reset();
     Super::EndPlay(Reason);
 }

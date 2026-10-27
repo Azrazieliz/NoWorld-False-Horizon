@@ -39,3 +39,10 @@ struct OFFLINEGAME_API FOGWorldEvent
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     bool bChronicleEligible = false;
 };
+
+/** Descending (world_tick,event_id) cursor over the existing append-only ledger. */
+struct OFFLINEGAME_API FOGWorldEventCursor
+{
+    int64 WorldTick = 0;
+    FOGEntityId EventId;
+};

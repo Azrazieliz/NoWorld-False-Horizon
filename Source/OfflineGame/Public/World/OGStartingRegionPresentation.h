@@ -1012,6 +1012,9 @@ public:
     /** Native UMG world transition uses existing HUD/presentation contracts. */
     UFUNCTION()
     void OnGate12NativeWorldRequested();
+    /** Content-driven World interactions enter the actual native HUD surface. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
+    bool ShowNativeRulerSurface(FString& OutError);
     virtual void NotifyHitBoxClick(FName BoxName) override;
     virtual void NotifyHitBoxRelease(FName BoxName) override;
     TSet<FName> PressedWorldControls;

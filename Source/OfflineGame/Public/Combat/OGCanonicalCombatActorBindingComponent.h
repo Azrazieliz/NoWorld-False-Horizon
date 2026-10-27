@@ -27,6 +27,8 @@ public:
     void UnbindVisual();
 
     bool IsBoundTo(const FOGEntityId& BattleId, const FOGEntityId& UnitId) const;
+    FOGEntityId GetBoundBattleId() const { return BoundBattleId; }
+    FOGEntityId GetBoundUnitId() const { return BoundUnitId; }
     static AActor* FindActualWorldActor(UWorld* World,
         const FOGEntityId& BattleId, const FOGEntityId& UnitId);
 

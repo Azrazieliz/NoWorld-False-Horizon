@@ -6366,6 +6366,28 @@ void AOGWorldPresentationHud::SetFoundationSurface(FName Surface)
     if (Character) Character->RefreshFoundationInputState();
 }
 
+bool AOGWorldPresentationHud::ShowNativeRulerSurface(FString& OutError)
+{
+    OutError.Reset();
+    UOGGate12RulerSessionSubsystem* Session = GetGameInstance()
+        ? GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!bGate12NativeRulerUMGEnabled || !PlayerOwner || !PlayerOwner->IsLocalController() ||
+        !PlayerOwner->GetLocalPlayer() || !Session || !Session->IsBoundToStoredRuler())
+    { OutError = TEXT("The native Ruler interface is unavailable for this local player."); return false; }
+    const FName PreviousSurface = FoundationSurface;
+    if (!Session->ReturnToRuler(OutError)) return false;
+    SetFoundationSurface(TEXT("ruler"));
+    SynchronizeGate12NativeRulerUMG(true);
+    if (!IsValid(Gate12NativeRulerWidget) || !Gate12NativeRulerWidget->IsInViewport())
+    {
+        SetFoundationSurface(PreviousSurface);
+        OutError = TEXT("The native Ruler interface could not be opened.");
+        return false;
+    }
+    Gate12NativeRulerWidget->RefreshFromCanonical();
+    return true;
+}
+
 void AOGWorldPresentationHud::DrawFoundationOpening(
     float Scale,
     const FLinearColor& MainText,
@@ -10294,7 +10316,8 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         }
         else
         {
-            int32 Slot = INDEX_NONE;
+            // -1 is the valid Ultimate command, so it cannot also mean unknown.
+            int32 Slot = MIN_int32;
             FName Branch = NAME_None;
             if (Hit == TEXT("OG.Battle.A1")) Slot = 0;
             else if (Hit == TEXT("OG.Battle.A2")) Slot = 1;
@@ -10309,7 +10332,7 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
             else if (Hit == TEXT("OG.Battle.Ultimate.GrandGenesis")) { Slot=-1;Branch=TEXT("genesis"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.GrandRuin")) { Slot=-1;Branch=TEXT("grand_ruin"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.GrandVerdict")) { Slot=-1;Branch=TEXT("verdict"); }
-            if (Slot == INDEX_NONE ||
+            if (Slot == MIN_int32 ||
                 !Character->SubmitApprovedLuminousWorldAction(Slot, Branch, Error))
                 FoundationStatusMessage = Error.IsEmpty() ?
                     TEXT("The selected battle action is unavailable.") : Error;

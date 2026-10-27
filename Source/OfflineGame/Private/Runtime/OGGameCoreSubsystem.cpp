@@ -871,6 +871,7 @@ bool UOGGameCoreSubsystem::StartApprovedLuminousEncounter(
          *Next,*WorldStore,RulerId,FOGLuminousCanonicalSources(),OutError))
         return false;
     OwnedLuminousTurnBattle=MoveTemp(Next);
+    ActiveCombatRulerId=RulerId;
     return true;
 }
 
@@ -982,6 +983,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         *Candidate,RulerId,MoveTemp(TrustedProviders),OutError))
         return false;
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
+    ActiveCombatRulerId=RulerId;
     return true;
 }
 
@@ -1000,6 +1002,7 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
     // This is a non-authoritative visual notification, emitted ONLY after
     // the existing source-approved battle executor accepted the action.
     OnLuminousCombatActionResolved.Broadcast(Action.SourceUnitId,Action.SkillId);
+    OnNativeCombatActionResolved.Broadcast(Action);
     return true;
 }
 

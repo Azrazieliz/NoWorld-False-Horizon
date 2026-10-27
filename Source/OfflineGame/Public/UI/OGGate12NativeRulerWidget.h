@@ -6,6 +6,7 @@
 #include "Progression/OGCharacterDevelopmentService.h"
 #include "UI/OGUiViewModels.h"
 #include "World/OGOwnedEquipmentService.h"
+#include "Narrative/OGNarrativeService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
@@ -185,6 +186,14 @@ private:
     FString InventoryRefreshWarning;
     bool bInventoryFeedbackError = false;
 
+    bool bNarrativeJournalOpen = false;
+    FOGContentId OpenNarrativeQuestId;
+    FOGContentId OpenNarrativeDialogueId;
+    FOGEntityId NarrativePageRulerId;
+    FOGNarrativePreview PendingNarrativePreview;
+    FOGEntityId PendingNarrativeRequestId;
+    FString NarrativeFeedback;
+
     void BuildRoot();
     void RefreshFrozenScene(EOGRulerPrimaryDestination Destination);
     void BuildCurrentPage();
@@ -218,6 +227,10 @@ private:
     void ReleaseRosterPreviewStages();
     void LoadSelectedPresentationPreference(const UOGGate12RulerSessionSubsystem* Session, FString& OutError);
     void BuildRecords();
+    void BuildNarrativeJournal();
+    void HandleNarrativeAction(const FString& Action);
+    void ClearNarrativeReview();
+    void ResetNarrativePage();
     void BuildTerritory();
     void BuildNav();
     void AddMessage(UVerticalBox* Parent, const FString& Value, int32 FontSize = 22,

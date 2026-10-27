@@ -10,6 +10,7 @@ class UOGCharacterAppearanceComponent;
 class UOGSharedMotionControllerComponent;
 class UOGCanonicalCombatActorBindingComponent;
 class UOGGameCoreSubsystem;
+struct FOGResolvedCombatAction;
 
 /** Content Blueprint supplies appearance definitions and visual action maps.
  * The inherited World pawn continues to own movement, camera and touch input. */
@@ -53,7 +54,8 @@ private:
     FOGContentId BoundIdentity;
     FOGContentId BoundVersion;
     FName FailedTraversalAction = NAME_None;
-    void HandleResolvedCombatAction(const FOGEntityId& Source, const FOGContentId& Skill);
+    FOGEntityId LastPresentedActionId;
+    void HandleResolvedCombatAction(const FOGResolvedCombatAction& Action);
 };
 
 /** Non-gameplay Actor for the existing live roster capture. Content only needs
