@@ -10213,14 +10213,20 @@ void AOGWorldPresentationHud::DrawHUD()
     DrawFoundationDiagnosticSurface(Character, Scale, false);
     if (Character)
     {
-        const auto Caption = Character->FindComponentByClass<UOGSemanticAudioRuntime>()->GetCurrentCaption();
-        if (Caption.bVisible)
+        // Not every approved playable World pawn installs optional semantic
+        // audio. Missing audio must not crash the live World/HUD render loop.
+        if (const UOGSemanticAudioRuntime* Audio =
+                Character->FindComponentByClass<UOGSemanticAudioRuntime>())
         {
-            const float CaptionScale = Caption.Presentation == TEXT("large") ? .82f : .6f;
-            DrawRect(FLinearColor(.01f,.015f,.02f,Caption.Readability == TEXT("high_contrast") ? .98f : .80f),
-                Canvas->ClipX * .20f, Canvas->ClipY * .83f, Canvas->ClipX * .60f, 58 * Scale);
-            DrawFoundationText(Caption.Speaker.ToString() + TEXT(" ") + Caption.Text.ToString(), MainText,
-                Canvas->ClipX * .22f, Canvas->ClipY * .85f, nullptr, CaptionScale * Scale);
+            const auto Caption = Audio->GetCurrentCaption();
+            if (Caption.bVisible)
+            {
+                const float CaptionScale = Caption.Presentation == TEXT("large") ? .82f : .6f;
+                DrawRect(FLinearColor(.01f,.015f,.02f,Caption.Readability == TEXT("high_contrast") ? .98f : .80f),
+                    Canvas->ClipX * .20f, Canvas->ClipY * .83f, Canvas->ClipX * .60f, 58 * Scale);
+                DrawFoundationText(Caption.Speaker.ToString() + TEXT(" ") + Caption.Text.ToString(), MainText,
+                    Canvas->ClipX * .22f, Canvas->ClipY * .85f, nullptr, CaptionScale * Scale);
+            }
         }
     }
 }
@@ -10289,6 +10295,11 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
             else if (Hit == TEXT("OG.Battle.Ultimate.Night")) { Slot=-1;Branch=TEXT("night"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.Ruin")) { Slot=-1;Branch=TEXT("ruin"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.Harvest")) { Slot=-1;Branch=TEXT("harvest"); }
+            else if (Hit == TEXT("OG.Battle.Ultimate.AzureDawn") ||
+                     Hit == TEXT("OG.Battle.Ultimate.CrownBreaks")) { Slot=-1;Branch=NAME_None; }
+            else if (Hit == TEXT("OG.Battle.Ultimate.GrandGenesis")) { Slot=-1;Branch=TEXT("genesis"); }
+            else if (Hit == TEXT("OG.Battle.Ultimate.GrandRuin")) { Slot=-1;Branch=TEXT("grand_ruin"); }
+            else if (Hit == TEXT("OG.Battle.Ultimate.GrandVerdict")) { Slot=-1;Branch=TEXT("verdict"); }
             if (Slot == INDEX_NONE ||
                 !Character->SubmitApprovedLuminousWorldAction(Slot, Branch, Error))
                 FoundationStatusMessage = Error.IsEmpty() ?
