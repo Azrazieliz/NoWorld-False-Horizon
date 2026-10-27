@@ -326,10 +326,47 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     // Buttons map to the real approved ActiveSkill slots, not diagnostic
     // Basic/Skill1/Skill2 placeholders. Ultimate selection is always explicit.
     const int32 ActiveCount = Owned->SkillSet.ActiveSkills.Num();
-    const int32 ButtonCount = ActiveCount + 2; // Authored actives + two existing Ultimate choices.
+    const FString Form = Owned->SkillSet.CurrentForm.ToString();
+    const bool bBase = Form == TEXT("character:luminous_valentine.version_ln_base");
+    const bool bAlter = Form == TEXT("character:luminous_valentine.version_alter_v1");
+    const bool bAwakened = Form == TEXT("character:luminous_valentine.version_awakened_v4");
+    const bool bBerserker = Form == TEXT("character:luminous_valentine.version_berserker_v4");
+    const bool bGrand = Form == TEXT("character:luminous_valentine.version_grand_v4");
+    // Base and Alter have two authored branches on an established executor.
+    // Awakened and Berserker have ONE ultimate each, Grand has THREE distinct
+    // ultimates. Never label all non-Base characters with Alter's two branches.
+    TArray<FName> UltimateControls;
+    TArray<FString> UltimateLabels;
+    if (bBase)
+    {
+        UltimateControls = { TEXT("OG.Battle.Ultimate.Day"), TEXT("OG.Battle.Ultimate.Night") };
+        UltimateLabels = { TEXT("DAY"), TEXT("NIGHT") };
+    }
+    else if (bAlter)
+    {
+        UltimateControls = { TEXT("OG.Battle.Ultimate.Ruin"), TEXT("OG.Battle.Ultimate.Harvest") };
+        UltimateLabels = { TEXT("RUIN"), TEXT("HOLLOW CROWN") };
+    }
+    else if (bAwakened)
+    {
+        UltimateControls = { TEXT("OG.Battle.Ultimate.AzureDawn") };
+        UltimateLabels = { TEXT("AZURE DAWN") };
+    }
+    else if (bBerserker)
+    {
+        UltimateControls = { TEXT("OG.Battle.Ultimate.CrownBreaks") };
+        UltimateLabels = { TEXT("CROWN BREAKS") };
+    }
+    else if (bGrand)
+    {
+        UltimateControls = { TEXT("OG.Battle.Ultimate.GrandGenesis"),
+            TEXT("OG.Battle.Ultimate.GrandRuin"), TEXT("OG.Battle.Ultimate.GrandVerdict") };
+        UltimateLabels = { TEXT("GENESIS"), TEXT("RUIN"), TEXT("VERDICT") };
+    }
+    const int32 ButtonCount = ActiveCount + UltimateControls.Num();
     const float ButtonGap = 8.f*S;
     const float ButtonW = FMath::Min(140.f*S,
-        (W-2.f*Edge-(ButtonCount-1)*ButtonGap)/FMath::Max(1,ButtonCount));
+        (W-2.f*Edge-FMath::Max(0,ButtonCount-1)*ButtonGap)/FMath::Max(1,ButtonCount));
     const float ButtonH = 54.f*S;
     const float Bottom = H-ButtonH-Edge;
     DrawGameText(TEXT("AoE hits ALL eligible field allies/enemies automatically. Tap to set primary."),
@@ -339,22 +376,21 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const FString Label = FString::Printf(TEXT("ACTIVE %d"),Slot+1);
         DrawGameButton(Label,
             FName(*FString::Printf(TEXT("OG.Battle.A%d"),Slot+1)),
-            Edge+Slot*(ButtonW+8.f*S),Bottom,ButtonW,ButtonH,
-            Slot==0,bOwnTurn && Owned->SkillSet.ActiveSkills.IsValidIndex(Slot) &&
-            Owned->SkillSet.ActiveSkills[Slot].IsValid(),158);
+            Edge+Slot*(ButtonW+ButtonGap),Bottom,ButtonW,ButtonH,
+            Slot==0,bOwnTurn && Owned->SkillSet.ActiveSkills[Slot].IsValid(),158);
     }
-    const bool bBase = Owned->SkillSet.CurrentForm ==
-        FOGContentId(TEXT("character:luminous_valentine.version_ln_base"));
-    const FName LeftId = bBase ? TEXT("OG.Battle.Ultimate.Day") :
-        TEXT("OG.Battle.Ultimate.Ruin");
-    const FName RightId = bBase ? TEXT("OG.Battle.Ultimate.Night") :
-        TEXT("OG.Battle.Ultimate.Harvest");
-    DrawGameButton(bBase ? TEXT("DAY") : TEXT("RUIN"),LeftId,
-        Edge+ActiveCount*(ButtonW+ButtonGap),Bottom,ButtonW,ButtonH,
-        false,bOwnTurn && Owned->SkillSet.UltimateSkill.IsValid(),158);
-    DrawGameButton(bBase ? TEXT("NIGHT") : TEXT("HOLLOW CROWN"),RightId,
-        Edge+(ActiveCount+1)*(ButtonW+ButtonGap),Bottom,ButtonW,ButtonH,
-        false,bOwnTurn && Owned->SkillSet.UltimateSkill.IsValid(),158);
+    for (int32 U=0; U<UltimateControls.Num(); ++U)
+    {
+        // FOGResolvedSkillSet still stores only ONE UltimateSkill. In
+        // particular, Grand's three distinct v4 abilities MUST remain
+        // inactive until their registered IDs and executors are integrated.
+        // No generic/Alter ultimate is a permissible gameplay substitute.
+        const bool bExecutable = !bGrand && bOwnTurn &&
+            Owned->SkillSet.UltimateSkill.IsValid();
+        DrawGameButton(UltimateLabels[U], UltimateControls[U],
+            Edge+(ActiveCount+U)*(ButtonW+ButtonGap),
+            Bottom,ButtonW,ButtonH,false,bExecutable,158);
+    }
 
     // Error messages are actual canonical preflight errors, not invented
     // animation/gameplay consequences.
