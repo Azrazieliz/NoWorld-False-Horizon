@@ -1,6 +1,7 @@
 #include "World/OGStartingRegionPresentation.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "HAL/FileManager.h"
 #include "Misc/SecureHash.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonReader.h"
@@ -5525,6 +5526,71 @@ void AOGWorldPresentationGameMode::StartPlay()
     // Ruler presentation boundary so the 3D world is suspended and portrait
     // orientation is applied before the player chooses Continue.
     if (GetWorld() && GetWorld()->GetWorldSettings()) GetWorld()->GetWorldSettings()->bEnableWorldBoundsChecks = false;
+
+    // The existing tracked StartingWorld level is the boot carrier until the
+    // authored FirstWorld streaming .umap is integrated. In that carrier, use
+    // the ORIGINAL Gate02 R1 height/scatter source and native generator; never
+    // generate random Foundation settlements as a substitute for authored R1.
+    // An already-authored Gate02 generator is kept intact in any other level.
+    if (UWorld* World = GetWorld())
+    {
+        if (World->GetMapName().EndsWith(TEXT("StartingWorld")))
+        {
+            const FString SourceRoot = FPaths::Combine(
+                FPaths::ProjectContentDir(), TEXT("NoWorld/FirstWorld/Source"));
+            const TCHAR* RequiredSources[] =
+            {
+                TEXT("height_513_float32.raw"),
+                TEXT("soil_mask_513_float32.raw"),
+                TEXT("rock_mask_513_float32.raw"),
+                TEXT("river_mask_513_float32.raw"),
+                TEXT("baked_seed1412_scatter.jsonl")
+            };
+            bool bAllOriginalSourcesPresent = true;
+            for (const TCHAR* SourceName : RequiredSources)
+            {
+                const FString SourcePath = FPaths::Combine(SourceRoot, SourceName);
+                if (!IFileManager::Get().FileExists(*SourcePath))
+                {
+                    UE_LOG(LogOfflineGame, Error,
+                        TEXT("Playable First World requires original Gate02 R1 source: %s"),
+                        *SourcePath);
+                    bAllOriginalSourcesPresent = false;
+                }
+            }
+            if (bAllOriginalSourcesPresent)
+            {
+                AOGStartingRegionGenerator* Region = nullptr;
+                for (TActorIterator<AOGStartingRegionGenerator> It(World); It; ++It)
+                {
+                    if (It->bGate02R1RegionSource)
+                    {
+                        Region = *It;
+                        break;
+                    }
+                    if (!Region) Region = *It;
+                }
+                if (!Region)
+                {
+                    Region = World->SpawnActor<AOGStartingRegionGenerator>(
+                        AOGStartingRegionGenerator::StaticClass(),
+                        FVector::ZeroVector, FRotator::ZeroRotator);
+                }
+                if (Region)
+                {
+                    Region->bGate02R1RegionSource = true;
+                    Region->Tags.AddUnique(FName(TEXT("Gate02R1Source")));
+                    UE_LOG(LogOfflineGame, Log,
+                        TEXT("Native startup bound original authored Gate02 R1 source to the playable World."));
+                }
+                else
+                {
+                    UE_LOG(LogOfflineGame, Error,
+                        TEXT("Native First World R1 generator could not be spawned."));
+                }
+            }
+        }
+    }
     Super::StartPlay();
 
     if (UWorld* World = GetWorld())
