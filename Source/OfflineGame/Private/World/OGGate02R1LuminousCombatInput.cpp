@@ -3,6 +3,8 @@
 // fake enemies, invent Manifestations or bypass selected player's version.
 #include "World/OGStartingRegionPresentation.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Characters/OGContentCharacterActors.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -50,9 +52,12 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         return false;
     AOGLuminousV3PlayableCharacter* ActiveLuminous=
         Cast<AOGLuminousV3PlayableCharacter>(this);
-    if(!ActiveLuminous ||
-       !ActiveLuminous->IsBoundToOwnedLuminousCombatUnit(
-           Ruler,Manifestation,ApprovedSkills.CurrentForm))
+    const AOGContentPlayableCharacter* ContentCharacter = Cast<AOGContentPlayableCharacter>(this);
+    const bool bBoundLegacy = ActiveLuminous && ActiveLuminous->IsBoundToOwnedLuminousCombatUnit(
+        Ruler, Manifestation, ApprovedSkills.CurrentForm);
+    const bool bBoundContent = ContentCharacter && ContentCharacter->IsBoundToOwnedCombatUnit(
+        Ruler, Manifestation, ApprovedSkills.CurrentForm);
+    if(!bBoundLegacy && !bBoundContent)
     {
         OutError=TEXT("Selected Manifestation is not the actually possessed Luminous World character.");
         return false;
@@ -191,7 +196,7 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
     // Preserve the authoritative executor as the only source of gameplay truth.
     // Presentation is attempted only after the action has been accepted.
     const bool bApplied = Core->ApplyApprovedLuminousResolvedAction(Action, OutError);
-    if (bApplied && ActiveLuminous)
+    if (bApplied)
     {
         ClearSelectedCanonicalTurnTargets();
         // Actual actor facing and reactions are presentation of a committed
@@ -233,7 +238,7 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
                         Motion->PlayAction(Reaction,TEXT("Combat"),false,1);
                     }
             }
-            if(FirstActualTarget && FirstActualTarget!=ActiveLuminous)
+            if(FirstActualTarget && FirstActualTarget!=this)
             {
                 const FVector Delta=FirstActualTarget->GetActorLocation()-GetActorLocation();
                 if(Delta.SizeSquared2D()>FMath::Square(5.f))
@@ -251,7 +256,19 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
                 : FString::Printf(TEXT("Combat.Ultimate.%s.%s"),
                     *Skill.ToString(),*Branch.ToString().ToLower());
         const FName Semantic(*MotionKey);
-        if (!ActiveLuminous->PlaySharedGameplayAction(Semantic))
+        bool bMotionPlayed = ActiveLuminous && ActiveLuminous->PlaySharedGameplayAction(Semantic);
+        if (ContentCharacter && ContentCharacter->Appearance)
+        {
+            // Branch-specific Ultimate presentation retains the exact branch
+            // semantic; an unbranched skill may use its authored visual map.
+            const FName* Authored = Branch.IsNone() ? ContentCharacter->CombatActionSemantics.Find(Skill) : nullptr;
+            const FName ActionSemantic = Authored ? *Authored : Semantic;
+            UOGSharedMotionControllerComponent* Motion = ContentCharacter->Appearance->GetMotionController();
+            FString MotionError;
+            bMotionPlayed = (Motion && Motion->IsPlayingAction() && Motion->CurrentAction == ActionSemantic) ||
+                ContentCharacter->Appearance->PlaySemanticAction(ActionSemantic, TEXT("Combat"), false, 1, NAME_None, MotionError);
+        }
+        if (!bMotionPlayed)
             UE_LOG(LogTemp, Warning,
                 TEXT("Gate12 combat accepted but no approved exact-rig native clip for %s; not substituting unrelated motion"),
                 *Semantic.ToString());

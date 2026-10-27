@@ -10,6 +10,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Characters/OGContentCharacterActors.h"
 
 bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     const FOGEntityId& UnitId, const FOGContentId& ApprovedIdentity,
@@ -79,6 +80,17 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
                 Session->BoundRulerId,UnitId,Unit->SkillSet.CurrentForm))
         {
             OutError=TEXT("Owned Luminous Registry/Manifestation binding differs from requested unit.");
+            return false;
+        }
+    }
+    if (const AOGContentPlayableCharacter* ContentCharacter = Cast<AOGContentPlayableCharacter>(Owner))
+    {
+        const UOGGate12RulerSessionSubsystem* Session = GI
+            ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+        if (!Session || !Session->IsBoundToStoredRuler() ||
+            !ContentCharacter->IsBoundToOwnedCombatUnit(Session->BoundRulerId, UnitId, Unit->SkillSet.CurrentForm))
+        {
+            OutError = TEXT("Content character Registry/Manifestation binding differs from requested unit.");
             return false;
         }
     }
