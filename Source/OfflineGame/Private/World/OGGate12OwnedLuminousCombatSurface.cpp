@@ -339,28 +339,31 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     TArray<FString> UltimateLabels;
     if (bBase)
     {
-        UltimateControls = { TEXT("OG.Battle.Ultimate.Day"), TEXT("OG.Battle.Ultimate.Night") };
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Day")));
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Night")));
         UltimateLabels = { TEXT("DAY"), TEXT("NIGHT") };
     }
     else if (bAlter)
     {
-        UltimateControls = { TEXT("OG.Battle.Ultimate.Ruin"), TEXT("OG.Battle.Ultimate.Harvest") };
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Ruin")));
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Harvest")));
         UltimateLabels = { TEXT("RUIN"), TEXT("HOLLOW CROWN") };
     }
     else if (bAwakened)
     {
-        UltimateControls = { TEXT("OG.Battle.Ultimate.AzureDawn") };
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.AzureDawn")));
         UltimateLabels = { TEXT("AZURE DAWN") };
     }
     else if (bBerserker)
     {
-        UltimateControls = { TEXT("OG.Battle.Ultimate.CrownBreaks") };
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.CrownBreaks")));
         UltimateLabels = { TEXT("CROWN BREAKS") };
     }
     else if (bGrand)
     {
-        UltimateControls = { TEXT("OG.Battle.Ultimate.GrandGenesis"),
-            TEXT("OG.Battle.Ultimate.GrandRuin"), TEXT("OG.Battle.Ultimate.GrandVerdict") };
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.GrandGenesis")));
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.GrandRuin")));
+        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.GrandVerdict")));
         UltimateLabels = { TEXT("GENESIS"), TEXT("RUIN"), TEXT("VERDICT") };
     }
     const int32 ButtonCount = ActiveCount + UltimateControls.Num();
