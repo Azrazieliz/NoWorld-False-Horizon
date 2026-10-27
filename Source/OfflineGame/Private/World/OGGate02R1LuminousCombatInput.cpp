@@ -78,16 +78,45 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
     FString Resolution=TEXT("{}");
     if(Slot==-1)
     {
+        const FString Form=ApprovedSkills.CurrentForm.ToString();
         const FString Choice=Branch.ToString().ToLower();
-        const bool bBase=ApprovedSkills.CurrentForm==
-            FOGContentId(TEXT("character:luminous_valentine.version_ln_base"));
-        if((bBase && Choice!=TEXT("day") && Choice!=TEXT("night")) ||
-           (!bBase && Choice!=TEXT("ruin") && Choice!=TEXT("harvest")))
+        if(Form==TEXT("character:luminous_valentine.version_ln_base"))
         {
-            OutError=TEXT("Choose the approved Day/Night or Ruin/Harvest ultimate branch explicitly.");
+            if(Choice!=TEXT("day") && Choice!=TEXT("night"))
+            {
+                OutError=TEXT("Base Ultimate requires its approved Day or Night branch.");
+                return false;
+            }
+            Resolution=FString::Printf(TEXT("{\"branch\":\"%s\"}"),*Choice);
+        }
+        else if(Form==TEXT("character:luminous_valentine.version_alter_v1"))
+        {
+            if(Choice!=TEXT("ruin") && Choice!=TEXT("harvest"))
+            {
+                OutError=TEXT("Alter Ultimate requires Ruin or Hollow Crown.");
+                return false;
+            }
+            Resolution=FString::Printf(TEXT("{\"branch\":\"%s\"}"),*Choice);
+        }
+        else if(Form==TEXT("character:luminous_valentine.version_awakened_v4") ||
+                Form==TEXT("character:luminous_valentine.version_berserker_v4"))
+        {
+            if(!Branch.IsNone())
+            {
+                OutError=TEXT("This v4 form has one Ultimate, not an Alter branch.");
+                return false;
+            }
+            // Its single approved native UltimateSkill must still pass the
+            // central executor's exact content/ability preflight.
+        }
+        else
+        {
+            // Grand has THREE distinct authored Ultimate IDs. The current
+            // FOGResolvedSkillSet single UltimateSkill cannot represent
+            // them faithfully. Fail closed rather than launch a false spell.
+            OutError=TEXT("The selected form's distinct approved v4 Ultimate IDs are not yet bound.");
             return false;
         }
-        Resolution=FString::Printf(TEXT("{\"branch\":\"%s\"}"),*Choice);
     }
     const FOGTurnBattle* Encounter=Core->GetOwnedLuminousTurnBattle();
     if(!Encounter || Encounter->GetState().Status!=EOGTurnBattleStatus::Running)
@@ -215,10 +244,12 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
         // Ultimate branch, not one generic Luminous pose for every Version.
         // Content artists register exact-rig derivatives globally under the
         // same action. Missing approved combat clips never trigger a fake pose.
-        const FString MotionKey = Slot == -1
-            ? FString::Printf(TEXT("Combat.Ultimate.%s.%s"),
-                *Skill.ToString(),*Branch.ToString().ToLower())
-            : FString::Printf(TEXT("Combat.Skill.%s"),*Skill.ToString());
+        const FString MotionKey = Slot != -1
+            ? FString::Printf(TEXT("Combat.Skill.%s"),*Skill.ToString())
+            : Branch.IsNone()
+                ? FString::Printf(TEXT("Combat.Ultimate.%s"),*Skill.ToString())
+                : FString::Printf(TEXT("Combat.Ultimate.%s.%s"),
+                    *Skill.ToString(),*Branch.ToString().ToLower());
         const FName Semantic(*MotionKey);
         if (!ActiveLuminous->PlaySharedGameplayAction(Semantic))
             UE_LOG(LogTemp, Warning,
