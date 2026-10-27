@@ -15,6 +15,7 @@
 #include "World/OGFoundationIntegrationWorld.h"
 #include "Animation/OGDiagnosticAnimationPresentation.h"
 #include "Runtime/OGSemanticAudioRuntime.h"
+#include "Runtime/OGAdaptiveScoreComponent.h"
 #include "Runtime/OGFoundationDiagnosticMenu.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "Interaction/OGFoundationInteractionHost.h"
@@ -1822,6 +1823,7 @@ AOGWorldPrototypeCharacter::AOGWorldPrototypeCharacter()
     DiagnosticAnimations = CreateDefaultSubobject<UOGDiagnosticAnimationPresentation>(TEXT("DiagnosticAnimations"));
     SemanticAudio = CreateDefaultSubobject<UOGSemanticAudioRuntime>(TEXT("SemanticAudio"));
     SemanticAudio->ComponentTags.Add(TEXT("OG.PresentationPersistent"));
+    AdaptiveScore = CreateDefaultSubobject<UOGAdaptiveScoreComponent>(TEXT("AdaptiveScore"));
     DiagnosticMenu = CreateDefaultSubobject<UOGFoundationDiagnosticMenu>(TEXT("DiagnosticMenu"));
     InteractionHost = CreateDefaultSubobject<UOGFoundationInteractionHost>(TEXT("InteractionHost"));
     CanonicalPresentation = CreateDefaultSubobject<UOGCanonicalCharacterPresentation>(TEXT("CanonicalCharacterPresentation"));

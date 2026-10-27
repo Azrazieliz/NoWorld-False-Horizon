@@ -23,6 +23,7 @@ class UTouchInterface;
 class UOGDiagnosticCombatComponent;
 class UOGDiagnosticAnimationPresentation;
 class UOGSemanticAudioRuntime;
+class UOGAdaptiveScoreComponent;
 class UOGFoundationDiagnosticMenu;
 class UOGCanonicalCharacterPresentation;
 struct FOGFoundationCharacterContext;
@@ -773,6 +774,8 @@ protected:
     UPROPERTY() TObjectPtr<UOGDiagnosticCombatComponent> DiagnosticCombat;
     UPROPERTY() TObjectPtr<UOGDiagnosticAnimationPresentation> DiagnosticAnimations;
     UPROPERTY() TObjectPtr<UOGSemanticAudioRuntime> SemanticAudio;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="OfflineGame|Audio", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UOGAdaptiveScoreComponent> AdaptiveScore;
     UPROPERTY() TObjectPtr<UOGFoundationDiagnosticMenu> DiagnosticMenu;
     UPROPERTY() TObjectPtr<UOGCanonicalCharacterPresentation> CanonicalPresentation;
     UPROPERTY() TObjectPtr<UOGFoundationInteractionHost> InteractionHost;

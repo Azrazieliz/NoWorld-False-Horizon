@@ -484,4 +484,35 @@ bool FOGSemanticAudioCanonicalReadOnlyTest::RunTest(const FString& Parameters)
     return bCompleted;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSemanticEnvelopeLifecycleTest,
+    "OfflineGame.Foundation.SemanticAudio.EnvelopeReversalAndOwnedRetirement",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOGSemanticEnvelopeLifecycleTest::RunTest(const FString& Parameters)
+{
+    FSemanticAudioFixture F;
+    if (!TestNotNull(TEXT("Runtime"), F.Audio)) return false;
+    auto LongCue = CaptionEvent(TEXT("Isolated envelope fixture"));
+    LongCue.Captions[0].DurationSeconds = 30.f;
+    F.Audio->RegisterEventDefinition(TEXT("score"), LongCue);
+    F.Audio->RegisterEventDefinition(TEXT("voice"), LongCue);
+    TestTrue(TEXT("Score event admitted"), F.Audio->PlaySemanticEvent(TEXT("score")));
+    TestTrue(TEXT("Other owned event admitted"), F.Audio->PlaySemanticEvent(TEXT("voice")));
+    TestTrue(TEXT("Fade out begins"), F.Audio->TransitionSemanticEvent(TEXT("score"), 0.f, 2.f, true));
+    F.Advance(1.f);
+    TestTrue(TEXT("Score retained until envelope end"), F.Audio->IsSemanticEventActiveOrPending(TEXT("score")));
+    TestTrue(TEXT("Rapid return reverses active fade"), F.Audio->TransitionSemanticEvent(TEXT("score"), 1.f, 1.f, false));
+    F.Advance(2.f);
+    TestTrue(TEXT("Original instance survives reversed fade"), F.Audio->IsSemanticEventActiveOrPending(TEXT("score")));
+    TestTrue(TEXT("Second fade begins"), F.Audio->TransitionSemanticEvent(TEXT("score"), 0.f, 1.f, true));
+    FOGPlayerProfileSettings Profile;
+    Profile.MusicVolume = 0.2f;
+    F.Audio->ApplyProfile(Profile);
+    F.Advance(1.1f);
+    TestFalse(TEXT("Settings change did not erase retirement envelope"), F.Audio->IsSemanticEventActiveOrPending(TEXT("score")));
+    TestTrue(TEXT("Unrelated voice event remains"), F.Audio->IsSemanticEventActiveOrPending(TEXT("voice")));
+    TestFalse(TEXT("Invalid envelope is rejected"), F.Audio->TransitionSemanticEvent(TEXT("voice"), 2.f, 1.f, false));
+    return true;
+}
+
 #endif
