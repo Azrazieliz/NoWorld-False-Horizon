@@ -1,3 +1,4 @@
+#include "Interaction/OGInteractionParticipantComponent.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 #include "Koikatsu/OGLuminousV3WardrobeQAWidget.h"
 #include "Animation/OGSharedMotionLibrary.h"
@@ -343,7 +344,7 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
         if (!Component) { Error = TEXT("Luminous V3: skeletal component allocation failed"); return false; }
         Component->SetupAttachment(GetRootComponent());
         Component->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
-        // MEASURED Luminous source axis: eyes→nose = glTF +Z
+        // MEASURED Luminous source axis: eyesâ†’nose = glTF +Z
         // (CLOTHED, UNDERWEAR, NUDE: +Z dot 0.9999999946). Native UE glTF
         // importer maps +Z to mesh +Y. Unreal movement actor uses +X front.
         // A component-space -90 yaw maps imported visual +Y to actor +X.
@@ -1191,6 +1192,19 @@ bool AOGLuminousV3PlayableCharacter::BindOwnedWorldCharacter_Implementation(
         BoundOwnedVersion=FOGContentId();
         return false;
     }
+    if (auto* Participant = FindComponentByClass<UOGInteractionParticipantComponent>())
+    {
+        TArray<USkeletalMeshComponent*> Parts; UOGSharedMotionControllerComponent* Motion = nullptr;
+        FString BindingError;
+        if (!UOGInteractionParticipantComponent::DiscoverNativeBinding(this, Parts, Motion, BindingError) || !Motion)
+        { LastLuminousError = BindingError; bNativeOwnedCharacterBound = false; return false; }
+        {
+            const FString Rig = Motion->RigProfile.ToString().ToLower();
+            const FOGContentId Family = FOGContentId(Rig).IsValid() ? FOGContentId(Rig) : FOGContentId(TEXT("rig:") + Rig);
+            if (!Participant->BindActualNativeParticipant(ManifestationId, Family, BindingError))
+            { LastLuminousError = BindingError; bNativeOwnedCharacterBound = false; return false; }
+        }
+    }
     return true;
 }
 
@@ -1279,6 +1293,8 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
         else if (!Battle || Battle->GetState().Status!=EOGTurnBattleStatus::Running)
             CanonicalCombatBody->UnbindVisual();
     }
+    if (const auto* Participant = FindComponentByClass<UOGInteractionParticipantComponent>();
+        Participant && Participant->IsInInteractionPresentation()) return;
     if (bGate09EmotePlaying)
     {
         const UCharacterMovementComponent* Move = GetCharacterMovement();

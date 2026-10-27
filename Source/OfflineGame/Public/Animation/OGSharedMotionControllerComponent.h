@@ -104,6 +104,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     void SynchronizeToWorldTime(float SceneStartTime);
 
+    /** Changes presentation speed continuously without changing authored timing.
+     * Zero pauses only this action; canonical World time continues. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Shared")
+    bool SetExternalPacing(float Rate);
+
+    UFUNCTION(BlueprintPure, Category="Motion|Shared")
+    float GetExternalPacing() const { return ExternalPacing; }
+
     /** An authored facial/secondary morph layer that does not replace body animation. */
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
     bool SetMorphLayer(FName Layer, FName Morph, float Weight);
@@ -119,6 +127,7 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Motion|Shared")
     int32 GetNativePartCount() const { return RegisteredParts.Num(); }
+    const TArray<TObjectPtr<USkeletalMeshComponent>>& GetNativeParts() const { return RegisteredParts; }
 
 protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -154,6 +163,8 @@ private:
     bool bApplyingRootMotion = false;
     bool bSceneTimeLocked = false;
     float SceneWorldStartTime = 0.f;
+    float SceneAnchorElapsed = 0.f;
+    float ExternalPacing = 1.f;
 
     struct FMorphOverlay
     {

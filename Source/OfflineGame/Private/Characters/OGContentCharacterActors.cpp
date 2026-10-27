@@ -2,6 +2,7 @@
 
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
+#include "Interaction/OGInteractionParticipantComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnBattle.h"
 #include "Components/SceneComponent.h"
@@ -42,6 +43,14 @@ bool AOGContentPlayableCharacter::BindOwnedWorldCharacter_Implementation(
     LastPresentedActionId = FOGEntityId();
     LastMotionController.Reset();
     if (Core) Core->OnNativeCombatActionResolved.AddUObject(this, &ThisClass::HandleResolvedCombatAction);
+    if (auto* Participant = FindComponentByClass<UOGInteractionParticipantComponent>())
+    {
+        auto* Motion = Appearance->GetMotionController();
+        const FString Rig = Motion ? Motion->RigProfile.ToString().ToLower() : FString();
+        const FOGContentId Family = FOGContentId(Rig).IsValid() ? FOGContentId(Rig) : FOGContentId(TEXT("rig:") + Rig);
+        if (!Participant->BindActualNativeParticipant(Manifestation, Family, Error))
+        { UE_LOG(LogTemp, Warning, TEXT("Native participant binding unavailable: %s"), *Error); return false; }
+    }
     return true;
 }
 
@@ -79,6 +88,7 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
 void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    if (const auto* Participant = FindComponentByClass<UOGInteractionParticipantComponent>(); Participant && Participant->IsInInteractionPresentation()) return;
     if (!Appearance || !Appearance->MatchesOwnedManifestation(BoundRuler, BoundManifestation)) return;
     const FOGTurnBattle* Battle = BoundCore.IsValid() ? BoundCore->GetOwnedLuminousTurnBattle() : nullptr;
     if (Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running && CombatBody)

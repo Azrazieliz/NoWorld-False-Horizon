@@ -14,7 +14,7 @@ bool UOGSharedMotionSceneComponent::StartSynchronizedScene(
 {
     const int32 Count = Participants.Num();
     if (!GetWorld() || Action.IsNone() || Context.IsNone() ||
-        Count < 2 || Count > 13) return false;
+        Count < 2) return false;
     // A failed preflight must not interrupt a currently valid scene.
     TSet<UOGSharedMotionControllerComponent*> UniqueControllers;
     TSet<FName> UniqueRoles;

@@ -5,6 +5,7 @@
 #include "Animation/OGDiagnosticAnimationPresentation.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Interaction/OGSystemicInteractionRuntime.h"
+#include "Interaction/OGInteractionDefinition.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "OGFoundationInteractionHost.generated.h"
 
@@ -13,6 +14,7 @@ class UOGDiagnosticCombatComponent;
 class UOGDiagnosticAnimationPresentation;
 class UOGSharedMotionSceneComponent;
 class USkeletalMeshComponent;
+class UOGSharedMotionControllerComponent;
 
 struct OFFLINEGAME_API FOGFoundationInteractionRow
 {
@@ -36,6 +38,9 @@ public:
     UOGFoundationInteractionHost();
     virtual ~UOGFoundationInteractionHost() override;
     bool Initialize();
+    /** Native catalog of admitted original interaction definitions. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Content")
+    TSoftObjectPtr<UOGInteractionCatalog> Catalog;
     bool IsActive() const;
     FString GetStatus() const;
     TArray<FOGFoundationInteractionRow> GetRows() const;
@@ -61,6 +66,7 @@ public:
     virtual bool PlaySharedScene(const FOGInteractionActionNode&,
         const TArray<FOGInteractionParticipantState>&) override;
     virtual void StopSharedScene() override;
+    virtual void EndAction() override;
     virtual void ApplyReaction(const FOGEntityId&, UObject*, UObject*) override;
     virtual void SetPrivacy(bool) override;
     virtual void RestoreGameplay() override;
@@ -72,6 +78,9 @@ private:
     void HandleApplicationDeactivated();
     bool EnsureRuntime();
     void BuildDiagnosticSelection(bool bAll);
+    void RefreshProductionSelection();
+    UOGSharedMotionControllerComponent* FindMotionController(AActor*) const;
+    void OwnMotion(UOGSharedMotionControllerComponent*);
     void UpdateAnimationPacing();
     AActor* FindBoundActor(const FOGEntityId&) const;
     struct FMeshRestore
@@ -90,16 +99,29 @@ private:
     TWeakObjectPtr<UOGPresentationModeSubsystem> PresentationMode;
     EOGPresentationMode SavedPresentationMode = EOGPresentationMode::World;
     bool bOwnsPresentationMode = false;
+    TWeakObjectPtr<class AOGWorldPresentationHud> InteractionHud;
+    FName SavedHudSurface;
     IOGWorldStore* BoundStore = nullptr;
+    FOGEntityId BoundRulerId;
     TUniquePtr<FOGSystemicInteractionRuntime> Runtime;
     FDelegateHandle ReleaseHandle;
     FDelegateHandle DeactivateHandle;
     FDelegateHandle BackgroundHandle;
     TArray<FOGInteractionParticipant> SelectedParticipants;
+    TArray<FOGInteractionParticipant> AvailableParticipants;
+    UPROPERTY(Transient) TArray<TObjectPtr<UOGInteractionDefinition>> AvailableDefinitions;
+    UPROPERTY(Transient) TObjectPtr<UOGInteractionDefinition> SelectedDefinition;
     TMap<FOGEntityId, TWeakObjectPtr<AActor>> BoundActors;
     TMap<FOGEntityId, FMeshRestore> MeshRestores;
     UPROPERTY(Transient)
     TObjectPtr<UOGSharedMotionSceneComponent> ActiveSharedScene = nullptr;
+    struct FMotionRestore
+    {
+        TWeakObjectPtr<UOGSharedMotionControllerComponent> Motion;
+        bool bRootMotion = false;
+        float Pacing = 1.f;
+    };
+    TArray<FMotionRestore> OwnedMotions;
     FOGInteractionActionGraph ActiveGraph;
     FString Status = TEXT("Choose participants and an entry context.");
     int64 LastTick = -1;

@@ -1015,6 +1015,11 @@ public:
     /** Content-driven World interactions enter the actual native HUD surface. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
     bool ShowNativeRulerSurface(FString& OutError);
+    FName GetInteractionReturnSurface() const { return FoundationSurface; }
+    /** Existing native HUD/presentation transition, without changing possession. */
+    void SetInteractionSurface(FName Surface);
+    bool ShowNativeInteractionSurface(FString& OutError);
+    void RememberEmbodiedOwnedCharacter(AOGWorldPrototypeCharacter* Character);
     virtual void NotifyHitBoxClick(FName BoxName) override;
     virtual void NotifyHitBoxRelease(FName BoxName) override;
     TSet<FName> PressedWorldControls;
@@ -1055,6 +1060,11 @@ public:
 #endif
 
 private:
+    TWeakObjectPtr<AOGWorldPrototypeCharacter> PreservedRulerWorldPawn;
+    FOGEntityId PreservedRulerOwnerId;
+    TMap<FOGEntityId, TWeakObjectPtr<AOGWorldPrototypeCharacter>> EmbodiedOwnedWorldPawns;
+    UPROPERTY(Transient) TObjectPtr<class UOGNativeInteractionWidget> NativeInteractionWidget;
+    void CloseNativeInteractionSurface();
     /** Native editable opening: preserves existing Canvas events/saves. */
     void SynchronizeGate12NativeOpeningUMG(bool bShouldShow);
 

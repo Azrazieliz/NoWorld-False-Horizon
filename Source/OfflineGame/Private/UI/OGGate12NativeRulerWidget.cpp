@@ -488,7 +488,7 @@ void UOGGate12NativeRulerWidget::BuildNav()
     };
     static const TCHAR* Marks[5] =
     {
-        TEXT("✧"), TEXT("◇"), TEXT("✦"), TEXT("♜"), TEXT("▤")
+        TEXT("âœ§"), TEXT("â—‡"), TEXT("âœ¦"), TEXT("â™œ"), TEXT("â–¤")
     };
     const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session = GI
@@ -888,8 +888,9 @@ void UOGGate12NativeRulerWidget::BuildRoster()
     // This is NOT a character Manifestation and is never counted as one.
     if (Session && Session->IsBoundToStoredRuler())
     {
-        AddMessage(Content, TEXT("RULER — ORIGINAL PLAYER"), 22, TextMain);
+        AddMessage(Content, TEXT("RULER â€” ORIGINAL PLAYER"), 22, TextMain);
         AddAction(Content, TEXT("CONTROL THE RULER"), TEXT("select-ruler"));
+        AddAction(Content, TEXT("INTERACTIONS"), TEXT("interaction/open"));
     }
     if (!Session || Session->OwnedRoster.IsEmpty())
     {
@@ -988,7 +989,7 @@ void UOGGate12NativeRulerWidget::BuildDevelopmentQaCharacterViewer()
         return;
 
     AddMessage(Content,
-        TEXT("DEVELOPMENT QA — real imported CLOTHED Luminous V3. "
+        TEXT("DEVELOPMENT QA â€” real imported CLOTHED Luminous V3. "
              "This is NOT a character you own, NOT a Registry package, "
              "NOT a canonical Identity or a gameplay acquisition."),
         16, Gate12RulerGold);
@@ -1389,9 +1390,9 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
              595.f,1038.f,243.f,80.f,false,19);
     // A pull must NEVER fire before Gate07's actual banner/economy transaction
     // has been bound. No invented pity/tickets/currency are displayed.
-    ActionAt(TEXT("DRAW ×1"),TEXT("gacha-draw-1"),
+    ActionAt(TEXT("DRAW Ã—1"),TEXT("gacha-draw-1"),
              50.f,1170.f,309.f,100.f,bCanSummon,37);
-    ActionAt(TEXT("DRAW ×10"),TEXT("gacha-draw-10"),
+    ActionAt(TEXT("DRAW Ã—10"),TEXT("gacha-draw-10"),
              511.f,1170.f,311.f,100.f,bCanSummon,37);
     ActionAt(TEXT("DETAILS"),TEXT("gacha-rates"),
              151.f,1289.f,223.f,50.f,bCanSummon,24);
@@ -1486,7 +1487,7 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     else
         for (const FOGGachaHistoryEntryViewModel& Entry :
              Session->GachaHistoryProjection)
-            AddMessage(Rows,FString::Printf(TEXT("%s · %s · tick %lld"),
+            AddMessage(Rows,FString::Printf(TEXT("%s Â· %s Â· tick %lld"),
                 *Entry.IdentityId.ToString(),*Entry.Rarity.ToString(),
                 Entry.WorldTick),17,Main);
     ActionAt(TEXT("CLOSE"),TEXT("gacha-history-toggle"),
@@ -1603,7 +1604,7 @@ void UOGGate12NativeRulerWidget::BuildGacha()
             UVerticalBox::StaticClass());
         DrawActions->AddChildToHorizontalBox(Wrapper)
             ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-        AddAction(Wrapper, I==0 ? TEXT("DRAW  ×1") : TEXT("DRAW  ×10"),
+        AddAction(Wrapper, I==0 ? TEXT("DRAW  Ã—1") : TEXT("DRAW  Ã—10"),
             I==0 ? TEXT("gacha-draw-1") : TEXT("gacha-draw-10"), bCanDraw);
     }
     UHorizontalBox* BottomUtilities=WidgetTree->ConstructWidget<UHorizontalBox>(
@@ -1822,7 +1823,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         TEXT("REPORTS"), TEXT("CHRONICLE"), TEXT("CODEX"), TEXT("INTELLIGENCE")
     };
     static const TCHAR* IconMarks[4] = {
-        TEXT("✧"), TEXT("♜"), TEXT("◇"), TEXT("◈")
+        TEXT("âœ§"), TEXT("â™œ"), TEXT("â—‡"), TEXT("â—ˆ")
     };
     static const TCHAR* Subtitles[4] = {
         TEXT("AUTHORITATIVE REPORTS"), TEXT("KNOWN HISTORY"),
@@ -2241,6 +2242,7 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
     }
     const FOGRosterIdentityViewModel& Identity = Session->OwnedRoster[OpenIdentityIndex];
     AddAction(Content, TEXT("BACK TO ROSTER"), TEXT("back"));
+    AddAction(Content, TEXT("INTERACTIONS"), TEXT("interaction/open"));
     AddMessage(Content,
         Identity.DisplayNameKey.IsEmpty()
             ? Identity.IdentityId.ToString() : Identity.DisplayNameKey,
@@ -2569,6 +2571,12 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     else if (Action == TEXT("back"))
     {
         OpenIdentityIndex = INDEX_NONE;
+    }
+    else if (Action == TEXT("interaction/open"))
+    {
+        auto* Hud = GetOwningPlayer() ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
+        if (Hud && Hud->ShowNativeInteractionSurface(Error)) return;
+        if (!Hud) Error = TEXT("World interaction presentation is unavailable.");
     }
     else if (Action == TEXT("world"))
     {

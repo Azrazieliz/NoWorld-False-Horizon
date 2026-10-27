@@ -90,7 +90,7 @@ bool UOGSharedMotionControllerComponent::CanPlayAction(
     int32 ParticipantCount, FName ParticipantRole) const
 {
     if (RigProfile.IsNone() || GameplayAction.IsNone() || Context.IsNone() ||
-        RegisteredParts.IsEmpty() || ParticipantCount < 1 || ParticipantCount > 13)
+        RegisteredParts.IsEmpty() || ParticipantCount < 1)
         return false;
     const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
         ? nullptr : SharedLibrary.LoadSynchronous();
@@ -171,7 +171,32 @@ void UOGSharedMotionControllerComponent::SynchronizeToWorldTime(float SceneStart
     if (!bPlaying || !GetWorld()) return;
     bSceneTimeLocked = true;
     SceneWorldStartTime = SceneStartTime;
-    ElapsedSeconds = FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime);
+    SceneAnchorElapsed = 0.f;
+    ElapsedSeconds = FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime) * ExternalPacing;
+}
+
+bool UOGSharedMotionControllerComponent::SetExternalPacing(float Rate)
+{
+    if (!FMath::IsFinite(Rate) || Rate < 0.f) return false;
+    if (Rate == ExternalPacing) return true;
+    if (bSceneTimeLocked && GetWorld())
+    {
+        const float Now = GetWorld()->GetTimeSeconds();
+        // Preserve phase at the speed boundary, including a paused interval.
+        SceneAnchorElapsed += FMath::Max(0.f, Now - SceneWorldStartTime) * ExternalPacing;
+        ElapsedSeconds = SceneAnchorElapsed;
+        SceneWorldStartTime = Now;
+    }
+    ExternalPacing = Rate;
+    for (int32 I = 0; I < PlayingParts.Num(); ++I)
+        if (PlayingParts[I])
+        {
+            const float LengthScale = CurrentLeader ? 1.f :
+                (PlayingSequenceLengths.IsValidIndex(I) && SequenceSeconds > 0.f
+                    ? PlayingSequenceLengths[I] / SequenceSeconds : 1.f);
+            PlayingParts[I]->SetPlayRate(PlaybackRate * ExternalPacing * LengthScale);
+        }
+    return true;
 }
 
 bool UOGSharedMotionControllerComponent::SetMorphLayer(
@@ -383,6 +408,8 @@ bool UOGSharedMotionControllerComponent::PlayAction(
     bApplyingRootMotion = PrimaryEntry->bUsesRootMotion;
     AuthoredMorphTracks = PrimaryEntry->MorphTracks;
     bSceneTimeLocked = false;
+    SceneAnchorElapsed = 0.f;
+    ExternalPacing = 1.f;
     bLooping = PrimaryEntry->bLoop;
     bHasContact = PrimaryEntry->ContactSeconds >= 0.f;
     SourceContactSeconds = PrimaryEntry->ContactSeconds;
@@ -482,8 +509,8 @@ void UOGSharedMotionControllerComponent::TickComponent(
     }
     const float Before = ElapsedSeconds * PlaybackRate;
     ElapsedSeconds = bSceneTimeLocked && GetWorld()
-        ? FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime)
-        : ElapsedSeconds + DeltaSeconds;
+        ? SceneAnchorElapsed + FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime) * ExternalPacing
+        : ElapsedSeconds + DeltaSeconds * ExternalPacing;
     const float SourceTime = ElapsedSeconds * PlaybackRate;
     ApplyAuthoredRootMotion(Before, SourceTime);
     ApplyMorphOverlays();

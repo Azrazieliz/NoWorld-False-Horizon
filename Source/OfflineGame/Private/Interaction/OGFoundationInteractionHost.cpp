@@ -1,5 +1,8 @@
 #include "Interaction/OGFoundationInteractionHost.h"
+#include "Interaction/OGInteractionParticipantComponent.h"
+#include "EngineUtils.h"
 #include "Combat/OGDiagnosticCombatComponent.h"
+#include "Combat/OGTurnBattle.h"
 #include "Combat/OGDiagnosticHumanoid.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
@@ -51,7 +54,9 @@ bool UOGFoundationInteractionHost::Initialize()
         this, &UOGFoundationInteractionHost::HandleApplicationDeactivated);
     if (!BackgroundHandle.IsValid()) BackgroundHandle = FCoreDelegates::ApplicationWillEnterBackgroundDelegate.AddUObject(
         this, &UOGFoundationInteractionHost::HandleApplicationDeactivated);
-    return EnsureRuntime();
+    if (!EnsureRuntime()) return false;
+    if (!IsActive()) RefreshProductionSelection();
+    return true;
 }
 
 bool UOGFoundationInteractionHost::EnsureRuntime()
@@ -64,8 +69,11 @@ bool UOGFoundationInteractionHost::EnsureRuntime()
         Core->GetCanonicalWorldTick() < 0 || !Session ||
         !Session->IsBoundToStoredRuler() || !Session->BoundRulerId.IsValid())
     { Status = TEXT("Canonical world, clock and persisted Ruler are not ready."); return false; }
+    if (Runtime && (BoundStore != Core->GetWorldStore() || BoundRulerId != Session->BoundRulerId))
+    { Cancel(TEXT("canonical_binding_changed")); Runtime.Reset(); SelectedParticipants.Reset(); }
     if (!Runtime)
     {
+        BoundRulerId = Session->BoundRulerId;
         BoundStore = Core->GetWorldStore();
         Runtime = MakeUnique<FOGSystemicInteractionRuntime>(
             *BoundStore, Session->BoundRulerId, Core->GetOptionalPackageHost());
@@ -91,7 +99,7 @@ FString UOGFoundationInteractionHost::GetStatus() const
 {
     if (!IsActive()) return Status;
     return FString::Printf(TEXT("%s | %s | %d participants | %.2fx | tick %lld"), *Status,
-        Runtime->IsAwaitingAction() ? TEXT("Choose next action") : *Runtime->GetCurrentNode().ToString(),
+        Runtime->IsAwaitingAction() ? TEXT("Choose / ") : *Runtime->GetCurrentNode().ToString(),
         Runtime->GetParticipants().Num(), Runtime->GetPacing(), LastTick);
 }
 
@@ -153,58 +161,107 @@ void UOGFoundationInteractionHost::BuildDiagnosticSelection(bool bAll)
         SelectionIndex = (SelectionIndex + 1) % Candidates.Num();
     }
     else SelectedParticipants.Reset();
-    Status = FString::Printf(TEXT("Selected %d canonical participants; unembodied bindings remain logical."), SelectedParticipants.Num());
+    Status = FString::Printf(TEXT("Selected / "), SelectedParticipants.Num());
+}
+
+void UOGFoundationInteractionHost::RefreshProductionSelection()
+{
+    AvailableParticipants.Reset(); AvailableDefinitions.Reset();
+    if (!BoundStore || !GetWorld()) return;
+    for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+        if (auto* Component = It->FindComponentByClass<UOGInteractionParticipantComponent>())
+        {
+            FOGInteractionParticipant Participant; FString Error;
+            if (Component->BuildParticipant(TEXT("participant"), Participant, Error) &&
+                Participant.Character.EntityId != BoundRulerId)
+                AvailableParticipants.Add(MoveTemp(Participant));
+        }
+    AvailableParticipants.Sort([](const auto& A, const auto& B)
+        { return A.Character.EntityId.ToString() < B.Character.EntityId.ToString(); });
+    SelectedParticipants.RemoveAll([this](const auto& P)
+        { return !AvailableParticipants.ContainsByPredicate([&](const auto& A)
+            { return A.Character.EntityId == P.Character.EntityId && A.Actor == P.Actor; }); });
+    UOGInteractionCatalog* Content = Catalog.IsNull()
+        ? LoadObject<UOGInteractionCatalog>(nullptr, TEXT("/Game/NoWorld/Interactions/DA_NoWorld_InteractionCatalog.DA_NoWorld_InteractionCatalog"))
+        : Catalog.LoadSynchronous();
+    if (Content)
+    {
+        TSet<FOGContentId> Ids;
+        for (const auto& Reference : Content->Definitions)
+            if (auto* Definition = Reference.LoadSynchronous())
+            {
+                FOGInteractionActionGraph Checked; FString Error;
+                if (!Definition->BuildGraph(Checked, Error) || Ids.Contains(Definition->GraphId))
+                { Status = TEXT("Installed interaction catalog contains an invalid or duplicate definition."); AvailableDefinitions.Reset(); SelectedDefinition = nullptr; return; }
+                Ids.Add(Definition->GraphId); AvailableDefinitions.Add(Definition);
+            }
+    }
+    if (!AvailableDefinitions.Contains(SelectedDefinition))
+        SelectedDefinition = AvailableDefinitions.IsEmpty() ? nullptr : AvailableDefinitions[0];
+    if (!SelectedDefinition && !(Combat.IsValid() && Combat->IsActive()))
+        Status = TEXT("No original interaction definitions installed. Real participant bindings are available; no substitute actions created.");
 }
 
 bool UOGFoundationInteractionHost::BeginContext(FName Context,
     const TArray<FOGInteractionParticipant>& Participants, const FOGEntityId& ContextEvent)
 {
     if (!Initialize() || IsActive()) return false;
-    UOGGate12RulerSessionSubsystem* Session =
-        GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
-    if (!Session || !Session->IsBoundToStoredRuler() ||
-        !Session->BoundRulerId.IsValid())
-    { Status = TEXT("A stored Ruler is required for World interaction."); return false; }
-    // Ordinary exploration binds the existing controlled pawn. An authored
-    // diagnostic encounter may supply a different true controlled body.
-    AActor* Protagonist = Combat.IsValid() && Combat->IsActive()
-        ? Combat->GetProtagonistWorldActor() : GetOwner();
-    if (!Protagonist)
-    { Status = TEXT("A controlled World body is required before interaction."); return false; }
-    FOGInteractionEntry Entry; Entry.Context = Context; Entry.ContextEventId = ContextEvent;
-    Entry.World = GetWorld(); Entry.PreferredLocation = Protagonist->GetActorLocation();
-    if (APawn* Pawn = Cast<APawn>(GetOwner())) Entry.ReturnController = Cast<APlayerController>(Pawn->GetController());
-    if (const AOGWorldPrototypeCharacter* Player = Cast<AOGWorldPrototypeCharacter>(GetOwner()))
-        Entry.bPrivacyPresentation = Player->GetSfwPresentation();
-    bool bPresence = false; FOGWorldPresenceRecord Presence; FString Error;
-    if (!BoundStore->TryReadWorldPresence(Session->BoundRulerId, bPresence, Presence, Error))
+    if (const auto* Battle = Core->GetOwnedLuminousTurnBattle(); Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running)
+    { Status = TEXT("Finish the active combat encounter before entering an interaction."); return false; }
+    FOGInteractionParticipant Ruler; FString Error;
+    if (!UOGInteractionParticipantComponent::ResolveActualRulerParticipant(
+        GetWorld(), *BoundStore, BoundRulerId, Ruler, Error))
     { Status = Error; return false; }
+    FOGInteractionEntry Entry; Entry.Context = Context; Entry.ContextEventId = ContextEvent;
+    Entry.World = GetWorld(); Entry.PreferredLocation = Ruler.Actor->GetActorLocation();
+    if (APawn* Pawn = Cast<APawn>(GetOwner())) Entry.ReturnController = Cast<APlayerController>(Pawn->GetController());
+    if (const auto* Player = Cast<AOGWorldPrototypeCharacter>(GetOwner())) Entry.bPrivacyPresentation = Player->GetSfwPresentation();
+    bool bPresence = false; FOGWorldPresenceRecord Presence;
+    if (!BoundStore->TryReadWorldPresence(BoundRulerId, bPresence, Presence, Error)) { Status = Error; return false; }
     if (bPresence) Entry.LocationId = Presence.LocationId;
-    FOGInteractionParticipant Player;
-    Player.Character.EntityId = Session->BoundRulerId;
-    Player.Character.OwnerEntityId = Session->BoundRulerId;
-    Player.Role = TEXT("player"); Player.Actor = Protagonist;
-    if (ACharacter* Character = Cast<ACharacter>(Protagonist))
-        if (Character->GetMesh() && Character->GetMesh()->GetSkeletalMeshAsset() && Character->GetMesh()->GetSkeletalMeshAsset()->GetSkeleton())
-            Player.RigFamilyId = FOGContentId(TEXT("rig:") + Character->GetMesh()->GetSkeletalMeshAsset()->GetSkeleton()->GetPathName().ToLower());
-    Entry.Participants.Add(Player);
-    const TArray<FOGInteractionParticipant>& Other = Participants.IsEmpty() ? SelectedParticipants : Participants;
-    for (const auto& Binding : Other)
-        if (Binding.Character.EntityId != Session->BoundRulerId) Entry.Participants.Add(Binding);
-    return EnterAuthored(Entry, FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph());
+    Entry.Participants.Add(Ruler);
+    const auto& Others = Participants.IsEmpty() ? SelectedParticipants : Participants;
+    for (const auto& Binding : Others) if (Binding.Character.EntityId != BoundRulerId) Entry.Participants.Add(Binding);
+    FOGInteractionActionGraph Graph;
+    if (SelectedDefinition)
+    {
+        TArray<FOGInteractionParticipant> Bound;
+        if (!SelectedDefinition->BuildGraph(Graph, Error) || !SelectedDefinition->BindRoles(Entry.Participants, Bound, Error))
+        { Status = Error; return false; }
+        Entry.Participants = MoveTemp(Bound);
+        // Source lore classification only. General mature/violence graphs do not consume this check.
+        if (SelectedDefinition->bContainsAdultSource)
+            for (const auto& P : Entry.Participants)
+            {
+                auto* Source = P.Actor->FindComponentByClass<UOGInteractionParticipantComponent>();
+                if (!Source || !Source->HasCanonicalAdultSource(Error))
+                { Status = Error.IsEmpty() ? TEXT("Original adult source metadata is unavailable for this participant.") : Error; return false; }
+            }
+    }
+    else if (Combat.IsValid() && Combat->IsActive()) Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    else { Status = TEXT("Install the approved original action definition before starting interaction."); return false; }
+    return EnterAuthored(Entry, Graph);
 }
 
 bool UOGFoundationInteractionHost::EnterAuthored(const FOGInteractionEntry& Entry,
     const FOGInteractionActionGraph& Graph)
 {
     if (!Initialize() || IsActive()) return false;
-    // Never silently replace a companion actor with the protagonist identity.
-    for (const auto& Binding : Entry.Participants)
-        if (Binding.Role == TEXT("player") && Entry.World.IsValid() &&
-            Binding.Actor.Get() !=
-                (Combat.IsValid() && Combat->IsActive()
-                    ? Combat->GetProtagonistWorldActor() : GetOwner()))
-        { Status = TEXT("Player-side actor must be the bound canonical protagonist body."); return false; }
+    if (Entry.World.IsValid())
+    {
+        FOGInteractionParticipant RealRuler; FString Error;
+        if (Entry.World.Get() != GetWorld() || !UOGInteractionParticipantComponent::ResolveActualRulerParticipant(
+            GetWorld(), *BoundStore, BoundRulerId, RealRuler, Error)) { Status = Error; return false; }
+        for (const auto& Binding : Entry.Participants)
+            if (Binding.Role == TEXT("player") && Binding.Actor != RealRuler.Actor)
+            { Status = TEXT("Player-side participant must be the actual canonical Ruler body."); return false; }
+    }
+    if (auto* Controller = Entry.ReturnController.Get())
+        if (auto* Hud = Cast<AOGWorldPresentationHud>(Controller->GetHUD()))
+        {
+            InteractionHud = Hud; SavedHudSurface = Hud->GetInteractionReturnSurface();
+            Hud->SetInteractionSurface(TEXT("world"));
+        }
     // Reveal ordinary World presentation before native entry captures visibility.
     // Otherwise a Ruler-hidden participant would be saved as permanently hidden,
     // and Privacy toggles/exit could restore that suspension inside the scene.
@@ -225,9 +282,34 @@ bool UOGFoundationInteractionHost::EnterAuthored(const FOGInteractionEntry& Entr
     if (const AOGWorldPrototypeCharacter* Player = Cast<AOGWorldPrototypeCharacter>(GetOwner()))
         bLastProfilePrivacy = Player->GetSfwPresentation();
     FString Error;
+    APlayerController* Controller = Entry.ReturnController.Get();
+    APawn* RulerPawn = Cast<APawn>(FindBoundActor(BoundRulerId));
+    TWeakObjectPtr<APawn> PreviousPawn = Controller ? Controller->GetPawn() : nullptr;
+    if (Controller && (!RulerPawn || !Controller->IsLocalController()))
+    { RestoreGameplay(); Status = TEXT("The real Ruler pawn must be locally controllable."); return false; }
+    const bool bSwitch = Controller && PreviousPawn.Get() != RulerPawn;
+    if (bSwitch)
+    {
+        if (auto* Hud = Cast<AOGWorldPresentationHud>(Controller->GetHUD()))
+            Hud->RememberEmbodiedOwnedCharacter(Cast<AOGWorldPrototypeCharacter>(PreviousPawn.Get()));
+        Controller->Possess(RulerPawn);
+        if (Controller->GetPawn() != RulerPawn)
+        { if (PreviousPawn.IsValid()) Controller->Possess(PreviousPawn.Get()); RestoreGameplay(); Status = TEXT("Ruler control could not be transferred; previous character retained."); return false; }
+    }
     if (!Runtime->Enter(Entry, Graph, LastTick, Error))
-    { RestoreGameplay(); Status = Error; return false; }
-    Status = FString::Printf(TEXT("%s: %d canonical participants. Neutral actions; world time continues."),
+    {
+        if (bSwitch && PreviousPawn.IsValid()) Controller->Possess(PreviousPawn.Get());
+        RestoreGameplay(); Status = Error; return false;
+    }
+    if (Controller && GetWorld()->GetGameInstance())
+        if (auto* Session = GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>())
+            if (!Session->SelectRulerForWorld(Error))
+            {
+                Cancel(TEXT("ruler_selection_failed"));
+                if (bSwitch && PreviousPawn.IsValid()) Controller->Possess(PreviousPawn.Get());
+                Status = Error; return false;
+            }
+    Status = FString::Printf(TEXT("%s: %d canonical participants. World time continues."),
         *Entry.Context.ToString(), Entry.Participants.Num());
     return true;
 }
@@ -237,30 +319,50 @@ TArray<FOGFoundationInteractionRow> UOGFoundationInteractionHost::GetRows() cons
     TArray<FOGFoundationInteractionRow> Rows;
     if (!IsActive())
     {
-        const bool bReady = Core.IsValid() && Core->IsCoreReady() &&
-            GetOwner() && GetWorld() && GetWorld()->GetGameInstance() &&
-            GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>() &&
-            GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>()->IsBoundToStoredRuler();
-        const bool bDiagnosticSelection = bReady && Combat.IsValid() &&
-            Combat->IsActive();
-        Rows.Add({TEXT("world"), TEXT("World interaction"), bReady});
-        Rows.Add({TEXT("ruler"), TEXT("Ruler interaction"), bReady});
-        Rows.Add({TEXT("roster"), TEXT("Roster interaction"), bReady});
-        Rows.Add({TEXT("npc"), TEXT("NPC context interaction"), bReady && !SelectedParticipants.IsEmpty()});
-        const bool bEvent = bDiagnosticSelection && Combat->GetResolvedEncounterEventId().IsValid();
-        Rows.Add({TEXT("event"), TEXT("Event context interaction"), bEvent});
-        Rows.Add({TEXT("post_combat"), TEXT("Post-combat interaction"), bEvent});
-        Rows.Add({TEXT("select_next"), TEXT("Select next canonical participant"), bDiagnosticSelection});
-        Rows.Add({TEXT("select_all"), TEXT("Select available diagnostic group"), bDiagnosticSelection});
+        const bool bReady = Core.IsValid() && Core->IsCoreReady() && BoundRulerId.IsValid();
+        for (UOGInteractionDefinition* Definition : AvailableDefinitions)
+            if (Definition) Rows.Add({FName(*(TEXT("definition.") + Definition->GraphId.ToString())),
+                (Definition == SelectedDefinition ? TEXT("Selected / ") : TEXT("Choose / ")) + Definition->DisplayName.ToString(), true});
+        for (int32 I = 0; I < AvailableParticipants.Num(); ++I)
+        {
+            const auto& P = AvailableParticipants[I];
+            const bool Selected = SelectedParticipants.ContainsByPredicate([&](const auto& S) { return S.Character.EntityId == P.Character.EntityId; });
+            const auto* Source = P.Actor.IsValid() ? P.Actor->FindComponentByClass<UOGInteractionParticipantComponent>() : nullptr;
+            const FString Name = Source && !Source->DisplayName.IsEmpty() ? Source->DisplayName.ToString() : FString::Printf(TEXT("Character %d"), I + 1);
+            Rows.Add({FName(*(TEXT("participant.") + P.Character.EntityId.ToString())),
+                FString(Selected ? TEXT("Remove / ") : TEXT("Include / ")) + Name, bReady});
+        }
+        Rows.Add({TEXT("refresh"), TEXT("Refresh nearby character bindings"), bReady});
+        Rows.Add({TEXT("clear_participants"), TEXT("Clear participant selection"), !SelectedParticipants.IsEmpty()});
+        const bool bContent = SelectedDefinition || (Combat.IsValid() && Combat->IsActive());
+        Rows.Add({TEXT("world"), TEXT("Begin World interaction"), bReady && bContent});
+        Rows.Add({TEXT("ruler"), TEXT("Begin Ruler interaction"), bReady && bContent});
+        Rows.Add({TEXT("roster"), TEXT("Begin character interaction"), bReady && bContent});
+        Rows.Add({TEXT("npc"), TEXT("Begin selected NPC interaction"), bReady && bContent && !SelectedParticipants.IsEmpty()});
+        const bool bEvent = Combat.IsValid() && Combat->IsActive() && Combat->GetResolvedEncounterEventId().IsValid();
+        Rows.Add({TEXT("event"), TEXT("Event interaction"), bContent && bEvent});
+        Rows.Add({TEXT("post_combat"), TEXT("Post-combat interaction"), bContent && bEvent});
+        if (Combat.IsValid() && Combat->IsActive())
+        {
+            Rows.Add({TEXT("select_next"), TEXT("Diagnostic: next canonical participant"), true});
+            Rows.Add({TEXT("select_all"), TEXT("Diagnostic: available group"), true});
+        }
     }
     else
     {
-        Rows.Add({TEXT("align"), TEXT("Choose: align"), Runtime->IsAwaitingAction()});
-        Rows.Add({TEXT("handoff"), TEXT("Choose: handoff"), Runtime->IsAwaitingAction()});
-        Rows.Add({TEXT("sequence"), TEXT("Queue handoff then align"), true});
+        TArray<FName> Next = Runtime->GetAvailableActions();
+        const auto& Queue = Runtime->GetQueuedActions();
+        if (!Queue.IsEmpty())
+            if (const auto* Tail = ActiveGraph.Nodes.FindByPredicate([&](const auto& N) { return N.NodeId == Queue.Last(); })) Next = Tail->NextNodes;
+        for (FName Id : Next)
+            if (const auto* Node = ActiveGraph.Nodes.FindByPredicate([Id](const auto& N) { return N.NodeId == Id; }))
+                Rows.Add({FName(*(TEXT("action.") + Id.ToString())),
+                    FString(Runtime->IsAwaitingAction() && Queue.IsEmpty() ? TEXT("Play / ") : TEXT("Queue / ")) +
+                    (Node->DisplayName.IsEmpty() ? Id.ToString() : Node->DisplayName), true});
+        Rows.Add({TEXT("clear_queue"), FString::Printf(TEXT("Clear sequence (%d queued)"), Queue.Num()), !Queue.IsEmpty()});
         Rows.Add({TEXT("pacing"), FString::Printf(TEXT("Pacing %.2fx: change"), Runtime->GetPacing()), true});
         Rows.Add({TEXT("camera"), TEXT("Orbit camera"), true});
-        Rows.Add({TEXT("restage"), TEXT("Find nearby staging"), true});
+        Rows.Add({TEXT("restage"), TEXT("Adapt staging to nearby space"), true});
         Rows.Add({TEXT("privacy"), bPrivacy ? TEXT("Presentation: masked") : TEXT("Presentation: visible"), true});
         Rows.Add({TEXT("exit"), TEXT("Return to ordinary gameplay"), true});
     }
@@ -272,41 +374,52 @@ bool UOGFoundationInteractionHost::ActivateRow(FName Id)
     if (!Initialize()) return false;
     const auto Rows = GetRows();
     const auto* Row = Rows.FindByPredicate([Id](const auto& Value) { return Value.Id == Id; });
-    if (!Row || !Row->bEnabled) { Status = TEXT("This interaction control is unavailable in the current state."); return false; }
-    if (IsEntry(Id))
-        return BeginContext(Id, {}, (Id == TEXT("event") || Id == TEXT("post_combat")) ?
-            (Combat.IsValid() && Combat->IsActive()
-                ? Combat->GetResolvedEncounterEventId() : FOGEntityId())
-                : FOGEntityId());
-    if (Id == TEXT("select_next") || Id == TEXT("select_all"))
-    { BuildDiagnosticSelection(Id == TEXT("select_all")); return true; }
+    if (!Row || !Row->bEnabled) { Status = TEXT("This control is unavailable in the current state."); return false; }
+    const FString Key = Id.ToString();
+    if (Key.StartsWith(TEXT("definition.")))
+    {
+        for (UOGInteractionDefinition* Definition : AvailableDefinitions)
+            if (Definition && Key == TEXT("definition.") + Definition->GraphId.ToString())
+            { SelectedDefinition = Definition; Status = Definition->Description.ToString(); return true; }
+        return false;
+    }
+    if (Key.StartsWith(TEXT("participant.")))
+    {
+        const auto* P = AvailableParticipants.FindByPredicate([&](const auto& A) { return Key == TEXT("participant.") + A.Character.EntityId.ToString(); });
+        if (!P) return false;
+        const int32 Index = SelectedParticipants.IndexOfByPredicate([&](const auto& A) { return A.Character.EntityId == P->Character.EntityId; });
+        if (Index == INDEX_NONE) SelectedParticipants.Add(*P); else SelectedParticipants.RemoveAt(Index);
+        Status = FString::Printf(TEXT("%d actual participants selected, plus the canonical Ruler."), SelectedParticipants.Num()); return true;
+    }
+    if (Id == TEXT("refresh")) { RefreshProductionSelection(); return true; }
+    if (Id == TEXT("clear_participants")) { SelectedParticipants.Reset(); return true; }
+    if (IsEntry(Id)) return BeginContext(Id, {}, (Id == TEXT("event") || Id == TEXT("post_combat")) && Combat.IsValid() ? Combat->GetResolvedEncounterEventId() : FOGEntityId());
+    if (Id == TEXT("select_next") || Id == TEXT("select_all")) { BuildDiagnosticSelection(Id == TEXT("select_all")); return true; }
     if (Id == TEXT("exit")) { Cancel(); return true; }
     FString Error; bool bResult = false;
-    if (Id == TEXT("align") || Id == TEXT("handoff")) bResult = Runtime->SelectAction(Id, Error);
-    else if (Id == TEXT("sequence"))
-        bResult = Runtime->SetSequence({FName(TEXT("handoff")), FName(TEXT("align"))}, Error);
+    if (Key.StartsWith(TEXT("action.")))
+    {
+        const FName Node(*Key.Mid(7));
+        if (Runtime->IsAwaitingAction() && Runtime->GetQueuedActions().IsEmpty()) bResult = Runtime->SelectAction(Node, Error);
+        else { auto Queue = Runtime->GetQueuedActions(); Queue.Add(Node); bResult = Runtime->SetSequence(Queue, Error); }
+    }
+    else if (Id == TEXT("clear_queue")) bResult = Runtime->SetSequence({}, Error);
     else if (Id == TEXT("pacing"))
     {
         const double Rate = Runtime->GetPacing();
-        bResult = Runtime->SetPacing(Rate == 0 ? 0.5 : Rate < 1 ? 1.0 : Rate < 2 ? 2.0 : 0.0, Error);
-        UpdateAnimationPacing();
+        bResult = Runtime->SetPacing(Rate == 0 ? 0.5 : Rate < 1 ? 1.0 : Rate < 2 ? 2.0 : 0.0, Error); UpdateAnimationPacing();
     }
     else if (Id == TEXT("camera"))
     {
-        AActor* Protagonist = Combat.IsValid() && Combat->IsActive()
-            ? Combat->GetProtagonistWorldActor() : GetOwner();
-        const FVector Center = Protagonist
-            ? Protagonist->GetActorLocation() : GetOwner()->GetActorLocation();
+        AActor* Ruler = FindBoundActor(BoundRulerId);
+        const FVector Center = Ruler ? Ruler->GetActorLocation() : GetOwner()->GetActorLocation();
         CameraAngle += PI / 4;
         const FVector Camera = Center + FVector(FMath::Cos(CameraAngle) * 450, FMath::Sin(CameraAngle) * 450, 180);
         bResult = Runtime->SetCamera(FTransform((Center - Camera).Rotation(), Camera), Error);
     }
-    else if (Id == TEXT("restage"))
-        bResult = Runtime->Restage(GetOwner()->GetActorLocation() + GetOwner()->GetActorRightVector() * 150, Error);
-    else if (Id == TEXT("privacy"))
-    { bPrivacy = !bPrivacy; Runtime->SetPrivacyPresentation(bPrivacy); bResult = true; }
-    Status = bResult ? FString::Printf(TEXT("%s accepted; canonical tick %lld."), *Id.ToString(), LastTick) : Error;
-    return bResult;
+    else if (Id == TEXT("restage")) bResult = Runtime->Restage(GetOwner()->GetActorLocation() + GetOwner()->GetActorRightVector() * 150, Error);
+    else if (Id == TEXT("privacy")) { bPrivacy = !bPrivacy; Runtime->SetPrivacyPresentation(bPrivacy); bResult = true; }
+    Status = bResult ? FString::Printf(TEXT("%s accepted."), *Row->Label) : Error; return bResult;
 }
 
 void UOGFoundationInteractionHost::Cancel(FName Reason)
@@ -365,11 +478,17 @@ void UOGFoundationInteractionHost::ApplyCharacter(const FOGInteractionParticipan
     if (FMeshRestore* Saved = MeshRestores.Find(State.Binding.Character.EntityId);
         Saved && Saved->bOwnsClip && Saved->Animation.IsValid())
     { Saved->Animation->SetPresentedState(NAME_None); Saved->bOwnsClip = false; }
+    if (AActor* Physical = FindBoundActor(State.Binding.Character.EntityId))
+        if (auto* Participant = Physical->FindComponentByClass<UOGInteractionParticipantComponent>())
+        { FString Error; if (!Participant->RefreshFromCanonical(Error)) Status = Error; }
     OnCharacterPresentation.Broadcast(State);
 }
 
 void UOGFoundationInteractionHost::SetSignificance(const FOGEntityId& Entity, bool bAction, bool bCamera)
 {
+    if (AActor* Physical = FindBoundActor(Entity))
+        if (auto* Participant = Physical->FindComponentByClass<UOGInteractionParticipantComponent>())
+            Participant->SetInteractionSignificance(bAction, bCamera);
     if (FMeshRestore* Saved = MeshRestores.Find(Entity); Saved && Saved->Mesh.IsValid())
     {
         Saved->Mesh->bEnableUpdateRateOptimizations = !(bAction || bCamera);
@@ -382,17 +501,31 @@ void UOGFoundationInteractionHost::ApplyConstraint(const FOGInteractionConstrain
     const TArray<FOGInteractionParticipantState>& Participants)
 { OnConstraintPresentation.Broadcast(Constraint, Participants); }
 
-bool UOGFoundationInteractionHost::PlaySharedAction(
-    const FOGEntityId& Entity, FName Action, FName Context)
+UOGSharedMotionControllerComponent* UOGFoundationInteractionHost::FindMotionController(AActor* Actor) const
 {
-    AActor* Physical = FindBoundActor(Entity);
-    if (!Physical || Action.IsNone() || Context.IsNone()) return false;
-    // The actual possessed/embodied participant owns its compatible part set.
-    // The exact source/rig/quality decision belongs to the GAME-WIDE resolver;
-    // no Luminous Version, wardrobe or content category is hardcoded here.
-    UOGSharedMotionControllerComponent* Motion =
-        Physical->FindComponentByClass<UOGSharedMotionControllerComponent>();
-    return Motion && Motion->PlayAction(Action, Context, false, 1);
+    if (!Actor) return nullptr;
+    if (auto* Participant = Actor->FindComponentByClass<UOGInteractionParticipantComponent>())
+        return Participant->GetMotionController();
+    TArray<USkeletalMeshComponent*> Parts; UOGSharedMotionControllerComponent* Motion = nullptr; FString Error;
+    return UOGInteractionParticipantComponent::DiscoverNativeBinding(Actor, Parts, Motion, Error) ? Motion : nullptr;
+}
+
+void UOGFoundationInteractionHost::OwnMotion(UOGSharedMotionControllerComponent* Motion)
+{
+    if (!Motion || OwnedMotions.ContainsByPredicate([Motion](const auto& M) { return M.Motion.Get() == Motion; })) return;
+    FMotionRestore Saved; Saved.Motion = Motion;
+    Saved.bRootMotion = Motion->bPermitAuthoritativeRootMotion; Saved.Pacing = Motion->GetExternalPacing();
+    OwnedMotions.Add(Saved); Motion->bPermitAuthoritativeRootMotion = false;
+}
+
+bool UOGFoundationInteractionHost::PlaySharedAction(const FOGEntityId& Entity, FName Action, FName Context)
+{
+    auto* Motion = FindMotionController(FindBoundActor(Entity));
+    if (!Motion || !Motion->CanPlayAction(Action, Context, false, 1)) return false;
+    OwnMotion(Motion);
+    const bool Played = Motion->PlayAction(Action, Context, false, 1);
+    if (Played && Runtime) Motion->SetExternalPacing(static_cast<float>(Runtime->GetPacing()));
+    return Played;
 }
 
 bool UOGFoundationInteractionHost::PlaySharedScene(
@@ -400,14 +533,16 @@ bool UOGFoundationInteractionHost::PlaySharedScene(
     const TArray<FOGInteractionParticipantState>& SourceParticipants)
 {
     if (!GetWorld() || !GetOwner() || Node.SharedSceneAction.IsNone() ||
-        Node.SharedSceneContext.IsNone() || SourceParticipants.Num() < 2 ||
-        SourceParticipants.Num() > 13) return false;
+        Node.SharedSceneContext.IsNone() || SourceParticipants.Num() < 2) return false;
 
     TArray<FOGSharedMotionParticipant> Roles;
     Roles.Reserve(SourceParticipants.Num());
     for (const FOGInteractionParticipantState& Participant : SourceParticipants)
     {
+        // Observers retain canonical state and ordinary LOD; only active original tracks animate.
+        if (!Node.RequiredRoles.Contains(Participant.Binding.Role)) continue;
         const FOGInteractionAnimationBinding* Authored = nullptr;
+        int32 BestSpecificity = -1; bool bAmbiguous = false;
         for (const FOGInteractionAnimationBinding& Binding : Node.AnimationBindings)
         {
             // Shared scene assets declare a real source role. The global
@@ -428,20 +563,22 @@ bool UOGFoundationInteractionHost::PlaySharedScene(
                  Binding.VersionId !=
                     Participant.Character.Manifestation.ActiveVersionId))
                 continue;
-            if (!Authored || Binding.ManifestationId.IsValid())
-                Authored = &Binding;
+            const int32 Specificity = (Binding.ManifestationId.IsValid() ? 4 : 0) +
+                (!Binding.VersionId.IsEmpty() ? 2 : 0) + (Binding.RigFamilyId.IsValid() ? 1 : 0);
+            if (Specificity == BestSpecificity) bAmbiguous = true;
+            if (Specificity > BestSpecificity) { Authored = &Binding; BestSpecificity = Specificity; bAmbiguous = false; }
         }
-        if (!Authored || Authored->SharedSceneRole.IsNone()) return false;
+        if (bAmbiguous || !Authored || Authored->SharedSceneRole.IsNone()) return false;
         AActor* Actor = FindBoundActor(Participant.Binding.Character.EntityId);
         if (!Actor || Actor->GetWorld() != GetWorld()) return false;
-        UOGSharedMotionControllerComponent* Controller =
-            Actor->FindComponentByClass<UOGSharedMotionControllerComponent>();
+        UOGSharedMotionControllerComponent* Controller = FindMotionController(Actor);
         if (!Controller) return false;
         FOGSharedMotionParticipant& Role = Roles.AddDefaulted_GetRef();
         Role.Controller = Controller;
         Role.SourceRole = Authored->SharedSceneRole;
     }
 
+    if (Roles.Num() < 2 || Roles.Num() != Node.RequiredRoles.Num()) return false;
     if (!IsValid(ActiveSharedScene))
     {
         ActiveSharedScene = NewObject<UOGSharedMotionSceneComponent>(GetOwner());
@@ -452,14 +589,22 @@ bool UOGFoundationInteractionHost::PlaySharedScene(
     // Existing shared scene component preflights ALL authored source roles,
     // native Skeletons and grouped original scene IDs atomically. A rejected
     // clip is not silently substituted, including for mature interactions.
-    return ActiveSharedScene->StartSynchronizedScene(
-        Node.SharedSceneAction, Node.SharedSceneContext, false);
+    for (const auto& Role : ActiveSharedScene->Participants) OwnMotion(Role.Controller);
+    const bool Played = ActiveSharedScene->StartSynchronizedScene(Node.SharedSceneAction, Node.SharedSceneContext, false);
+    if (Played) UpdateAnimationPacing();
+    return Played;
 }
 
 void UOGFoundationInteractionHost::StopSharedScene()
 {
     if (IsValid(ActiveSharedScene))
         ActiveSharedScene->StopSynchronizedScene();
+    for (const auto& Saved : OwnedMotions) if (auto* Motion = Saved.Motion.Get())
+    {
+        Motion->StopAction(); Motion->bPermitAuthoritativeRootMotion = Saved.bRootMotion;
+        Motion->SetExternalPacing(Saved.Pacing);
+    }
+    OwnedMotions.Reset();
 }
 
 void UOGFoundationInteractionHost::ApplyAnimation(const FOGEntityId& Entity, UObject* Asset)
@@ -489,6 +634,13 @@ void UOGFoundationInteractionHost::ApplyAnimation(const FOGEntityId& Entity, UOb
     UpdateAnimationPacing();
 }
 
+void UOGFoundationInteractionHost::EndAction()
+{
+    for (auto& Pair : MeshRestores)
+        if (Pair.Value.bOwnsClip && Pair.Value.Animation.IsValid())
+        { Pair.Value.Animation->SetPresentedState(NAME_None); Pair.Value.bOwnsClip = false; }
+}
+
 void UOGFoundationInteractionHost::ApplyReaction(const FOGEntityId& Entity, UObject* Expression, UObject* Reaction)
 { OnReactionPresentation.Broadcast(Entity, Expression, Reaction); }
 
@@ -502,6 +654,8 @@ void UOGFoundationInteractionHost::SetPrivacy(bool Privacy)
 void UOGFoundationInteractionHost::UpdateAnimationPacing()
 {
     if (!Runtime) return;
+    for (const auto& Saved : OwnedMotions)
+        if (auto* Motion = Saved.Motion.Get()) Motion->SetExternalPacing(static_cast<float>(Runtime->GetPacing()));
     for (auto& Pair : MeshRestores)
         if (Pair.Value.bOwnsClip && Pair.Value.Mesh.IsValid() && Pair.Value.Animation.IsValid())
             if (const auto* Clip = Pair.Value.Animation->Clips.Find(InteractionClip))
@@ -512,6 +666,9 @@ void UOGFoundationInteractionHost::UpdateAnimationPacing()
 
 void UOGFoundationInteractionHost::RestoreGameplay()
 {
+    StopSharedScene();
+    for (const auto& Pair : BoundActors) if (auto* Actor = Pair.Value.Get())
+        if (auto* Participant = Actor->FindComponentByClass<UOGInteractionParticipantComponent>()) Participant->RestoreSignificance();
     // Restore ALL participant native motion tracks before the canonical
     // interaction returns the characters to ordinary World control.
     if (IsValid(ActiveSharedScene))
@@ -541,6 +698,8 @@ void UOGFoundationInteractionHost::RestoreGameplay()
         if (PresentationMode.IsValid()) PresentationMode->SetMode(SavedPresentationMode);
     }
     PresentationMode.Reset();
+    if (InteractionHud.IsValid()) InteractionHud->SetInteractionSurface(SavedHudSurface);
+    InteractionHud.Reset(); SavedHudSurface = NAME_None;
 }
 
 void UOGFoundationInteractionHost::EndPlay(const EEndPlayReason::Type Reason)
