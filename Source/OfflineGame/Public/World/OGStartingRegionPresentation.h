@@ -1019,6 +1019,7 @@ public:
     /** Existing native HUD/presentation transition, without changing possession. */
     void SetInteractionSurface(FName Surface);
     bool ShowNativeInteractionSurface(FString& OutError);
+    void CloseInteractionForCombat();
     void RememberEmbodiedOwnedCharacter(AOGWorldPrototypeCharacter* Character);
     virtual void NotifyHitBoxClick(FName BoxName) override;
     virtual void NotifyHitBoxRelease(FName BoxName) override;

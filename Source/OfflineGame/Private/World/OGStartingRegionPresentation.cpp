@@ -6254,6 +6254,10 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
 bool AOGWorldPresentationHud::ShowNativeInteractionSurface(FString& OutError)
 {
     OutError.Reset();
+    const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    if (const auto* Battle = NativeCore ? NativeCore->GetOwnedLuminousTurnBattle() : nullptr;
+        Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running)
+    { OutError = TEXT("Interaction controls close while the combat encounter is active."); return false; }
     auto* Character = PlayerOwner ? Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn()) : nullptr;
     auto* Host = Character ? Character->FindComponentByClass<UOGFoundationInteractionHost>() : nullptr;
     if (Host && NativeInteractionWidget && NativeInteractionWidget->IsInViewport()) return true;
@@ -6285,6 +6289,13 @@ void AOGWorldPresentationHud::CloseNativeInteractionSurface()
         else
         { FInputModeGameAndUI Mode; PlayerOwner->SetInputMode(Mode); PlayerOwner->bShowMouseCursor = true; }
     }
+}
+
+void AOGWorldPresentationHud::CloseInteractionForCombat()
+{
+    if (NativeInteractionWidget) NativeInteractionWidget->InterruptForCombat();
+    SetFoundationSurface(TEXT("world"));
+    CloseNativeInteractionSurface();
 }
 
 void AOGWorldPresentationHud::SetInteractionSurface(FName Surface)
@@ -8738,6 +8749,11 @@ void AOGWorldPresentationHud::DrawHUD()
         Character && Character->IsFoundationSettingsOpen();
     const bool bPauseOpen =
         Character && Character->IsFoundationPauseMenuOpen();
+    if (bInteractionMenuOpen)
+        if (const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
+            if (const auto* Battle = NativeCore->GetOwnedLuminousTurnBattle();
+                Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running)
+                CloseInteractionForCombat();
 
     const bool bNativeOpeningVisible =
         bGate12NativeOpeningUMGEnabled && !bSettingsOpen && !bPauseOpen &&

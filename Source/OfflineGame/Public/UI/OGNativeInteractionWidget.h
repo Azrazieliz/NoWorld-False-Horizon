@@ -30,6 +30,7 @@ class OFFLINEGAME_API UOGNativeInteractionWidget : public UUserWidget
 public:
     void BindHost(UOGFoundationInteractionHost* InHost);
     void Activate(FName Action);
+    void InterruptForCombat();
     FOGNativeInteractionClosed OnClosed;
 protected:
     virtual void NativeConstruct() override;

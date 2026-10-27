@@ -99,6 +99,11 @@ void UOGNativeInteractionWidget::Activate(FName Action)
     Refresh();
 }
 
+void UOGNativeInteractionWidget::InterruptForCombat()
+{
+    if (Host.IsValid() && Host->IsActive()) Host->Cancel(TEXT("combat_started"));
+}
+
 void UOGNativeInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
 {
     Super::NativeTick(Geometry, DeltaSeconds);

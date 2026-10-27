@@ -1,5 +1,8 @@
 #include "Interaction/OGFoundationInteractionHost.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Narrative/OGNarrativeWorldActor.h"
+#include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "EngineUtils.h"
 #include "Combat/OGDiagnosticCombatComponent.h"
 #include "Combat/OGTurnBattle.h"
@@ -169,13 +172,41 @@ void UOGFoundationInteractionHost::RefreshProductionSelection()
     AvailableParticipants.Reset(); AvailableDefinitions.Reset();
     if (!BoundStore || !GetWorld()) return;
     for (TActorIterator<AActor> It(GetWorld()); It; ++It)
-        if (auto* Component = It->FindComponentByClass<UOGInteractionParticipantComponent>())
+    {
+        AActor* Actor = *It;
+        if (!IsValid(Actor) || Actor->IsActorBeingDestroyed()) continue;
+        auto* Component = Actor->FindComponentByClass<UOGInteractionParticipantComponent>();
+        FOGInteractionParticipant Participant; FString Error;
+        if (!Component || !Component->BuildParticipant(TEXT("participant"), Participant, Error))
         {
-            FOGInteractionParticipant Participant; FString Error;
-            if (Component->BuildParticipant(TEXT("participant"), Participant, Error) &&
-                Participant.Character.EntityId != BoundRulerId)
-                AvailableParticipants.Add(MoveTemp(Participant));
+            // Reuse existing factual identity evidence. Never create an NPC,
+            // infer identity from an actor name, or relabel the possessed pawn.
+            FOGEntityId Entity;
+            if (const auto* Canonical = Actor->FindComponentByClass<UOGCanonicalCharacterPresentation>();
+                Canonical && Canonical->HasProjection()) Entity = Canonical->GetProjection().Context.EntityId;
+            else if (const auto* Body = Actor->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+                Body && Core->GetOwnedLuminousTurnBattle() &&
+                Body->IsBoundTo(Core->GetOwnedLuminousTurnBattle()->GetState().BattleId, Body->GetBoundUnitId()))
+                Entity = Body->GetBoundUnitId();
+            else if (const auto* Subject = Cast<AOGNarrativeWorldActor>(Actor)) Entity = Subject->CanonicalSubjectId;
+            if (!Entity.IsValid()) continue;
+            TArray<USkeletalMeshComponent*> Parts; UOGSharedMotionControllerComponent* Motion = nullptr;
+            if (!UOGInteractionParticipantComponent::DiscoverNativeBinding(Actor, Parts, Motion, Error)) continue;
+            FString Rig = Motion && !Motion->RigProfile.IsNone() ? Motion->RigProfile.ToString().ToLower() :
+                Parts[0]->GetSkeletalMeshAsset()->GetSkeleton()->GetPathName().ToLower();
+            const FOGContentId Family = FOGContentId(Rig).IsValid() ? FOGContentId(Rig) : FOGContentId(TEXT("rig:") + Rig);
+            const bool bCreated = !Component;
+            if (!Component)
+            {
+                Component = NewObject<UOGInteractionParticipantComponent>(Actor);
+                Actor->AddInstanceComponent(Component); Component->RegisterComponent();
+            }
+            if (!Component->BindActualNativeParticipant(Entity, Family, Error) ||
+                !Component->BuildParticipant(TEXT("participant"), Participant, Error))
+            { if (bCreated) Component->DestroyComponent(); continue; }
         }
+        if (Participant.Character.EntityId != BoundRulerId) AvailableParticipants.Add(MoveTemp(Participant));
+    }
     AvailableParticipants.Sort([](const auto& A, const auto& B)
         { return A.Character.EntityId.ToString() < B.Character.EntityId.ToString(); });
     SelectedParticipants.RemoveAll([this](const auto& P)
@@ -453,6 +484,14 @@ void UOGFoundationInteractionHost::TickComponent(float Delta, ELevelTick Tick,
     Super::TickComponent(Delta, Tick, Function);
     if (!IsActive()) return;
     if (!EnsureRuntime()) { Cancel(TEXT("core_unavailable")); return; }
+    if (const auto* Battle = Core->GetOwnedLuminousTurnBattle();
+        Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running)
+    {
+        TWeakObjectPtr<AOGWorldPresentationHud> Hud = InteractionHud;
+        Cancel(TEXT("combat_started"));
+        if (Hud.IsValid()) Hud->CloseInteractionForCombat();
+        return;
+    }
     if (const AOGWorldPrototypeCharacter* Player = Cast<AOGWorldPrototypeCharacter>(GetOwner()))
         if (Player->GetSfwPresentation() != bLastProfilePrivacy)
         {
