@@ -53,7 +53,7 @@ jobs:
             --source-root SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks \
             --catalog Content/NoWorld/Animation/SharedMotionCatalog.json \
             --output-root Content/NoWorld/Animation/SharedSource
-      - name: Reopen every generated packet and verify length, CRC32, identity and routes
+      - name: Reopen every generated packet and verify CRC32, calibration basis, identity and routes
         run: |
           python -B Scripts/production/build_shared_reference_library.py \
             --output-root Content/NoWorld/Animation/SharedSource --validate-only

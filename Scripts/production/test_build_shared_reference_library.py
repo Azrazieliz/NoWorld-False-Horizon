@@ -162,15 +162,15 @@ class SharedReferenceLibraryTests(unittest.TestCase):
         self.assertEqual(motion["tracks"][0]["translations"], document["bones"][0]["translations"])
         self.assertEqual(motion["tracks"][0]["scales"], document["bones"][0]["scales"])
 
-    def test_duplicate_source_identity_merges_declared_aliases_and_provenance_only(self):
+    def test_duplicate_source_identity_merges_consistent_calibration_and_provenance_only(self):
         second = copy.deepcopy(self.document)
-        second["bones"][0]["target_bone"] = "second_declared_adapter_alias"
         second["source_clip_sha256"] = "d" * 64
         self.put_source("second", second)
         manifest = self.build()
         self.assertEqual(len(manifest["clips"]), 1)
         motion = builder.decode_packet(self.packet())
-        self.assertEqual(motion["tracks"][0]["aliases"], ["adapter_root", "second_declared_adapter_alias"])
+        self.assertEqual(motion["tracks"][0]["aliases"], ["adapter_root"])
+        self.assertEqual(motion["tracks"][0]["calibration_bone"], "adapter_root")
         self.assertEqual(motion["provenance"]["source_clip_sha256"], ["b" * 64, "d" * 64])
 
     def test_conflicting_same_identity_is_rejected_before_output_changes(self):
@@ -302,6 +302,102 @@ class SharedReferenceLibraryTests(unittest.TestCase):
         checked = subprocess.run(args + ["--validate-only"], text=True, capture_output=True)
         self.assertEqual(checked.returncode, 0, checked.stderr)
         self.assertTrue(json.loads(checked.stdout)["all_packet_crc_checks_passed"])
+
+    def test_calibration_contract_and_source_identity_survive_byte_roundtrip(self):
+        manifest = self.build()
+        motion = builder.decode_packet(self.packet())
+        self.assertEqual(manifest["calibration_basis"], builder.CALIBRATION_BASIS)
+        self.assertEqual(motion["calibration_basis"], manifest["calibration_basis"])
+        self.assertEqual(manifest["calibration_skeleton"],
+                         "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/"
+                         "SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton."
+                         "SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton")
+        self.assertEqual(motion["tracks"][0]["bone"], "source_root")
+        self.assertEqual(motion["tracks"][0]["calibration_bone"], "adapter_root")
+        self.assertEqual(manifest["coverage"]["calibration_tracks"], 1)
+        self.assertEqual(manifest["coverage"]["tracks_missing_calibration"], 0)
+
+    def test_missing_calibration_reports_all_source_inputs_before_output_changes(self):
+        manifest = self.build()
+        old = self.packet()
+        for name, value in (("missing", None), ("empty", ""), ("blank", " ")):
+            document = fixture_document(len(name))
+            if value is None:
+                del document["bones"][0]["target_bone"]
+            else:
+                document["bones"][0]["target_bone"] = value
+            self.put_source(name, document)
+        with self.assertRaises(builder.LibraryError) as caught:
+            self.build()
+        message = str(caught.exception)
+        self.assertIn("3 source input(s) failed", message)
+        self.assertEqual(message.count("Missing original target_bone calibration identity"), 3)
+        self.assertIn("zero-based track indices [0]", message)
+        self.assertEqual(self.packet(), old)
+        self.assertEqual(builder.validate_library(self.output), manifest)
+
+    def test_same_source_id_with_different_calibration_is_never_coalesced(self):
+        self.build()
+        old = self.packet()
+        other = copy.deepcopy(self.document)
+        other["bones"][0]["target_bone"] = "different_calibration_basis_bone"
+        self.put_source("conflict", other)
+        with self.assertRaisesRegex(builder.LibraryError, "calibration identity"):
+            self.build()
+        self.assertEqual(self.packet(), old)
+
+    def test_packet_requires_basis_and_calibration_track_label(self):
+        self.build()
+        good = builder.decode_packet(self.packet())
+        for field, value in (("calibration_basis", None), ("calibration_basis", "other.basis")):
+            bad = copy.deepcopy(good)
+            bad[field] = value
+            with self.assertRaises(builder.LibraryError):
+                builder.encode_packet(bad)
+        bad = copy.deepcopy(good)
+        del bad["tracks"][0]["calibration_bone"]
+        with self.assertRaises(builder.LibraryError):
+            builder.encode_packet(bad)
+
+    def test_manifest_requires_exact_basis_and_skeleton_agreement(self):
+        manifest = self.build()
+        for field, value in (("calibration_basis", None), ("calibration_basis", "other.basis"),
+                             ("calibration_skeleton", None), ("calibration_skeleton", "/Game/Other.Other")):
+            bad = copy.deepcopy(manifest)
+            bad[field] = value
+            (self.output / builder.MANIFEST_NAME).write_text(json.dumps(bad))
+            with self.assertRaises(builder.LibraryError):
+                builder.validate_library(self.output)
+        (self.output / builder.MANIFEST_NAME).write_text(json.dumps(manifest))
+        self.assertEqual(builder.validate_library(self.output), manifest)
+
+    def test_full_rebuild_upgrades_previous_generated_contract(self):
+        manifest = self.build()
+        legacy = builder.decode_packet(self.packet())
+        del legacy["calibration_basis"]
+        del legacy["tracks"][0]["calibration_bone"]
+        plain = builder.json_bytes(legacy)
+        path = self.output / manifest["clips"][0]["path"]
+        path.write_bytes(builder.HEADER.pack(builder.MAGIC, len(plain),
+                                            zlib.crc32(plain) & 0xffffffff) + zlib.compress(plain))
+        del manifest["calibration_basis"]
+        del manifest["calibration_skeleton"]
+        (self.output / builder.MANIFEST_NAME).write_text(json.dumps(manifest))
+        with self.assertRaises(builder.LibraryError):
+            builder.validate_library(self.output)
+        rebuilt = self.build()
+        self.assertEqual(builder.validate_library(self.output), rebuilt)
+        self.assertEqual(builder.decode_packet(self.packet())["tracks"][0]["calibration_bone"],
+                         "adapter_root")
+
+    def test_alias_union_cannot_change_calibration_identity(self):
+        self.build()
+        left = builder.decode_packet(self.packet())
+        right = copy.deepcopy(left)
+        right["tracks"][0]["aliases"].append("declared_name_alias")
+        merged = builder.merge_motion(left, right)
+        self.assertEqual(merged["tracks"][0]["calibration_bone"], "adapter_root")
+        self.assertEqual(merged["tracks"][0]["aliases"], ["adapter_root", "declared_name_alias"])
 
 
 if __name__ == "__main__":

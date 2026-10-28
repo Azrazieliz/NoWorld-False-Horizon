@@ -24,6 +24,10 @@ SOURCE_SCHEMA = "noworld.gate12.koikatsu.uncooked_original_studio_unity_native_m
 PACKET_SCHEMA = "noworld.shared_reference_motion.v1"
 LIBRARY_SCHEMA = "noworld.shared_reference_library.v1"
 CATALOG_SCHEMA = "noworld.shared_motion_catalog.v1"
+CALIBRATION_BASIS = "koikatsu.native_original.reference_delta.v1"
+CALIBRATION_SKELETON = ("/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/"
+                        "SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton."
+                        "SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton")
 MAGIC = b"NWMRJ001"
 HEADER = struct.Struct("<8sII")
 MAX_PLAIN_BYTES = 64 * 1024 * 1024
@@ -119,6 +123,7 @@ def samples(value, count, width, label):
 def validate_motion(motion):
     require(isinstance(motion, dict) and motion.get("schema") == PACKET_SCHEMA, "Unsupported packet schema.")
     require(isinstance(motion.get("id"), str) and ID_RE.fullmatch(motion["id"]), "Invalid packet ID.")
+    require(motion.get("calibration_basis") == CALIBRATION_BASIS, "Missing or unsupported packet calibration basis.")
     rate = finite_number(motion.get("rate"), "rate", True)
     duration = finite_number(motion.get("duration"), "duration")
     require(duration >= 0, "duration must be nonnegative.")
@@ -132,6 +137,9 @@ def validate_motion(motion):
     for track in tracks:
         require(isinstance(track, dict), "Invalid track.")
         name = bone_name(track.get("bone"))
+        require(isinstance(track.get("calibration_bone"), str) and bool(track["calibration_bone"].strip()),
+                "Missing required calibration_bone for source track " + name + ".")
+        bone_name(track["calibration_bone"])
         require(name.casefold() not in names, "Duplicate case-insensitive source bone.")
         names.add(name.casefold())
         aliases = track.get("aliases")
@@ -167,6 +175,11 @@ def make_motion(document, input_sha):
     require(type(frames) is int and frames >= 1, "Invalid calibrated frame count.")
     bones = document.get("bones")
     require(isinstance(bones, list) and bones, "No original source bones.")
+    missing = [str(index) for index, source in enumerate(bones)
+               if isinstance(source, dict) and
+               (not isinstance(source.get("target_bone"), str) or not source["target_bone"].strip())]
+    require(not missing, "Missing original target_bone calibration identity: source " + clip_id +
+            ", zero-based track indices [" + ", ".join(missing) + "].")
     tracks = []
     for source in bones:
         require(isinstance(source, dict), "Invalid source bone record.")
@@ -174,10 +187,11 @@ def make_motion(document, input_sha):
         require(not any(k in source for k in ("translation", "position", "positions", "scale")),
                 "Unsupported channel spelling; preserve/recover its source schema first.")
         name = bone_name(source.get("source_bone"))
-        alias = source.get("target_bone")
-        require(alias is None or isinstance(alias, str), "Invalid declared target alias.")
-        track = {"bone": name, "aliases": [bone_name(alias)] if alias else [],
-                 "rotations": source.get("deltas")}
+        calibration = bone_name(source["target_bone"])
+        # This label identifies the measured delta basis; source identity and
+        # aliases alone never authorize a different bone-local basis.
+        track = {"bone": name, "aliases": [calibration],
+                 "calibration_bone": calibration, "rotations": source.get("deltas")}
         for field in ("translations", "scales"):
             if field in source:
                 track[field] = source[field]
@@ -186,6 +200,7 @@ def make_motion(document, input_sha):
     absent = [channel for field, channel in (("translations", "translation"), ("scales", "scale"))
               if not any(field in track for track in tracks)]
     motion = {"schema": PACKET_SCHEMA, "id": clip_id,
+              "calibration_basis": CALIBRATION_BASIS,
               "rate": document.get("frame_rate"), "duration": document.get("original_duration_s"),
               "frames": frames, "tracks": tracks,
               "source_fields_originally_absent": absent,
@@ -223,7 +238,7 @@ def decode_packet(packet):
 
 
 def _core(motion):
-    # Different declared aliases/provenance may coalesce, different motion may not.
+    # Aliases/provenance may coalesce; motion AND calibration identity must agree.
     result = {key: value for key, value in motion.items() if key != "provenance"}
     result["tracks"] = [{key: value for key, value in track.items() if key != "aliases"}
                         for track in motion["tracks"]]
@@ -231,7 +246,9 @@ def _core(motion):
 
 
 def merge_motion(previous, current):
-    require(_core(previous) == _core(current), "Conflicting calibrated motion for one original source ID.")
+    validate_motion(previous)
+    validate_motion(current)
+    require(_core(previous) == _core(current), "Conflicting motion or calibration identity for one original source ID.")
     result = previous
     for left, right in zip(result["tracks"], current["tracks"]):
         left["aliases"] = sorted(set(left["aliases"]) | set(right["aliases"]))
@@ -334,6 +351,8 @@ def validate_library(output_root):
     root = Path(output_root).resolve()
     manifest = parse_json((root / MANIFEST_NAME).read_bytes())
     require(isinstance(manifest, dict) and manifest.get("schema") == LIBRARY_SCHEMA, "Unsupported library schema.")
+    require(manifest.get("calibration_basis") == CALIBRATION_BASIS, "Missing or unsupported manifest calibration basis.")
+    require(manifest.get("calibration_skeleton") == CALIBRATION_SKELETON, "Manifest calibration skeleton mismatch.")
     require(isinstance(manifest.get("clips"), list) and manifest["clips"], "Empty or invalid library.")
     require(isinstance(manifest.get("routes"), list), "Invalid library routes.")
     ids, paths = set(), set()
@@ -343,6 +362,7 @@ def validate_library(output_root):
         require(entry["id"] not in ids and path not in paths, "Duplicate library source identity/path.")
         ids.add(entry["id"]); paths.add(path)
         motion = decode_packet(path.read_bytes())
+        require(motion["calibration_basis"] == manifest["calibration_basis"], "Packet/manifest calibration basis mismatch.")
         require(motion["id"] == entry["id"] and motion["duration"] == entry.get("duration") and
                 motion["rate"] == entry.get("rate"), "Manifest/packet metadata mismatch.")
         require(isinstance(entry.get("source_path_id"), str) and
@@ -379,14 +399,20 @@ def build_library(source_root=DEFAULT_SOURCE, catalog_path=DEFAULT_CATALOG, outp
     require(isinstance(catalog, dict) and catalog.get("schema") == CATALOG_SCHEMA and
             isinstance(catalog.get("motions"), list), "Unsupported source catalog.")
     packets, profiles = {}, defaultdict(set)
+    source_errors = []
     for path in files:
-        require(path.resolve().is_relative_to(source_root), "Source symlink escapes the source root.")
-        motion = read_calibrated(path)
-        clip_id = motion["id"]
-        if clip_id in packets:
-            motion = merge_motion(decode_packet(packets[clip_id]), motion)
-        packets[clip_id] = encode_packet(motion)
-        profiles[clip_id].update(motion["provenance"]["original_rig_families"])
+        try:
+            require(path.resolve().is_relative_to(source_root), "Source symlink escapes the source root.")
+            motion = read_calibrated(path)
+            clip_id = motion["id"]
+            if clip_id in packets:
+                motion = merge_motion(decode_packet(packets[clip_id]), motion)
+            packets[clip_id] = encode_packet(motion)
+            profiles[clip_id].update(motion["provenance"]["original_rig_families"])
+        except (LibraryError, OSError, EOFError) as error:
+            source_errors.append(str(path.relative_to(source_root)) + ": " + str(error))
+    require(not source_errors, str(len(source_errors)) + " source input(s) failed; no output changed.\n" +
+            "\n".join(source_errors))
     routes, available_rows, unkeyed, unavailable = {}, 0, 0, 0
     for row in catalog["motions"]:
         require(isinstance(row, dict), "Catalog row must be an object.")
@@ -404,25 +430,40 @@ def build_library(source_root=DEFAULT_SOURCE, catalog_path=DEFAULT_CATALOG, outp
         # agree; neither approval nor capabilities are unioned into new grants.
         routes[json_bytes(route)] = route
     clips = []
+    calibration_tracks = 0
     for clip_id in sorted(packets):
         motion = decode_packet(packets[clip_id])
+        calibration_tracks += len(motion["tracks"])
         clips.append({"id": clip_id, "path": "Clips/" + clip_id + ".nwmotion",
                       "rig_profiles": sorted(profiles[clip_id]), "duration": motion["duration"],
                       "rate": motion["rate"], "source_hash": motion["provenance"]["source_bundle_sha256"],
                       "source_path_id": motion["provenance"]["source_path_id"]})
-    manifest = {"schema": LIBRARY_SCHEMA, "clips": clips,
+    manifest = {"schema": LIBRARY_SCHEMA, "calibration_basis": CALIBRATION_BASIS,
+                "calibration_skeleton": CALIBRATION_SKELETON, "clips": clips,
                 "routes": [routes[key] for key in sorted(routes)],
                 "coverage": {"repository_input_files": len(files), "source_unique_clips": len(clips),
                              "catalog_rows": len(catalog["motions"]), "catalog_rows_with_available_source": available_rows,
                              "catalog_rows_without_actual_id": unkeyed, "catalog_rows_without_available_source": unavailable,
                              "coalesced_semantic_routes": len(routes),
+                             "calibration_tracks": calibration_tracks, "tracks_missing_calibration": 0,
                              "source_inventory_complete": False, "native_acceptance": False,
                              "boundary": "repository_available_relative_reference_channels_only_no_missing_source_synthesis"}}
     # Inputs and all packets validate before any generated file is changed.
     previous = []
     old_manifest = output_root / MANIFEST_NAME
     if old_manifest.exists():
-        previous = validate_library(output_root)["clips"]
+        # A full rebuild may replace an older packet contract. Trust only
+        # canonical owned paths for cleanup, never the old calibration metadata.
+        old = parse_json(old_manifest.read_bytes())
+        require(isinstance(old, dict) and old.get("schema") == LIBRARY_SCHEMA and
+                isinstance(old.get("clips"), list), "Invalid previous generated manifest.")
+        previous = old["clips"]
+        previous_paths = set()
+        for entry in previous:
+            require(isinstance(entry, dict), "Invalid previous clip entry.")
+            path = _clip_path(output_root, entry)
+            require(path not in previous_paths, "Duplicate previous owned packet path.")
+            previous_paths.add(path)
     for entry in clips:
         path = _clip_path(output_root, entry)
         _write(path, packets[entry["id"]])
@@ -447,7 +488,8 @@ def main(argv=None):
     except (LibraryError, OSError, EOFError) as error:
         print("Shared reference library failed: " + str(error), file=sys.stderr)
         return 2
-    print(json.dumps({"schema": LIBRARY_SCHEMA, "clips": len(manifest["clips"]),
+    print(json.dumps({"schema": LIBRARY_SCHEMA, "calibration_basis": manifest["calibration_basis"],
+                      "calibration_skeleton": manifest["calibration_skeleton"], "clips": len(manifest["clips"]),
                       "routes": len(manifest["routes"]), "coverage": manifest.get("coverage", {}),
                       "all_packet_crc_checks_passed": True}, sort_keys=True))
     return 0
