@@ -95,7 +95,8 @@ void UOGNativeInteractionWidget::Activate(FName Action)
         if (Host.IsValid()) Host->Cancel();
         OnClosed.Broadcast(); return;
     }
-    if (Host.IsValid()) Host->ActivateRow(Action);
+    if (Host.IsValid() && Host->ActivateRow(Action) && Action.ToString().StartsWith(TEXT("object_offers.")))
+    { OnClosed.Broadcast(); return; }
     Refresh();
 }
 

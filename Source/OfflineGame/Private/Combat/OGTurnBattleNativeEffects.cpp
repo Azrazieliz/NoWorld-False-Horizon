@@ -123,6 +123,7 @@ void FOGTurnBattle::RecordNativeEffect(EOGCombatLogEventType Type,const FOGEntit
     Json->SetStringField(TEXT("remaining_actions_exact"),LexToString(Instance.RemainingActions));
     Json->SetStringField(TEXT("barrier_remaining"),Instance.BarrierRemaining.ToDebugString());
     FOGCombatLogEvent Event; Event.Type=Type; Event.SourceUnitId=Source; Event.TargetUnitId=Target; Event.SkillId=Skill;
+    Event.PayloadJson.Reset();
     FJsonSerializer::Serialize(Json.ToSharedRef(),TJsonWriterFactory<>::Create(&Event.PayloadJson));
     const int64 Sequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Event)); ++NativeAbilityRevision;

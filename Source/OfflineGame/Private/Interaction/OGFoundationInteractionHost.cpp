@@ -1,3 +1,6 @@
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "UI/OGGate12NativeRulerWidget.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Interaction/OGFoundationInteractionHost.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
@@ -385,6 +388,14 @@ TArray<FOGFoundationInteractionRow> UOGFoundationInteractionHost::GetRows() cons
             const FString Name = Source && !Source->DisplayName.IsEmpty() ? Source->DisplayName.ToString() : FString::Printf(TEXT("Character %d"), I + 1);
             Rows.Add({FName(*(TEXT("participant.") + P.Character.EntityId.ToString())),
                 FString(Selected ? TEXT("Remove / ") : TEXT("Include / ")) + Name, bReady});
+            if (bReady && P.Actor.IsValid())
+            {
+                auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
+                auto* Session=Game?Game->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+                TArray<FOGObjectActionPreview> Offers; FString Error;
+                if (Session && Session->ReadOwnedObjectActions(FOGEntityId(),P.Character.EntityId,Offers,Error) && !Offers.IsEmpty())
+                    Rows.Add({FName(*(TEXT("object_offers.")+P.Character.EntityId.ToString())),TEXT("Trade / ")+Name,true});
+            }
         }
         Rows.Add({TEXT("refresh"), TEXT("Refresh nearby character bindings"), bReady});
         Rows.Add({TEXT("clear_participants"), TEXT("Clear participant selection"), !SelectedParticipants.IsEmpty()});
@@ -430,6 +441,21 @@ bool UOGFoundationInteractionHost::ActivateRow(FName Id)
     const auto* Row = Rows.FindByPredicate([Id](const auto& Value) { return Value.Id == Id; });
     if (!Row || !Row->bEnabled) { Status = TEXT("This control is unavailable in the current state."); return false; }
     const FString Key = Id.ToString();
+    if (Key.StartsWith(TEXT("object_offers.")))
+    {
+        const auto* Participant=AvailableParticipants.FindByPredicate([&](const auto& P)
+            { return P.Actor.IsValid() && Key==TEXT("object_offers.")+P.Character.EntityId.ToString(); });
+        if (!Participant) { Status=TEXT("This counterparty is no longer nearby."); return false; }
+        TArray<UUserWidget*> Widgets; UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(),Widgets,UOGGate12NativeRulerWidget::StaticClass(),false);
+        UOGGate12NativeRulerWidget* Screen=nullptr;
+        for (auto* Widget:Widgets)
+            if (auto* Candidate=Cast<UOGGate12NativeRulerWidget>(Widget); Candidate && Candidate->GetWorld()==GetWorld())
+            { if (Screen) { Status=TEXT("Trade interface is unavailable."); return false; } Screen=Candidate; }
+        FString Error;
+        const bool Opened=Screen && Screen->OpenObjectActionsForCounterparty(Participant->Character.EntityId,Error);
+        Status=Opened?TEXT("Trade opened."):Error.IsEmpty()?TEXT("Trade interface is unavailable."):Error;
+        return Opened;
+    }
     if (Key.StartsWith(TEXT("definition.")))
     {
         for (UOGInteractionDefinition* Definition : AvailableDefinitions)

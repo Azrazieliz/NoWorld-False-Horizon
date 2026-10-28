@@ -7,6 +7,7 @@
 #include "UI/OGUiViewModels.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Narrative/OGNarrativeService.h"
+#include "Objects/OGObjectActionDefinition.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
@@ -73,6 +74,9 @@ public:
     UOGGate12CharacterVisualCatalog* GetVisualCatalog() const { return VisualCatalog; }
 
     void ShowWorldTransitionError(const FString& Error);
+    /** Existing NPC/world interactions can open this same native transaction interface. */
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool OpenObjectActionsForCounterparty(const FOGEntityId& Counterparty,FString& Error);
 
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Native")
     void RefreshFromCanonical();
@@ -180,6 +184,9 @@ private:
     FOGEntityId InventoryContextRulerId;
     FOGContentId InventoryContextIdentityId;
     FOGEntityId InventoryContextManifestationId;
+    FOGObjectActionPreview PendingObjectReview;
+    FOGEntityId PendingObjectRequestId;
+    FOGEntityId ObjectActionCounterpartyId;
     FOGOwnedEquipmentPreview PendingEquipmentReview;
     FOGEntityId PendingEquipmentRequestId;
     FString InventoryFeedback;
@@ -217,6 +224,7 @@ private:
     void ResetCharacterDevelopment();
     bool SynchronizeDevelopmentContext(const UOGGate12RulerSessionSubsystem* Session);
     void BuildInventory();
+    void BuildObjectActions(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session);
     void BuildEquipmentReview(UVerticalBox* Parent, const FOGOwnedEquipmentPreview& Review);
     void HandleInventoryAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);
     void ClearInventoryReview();

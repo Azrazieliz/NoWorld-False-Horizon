@@ -6,6 +6,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/OGUiViewModels.h"
 #include "Runtime/OGPackageReportManagementRecords.h"
+#include "Objects/OGObjectActionDefinition.h"
 #include "OGGate12RulerSessionSubsystem.generated.h"
 
 class UOGGameCoreSubsystem;
@@ -114,6 +115,16 @@ public:
      * live-party/projection refresh warning. No UI quote is state authority. */
     bool ConfirmOwnedEquipment(const FOGOwnedEquipmentPreview& Reviewed,
         const FOGEntityId& RequestId, FString& OutError);
+
+    /** Shared object operations use the selected real instances and canonical wallets/stock. */
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool ReadOwnedObjectActions(const FOGEntityId& SelectedItem,const FOGEntityId& Counterparty,
+        TArray<FOGObjectActionPreview>& Out,FString& Error);
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool ReviewOwnedObjectAction(const FOGContentId& ActionId,const FOGEntityId& SelectedItem,
+        const FOGEntityId& Counterparty,FOGObjectActionPreview& Out,FString& Error);
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool ConfirmOwnedObjectAction(const FOGObjectActionPreview& Reviewed,const FOGEntityId& RequestId,FString& Error);
 
     /** Writes only an authored, version-exact real wardrobe value in canonical
      * presentation JSON, preserving other physical outfit/equipment/world data.

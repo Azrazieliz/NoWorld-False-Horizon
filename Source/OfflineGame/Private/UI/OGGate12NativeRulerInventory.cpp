@@ -9,6 +9,8 @@
 #include "Engine/GameInstance.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "UI/OGGate12GothicChromeWidget.h"
+#include "Objects/OGObjectActionDefinition.h"
+#include "Content/OGDefinitionLibrary.h"
 
 namespace
 {
@@ -25,6 +27,8 @@ FString InventoryRecordedId(const FOGContentId& Id)
 
 void UOGGate12NativeRulerWidget::ClearInventoryReview()
 {
+    PendingObjectReview=FOGObjectActionPreview();
+    PendingObjectRequestId=FOGEntityId();
     PendingEquipmentReview = FOGOwnedEquipmentPreview();
     PendingEquipmentRequestId = FOGEntityId();
 }
@@ -32,6 +36,7 @@ void UOGGate12NativeRulerWidget::ClearInventoryReview()
 void UOGGate12NativeRulerWidget::ResetInventoryUi()
 {
     bInventoryOpen = false;
+    ObjectActionCounterpartyId=FOGEntityId();
     bInventoryTargetPicker = false;
     InventorySelectedItemId = FOGEntityId();
     InventoryContextRulerId = FOGEntityId();
@@ -56,6 +61,7 @@ bool UOGGate12NativeRulerWidget::SynchronizeInventoryContext(
     if (InventoryContextRulerId == Session->BoundRulerId &&
         InventoryContextIdentityId == Session->SelectedIdentityId &&
         InventoryContextManifestationId == Session->SelectedManifestationId) return false;
+    if (InventoryContextRulerId!=Session->BoundRulerId) ObjectActionCounterpartyId=FOGEntityId();
     InventoryContextRulerId = Session->BoundRulerId;
     InventoryContextIdentityId = Session->SelectedIdentityId;
     InventoryContextManifestationId = Session->SelectedManifestationId;
@@ -187,6 +193,8 @@ void UOGGate12NativeRulerWidget::BuildInventory()
         AddMessage(Body, TEXT("Equipment details changed. Review the current item and slot again."), 17, InventoryWarning);
     }
 
+    BuildObjectActions(Body,*Session);
+    if (!PendingObjectReview.ConfirmationToken.IsEmpty()) return;
     AddMessage(Body, TEXT("EQUIPMENT SLOTS"), 20, InventorySilver);
     if (!Snapshot.bHasTarget) AddMessage(Body, TEXT("Choose a character to inspect its slots."), 16, InventoryMuted);
     for (const auto& Slot : Snapshot.Slots)
@@ -297,6 +305,29 @@ void UOGGate12NativeRulerWidget::HandleInventoryAction(
         else if (Error.IsEmpty()) Error = TEXT("This item instance is no longer in owned inventory.");
     }
     else if (Action == TEXT("inventory/cancel")) ClearInventoryReview();
+    else if (Action == TEXT("inventory/object/leave"))
+    { ClearInventoryReview(); ObjectActionCounterpartyId=FOGEntityId(); }
+    else if (Action == TEXT("inventory/object/confirm"))
+    {
+        const auto Review=PendingObjectReview; const auto Request=PendingObjectRequestId; ClearInventoryReview();
+        if (Review.ConfirmationToken.IsEmpty() || !Request.IsValid())
+            Error=TEXT("Review an action before confirming.");
+        else if (Session.ConfirmOwnedObjectAction(Review,Request,Error))
+        {
+            InventoryRefreshWarning=Error; Error.Reset();
+            InventoryFeedback=Review.DisplayName.ToString()+TEXT(" completed.");
+        }
+    }
+    else if (Action.StartsWith(TEXT("inventory/object/review/")))
+    {
+        ClearInventoryReview(); FOGObjectActionPreview Review;
+        const FOGContentId Id(Action.Mid(24));
+        if (Session.ReviewOwnedObjectAction(Id,InventorySelectedItemId,ObjectActionCounterpartyId,Review,Error))
+        {
+            if (!Review.bCanApply) Error=FString::Join(Review.MissingRequirements,TEXT(" "));
+            else { PendingObjectReview=MoveTemp(Review); PendingObjectRequestId=FOGEntityId::NewId(); }
+        }
+    }
     else if (Action.StartsWith(TEXT("inventory/equip/")) || Action.StartsWith(TEXT("inventory/unequip/")))
     {
         ClearInventoryReview();
@@ -346,4 +377,62 @@ void UOGGate12NativeRulerWidget::HandleInventoryAction(
         if (!bInventoryOpen) LastUiError = Error;
     }
     BuildCurrentPage();
+}
+
+bool UOGGate12NativeRulerWidget::OpenObjectActionsForCounterparty(const FOGEntityId& Counterparty,FString& Error)
+{
+    auto* GI=GetGameInstance(); auto* Session=GI?GI->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+    if (!Session || !Counterparty.IsValid()) { Error=TEXT("This counterparty is unavailable."); return false; }
+    TArray<FOGObjectActionPreview> Actions;
+    if (!Session->ReadOwnedObjectActions(FOGEntityId(),Counterparty,Actions,Error)) return false;
+    if (Actions.IsEmpty()) { Error=TEXT("No offers are available."); return false; }
+    if (!Session->ReturnToRuler(Error) || !Session->Navigate(EOGRulerPrimaryDestination::Home,Error)) return false;
+    ResetInventoryUi(); bInventoryOpen=true; SynchronizeInventoryContext(Session);
+    ObjectActionCounterpartyId=Counterparty; BuildCurrentPage(); return true;
+}
+void UOGGate12NativeRulerWidget::BuildObjectActions(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session)
+{
+    AddMessage(Parent,ObjectActionCounterpartyId.IsValid()?TEXT("AVAILABLE OFFERS"):TEXT("CRAFT / USE / REPAIR"),20,InventorySilver);
+    if (ObjectActionCounterpartyId.IsValid()) AddAction(Parent,TEXT("LEAVE TRADE"),TEXT("inventory/object/leave"));
+    FString Error;
+    if (!PendingObjectReview.ConfirmationToken.IsEmpty())
+    {
+        FOGObjectActionPreview Fresh;
+        if (!Session.ReviewOwnedObjectAction(PendingObjectReview.ActionId,InventorySelectedItemId,ObjectActionCounterpartyId,Fresh,Error) ||
+            !Fresh.bCanApply || Fresh.ConfirmationToken!=PendingObjectReview.ConfirmationToken)
+        { ClearInventoryReview(); AddMessage(Parent,TEXT("The action changed. Review it again."),17,InventoryWarning); }
+        else
+        {
+            AddMessage(Parent,Fresh.DisplayName.ToString(),22,InventorySilver);
+            if (!Fresh.Description.IsEmpty()) AddMessage(Parent,Fresh.Description.ToString(),17,InventoryText);
+            for (const auto& Input:Fresh.Inputs)
+            {
+                const FString Verb=Input.Disposition==EOGObjectInputDisposition::Consume?TEXT("Use: "):
+                    Input.Disposition==EOGObjectInputDisposition::Transfer?TEXT("Transfer: "):TEXT("Required tool: ");
+                AddMessage(Parent,Verb+Input.DisplayName.ToString(),16,InventoryText);
+            }
+            for (const auto& Wallet:Fresh.Wallets)
+                AddMessage(Parent,Wallet.ResourceId.ToString()+TEXT(": ")+LexToString(Wallet.Before)+TEXT(" → ")+LexToString(Wallet.After),
+                    16,Wallet.After<Wallet.Before?InventoryWarning:InventorySuccess);
+            auto* Library=UOGDefinitionLibrary::Get();
+            for (const auto& Output:Fresh.Outputs)
+            {
+                const auto* Definition=Library?Cast<UOGObjectDefinition>(Library->Resolve(TEXT("object"),Output.ObjectId)):nullptr;
+                AddMessage(Parent,TEXT("Receive: ")+(Definition?Definition->DisplayName.ToString():Output.ObjectId.ToString())+
+                    FString::Printf(TEXT(" x%d"),Output.InstanceCount),17,InventorySuccess);
+            }
+            if (Fresh.bRepairsSubject) AddMessage(Parent,TEXT("Repair the selected item and preserve its upgrades."),17,InventoryText);
+            AddAction(Parent,TEXT("CONFIRM"),TEXT("inventory/object/confirm"));
+            AddAction(Parent,TEXT("CANCEL"),TEXT("inventory/cancel")); return;
+        }
+    }
+    TArray<FOGObjectActionPreview> Actions;
+    if (!Session.ReadOwnedObjectActions(InventorySelectedItemId,ObjectActionCounterpartyId,Actions,Error))
+    { AddMessage(Parent,Error,16,InventoryWarning); return; }
+    if (Actions.IsEmpty()) AddMessage(Parent,TEXT("No actions are available for the current selection."),16,InventoryMuted);
+    for (const auto& Action:Actions)
+    {
+        if (Action.bCanApply) AddAction(Parent,Action.DisplayName.ToString(),TEXT("inventory/object/review/")+Action.ActionId.ToString());
+        else AddMessage(Parent,Action.DisplayName.ToString()+TEXT(" — ")+FString::Join(Action.MissingRequirements,TEXT(" ")),16,InventoryMuted);
+    }
 }
