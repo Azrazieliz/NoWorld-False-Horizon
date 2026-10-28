@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Combat/OGCombatMath.h"
+#include "Effects/OGNativeEffectTypes.h"
 #include "Engine/DataAsset.h"
 #include "OGNativeCombatAbility.generated.h"
 
@@ -68,6 +69,8 @@ struct OFFLINEGAME_API FOGNativeAbilityDefinition
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeAbilityTargets Targets=EOGNativeAbilityTargets::SingleEnemy;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bIncludeSelf=false;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGNativeAbilityPacket> Packets;
+    /** Ordered effects share the global library; no per-character effect assets. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGNativeAbilityEffectOperation> Effects;
     bool MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const;
     bool Validate(FString& Error) const;
     bool operator==(const FOGNativeAbilityDefinition& V) const;

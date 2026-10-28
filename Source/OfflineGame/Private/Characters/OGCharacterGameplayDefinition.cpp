@@ -78,7 +78,7 @@ bool UOGCharacterGameplayDefinition::ValidateResolvedReferences(const FOGDefinit
     }
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) return true;
     TArray<FOGContentId> Commands=Skills.ActiveSkills;
-    if (Skills.UltimateSkill.IsValid()) Commands.Add(Skills.UltimateSkill);
+    Commands.Append(Skills.GetUltimateSkills());
     FOGCombatUnitState Source; Source.IdentityId=IdentityId; Source.SkillSet=Skills;
     for (const auto& Skill:Skills.PassiveSkills)
     {

@@ -78,6 +78,9 @@ bool FOGTurnBattle::RegisterNativeAbility(const FOGNativeAbilityDefinition& Defi
                 for (const auto& Resource:*Rows)
                     if (!NativeResourceSpecifications.Contains(Unit.UnitEntityId.ToString()+TEXT("|")+Resource.ResourceId.ToString()))
                     { Error=TEXT("A shared ability references a battle resource not admitted for an actual source unit."); return false; }
+    for (const auto& Operation:Definition.Effects)
+        if (Operation.Operation==EOGNativeEffectOperation::Apply && !NativeEffectDefinitions.Contains(Operation.Id))
+        { Error=TEXT("Shared ability references an effect not admitted to this encounter: ")+Operation.Id.ToString(); return false; }
     const FString Key=AbilityKey(Definition.IdentityId,Definition.VersionId,Definition.SkillId);
     if (const auto* Existing=NativeAbilities.Find(Key))
     {
@@ -172,8 +175,9 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
     for (const auto& Packet:Definition->Packets)
         if (Packet.Effect==EOGNativeAbilityEffect::Damage && Packet.DamageType==EOGBaseDamageType::Physical)
         {
-            const auto Reference=Packet.DefenseReference==EOGNativeDefenseReference::Attack?Source.Stats.Attack:
-                Packet.DefenseReference==EOGNativeDefenseReference::MaxHp?Source.Stats.MaxHp:Source.Stats.Defense;
+            const auto Effective=GetNativeEffectiveStats(Source.UnitEntityId);
+            const auto Reference=Packet.DefenseReference==EOGNativeDefenseReference::Attack?Effective.Attack:
+                Packet.DefenseReference==EOGNativeDefenseReference::MaxHp?Effective.MaxHp:Effective.Defense;
             if (Reference.GetSign()<=0) { Error=TEXT("Authored physical damage reference must be positive."); return false; }
         }
     return true;
@@ -189,12 +193,13 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
         Resource->Value-=Cost.Amount;
     }
     FOGDeterministicRng Rng(AbilitySeed(State,Action,Log.GetNextSequence()));
+    if (!ExecuteNativeEffects(Action,true,Rng,Error)) return false;
     for (const auto& Packet:Definition->Packets)
     for (int32 Hit=0;Hit<Packet.Repeats;++Hit)
     for (const auto& Id:Action.TargetUnitIds)
     {
         auto* Target=FindMutableUnit(Id); if (!Target || (!Target->CanAct() && !(Id==Source.UnitEntityId && AllowsNativeReactionSource(Source,Action)))) continue;
-        FOGCombatStats Attacker=Source.Stats;
+        FOGCombatStats Attacker=GetNativeEffectiveStats(Source.UnitEntityId);
         int32 Attack=0,Speed=0,Healing=0,Reduction=0;
         GetApprovedDawnBlessingBps(Source.UnitEntityId,Attack,Speed,Healing,Reduction);
         if (Attack>0) Attacker.Attack=FOGLargeNumber::ScaleByBasisPoints(Attacker.Attack,10000+Attack);
@@ -213,9 +218,10 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
         Request.bCanCrit=Packet.bCanCrit; Request.bCanBeBlocked=Packet.bCanBeBlocked;
         Request.bAllowHitOverflowReplication=Packet.bAllowHitOverflow;
         if (!ResolveRankSuppressionMultiplier(Source.UnitEntityId,Id,OGRankSuppressionChannels::Damage(),Request.RankSuppressionMultiplierBps,Error)) return false;
-        const auto Damage=FOGCombatMath::ResolveDamage(Request,Attacker,Target->Stats,Rng);
+        const auto Damage=FOGCombatMath::ResolveDamage(Request,Attacker,GetNativeEffectiveStats(Id),Rng);
         if (!Damage.TotalDamage.IsZero() && !ApplyDamage(Source.UnitEntityId,Id,Damage.TotalDamage,Action.SkillId,Error)) return false;
     }
+    if (!ExecuteNativeEffects(Action,false,Rng,Error)) return false;
     for (const auto& Change:Definition->ResourceChanges)
     {
         auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Change.ResourceId;});

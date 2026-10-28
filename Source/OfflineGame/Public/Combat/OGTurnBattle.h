@@ -226,6 +226,10 @@ public:
     bool RegisterNativeAbility(const FOGNativeAbilityDefinition& Definition,FString& Error);
     bool HasNativeActionExecutor(const FOGCombatUnitState& Source,const FOGContentId& Skill,FString& Error) const;
     FName ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool RegisterNativeEffect(const FOGNativeEffectDefinition& Definition,FString& Error);
+    FOGCombatStats GetNativeEffectiveStats(const FOGEntityId& UnitId) const;
+    bool HasNativeEffect(const FOGEntityId& UnitId,const FOGContentId& Id,bool Family=false) const;
+    FString DescribeNativeEffects(const FOGEntityId& UnitId) const;
     int64 GetNativeAbilityRevision() const { return NativeAbilityRevision; }
 
     bool ApplyResolvedAction(
@@ -303,6 +307,17 @@ private:
     bool ResolveNativeReactions(FString& Error);
     bool SelectNativeReactionTarget(const FOGQueuedTriggeredAction& Queued,const FNativePassiveRule& Rule,
         FOGResolvedCombatAction& Action,FString& Error) const;
+    TMap<FOGContentId,FOGNativeEffectDefinition> NativeEffectDefinitions;
+    bool ExecuteNativeEffects(const FOGResolvedCombatAction& Action,bool BeforePackets,FOGDeterministicRng& Rng,FString& Error);
+    bool ApplyNativeEffect(const FOGNativeEffectDefinition& Definition,const FOGNativeAbilityEffectOperation& Operation,
+        const FOGResolvedCombatAction& Action,const FOGEntityId& TargetId,int32 OperationIndex,FString& Error);
+    bool ProcessNativeEffectOwnerAction(const FOGEntityId& Owner,FString& Error);
+    void RemoveNativeEffectsOnDefeat(const FOGEntityId& Target);
+    void ClearNativeEncounterEffects();
+    void RecordNativeEffect(EOGCombatLogEventType Type,const FOGEntityId& Source,const FOGEntityId& Target,
+        const FOGContentId& Skill,const FOGNativeEffectInstance& Instance,const TCHAR* Reason);
+    FOGLargeNumber AbsorbNativeBarriers(const FOGEntityId& Target,FOGLargeNumber& Amount);
+    int64 NativeEffectActionDelay(const FOGCombatUnitState& Source,int64 Delay) const;
     bool bRequireNativeExecutors=false;
     int64 NativeAbilityRevision=0;
     TMap<FString,FOGNativeAbilityDefinition> NativeAbilities;

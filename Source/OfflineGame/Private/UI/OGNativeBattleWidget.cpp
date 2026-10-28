@@ -133,6 +133,8 @@ void UOGNativeBattleWidget::Refresh()
     for (const auto& Value:Source->BattleResources)
         ResourceText+=FString::Printf(TEXT("   |   %s %lld / %lld"),*Value.DisplayName.ToString(),
             static_cast<long long>(Value.Value),static_cast<long long>(Value.Maximum));
+    const FString Status=Battle->DescribeNativeEffects(Source->UnitEntityId);
+    if (!Status.IsEmpty()) ResourceText+=TEXT("\n")+Status;
     Resources->SetText(FText::FromString(ResourceText));
     Feedback->SetText(FText::FromString(LastActionMessage.IsEmpty()?
         TEXT("Choose a primary target. Area effects include every eligible field participant."):LastActionMessage));

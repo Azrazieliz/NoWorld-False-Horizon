@@ -68,7 +68,8 @@ bool FOGTurnBattle::Initialize(
     NativePassiveRules.Reset(); NativePassiveActionOwners.Reset(); NativeReactionProof.Reset(); LastNativeReactions.Reset();
     NativeFallbackConditions=ConditionEvaluator;
     // Opening resource truth comes only from admitted shared specifications, never caller snapshots.
-    for (auto& Unit:State.Units) Unit.BattleResources.Reset();
+    for (auto& Unit:State.Units) { Unit.BattleResources.Reset(); Unit.NativeEffects.Reset(); }
+    NativeEffectDefinitions.Reset();
     NativeResourceSpecifications.Reset();
     NativeAbilities.Reset(); NativeAbilityRevision=0; NativeOwnerActions.Reset(); NativeAbilityReadyActions.Reset();
     Log.Reset();
@@ -557,7 +558,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
                 State.CurrentActionValue,
                 Source->NextActionValue);
 
-        int64 AuthoredDelay=FMath::Max<int64>(1,Action.ActionDelay);
+        int64 AuthoredDelay=NativeEffectActionDelay(*Source,FMath::Max<int64>(1,Action.ActionDelay));
         // Base v6 Queen of Nightfall P3 is an 8% owner Speed bonus while
         // the owner's Night attunement is active. Apply it to the actual
         // next-action timeline, never merely to a temporary damage stat.
@@ -575,7 +576,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
                         AuthoredDelay*9000/10000);
                     S->bNextScarletCadenceDelayReduction=false;
                 }
-        Source->NextActionValue=State.CurrentActionValue+AuthoredDelay;
+        Source->NextActionValue=AuthoredDelay>MAX_int64-State.CurrentActionValue?MAX_int64:State.CurrentActionValue+AuthoredDelay;
     }
 
     // The ordinary combat executor now dispatches the exact authored Base
@@ -586,7 +587,13 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
         !ExecuteNativeAbility(Action,*Source,OutError))
         return false;
 
-    if (!bInterrupt) ++NativeOwnerActions.FindOrAdd(Source->UnitEntityId);
+    if (!bInterrupt)
+    {
+        auto& Count=NativeOwnerActions.FindOrAdd(Source->UnitEntityId);
+        if (Count==MAX_int64) { OutError=TEXT("Native own-action clock exhausted."); return false; }
+        ++Count;
+        if (!ProcessNativeEffectOwnerAction(Source->UnitEntityId,OutError)) return false;
+    }
 
     // Alter v1 Eclipse Harrier P4: apply only after verified final HP damage
     // by Alter to an actively source-bleeding enemy, once per owner action.
@@ -726,6 +733,9 @@ bool FOGTurnBattle::ApplyDamage(
             EffectiveAmount,FOGLargeNumber(-Used.Significand,Used.Exponent10));
         Absorbed=FOGLargeNumber::Add(Absorbed,Used);
     }
+    const FOGLargeNumber DawnAbsorbed=Absorbed;
+    const FOGLargeNumber NativeAbsorbed=AbsorbNativeBarriers(TargetUnitId,EffectiveAmount);
+    Absorbed=FOGLargeNumber::Add(Absorbed,NativeAbsorbed);
     // Snapshot actual HP loss BEFORE the OnDefeat trigger fires. Overkill
     // beyond remaining HP is not a vampirism/status/resource source.
     LastEffectiveHpDamage.Add(TargetUnitId,
@@ -749,8 +759,8 @@ bool FOGTurnBattle::ApplyDamage(
     Damage.PayloadJson = Absorbed.IsZero()
         ? FString::Printf(TEXT("{\"amount\":\"%s\"}"),
               *EffectiveAmount.ToDebugString())
-        : FString::Printf(TEXT("{\"amount\":\"%s\",\"dawn_barrier_absorbed\":\"%s\",\"nominal\":\"%s\"}"),
-              *EffectiveAmount.ToDebugString(),*Absorbed.ToDebugString(),
+        : FString::Printf(TEXT("{\"amount\":\"%s\",\"dawn_barrier_absorbed\":\"%s\",\"native_barrier_absorbed\":\"%s\",\"nominal\":\"%s\"}"),
+              *EffectiveAmount.ToDebugString(),*DawnAbsorbed.ToDebugString(),*NativeAbsorbed.ToDebugString(),
               *Amount.ToDebugString());
     const int64 DamageSequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Damage));
@@ -769,6 +779,7 @@ bool FOGTurnBattle::ApplyDamage(
             PendingDefeatedUnitIds.Add(
                 TargetUnitId);
         }
+        RemoveNativeEffectsOnDefeat(TargetUnitId);
 
         const int64 DefeatSequence =
             Log.GetNextSequence();
@@ -1454,6 +1465,7 @@ void FOGTurnBattle::EvaluateBattleCompletion()
         State.Status =
             EOGTurnBattleStatus::Completed;
 
+        ClearNativeEncounterEffects();
         FOGCombatLogEvent Event;
         Event.Type =
             EOGCombatLogEventType::BattleEnded;

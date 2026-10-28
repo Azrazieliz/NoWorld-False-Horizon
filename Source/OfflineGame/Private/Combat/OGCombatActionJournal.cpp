@@ -27,7 +27,7 @@ bool AddUnitDelta(
         Before.Presence == After.Presence &&
         Before.NextActionValue == After.NextActionValue &&
         Before.OccupiedLaneIndex == After.OccupiedLaneIndex &&
-        Before.BattleResources == After.BattleResources)
+        Before.BattleResources == After.BattleResources && Before.NativeEffects == After.NativeEffects)
     {
         return false;
     }
@@ -62,6 +62,28 @@ bool AddUnitDelta(
     };
     Delta->SetArrayField(TEXT("battle_resources_before"),Resources(Before.BattleResources));
     Delta->SetArrayField(TEXT("battle_resources_after"),Resources(After.BattleResources));
+    auto Effects=[](const TArray<FOGNativeEffectInstance>& Values)
+    {
+        TArray<TSharedPtr<FJsonValue>> Rows;
+        for (const auto& I:Values)
+        {
+            auto Row=MakeShared<FJsonObject>();
+            Row->SetStringField(TEXT("instance_id"),I.InstanceId.ToString());
+            Row->SetStringField(TEXT("effect_id"),I.EffectId.ToString());
+            Row->SetStringField(TEXT("source_unit_id"),I.SourceUnitId.ToString());
+            Row->SetStringField(TEXT("source_skill_id"),I.SourceSkillId.ToString());
+            Row->SetStringField(TEXT("clock_unit_id"),I.ClockUnitId.ToString());
+            Row->SetNumberField(TEXT("stacks"),I.Stacks);
+            Row->SetStringField(TEXT("remaining_actions_exact"),LexToString(I.RemainingActions));
+            Row->SetStringField(TEXT("applied_at_owner_action_exact"),LexToString(I.AppliedAtOwnerAction));
+            Row->SetStringField(TEXT("magnitude_per_stack"),I.MagnitudePerStack.ToDebugString());
+            Row->SetStringField(TEXT("barrier_remaining"),I.BarrierRemaining.ToDebugString());
+            Rows.Add(MakeShared<FJsonValueObject>(Row));
+        }
+        return Rows;
+    };
+    Delta->SetArrayField(TEXT("effects_before"),Effects(Before.NativeEffects));
+    Delta->SetArrayField(TEXT("effects_after"),Effects(After.NativeEffects));
     OutDeltas.Add(MakeShared<FJsonValueObject>(Delta));
     return true;
 }

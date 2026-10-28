@@ -4,6 +4,7 @@
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
+#include "Effects/OGNativeCombatEffect.h"
 #include "Progression/OGCharacterDevelopmentService.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
@@ -851,6 +852,21 @@ void UOGGameCoreSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
+namespace
+{
+bool AdmitSharedNativeEffects(FOGTurnBattle& Battle,const FOGNativeAbilityDefinition& Ability,FString& Error)
+{
+    auto* Library=UOGDefinitionLibrary::Get();
+    for (const auto& Operation:Ability.Effects)
+        if (Operation.Operation==EOGNativeEffectOperation::Apply)
+        {
+            const auto* Asset=Library?Cast<UOGNativeCombatEffect>(Library->Resolve(TEXT("effect"),Operation.Id)):nullptr;
+            if (!Asset || !Asset->ValidateDefinition(Error) || !Battle.RegisterNativeEffect(Asset->Specification,Error))
+            { if (Error.IsEmpty()) Error=TEXT("Missing installed shared effect: ")+Operation.Id.ToString(); return false; }
+        }
+    return true;
+}
+}
 bool UOGGameCoreSubsystem::StartApprovedLuminousEncounter(
     const FOGTurnBattleState& InitialState,
     const FOGEntityId& RulerId,FString& OutError)
@@ -1027,7 +1043,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
                 D.MatchesSource(U.IdentityId,U.SkillSet.CurrentForm) &&
                 Candidate->CanAdmitNativeAbility(U,D.SkillId);
         });
-        if (Used && (!Ability->ValidateInstalled(OutError) || !Candidate->RegisterNativeAbility(D,OutError))) return false;
+        if (Used && (!Ability->ValidateInstalled(OutError) || !AdmitSharedNativeEffects(*Candidate,D,OutError) || !Candidate->RegisterNativeAbility(D,OutError))) return false;
     }
     if (!Candidate->ResolveNativeOpeningReactions(OutError)) return false;
     FOGWorldEvent OpeningEvent;
@@ -1066,7 +1082,7 @@ bool UOGGameCoreSubsystem::ConfigureOwnedNativeAbilities(const FOGEntityId& Unit
         const auto& D=Ability->Definition;
         if (!D.MatchesSource(Unit->IdentityId,Unit->SkillSet.CurrentForm) || !RequiredSkills.Contains(D.SkillId))
         { Error=TEXT("An authored ability asset belongs to a different source kit or policy."); return false; }
-        if (!Candidate.RegisterNativeAbility(D,Error)) return false;
+        if (!AdmitSharedNativeEffects(Candidate,D,Error) || !Candidate.RegisterNativeAbility(D,Error)) return false;
     }
     for (const auto& Skill:RequiredSkills)
         if (!Candidate.HasNativeActionExecutor(*Unit,Skill,Error)) return false;

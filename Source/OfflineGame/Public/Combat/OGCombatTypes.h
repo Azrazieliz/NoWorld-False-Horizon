@@ -7,6 +7,7 @@
 #include "Progression/OGProgressionRecords.h"
 #include "Skills/OGResolvedSkillSet.h"
 #include "Combat/OGCombatResourceDefinition.h"
+#include "Effects/OGNativeEffectTypes.h"
 #include "OGCombatTypes.generated.h"
 
 /** Percentages use basis points: 10,000 = 100%. */
@@ -96,6 +97,9 @@ struct OFFLINEGAME_API FOGCombatUnitState
     /** Runtime battle resources, admitted from shared definitions; distinct for every actual unit. */
     UPROPERTY(BlueprintReadOnly)
     TArray<FOGCombatResourceValue> BattleResources;
+
+    /** Encounter-owned effects are admitted/executed by the shared effect runtime. */
+    UPROPERTY(BlueprintReadOnly) TArray<FOGNativeEffectInstance> NativeEffects;
 
     /** Fresh content stats before native authored equipment contributions.
      * Read-only projection cache; never an equipment/save-state authority. */

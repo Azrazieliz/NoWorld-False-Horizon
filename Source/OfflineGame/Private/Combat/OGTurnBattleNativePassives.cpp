@@ -64,6 +64,10 @@ bool FOGTurnBattle::EvaluateNativePassiveCondition(const FOGCombatTriggerBinding
     if (C.Predicate==TEXT("target_is_enemy")) return Target && Target->TeamIndex!=Owner->TeamIndex;
     if (C.Predicate==TEXT("owner_in_reserve")) return Owner->Presence==EOGCombatPresence::Reserve;
     if (C.Predicate==TEXT("skill_is")) return E.SkillId==C.ContentOperand;
+    if (C.Predicate==TEXT("owner_has_effect")) return HasNativeEffect(B.OwnerUnitId,C.ContentOperand);
+    if (C.Predicate==TEXT("owner_has_effect_family")) return HasNativeEffect(B.OwnerUnitId,C.ContentOperand,true);
+    if (C.Predicate==TEXT("source_has_effect")) return HasNativeEffect(E.SourceUnitId,C.ContentOperand);
+    if (C.Predicate==TEXT("target_has_effect")) return HasNativeEffect(E.TargetUnitId,C.ContentOperand);
     const auto Threshold=FOGLargeNumber::ScaleByBasisPoints(Owner->Stats.MaxHp,static_cast<int32>(C.IntegerOperand));
     if (C.Predicate==TEXT("owner_hp_at_most_bps")) return FOGLargeNumber::Compare(Owner->CurrentHp,Threshold)<=0;
     if (C.Predicate==TEXT("owner_hp_at_least_bps")) return FOGLargeNumber::Compare(Owner->CurrentHp,Threshold)>=0;

@@ -6,7 +6,9 @@ bool OGNativePassivePredicates::IsSupported(FName Name)
     return Name==TEXT("owner_is_source") || Name==TEXT("owner_is_target") ||
         Name==TEXT("source_is_enemy") || Name==TEXT("target_is_enemy") ||
         Name==TEXT("owner_hp_at_most_bps") || Name==TEXT("owner_hp_at_least_bps") ||
-        Name==TEXT("skill_is") || Name==TEXT("owner_in_reserve");
+        Name==TEXT("skill_is") || Name==TEXT("owner_in_reserve") ||
+        Name==TEXT("owner_has_effect") || Name==TEXT("owner_has_effect_family") ||
+        Name==TEXT("source_has_effect") || Name==TEXT("target_has_effect");
 }
 bool FOGNativePassiveSpecification::MatchesSource(const FOGCombatUnitState& Unit) const
 {
@@ -29,7 +31,9 @@ bool FOGNativePassiveSpecification::Validate(FString& Error) const
         const bool Event=T.EventType==TEXT("OnBattleStart") || T.EventType==TEXT("OnDefeat") ||
             T.EventType==TEXT("OnEntry") || T.EventType==TEXT("OnEnterReserve") ||
             T.EventType==TEXT("OnDamageDealt") || T.EventType==TEXT("OnDamageReceived") ||
-            T.EventType==TEXT("OnHealingApplied") || T.EventType==TEXT("OnActionResolved") || T.EventType==TEXT("OnOwnerActionEnd");
+            T.EventType==TEXT("OnHealingApplied") || T.EventType==TEXT("OnActionResolved") || T.EventType==TEXT("OnOwnerActionEnd") ||
+            T.EventType==TEXT("OnEffectApplied") || T.EventType==TEXT("OnEffectRemoved") ||
+            T.EventType==TEXT("OnEffectTicked") || T.EventType==TEXT("OnEffectResisted");
         if (!T.TriggerId.IsValid() || T.TriggerId.Value.StartsWith(TEXT("diagnostic:")) || Ids.Contains(T.TriggerId) || !Event || T.ActionIds.IsEmpty() ||
             Rule.MaximumActivationsPerRoot<1 || Rule.Priority<1 ||
             static_cast<uint8>(Rule.Target)>static_cast<uint8>(EOGNativeReactionTarget::LowestHealthAlly) ||
@@ -45,11 +49,15 @@ bool FOGNativePassiveSpecification::Validate(FString& Error) const
         for (const auto& C:T.Conditions)
         {
             const bool Hp=C.Predicate==TEXT("owner_hp_at_most_bps") || C.Predicate==TEXT("owner_hp_at_least_bps");
+            const bool Effect=C.Predicate==TEXT("owner_has_effect") || C.Predicate==TEXT("owner_has_effect_family") ||
+                C.Predicate==TEXT("source_has_effect") || C.Predicate==TEXT("target_has_effect");
+            const bool Content=Effect || C.Predicate==TEXT("skill_is");
+            const bool OwnerOnly=C.Predicate==TEXT("owner_has_effect") || C.Predicate==TEXT("owner_has_effect_family");
             if (!OGNativePassivePredicates::IsSupported(C.Predicate) || !C.NameOperand.IsNone() ||
-                (!Hp && C.IntegerOperand!=0) || (C.Predicate!=TEXT("skill_is") && !C.ContentOperand.IsEmpty()) ||
+                (!Hp && C.IntegerOperand!=0) || (!Content && !C.ContentOperand.IsEmpty()) ||
                 (Hp && (C.IntegerOperand<0 || C.IntegerOperand>10000)) ||
-                (C.Predicate==TEXT("skill_is") && !C.ContentOperand.IsValid()) ||
-                (T.EventType==TEXT("OnBattleStart") && !Hp && C.Predicate!=TEXT("owner_in_reserve")))
+                (Content && !C.ContentOperand.IsValid()) ||
+                (T.EventType==TEXT("OnBattleStart") && !Hp && !OwnerOnly && C.Predicate!=TEXT("owner_in_reserve")))
             { Error=TEXT("Passive condition is unsupported, invalid or requires context absent from BattleStart."); return false; }
         }
     }

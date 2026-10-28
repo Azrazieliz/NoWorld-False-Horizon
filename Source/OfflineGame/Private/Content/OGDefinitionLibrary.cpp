@@ -3,6 +3,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Characters/OGCharacterAppearanceDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
+#include "Effects/OGNativeCombatEffect.h"
 #include "Interaction/OGInteractionDefinition.h"
 #include "Animation/OGSharedMotionLibrary.h"
 #include "Runtime/OGAdaptiveScoreComponent.h"
@@ -83,6 +84,14 @@ bool RawArrays(const FString& Json,const TArray<FString>& Fields,FString& Schema
     }
     for (const auto& Field:Fields) if (!Arrays.Contains(Field)) return Fail(Error,TEXT("Missing catalog array: ")+Field);
     return true;
+}
+void CollectAssetReferences(UDataAsset* Asset,TArray<FOGDefinitionReference>& Out)
+{
+    if (const auto* D=Cast<UOGReusableDefinition>(Asset)) D->CollectRequiredDefinitions(Out);
+    if (const auto* Ability=Cast<UOGNativeCombatAbility>(Asset))
+        for (const auto& Op:Ability->Definition.Effects)
+            if (Op.Operation==EOGNativeEffectOperation::Apply)
+            { FOGDefinitionReference Ref; Ref.System=TEXT("effect"); Ref.Id=Op.Id; Out.Add(Ref); }
 }
 bool ValidateAsset(const FOGDefinitionAssetEntry& E,UDataAsset* A,FString& Error)
 {
@@ -216,7 +225,7 @@ bool UOGDefinitionLibrary::BuildCandidate(const TArray<FInstalledBundle>& Bundle
     for (const auto& Pair:OutEntries)
     {
         TArray<FOGDefinitionReference> Refs=Pair.Value.Entry.Dependencies;
-        if (const auto* D=Cast<UOGReusableDefinition>(Pair.Value.Asset)) D->CollectRequiredDefinitions(Refs);
+        CollectAssetReferences(Pair.Value.Asset,Refs);
         for (const auto& Ref:Refs)
         {
             const auto* Target=OutEntries.Find(Key(Ref.System,Ref.Id));
@@ -229,7 +238,7 @@ bool UOGDefinitionLibrary::BuildCandidate(const TArray<FInstalledBundle>& Bundle
     for (const auto& Pair:OutEntries)
     {
         TArray<FOGDefinitionReference> Refs=Pair.Value.Entry.Dependencies;
-        if (const auto* D=Cast<UOGReusableDefinition>(Pair.Value.Asset)) D->CollectRequiredDefinitions(Refs);
+        CollectAssetReferences(Pair.Value.Asset,Refs);
         TSet<FString> Unique;
         for (const auto& Ref:Refs) Unique.Add(Key(Ref.System,Ref.Id));
         Pending.Add(Pair.Key,Unique.Num());
@@ -244,6 +253,12 @@ bool UOGDefinitionLibrary::BuildCandidate(const TArray<FInstalledBundle>& Bundle
     { const auto* Entry=OutEntries.Find(Key(System,Id)); return Entry?Entry->Asset:nullptr; };
     for (const auto& Pair:OutEntries)
         if (const auto* D=Cast<UOGReusableDefinition>(Pair.Value.Asset); D && !D->ValidateResolvedReferences(Resolve,Error)) return false;
+    for (const auto& Pair:OutEntries)
+        if (const auto* Ability=Cast<UOGNativeCombatAbility>(Pair.Value.Asset))
+            for (const auto& Op:Ability->Definition.Effects)
+                if (Op.Operation==EOGNativeEffectOperation::Apply &&
+                    !Cast<UOGNativeCombatEffect>(Resolve(TEXT("effect"),Op.Id)))
+                    return Fail(Error,TEXT("Shared ability effect reference has the wrong native definition class."));
     for (const auto& Pair:OutCatalogs)
     {
         const auto& A=CatalogAdapters[Pair.Key]; FString Base,Merged;

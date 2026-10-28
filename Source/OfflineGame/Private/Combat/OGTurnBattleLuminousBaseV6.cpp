@@ -328,7 +328,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(!T || !T->IsAlive()){Expired.Add(Entry.Key);continue;}
         const FOGLargeNumber Before=T->CurrentHp;
         const FOGLargeNumber Bleed=FOGLargeNumber::ScaleByBasisPoints(
-            Source.Stats.Attack,1800*Entry.Value);
+            GetNativeEffectiveStats(Source.UnitEntityId).Attack,1800*Entry.Value);
         if(!Bleed.IsZero() &&
            !ApplyDamage(Source.UnitEntityId,T->UnitEntityId,
                Bleed,Action.SkillId,OutError)) return false;
@@ -378,7 +378,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         LastEffectiveHpDamage.Remove(TargetId);
         FOGCombatUnitState* Target=FindMutableUnit(TargetId);
         if(!Target || !Target->IsAlive())return true;
-        FOGCombatStats EffectiveAttacker=Source.Stats;
+        FOGCombatStats EffectiveAttacker=GetNativeEffectiveStats(Source.UnitEntityId);
         int32 DawnAtk=0,DawnSpd=0,DawnHeal=0,DawnReduction=0;
         GetApprovedDawnBlessingBps(Source.UnitEntityId,
             DawnAtk,DawnSpd,DawnHeal,DawnReduction);
@@ -406,7 +406,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         FOGDamageRequest Request;
         Request.BaseDamage=FOGLargeNumber::ScaleByBasisPoints(
             EffectiveAttacker.Attack,AtkBps);
-        Request.DefenseReference=Source.Stats.Attack;
+        Request.DefenseReference=GetNativeEffectiveStats(Source.UnitEntityId).Attack;
         Request.bAllowHitOverflowReplication=false;
         Request.bCanCrit=true;
         if(StateOfOwner.bAttunementActive &&
@@ -417,7 +417,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
         if(bUlt && UltimateBranch==TEXT("night"))
             EffectiveAttacker.DefensePenetrationBps+=2000;
         const FOGDamageResolution Damage=FOGCombatMath::ResolveDamage(
-            Request,EffectiveAttacker,Target->Stats,Rng);
+            Request,EffectiveAttacker,GetNativeEffectiveStats(Target->UnitEntityId),Rng);
         if(Damage.TotalDamage.IsZero())return true;
         const FOGLargeNumber Before=Target->CurrentHp;
         if(!ApplyDamage(Source.UnitEntityId,TargetId,
@@ -550,8 +550,8 @@ bool FOGTurnBattle::ExecuteApprovedLuminousBaseAction(
             CasterSpeedBps,CasterHealBps,CasterMitigationBps);
         const FOGLargeNumber HealerAttack=CasterAtkBps>0
             ?FOGLargeNumber::ScaleByBasisPoints(
-                Source.Stats.Attack,10000+CasterAtkBps)
-            :Source.Stats.Attack;
+                GetNativeEffectiveStats(Source.UnitEntityId).Attack,10000+CasterAtkBps)
+            :GetNativeEffectiveStats(Source.UnitEntityId).Attack;
         for(int32 I=0;I<Action.TargetUnitIds.Num();++I)
         {
             const FOGEntityId Id=Action.TargetUnitIds[I];

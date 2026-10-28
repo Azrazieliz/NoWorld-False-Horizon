@@ -11,7 +11,7 @@ bool FOGNativeAbilityDefinition::operator==(const FOGNativeAbilityDefinition& V)
     return IdentityId==V.IdentityId && VersionId==V.VersionId && SkillId==V.SkillId &&
         OriginalSourceReference==V.OriginalSourceReference && MotionSemantic==V.MotionSemantic &&
         bNoResourceCost==V.bNoResourceCost && ResourceCosts==V.ResourceCosts && ResourceChanges==V.ResourceChanges && CooldownOwnerActions==V.CooldownOwnerActions && Targets==V.Targets &&
-        bIncludeSelf==V.bIncludeSelf && Packets==V.Packets;
+        bIncludeSelf==V.bIncludeSelf && Packets==V.Packets && Effects==V.Effects;
 }
 bool FOGNativeAbilityDefinition::MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const
 { return (IdentityId.IsEmpty() || IdentityId==Identity) && (VersionId.IsEmpty() || VersionId==Version); }
@@ -22,7 +22,7 @@ bool FOGNativeAbilityDefinition::Validate(FString& Error) const
         IdentityId.Value.StartsWith(TEXT("diagnostic:")) || VersionId.Value.StartsWith(TEXT("diagnostic:")) ||
         SkillId.Value.StartsWith(TEXT("diagnostic:")) || OriginalSourceReference.TrimStartAndEnd().IsEmpty() ||
         static_cast<uint8>(Targets)>static_cast<uint8>(EOGNativeAbilityTargets::AllAllies) ||
-        (Packets.IsEmpty() && ResourceChanges.IsEmpty()) || Packets.Num()>4096)
+        (Packets.IsEmpty() && ResourceChanges.IsEmpty() && Effects.IsEmpty()) || Packets.Num()>4096 || Effects.Num()>4096)
     { Error=TEXT("Native ability needs valid optional source restrictions, skill, provenance and packets."); return false; }
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity")))
     { Error=TEXT("Luminous requires its complete specialized kit executor; ordinary packets cannot replace it."); return false; }
@@ -39,6 +39,7 @@ bool FOGNativeAbilityDefinition::Validate(FString& Error) const
             Resources.Add(Row.ResourceId);
         }
     }
+    for (const auto& Effect:Effects) if (!Effect.Validate(Error)) return false;
     for (const auto& Packet:Packets)
     {
         if (static_cast<uint8>(Packet.Effect)>static_cast<uint8>(EOGNativeAbilityEffect::Healing) ||
