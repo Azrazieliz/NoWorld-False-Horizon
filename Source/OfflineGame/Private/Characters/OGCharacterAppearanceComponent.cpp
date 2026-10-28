@@ -73,11 +73,10 @@ UOGCharacterAppearanceComponent::UOGCharacterAppearanceComponent()
 UOGCharacterAppearanceDefinition* UOGCharacterAppearanceComponent::FindDefinition(
     const FOGContentId& Identity, const FOGContentId& Version, FString& Error) const
 {
-    TArray<UDataAsset*> Shared;
-    if (auto* Library=UOGDefinitionLibrary::Get())
-        Library->List(TEXT("appearance"),UOGCharacterAppearanceDefinition::StaticClass(),Shared);
     TArray<UOGCharacterAppearanceDefinition*> Candidates;
-    for (auto* Asset:Shared) Candidates.AddUnique(CastChecked<UOGCharacterAppearanceDefinition>(Asset));
+    if (auto* Library=UOGDefinitionLibrary::Get())
+        if (auto* Shared=Cast<UOGCharacterAppearanceDefinition>(Library->Resolve(TEXT("appearance"),Version)))
+            Candidates.Add(Shared);
     for (const auto& Reference:Definitions)
     {
         auto* Definition=Reference.LoadSynchronous();

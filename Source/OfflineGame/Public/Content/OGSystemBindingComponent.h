@@ -7,6 +7,8 @@
 #include "OGSystemBindingComponent.generated.h"
 
 class UOGGameCoreSubsystem;
+class UOGAdaptiveScoreComponent;
+class UOGAdaptiveScoreDefinition;
 class UStaticMesh;
 class UMaterialInterface;
 USTRUCT(BlueprintType)
@@ -25,6 +27,9 @@ class OFFLINEGAME_API UOGDefinitionReceiverComponent : public UActorComponent
 public:
     UOGDefinitionReceiverComponent();
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly) FName AcceptedSystem;
+    UPROPERTY(EditDefaultsOnly,BlueprintReadOnly) TArray<FName> ExclusiveChannels;
+    UPROPERTY(Transient,BlueprintReadOnly) TObjectPtr<UDataAsset> BoundDefinition;
+    UPROPERTY(Transient,BlueprintReadOnly) FOGDefinitionBindingContext BoundContext;
     UFUNCTION(BlueprintNativeEvent,Category="Definitions")
     bool PrepareDefinition(UDataAsset* Definition,const FOGDefinitionBindingContext& Context,FString& Error);
     virtual bool PrepareDefinition_Implementation(UDataAsset*,const FOGDefinitionBindingContext&,FString& Error);
@@ -52,6 +57,7 @@ public:
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGSystemBindingEntry> Bindings;
     virtual bool ValidateDefinition_Implementation(FString& Error) const override;
     virtual void CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const override;
+    virtual bool ValidateResolvedReferences(const FOGDefinitionResolver& Resolve,FString& Error) const override;
 };
 
 UCLASS(ClassGroup=(OfflineGame),meta=(BlueprintSpawnableComponent))
@@ -109,4 +115,18 @@ private:
     UPROPERTY(Transient) TObjectPtr<UOGStaticMeshSystemDefinition> Prepared;
     TArray<FSavedPart> Previous;
     bool bActive=false;
+};
+
+/** Native score director receiver: one shared score, no duplicate audio assets. */
+UCLASS(ClassGroup=(OfflineGame))
+class OFFLINEGAME_API UOGScoreDefinitionReceiver : public UOGDefinitionReceiverComponent
+{
+    GENERATED_BODY()
+public:
+    UOGScoreDefinitionReceiver();
+    virtual bool PrepareDefinition_Implementation(UDataAsset*,const FOGDefinitionBindingContext&,FString&) override;
+    virtual void ActivateDefinition_Implementation() override;
+    virtual void ReleaseDefinition_Implementation() override;
+private:
+    UPROPERTY(Transient) TObjectPtr<UOGAdaptiveScoreComponent> InstalledScore;
 };

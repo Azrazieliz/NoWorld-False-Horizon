@@ -1,3 +1,4 @@
+#include "Combat/OGNativeTurnAgentComponent.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Characters/OGCharacterAppearanceDefinition.h"
@@ -93,6 +94,8 @@ bool ValidateAsset(const FOGDefinitionAssetEntry& E,UDataAsset* A,FString& Error
         return (E.System==TEXT("ability") && E.Id==D->Definition.SkillId && D->ValidateInstalled(Error)) || Fail(Error,Error.IsEmpty()?TEXT("Ability definition key mismatch."):Error);
     if (const auto* D=Cast<UOGInteractionDefinition>(A))
     { FOGInteractionActionGraph Graph; return (E.System==TEXT("interaction") && E.Id==D->GraphId && D->BuildGraph(Graph,Error)) || Fail(Error,Error.IsEmpty()?TEXT("Interaction definition key mismatch."):Error); }
+    if (const auto* D=Cast<UOGNativeTurnPolicy>(A))
+        return (E.System==TEXT("agent") && D->Validate(Error)) || Fail(Error,Error.IsEmpty()?TEXT("Turn policy definition key mismatch."):Error);
     if (const auto* D=Cast<UOGAdaptiveScoreDefinition>(A))
         return (E.System==TEXT("score") && D->Validate(Error)) || Fail(Error,Error.IsEmpty()?TEXT("Score definition key mismatch."):Error);
     if (Cast<UOGSharedMotionLibrary>(A)) return E.System==TEXT("motion") || Fail(Error,TEXT("Motion definition key mismatch."));
@@ -288,6 +291,11 @@ bool UOGDefinitionLibrary::RemoveBundle(const FOGContentId& Id,FString& Error)
         return Fail(Error,TEXT("Definition bundle is not installed."));
     return Publish(Candidate,Error);
 }
+void UOGDefinitionLibrary::RefreshDiscovery()
+{
+    if (!IsInGameThread() || bPublishing || bDiscovering) return;
+    bDiscovered=false; EnsureDiscovered();
+}
 void UOGDefinitionLibrary::EnsureDiscovered()
 {
     if (bDiscovered || bDiscovering || bPublishing || !IsInGameThread()) return;
@@ -300,6 +308,24 @@ void UOGDefinitionLibrary::EnsureDiscovered()
     TArray<FAssetData> Assets; Registry.GetAssets(Filter,Assets);
     Assets.Sort([](const FAssetData& A,const FAssetData& B){return A.GetSoftObjectPath().ToString()<B.GetSoftObjectPath().ToString();});
     TArray<UOGDefinitionBundle*> Pending; for (const auto& A:Assets) if (auto* B=Cast<UOGDefinitionBundle>(A.GetAsset())) Pending.Add(B);
+    // Install a complete discovery set first, so cross-bundle definition references
+    // do not require redundant authoring of load-order dependencies.
+    auto Complete=Installed;
+    for (auto* B:Pending)
+    {
+        const int32 Index=Complete.IndexOfByPredicate([&](const auto& Old){return Old.BundleId==B->BundleId;});
+        if (Index!=INDEX_NONE && Complete[Index].Version>=B->Version) continue;
+        if (Index!=INDEX_NONE) Complete.RemoveAt(Index);
+        FInstalledBundle Snapshot; Snapshot.BundleId=B->BundleId; Snapshot.Version=B->Version; Snapshot.Source=B;
+        Snapshot.Dependencies=B->Dependencies; Snapshot.Assets=B->Assets; Snapshot.Catalogs=B->Catalogs;
+        Complete.Add(MoveTemp(Snapshot));
+    }
+    if (Complete.Num()!=Installed.Num() || Complete.ContainsByPredicate([&](const auto& B)
+        { return !Installed.ContainsByPredicate([&](const auto& Old){return Old.BundleId==B.BundleId && Old.Version==B.Version;}); }))
+    {
+        FString BatchError;
+        if (Publish(Complete,BatchError)) return;
+    }
     bool Progress=true;
     while (Progress && !Pending.IsEmpty())
     {

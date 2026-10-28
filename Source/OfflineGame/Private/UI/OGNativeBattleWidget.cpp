@@ -126,8 +126,14 @@ void UOGNativeBattleWidget::Refresh()
     const bool Own=State.Units.IsValidIndex(Acting) && State.Units[Acting].UnitEntityId==Source->UnitEntityId &&
         Source->CanAct() && Body->IsFoundationWorldInputAllowed();
     Heading->SetText(FText::FromString(Own?TEXT("YOUR TURN"):TEXT("OPPONENT / ALLY TURN")));
-    Resources->SetText(FText::FromString(FString::Printf(TEXT("HP %s / %s   |   %s %d / %d   |   Ultimate %d%% / %d%%"),
-        *Source->CurrentHp.ToDebugString(),*Source->Stats.MaxHp.ToDebugString(),*Set.ResourceLabel,Resource,Set.ResourceCap,Charge,Set.ChargeCap)));
+    FString ResourceText=FString::Printf(TEXT("HP %s / %s"),*Source->CurrentHp.ToDebugString(),*Source->Stats.MaxHp.ToDebugString());
+    if (!Set.ResourceLabel.IsEmpty())
+        ResourceText+=FString::Printf(TEXT("   |   %s %d / %d   |   Ultimate %d%% / %d%%"),
+            *Set.ResourceLabel,Resource,Set.ResourceCap,Charge,Set.ChargeCap);
+    for (const auto& Value:Source->BattleResources)
+        ResourceText+=FString::Printf(TEXT("   |   %s %lld / %lld"),*Value.DisplayName.ToString(),
+            static_cast<long long>(Value.Value),static_cast<long long>(Value.Maximum));
+    Resources->SetText(FText::FromString(ResourceText));
     Feedback->SetText(FText::FromString(LastActionMessage.IsEmpty()?
         TEXT("Choose a primary target. Area effects include every eligible field participant."):LastActionMessage));
     if (!Own && State.Units.IsValidIndex(Acting))

@@ -25,7 +25,8 @@ bool AddUnitDelta(
     if (Before.CurrentHp == After.CurrentHp &&
         Before.Presence == After.Presence &&
         Before.NextActionValue == After.NextActionValue &&
-        Before.OccupiedLaneIndex == After.OccupiedLaneIndex)
+        Before.OccupiedLaneIndex == After.OccupiedLaneIndex &&
+        Before.BattleResources == After.BattleResources)
     {
         return false;
     }
@@ -46,6 +47,20 @@ bool AddUnitDelta(
         static_cast<double>(Before.OccupiedLaneIndex));
     Delta->SetNumberField(TEXT("lane_after"),
         static_cast<double>(After.OccupiedLaneIndex));
+    auto Resources=[](const TArray<FOGCombatResourceValue>& Values)
+    {
+        TArray<TSharedPtr<FJsonValue>> Rows;
+        for (const auto& Value:Values)
+        {
+            auto Row=MakeShared<FJsonObject>(); Row->SetStringField(TEXT("resource_id"),Value.ResourceId.ToString());
+            Row->SetStringField(TEXT("value_exact"),LexToString(Value.Value));
+            Row->SetStringField(TEXT("maximum_exact"),LexToString(Value.Maximum));
+            Rows.Add(MakeShared<FJsonValueObject>(Row));
+        }
+        return Rows;
+    };
+    Delta->SetArrayField(TEXT("battle_resources_before"),Resources(Before.BattleResources));
+    Delta->SetArrayField(TEXT("battle_resources_after"),Resources(After.BattleResources));
     OutDeltas.Add(MakeShared<FJsonValueObject>(Delta));
     return true;
 }

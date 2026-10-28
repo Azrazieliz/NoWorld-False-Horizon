@@ -1,3 +1,4 @@
+#include "Runtime/OGAdaptiveScoreComponent.h"
 #include "Content/OGSystemBindingComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/GameInstance.h"
@@ -33,7 +34,7 @@ bool UOGSystemBindingDefinition::ValidateDefinition_Implementation(FString& Erro
     if (!Super::ValidateDefinition_Implementation(Error)) return false;
     if (System!=TEXT("binding") || Bindings.IsEmpty())
         return FailBinding(Error,TEXT("A binding profile requires real subsystem bindings."));
-    TSet<FName> Slots;
+    TSet<FName> Slots,Channels;
     for (const auto& B:Bindings)
     {
         if (B.Slot.IsNone() || Slots.Contains(B.Slot) || B.Definition.System.IsNone() ||
@@ -42,6 +43,33 @@ bool UOGSystemBindingDefinition::ValidateDefinition_Implementation(FString& Erro
             B.ReceiverClass->GetDefaultObject<UOGDefinitionReceiverComponent>()->AcceptedSystem!=B.Definition.System)
             return FailBinding(Error,TEXT("Binding slots require distinct names, valid definitions and a compatible concrete receiver."));
         Slots.Add(B.Slot);
+        for (FName Channel:B.ReceiverClass->GetDefaultObject<UOGDefinitionReceiverComponent>()->ExclusiveChannels)
+        {
+            if (Channel.IsNone() || Channels.Contains(Channel))
+                return FailBinding(Error,TEXT("Binding receivers cannot claim the same exclusive subsystem channel."));
+            Channels.Add(Channel);
+        }
+    }
+    return true;
+}
+bool UOGSystemBindingDefinition::ValidateResolvedReferences(const FOGDefinitionResolver& Resolve,FString& Error) const
+{
+    TSet<FName> ReplacedParts;
+    for (const auto& B:Bindings)
+    {
+        auto* Asset=Resolve(B.Definition.System,B.Definition.Id);
+        if (B.ReceiverClass->IsChildOf(UOGStaticMeshDefinitionReceiver::StaticClass()))
+        {
+            const auto* Mesh=Cast<UOGStaticMeshSystemDefinition>(Asset);
+            if (!Mesh) return FailBinding(Error,TEXT("Native mesh receivers require a native mesh definition."));
+            for (FName Part:Mesh->ReplaceComponentNames)
+            {
+                if (ReplacedParts.Contains(Part)) return FailBinding(Error,TEXT("Two mesh receivers cannot replace the same actor part."));
+                ReplacedParts.Add(Part);
+            }
+        }
+        if (B.ReceiverClass->IsChildOf(UOGScoreDefinitionReceiver::StaticClass()) && !Cast<UOGAdaptiveScoreDefinition>(Asset))
+            return FailBinding(Error,TEXT("Native score receivers require an adaptive score definition."));
     }
     return true;
 }
@@ -74,7 +102,10 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
     TSharedPtr<FJsonObject> Json;
     if (!Found || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(State),Json) ||
         !Json || Json->HasField(TEXT("diagnosticFixture")))
+    {
+        if (CanonicalEntityId==Entity) ReleaseBinding();
         return FailBinding(Error,TEXT("Definition bindings require an actual non-diagnostic canonical entity."));
+    }
     FString ProfileText;
     if (Json->HasField(TEXT("system_binding_id")) && !Json->TryGetStringField(TEXT("system_binding_id"),ProfileText))
         return FailBinding(Error,TEXT("Canonical system_binding_id must be an exact content ID string."));
@@ -94,6 +125,7 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
     {
         auto* Definition=Library->Resolve(B.Definition.System,B.Definition.Id);
         TStrongObjectPtr<UOGDefinitionReceiverComponent> Receiver(NewObject<UOGDefinitionReceiverComponent>(GetOwner(),B.ReceiverClass));
+        if (Receiver.IsValid()) { Receiver->BoundDefinition=Definition; Receiver->BoundContext=Context; }
         if (!Receiver.IsValid() || !Definition || !Receiver->PrepareDefinition(Definition,Context,Error))
         {
             if (Receiver.IsValid()) Receiver->ReleaseDefinition();
@@ -199,4 +231,32 @@ void UOGStaticMeshDefinitionReceiver::ReleaseDefinition_Implementation()
     if (InstalledMesh)
     { if (auto* Owner=InstalledMesh->GetOwner()) Owner->RemoveInstanceComponent(InstalledMesh); InstalledMesh->DestroyComponent(); }
     InstalledMesh=nullptr; Prepared=nullptr; bActive=false;
+}
+
+UOGScoreDefinitionReceiver::UOGScoreDefinitionReceiver() { AcceptedSystem=TEXT("score"); ExclusiveChannels.Add(TEXT("audio.score")); }
+bool UOGScoreDefinitionReceiver::PrepareDefinition_Implementation(
+    UDataAsset* Asset,const FOGDefinitionBindingContext&,FString& Error)
+{
+    auto* Definition=Cast<UOGAdaptiveScoreDefinition>(Asset);
+    if (InstalledScore || !Definition || !Definition->Validate(Error) || !GetOwner()) return false;
+    if (!GetOwner()->FindComponentByClass<UOGSemanticAudioRuntime>())
+        return FailBinding(Error,TEXT("A shared score needs the actor's actual semantic audio runtime."));
+    TArray<UOGAdaptiveScoreComponent*> Existing; GetOwner()->GetComponents(Existing);
+    for (auto* Component:Existing)
+        if (!Component->ComponentTags.Contains(TEXT("OG.Definition.Score")))
+            return FailBinding(Error,TEXT("An existing independent score director already owns this actor's music."));
+    InstalledScore=NewObject<UOGAdaptiveScoreComponent>(GetOwner());
+    InstalledScore->Score=Definition; InstalledScore->ComponentTags.Add(TEXT("OG.Definition.Score"));
+    return true;
+}
+void UOGScoreDefinitionReceiver::ActivateDefinition_Implementation()
+{
+    if (!InstalledScore || InstalledScore->IsRegistered()) return;
+    GetOwner()->AddInstanceComponent(InstalledScore); InstalledScore->RegisterComponent();
+}
+void UOGScoreDefinitionReceiver::ReleaseDefinition_Implementation()
+{
+    if (!InstalledScore) return;
+    if (auto* Owner=InstalledScore->GetOwner()) Owner->RemoveInstanceComponent(InstalledScore);
+    InstalledScore->DestroyComponent(); InstalledScore=nullptr;
 }

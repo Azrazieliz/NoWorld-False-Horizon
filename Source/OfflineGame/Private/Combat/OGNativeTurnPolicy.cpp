@@ -51,10 +51,12 @@ bool PickTargets(const FOGNativeTurnRule& Rule, const FOGCombatUnitState& Source
 }
 }
 
+bool UOGNativeTurnPolicy::MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const
+{ return (IdentityId.IsEmpty() || IdentityId==Identity) && (VersionId.IsEmpty() || VersionId==Version); }
 bool UOGNativeTurnPolicy::Validate(FString& Error) const
 {
     Error.Reset();
-    if (!IdentityId.IsValid() || !VersionId.IsValid() || IdentityId.Value.StartsWith(TEXT("diagnostic:")) ||
+    if ((!IdentityId.IsEmpty() && !IdentityId.IsValid()) || (!VersionId.IsEmpty() && !VersionId.IsValid()) || IdentityId.Value.StartsWith(TEXT("diagnostic:")) ||
         VersionId.Value.StartsWith(TEXT("diagnostic:")) || CanonicalIdentityField.IsNone() ||
         CanonicalVersionField.IsNone() || CanonicalLifeField.IsNone() || RequiredLifeValue.IsEmpty() ||
         CanonicalIdentityField == CanonicalVersionField || CanonicalIdentityField == CanonicalLifeField ||
@@ -86,7 +88,7 @@ bool UOGNativeTurnPolicy::BuildDecision(const FOGTurnBattleState& State, const F
     const FOGCombatUnitState* Source = State.Units.FindByPredicate(
         [&SourceId](const FOGCombatUnitState& U) { return U.UnitEntityId == SourceId; });
     if (State.Status != EOGTurnBattleStatus::Running || !State.BattleId.IsValid() || !Source || !Source->CanAct() ||
-        Source->IdentityId != IdentityId || Source->SkillSet.CurrentForm != VersionId || Source->DefaultActionDelay <= 0 ||
+        !MatchesSource(Source->IdentityId,Source->SkillSet.CurrentForm) || Source->DefaultActionDelay <= 0 ||
         Source->Stats.MaxHp.GetSign() <= 0)
     { Error = TEXT("No matching active real source unit/kit is available to this AI policy."); return false; }
     const FOGNativeTurnRule* Best = nullptr;

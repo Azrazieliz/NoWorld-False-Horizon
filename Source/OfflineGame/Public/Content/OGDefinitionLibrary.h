@@ -81,6 +81,8 @@ public:
     virtual void Deinitialize() override;
     /** Discovers cooked bundles under /Game/NoWorld/Definitions once, without loading per entity. */
     void EnsureDiscovered();
+    /** Call after an installed package has registered its cooked asset registry. */
+    UFUNCTION(BlueprintCallable,Category="Definitions") void RefreshDiscovery();
     UFUNCTION(BlueprintCallable,Category="Definitions") bool InstallBundle(UOGDefinitionBundle* Bundle,FString& Error);
     UFUNCTION(BlueprintCallable,Category="Definitions") bool RemoveBundle(const FOGContentId& BundleId,FString& Error);
     UFUNCTION(BlueprintCallable,Category="Definitions") UDataAsset* Resolve(FName System,const FOGContentId& Id);

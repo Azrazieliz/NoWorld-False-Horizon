@@ -57,6 +57,9 @@ bool FOGTurnBattle::Initialize(
     FString& OutError)
 {
     State = InitialState;
+    // Opening resource truth comes only from admitted shared specifications, never caller snapshots.
+    for (auto& Unit:State.Units) Unit.BattleResources.Reset();
+    NativeResourceSpecifications.Reset();
     NativeAbilities.Reset(); NativeAbilityRevision=0; NativeOwnerActions.Reset(); NativeAbilityReadyActions.Reset();
     Log.Reset();
     TriggerRuntime.Reset();

@@ -33,6 +33,7 @@ uint64 AbilitySeed(const FOGTurnBattleState& State,const FOGResolvedCombatAction
 }
 const FOGNativeAbilityDefinition* FOGTurnBattle::FindNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const
 {
+    if (Source.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) return nullptr;
     const FOGContentId Any;
     for (const FString& Key:{AbilityKey(Source.IdentityId,Source.SkillSet.CurrentForm,Skill),
         AbilityKey(Source.IdentityId,Any,Skill),AbilityKey(Any,Source.SkillSet.CurrentForm,Skill),AbilityKey(Any,Any,Skill)})
@@ -43,6 +44,26 @@ FName FOGTurnBattle::ResolveNativeAbilityMotion(const FOGCombatUnitState& Source
 {
     if (const auto* Definition=FindNativeAbility(Source,Skill)) return Definition->MotionSemantic;
     return NAME_None;
+}
+bool FOGTurnBattle::ConfigureNativeResource(const FOGEntityId& UnitId,
+    const FOGCombatResourceSpecification& Specification,FString& Error)
+{
+    if (State.Status!=EOGTurnBattleStatus::Running || !Specification.Validate(Error))
+    { if (Error.IsEmpty()) Error=TEXT("Resources require a running battle and valid specification."); return false; }
+    auto* Unit=FindMutableUnit(UnitId);
+    if (!Unit) { Error=TEXT("Combat resource owner is not an actual battle participant."); return false; }
+    const FString Key=UnitId.ToString()+TEXT("|")+Specification.ResourceId.ToString();
+    if (const auto* Existing=NativeResourceSpecifications.Find(Key))
+    {
+        if (*Existing==Specification) { Error.Reset(); return true; }
+        Error=TEXT("An admitted battle resource cannot be changed or reset."); return false;
+    }
+    if (NativeOwnerActions.FindRef(UnitId)!=0)
+    { Error=TEXT("Opening resource definitions cannot be added after this unit has acted."); return false; }
+    FOGCombatResourceValue Value; Value.ResourceId=Specification.ResourceId; Value.DisplayName=Specification.DisplayName;
+    Value.Maximum=Specification.Maximum; Value.Value=Specification.OpeningValue;
+    Unit->BattleResources.Add(Value); NativeResourceSpecifications.Add(Key,Specification); ++NativeAbilityRevision;
+    return true;
 }
 bool FOGTurnBattle::RegisterNativeAbility(const FOGNativeAbilityDefinition& Definition,FString& Error)
 {
@@ -110,6 +131,15 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
     const FString CooldownKey=Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString();
     if (NativeOwnerActions.FindRef(Source.UnitEntityId)+1<NativeAbilityReadyActions.FindRef(CooldownKey))
     { Error=TEXT("The authored own-action cooldown is not ready."); return false; }
+    for (const auto* Rows:{&Definition->ResourceCosts,&Definition->ResourceChanges})
+    for (const auto& Row:*Rows)
+    {
+        const auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Row.ResourceId;});
+        const FString Key=Source.UnitEntityId.ToString()+TEXT("|")+Row.ResourceId.ToString();
+        if (!Resource || !NativeResourceSpecifications.Contains(Key) || Resource->Value<0 ||
+            Resource->Value>Resource->Maximum || (Rows==&Definition->ResourceCosts && Resource->Value<Row.Amount))
+        { Error=TEXT("An authored battle resource is unavailable or its exact cost is unaffordable."); return false; }
+    }
     TSharedPtr<FJsonObject> Context;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson),Context) ||
         !Context || !Context->Values.IsEmpty())
@@ -144,6 +174,12 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
 {
     const auto* Definition=FindNativeAbility(Source,Action.SkillId);
     if (!Definition) return true; // Strict production dispatch was checked before mutation.
+    for (const auto& Cost:Definition->ResourceCosts)
+    {
+        auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Cost.ResourceId;});
+        if (!Resource || Resource->Value<Cost.Amount) { Error=TEXT("Battle resource cost changed before execution."); return false; }
+        Resource->Value-=Cost.Amount;
+    }
     FOGDeterministicRng Rng(AbilitySeed(State,Action,Log.GetNextSequence()));
     for (const auto& Packet:Definition->Packets)
     for (int32 Hit=0;Hit<Packet.Repeats;++Hit)
@@ -154,7 +190,7 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
         int32 Attack=0,Speed=0,Healing=0,Reduction=0;
         GetApprovedDawnBlessingBps(Source.UnitEntityId,Attack,Speed,Healing,Reduction);
         if (Attack>0) Attacker.Attack=FOGLargeNumber::ScaleByBasisPoints(Attacker.Attack,10000+Attack);
-        FOGLargeNumber Amount;
+        FOGLargeNumber Amount=Packet.FlatAmount;
         for (const auto& Term:Packet.Scaling)
             Amount=FOGLargeNumber::Add(Amount,FOGLargeNumber::ScaleByBasisPoints(StatValue(Attacker,Term.Stat),Term.MultiplierBps));
         if (Amount.GetSign()<0) { Error=TEXT("Authored scaling resolved to negative magnitude."); return false; }
@@ -171,6 +207,15 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
         if (!ResolveRankSuppressionMultiplier(Source.UnitEntityId,Id,OGRankSuppressionChannels::Damage(),Request.RankSuppressionMultiplierBps,Error)) return false;
         const auto Damage=FOGCombatMath::ResolveDamage(Request,Attacker,Target->Stats,Rng);
         if (!Damage.TotalDamage.IsZero() && !ApplyDamage(Source.UnitEntityId,Id,Damage.TotalDamage,Action.SkillId,Error)) return false;
+    }
+    for (const auto& Change:Definition->ResourceChanges)
+    {
+        auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Change.ResourceId;});
+        if (!Resource) { Error=TEXT("Battle resource change has no admitted destination."); return false; }
+        // Saturation without signed overflow, including capacities near int64 maximum.
+        Resource->Value=Change.Amount>0
+            ? (Change.Amount>Resource->Maximum-Resource->Value?Resource->Maximum:Resource->Value+Change.Amount)
+            : (Change.Amount < -Resource->Value?0:Resource->Value+Change.Amount);
     }
     NativeAbilityReadyActions.Add(Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString(),
         NativeOwnerActions.FindRef(Source.UnitEntityId)+Definition->CooldownOwnerActions+2);

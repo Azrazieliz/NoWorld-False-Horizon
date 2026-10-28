@@ -1,3 +1,4 @@
+#include "Combat/OGCombatResourceDefinition.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
@@ -990,10 +991,31 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     if(!BindOwnedLuminousCombatAuthority(
         *Candidate,RulerId,MoveTemp(TrustedProviders),OutError))
         return false;
+    if (auto* Library=UOGDefinitionLibrary::Get())
+        for (const auto& Unit:Candidate->GetState().Units)
+        {
+            const auto* Kit=Cast<UOGCharacterGameplayDefinition>(Library->Resolve(TEXT("character"),Unit.SkillSet.CurrentForm));
+            if (!Kit || Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) continue;
+            if (Kit->IdentityId!=Unit.IdentityId || !Kit->MatchesKit(Unit.SkillSet))
+            { OutError=TEXT("A battle participant does not match its shared character definition."); return false; }
+            for (const auto& Ref:Kit->BattleResources)
+            {
+                const auto* Resource=Cast<UOGCombatResourceDefinition>(Library->Resolve(Ref.System,Ref.Id));
+                if (!Resource || !Candidate->ConfigureNativeResource(Unit.UnitEntityId,Resource->Specification,OutError)) return false;
+            }
+        }
     // Admit the shared skill library once per encounter. Copies connect by their actual owned kit.
     TArray<UDataAsset*> SharedAbilities;
     if (auto* Library=UOGDefinitionLibrary::Get())
-        Library->List(TEXT("ability"),UOGNativeCombatAbility::StaticClass(),SharedAbilities);
+        for (const auto& Unit:Candidate->GetState().Units)
+        {
+            if (Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) continue;
+            TArray<FOGContentId> Skills=Unit.SkillSet.ActiveSkills;
+            if (Unit.SkillSet.UltimateSkill.IsValid()) Skills.Add(Unit.SkillSet.UltimateSkill);
+            for (const auto& Skill:Skills)
+                if (auto* Ability=Cast<UOGNativeCombatAbility>(Library->Resolve(TEXT("ability"),Skill)))
+                    SharedAbilities.AddUnique(Ability);
+        }
     for (auto* Asset:SharedAbilities)
     {
         const auto* Ability=CastChecked<UOGNativeCombatAbility>(Asset);

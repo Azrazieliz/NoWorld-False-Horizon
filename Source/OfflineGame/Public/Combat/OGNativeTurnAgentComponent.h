@@ -55,6 +55,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TArray<FOGNativeTurnRule> Rules;
 
     bool Validate(FString& Error) const;
+    bool MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const;
     /** Pure selection. Caller verifies the canonical NPC and native physical body separately. */
     bool BuildDecision(const FOGTurnBattleState& State, const FOGEntityId& SourceId,
         FName CanonicalPhase, FOGResolvedCombatAction& Out, FName& OutRule, FString& Error,
@@ -90,6 +91,7 @@ private:
     FOGEntityId LastAutoBattleId;
     FOGEntityId LastAutoUnitId;
     int64 LastAutoAbilityRevision=-1;
+    int64 LastAutoDefinitionRevision=-1;
     int64 FailedSequence = -1;
     int64 FailedAbilityRevision = -1;
     double ReadyAtSeconds = -1.0;

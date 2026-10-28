@@ -1,3 +1,4 @@
+#include "Combat/OGNativeTurnAgentComponent.h"
 #include "Content/OGSystemBindingComponent.h"
 #include "Characters/OGContentCharacterActors.h"
 
@@ -20,6 +21,7 @@ AOGContentPlayableCharacter::AOGContentPlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
     Appearance = CreateDefaultSubobject<UOGCharacterAppearanceComponent>(TEXT("ContentAppearance"));
+    CreateDefaultSubobject<UOGNativeTurnAgentComponent>(TEXT("SharedTurnAgent"));
     SystemBindings = CreateDefaultSubobject<UOGSystemBindingComponent>(TEXT("SharedSystemBindings"));
     CombatBody = CreateDefaultSubobject<UOGCanonicalCombatActorBindingComponent>(TEXT("CanonicalCombatBody"));
     if (GetMesh()) Appearance->BodyComponentNamesToReplace.Add(GetMesh()->GetFName());

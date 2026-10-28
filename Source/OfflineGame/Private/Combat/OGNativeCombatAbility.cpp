@@ -2,7 +2,7 @@
 
 bool FOGNativeAbilityPacket::operator==(const FOGNativeAbilityPacket& V) const
 {
-    return Effect==V.Effect && Scaling==V.Scaling && DefenseReference==V.DefenseReference &&
+    return Effect==V.Effect && Scaling==V.Scaling && FlatAmount==V.FlatAmount && DefenseReference==V.DefenseReference &&
         DamageType==V.DamageType && Repeats==V.Repeats && bCanCrit==V.bCanCrit &&
         bCanBeBlocked==V.bCanBeBlocked && bAllowHitOverflow==V.bAllowHitOverflow;
 }
@@ -10,7 +10,7 @@ bool FOGNativeAbilityDefinition::operator==(const FOGNativeAbilityDefinition& V)
 {
     return IdentityId==V.IdentityId && VersionId==V.VersionId && SkillId==V.SkillId &&
         OriginalSourceReference==V.OriginalSourceReference && MotionSemantic==V.MotionSemantic &&
-        bNoResourceCost==V.bNoResourceCost && CooldownOwnerActions==V.CooldownOwnerActions && Targets==V.Targets &&
+        bNoResourceCost==V.bNoResourceCost && ResourceCosts==V.ResourceCosts && ResourceChanges==V.ResourceChanges && CooldownOwnerActions==V.CooldownOwnerActions && Targets==V.Targets &&
         bIncludeSelf==V.bIncludeSelf && Packets==V.Packets;
 }
 bool FOGNativeAbilityDefinition::MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const
@@ -22,18 +22,30 @@ bool FOGNativeAbilityDefinition::Validate(FString& Error) const
         IdentityId.Value.StartsWith(TEXT("diagnostic:")) || VersionId.Value.StartsWith(TEXT("diagnostic:")) ||
         SkillId.Value.StartsWith(TEXT("diagnostic:")) || OriginalSourceReference.TrimStartAndEnd().IsEmpty() ||
         static_cast<uint8>(Targets)>static_cast<uint8>(EOGNativeAbilityTargets::AllAllies) ||
-        Packets.IsEmpty() || Packets.Num()>4096)
+        (Packets.IsEmpty() && ResourceChanges.IsEmpty()) || Packets.Num()>4096)
     { Error=TEXT("Native ability needs valid optional source restrictions, skill, provenance and packets."); return false; }
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity")))
     { Error=TEXT("Luminous requires its complete specialized kit executor; ordinary packets cannot replace it."); return false; }
-    if (!bNoResourceCost || CooldownOwnerActions<0)
-    { Error=TEXT("Ordinary packets require an explicit no-resource-cost source contract and valid own-action cooldown; paid abilities need their exact executor."); return false; }
+    if (bNoResourceCost!=ResourceCosts.IsEmpty() || CooldownOwnerActions<0)
+    { Error=TEXT("Declare either no resource cost or exact typed costs, with a valid own-action cooldown."); return false; }
+    for (const auto* Rows:{&ResourceCosts,&ResourceChanges})
+    {
+        TSet<FOGContentId> Resources;
+        for (const auto& Row:*Rows)
+        {
+            if (!Row.ResourceId.IsValid() || Resources.Contains(Row.ResourceId) || Row.Amount==0 ||
+                Row.Amount==MIN_int64 || (Rows==&ResourceCosts && Row.Amount<0))
+            { Error=TEXT("Resource costs/changes require distinct valid IDs and safe explicit nonzero amounts."); return false; }
+            Resources.Add(Row.ResourceId);
+        }
+    }
     for (const auto& Packet:Packets)
     {
         if (static_cast<uint8>(Packet.Effect)>static_cast<uint8>(EOGNativeAbilityEffect::Healing) ||
             static_cast<uint8>(Packet.DamageType)>static_cast<uint8>(EOGBaseDamageType::TrueDamage) ||
             static_cast<uint8>(Packet.DefenseReference)>static_cast<uint8>(EOGNativeDefenseReference::Defense) ||
-            Packet.Repeats<1 || Packet.Repeats>10000 || Packet.Scaling.IsEmpty() || Packet.Scaling.Num()>3)
+            Packet.Repeats<1 || Packet.Repeats>10000 || Packet.FlatAmount.GetSign()<0 ||
+            (Packet.Scaling.IsEmpty() && Packet.FlatAmount.GetSign()<=0) || Packet.Scaling.Num()>3)
         { Error=TEXT("Native packet kind, repeat count or scaling is invalid."); return false; }
         TSet<EOGNativeScaleStat> Stats;
         for (const auto& Scale:Packet.Scaling)

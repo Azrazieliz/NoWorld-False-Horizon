@@ -214,6 +214,7 @@ public:
 
     /** Production sessions require an actual executor; isolated timeline/replay adapters opt in explicitly. */
     void RequireNativeActionExecutors(bool Required) { bRequireNativeExecutors=Required; }
+    bool ConfigureNativeResource(const FOGEntityId& UnitId,const FOGCombatResourceSpecification& Specification,FString& Error);
     bool RegisterNativeAbility(const FOGNativeAbilityDefinition& Definition,FString& Error);
     bool HasNativeActionExecutor(const FOGCombatUnitState& Source,const FOGContentId& Skill,FString& Error) const;
     FName ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
@@ -281,6 +282,7 @@ private:
     bool bRequireNativeExecutors=false;
     int64 NativeAbilityRevision=0;
     TMap<FString,FOGNativeAbilityDefinition> NativeAbilities;
+    TMap<FString,FOGCombatResourceSpecification> NativeResourceSpecifications;
     TMap<FOGEntityId,int64> NativeOwnerActions;
     TMap<FString,int64> NativeAbilityReadyActions;
     const FOGNativeAbilityDefinition* FindNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;

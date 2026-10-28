@@ -28,6 +28,7 @@ struct OFFLINEGAME_API FOGNativeAbilityPacket
     GENERATED_BODY()
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeAbilityEffect Effect=EOGNativeAbilityEffect::Damage;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGNativeAbilityScale> Scaling;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGLargeNumber FlatAmount;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeDefenseReference DefenseReference=EOGNativeDefenseReference::Unspecified;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGBaseDamageType DamageType=EOGBaseDamageType::Physical;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 Repeats=1;
@@ -35,6 +36,14 @@ struct OFFLINEGAME_API FOGNativeAbilityPacket
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bCanBeBlocked=false;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bAllowHitOverflow=false;
     bool operator==(const FOGNativeAbilityPacket& V) const;
+};
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGNativeAbilityResourceAmount
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId ResourceId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 Amount=0;
+    bool operator==(const FOGNativeAbilityResourceAmount& V) const { return ResourceId==V.ResourceId && Amount==V.Amount; }
 };
 /** Shared skill mechanics. Empty scope accepts any real kit owning this skill ID.
  * Special mechanics retain their own native executors, including every Luminous form. */
@@ -49,8 +58,11 @@ struct OFFLINEGAME_API FOGNativeAbilityDefinition
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FString OriginalSourceReference;
     /** Existing global semantic motion key; independent of actor/wardrobe clip assets. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FName MotionSemantic;
-    /** Must be declared by the complete source definition; paid abilities need their resource executor. */
+    /** Explicit no-cost contract, or exact typed costs on this source unit's battle resources. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bNoResourceCost=false;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGNativeAbilityResourceAmount> ResourceCosts;
+    /** Applied once after successful resolution, clamped to the source's admitted resource capacity. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGNativeAbilityResourceAmount> ResourceChanges;
     /** Number of intervening own actions; no arbitrary timer or global team cooldown. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 CooldownOwnerActions=0;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeAbilityTargets Targets=EOGNativeAbilityTargets::SingleEnemy;

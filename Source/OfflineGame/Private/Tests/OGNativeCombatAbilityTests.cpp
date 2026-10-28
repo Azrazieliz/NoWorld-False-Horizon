@@ -181,4 +181,65 @@ bool FOGSharedNativeAbilityTest::RunTest(const FString&)
     TestTrue(TEXT("Shared executor changes actual battle HP"),Actual && FOGLargeNumber::Compare(Actual->CurrentHp,Enemy.CurrentHp)<0);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeResourceCostTest,
+    "OfflineGame.Combat.NativeAbilities.ResourceCostsAreAtomicAndPerUnit",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGNativeResourceCostTest::RunTest(const FString&)
+{
+    auto Source=NativeTestUnit(0,TEXT("test:resource.source"));
+    auto Enemy=NativeTestUnit(1,TEXT("test:resource.enemy"),10000);
+    Source.SkillSet.ActiveSkills={FOGContentId(TEXT("test:resource.skill"))};
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(NativeInitial(Source,{Enemy}),Error)) return false;
+    Battle.RequireNativeActionExecutors(true);
+    FOGCombatResourceSpecification Resource;
+    Resource.ResourceId=FOGContentId(TEXT("test:resource.meter")); Resource.DisplayName=FText::FromString(TEXT("Test meter"));
+    Resource.Maximum=10; Resource.OpeningValue=3;
+    if (!Battle.ConfigureNativeResource(Source.UnitEntityId,Resource,Error) ||
+        !Battle.ConfigureNativeResource(Enemy.UnitEntityId,Resource,Error)) return false;
+    auto Definition=NativeStrike(Source); Definition.bNoResourceCost=false;
+    FOGNativeAbilityResourceAmount Cost; Cost.ResourceId=Resource.ResourceId; Cost.Amount=2;
+    FOGNativeAbilityResourceAmount Gain=Cost; Gain.Amount=1;
+    Definition.ResourceCosts={Cost}; Definition.ResourceChanges={Gain};
+    if (!Battle.RegisterNativeAbility(Definition,Error)) return false;
+    auto Action=NativeAction(Source,Enemy.UnitEntityId);
+    TestTrue(TEXT("Paid skill executes"),Battle.ApplyResolvedAction(Action,Error));
+    const auto Read=[&](const FOGEntityId& Id)
+    { return Battle.GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Id;})->BattleResources[0].Value; };
+    TestEqual(TEXT("Exact cost then gain once per skill, not once per hit"),Read(Source.UnitEntityId),int64(2));
+    TestEqual(TEXT("Other unit's same named meter is independent"),Read(Enemy.UnitEntityId),int64(3));
+    TestTrue(TEXT("Second paid skill executes"),Battle.ApplyResolvedAction(Action,Error));
+    const auto Sequence=Battle.GetLog().GetNextSequence();
+    const auto Before=Battle.GetState().Units[1].CurrentHp;
+    TestFalse(TEXT("Unaffordable skill is rejected"),Battle.ApplyResolvedAction(Action,Error));
+    TestEqual(TEXT("Rejected cost consumes no timeline/log step"),Battle.GetLog().GetNextSequence(),Sequence);
+    TestTrue(TEXT("Rejected cost causes no damage"),Battle.GetState().Units[1].CurrentHp==Before);
+    TestEqual(TEXT("Rejected cost leaves the meter unchanged"),Read(Source.UnitEntityId),int64(1));
+    TestTrue(TEXT("Identical re-admission is idempotent"),Battle.ConfigureNativeResource(Source.UnitEntityId,Resource,Error));
+    TestEqual(TEXT("Re-admission cannot refill a spent meter"),Read(Source.UnitEntityId),int64(1));
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeResourceSaturationTest,
+    "OfflineGame.Combat.NativeAbilities.ResourceOnlySkillSaturatesWithoutOverflow",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGNativeResourceSaturationTest::RunTest(const FString&)
+{
+    auto Source=NativeTestUnit(0,TEXT("test:capacity.source"));
+    const auto Enemy=NativeTestUnit(1,TEXT("test:capacity.enemy"));
+    Source.SkillSet.ActiveSkills={FOGContentId(TEXT("test:capacity.skill"))};
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(NativeInitial(Source,{Enemy}),Error)) return false;
+    Battle.RequireNativeActionExecutors(true);
+    FOGCombatResourceSpecification Resource;
+    Resource.ResourceId=FOGContentId(TEXT("test:capacity.meter")); Resource.DisplayName=FText::FromString(TEXT("Capacity"));
+    Resource.Maximum=MAX_int64; Resource.OpeningValue=MAX_int64-1;
+    if (!Battle.ConfigureNativeResource(Source.UnitEntityId,Resource,Error)) return false;
+    auto Definition=NativeStrike(Source); Definition.Packets.Reset(); Definition.Targets=EOGNativeAbilityTargets::Self;
+    FOGNativeAbilityResourceAmount Gain; Gain.ResourceId=Resource.ResourceId; Gain.Amount=MAX_int64;
+    Definition.ResourceChanges={Gain};
+    if (!Battle.RegisterNativeAbility(Definition,Error)) return false;
+    TestTrue(TEXT("Resource-only skill resolves through the real executor"),Battle.ApplyResolvedAction(NativeAction(Source,Source.UnitEntityId),Error));
+    TestEqual(TEXT("Near-int64 resource gain saturates safely"),Battle.GetState().Units[0].BattleResources[0].Value,int64(MAX_int64));
+    return true;
+}
 #endif

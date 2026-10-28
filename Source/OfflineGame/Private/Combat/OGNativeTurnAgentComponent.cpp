@@ -1,3 +1,5 @@
+#include "Content/OGDefinitionLibrary.h"
+#include "Characters/OGCharacterGameplayDefinition.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 
 #include "Animation/OGSharedMotionControllerComponent.h"
@@ -31,8 +33,8 @@ bool ReadActualNpc(IOGWorldStore& Store, const UOGNativeTurnPolicy& Policy,
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Saved), State) || !State || State->HasField(TEXT("diagnosticFixture")))
     { Error = TEXT("Opponent state is missing, malformed or diagnostic-only."); return false; }
     FString Identity, Version, Life;
-    if (!State->TryGetStringField(Policy.CanonicalIdentityField.ToString(), Identity) || Identity != Policy.IdentityId.ToString() ||
-        !State->TryGetStringField(Policy.CanonicalVersionField.ToString(), Version) || Version != Policy.VersionId.ToString() ||
+    if (!State->TryGetStringField(Policy.CanonicalIdentityField.ToString(), Identity) || Identity != Unit.IdentityId.ToString() ||
+        !State->TryGetStringField(Policy.CanonicalVersionField.ToString(), Version) || Version != Unit.SkillSet.CurrentForm.ToString() ||
         !State->TryGetStringField(Policy.CanonicalLifeField.ToString(), Life) || Life != Policy.RequiredLifeValue)
     { Error = TEXT("Canonical opponent identity, kit or life state does not match the authored policy."); return false; }
     FOGCharacterManifestationRecord Copy;
@@ -84,7 +86,16 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
     UOGGameCoreSubsystem* Runtime = GetWorld() && GetWorld()->GetGameInstance()
         ? GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
     const FOGTurnBattle* Battle = Runtime ? Runtime->GetOwnedLuminousTurnBattle() : nullptr;
-    UOGNativeTurnPolicy* CandidatePolicy = Policy.LoadSynchronous();
+    UOGNativeTurnPolicy* CandidatePolicy=Policy.LoadSynchronous();
+    if (Policy.IsNull() && Battle)
+    {
+        const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==UnitId;});
+        auto* Library=UOGDefinitionLibrary::Get();
+        const auto* Kit=Library && Unit?Cast<UOGCharacterGameplayDefinition>(
+            Library->Resolve(TEXT("character"),Unit->SkillSet.CurrentForm)):nullptr;
+        if (Kit && Kit->IdentityId==Unit->IdentityId && Kit->TurnPolicy.Id.IsValid())
+            CandidatePolicy=Cast<UOGNativeTurnPolicy>(Library->Resolve(Kit->TurnPolicy.System,Kit->TurnPolicy.Id));
+    }
     TArray<UOGCanonicalCombatActorBindingComponent*> SourceBindings;
     if (GetOwner()) GetOwner()->GetComponents<UOGCanonicalCombatActorBindingComponent>(SourceBindings);
     UOGCanonicalCombatActorBindingComponent* CandidateBody = SourceBindings.Num() == 1 ? SourceBindings[0] : nullptr;
@@ -101,7 +112,7 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
         [&UnitId](const FOGCombatUnitState& U) { return U.UnitEntityId == UnitId; });
     const UOGGate12RulerSessionSubsystem* Session = GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
     if (!Session || !Session->IsBoundToStoredRuler() || Session->BoundRulerId != Runtime->GetOwnedBattleRulerId() ||
-        !Unit || !Unit->CanAct() || Unit->IdentityId != CandidatePolicy->IdentityId || Unit->SkillSet.CurrentForm != CandidatePolicy->VersionId ||
+        !Unit || !Unit->CanAct() || !CandidatePolicy->MatchesSource(Unit->IdentityId,Unit->SkillSet.CurrentForm) ||
         UnitId == Session->BoundRulerId || UnitId == Session->SelectedManifestationId)
     { Error = TEXT("Opponent policy cannot borrow a different source unit, kit or the local player."); return false; }
     for (const FOGNativeTurnRule& Rule : CandidatePolicy->Rules)
@@ -139,7 +150,7 @@ void UOGNativeTurnAgentComponent::RetryDecision()
     bAutoBindingEnabled = true;
     FailedSequence = ObservedSequence = -1; FailedAbilityRevision=-1;
     ReadyAtSeconds = -1.0;
-    LastAutoBattleId = LastAutoUnitId = FOGEntityId(); LastAutoAbilityRevision=-1;
+    LastAutoBattleId = LastAutoUnitId = FOGEntityId(); LastAutoAbilityRevision=-1; LastAutoDefinitionRevision=-1;
 }
 
 void UOGNativeTurnAgentComponent::ReleaseBattleUnit()
@@ -240,7 +251,7 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
 void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    if (!bAutoBindingEnabled || !Core.IsValid() || !Core->IsCoreReady() || Policy.IsNull() || bSubmitting) return;
+    if (!bAutoBindingEnabled || !Core.IsValid() || !Core->IsCoreReady() || bSubmitting) return;
     const UOGPresentationModeSubsystem* Mode = GetWorld()->GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>();
     if (Mode && Mode->GetMode() != EOGPresentationMode::World) { ReadyAtSeconds = -1.0; return; }
     const APawn* OwnerPawn = Cast<APawn>(GetOwner());
@@ -252,9 +263,11 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
         UOGCanonicalCombatActorBindingComponent* Existing = GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
         if (!Existing || Existing->GetBoundBattleId() != Battle->GetState().BattleId || !Existing->GetBoundUnitId().IsValid()) return;
         if (LastAutoBattleId == Existing->GetBoundBattleId() && LastAutoUnitId == Existing->GetBoundUnitId() &&
-            LastAutoAbilityRevision==Battle->GetNativeAbilityRevision()) return;
+            LastAutoAbilityRevision==Battle->GetNativeAbilityRevision() &&
+            LastAutoDefinitionRevision==(UOGDefinitionLibrary::Get()?UOGDefinitionLibrary::Get()->GetRevision():-1)) return;
         LastAutoBattleId = Existing->GetBoundBattleId(); LastAutoUnitId = Existing->GetBoundUnitId();
         LastAutoAbilityRevision=Battle->GetNativeAbilityRevision();
+        LastAutoDefinitionRevision=UOGDefinitionLibrary::Get()?UOGDefinitionLibrary::Get()->GetRevision():-1;
         FString Error;
         if (!ConfigureBattleUnit(LastAutoBattleId, LastAutoUnitId, Error)) { Status = Error; return; }
     }

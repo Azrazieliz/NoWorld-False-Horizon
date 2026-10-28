@@ -1,3 +1,5 @@
+#include "Combat/OGNativeTurnAgentComponent.h"
+#include "Combat/OGCombatResourceDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
 UOGCharacterGameplayDefinition::UOGCharacterGameplayDefinition() { System=TEXT("character"); }
@@ -13,6 +15,15 @@ bool UOGCharacterGameplayDefinition::ValidateDefinition_Implementation(FString& 
     for (const auto& Skill:All)
         if (!Skill.IsValid() || Skill.Value.StartsWith(TEXT("diagnostic:")))
         { Error=TEXT("Invalid skill in shared character definition."); return false; }
+    if (!TurnPolicy.Id.IsEmpty() && (TurnPolicy.System!=TEXT("agent") || !TurnPolicy.Id.IsValid() || TurnPolicy.MinimumVersion<1))
+    { Error=TEXT("Character turn policy requires a valid shared agent reference."); return false; }
+    TSet<FOGContentId> Resources;
+    for (const auto& Ref:BattleResources)
+    {
+        if (Ref.System!=TEXT("combat_resource") || !Ref.Id.IsValid() || Ref.MinimumVersion<1 || Resources.Contains(Ref.Id))
+        { Error=TEXT("Character resources must uniquely reference shared combat resource definitions."); return false; }
+        Resources.Add(Ref.Id);
+    }
     return true;
 }
 const UOGCharacterGameplayDefinition* UOGCharacterGameplayDefinition::Find(
@@ -36,7 +47,8 @@ bool UOGCharacterGameplayDefinition::MatchesKit(const FOGResolvedSkillSet& Kit) 
 
 void UOGCharacterGameplayDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const
 {
-    Super::CollectRequiredDefinitions(Out);
+    Super::CollectRequiredDefinitions(Out); Out.Append(BattleResources);
+    if (TurnPolicy.Id.IsValid()) Out.Add(TurnPolicy);
     // Existing specialized canonical kits keep their native executors.
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) return;
     TArray<FOGContentId> Commands=Skills.ActiveSkills;
@@ -45,6 +57,22 @@ void UOGCharacterGameplayDefinition::CollectRequiredDefinitions(TArray<FOGDefini
 }
 bool UOGCharacterGameplayDefinition::ValidateResolvedReferences(const FOGDefinitionResolver& Resolve,FString& Error) const
 {
+    if (TurnPolicy.Id.IsValid())
+    {
+        const auto* Policy=Cast<UOGNativeTurnPolicy>(Resolve(TurnPolicy.System,TurnPolicy.Id));
+        if (!Policy || !Policy->MatchesSource(IdentityId,DefinitionId))
+        { Error=TEXT("Character turn policy does not accept this source kit."); return false; }
+        for (const auto& Rule:Policy->Rules)
+            if (!Skills.ActiveSkills.Contains(Rule.SkillId) && Skills.UltimateSkill!=Rule.SkillId)
+            { Error=TEXT("Shared AI policy references an ability outside this character's actual kit."); return false; }
+    }
+    TSet<FOGContentId> ResourceIds;
+    for (const auto& Ref:BattleResources)
+    {
+        if (!Cast<UOGCombatResourceDefinition>(Resolve(Ref.System,Ref.Id)))
+        { Error=TEXT("Character resource must resolve to the native resource definition class."); return false; }
+        ResourceIds.Add(Ref.Id);
+    }
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) return true;
     TArray<FOGContentId> Commands=Skills.ActiveSkills;
     if (Skills.UltimateSkill.IsValid()) Commands.Add(Skills.UltimateSkill);
@@ -53,6 +81,9 @@ bool UOGCharacterGameplayDefinition::ValidateResolvedReferences(const FOGDefinit
         const auto* Ability=Cast<UOGNativeCombatAbility>(Resolve(TEXT("ability"),Skill));
         if (!Ability || !Ability->Definition.MatchesSource(IdentityId,DefinitionId))
         { Error=TEXT("A character command must resolve to a compatible installed shared skill."); return false; }
+        for (const auto* Rows:{&Ability->Definition.ResourceCosts,&Ability->Definition.ResourceChanges})
+            for (const auto& Row:*Rows) if (!ResourceIds.Contains(Row.ResourceId))
+            { Error=TEXT("A kit skill refers to a battle resource not declared by this character."); return false; }
     }
     return true;
 }
