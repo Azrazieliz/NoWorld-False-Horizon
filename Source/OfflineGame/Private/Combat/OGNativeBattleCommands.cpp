@@ -46,8 +46,8 @@ void FOGNativeBattleCommand::BuildAction(const FOGCombatUnitState& Source,
     Out.ActionDelay=FMath::Max<int64>(1,Source.DefaultActionDelay);
     Out.TargetUnitIds=bSelfTarget?TArray<FOGEntityId>{Source.UnitEntityId}:Selected;
     auto Context=MakeShared<FJsonObject>();
-    if (!Branch.IsNone()) Context->SetStringField(TEXT("branch"),Branch.ToString());
-    if (!Mode.IsNone()) Context->SetStringField(TEXT("mode"),Mode.ToString());
+    if (!Branch.IsNone()) Context->SetStringField(TEXT("branch"),Branch.ToString().ToLower());
+    if (!Mode.IsNone()) Context->SetStringField(TEXT("mode"),Mode.ToString().ToLower());
     Out.ResolutionJson.Reset();
     FJsonSerializer::Serialize(Context,TJsonWriterFactory<>::Create(&Out.ResolutionJson));
 }
@@ -55,8 +55,8 @@ FName FOGNativeBattleCommand::MotionSemantic() const
 {
     FString Key=bFantasm?TEXT("Combat.Fantasm."):ActiveSlot==INDEX_NONE?TEXT("Combat.Ultimate."):TEXT("Combat.Skill.");
     Key+=SkillId.ToString();
-    if (!Branch.IsNone()) Key+=TEXT(".")+Branch.ToString();
-    if (!Mode.IsNone()) Key+=TEXT(".")+Mode.ToString();
+    if (!Branch.IsNone()) Key+=TEXT(".")+Branch.ToString().ToLower();
+    if (!Mode.IsNone()) Key+=TEXT(".")+Mode.ToString().ToLower();
     return FName(*Key);
 }
 bool FOGNativeBattleCommands::BuildFor(const FOGCombatUnitState& Source,FOGNativeBattleCommandSet& Out,FString& Error)

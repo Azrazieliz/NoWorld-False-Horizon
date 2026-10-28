@@ -121,7 +121,7 @@ void UOGNativeBattleWidget::Refresh()
     Signature=Key;
     FOGNativeBattleCommandSet Set; FString Error;
     if (!Body->ReadOwnedLuminousBattleCommands(Set,Error))
-    { Heading->SetText(FText::FromString(TEXT("ENCOUNTER"))); Feedback->SetText(FText::FromString(Error)); Commands->ClearChildren(); return; }
+    { Heading->SetText(FText::FromString(TEXT("ENCOUNTER"))); Feedback->SetText(FText::FromString(Error)); Resources->SetText(FText::GetEmpty()); Targets->ClearChildren(); Commands->ClearChildren(); return; }
     const int32 Acting=Battle->SelectNextActingUnitIndex();
     const bool Own=State.Units.IsValidIndex(Acting) && State.Units[Acting].UnitEntityId==Source->UnitEntityId &&
         Source->CanAct() && Body->IsFoundationWorldInputAllowed();

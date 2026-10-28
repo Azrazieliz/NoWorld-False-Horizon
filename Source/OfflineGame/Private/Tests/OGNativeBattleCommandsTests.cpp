@@ -32,7 +32,9 @@ bool FOGNativeBattleCommandModesTest::RunTest(const FString& Parameters)
     const FOGEntityId Ally=FOGEntityId::NewId();
     const auto* Preparation=Set.Commands.FindByPredicate([](const FOGNativeBattleCommand& C){return C.Id==TEXT("revival_prepare");});
     if (!TestNotNull(TEXT("Day preparation is reachable"),Preparation)) return false;
-    FOGResolvedCombatAction Action; Preparation->BuildAction(Source,{Ally},Action);
+    FOGNativeBattleCommand CaseVariant=*Preparation;
+    CaseVariant.Branch=TEXT("DAY"); CaseVariant.Mode=TEXT("REVIVAL_PREPARE");
+    FOGResolvedCombatAction Action; CaseVariant.BuildAction(Source,{Ally},Action);
     TSharedPtr<FJsonObject> Context;
     if (!TestTrue(TEXT("Command generates valid JSON"),FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson),Context))) return false;
     TestEqual(TEXT("Prepared revival uses Day"),Context->GetStringField(TEXT("branch")),FString(TEXT("day")));
