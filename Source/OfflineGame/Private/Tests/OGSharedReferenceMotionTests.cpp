@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/Compression.h"
 #include "Misc/Crc.h"
+#include "Engine/SkeletalMesh.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedReferenceSamplingTest,
     "OfflineGame.Animation.SharedReference.IndependentRigSampling",
@@ -57,4 +58,42 @@ bool FOGSharedReferenceCodecTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Corrupt payload cannot drive any character"),FOGSharedReferenceLibrary::Decode(Data,Error).IsValid());
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedReferenceRigTest,
+    "OfflineGame.Animation.SharedReference.CompleteUnambiguousRigAdapter",
+    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGSharedReferenceRigTest::RunTest(const FString& Parameters)
+{
+    USkeletalMesh* Mesh=NewObject<USkeletalMesh>();
+    FOGReferenceRigAdapter Rig; Rig.Mesh=Mesh;
+    Rig.Bones.Add(TEXT("source_joint"),0); Rig.Bones.Add(TEXT("native_joint"),1);
+    Rig.ReferencePose={FTransform::Identity,
+        FTransform(FRotator(0,30,0).Quaternion(),FVector(0,10,0),FVector(2))};
+    FOGReferenceMotionClip Clip; Clip.Rate=30; Clip.Duration=0; Clip.Frames=1;
+    FOGReferenceMotionTrack Track; Track.Bone=TEXT("source_joint");
+    Track.Aliases.Add(TEXT("native_joint"));
+    Track.Rotations.Add(FRotator(0,60,0).Quaternion()); Clip.Tracks.Add(Track);
+    TArray<int32> Mapping; FString Error; TMap<FName,FName> Aliases;
+    TestFalse(TEXT("Two matching real bones never select by alias array order"),
+        Rig.Map(Clip,Aliases,Mapping,Error));
+    Aliases.Add(TEXT("source_joint"),TEXT("native_joint"));
+    if (!TestTrue(TEXT("One rig-level alias resolves the original source"),
+        Rig.Map(Clip,Aliases,Mapping,Error))) return false;
+    TArray<FTransform> Pose;
+    if (!TestTrue(TEXT("Shared source evaluates on connected native rig"),
+        Rig.Evaluate(Clip,Mapping,0,Pose))) return false;
+    TestTrue(TEXT("Native reference orientation composes with original delta"),
+        Pose[1].GetRotation().Equals(FRotator(0,90,0).Quaternion(),.0001));
+    TestTrue(TEXT("Missing translation preserves actual native morphology"),
+        Pose[1].GetTranslation().Equals(FVector(0,10,0)));
+    TestTrue(TEXT("Missing scale preserves actual native reference scale"),
+        Pose[1].GetScale3D().Equals(FVector(2)));
+    TestTrue(TEXT("Unanimated native bone retains its reference pose"),
+        Pose[0].Equals(Rig.ReferencePose[0]));
+    Clip.Tracks[0].Bone=TEXT("missing_source");
+    Clip.Tracks[0].Aliases.Reset();
+    TestFalse(TEXT("Difficult missing tracks are reported, never silently dropped"),
+        Rig.Map(Clip,Aliases,Mapping,Error));
+    return true;
+}
+
 #endif

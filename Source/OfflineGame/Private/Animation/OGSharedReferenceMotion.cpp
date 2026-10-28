@@ -261,12 +261,24 @@ bool FOGReferenceRigAdapter::Map(const FOGReferenceMotionClip& Clip, const TMap<
     for (const auto& Track : Clip.Tracks)
     {
         const FName* Explicit = Aliases.Find(Track.Bone);
-        const int32* Bone = Bones.Find(Explicit ? *Explicit : Track.Bone);
-        if (!Bone && !Explicit) for (FName Alias : Track.Aliases)
-            if ((Bone = Bones.Find(Alias))) break;
-        if (!Bone || Used.Contains(*Bone))
+        int32 Selected = INDEX_NONE;
+        if (Explicit)
+        {
+            if (const int32* Bone = Bones.Find(*Explicit)) Selected = *Bone;
+        }
+        else
+        {
+            TSet<int32> Matches;
+            if (const int32* Bone = Bones.Find(Track.Bone)) Matches.Add(*Bone);
+            for (FName Alias : Track.Aliases)
+                if (const int32* Bone = Bones.Find(Alias)) Matches.Add(*Bone);
+            // Two real bones matching different names require one explicit rig
+            // adapter choice; array ordering must never decide the skeleton.
+            if (Matches.Num()==1) for (int32 Bone : Matches) Selected = Bone;
+        }
+        if (Selected==INDEX_NONE || Used.Contains(Selected))
         { Out.Reset(); return Fail(Error,TEXT("Rig needs a complete, unambiguous source-bone adapter.")); }
-        Used.Add(*Bone); Out.Add(*Bone);
+        Used.Add(Selected); Out.Add(Selected);
     }
     return true;
 }
