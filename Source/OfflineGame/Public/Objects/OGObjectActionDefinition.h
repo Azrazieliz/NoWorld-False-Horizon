@@ -37,6 +37,7 @@ struct OFFLINEGAME_API FOGObjectActionResourceChange
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId ResourceId;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGObjectActionParty Account=EOGObjectActionParty::Ruler;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 Amount=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FText DisplayName;
 };
 UCLASS(BlueprintType)
 class OFFLINEGAME_API UOGObjectDefinition : public UOGReusableDefinition
@@ -102,6 +103,7 @@ struct OFFLINEGAME_API FOGObjectActionWalletPreview
     GENERATED_BODY()
     UPROPERTY(BlueprintReadOnly) FOGEntityId OwnerId;
     UPROPERTY(BlueprintReadOnly) FOGContentId ResourceId;
+    UPROPERTY(BlueprintReadOnly) FText DisplayName;
     UPROPERTY(BlueprintReadOnly) int64 Before=0;
     UPROPERTY(BlueprintReadOnly) int64 After=0;
 };
@@ -117,6 +119,9 @@ struct OFFLINEGAME_API FOGObjectActionPreview
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionOutput> Outputs;
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionWalletPreview> Wallets;
     UPROPERTY(BlueprintReadOnly) bool bRepairsSubject=false;
+    UPROPERTY(BlueprintReadOnly) int32 RepairBeforeConditionBps=0;
+    UPROPERTY(BlueprintReadOnly) int32 RepairAfterConditionBps=0;
+    UPROPERTY(BlueprintReadOnly) bool bSubjectWasBroken=false;
     UPROPERTY(BlueprintReadOnly) FOGItemInstanceRecord SubjectBefore;
     UPROPERTY(BlueprintReadOnly) FString SubjectDurabilityAfter;
     UPROPERTY(BlueprintReadOnly) bool bCanApply=false;

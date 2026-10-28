@@ -178,7 +178,7 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
             const auto Effective=GetNativeEffectiveStats(Source.UnitEntityId);
             const auto Reference=Packet.DefenseReference==EOGNativeDefenseReference::Attack?Effective.Attack:
                 Packet.DefenseReference==EOGNativeDefenseReference::MaxHp?Effective.MaxHp:Effective.Defense;
-            if (Reference.GetSign()<=0) { Error=TEXT("Authored physical damage reference must be positive."); return false; }
+            if (Reference.GetSign()<0) { Error=TEXT("Authored physical damage reference cannot be negative."); return false; }
         }
     return true;
 }

@@ -60,7 +60,7 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
     for (const auto& R:Resources)
     {
         const FString Key=FString::FromInt(static_cast<int32>(R.Account))+TEXT("|")+R.ResourceId.ToString();
-        if (!R.ResourceId.IsValid() || R.Amount==0 || R.Amount==MIN_int64 || Accounts.Contains(Key) ||
+        if (!R.ResourceId.IsValid() || R.DisplayName.IsEmpty() || R.Amount==0 || R.Amount==MIN_int64 || Accounts.Contains(Key) ||
             static_cast<uint8>(R.Account)>static_cast<uint8>(EOGObjectActionParty::Counterparty))
         { Error=TEXT("Resource rows require distinct accounts, real IDs and safe explicit nonzero amounts."); return false; }
         Accounts.Add(Key); Cost|=R.Amount<0;
@@ -92,7 +92,7 @@ FString UOGObjectActionDefinition::Fingerprint() const
     Part(S,TEXT("outputs"));
     for (const auto& O:Outputs) for (const auto& V:{O.ObjectId.ToString(),FString::FromInt(O.InstanceCount),FString::FromInt(static_cast<int32>(O.To))}) Part(S,V);
     Part(S,TEXT("resources"));
-    for (const auto& R:Resources) for (const auto& V:{R.ResourceId.ToString(),FString::FromInt(static_cast<int32>(R.Account)),LexToString(R.Amount)}) Part(S,V);
+    for (const auto& R:Resources) for (const auto& V:{R.ResourceId.ToString(),FString::FromInt(static_cast<int32>(R.Account)),LexToString(R.Amount),R.DisplayName.ToString()}) Part(S,V);
     return FMD5::HashAnsiString(*S);
 }
 void UOGObjectActionDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const

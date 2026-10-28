@@ -408,20 +408,23 @@ void UOGGate12NativeRulerWidget::BuildObjectActions(UVerticalBox* Parent,UOGGate
             for (const auto& Input:Fresh.Inputs)
             {
                 const FString Verb=Input.Disposition==EOGObjectInputDisposition::Consume?TEXT("Use: "):
-                    Input.Disposition==EOGObjectInputDisposition::Transfer?TEXT("Transfer: "):TEXT("Required tool: ");
+                    Input.Disposition==EOGObjectInputDisposition::Transfer?(Input.NewOwnerId==Fresh.Context.RulerId?TEXT("Receive: "):TEXT("Give: ")):TEXT("Required tool: ");
                 AddMessage(Parent,Verb+Input.DisplayName.ToString(),16,InventoryText);
             }
             for (const auto& Wallet:Fresh.Wallets)
-                AddMessage(Parent,Wallet.ResourceId.ToString()+TEXT(": ")+LexToString(Wallet.Before)+TEXT(" → ")+LexToString(Wallet.After),
+                AddMessage(Parent,(Wallet.OwnerId==Fresh.Context.RulerId?TEXT("You / "):TEXT("Counterparty / "))+Wallet.DisplayName.ToString()+TEXT(": ")+LexToString(Wallet.Before)+TEXT(" → ")+LexToString(Wallet.After),
                     16,Wallet.After<Wallet.Before?InventoryWarning:InventorySuccess);
             auto* Library=UOGDefinitionLibrary::Get();
             for (const auto& Output:Fresh.Outputs)
             {
                 const auto* Definition=Library?Cast<UOGObjectDefinition>(Library->Resolve(TEXT("object"),Output.ObjectId)):nullptr;
-                AddMessage(Parent,TEXT("Receive: ")+(Definition?Definition->DisplayName.ToString():Output.ObjectId.ToString())+
+                AddMessage(Parent,(Output.To==EOGObjectActionParty::Ruler?TEXT("Receive: "):TEXT("Give: "))+(Definition?Definition->DisplayName.ToString():TEXT("Item"))+
                     FString::Printf(TEXT(" x%d"),Output.InstanceCount),17,InventorySuccess);
             }
-            if (Fresh.bRepairsSubject) AddMessage(Parent,TEXT("Repair the selected item and preserve its upgrades."),17,InventoryText);
+            if (Fresh.bRepairsSubject)
+                AddMessage(Parent,FString::Printf(TEXT("Condition %s%.2f%% → %.2f%%"),
+                    Fresh.bSubjectWasBroken?TEXT("Broken / "):TEXT(""),
+                    Fresh.RepairBeforeConditionBps/100.0,Fresh.RepairAfterConditionBps/100.0),17,InventoryText);
             AddAction(Parent,TEXT("CONFIRM"),TEXT("inventory/object/confirm"));
             AddAction(Parent,TEXT("CANCEL"),TEXT("inventory/cancel")); return;
         }

@@ -130,6 +130,7 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             if (!Broken && Before>=D.RepairToConditionBps) Out.MissingRequirements.Add(TEXT("This repair would not improve the selected item."));
             Condition->SetNumberField(TEXT("condition_bps"),D.RepairToConditionBps); Condition->SetBoolField(TEXT("broken"),false);
             Out.bRepairsSubject=true; Out.SubjectBefore=*Item; Out.SubjectDurabilityAfter=Write(Condition.ToSharedRef());
+            Out.RepairBeforeConditionBps=static_cast<int32>(Before); Out.RepairAfterConditionBps=D.RepairToConditionBps; Out.bSubjectWasBroken=Broken;
             ItemQuote(Quote,*Item); Used.Add(Item->ItemId);
         }
     }
@@ -168,14 +169,14 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
         Out.MissingRequirements.Add(TEXT("Select the owned consumable instance used by this action."));
     for (const auto& Change:D.Resources)
     {
-        FOGObjectActionWalletPreview Wallet; Wallet.OwnerId=Party(C,Change.Account); Wallet.ResourceId=Change.ResourceId;
+        FOGObjectActionWalletPreview Wallet; Wallet.OwnerId=Party(C,Change.Account); Wallet.ResourceId=Change.ResourceId; Wallet.DisplayName=Change.DisplayName;
         bool Found=false; if (!Store.TryReadResourceBalance(Wallet.OwnerId,Change.ResourceId,Found,Wallet.Before,Error)) return false;
         if (!Found) Wallet.Before=0;
         if (Wallet.Before<0) { Error=TEXT("Stored resource balance is invalid."); return false; }
         if (Change.Amount<0 && Wallet.Before < -Change.Amount)
-        { Out.MissingRequirements.Add(TEXT("Insufficient ")+Change.ResourceId.ToString()+TEXT(" for ")+Wallet.OwnerId.ToString()); Wallet.After=Wallet.Before; }
+        { Out.MissingRequirements.Add(TEXT("Insufficient ")+Change.DisplayName.ToString()+(Change.Account==EOGObjectActionParty::Ruler?TEXT("."):TEXT(" in the counterparty stock."))); Wallet.After=Wallet.Before; }
         else if (Change.Amount>0 && Change.Amount>MAX_int64-Wallet.Before)
-        { Out.MissingRequirements.Add(TEXT("Resource capacity would overflow: ")+Change.ResourceId.ToString()); Wallet.After=Wallet.Before; }
+        { Out.MissingRequirements.Add(Change.DisplayName.ToString()+TEXT(" would exceed its balance limit.")); Wallet.After=Wallet.Before; }
         else Wallet.After=Wallet.Before+Change.Amount;
         Part(Quote,Wallet.OwnerId.ToString()); Part(Quote,Wallet.ResourceId.ToString()); Part(Quote,LexToString(Wallet.Before));
         Out.Wallets.Add(Wallet);
