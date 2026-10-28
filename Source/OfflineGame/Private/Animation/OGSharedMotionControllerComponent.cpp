@@ -510,6 +510,7 @@ bool UOGSharedMotionControllerComponent::PlayAction(
 
 void UOGSharedMotionControllerComponent::StopAction()
 {
+    ++PlaybackGeneration;
     RestoreReferencePose();
     SetComponentTickEnabled(!MorphOverlays.IsEmpty());
     for (USkeletalMeshComponent* Part : PlayingParts)
@@ -553,6 +554,7 @@ void UOGSharedMotionControllerComponent::TickComponent(
         ApplyMorphOverlays();
         return;
     }
+    const uint64 Generation = PlaybackGeneration;
     const float Before = ElapsedSeconds * PlaybackRate;
     ElapsedSeconds = bSceneTimeLocked && GetWorld()
         ? SceneAnchorElapsed + FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime) * ExternalPacing
@@ -587,6 +589,9 @@ void UOGSharedMotionControllerComponent::TickComponent(
         {
             LastContactCycle = ContactCycle;
             OnAuthoredContact.Broadcast(CurrentAction, CurrentMotionId);
+            // A contact receiver may finish or replace this action synchronously.
+            // Never stop the new action using the old action's elapsed time.
+            if (Generation != PlaybackGeneration) return;
         }
     }
     if (!bLooping && SourceTime >= SequenceSeconds)

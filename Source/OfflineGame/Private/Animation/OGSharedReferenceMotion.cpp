@@ -221,7 +221,8 @@ FTransform FOGReferenceMotionClip::Sample(int32 Index, double Seconds) const
     if (!Tracks.IsValidIndex(Index) || !FMath::IsFinite(Seconds) || Frames < 1) return FTransform::Identity;
     const auto& Track = Tracks[Index];
     const double Time = FMath::Clamp(Seconds, 0., static_cast<double>(Duration));
-    const int32 A = FMath::Clamp(FMath::FloorToInt(Time * Rate), 0, Frames-1);
+    const double Frame = FMath::Clamp(Time * static_cast<double>(Rate), 0., static_cast<double>(Frames-1));
+    const int32 A = FMath::FloorToInt(Frame);
     const int32 B = FMath::Min(A+1, Frames-1);
     const double Start = A / static_cast<double>(Rate);
     const double End = B == Frames-1 ? static_cast<double>(Duration) : B / static_cast<double>(Rate);

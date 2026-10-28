@@ -176,6 +176,7 @@ private:
     float SequenceSeconds = 0.f;
     float PlaybackRate = 1.f;
     int32 LastContactCycle = -1;
+    uint64 PlaybackGeneration = 0;
     bool bApplyingRootMotion = false;
     bool bSceneTimeLocked = false;
     float SceneWorldStartTime = 0.f;
