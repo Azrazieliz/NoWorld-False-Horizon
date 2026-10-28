@@ -2,6 +2,8 @@
 #include "World/OGStartingRegionPresentation.h"
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "EngineUtils.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Blueprint/WidgetTree.h"
@@ -130,13 +132,27 @@ void UOGNativeBattleWidget::Refresh()
         TEXT("Choose a primary target. Area effects include every eligible field participant."):LastActionMessage));
     const float TargetOffset=Targets->GetScrollOffset(),ActionOffset=ActionScroll->GetScrollOffset();
     Targets->ClearChildren(); Commands->ClearChildren();
+    // One actor pass per refresh; expose only existing native battle bodies.
+    TMap<FOGEntityId,AActor*> Bodies; TSet<FOGEntityId> AmbiguousBodies;
+    for (TActorIterator<AActor> It(GetWorld());It;++It)
+    {
+        AActor* Actor=*It; if (!IsValid(Actor)) continue;
+        const auto* Binding=Actor->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+        if (!Binding || Binding->GetBoundBattleId()!=State.BattleId || !Binding->GetBoundUnitId().IsValid()) continue;
+        const auto Id=Binding->GetBoundUnitId();
+        if (Bodies.Contains(Id)) AmbiguousBodies.Add(Id);
+        else Bodies.Add(Id,Actor);
+    }
+    if (!Bodies.Contains(Source->UnitEntityId)) Bodies.Add(Source->UnitEntityId,Body);
     for (int32 I=0;I<State.Units.Num();++I)
     {
         const auto& Unit=State.Units[I]; if (Unit.Presence!=EOGCombatPresence::Active) continue;
         const bool Selected=Body->IsOwnedBattleTargetSelected(Unit.UnitEntityId);
         const FString Side=Unit.UnitEntityId==Source->UnitEntityId?TEXT("SELF"):Unit.TeamIndex==Source->TeamIndex?TEXT("ALLY"):TEXT("OPPONENT");
-        AddButton(Targets,FString::Printf(TEXT("%s %d%s"),*Side,I+1,Selected?TEXT(" / SELECTED"):TEXT("")),
-            TEXT("Select this actual battle participant."),NAME_None,I,Own && Unit.CanAct(),Selected,176);
+        const bool Embodied=Bodies.Contains(Unit.UnitEntityId) && !AmbiguousBodies.Contains(Unit.UnitEntityId);
+        const FString Suffix=!Embodied?TEXT(" / CHARACTER UNAVAILABLE"):Selected?TEXT(" / SELECTED"):TEXT("");
+        AddButton(Targets,FString::Printf(TEXT("%s %d%s"),*Side,I+1,*Suffix),
+            TEXT("Select this actual battle participant."),NAME_None,I,Own && Unit.CanAct() && Embodied,Selected,176);
     }
     const bool Portrait=ViewWidth<ViewHeight;
     const float Available=FMath::Max(200.f,ViewWidth*.96f-32.f);
