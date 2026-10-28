@@ -83,6 +83,51 @@ class SharedReferenceLibraryTests(unittest.TestCase):
         self.assertEqual({p.name: p.read_bytes() for p in self.sources.iterdir()}, before)
         self.assertEqual(builder.validate_library(self.output), manifest)
 
+    def test_early_packet_without_rig_family_uses_exact_catalog_rig(self):
+        document = copy.deepcopy(self.document)
+        del document["rig_family"]
+        self.put_source("source", document)
+        manifest = self.build()
+        self.assertEqual(manifest["clips"][0]["rig_profiles"], ["fixture_catalog_rig"])
+        motion = builder.decode_packet(self.packet())
+        self.assertEqual(motion["provenance"]["original_rig_families"], [])
+
+    def test_zero_duration_static_source_and_native_packet_budget(self):
+        document = copy.deepcopy(self.document)
+        document.update(frame_count=1, original_duration_s=0)
+        document["bones"][0]["deltas"] = [[0, 0, 0, 1]]
+        self.put_source("source", document)
+        manifest = self.build()
+        self.assertEqual(manifest["clips"][0]["duration"], 0)
+        self.assertEqual(builder.decode_packet(self.packet())["frames"], 1)
+        self.assertEqual(builder.MAX_PLAIN_BYTES, 64 * 1024 * 1024)
+        packet = builder.HEADER.pack(builder.MAGIC, 64 * 1024 * 1024 + 1, 0) + zlib.compress(b"x")
+        with self.assertRaises(builder.LibraryError):
+            builder.decode_packet(packet)
+
+    def test_missing_rig_declaration_is_not_guessed_for_direct_only_clip(self):
+        document = copy.deepcopy(self.document)
+        del document["rig_family"]
+        self.put_source("source", document)
+        self.put_catalog([])
+        manifest = self.build()
+        self.assertEqual(manifest["clips"][0]["rig_profiles"], [])
+        self.assertEqual(manifest["routes"], [])
+
+    def test_classification_and_notify_are_data_and_optional_fields_validate(self):
+        row = fixture_row(self.document)
+        row.update(contact_notify="ActualSourceNotify", mature_content=False, adult_restricted=True)
+        self.put_catalog([row])
+        manifest = self.build()
+        route = manifest["routes"][0]
+        self.assertEqual(route["contact_notify"], "ActualSourceNotify")
+        self.assertFalse(route["mature_content"])
+        self.assertTrue(route["adult_restricted"])
+        self.assertEqual(builder.validate_library(self.output), manifest)
+        del row["mature_content"]
+        self.put_catalog([row])
+        self.assertTrue(self.build()["routes"][0]["mature_content"])
+
     def test_packet_byte_contract_and_crc(self):
         self.build()
         packet = self.packet()

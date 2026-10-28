@@ -26,7 +26,7 @@ LIBRARY_SCHEMA = "noworld.shared_reference_library.v1"
 CATALOG_SCHEMA = "noworld.shared_motion_catalog.v1"
 MAGIC = b"NWMRJ001"
 HEADER = struct.Struct("<8sII")
-MAX_PLAIN_BYTES = 256 * 1024 * 1024
+MAX_PLAIN_BYTES = 64 * 1024 * 1024
 DEFAULT_SOURCE = Path("SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks")
 DEFAULT_CATALOG = Path("Content/NoWorld/Animation/SharedMotionCatalog.json")
 DEFAULT_OUTPUT = Path("Content/NoWorld/Animation/SharedSource")
@@ -109,6 +109,7 @@ def samples(value, count, width, label):
         require(isinstance(sample, list) and len(sample) == width, label + " width mismatch.")
         for component in sample:
             finite_number(component, label)
+            require(abs(component) <= 3.4028234663852886e38, "Sample exceeds native float range.")
         if width == 4:
             norm = sum(component * component for component in sample)
             require(abs(norm - 1.0) <= 0.01, "Invalid source quaternion; normalization is not synthesized.")
@@ -119,12 +120,13 @@ def validate_motion(motion):
     require(isinstance(motion, dict) and motion.get("schema") == PACKET_SCHEMA, "Unsupported packet schema.")
     require(isinstance(motion.get("id"), str) and ID_RE.fullmatch(motion["id"]), "Invalid packet ID.")
     rate = finite_number(motion.get("rate"), "rate", True)
-    duration = finite_number(motion.get("duration"), "duration", True)
+    duration = finite_number(motion.get("duration"), "duration")
+    require(duration >= 0, "duration must be nonnegative.")
     frames = motion.get("frames")
-    require(type(frames) is int and frames >= 1, "frames must be a positive integer.")
+    require(type(frames) is int and 1 <= frames <= 1000000, "frames must fit the native decoded clip limit.")
     require(abs((frames - 1) / rate - duration) <= 1.0 / rate + 1e-6, "Source rate/duration/frame extent mismatch.")
     tracks = motion.get("tracks")
-    require(isinstance(tracks, list) and tracks, "Packet has no source tracks.")
+    require(isinstance(tracks, list) and 1 <= len(tracks) <= 8192, "Packet source track count exceeds native limits.")
     names = set()
     channel_counts = {"translation": 0, "scale": 0}
     for track in tracks:
@@ -160,7 +162,7 @@ def make_motion(document, input_sha):
     clip_id = source_identity(document.get("source_sha256"), document.get("source_path_id"))
     require(sha(document.get("source_clip_sha256")) and sha(input_sha), "Missing declared source provenance.")
     family = document.get("rig_family")
-    require(isinstance(family, str) and family.strip(), "Missing original rig family.")
+    require(family is None or (isinstance(family, str) and bool(family.strip())), "Invalid declared original rig family.")
     frames = document.get("frame_count")
     require(type(frames) is int and frames >= 1, "Invalid calibrated frame count.")
     bones = document.get("bones")
@@ -192,7 +194,7 @@ def make_motion(document, input_sha):
                              "source_path_id": str(document["source_path_id"]),
                              "source_clip_sha256": [document["source_clip_sha256"].lower()],
                              "calibrated_input_sha256": [input_sha.lower()],
-                             "original_rig_families": [family],
+                             "original_rig_families": [family] if family else [],
                              "source_schema": SOURCE_SCHEMA,
                              "source_events_available": False}}
     return validate_motion(motion)
@@ -286,6 +288,15 @@ def route_from_row(row, clip_id):
             "rig": rig, "anatomy": anatomy, "capabilities": sorted(set(caps)),
             "priority": priority, "loop": looping, "play_rate": play_rate,
             "approved_legacy": approved, "legacy_source_id": legacy}
+    if "contact_notify" in row:
+        require(isinstance(row["contact_notify"], str), "Contact-notify metadata must be a string.")
+        result["contact_notify"] = row["contact_notify"]
+    for field in ("mature_content", "adult_restricted"):
+        if field in row:
+            require(type(row[field]) is bool, "Source content classification must be boolean.")
+            result[field] = row[field]
+    if "adult_restricted" in row and "mature_content" not in row:
+        result["mature_content"] = row["adult_restricted"]  # Original catalog's classification fallback.
     if "root_motion" in row:
         require(type(row["root_motion"]) is bool, "Root-motion metadata must be boolean.")
         result["root_motion"] = row["root_motion"]
@@ -338,8 +349,8 @@ def validate_library(output_root):
                 source_identity(entry.get("source_hash"), entry["source_path_id"], True) == entry["id"],
                 "Manifest provenance mismatch or nonstring int64 path ID.")
         profiles = entry.get("rig_profiles")
-        require(isinstance(profiles, list) and profiles and all(isinstance(p, str) and p for p in profiles),
-                "Missing declared rig profiles.")
+        require(isinstance(profiles, list) and all(isinstance(p, str) and p for p in profiles),
+                "Invalid declared rig profiles.")
     actual = set((root / "Clips").rglob("*.nwmotion"))
     require(actual == paths, "Unlisted or missing generated packet.")
     for route in manifest["routes"]:
@@ -352,7 +363,7 @@ def validate_library(output_root):
             "priority": route.get("priority"), "loop": route.get("loop"),
             "play_rate": route.get("play_rate"), "approved_for_gameplay": route.get("approved_legacy"),
             "source_clip_id": route.get("legacy_source_id"),
-            **{k: route[k] for k in ("root_motion", "contact_seconds", "morph_tracks") if k in route}},
+            **{k: route[k] for k in ("root_motion", "contact_seconds", "morph_tracks", "contact_notify", "mature_content", "adult_restricted") if k in route}},
             route["clip"])
         require(expected == route, "Invalid route fields.")
     return manifest
