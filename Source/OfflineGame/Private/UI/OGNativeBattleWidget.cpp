@@ -164,6 +164,9 @@ void UOGNativeBattleWidget::Refresh()
     {
         FOGResolvedCombatAction Proposal,Expanded; Command.BuildAction(*Source,Selected,Proposal);
         FString Reason; bool Enabled=Own && Battle->ValidateResolvedAction(Proposal,Expanded,Reason);
+        if (Enabled) for (const auto& Id:Expanded.TargetUnitIds)
+            if (!Bodies.Contains(Id) || AmbiguousBodies.Contains(Id))
+            { Enabled=false; Reason=TEXT("Waiting for the battlefield characters."); break; }
         if (!Own) Reason=TEXT("Available on this character's next turn.");
         if (Own && !Enabled && Expanded.TargetUnitIds.IsEmpty()) Reason=TEXT("Select a primary target.");
         const FString Label=Command.Label+(Own && !Enabled?TEXT("\n")+Reason:FString());

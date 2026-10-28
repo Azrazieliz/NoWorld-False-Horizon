@@ -91,6 +91,8 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
             [&Id](const FOGCombatUnitState& U) { return U.UnitEntityId==Id; });
         if (!Target || !Target->CanAct())
         { Error=TEXT("Select a living participant currently on the battlefield."); return false; }
+        if (Id!=SourceId && !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Id))
+        { Error=TEXT("A required battle character is unavailable in the World."); return false; }
     }
     // Include self-costs, self-restoration, ongoing effects and unselected AoE
     // participants in feedback; direct selected targets are not the full result.
