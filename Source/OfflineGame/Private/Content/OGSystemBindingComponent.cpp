@@ -1,5 +1,5 @@
-#include "Runtime/OGAdaptiveScoreComponent.h"
 #include "Content/OGSystemBindingComponent.h"
+#include "Runtime/OGAdaptiveScoreComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/StaticMesh.h"

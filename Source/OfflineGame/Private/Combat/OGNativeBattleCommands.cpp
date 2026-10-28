@@ -1,6 +1,6 @@
+#include "Combat/OGNativeBattleCommands.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
-#include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGApprovedLuminousSourceKit.h"
 #include "Combat/OGLuminousAlterV1Projection.h"
 #include "Dom/JsonObject.h"

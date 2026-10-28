@@ -1,5 +1,5 @@
-#include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
+#include "Content/OGDefinitionLibrary.h"
 
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Animation/Skeleton.h"

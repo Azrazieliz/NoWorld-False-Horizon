@@ -1,5 +1,5 @@
-#include "Combat/OGNativeTurnAgentComponent.h"
 #include "Content/OGDefinitionLibrary.h"
+#include "Combat/OGNativeTurnAgentComponent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Characters/OGCharacterAppearanceDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"

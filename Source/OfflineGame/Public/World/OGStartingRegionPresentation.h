@@ -1059,6 +1059,9 @@ public:
     const TArray<FOGGachaPullResult>& GetLastGachaResults() const { return LastGachaResults; }
     bool ExecuteActiveGachaDraw(int32 Count, FString& OutError);
     bool LoadInstalledGachaBannerForRuler(FString& OutError);
+    bool ListInstalledGachaBanners(TArray<FOGGachaBannerDefinition>& Out,FString& Error) const;
+    bool SelectInstalledGachaBanner(const FOGContentId& BannerId,FString& Error);
+    bool StepInstalledGachaBanner(int32 Direction,FString& Error);
 
 #if WITH_DEV_AUTOMATION_TESTS
     /** Test-only HUD geometry seam, deliberately unavailable to shipping. */
@@ -1193,4 +1196,6 @@ private:
     TArray<FOGGachaPullResult> LastGachaResults;
     int64 GachaCommandWorldTick = 0;
     int64 GachaCommandSeed = 0;
+    FOGEntityId GachaSeedOwner;
+    TMap<FOGContentId,int64> GachaSeedsByBanner;
 };

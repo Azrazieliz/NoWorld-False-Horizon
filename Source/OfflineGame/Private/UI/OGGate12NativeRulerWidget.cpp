@@ -1,4 +1,5 @@
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "Gacha/OGSharedGachaBannerDefinition.h"
 #include "Narrative/OGNarrativeSessionSubsystem.h"
 
 #include "Blueprint/WidgetTree.h"
@@ -1379,15 +1380,17 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         TextAt(TEXT("NO ACTIVE BANNER"),
             TEXT("AuthoritativeNoActiveBanner"),155.f,830.f,555.f,96.f,48,Main);
     else
-        TextAt(Hud->GetActiveGachaBanner().BannerId.ToString(),
+        TextAt(FOGInstalledGachaBannerLibrary::DisplayName(Hud->GetActiveGachaBanner().BannerId),
             TEXT("AuthoritativeInstalledBannerId"),108.f,812.f,640.f,118.f,35,Main);
 
-    ActionAt(bCanSummon ? TEXT("ACTIVE") : TEXT("NO BANNER"),TEXT("gacha/banner/0"),
-             68.f,1038.f,242.f,80.f,false,21);
-    ActionAt(TEXT("UNAVAILABLE"),TEXT("gacha/banner/1"),
-             332.f,1038.f,242.f,80.f,false,19);
-    ActionAt(TEXT("UNAVAILABLE"),TEXT("gacha/banner/2"),
-             595.f,1038.f,243.f,80.f,false,19);
+    TArray<FOGGachaBannerDefinition> InstalledBanners; FString BannerError;
+    if (Hud) Hud->ListInstalledGachaBanners(InstalledBanners,BannerError);
+    ActionAt(TEXT("PREVIOUS"),TEXT("gacha-banner-previous"),68.f,1038.f,242.f,80.f,InstalledBanners.Num()>1,21);
+    const int32 BannerIndex=Hud?InstalledBanners.IndexOfByPredicate([&](const auto& B)
+        {return B.BannerId==Hud->GetActiveGachaBanner().BannerId;}):INDEX_NONE;
+    TextAt(BannerIndex==INDEX_NONE?TEXT("NO BANNER"):FString::Printf(TEXT("%d / %d"),BannerIndex+1,InstalledBanners.Num()),
+        TEXT("RegisteredBannerPosition"),332.f,1038.f,242.f,80.f,25,Main);
+    ActionAt(TEXT("NEXT"),TEXT("gacha-banner-next"),595.f,1038.f,243.f,80.f,InstalledBanners.Num()>1,21);
     // A pull must NEVER fire before Gate07's actual banner/economy transaction
     // has been bound. No invented pity/tickets/currency are displayed.
     ActionAt(TEXT("DRAW Ã—1"),TEXT("gacha-draw-1"),
@@ -1496,6 +1499,8 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
 
 void UOGGate12NativeRulerWidget::BuildGacha()
 {
+    if (auto* BannerHud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr)
+    { FString Error; BannerHud->LoadInstalledGachaBannerForRuler(Error); }
     BuildGachaPortrait();
     if (!Content || !WidgetTree) return;
     UGameInstance* GI = GetGameInstance();
@@ -1523,7 +1528,7 @@ void UOGGate12NativeRulerWidget::BuildGacha()
         UVerticalBox::StaticClass(), TEXT("GachaRatesAndHistory"));
     Utilities->AddChildToHorizontalBox(Options);
     // Gate07 must install rate details before this control can be used.
-    AddAction(Options, TEXT("RATES"), TEXT("gacha-rates"), false);
+    AddAction(Options, TEXT("RATES"), TEXT("gacha-rates"), true);
     AddAction(Options, bGachaHistoryExpanded ? TEXT("CLOSE HISTORY")
         : TEXT("HISTORY"), TEXT("gacha-history-toggle"));
 
@@ -1584,7 +1589,14 @@ void UOGGate12NativeRulerWidget::BuildGacha()
     Selector->SetColorAndOpacity(FSlateColor(TextMain));
     Selector->SetJustification(ETextJustify::Center);
     FSlateFontInfo Font=Selector->GetFont();Font.Size=13;Selector->SetFont(Font);
-    SelectorFace->AddChild(Selector);
+    UVerticalBox* BannerSelection=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    BannerSelection->AddChildToVerticalBox(Selector);
+    auto* SelectionHud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr;
+    TArray<FOGGachaBannerDefinition> AvailableBanners; FString SelectionError;
+    if (SelectionHud) SelectionHud->ListInstalledGachaBanners(AvailableBanners,SelectionError);
+    AddAction(BannerSelection,TEXT("PREVIOUS BANNER"),TEXT("gacha-banner-previous"),AvailableBanners.Num()>1);
+    AddAction(BannerSelection,TEXT("NEXT BANNER"),TEXT("gacha-banner-next"),AvailableBanners.Num()>1);
+    SelectorFace->AddChild(BannerSelection);
     Content->AddChildToVerticalBox(SelectorEdge)
         ->SetPadding(FMargin(7.f,3.f,7.f,11.f));
 
@@ -1614,7 +1626,7 @@ void UOGGate12NativeRulerWidget::BuildGacha()
     UVerticalBox* Exchange=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
     BottomUtilities->AddChildToHorizontalBox(Details)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     BottomUtilities->AddChildToHorizontalBox(Exchange)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    AddAction(Details,TEXT("DETAILS"),TEXT("gacha-details"),false);
+    AddAction(Details,TEXT("DETAILS"),TEXT("gacha-rates"),bCanDraw);
     AddAction(Exchange,TEXT("EXCHANGE"),TEXT("gacha-exchange"),false);
 
     if (!bGachaHistoryExpanded) return;
@@ -2422,6 +2434,13 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     else if (Action == TEXT("roster/sort"))
     {
         RosterSortMode = (RosterSortMode + 1) % 3;
+    }
+    else if (Action == TEXT("gacha-banner-next") || Action == TEXT("gacha-banner-previous"))
+    {
+        auto* Hud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr;
+        if (!Hud) Error=TEXT("Native acquisition presentation is unavailable.");
+        else Hud->StepInstalledGachaBanner(Action==TEXT("gacha-banner-next")?1:-1,Error);
+        bGachaRatesExpanded=bGachaResultsExpanded=bGachaHistoryExpanded=false;
     }
     else if (Action == TEXT("gacha-history-toggle"))
     {

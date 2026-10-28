@@ -1,6 +1,6 @@
+#include "Characters/OGContentCharacterActors.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "Content/OGSystemBindingComponent.h"
-#include "Characters/OGContentCharacterActors.h"
 
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Characters/OGCharacterAppearanceComponent.h"

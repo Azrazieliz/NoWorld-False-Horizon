@@ -1,7 +1,7 @@
+#include "Characters/OGCharacterGameplayDefinition.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "Combat/OGCombatResourceDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
-#include "Characters/OGCharacterGameplayDefinition.h"
 UOGCharacterGameplayDefinition::UOGCharacterGameplayDefinition() { System=TEXT("character"); }
 bool UOGCharacterGameplayDefinition::ValidateDefinition_Implementation(FString& Error) const
 {

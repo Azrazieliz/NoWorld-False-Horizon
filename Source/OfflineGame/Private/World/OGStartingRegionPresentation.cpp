@@ -1,4 +1,5 @@
 #include "World/OGStartingRegionPresentation.h"
+#include "Gacha/OGSharedGachaBannerDefinition.h"
 #include "UI/OGNativeBattleWidget.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -5922,6 +5923,9 @@ bool AOGWorldPresentationHud::ExecuteActiveGachaDraw(
         return false;
     }
     const int64 Tick = Core->GetCanonicalWorldTick();
+    const FOGContentId CurrentBannerId=ActiveGachaBanner.BannerId;
+    if (!SelectInstalledGachaBanner(CurrentBannerId,OutError))
+    { FoundationStatusMessage=OutError; return false; }
     if (Tick < 0 ||
         !FOGGachaService::ValidateBanner(ActiveGachaBanner, OutError) ||
         !ValidateInstalledPlayableGachaPool(ActiveGachaBanner, OutError))
@@ -5944,6 +5948,7 @@ bool AOGWorldPresentationHud::ExecuteActiveGachaDraw(
         GachaCommandSeed = static_cast<int64>(
             static_cast<uint64>(GachaCommandSeed) +
             static_cast<uint64>(FMath::Max<int64>(1, Result.RngDrawCount + 1)));
+    GachaSeedsByBanner.Add(ActiveGachaBanner.BannerId,GachaCommandSeed);
     GachaOverlay = TEXT("results");
     GachaDetailsPage = 0;
     FoundationStatusMessage = FString::Printf(
@@ -5961,53 +5966,68 @@ bool AOGWorldPresentationHud::ExecuteActiveGachaDraw(
 bool AOGWorldPresentationHud::LoadInstalledGachaBannerForRuler(
     FString& OutError)
 {
-    OutError.Reset();
-    // Respect an already-activated banner supplied by the authorized
-    // installed-content service; never replace it with a guessed pool.
-    if (bHasActiveGachaPresentation) return true;
-    UGameInstance* GI = GetGameInstance();
-    UOGGameCoreSubsystem* Core =
-        GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
-    UOGGate12RulerSessionSubsystem* Session =
-        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
-    if (!Core || !Core->IsCoreReady() || !Session ||
-        !Session->IsBoundToStoredRuler())
+    TArray<FOGGachaBannerDefinition> Banners;
+    if (!ListInstalledGachaBanners(Banners,OutError)) return false;
+    if (bHasActiveGachaPresentation && Banners.ContainsByPredicate([this](const auto& B){return B.BannerId==ActiveGachaBanner.BannerId;}))
+        return SelectInstalledGachaBanner(ActiveGachaBanner.BannerId,OutError);
+    for (const auto& Banner:Banners)
+        if (SelectInstalledGachaBanner(Banner.BannerId,OutError)) return true;
+    ClearActiveGachaPresentation();
+    if (OutError.IsEmpty()) OutError=TEXT("No currently eligible installed authored banner.");
+    return false;
+}
+bool AOGWorldPresentationHud::ListInstalledGachaBanners(TArray<FOGGachaBannerDefinition>& Out,FString& Error) const
+{
+    const auto* GI=GetGameInstance();
+    const auto* Core=GI?GI->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    const auto* Session=GI?GI->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+    if (!Core || !Core->IsCoreReady() || !Session || !Session->IsBoundToStoredRuler())
+    { Out.Reset(); Error=TEXT("No stored player World for live banner discovery."); return false; }
+    return FOGInstalledGachaBannerLibrary::Collect(Core->GetCanonicalWorldTick(),Out,Error);
+}
+bool AOGWorldPresentationHud::SelectInstalledGachaBanner(const FOGContentId& Id,FString& Error)
+{
+    const FOGContentId RequestedId=Id;
+    TArray<FOGGachaBannerDefinition> Banners;
+    if (!ListInstalledGachaBanners(Banners,Error)) return false;
+    const auto* Selected=Banners.FindByPredicate([&](const auto& B){return B.BannerId==RequestedId;});
+    if (!Selected) { Error=TEXT("Selected banner is absent, inactive or outside its World schedule."); return false; }
+    if (!ValidateInstalledPlayableGachaPool(*Selected,Error)) return false;
+    const auto* GI=GetGameInstance();
+    const auto* Core=GI->GetSubsystem<UOGGameCoreSubsystem>();
+    const auto* Session=GI->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+    if (GachaSeedOwner!=Session->BoundRulerId)
     {
-        OutError=TEXT("No stored player World for live banner resolution.");
-        return false;
+        ClearActiveGachaPresentation(); GachaSeedsByBanner.Reset();
+        GachaSeedOwner=Session->BoundRulerId;
     }
-    UOGApprovedGachaBannerCatalog* Catalog =
-        LoadObject<UOGApprovedGachaBannerCatalog>(nullptr,
-            TEXT("/Game/NoWorld/Gacha/DA_NoWorld_ApprovedBanners."
-                 "DA_NoWorld_ApprovedBanners"));
-    if (!Catalog)
+    if (bHasActiveGachaPresentation) GachaSeedsByBanner.Add(ActiveGachaBanner.BannerId,GachaCommandSeed);
+    const int64 Tick=Core->GetCanonicalWorldTick();
+    const int64 Seed=GachaSeedsByBanner.Contains(RequestedId)?GachaSeedsByBanner[RequestedId]:static_cast<int64>(
+        HashCombine(GetTypeHash(Session->BoundRulerId.ToString()),GetTypeHash(Tick)));
+    const bool Changed=!bHasActiveGachaPresentation || ActiveGachaBanner.BannerId!=RequestedId;
+    SetActiveGachaPresentation(*Selected,Tick,Seed);
+    if (Changed) { LastGachaResults.Reset(); GachaOverlay=NAME_None; }
+    return bHasActiveGachaPresentation;
+}
+bool AOGWorldPresentationHud::StepInstalledGachaBanner(int32 Direction,FString& Error)
+{
+    TArray<FOGGachaBannerDefinition> Banners;
+    if (!ListInstalledGachaBanners(Banners,Error)) return false;
+    if (Banners.IsEmpty()) { Error=TEXT("No active installed banners."); return false; }
+    int32 Index=Banners.IndexOfByPredicate([this](const auto& B){return B.BannerId==ActiveGachaBanner.BannerId;});
+    if (Index==INDEX_NONE) Index=Direction<0?0:-1;
+    for (int32 Attempt=0;Attempt<Banners.Num();++Attempt)
     {
-        OutError=TEXT("No installed accepted banner catalog.");
-        return false;
+        Index=(Index+(Direction<0?-1:1)+Banners.Num())%Banners.Num();
+        if (SelectInstalledGachaBanner(Banners[Index].BannerId,Error)) return true;
     }
-    const int64 WorldTick=Core->GetCanonicalWorldTick();
-    for (const FOGInstalledScheduledGachaBanner& Scheduled:
-         Catalog->ActiveSchedules)
-    {
-        if (!Scheduled.bAcceptedInstalledAndActivated ||
-            WorldTick < Scheduled.BeginsAtWorldTick ||
-            WorldTick >= Scheduled.EndsBeforeWorldTick)
-            continue;
-        // Every pull is still Ruler-access, payment and Registry-gated.
-        // Seed is tied to the actual World and owner, not an invented
-        // Ruler account or developer wallet.
-        const int64 Seed=static_cast<int64>(
-            HashCombine(GetTypeHash(Session->BoundRulerId.ToString()),
-                        GetTypeHash(WorldTick)));
-        SetActiveGachaPresentation(Scheduled.Banner,WorldTick,Seed);
-        if (bHasActiveGachaPresentation) return true;
-    }
-    OutError=TEXT("No currently eligible installed authored banner.");
     return false;
 }
 
 void AOGWorldPresentationHud::ClearActiveGachaPresentation()
 {
+    if (bHasActiveGachaPresentation) GachaSeedsByBanner.Add(ActiveGachaBanner.BannerId,GachaCommandSeed);
     bHasActiveGachaPresentation = false;
     LastGachaResults.Reset();
     ActiveGachaBanner = FOGGachaBannerDefinition();

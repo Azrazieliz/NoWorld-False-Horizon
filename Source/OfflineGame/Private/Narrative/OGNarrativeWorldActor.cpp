@@ -1,5 +1,5 @@
-#include "Content/OGSystemBindingComponent.h"
 #include "Narrative/OGNarrativeWorldActor.h"
+#include "Content/OGSystemBindingComponent.h"
 
 #include "Components/SceneComponent.h"
 #include "Engine/GameInstance.h"
