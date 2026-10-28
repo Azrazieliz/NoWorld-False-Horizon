@@ -3,14 +3,32 @@
 // invent world-level scaling, or use the diagnostic combat simulator.
 #include "World/OGStartingRegionPresentation.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Characters/OGContentCharacterActors.h"
+#include "Combat/OGNativeTurnAgentComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnBattle.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+
+namespace
+{
+UOGSharedMotionControllerComponent* OpponentMotion(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+    if (const auto* Appearance=Actor->FindComponentByClass<UOGCharacterAppearanceComponent>())
+        if (auto* Motion=Appearance->GetMotionController()) return Motion;
+    return Actor->FindComponentByClass<UOGSharedMotionControllerComponent>();
+}
+}
+
 
 void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
 {
@@ -19,7 +37,8 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
         return;
     const AOGLuminousV3PlayableCharacter* Luminous =
         Cast<AOGLuminousV3PlayableCharacter>(this);
-    if (!Luminous) return;
+    const AOGContentPlayableCharacter* ContentCharacter = Cast<AOGContentPlayableCharacter>(this);
+    if (!Luminous && !ContentCharacter) return;
 
     UGameInstance* GI = GetGameInstance();
     UOGGameCoreSubsystem* Core = GI ?
@@ -34,9 +53,10 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     const FOGCombatUnitState* Owned = State.Units.FindByPredicate(
         [Session](const FOGCombatUnitState& U)
         { return U.UnitEntityId == Session->SelectedManifestationId; });
-    if (!Owned || !Luminous->IsBoundToOwnedLuminousCombatUnit(
-        Session->BoundRulerId, Session->SelectedManifestationId,
-        Owned->SkillSet.CurrentForm)) return;
+    if (!Owned || !((Luminous && Luminous->IsBoundToOwnedLuminousCombatUnit(
+        Session->BoundRulerId, Session->SelectedManifestationId, Owned->SkillSet.CurrentForm)) ||
+        (ContentCharacter && ContentCharacter->IsBoundToOwnedCombatUnit(
+            Session->BoundRulerId, Session->SelectedManifestationId, Owned->SkillSet.CurrentForm)))) return;
 
     const double Now = GetWorld()->GetTimeSeconds();
     if (AutonomousCombatBattleId != State.BattleId)
@@ -56,18 +76,30 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     }
     if (Now < NextCanonicalOpponentActionAt) return;
     NextCanonicalOpponentActionAt = Now + 1.20;
+    AActor* ExistingSourceBody = UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+        GetWorld(), ActualBattleId, ActingId);
+    if (!IsValid(ExistingSourceBody)) return; // Do not execute an invisible, unembodied opponent.
+    if (ExistingSourceBody->FindComponentByClass<UOGNativeTurnAgentComponent>())
+        return; // Its exact authored policy owns decisions; never race or bypass it with this fallback.
 
+    const int64 Sequence=Battle->GetLog().GetNextSequence(),Revision=Battle->GetNativeAbilityRevision();
+    if (MissingExecutorUnit==ActingId && MissingExecutorSequence==Sequence && MissingExecutorRevision==Revision) return;
     // All choices are already authored abilities on the actual participating
     // unit. The approved resolver owns targeting, AoE expansion, costs,
     // status effects, health, turn delay, and every world consequence.
     TArray<FOGContentId> Authored;
-    Authored.Reserve(Acting.SkillSet.ActiveSkills.Num() + 1);
+    Authored.Reserve(Acting.SkillSet.ActiveSkills.Num()+Acting.SkillSet.GetUltimateSkills().Num());
     for (const FOGContentId& Id : Acting.SkillSet.ActiveSkills)
-        if (Id.IsValid() && !Authored.Contains(Id)) Authored.Add(Id);
-    if (Acting.SkillSet.UltimateSkill.IsValid() &&
-        !Authored.Contains(Acting.SkillSet.UltimateSkill))
-        Authored.Add(Acting.SkillSet.UltimateSkill);
-    if (Authored.IsEmpty()) return; // Do not fabricate a basic attack.
+        if (Id.IsValid() && !Authored.Contains(Id)) { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Id,Missing)) Authored.Add(Id); }
+    for (const auto& Ultimate:Acting.SkillSet.GetUltimateSkills())
+        if (!Authored.Contains(Ultimate))
+        { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Ultimate,Missing)) Authored.Add(Ultimate); }
+    if (Authored.IsEmpty())
+    {
+        MissingExecutorUnit=ActingId; MissingExecutorSequence=Sequence; MissingExecutorRevision=Revision;
+        UE_LOG(LogTemp,Warning,TEXT("Actual opponent %s waits for registered source ability content; no empty action was accepted."),*ActingId.ToString());
+        return;
+    }
 
     // Prefer living opponents for offensive actions. For authored support
     // skills try eligible allies as well; the canonical skill preflight
@@ -111,15 +143,13 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                 Proposal, Expanded, bArea, Error))
                 continue;
             TMap<FOGEntityId, FOGLargeNumber> HpBefore;
-            for (const FOGEntityId& TargetId : Expanded.TargetUnitIds)
-                if (const FOGCombatUnitState* U = State.Units.FindByPredicate(
-                    [&TargetId](const FOGCombatUnitState& X)
-                    { return X.UnitEntityId == TargetId; }))
-                    HpBefore.Add(TargetId, U->CurrentHp);
+            for (const auto& Unit:State.Units) HpBefore.Add(Unit.UnitEntityId,Unit.CurrentHp);
             Expanded.ActionId = FOGEntityId::NewId();
             if (!Core->ApplyApprovedLuminousResolvedAction(Expanded, Error))
                 continue; // Atomic failed preflight: no turn consumed.
 
+            const auto* Committed=Core->GetOwnedLuminousTurnBattle();
+            if (!Committed || Committed->GetState().BattleId!=ActualBattleId) return;
             AActor* SourceActor =
                 UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
                     GetWorld(), ActualBattleId, ActingId);
@@ -127,13 +157,14 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
             if (const FOGTurnBattle* AfterBattle =
                 Core->GetOwnedLuminousTurnBattle())
             {
-                for (const FOGEntityId& TargetId : Expanded.TargetUnitIds)
+                for (const auto& ResolvedUnit:AfterBattle->GetState().Units)
                 {
+                    const FOGEntityId TargetId=ResolvedUnit.UnitEntityId;
                     AActor* Body =
                         UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
                             GetWorld(), ActualBattleId, TargetId);
                     if (!IsValid(Body)) continue;
-                    if (!FirstActor) FirstActor = Body;
+                    if (!FirstActor && Expanded.TargetUnitIds.Contains(TargetId)) FirstActor = Body;
                     const FOGLargeNumber* Before = HpBefore.Find(TargetId);
                     const FOGCombatUnitState* After =
                         AfterBattle->GetState().Units.FindByPredicate(
@@ -149,14 +180,15 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                             Hud->RegisterCanonicalCombatImpact(
                                 Body, *Before, After->CurrentHp);
                     if (UOGSharedMotionControllerComponent* Motion =
-                        Body->FindComponentByClass<UOGSharedMotionControllerComponent>())
+                        OpponentMotion(Body))
                     {
                         const FName Reaction = !After->IsAlive()
                             ? FName(TEXT("Combat.Reaction.Death")) :
                             FOGLargeNumber::Compare(After->CurrentHp, *Before) < 0
                             ? FName(TEXT("Combat.Reaction.Hit")) :
                             FName(TEXT("Combat.Reaction.Heal"));
-                        Motion->PlayAction(Reaction, TEXT("Combat"), false, 1);
+                        if (!After->IsAlive()) Motion->PlayAction(Reaction,TEXT("Combat"),false,1);
+                        else Motion->EnqueueCombatCue(Reaction,ActualBattleId,Expanded.ActionId,TargetId);
                     }
                 }
             }
@@ -170,13 +202,7 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                         SourceActor->SetActorRotation(
                             FRotator(0.f, Delta.Rotation().Yaw, 0.f));
                 }
-                if (UOGSharedMotionControllerComponent* Motion =
-                    SourceActor->FindComponentByClass<UOGSharedMotionControllerComponent>())
-                {
-                    const FName ActionName(*FString::Printf(
-                        TEXT("Combat.Skill.%s"), *Skill.ToString()));
-                    Motion->PlayAction(ActionName, TEXT("Combat"), false, 1);
-                }
+                // Canonical body binding queues every accepted root/reaction motion once.
             }
             UE_LOG(LogTemp, Display,
                 TEXT("Gate12 actual non-player turn committed: unit %s source skill %s targets %d"),

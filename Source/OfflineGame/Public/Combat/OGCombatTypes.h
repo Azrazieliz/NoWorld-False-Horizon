@@ -6,6 +6,8 @@
 #include "Math/OGLargeNumber.h"
 #include "Progression/OGProgressionRecords.h"
 #include "Skills/OGResolvedSkillSet.h"
+#include "Combat/OGCombatResourceDefinition.h"
+#include "Effects/OGNativeEffectTypes.h"
 #include "OGCombatTypes.generated.h"
 
 /** Percentages use basis points: 10,000 = 100%. */
@@ -91,6 +93,30 @@ struct OFFLINEGAME_API FOGCombatUnitState
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGCombatStats Stats;
+
+    /** Runtime battle resources, admitted from shared definitions; distinct for every actual unit. */
+    UPROPERTY(BlueprintReadOnly)
+    TArray<FOGCombatResourceValue> BattleResources;
+
+    /** Encounter-owned effects are admitted/executed by the shared effect runtime. */
+    UPROPERTY(BlueprintReadOnly) TArray<FOGNativeEffectInstance> NativeEffects;
+
+    /** Fresh content stats before native authored equipment contributions.
+     * Read-only projection cache; never an equipment/save-state authority. */
+    UPROPERTY()
+    FOGCombatStats EquipmentBaseStats;
+
+    UPROPERTY()
+    bool bHasEquipmentStatProjection = false;
+
+    /** Read-only development projection input, retained so refreshing a party
+     * or opening a battle cannot add earned bonuses twice. Content/stat
+     * resolvers supply a fresh unit when the underlying build changes. */
+    UPROPERTY()
+    FOGCombatStats DevelopmentBaseStats;
+
+    UPROPERTY()
+    bool bHasDevelopmentStatProjection = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGLargeNumber CurrentHp;

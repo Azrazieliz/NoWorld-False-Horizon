@@ -1,4 +1,6 @@
 #include "UI/OGGate12NativeRulerWidget.h"
+#include "Gacha/OGSharedGachaBannerDefinition.h"
+#include "Narrative/OGNarrativeSessionSubsystem.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
@@ -41,6 +43,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/GameInstance.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "Runtime/OGGameCoreSubsystem.h"
 #include "World/OGStartingRegionPresentation.h"
 
 namespace
@@ -139,11 +142,28 @@ void UOGGate12NativeRulerWidget::NativeOnInitialized()
 void UOGGate12NativeRulerWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    if (UOGGameCoreSubsystem* Core = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
+    {
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(
+            this, &UOGGate12NativeRulerWidget::ResetCharacterDevelopment);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(
+            this, &UOGGate12NativeRulerWidget::ResetInventoryUi);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(
+            this, &UOGGate12NativeRulerWidget::ResetNarrativePage);
+    }
     RefreshFromCanonical();
 }
 
 void UOGGate12NativeRulerWidget::NativeDestruct()
 {
+    ResetNarrativePage();
+    ResetInventoryUi();
+    ResetCharacterDevelopment();
+    if (UOGGameCoreSubsystem* Core = GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
     ReleasePreviewStage();
     Super::NativeDestruct();
 }
@@ -156,6 +176,12 @@ void UOGGate12NativeRulerWidget::NativeTick(
     const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    const bool bInventoryContextChanged = SynchronizeInventoryContext(Session);
+    const bool bNarrativeContextChanged = NarrativePageRulerId.IsValid() &&
+        (!Session || !Session->IsBoundToStoredRuler() || Session->BoundRulerId != NarrativePageRulerId);
+    if (bNarrativeContextChanged) ResetNarrativePage();
+    if (SynchronizeDevelopmentContext(Session) || bInventoryContextChanged || bNarrativeContextChanged)
+        BuildCurrentPage();
     const FVector2D ViewportSize = MyGeometry.GetLocalSize();
     // Ruler has NO landscape presentation. During the device's asynchronous
     // rotation from World, hide the whole Ruler surface until portrait fits.
@@ -463,7 +489,7 @@ void UOGGate12NativeRulerWidget::BuildNav()
     };
     static const TCHAR* Marks[5] =
     {
-        TEXT("✧"), TEXT("◇"), TEXT("✦"), TEXT("♜"), TEXT("▤")
+        TEXT("âœ§"), TEXT("â—‡"), TEXT("âœ¦"), TEXT("â™œ"), TEXT("â–¤")
     };
     const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session = GI
@@ -573,6 +599,11 @@ void UOGGate12NativeRulerWidget::BuildNav()
 
 void UOGGate12NativeRulerWidget::RefreshFromCanonical()
 {
+    // An explicit refresh may follow recovery of a world with the same IDs.
+    // Require a fresh review rather than keeping a previous world's quote.
+    ResetCharacterDevelopment();
+    ClearInventoryReview();
+    ClearNarrativeReview();
     if (!Screen) BuildRoot();
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
@@ -615,6 +646,8 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    SynchronizeDevelopmentContext(Session);
+    SynchronizeInventoryContext(Session);
     RefreshFrozenScene(Session ? Session->CurrentDestination
                               : EOGRulerPrimaryDestination::Home);
 
@@ -661,9 +694,16 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         Content->AddChildToVerticalBox(HeadingHeight)
             ->SetPadding(FMargin(4.f,0.f,4.f,8.f));
     if (!LastUiError.IsEmpty()) AddMessage(Content, LastUiError, 16, TextMuted);
+    if (bInventoryOpen)
+    {
+        BuildInventory();
+        BuildNav();
+        return;
+    }
     switch (Session->CurrentDestination)
     {
     case EOGRulerPrimaryDestination::Home:
+        AddAction(Content, TEXT("INVENTORY & EQUIPMENT"), TEXT("inventory/open"));
         BuildHome();
         break;
     case EOGRulerPrimaryDestination::Characters:
@@ -849,8 +889,9 @@ void UOGGate12NativeRulerWidget::BuildRoster()
     // This is NOT a character Manifestation and is never counted as one.
     if (Session && Session->IsBoundToStoredRuler())
     {
-        AddMessage(Content, TEXT("RULER — ORIGINAL PLAYER"), 22, TextMain);
+        AddMessage(Content, TEXT("RULER â€” ORIGINAL PLAYER"), 22, TextMain);
         AddAction(Content, TEXT("CONTROL THE RULER"), TEXT("select-ruler"));
+        AddAction(Content, TEXT("INTERACTIONS"), TEXT("interaction/open"));
     }
     if (!Session || Session->OwnedRoster.IsEmpty())
     {
@@ -949,7 +990,7 @@ void UOGGate12NativeRulerWidget::BuildDevelopmentQaCharacterViewer()
         return;
 
     AddMessage(Content,
-        TEXT("DEVELOPMENT QA — real imported CLOTHED Luminous V3. "
+        TEXT("DEVELOPMENT QA â€” real imported CLOTHED Luminous V3. "
              "This is NOT a character you own, NOT a Registry package, "
              "NOT a canonical Identity or a gameplay acquisition."),
         16, Gate12RulerGold);
@@ -1339,20 +1380,22 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         TextAt(TEXT("NO ACTIVE BANNER"),
             TEXT("AuthoritativeNoActiveBanner"),155.f,830.f,555.f,96.f,48,Main);
     else
-        TextAt(Hud->GetActiveGachaBanner().BannerId.ToString(),
+        TextAt(FOGInstalledGachaBannerLibrary::DisplayName(Hud->GetActiveGachaBanner().BannerId),
             TEXT("AuthoritativeInstalledBannerId"),108.f,812.f,640.f,118.f,35,Main);
 
-    ActionAt(bCanSummon ? TEXT("ACTIVE") : TEXT("NO BANNER"),TEXT("gacha/banner/0"),
-             68.f,1038.f,242.f,80.f,false,21);
-    ActionAt(TEXT("UNAVAILABLE"),TEXT("gacha/banner/1"),
-             332.f,1038.f,242.f,80.f,false,19);
-    ActionAt(TEXT("UNAVAILABLE"),TEXT("gacha/banner/2"),
-             595.f,1038.f,243.f,80.f,false,19);
+    TArray<FOGGachaBannerDefinition> InstalledBanners; FString BannerError;
+    if (Hud) Hud->ListInstalledGachaBanners(InstalledBanners,BannerError);
+    ActionAt(TEXT("PREVIOUS"),TEXT("gacha-banner-previous"),68.f,1038.f,242.f,80.f,InstalledBanners.Num()>1,21);
+    const int32 BannerIndex=Hud?InstalledBanners.IndexOfByPredicate([&](const auto& B)
+        {return B.BannerId==Hud->GetActiveGachaBanner().BannerId;}):INDEX_NONE;
+    TextAt(BannerIndex==INDEX_NONE?TEXT("NO BANNER"):FString::Printf(TEXT("%d / %d"),BannerIndex+1,InstalledBanners.Num()),
+        TEXT("RegisteredBannerPosition"),332.f,1038.f,242.f,80.f,25,Main);
+    ActionAt(TEXT("NEXT"),TEXT("gacha-banner-next"),595.f,1038.f,243.f,80.f,InstalledBanners.Num()>1,21);
     // A pull must NEVER fire before Gate07's actual banner/economy transaction
     // has been bound. No invented pity/tickets/currency are displayed.
-    ActionAt(TEXT("DRAW ×1"),TEXT("gacha-draw-1"),
+    ActionAt(TEXT("DRAW Ã—1"),TEXT("gacha-draw-1"),
              50.f,1170.f,309.f,100.f,bCanSummon,37);
-    ActionAt(TEXT("DRAW ×10"),TEXT("gacha-draw-10"),
+    ActionAt(TEXT("DRAW Ã—10"),TEXT("gacha-draw-10"),
              511.f,1170.f,311.f,100.f,bCanSummon,37);
     ActionAt(TEXT("DETAILS"),TEXT("gacha-rates"),
              151.f,1289.f,223.f,50.f,bCanSummon,24);
@@ -1447,7 +1490,7 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     else
         for (const FOGGachaHistoryEntryViewModel& Entry :
              Session->GachaHistoryProjection)
-            AddMessage(Rows,FString::Printf(TEXT("%s · %s · tick %lld"),
+            AddMessage(Rows,FString::Printf(TEXT("%s Â· %s Â· tick %lld"),
                 *Entry.IdentityId.ToString(),*Entry.Rarity.ToString(),
                 Entry.WorldTick),17,Main);
     ActionAt(TEXT("CLOSE"),TEXT("gacha-history-toggle"),
@@ -1456,6 +1499,8 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
 
 void UOGGate12NativeRulerWidget::BuildGacha()
 {
+    if (auto* BannerHud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr)
+    { FString Error; BannerHud->LoadInstalledGachaBannerForRuler(Error); }
     BuildGachaPortrait();
     if (!Content || !WidgetTree) return;
     UGameInstance* GI = GetGameInstance();
@@ -1483,7 +1528,7 @@ void UOGGate12NativeRulerWidget::BuildGacha()
         UVerticalBox::StaticClass(), TEXT("GachaRatesAndHistory"));
     Utilities->AddChildToHorizontalBox(Options);
     // Gate07 must install rate details before this control can be used.
-    AddAction(Options, TEXT("RATES"), TEXT("gacha-rates"), false);
+    AddAction(Options, TEXT("RATES"), TEXT("gacha-rates"), true);
     AddAction(Options, bGachaHistoryExpanded ? TEXT("CLOSE HISTORY")
         : TEXT("HISTORY"), TEXT("gacha-history-toggle"));
 
@@ -1544,7 +1589,14 @@ void UOGGate12NativeRulerWidget::BuildGacha()
     Selector->SetColorAndOpacity(FSlateColor(TextMain));
     Selector->SetJustification(ETextJustify::Center);
     FSlateFontInfo Font=Selector->GetFont();Font.Size=13;Selector->SetFont(Font);
-    SelectorFace->AddChild(Selector);
+    UVerticalBox* BannerSelection=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    BannerSelection->AddChildToVerticalBox(Selector);
+    auto* SelectionHud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr;
+    TArray<FOGGachaBannerDefinition> AvailableBanners; FString SelectionError;
+    if (SelectionHud) SelectionHud->ListInstalledGachaBanners(AvailableBanners,SelectionError);
+    AddAction(BannerSelection,TEXT("PREVIOUS BANNER"),TEXT("gacha-banner-previous"),AvailableBanners.Num()>1);
+    AddAction(BannerSelection,TEXT("NEXT BANNER"),TEXT("gacha-banner-next"),AvailableBanners.Num()>1);
+    SelectorFace->AddChild(BannerSelection);
     Content->AddChildToVerticalBox(SelectorEdge)
         ->SetPadding(FMargin(7.f,3.f,7.f,11.f));
 
@@ -1564,7 +1616,7 @@ void UOGGate12NativeRulerWidget::BuildGacha()
             UVerticalBox::StaticClass());
         DrawActions->AddChildToHorizontalBox(Wrapper)
             ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-        AddAction(Wrapper, I==0 ? TEXT("DRAW  ×1") : TEXT("DRAW  ×10"),
+        AddAction(Wrapper, I==0 ? TEXT("DRAW  Ã—1") : TEXT("DRAW  Ã—10"),
             I==0 ? TEXT("gacha-draw-1") : TEXT("gacha-draw-10"), bCanDraw);
     }
     UHorizontalBox* BottomUtilities=WidgetTree->ConstructWidget<UHorizontalBox>(
@@ -1574,7 +1626,7 @@ void UOGGate12NativeRulerWidget::BuildGacha()
     UVerticalBox* Exchange=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
     BottomUtilities->AddChildToHorizontalBox(Details)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     BottomUtilities->AddChildToHorizontalBox(Exchange)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    AddAction(Details,TEXT("DETAILS"),TEXT("gacha-details"),false);
+    AddAction(Details,TEXT("DETAILS"),TEXT("gacha-rates"),bCanDraw);
     AddAction(Exchange,TEXT("EXCHANGE"),TEXT("gacha-exchange"),false);
 
     if (!bGachaHistoryExpanded) return;
@@ -1768,6 +1820,13 @@ void UOGGate12NativeRulerWidget::BuildRecords()
     UOGGate12RulerSessionSubsystem* Session = GI
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session) return;
+    UOGNarrativeSessionSubsystem* Narrative = GI ? GI->GetSubsystem<UOGNarrativeSessionSubsystem>() : nullptr;
+    if (bNarrativeJournalOpen || (Narrative && Narrative->HasOpenSubject()))
+    {
+        BuildNarrativeJournal();
+        return;
+    }
+    AddAction(Content, TEXT("QUEST JOURNAL"), TEXT("narrative/open"));
 
     // Frozen Gate10 Records: a 2x2 native UMG section board with independent
     // real buttons and a canonical detail panel. The illustrated mockup
@@ -1776,7 +1835,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
         TEXT("REPORTS"), TEXT("CHRONICLE"), TEXT("CODEX"), TEXT("INTELLIGENCE")
     };
     static const TCHAR* IconMarks[4] = {
-        TEXT("✧"), TEXT("♜"), TEXT("◇"), TEXT("◈")
+        TEXT("âœ§"), TEXT("â™œ"), TEXT("â—‡"), TEXT("â—ˆ")
     };
     static const TCHAR* Subtitles[4] = {
         TEXT("AUTHORITATIVE REPORTS"), TEXT("KNOWN HISTORY"),
@@ -2195,6 +2254,7 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
     }
     const FOGRosterIdentityViewModel& Identity = Session->OwnedRoster[OpenIdentityIndex];
     AddAction(Content, TEXT("BACK TO ROSTER"), TEXT("back"));
+    AddAction(Content, TEXT("INTERACTIONS"), TEXT("interaction/open"));
     AddMessage(Content,
         Identity.DisplayNameKey.IsEmpty()
             ? Identity.IdentityId.ToString() : Identity.DisplayNameKey,
@@ -2240,6 +2300,7 @@ void UOGGate12NativeRulerWidget::BuildCharacterDetail()
             {
                 return M.ManifestationId == Identity.SelectedManifestationId;
             });
+    BuildCharacterDevelopment(Identity, Selected);
     if (VisualCatalog && Selected)
     {
         const FOGGate12CharacterVisualEntry* Art =
@@ -2268,10 +2329,41 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     if (!Session)
     {
+        ResetInventoryUi();
+        ResetCharacterDevelopment();
         LastUiError = TEXT("Canonical Ruler service not loaded.");
         BuildCurrentPage();
         return;
     }
+
+    if (Action.StartsWith(TEXT("narrative/")))
+    {
+        ClearDevelopmentReview();
+        ResetInventoryUi();
+        HandleNarrativeAction(Action);
+        return;
+    }
+    ResetNarrativePage();
+    if (UOGNarrativeSessionSubsystem* Narrative = GI->GetSubsystem<UOGNarrativeSessionSubsystem>()) Narrative->CloseSubject();
+    if (Action.StartsWith(TEXT("inventory/")))
+    {
+        ClearDevelopmentReview();
+        DevelopmentFeedback.Reset();
+        DevelopmentRefreshWarning.Reset();
+        HandleInventoryAction(Action, *Session);
+        return;
+    }
+    ResetInventoryUi();
+    if (Action.StartsWith(TEXT("development/")))
+    {
+        HandleDevelopmentAction(Action, *Session);
+        return;
+    }
+    // Includes all navigation, copy selection, wardrobe and world transitions.
+    ClearDevelopmentReview();
+    DevelopmentFeedback.Reset();
+    DevelopmentRefreshWarning.Reset();
+    bDevelopmentFeedbackError = false;
 
     FString Error;
     if (Action == TEXT("restore-ruler"))
@@ -2342,6 +2434,13 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     else if (Action == TEXT("roster/sort"))
     {
         RosterSortMode = (RosterSortMode + 1) % 3;
+    }
+    else if (Action == TEXT("gacha-banner-next") || Action == TEXT("gacha-banner-previous"))
+    {
+        auto* Hud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr;
+        if (!Hud) Error=TEXT("Native acquisition presentation is unavailable.");
+        else Hud->StepInstalledGachaBanner(Action==TEXT("gacha-banner-next")?1:-1,Error);
+        bGachaRatesExpanded=bGachaResultsExpanded=bGachaHistoryExpanded=false;
     }
     else if (Action == TEXT("gacha-history-toggle"))
     {
@@ -2491,6 +2590,12 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     else if (Action == TEXT("back"))
     {
         OpenIdentityIndex = INDEX_NONE;
+    }
+    else if (Action == TEXT("interaction/open"))
+    {
+        auto* Hud = GetOwningPlayer() ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
+        if (Hud && Hud->ShowNativeInteractionSurface(Error)) return;
+        if (!Hud) Error = TEXT("World interaction presentation is unavailable.");
     }
     else if (Action == TEXT("world"))
     {

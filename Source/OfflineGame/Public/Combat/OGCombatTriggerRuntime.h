@@ -59,6 +59,10 @@ struct OFFLINEGAME_API FOGQueuedTriggeredAction
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int64 SourceSequence = 0;
+    UPROPERTY(BlueprintReadOnly) FName EventType;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId EventSourceUnitId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId EventTargetUnitId;
+    UPROPERTY(BlueprintReadOnly) FOGContentId EventSkillId;
 };
 
 using FOGCombatConditionEvaluator =
@@ -76,14 +80,14 @@ public:
         ConditionEvaluator = MoveTemp(InEvaluator);
     }
 
-    void QueueForEvent(const FOGCombatTriggerContext& Context);
+    void QueueForEvent(const FOGCombatTriggerContext& Context,const FOGCombatConditionEvaluator* Override=nullptr);
     TArray<FOGQueuedTriggeredAction> DrainQueuedActions();
     void Reset();
 
 private:
     bool ConditionsPass(
         const FOGCombatTriggerBinding& Binding,
-        const FOGCombatTriggerContext& Context) const;
+        const FOGCombatTriggerContext& Context,const FOGCombatConditionEvaluator* Override) const;
 
     TArray<FOGCombatTriggerBinding> Bindings;
     TArray<FOGQueuedTriggeredAction> QueuedActions;

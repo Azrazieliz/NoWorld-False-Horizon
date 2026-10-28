@@ -3,7 +3,11 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
+#include "Progression/OGCharacterDevelopmentService.h"
 #include "UI/OGUiViewModels.h"
+#include "World/OGOwnedEquipmentService.h"
+#include "Narrative/OGNarrativeService.h"
+#include "Objects/OGObjectActionDefinition.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
@@ -70,6 +74,9 @@ public:
     UOGGate12CharacterVisualCatalog* GetVisualCatalog() const { return VisualCatalog; }
 
     void ShowWorldTransitionError(const FString& Error);
+    /** Existing NPC/world interactions can open this same native transaction interface. */
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool OpenObjectActionsForCounterparty(const FOGEntityId& Counterparty,FString& Error);
 
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|Native")
     void RefreshFromCanonical();
@@ -157,6 +164,43 @@ private:
     int32 SelectedTerritoryOverlayIndex = 0;
     FString LastUiError;
 
+    // In-memory review only: never reflected, serialized, or treated as truth.
+    // Confirmation tokens and request IDs are discarded when context changes.
+    FOGCharacterDevelopmentPreview PendingDevelopmentReview;
+    FOGEntityId PendingDevelopmentRequestId;
+    FOGEntityId DevelopmentContextRulerId;
+    FOGContentId DevelopmentContextIdentityId;
+    FOGEntityId DevelopmentContextManifestationId;
+    FOGContentId DevelopmentSessionIdentityId;
+    FOGEntityId DevelopmentSessionManifestationId;
+    FString DevelopmentFeedback;
+    FString DevelopmentRefreshWarning;
+    bool bDevelopmentFeedbackError = false;
+
+    // Inventory utility page and review are transient presentation only.
+    bool bInventoryOpen = false;
+    bool bInventoryTargetPicker = false;
+    FOGEntityId InventorySelectedItemId;
+    FOGEntityId InventoryContextRulerId;
+    FOGContentId InventoryContextIdentityId;
+    FOGEntityId InventoryContextManifestationId;
+    FOGObjectActionPreview PendingObjectReview;
+    FOGEntityId PendingObjectRequestId;
+    FOGEntityId ObjectActionCounterpartyId;
+    FOGOwnedEquipmentPreview PendingEquipmentReview;
+    FOGEntityId PendingEquipmentRequestId;
+    FString InventoryFeedback;
+    FString InventoryRefreshWarning;
+    bool bInventoryFeedbackError = false;
+
+    bool bNarrativeJournalOpen = false;
+    FOGContentId OpenNarrativeQuestId;
+    FOGContentId OpenNarrativeDialogueId;
+    FOGEntityId NarrativePageRulerId;
+    FOGNarrativePreview PendingNarrativePreview;
+    FOGEntityId PendingNarrativeRequestId;
+    FString NarrativeFeedback;
+
     void BuildRoot();
     void RefreshFrozenScene(EOGRulerPrimaryDestination Destination);
     void BuildCurrentPage();
@@ -170,11 +214,31 @@ private:
     UFUNCTION()
     void HandleRosterSearchChanged(const FText& NewText);
     void BuildCharacterDetail();
+    void BuildCharacterDevelopment(const FOGRosterIdentityViewModel& Identity,
+        const FOGRosterManifestationViewModel* Manifestation);
+    void AddDevelopmentPreview(UVerticalBox* Parent,
+        const FOGCharacterDevelopmentPreview& Preview);
+    void HandleDevelopmentAction(const FString& Action,
+        UOGGate12RulerSessionSubsystem& Session);
+    void ClearDevelopmentReview();
+    void ResetCharacterDevelopment();
+    bool SynchronizeDevelopmentContext(const UOGGate12RulerSessionSubsystem* Session);
+    void BuildInventory();
+    void BuildObjectActions(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session);
+    void BuildEquipmentReview(UVerticalBox* Parent, const FOGOwnedEquipmentPreview& Review);
+    void HandleInventoryAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);
+    void ClearInventoryReview();
+    void ResetInventoryUi();
+    bool SynchronizeInventoryContext(const UOGGate12RulerSessionSubsystem* Session);
     void AddCharacterVisual(UVerticalBox* Parent, const FOGRosterIdentityViewModel& Identity, bool bThreeDimensional);
     void ReleasePreviewStage();
     void ReleaseRosterPreviewStages();
     void LoadSelectedPresentationPreference(const UOGGate12RulerSessionSubsystem* Session, FString& OutError);
     void BuildRecords();
+    void BuildNarrativeJournal();
+    void HandleNarrativeAction(const FString& Action);
+    void ClearNarrativeReview();
+    void ResetNarrativePage();
     void BuildTerritory();
     void BuildNav();
     void AddMessage(UVerticalBox* Parent, const FString& Value, int32 FontSize = 22,

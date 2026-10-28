@@ -3,15 +3,32 @@
 // a phantom-owned Manifestation, an animation or a second gameplay executor.
 #include "World/OGStartingRegionPresentation.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Characters/OGContentCharacterActors.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Combat/OGTurnBattle.h"
+#include "UI/OGNativeBattleWidget.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "EngineUtils.h"
 #include "Engine/Canvas.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+
+namespace
+{
+bool MatchesActualOwnedLuminousBody(const AOGWorldPrototypeCharacter* Character,
+    const UOGGate12RulerSessionSubsystem& Session, const FOGCombatUnitState& Unit)
+{
+    if (!Character || Unit.UnitEntityId != Session.SelectedManifestationId) return false;
+    const AOGLuminousV3PlayableCharacter* Legacy = Cast<AOGLuminousV3PlayableCharacter>(Character);
+    const AOGContentPlayableCharacter* Content = Cast<AOGContentPlayableCharacter>(Character);
+    return (Legacy && Legacy->IsBoundToOwnedLuminousCombatUnit(Session.BoundRulerId,
+        Unit.UnitEntityId, Unit.SkillSet.CurrentForm)) ||
+        (Content && Content->IsBoundToOwnedCombatUnit(Session.BoundRulerId,
+            Unit.UnitEntityId, Unit.SkillSet.CurrentForm));
+}
+}
 
 bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
     int32 UnitIndex, FString& OutError)
@@ -45,17 +62,13 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
     }
     const FOGCombatUnitState& Source = State.Units[ActingIndex];
     const FOGCombatUnitState& Target = State.Units[UnitIndex];
-    const AOGLuminousV3PlayableCharacter* Luminous =
-        Cast<AOGLuminousV3PlayableCharacter>(this);
-    if (!Luminous || Source.UnitEntityId != Session->SelectedManifestationId ||
-        !Luminous->IsBoundToOwnedLuminousCombatUnit(Session->BoundRulerId,
-            Session->SelectedManifestationId, Source.SkillSet.CurrentForm) ||
+    if (!MatchesActualOwnedLuminousBody(this, *Session, Source) ||
         !Source.CanAct() || !Target.CanAct())
     {
         // Ally, self and enemy targets are all meaningful in the approved
         // Base/Alter skills. Gate04's exact skill preflight, not this UI,
         // determines allegiance, number, revival and target eligibility.
-        OutError = TEXT("Select a live canonical battle participant on the actual possessed Luminous turn.");
+        OutError = TEXT("Select a live canonical battle participant on the actual possessed character's turn.");
         return false;
     }
     // Tap selects only a PRIMARY focus for primary-specific skill bonuses;
@@ -140,8 +153,7 @@ void AOGWorldPresentationHud::DrawNativeCombatImpacts(float Scale)
 bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     AOGWorldPrototypeCharacter* Character, float Scale)
 {
-    if (!Canvas || !Character ||
-        !Cast<AOGLuminousV3PlayableCharacter>(Character))
+    if (!Canvas || !Character)
         return false;
     UGameInstance* GI = GetGameInstance();
     const UOGGameCoreSubsystem* Core = GI
@@ -157,12 +169,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const FOGCombatUnitState* ActualOwned=State.Units.FindByPredicate(
         [Session](const FOGCombatUnitState& Unit)
         { return Unit.UnitEntityId==Session->SelectedManifestationId; });
-    const AOGLuminousV3PlayableCharacter* ActualLuminous=
-        Cast<AOGLuminousV3PlayableCharacter>(Character);
-    if(!ActualOwned || !ActualLuminous ||
-       !ActualLuminous->IsBoundToOwnedLuminousCombatUnit(
-           Session->BoundRulerId,Session->SelectedManifestationId,
-           ActualOwned->SkillSet.CurrentForm))return false;
+    if(!ActualOwned || !MatchesActualOwnedLuminousBody(Character, *Session, *ActualOwned))return false;
     if (State.Status == EOGTurnBattleStatus::Completed)
     {
         const double Now=GetWorld()?GetWorld()->GetTimeSeconds():0.;
@@ -194,6 +201,31 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     }
     if (State.Status != EOGTurnBattleStatus::Running)
         return false;
+    if (PlayerOwner)
+    {
+        bool Created=false;
+        if (!NativeBattleWidget)
+        {
+            NativeBattleWidget=CreateWidget<UOGNativeBattleWidget>(PlayerOwner,UOGNativeBattleWidget::StaticClass());
+            if (NativeBattleWidget) { NativeBattleWidget->AddToViewport(180); Created=true; }
+        }
+        if (NativeBattleWidget)
+        {
+            const bool WasHidden=!NativeBattleWidget->IsVisible();
+            if (Created || WasHidden)
+            {
+                FInputModeGameAndUI Input;
+                Input.SetHideCursorDuringCapture(false);
+                Input.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+                PlayerOwner->SetInputMode(Input);
+            }
+            NativeBattleWidget->BindCharacter(Character);
+            if (WasHidden && !Created) NativeBattleWidget->RefreshBattle();
+            NativeBattleWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+            DrawNativeCombatImpacts(Scale);
+            return true;
+        }
+    }
     const int32 ActingIndex = Battle->SelectNextActingUnitIndex();
     if (!State.Units.IsValidIndex(ActingIndex))
         return false;
@@ -202,11 +234,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     const FOGCombatUnitState* Owned = State.Units.FindByPredicate(
         [Session](const FOGCombatUnitState& U)
         { return U.UnitEntityId == Session->SelectedManifestationId; });
-    const AOGLuminousV3PlayableCharacter* Luminous =
-        CastChecked<AOGLuminousV3PlayableCharacter>(Character);
-    if (!Owned || !Luminous->IsBoundToOwnedLuminousCombatUnit(
-        Session->BoundRulerId,Session->SelectedManifestationId,
-        Owned->SkillSet.CurrentForm)) return false;
+    if (!Owned || !MatchesActualOwnedLuminousBody(Character, *Session, *Owned)) return false;
     const bool bOwnTurn =
         Acting.UnitEntityId == Owned->UnitEntityId && Acting.CanAct();
 
@@ -384,9 +412,9 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     }
     for (int32 U=0; U<UltimateControls.Num(); ++U)
     {
-        // FOGResolvedSkillSet still stores only ONE UltimateSkill. In
-        // particular, Grand's three distinct v4 abilities MUST remain
-        // inactive until their registered IDs and executors are integrated.
+        // The shared kit supports multiple distinct Ultimates. Grand's
+        // controls still require its exact registered v4 executors before
+        // this legacy canvas fallback may activate them.
         // No generic/Alter ultimate is a permissible gameplay substitute.
         const bool bExecutable = !bGrand && bOwnTurn &&
             Owned->SkillSet.UltimateSkill.IsValid();
@@ -401,4 +429,10 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         DrawGameText(FoundationStatusMessage,Edge+5.f*S,
             Bottom-35.f*S,18.f*S,Accent,W-2.f*Edge);
     return true;
+}
+
+void AOGWorldPresentationHud::EndPlay(const EEndPlayReason::Type Reason)
+{
+    if (NativeBattleWidget) { NativeBattleWidget->RemoveFromParent(); NativeBattleWidget=nullptr; }
+    Super::EndPlay(Reason);
 }

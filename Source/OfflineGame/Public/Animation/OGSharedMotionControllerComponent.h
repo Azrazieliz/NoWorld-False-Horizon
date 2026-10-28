@@ -1,12 +1,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/OGEntityId.h"
 #include "Components/ActorComponent.h"
 #include "Animation/OGSharedMotionLibrary.h"
+#include "Animation/OGSharedReferenceMotion.h"
+#include "UObject/StrongObjectPtr.h"
 #include "OGSharedMotionControllerComponent.generated.h"
 
 class USkeletalMeshComponent;
 class UAnimSequence;
+class UAnimationAsset;
+class UOGSharedReferenceAnimInstance;
+class USkinnedMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOGSharedMotionSignal, FName, GameplayAction, FName, MotionId);
 
@@ -81,6 +87,26 @@ public:
     bool PlayAction(FName GameplayAction, FName Context, bool bAdultContextAuthorized = false,
         int32 ParticipantCount = 1, FName ParticipantRole = NAME_None);
 
+    /** Accepted combat presentation is queued once per real action and battle.
+     * Ordinary interaction playback keeps its own source/authorization contract. */
+    UFUNCTION(BlueprintCallable,Category="Motion|Combat")
+    bool EnqueueCombatAction(FName GameplayAction,const FOGEntityId& BattleId,const FOGEntityId& ActionId);
+    UFUNCTION(BlueprintCallable,Category="Motion|Combat")
+    void CancelCombatActions(const FOGEntityId& BattleId);
+    /** A visual HP-result cue. Its deduplication ID never enters canonical gameplay state. */
+    bool EnqueueCombatCue(FName Cue,const FOGEntityId& BattleId,const FOGEntityId& ActionId,const FOGEntityId& SubjectId);
+
+    /** Every installed source is available by stable identity; no character clip copies. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Library")
+    bool PlaySharedSourceMotion(FName SourceId, bool bLoop = false);
+
+    UFUNCTION(BlueprintPure, Category="Motion|Library")
+    TArray<FName> GetSharedSourceMotionIds() const;
+
+    /** Character-side rig aliases, authored once for the actual rig. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
+    TMap<FName, FName> SharedSourceBoneAliases;
+
     /** Pure preflight for synchronized scene start. No actor or animation state changes. */
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     bool CanPlayAction(FName GameplayAction, FName Context,
@@ -104,6 +130,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     void SynchronizeToWorldTime(float SceneStartTime);
 
+    /** Changes presentation speed continuously without changing authored timing.
+     * Zero pauses only this action; canonical World time continues. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Shared")
+    bool SetExternalPacing(float Rate);
+
+    UFUNCTION(BlueprintPure, Category="Motion|Shared")
+    float GetExternalPacing() const { return ExternalPacing; }
+
     /** An authored facial/secondary morph layer that does not replace body animation. */
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
     bool SetMorphLayer(FName Layer, FName Morph, float Weight);
@@ -119,6 +153,7 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Motion|Shared")
     int32 GetNativePartCount() const { return RegisteredParts.Num(); }
+    const TArray<TObjectPtr<USkeletalMeshComponent>>& GetNativeParts() const { return RegisteredParts; }
 
 protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -143,6 +178,13 @@ private:
 
     TArray<float> PlayingSequenceLengths;
 
+    struct FQueuedCombatMotion { FName Action; FOGEntityId Receipt; };
+    TArray<FQueuedCombatMotion> CombatQueue;
+    TSet<FOGEntityId> CombatReceipts;
+    FOGEntityId CombatScope;
+    bool bPreserveCombatQueue=false;
+    bool bPlayingQueuedCombat=false;
+    bool StartNextCombatMotion();
     bool bPlaying = false;
     bool bLooping = false;
     bool bHasContact = false;
@@ -151,9 +193,12 @@ private:
     float SequenceSeconds = 0.f;
     float PlaybackRate = 1.f;
     int32 LastContactCycle = -1;
+    uint64 PlaybackGeneration = 0;
     bool bApplyingRootMotion = false;
     bool bSceneTimeLocked = false;
     float SceneWorldStartTime = 0.f;
+    float SceneAnchorElapsed = 0.f;
+    float ExternalPacing = 1.f;
 
     struct FMorphOverlay
     {
@@ -164,6 +209,32 @@ private:
     TArray<FMorphOverlay> MorphOverlays;
     TSet<FName> AppliedMorphs;
     TArray<FOGSharedMorphTrack> AuthoredMorphTracks;
+
+    struct FReferencePartRestore
+    {
+        TWeakObjectPtr<USkeletalMeshComponent> Part;
+        TWeakObjectPtr<USkeletalMesh> Mesh;
+        TWeakObjectPtr<UOGSharedReferenceAnimInstance> Instance;
+        TWeakObjectPtr<USkinnedMeshComponent> Leader;
+        TStrongObjectPtr<UClass> PreviousClass;
+        TStrongObjectPtr<UAnimationAsset> PreviousAsset;
+        uint8 Mode = 0;
+        float Rate = 1, Position = 0;
+        bool bLoop = false, bWasPlaying = false;
+    };
+    TArray<FOGReferenceRigAdapter> ReferenceRigs;
+    TArray<TArray<FOGReferenceBoneConnection>> ReferenceMappings;
+    TArray<FReferencePartRestore> ReferenceRestores;
+    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> ReferenceClip;
+    bool PrepareReference(const FOGReferenceMotionClip&, TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
+    bool FindReference(FName Action, FName Context, int32 Count, FName Role,
+        FOGSharedMotionEntry&, TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>&,
+        TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
+    bool StartReference(const FOGSharedMotionEntry&,
+        TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>,
+        TArray<TArray<FOGReferenceBoneConnection>>&&);
+    void UpdateReferencePose();
+    void RestoreReferencePose();
 
     void ApplyMorphOverlays();
     bool ResolveForPart(const UOGSharedMotionLibrary* Library,

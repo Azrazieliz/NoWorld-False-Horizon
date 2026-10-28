@@ -13,6 +13,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
@@ -20,6 +21,193 @@ namespace
 {
     const FName PlayerRole(TEXT("player"));
     bool Fail(FString& Error, const TCHAR* Message) { Error = Message; return false; }
+
+    // A grammar pass rejects permissive-reader extensions (comments, trailing
+    // commas, non-JSON numbers and trailing documents) before deserialization.
+    struct FStrictInteractionJson
+    {
+        const FString& Text;
+        int32 At = 0;
+        void Space() { while (At < Text.Len() && (Text[At] == ' ' || Text[At] == '\t' || Text[At] == '\r' || Text[At] == '\n')) ++At; }
+        bool Take(TCHAR C) { Space(); if (At < Text.Len() && Text[At] == C) { ++At; return true; } return false; }
+        bool Digit() const { return At < Text.Len() && Text[At] >= '0' && Text[At] <= '9'; }
+        bool String()
+        {
+            if (!Take('"')) return false;
+            while (At < Text.Len())
+            {
+                const TCHAR C = Text[At++];
+                if (C == '"') return true;
+                if (C < 0x20) return false;
+                if (C != '\\') continue;
+                if (At >= Text.Len()) return false;
+                const TCHAR Escape = Text[At++];
+                if (Escape == 'u')
+                {
+                    for (int32 I = 0; I < 4; ++I)
+                    {
+                        if (At >= Text.Len()) return false;
+                        const TCHAR H = Text[At++];
+                        if (!((H >= '0' && H <= '9') || (H >= 'a' && H <= 'f') || (H >= 'A' && H <= 'F'))) return false;
+                    }
+                }
+                else if (Escape != '"' && Escape != '\\' && Escape != '/' && Escape != 'b' && Escape != 'f' && Escape != 'n' && Escape != 'r' && Escape != 't') return false;
+            }
+            return false;
+        }
+        bool Value(int32 Depth = 0)
+        {
+            Space();
+            if (At >= Text.Len() || Depth > 64) return false;
+            if (Text[At] == '"') return String();
+            if (Text[At] == '{' || Text[At] == '[')
+            {
+                if (Depth >= 64) return false;
+                const bool bObject = Text[At++] == '{';
+                const TCHAR End = bObject ? '}' : ']';
+                if (Take(End)) return true;
+                do
+                {
+                    if (bObject && (!String() || !Take(':'))) return false;
+                    if (!Value(Depth + 1)) return false;
+                    if (Take(End)) return true;
+                } while (Take(','));
+                return false;
+            }
+            for (const TCHAR* Literal : { TEXT("true"), TEXT("false"), TEXT("null") })
+            {
+                const int32 Length = FCString::Strlen(Literal);
+                if (Text.Mid(At, Length) == Literal) { At += Length; return true; }
+            }
+            const int32 Start = At;
+            if (Text[At] == '-') ++At;
+            if (!Digit()) return false;
+            if (Text[At] == '0') ++At;
+            else while (Digit()) ++At;
+            if (At < Text.Len() && Text[At] == '.')
+            { ++At; if (!Digit()) return false; while (Digit()) ++At; }
+            if (At < Text.Len() && (Text[At] == 'e' || Text[At] == 'E'))
+            {
+                ++At;
+                if (At < Text.Len() && (Text[At] == '+' || Text[At] == '-')) ++At;
+                if (!Digit()) return false;
+                while (Digit()) ++At;
+            }
+            double Number = 0;
+            return LexTryParseString(Number, *Text.Mid(Start, At - Start)) && FMath::IsFinite(Number);
+        }
+    };
+
+    bool ReadStateJson(const FString& Json, TSharedPtr<FJsonObject>& Out, FString& Error, bool bPatch = false)
+    {
+        Out.Reset();
+        if (Json.Len() > 8 * 1024 * 1024) return Fail(Error, TEXT("Interaction JSON exceeds 8 Mi characters."));
+        FStrictInteractionJson Grammar{Json};
+        if (!Grammar.Value()) return Fail(Error, TEXT("Interaction state requires strict JSON."));
+        Grammar.Space();
+        if (Grammar.At != Json.Len()) return Fail(Error, TEXT("Interaction JSON has trailing data."));
+        struct FScope { bool bObject = false; TSet<FString> Keys; };
+        TArray<FScope> Stack;
+        const auto Reader = TJsonReaderFactory<>::Create(Json);
+        EJsonNotation N;
+        while (Reader->ReadNext(N))
+        {
+            if (N == EJsonNotation::Error) return Fail(Error, TEXT("Malformed interaction JSON."));
+            const bool bEnd = N == EJsonNotation::ObjectEnd || N == EJsonNotation::ArrayEnd;
+            if (!bEnd && !Stack.IsEmpty() && Stack.Last().bObject)
+            {
+                const FString Key = Reader->GetIdentifier();
+                if (Stack.Last().Keys.Contains(Key)) return Fail(Error, TEXT("Duplicate interaction JSON member."));
+                Stack.Last().Keys.Add(Key);
+                if (bPatch)
+                {
+                    FString Reserved = Key.ToLower();
+                    Reserved.ReplaceInline(TEXT("_"), TEXT("")); Reserved.ReplaceInline(TEXT("-"), TEXT(""));
+                    // Schema/authority protection, never a test of a character's
+                    // permission or eligibility. These patches only express state.
+                    for (const TCHAR* Name : { TEXT("eligible"), TEXT("eligibility"), TEXT("iseligible"), TEXT("beligible"),
+                        TEXT("permission"), TEXT("permissions"), TEXT("consent"), TEXT("consentstate"),
+                        TEXT("affection"), TEXT("affectionpoints"), TEXT("affectionthreshold"), TEXT("authorizedadult"),
+                        TEXT("reward"), TEXT("rewards"), TEXT("currency"), TEXT("grants"),
+                        TEXT("manifestationid"), TEXT("identityid"), TEXT("owningrulerid"), TEXT("ownerentityid"),
+                        TEXT("versionid"), TEXT("activeversionid"), TEXT("grand"), TEXT("grandstate"),
+                        TEXT("isgrand"), TEXT("bgrand"), TEXT("convergence"), TEXT("progressionstate") })
+                        if (Reserved == Name) return Fail(Error, TEXT("Interaction patch contains a reserved authority/access/reward field."));
+                }
+            }
+            if (N == EJsonNotation::ObjectStart || N == EJsonNotation::ArrayStart)
+            { FScope Scope; Scope.bObject = N == EJsonNotation::ObjectStart; Stack.Add(MoveTemp(Scope)); }
+            else if (bEnd && !Stack.IsEmpty()) Stack.Pop();
+        }
+        if (!Stack.IsEmpty() || !Reader->GetErrorMessage().IsEmpty() ||
+            !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Out, FJsonSerializer::EFlags::StoreNumbersAsStrings) || !Out.IsValid())
+            return Fail(Error, TEXT("Interaction state must be a complete JSON object."));
+        return true;
+    }
+
+    FString StateJson(const TSharedPtr<FJsonObject>& Object)
+    {
+        FString Json;
+        FJsonSerializer::Serialize(Object.ToSharedRef(), TJsonWriterFactory<>::Create(&Json));
+        return Json;
+    }
+    void MergeState(const TSharedPtr<FJsonObject>& Target, const TSharedPtr<FJsonObject>& Patch)
+    {
+        for (const auto& Pair : Patch->Values)
+        {
+            const TSharedPtr<FJsonObject>* Existing = nullptr;
+            if (Pair.Value->Type == EJson::Object && Target->TryGetObjectField(Pair.Key, Existing))
+                MergeState(*Existing, Pair.Value->AsObject());
+            else Target->SetField(Pair.Key, Pair.Value);
+        }
+    }
+    bool MergeStateJson(FString& Json, const FString& PatchJson, FString& Error)
+    {
+        TSharedPtr<FJsonObject> Current, Patch;
+        if (!ReadStateJson(Json, Current, Error) || !ReadStateJson(PatchJson, Patch, Error, true)) return false;
+        if (!Patch->Values.IsEmpty()) { MergeState(Current, Patch); Json = StateJson(Current); }
+        return true;
+    }
+    const FOGInteractionParticipant* UniqueRole(const TArray<FOGInteractionParticipant>& Bindings, FName Role)
+    {
+        const FOGInteractionParticipant* Result = nullptr;
+        if (Role.IsNone()) return nullptr;
+        for (const auto& Binding : Bindings) if (Binding.Role == Role)
+        { if (Result) return nullptr; Result = &Binding; }
+        return Result;
+    }
+    bool ValidatePatches(const FOGInteractionAuthoredConsequences& Consequences,
+        const TArray<FOGInteractionParticipant>& Bindings, FString& Error)
+    {
+        TSharedPtr<FJsonObject> Object;
+        for (const auto& Patch : Consequences.PresentationPatches)
+        {
+            const auto* Binding = UniqueRole(Bindings, Patch.Role);
+            if (!Binding) return Fail(Error, TEXT("Presentation patch role must bind exactly one canonical participant."));
+            if (Patch.SelectedSkinId.IsSet() && !Patch.SelectedSkinId.GetValue().IsEmpty() && !Patch.SelectedSkinId.GetValue().IsValid())
+                return Fail(Error, TEXT("Presentation patch skin must be an authored content ID or an explicit empty selection."));
+            if (!ReadStateJson(Patch.OutfitMergeJson, Object, Error, true) || !ReadStateJson(Patch.VariantMergeJson, Object, Error, true)) return false;
+            for (const auto& Record : Consequences.Presentation)
+                if (Record.ManifestationId == Binding->Character.EntityId)
+                    return Fail(Error, TEXT("Do not mix full presentation replacement and a sparse patch for the same participant."));
+        }
+        for (const auto& Patch : Consequences.AdultContextPatches)
+        {
+            if (!UniqueRole(Bindings, Patch.Role)) return Fail(Error, TEXT("Context patch role must bind exactly one canonical participant."));
+            if (Patch.CurrentProfileVariantId.IsSet() && !Patch.CurrentProfileVariantId.GetValue().IsEmpty() && !Patch.CurrentProfileVariantId.GetValue().IsValid())
+                return Fail(Error, TEXT("Context profile must be an authored content ID or an explicit empty selection."));
+            if (!ReadStateJson(Patch.MutableContextMergeJson, Object, Error, true)) return false;
+        }
+        // Full record consequences remain source compatible and deliberately
+        // retain their original explicit-replacement semantics.
+        for (const auto& Record : Consequences.Presentation)
+            if (!ReadStateJson(Record.OutfitStateJson, Object, Error) || !ReadStateJson(Record.PresentationVariantStateJson, Object, Error)) return false;
+        for (const auto& Record : Consequences.Memories)
+            if (!ReadStateJson(Record.StateJson, Object, Error)) return false;
+        for (const auto& Record : Consequences.Knowledge)
+            if (!ReadStateJson(TEXT("{\"value\":") + Record.ValueJson + TEXT("}"), Object, Error)) return false;
+        return true;
+    }
     void BodySize(AActor* Actor, float& Radius, float& HalfHeight)
     {
         Radius = 35.f; HalfHeight = 90.f;
@@ -48,6 +236,17 @@ FOGSystemicInteractionRuntime::~FOGSystemicInteractionRuntime()
 const FOGInteractionActionNode* FOGSystemicInteractionRuntime::FindNode(FName Id) const
 {
     return Graph.Nodes.FindByPredicate([Id](const auto& Node) { return Node.NodeId == Id; });
+}
+
+TArray<FName> FOGSystemicInteractionRuntime::GetAvailableActions() const
+{
+    TArray<FName> Result;
+    if (!bActive) return Result;
+    const FName Previous = CurrentNode.IsNone() ? LastCompletedNode : CurrentNode;
+    if (Previous.IsNone()) { Result.Add(Graph.StartNode); return Result; }
+    if (const auto* Node = FindNode(Previous))
+        for (const FName Next : Node->NextNodes) Result.AddUnique(Next);
+    return Result;
 }
 
 bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
@@ -88,6 +287,15 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
             !FMath::IsFinite(Node.DurationSeconds) || Node.DurationSeconds <= 0)
             return Fail(Error, TEXT("Graph nodes require unique IDs, action IDs and finite positive durations."));
         NodeIds.Add(Node.NodeId);
+        if (!ValidatePatches(Node.Consequences, Request.Participants, Error)) return false;
+        TSet<FName> PlacedRoles;
+        for (const auto& Placement : Node.RolePlacements)
+        {
+            if (!UniqueRole(Request.Participants, Placement.Role) || PlacedRoles.Contains(Placement.Role) ||
+                Placement.RelativeToAnchor.ContainsNaN() || !Placement.RelativeToAnchor.GetRotation().IsNormalized())
+                return Fail(Error, TEXT("Authored placements require unique individual roles and finite normalized transforms."));
+            PlacedRoles.Add(Placement.Role);
+        }
         for (FName Role : Node.RequiredRoles) if (!Roles.Contains(Role))
             return Fail(Error, TEXT("A graph role has no bound participant."));
         for (const auto& Constraint : Node.Constraints)
@@ -106,14 +314,14 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
     LastWorldTick = Tick;
     Entry = Request; Graph = Definition; SessionId = FOGEntityId::NewId();
     CurrentNode = NAME_None; LastCompletedNode = NAME_None;
-    Elapsed = 0; Pacing = 1; Sequence.Reset(); Participants.Reset(); Restore.Reset();
+    Elapsed = 0; Pacing = 1; bCompletionRefreshPending = false; Sequence.Reset(); Participants.Reset(); Restore.Reset();
     for (const auto& Binding : Entry.Participants)
     {
         FOGInteractionParticipantState State; State.Binding = Binding;
         Participants.Add(MoveTemp(State));
     }
     if (!RefreshCharacters(Error)) { Participants.Reset(); return false; }
-    if (!SolveStaging(Entry.PreferredLocation, FindNode(Graph.StartNode)->EnvironmentAnchorTag, Error))
+    if (!SolveStaging(Entry.PreferredLocation, FindNode(Graph.StartNode), Error))
     { Participants.Reset(); return false; }
     // Persist entry before touching ordinary movement/camera state.
     if (!CommitEvent(FName(TEXT("interaction.entered")), Entry.Context, Tick, nullptr, Error))
@@ -167,25 +375,27 @@ bool FOGSystemicInteractionRuntime::RefreshCharacters(FString& Error)
     return true;
 }
 
-bool FOGSystemicInteractionRuntime::SolveStaging(const FVector& Preferred, FName AnchorTag, FString& Error)
+bool FOGSystemicInteractionRuntime::SolveStaging(const FVector& Preferred, const FOGInteractionActionNode* Node, FString& Error)
 {
     if (Preferred.ContainsNaN()) return Fail(Error, TEXT("Staging position is not finite."));
     UWorld* World = Entry.World.Get();
-    TArray<FVector> Centers; Centers.Add(Preferred);
+    const FName AnchorTag = Node ? Node->EnvironmentAnchorTag : NAME_None;
+    TArray<FTransform> Anchors; Anchors.Add(FTransform(FQuat::Identity, Preferred));
     if (World)
     {
-        TArray<FVector> Anchors;
+        TArray<FTransform> Nearby;
         for (TActorIterator<AActor> It(World); It; ++It)
             if (It->ActorHasTag(FName(TEXT("OGInteractionAnchor"))) &&
-                (AnchorTag.IsNone() || It->ActorHasTag(AnchorTag))) Anchors.Add(It->GetActorLocation());
-        Anchors.Sort([Preferred](const FVector& A, const FVector& B)
-            { return FVector::DistSquared(A, Preferred) < FVector::DistSquared(B, Preferred); });
-        Centers.Append(Anchors);
+                (AnchorTag.IsNone() || It->ActorHasTag(AnchorTag)) && !It->GetActorTransform().ContainsNaN())
+                Nearby.Add(FTransform(It->GetActorQuat(), It->GetActorLocation()));
+        Nearby.Sort([Preferred](const FTransform& A, const FTransform& B)
+            { return FVector::DistSquared(A.GetLocation(), Preferred) < FVector::DistSquared(B.GetLocation(), Preferred); });
+        Anchors.Append(Nearby);
         // Bounded geometry search budget does not bound logical participant arity.
         for (int32 Ring = 1; Ring <= 4; ++Ring) for (int32 Sector = 0; Sector < 8; ++Sector)
         {
             const double Angle = Sector * UE_DOUBLE_PI / 4.0;
-            Centers.Add(Preferred + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0) * (Ring * 350.0));
+            Anchors.Add(FTransform(FQuat::Identity, Preferred + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0) * (Ring * 350.0)));
         }
     }
     FCollisionQueryParams Params(SCENE_QUERY_STAT(OGInteractionStaging), false);
@@ -197,31 +407,67 @@ bool FOGSystemicInteractionRuntime::SolveStaging(const FVector& Preferred, FName
         LargestRadius = FMath::Max(LargestRadius, Radius);
     }
     const double Spacing = LargestRadius * 2.0 + 35.0;
-    const double CircleRadius = FMath::Max(Spacing, Participants.Num() * Spacing / (2.0 * UE_DOUBLE_PI));
-    for (const FVector& Center : Centers)
+    double AuthoredExtent = 0;
+    if (Node) for (const auto& Placement : Node->RolePlacements)
+        AuthoredExtent = FMath::Max(AuthoredExtent, Placement.RelativeToAnchor.GetTranslation().Size2D());
+    const double CircleRadius = FMath::Max(AuthoredExtent + Spacing,
+        FMath::Max(Spacing, Participants.Num() * Spacing / (2.0 * UE_DOUBLE_PI)));
+    for (const FTransform& Anchor : Anchors)
     {
         TArray<FTransform> Placements;
+        TArray<bool> Authored;
+        TArray<double> FloorHeights;
         bool bFits = true;
+        double GroupLift = -TNumericLimits<double>::Max();
         for (int32 Index = 0; Index < Participants.Num(); ++Index)
         {
             const auto& Participant = Participants[Index];
             float Radius, Height; BodySize(Participant.Binding.Actor.Get(), Radius, Height);
             const double Angle = Index * 2.0 * UE_DOUBLE_PI / Participants.Num();
-            FVector Position = Center + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0) * CircleRadius;
+            const auto* Source = Node ? Node->RolePlacements.FindByPredicate([&Participant](const auto& Placement)
+                { return Placement.Role == Participant.Binding.Role; }) : nullptr;
+            FTransform Placement;
+            if (Source) Placement = Source->RelativeToAnchor * Anchor;
+            else
+            {
+                const FVector Position = Anchor.TransformPosition(FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0) * CircleRadius);
+                FRotator Facing = (Anchor.GetLocation() - Position).Rotation(); Facing.Pitch = 0; Facing.Roll = 0;
+                Placement = FTransform(Facing, Position);
+            }
+            // Source scale never resizes the current canonical body.
+            Placement.SetScale3D(Participant.Binding.Actor.IsValid() ? Participant.Binding.Actor->GetActorScale3D() : FVector::OneVector);
+            if (Placement.ContainsNaN()) { bFits = false; break; }
+            double FloorHeight = 0;
             if (World && Participant.Binding.Actor.IsValid())
             {
+                const FVector Position = Placement.GetLocation();
                 FHitResult Floor;
                 if (!World->LineTraceSingleByChannel(Floor, Position + FVector(0,0,500), Position - FVector(0,0,1500), ECC_WorldStatic, Params)
                     || Floor.ImpactNormal.Z < 0.5f) { bFits = false; break; }
-                Position.Z = Floor.ImpactPoint.Z + Height + 2.f;
+                FloorHeight = Floor.ImpactPoint.Z + Height + 2.f;
+                if (Source) GroupLift = FMath::Max(GroupLift, FloorHeight - Position.Z);
+            }
+            Placements.Add(Placement); Authored.Add(Source != nullptr); FloorHeights.Add(FloorHeight);
+        }
+        if (!bFits) continue;
+        if (GroupLift == -TNumericLimits<double>::Max()) GroupLift = 0;
+        for (int32 Index = 0; Index < Participants.Num(); ++Index)
+        {
+            const auto& Participant = Participants[Index];
+            FVector Position = Placements[Index].GetLocation();
+            // One shared vertical correction retains every source-role offset,
+            // including relative height. Observers retain independent floor fit.
+            if (Authored[Index]) Position.Z += GroupLift;
+            else if (World && Participant.Binding.Actor.IsValid()) Position.Z = FloorHeights[Index];
+            Placements[Index].SetLocation(Position);
+            if (World && Participant.Binding.Actor.IsValid())
+            {
+                float Radius, Height; BodySize(Participant.Binding.Actor.Get(), Radius, Height);
                 FCollisionObjectQueryParams Objects;
                 Objects.AddObjectTypesToQuery(ECC_WorldStatic); Objects.AddObjectTypesToQuery(ECC_WorldDynamic); Objects.AddObjectTypesToQuery(ECC_Pawn);
                 if (World->OverlapAnyTestByObjectType(Position, FQuat::Identity, Objects,
                     FCollisionShape::MakeCapsule(Radius, FMath::Max(Height, Radius)), Params)) { bFits = false; break; }
             }
-            FRotator Facing = (Center - Position).Rotation(); Facing.Pitch = 0; Facing.Roll = 0;
-            FVector Scale = Participant.Binding.Actor.IsValid() ? Participant.Binding.Actor->GetActorScale3D() : FVector::OneVector;
-            Placements.Add(FTransform(Facing, Position, Scale));
         }
         if (bFits)
         {
@@ -236,7 +482,7 @@ bool FOGSystemicInteractionRuntime::Restage(const FVector& Location, FString& Er
 {
     if (!bActive) return Fail(Error, TEXT("No active interaction."));
     const auto* Node = FindNode(CurrentNode);
-    if (!SolveStaging(Location, Node ? Node->EnvironmentAnchorTag : NAME_None, Error)) return false;
+    if (!SolveStaging(Location, Node, Error)) return false;
     Entry.PreferredLocation = Location;
     for (const auto& Participant : Participants) if (auto* Actor = Participant.Binding.Actor.Get())
         Actor->SetActorTransform(Participant.StagingTransform, false, nullptr, ETeleportType::TeleportPhysics);
@@ -279,7 +525,8 @@ bool FOGSystemicInteractionRuntime::StartNode(FName Id, FString& Error)
 {
     const auto* Node = FindNode(Id);
     if (!Node || !RefreshCharacters(Error)) return false;
-    if (!SolveStaging(Entry.PreferredLocation, Node->EnvironmentAnchorTag, Error)) return false;
+    if (!SolveStaging(Entry.PreferredLocation, Node, Error)) return false;
+    bCompletionRefreshPending = false;
     CurrentNode = Id; Elapsed = 0;
     for (const auto& Participant : Participants) if (auto* Actor = Participant.Binding.Actor.Get())
         Actor->SetActorTransform(Participant.StagingTransform, false, nullptr, ETeleportType::TeleportPhysics);
@@ -294,31 +541,48 @@ bool FOGSystemicInteractionRuntime::SetPacing(double Rate, FString& Error)
     for (const auto& Pair : PlayedMontages)
         if (auto* Character = Cast<ACharacter>(Pair.Key.Get()))
             if (auto* Montage = Cast<UAnimMontage>(Pair.Value.Get()))
-                if (auto* Anim = Character->GetMesh()->GetAnimInstance())
-                    Anim->Montage_SetPlayRate(Montage, static_cast<float>(Rate));
+                if (auto* Mesh = Character->GetMesh())
+                    if (auto* Anim = Mesh->GetAnimInstance())
+                        Anim->Montage_SetPlayRate(Montage, static_cast<float>(FMath::Min(Rate, static_cast<double>(MAX_flt))));
     return true;
 }
 
 bool FOGSystemicInteractionRuntime::Advance(double Delta, int64 Tick, FString& Error)
 {
     if (!bActive) return true;
-    if (!FMath::IsFinite(Delta) || Delta < 0 || Tick < 0) return Fail(Error, TEXT("Invalid frame duration or canonical tick."));
+    if (!FMath::IsFinite(Delta) || Delta < 0 || Tick < 0 || Tick < LastWorldTick) return Fail(Error, TEXT("Invalid frame duration or backward canonical tick."));
     LastWorldTick = Tick;
     for (const auto& Saved : Restore)
         if (!Saved.Actor.IsValid()) return Exit(FName(TEXT("participant_unloaded")), Tick, Error);
+    if (bCompletionRefreshPending)
+    {
+        if (!RefreshCharacters(Error)) return false;
+        bCompletionRefreshPending = false;
+    }
+    if (CurrentNode.IsNone() && !Sequence.IsEmpty())
+    {
+        if (!StartNode(Sequence[0], Error)) return false;
+        Sequence.RemoveAt(0);
+        // This call recovers a previously failed transition only; its frame
+        // duration must not be charged to a newly started action.
+        return true;
+    }
     if (const auto* ActiveNode = FindNode(CurrentNode)) UpdateSignificance(*ActiveNode);
     if (CurrentNode.IsNone() || Pacing == 0) return true;
     const auto* Node = FindNode(CurrentNode);
     if (!Node) return Fail(Error, TEXT("Current action no longer exists."));
     const double Progress = Delta * Pacing;
     if (!FMath::IsFinite(Progress)) return Fail(Error, TEXT("Pacing duration overflow."));
-    // At most one completed action per call: surplus becomes elapsed on the next
-    // selected action only on later frames, avoiding burst consequence commits.
+    // At most one completion per call. Surplus duration is discarded; the host
+    // continues advancing world time independently of action pacing/progress.
     Elapsed = FMath::Min(Node->DurationSeconds, Elapsed + Progress);
     if (Elapsed < Node->DurationSeconds) return true;
     if (!CommitEvent(FName(TEXT("interaction.action_completed")), Node->NodeId, Tick, &Node->Consequences, Error)) return false;
     LastCompletedNode = CurrentNode; CurrentNode = NAME_None; Elapsed = 0;
+    bCompletionRefreshPending = true;
+    StopActionPresentation();
     if (!RefreshCharacters(Error)) return false;
+    bCompletionRefreshPending = false;
     if (!Sequence.IsEmpty())
     {
         const FName Next = Sequence[0];
@@ -340,16 +604,29 @@ bool FOGSystemicInteractionRuntime::LoadOptional(const FOGOptionalAssetReference
     return true;
 }
 
-void FOGSystemicInteractionRuntime::UpdatePresentation(const FOGInteractionActionNode& Node)
+void FOGSystemicInteractionRuntime::StopActionPresentation()
 {
     for (const auto& Pair : PlayedMontages)
         if (auto* Character = Cast<ACharacter>(Pair.Key.Get()))
             if (auto* Montage = Cast<UAnimMontage>(Pair.Value.Get()))
-                if (auto* Anim = Character->GetMesh()->GetAnimInstance()) Anim->Montage_Stop(0.1f, Montage);
+                if (auto* Mesh = Character->GetMesh())
+                    if (auto* Anim = Mesh->GetAnimInstance()) Anim->Montage_Stop(0.1f, Montage);
     PlayedMontages.Reset();
     // Never let a previous scene continue into a different authored action
     // (including a privacy-masked or non-scene node).
-    if (Presentation) Presentation->StopSharedScene();
+    if (Presentation) { Presentation->StopSharedScene(); Presentation->EndAction(); }
+    for (auto& Participant : Participants)
+    {
+        Participant.bHasOptionalPresentation = false;
+        Participant.bActionRelevant = false;
+        if (Presentation && bActive)
+            Presentation->SetSignificance(Participant.Binding.Character.EntityId, false, Participant.bCameraRelevant);
+    }
+}
+
+void FOGSystemicInteractionRuntime::UpdatePresentation(const FOGInteractionActionNode& Node)
+{
+    StopActionPresentation();
     // Apply the original multi-actor action as a single synchronized native
     // scene. The presentation bridge verifies all compatible source roles,
     // approved clips and active actor rigs BEFORE any participant plays.
@@ -403,9 +680,10 @@ void FOGSystemicInteractionRuntime::UpdatePresentation(const FOGInteractionActio
                 {
                     if (Mesh && Mesh->GetAnimInstance() && Mesh->GetSkeletalMeshAsset() && Montage->GetSkeleton() == Mesh->GetSkeletalMeshAsset()->GetSkeleton())
                     {
-                        if (Mesh->GetAnimInstance()->Montage_Play(Montage, static_cast<float>(FMath::Max(0.01, Pacing))) > 0)
+                        const float MontageRate = static_cast<float>(FMath::Min(Pacing, static_cast<double>(MAX_flt)));
+                        if (Mesh->GetAnimInstance()->Montage_Play(Montage, FMath::Max(0.01f, MontageRate)) > 0)
                         {
-                            Mesh->GetAnimInstance()->Montage_SetPlayRate(Montage, static_cast<float>(Pacing));
+                            Mesh->GetAnimInstance()->Montage_SetPlayRate(Montage, MontageRate);
                             PlayedMontages.Add(Participant.Binding.Actor, TWeakObjectPtr<UObject>(Montage));
                             Participant.bHasOptionalPresentation = true;
                         }
@@ -468,9 +746,113 @@ void FOGSystemicInteractionRuntime::SetPrivacyPresentation(bool Privacy)
     if (bActive) if (const auto* Node = FindNode(CurrentNode)) UpdatePresentation(*Node);
 }
 
+bool FOGSystemicInteractionRuntime::ApplyStatePatches(const FOGInteractionAuthoredConsequences& Consequences,
+    int64 Tick, FString& Error)
+{
+    // Called only inside CommitEvent's transaction. Never derive a replacement
+    // from Participants[].Character, which is a presentation cache.
+    auto Resolve = [&](FName Role, FOGEntityId& Entity, FName& Kind, FString& Json, bool& bManifestation)
+    {
+        const auto* Binding = UniqueRole(Entry.Participants, Role);
+        if (!Binding) return Fail(Error, TEXT("State patch role is missing or ambiguous."));
+        Entity = Binding->Character.EntityId;
+        bool Found = false; int64 Revision = 0;
+        if (!Store.TryReadEntity(Entity, Found, Kind, Json, Revision, Error)) return false;
+        if (!Found) return Fail(Error, TEXT("State patch participant no longer exists canonically."));
+        FOGCharacterManifestationRecord Current;
+        if (!Store.TryReadCharacterManifestation(Entity, bManifestation, Current, Error)) return false;
+        const auto& Context = Binding->Character;
+        if (Context.ManifestationId.IsValid() && (Context.ManifestationId != Entity || !bManifestation))
+            return Fail(Error, TEXT("State patch canonical Manifestation binding changed."));
+        if (Context.OwnerEntityId.IsValid() && Context.OwnerEntityId !=
+            (bManifestation ? Current.OwningRulerId : Entity))
+            return Fail(Error, TEXT("State patch canonical ownership changed; rebind the participant."));
+        return true;
+    };
+    for (const auto& Patch : Consequences.PresentationPatches)
+    {
+        FOGEntityId Entity; FName Kind; FString EntityJson; bool bManifestation = false;
+        if (!Resolve(Patch.Role, Entity, Kind, EntityJson, bManifestation)) return false;
+        FOGManifestationPresentationStateRecord Record;
+        Record.ManifestationId = Entity;
+        TSharedPtr<FJsonObject> EntityState, PresentationState;
+        if (bManifestation)
+        {
+            bool Found = false;
+            if (!Store.TryReadManifestationPresentationState(Entity, Found, Record, Error)) return false;
+            Record.ManifestationId = Entity;
+        }
+        else
+        {
+            if (!ReadStateJson(EntityJson, EntityState, Error)) return false;
+            const auto* Value = EntityState->Values.Find(TEXT("foundation_presentation"));
+            if (Value)
+            {
+                if ((*Value)->Type != EJson::Object) return Fail(Error, TEXT("NPC foundation presentation must be an object."));
+                PresentationState = (*Value)->AsObject();
+            }
+            else PresentationState = MakeShared<FJsonObject>();
+            auto ReadString = [&](const TCHAR* Key, FString& Out)
+            {
+                if (!PresentationState->HasField(Key)) return true;
+                const auto* Field = PresentationState->Values.Find(Key);
+                return ((*Field)->Type == EJson::String && PresentationState->TryGetStringField(Key, Out)) ||
+                    Fail(Error, TEXT("NPC foundation presentation fields must retain their canonical string types."));
+            };
+            FString Skin, WorldTick;
+            if (!ReadString(TEXT("skin_id"), Skin) || !ReadString(TEXT("outfit_state_json"), Record.OutfitStateJson) ||
+                !ReadString(TEXT("variant_state_json"), Record.PresentationVariantStateJson) ||
+                !ReadString(TEXT("updated_world_tick"), WorldTick)) return false;
+            Record.SelectedSkinId = FOGContentId(Skin);
+            if (!WorldTick.IsEmpty() && (!LexTryParseString(Record.UpdatedWorldTick, *WorldTick) ||
+                Record.UpdatedWorldTick < 0 || LexToString(Record.UpdatedWorldTick) != WorldTick))
+                return Fail(Error, TEXT("NPC presentation has an invalid canonical tick."));
+        }
+        if (Record.UpdatedWorldTick > Tick) return Fail(Error, TEXT("Presentation patch cannot backdate newer canonical state."));
+        if (!Record.SelectedSkinId.IsEmpty() && !Record.SelectedSkinId.IsValid())
+            return Fail(Error, TEXT("Canonical presentation skin is invalid; preserving state."));
+        if (!MergeStateJson(Record.OutfitStateJson, Patch.OutfitMergeJson, Error) ||
+            !MergeStateJson(Record.PresentationVariantStateJson, Patch.VariantMergeJson, Error)) return false;
+        if (Patch.SelectedSkinId.IsSet()) Record.SelectedSkinId = Patch.SelectedSkinId.GetValue();
+        Record.UpdatedWorldTick = Tick;
+        if (bManifestation)
+        {
+            if (!Store.UpsertManifestationPresentationState(Record, Error)) return false;
+        }
+        else
+        {
+            // Preserve unknown presentation metadata and every entity sibling.
+            PresentationState->SetStringField(TEXT("skin_id"), Record.SelectedSkinId.ToString());
+            PresentationState->SetStringField(TEXT("outfit_state_json"), Record.OutfitStateJson);
+            PresentationState->SetStringField(TEXT("variant_state_json"), Record.PresentationVariantStateJson);
+            PresentationState->SetStringField(TEXT("updated_world_tick"), LexToString(Tick));
+            EntityState->SetObjectField(TEXT("foundation_presentation"), PresentationState);
+            if (!Store.UpsertEntity(Entity, Kind, Tick, StateJson(EntityState), Error)) return false;
+        }
+    }
+    for (const auto& Patch : Consequences.AdultContextPatches)
+    {
+        FOGEntityId Entity; FName Kind; FString Json; bool bManifestation = false;
+        if (!Resolve(Patch.Role, Entity, Kind, Json, bManifestation)) return false;
+        bool Found = false; FOGCharacterAdultRuntimeStateRecord Record;
+        if (!Store.TryReadCharacterAdultRuntimeState(Entity, Found, Record, Error)) return false;
+        if (Record.UpdatedWorldTick > Tick) return Fail(Error, TEXT("Context patch cannot backdate newer canonical state."));
+        if (!Record.CurrentProfileVariantId.IsEmpty() && !Record.CurrentProfileVariantId.IsValid())
+            return Fail(Error, TEXT("Canonical context profile is invalid; preserving state."));
+        if (!MergeStateJson(Record.MutableContextStateJson, Patch.MutableContextMergeJson, Error)) return false;
+        Record.CharacterEntityId = Entity; Record.UpdatedWorldTick = Tick;
+        if (Patch.CurrentProfileVariantId.IsSet()) Record.CurrentProfileVariantId = Patch.CurrentProfileVariantId.GetValue();
+        if (!Store.UpsertCharacterAdultRuntimeState(Record, Error)) return false;
+    }
+    return true;
+}
+
 bool FOGSystemicInteractionRuntime::CommitEvent(FName Type, FName Reason, int64 Tick,
     const FOGInteractionAuthoredConsequences* Consequences, FString& Error)
 {
+    if (!Store.BeginTransaction(Error)) return false;
+    auto Abort = [&]() { FString RollbackError; if (!Store.RollbackTransaction(RollbackError)) Error += TEXT("; rollback: ") + RollbackError; return false; };
+    if (Consequences && !ValidatePatches(*Consequences, Entry.Participants, Error)) return Abort();
     FOGWorldEvent Event;
     Event.EventId = FOGEntityId::NewId(); Event.EventType = Type; Event.WorldTick = Tick; Event.PrimaryEntity = RulerId;
     for (const auto& Participant : Participants) Event.RelatedEntities.Add(Participant.Binding.Character.EntityId);
@@ -487,20 +869,21 @@ bool FOGSystemicInteractionRuntime::CommitEvent(FName Type, FName Reason, int64 
         auto Binding = MakeShared<FJsonObject>();
         Binding->SetStringField(TEXT("entity_id"), Participant.Binding.Character.EntityId.ToString());
         Binding->SetStringField(TEXT("role"), Participant.Binding.Role.ToString());
-        if (Participant.Character.bHasManifestation)
-            Binding->SetStringField(TEXT("manifestation_id"), Participant.Character.Manifestation.ManifestationId.ToString());
+        bool Found = false; FOGCharacterManifestationRecord Current;
+        if (!Store.TryReadCharacterManifestation(Participant.Binding.Character.EntityId, Found, Current, Error)) return Abort();
+        if (Found) Binding->SetStringField(TEXT("manifestation_id"), Current.ManifestationId.ToString());
         Bindings.Add(MakeShared<FJsonValueObject>(Binding));
     }
     Payload->SetArrayField(TEXT("participants"), Bindings);
     // Privacy and installed asset availability deliberately never enter canonical payload.
-    FJsonSerializer::Serialize(Payload, TJsonWriterFactory<>::Create(&Event.PayloadJson));
-    if (!Store.BeginTransaction(Error)) return false;
-    auto Abort = [&]() { FString RollbackError; if (!Store.RollbackTransaction(RollbackError)) Error += TEXT("; rollback: ") + RollbackError; return false; };
+    if (!FJsonSerializer::Serialize(Payload, TJsonWriterFactory<>::Create(&Event.PayloadJson)))
+    { Error = TEXT("Unable to serialize interaction event."); return Abort(); }
     // Persist the causal event before authored consequences that may reference it by
     // source_event_id. The surrounding transaction keeps event + consequences atomic.
     if (!Store.AppendWorldEvent(Event, Error)) return Abort();
     if (Consequences)
     {
+        if (!ApplyStatePatches(*Consequences, Tick, Error)) return Abort();
         for (auto Record : Consequences->Knowledge)
         {
             Record.SourceEventId = Event.EventId; Record.UpdatedWorldTick = Tick;
@@ -529,6 +912,7 @@ bool FOGSystemicInteractionRuntime::CommitEvent(FName Type, FName Reason, int64 
 
 void FOGSystemicInteractionRuntime::RestoreGameplay()
 {
+    StopActionPresentation();
     for (const auto& Saved : Restore) if (auto* Actor = Saved.Actor.Get())
     {
         FTransform ReturnTransform = Saved.Transform;
@@ -540,9 +924,6 @@ void FOGSystemicInteractionRuntime::RestoreGameplay()
         Actor->SetActorHiddenInGame(Saved.bHidden);
         if (auto* Character = Cast<ACharacter>(Actor))
         {
-            if (const auto* Played = PlayedMontages.Find(Saved.Actor))
-                if (auto* Montage = Cast<UAnimMontage>(Played->Get()))
-                    if (auto* Anim = Character->GetMesh()->GetAnimInstance()) Anim->Montage_Stop(0.1f, Montage);
             auto* Movement = Character->GetCharacterMovement();
             Movement->SetMovementMode(static_cast<EMovementMode>(Saved.MovementMode), Saved.CustomMovementMode);
             Movement->Velocity = Saved.Velocity;
@@ -562,14 +943,14 @@ void FOGSystemicInteractionRuntime::RestoreGameplay()
     // Presentation clears its actual optional clip/material references before residency leases.
     SessionAssets.Reset();
     OptionalAssets.ReleaseAll();
-    bActive = false; CurrentNode = NAME_None; Sequence.Reset();
+    bActive = false; CurrentNode = NAME_None; bCompletionRefreshPending = false; Sequence.Reset();
 }
 
 bool FOGSystemicInteractionRuntime::Exit(FName Reason, int64 Tick, FString& Error)
 {
     if (!bActive) return true;
-    bool Persisted = Tick >= 0 && CommitEvent(FName(TEXT("interaction.exited")), Reason, Tick, nullptr, Error);
-    if (Tick < 0) Error = TEXT("Exit restored gameplay but canonical clock was unavailable.");
+    bool Persisted = Tick >= LastWorldTick && Tick >= 0 && CommitEvent(FName(TEXT("interaction.exited")), Reason, Tick, nullptr, Error);
+    if (Tick < 0 || Tick < LastWorldTick) Error = TEXT("Exit restored gameplay but canonical clock was unavailable or stale.");
     // Refresh actual consequences before returning actors to ordinary presentation.
     FString RefreshError;
     if (!RefreshCharacters(RefreshError) && Persisted) { Error = RefreshError; Persisted = false; }

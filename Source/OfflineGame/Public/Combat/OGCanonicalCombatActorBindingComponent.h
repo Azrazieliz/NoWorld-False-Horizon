@@ -6,6 +6,9 @@
 #include "Content/OGContentId.h"
 #include "OGCanonicalCombatActorBindingComponent.generated.h"
 
+class UOGGameCoreSubsystem;
+struct FOGResolvedCombatAction;
+
 /** Physical 3D body of an existing canonical encounter unit; no authority over
  * combat, ownership, NPC identity, saved state, damage or content approval.
  * An actual character/NPC factory installs and binds this to its source mesh.
@@ -27,6 +30,8 @@ public:
     void UnbindVisual();
 
     bool IsBoundTo(const FOGEntityId& BattleId, const FOGEntityId& UnitId) const;
+    FOGEntityId GetBoundBattleId() const { return BoundBattleId; }
+    FOGEntityId GetBoundUnitId() const { return BoundUnitId; }
     static AActor* FindActualWorldActor(UWorld* World,
         const FOGEntityId& BattleId, const FOGEntityId& UnitId);
 
@@ -34,6 +39,9 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:
+    TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
+    FOGEntityId LastPresentedAction;
+    void HandleNativeAction(const FOGResolvedCombatAction& Action);
     UPROPERTY(Transient)
     FOGEntityId BoundBattleId;
     UPROPERTY(Transient)

@@ -56,7 +56,22 @@ bool FOGTurnBattle::Initialize(
     FOGRankSuppressionResolver InRankResolver,
     FString& OutError)
 {
+    return Initialize(InitialState,MoveTemp(TriggerBindings),MoveTemp(ConditionEvaluator),
+        MoveTemp(InIdentityContext),MoveTemp(InRankResolver),{},OutError);
+}
+bool FOGTurnBattle::Initialize(
+    const FOGTurnBattleState& InitialState,TArray<FOGCombatTriggerBinding> TriggerBindings,
+    FOGCombatConditionEvaluator ConditionEvaluator,FOGIdentityExclusivityContext InIdentityContext,
+    FOGRankSuppressionResolver InRankResolver,TArray<FOGNativePassiveBinding> Passives,FString& OutError)
+{
     State = InitialState;
+    NativePassiveRules.Reset(); NativePassiveActionOwners.Reset(); NativeReactionProof.Reset(); LastNativeReactions.Reset();
+    NativeFallbackConditions=ConditionEvaluator;
+    // Opening resource truth comes only from admitted shared specifications, never caller snapshots.
+    for (auto& Unit:State.Units) { Unit.BattleResources.Reset(); Unit.NativeEffects.Reset(); }
+    NativeEffectDefinitions.Reset();
+    NativeResourceSpecifications.Reset();
+    NativeAbilities.Reset(); NativeAbilityRevision=0; NativeOwnerActions.Reset(); NativeAbilityReadyActions.Reset();
     Log.Reset();
     TriggerRuntime.Reset();
     PendingTriggeredActions.Reset();
@@ -85,6 +100,8 @@ bool FOGTurnBattle::Initialize(
         return false;
     }
 
+    if (!InitializeNativePassives(Passives,TriggerBindings,OutError))
+    { State.Status=EOGTurnBattleStatus::NotStarted; return false; }
     if (!NormalizeOpeningLanes(OutError))
     {
         State.Status = EOGTurnBattleStatus::NotStarted;
@@ -407,37 +424,12 @@ int32 FOGTurnBattle::SelectNextActingUnitIndex() const
     return BestIndex;
 }
 
-bool FOGTurnBattle::ApplyResolvedAction(
-    const FOGResolvedCombatAction& Action,
-    FString& OutError)
+bool FOGTurnBattle::ValidateResolvedAction(const FOGResolvedCombatAction& Original,
+    FOGResolvedCombatAction& Expanded,FString& OutError) const
 {
-    // Existing FOGTurnBattle copy semantics are used by the deterministic
-    // diagnostic encounter and replay path. Execute on a detached snapshot,
-    // then move only successful results into the real combat state.
-    // Critical for multi-strike costs, Dawn barriers, OnDefeat reactions,
-    // field contests, event queues and action-value timeline consistency.
-    FOGResolvedCombatAction CompleteAction;
-    bool bArea=false;
-    if(!ExpandApprovedFieldTargets(Action,CompleteAction,bArea,OutError))
-        return false;
-    FOGTurnBattle Candidate=*this;
-    FString CandidateError;
-    if(!Candidate.ApplyResolvedActionMutating(CompleteAction,CandidateError))
-    {
-        OutError=CandidateError.IsEmpty()
-            ?TEXT("Resolved action rejected; no battle state was committed.")
-            :MoveTemp(CandidateError);
-        return false;
-    }
-    *this=MoveTemp(Candidate);
-    OutError.Reset();
-    return true;
-}
-
-bool FOGTurnBattle::ApplyResolvedActionMutating(
-    const FOGResolvedCombatAction& Action,
-    FString& OutError)
-{
+    bool Area=false;
+    if (!ExpandApprovedFieldTargets(Original,Expanded,Area,OutError)) return false;
+    const FOGResolvedCombatAction& Action=Expanded;
     OutError.Reset();
 
     if (State.Status != EOGTurnBattleStatus::Running)
@@ -446,8 +438,8 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
         return false;
     }
 
-    FOGCombatUnitState* Source = FindMutableUnit(Action.SourceUnitId);
-    if (!Source || !Source->CanAct())
+    const FOGCombatUnitState* Source = FindUnit(Action.SourceUnitId);
+    if (!Source || (!Source->CanAct() && !AllowsNativeReactionSource(*Source,Action)))
     {
         OutError = TEXT("Resolved action source is missing, defeated, or not active.");
         return false;
@@ -478,11 +470,77 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
         }
     }
 
+    if (bRequireNativeExecutors && !HasNativeActionExecutor(*Source,Action.SkillId,OutError)) return false;
+    if (!ValidateNativeAbility(Action,*Source,OutError)) return false;
+
     // Validate the approved 3A/6P action BEFORE writing the declared event
     // or advancing the action-value timeline. A rejected cast must not
     // consume a player turn or leave a false combat event in the log.
     if(!PrevalidateLuminousActionWithoutSideEffects(Action,*Source,OutError))
         return false;
+
+
+    return true;
+}
+
+bool FOGTurnBattle::ReadLuminousCommandResources(const FOGEntityId& UnitId,
+    int32& Resource,int32& Charge,int32& OwnerActions) const
+{
+    Resource=Charge=OwnerActions=0;
+    const auto* Unit=FindUnit(UnitId);
+    if (!Unit || Unit->IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity"))) return false;
+    if (Unit->SkillSet.ActiveSkills.Contains(FOGContentId(TEXT("combat:luminous_valentine.base.skill.scarlet_cadence"))))
+    {
+        const FLuminousBaseBattleRuntime Default;
+        const auto* Stored=LuminousBaseStates.Find(UnitId);
+        const auto& Runtime=Stored?*Stored:Default;
+        Resource=Runtime.ScarletReserve; Charge=Runtime.UltimateChargePercent; OwnerActions=Runtime.OwnerActions; return true;
+    }
+    if (Unit->SkillSet.ActiveSkills.Contains(FOGContentId(TEXT("combat:luminous_valentine.alter.active_1"))))
+    {
+        const FLuminousAlterBattleRuntime Default;
+        const auto* Stored=LuminousAlterStates.Find(UnitId);
+        const auto& Runtime=Stored?*Stored:Default;
+        Resource=Runtime.RedTithe; Charge=Runtime.UltimateChargePercent; OwnerActions=Runtime.OwnerActions; return true;
+    }
+    return false;
+}
+
+bool FOGTurnBattle::ApplyResolvedAction(
+    const FOGResolvedCombatAction& Action,
+    FString& OutError)
+{
+    // Existing FOGTurnBattle copy semantics are used by the deterministic
+    // diagnostic encounter and replay path. Execute on a detached snapshot,
+    // then move only successful results into the real combat state.
+    // Critical for multi-strike costs, Dawn barriers, OnDefeat reactions,
+    // field contests, event queues and action-value timeline consistency.
+    FOGResolvedCombatAction CompleteAction;
+    if(!ValidateResolvedAction(Action,CompleteAction,OutError))
+        return false;
+    FOGTurnBattle Candidate=*this;
+    Candidate.LastNativeReactions.Reset();
+    FString CandidateError;
+    if(!Candidate.ApplyResolvedActionMutating(CompleteAction,CandidateError) || !Candidate.ResolveNativeReactions(CandidateError))
+    {
+        OutError=CandidateError.IsEmpty()
+            ?TEXT("Resolved action rejected; no battle state was committed.")
+            :MoveTemp(CandidateError);
+        return false;
+    }
+    *this=MoveTemp(Candidate);
+    OutError.Reset();
+    return true;
+}
+
+bool FOGTurnBattle::ApplyResolvedActionMutating(
+    const FOGResolvedCombatAction& Action,
+    FString& OutError)
+{
+    OutError.Reset();
+    FOGCombatUnitState* Source=FindMutableUnit(Action.SourceUnitId);
+    if (!Source) { OutError=TEXT("Validated combat source is unavailable."); return false; }
+    const bool bInterrupt=Action.InterruptPriority>0;
 
     FOGCombatLogEvent Declared;
     Declared.Type = EOGCombatLogEventType::ActionDeclared;
@@ -500,7 +558,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
                 State.CurrentActionValue,
                 Source->NextActionValue);
 
-        int64 AuthoredDelay=FMath::Max<int64>(1,Action.ActionDelay);
+        int64 AuthoredDelay=NativeEffectActionDelay(*Source,FMath::Max<int64>(1,Action.ActionDelay));
         // Base v6 Queen of Nightfall P3 is an 8% owner Speed bonus while
         // the owner's Night attunement is active. Apply it to the actual
         // next-action timeline, never merely to a temporary damage stat.
@@ -518,15 +576,24 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
                         AuthoredDelay*9000/10000);
                     S->bNextScarletCadenceDelayReduction=false;
                 }
-        Source->NextActionValue=State.CurrentActionValue+AuthoredDelay;
+        Source->NextActionValue=AuthoredDelay>MAX_int64-State.CurrentActionValue?MAX_int64:State.CurrentActionValue+AuthoredDelay;
     }
 
     // The ordinary combat executor now dispatches the exact authored Base
     // active/ultimate actions instead of only logging their resolution JSON.
     // Non-Luminous actions remain on the existing standard effect pipeline.
     if (!ExecuteApprovedLuminousBaseAction(Action,*Source,OutError) ||
-        !ExecuteApprovedLuminousAlterAction(Action,*Source,OutError))
+        !ExecuteApprovedLuminousAlterAction(Action,*Source,OutError) ||
+        !ExecuteNativeAbility(Action,*Source,OutError))
         return false;
+
+    if (!bInterrupt)
+    {
+        auto& Count=NativeOwnerActions.FindOrAdd(Source->UnitEntityId);
+        if (Count==MAX_int64) { OutError=TEXT("Native own-action clock exhausted."); return false; }
+        ++Count;
+        if (!ProcessNativeEffectOwnerAction(Source->UnitEntityId,OutError)) return false;
+    }
 
     // Alter v1 Eclipse Harrier P4: apply only after verified final HP damage
     // by Alter to an actively source-bleeding enemy, once per owner action.
@@ -586,7 +653,11 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
     Resolved.SourceUnitId = Action.SourceUnitId;
     Resolved.SkillId = Action.SkillId;
     Resolved.PayloadJson = Action.ResolutionJson;
+    const int64 ResolvedSequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Resolved));
+    QueueTriggerEvent(TEXT("OnActionResolved"),Action.SourceUnitId,
+        Action.TargetUnitIds.IsEmpty()?FOGEntityId():Action.TargetUnitIds[0],Action.SkillId,ResolvedSequence);
+    if (!bInterrupt) QueueTriggerEvent(TEXT("OnOwnerActionEnd"),Action.SourceUnitId,Action.SourceUnitId,Action.SkillId,ResolvedSequence);
 
     FlushTriggerRuntimeQueueToBattleQueue();
 
@@ -662,6 +733,9 @@ bool FOGTurnBattle::ApplyDamage(
             EffectiveAmount,FOGLargeNumber(-Used.Significand,Used.Exponent10));
         Absorbed=FOGLargeNumber::Add(Absorbed,Used);
     }
+    const FOGLargeNumber DawnAbsorbed=Absorbed;
+    const FOGLargeNumber NativeAbsorbed=AbsorbNativeBarriers(TargetUnitId,EffectiveAmount);
+    Absorbed=FOGLargeNumber::Add(Absorbed,NativeAbsorbed);
     // Snapshot actual HP loss BEFORE the OnDefeat trigger fires. Overkill
     // beyond remaining HP is not a vampirism/status/resource source.
     LastEffectiveHpDamage.Add(TargetUnitId,
@@ -685,9 +759,10 @@ bool FOGTurnBattle::ApplyDamage(
     Damage.PayloadJson = Absorbed.IsZero()
         ? FString::Printf(TEXT("{\"amount\":\"%s\"}"),
               *EffectiveAmount.ToDebugString())
-        : FString::Printf(TEXT("{\"amount\":\"%s\",\"dawn_barrier_absorbed\":\"%s\",\"nominal\":\"%s\"}"),
-              *EffectiveAmount.ToDebugString(),*Absorbed.ToDebugString(),
+        : FString::Printf(TEXT("{\"amount\":\"%s\",\"dawn_barrier_absorbed\":\"%s\",\"native_barrier_absorbed\":\"%s\",\"nominal\":\"%s\"}"),
+              *EffectiveAmount.ToDebugString(),*DawnAbsorbed.ToDebugString(),*NativeAbsorbed.ToDebugString(),
               *Amount.ToDebugString());
+    const int64 DamageSequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Damage));
 
     if (FOGLargeNumber::Compare(
@@ -704,6 +779,7 @@ bool FOGTurnBattle::ApplyDamage(
             PendingDefeatedUnitIds.Add(
                 TargetUnitId);
         }
+        RemoveNativeEffectsOnDefeat(TargetUnitId);
 
         const int64 DefeatSequence =
             Log.GetNextSequence();
@@ -729,6 +805,11 @@ bool FOGTurnBattle::ApplyDamage(
         TryResolveApprovedLuminousAlterRevival(TargetUnitId);
     }
 
+    if (LastEffectiveHpDamage.FindRef(TargetUnitId).GetSign()>0)
+    {
+        QueueTriggerEvent(TEXT("OnDamageDealt"),SourceUnitId,TargetUnitId,SkillId,DamageSequence);
+        QueueTriggerEvent(TEXT("OnDamageReceived"),SourceUnitId,TargetUnitId,SkillId,DamageSequence);
+    }
     return true;
 }
 
@@ -799,7 +880,10 @@ bool FOGTurnBattle::ApplyHealing(
     Healing.PayloadJson = FString::Printf(
         TEXT("{\"amount\":\"%s\",\"nominal_healing\":\"%s\"}"),
         *ActuallyRestored.ToDebugString(),*Amount.ToDebugString());
+    const int64 HealingSequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Healing));
+    if (ActuallyRestored.GetSign()>0)
+        QueueTriggerEvent(TEXT("OnHealingApplied"),SourceUnitId,TargetUnitId,SkillId,HealingSequence);
 
     return true;
 }
@@ -1303,8 +1387,10 @@ void FOGTurnBattle::QueueTriggerEvent(
     Context.SourceSequence =
         SourceSequence;
 
-    TriggerRuntime.QueueForEvent(
-        Context);
+    const FOGCombatConditionEvaluator Evaluate=[this](const FOGCombatTriggerBinding& B,
+        const FOGConditionDefinition& C,const FOGCombatTriggerContext& E)
+        { return EvaluateNativePassiveCondition(B,C,E); };
+    TriggerRuntime.QueueForEvent(Context,&Evaluate);
 }
 
 void FOGTurnBattle::FlushTriggerRuntimeQueueToBattleQueue()
@@ -1379,6 +1465,7 @@ void FOGTurnBattle::EvaluateBattleCompletion()
         State.Status =
             EOGTurnBattleStatus::Completed;
 
+        ClearNativeEncounterEffects();
         FOGCombatLogEvent Event;
         Event.Type =
             EOGCombatLogEventType::BattleEnded;

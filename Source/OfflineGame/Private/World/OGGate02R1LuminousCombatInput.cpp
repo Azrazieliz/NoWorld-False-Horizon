@@ -1,8 +1,9 @@
-// Native first-World active owned Luminous battle input.
-// Reuses real GameCore / WorldStore / FOGTurnBattle. Does not spawn
-// fake enemies, invent Manifestations or bypass selected player's version.
+// Native commands for the actual owned character in the rendered World encounter.
 #include "World/OGStartingRegionPresentation.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Characters/OGContentCharacterActors.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
+#include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -11,250 +12,135 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 
+namespace
+{
+UOGSharedMotionControllerComponent* BattleMotion(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+    if (auto* Appearance=Actor->FindComponentByClass<UOGCharacterAppearanceComponent>())
+        if (auto* Motion=Appearance->GetMotionController()) return Motion;
+    return Actor->FindComponentByClass<UOGSharedMotionControllerComponent>();
+}
+}
 bool AOGWorldPrototypeCharacter::HasNativeOwnedLuminousEncounter() const
 {
-    UGameInstance* GI=GetGameInstance();
-    const UOGGameCoreSubsystem* Core=GI?
-        GI->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
-    const FOGTurnBattle* Battle=Core?
-        Core->GetOwnedLuminousTurnBattle():nullptr;
+    const auto* Core=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    const auto* Battle=Core?Core->GetOwnedLuminousTurnBattle():nullptr;
     return Battle && Battle->GetState().Status==EOGTurnBattleStatus::Running;
 }
-
-bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(
-    int32 Slot,FName Branch,FString& OutError)
+bool AOGWorldPrototypeCharacter::ReadOwnedLuminousBattleCommands(
+    FOGNativeBattleCommandSet& Out,FString& Error) const
 {
-    OutError.Reset();
-    if(!GetWorld() || !GetWorld()->IsGameWorld() ||
-       !IsFoundationWorldInputAllowed() || !IsLocallyControlled())
+    Out=FOGNativeBattleCommandSet(); Error.Reset();
+    const auto* Core=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    const auto* Session=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+    const auto* Battle=Core?Core->GetOwnedLuminousTurnBattle():nullptr;
+    if (!GetWorld() || !GetWorld()->IsGameWorld() || !IsLocallyControlled() ||
+        !Core || !Core->IsCoreReady() || !Session || !Session->IsBoundToStoredRuler() ||
+        Core->GetOwnedBattleRulerId()!=Session->BoundRulerId || !Battle)
+    { Error=TEXT("This character has no locally owned encounter."); return false; }
+    const auto* Unit=Battle->GetState().Units.FindByPredicate(
+        [Session](const FOGCombatUnitState& U) { return U.UnitEntityId==Session->SelectedManifestationId; });
+    const auto* Legacy=Cast<AOGLuminousV3PlayableCharacter>(this);
+    const auto* Content=Cast<AOGContentPlayableCharacter>(this);
+    if (!Unit || !((Legacy && Legacy->IsBoundToOwnedLuminousCombatUnit(Session->BoundRulerId,Unit->UnitEntityId,Unit->SkillSet.CurrentForm)) ||
+        (Content && Content->IsBoundToOwnedCombatUnit(Session->BoundRulerId,Unit->UnitEntityId,Unit->SkillSet.CurrentForm))))
+    { Error=TEXT("Battle controls require the actual possessed owned character."); return false; }
+    FOGResolvedSkillSet Owned;
+    if (!Core->ReadOwnedCharacterSkills(Unit->UnitEntityId,Session->BoundRulerId,Owned,Error) ||
+        Owned.CurrentForm!=Unit->SkillSet.CurrentForm)
+    { if (Error.IsEmpty()) Error=TEXT("The stored character Version changed."); return false; }
+    return FOGNativeBattleCommands::BuildFor(*Unit,Out,Error);
+}
+bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,FString& Error)
+{
+    FOGNativeBattleCommandSet Set;
+    if (!ReadOwnedLuminousBattleCommands(Set,Error)) return false;
+    const auto* Choice=Set.Commands.FindByPredicate([Slot,Branch](const FOGNativeBattleCommand& C)
+        { return !C.bFantasm && C.ActiveSlot==Slot && C.Branch==Branch && C.Mode.IsNone(); });
+    if (!Choice) { Error=TEXT("This form has no approved command for that skill or branch."); return false; }
+    return SubmitApprovedLuminousWorldCommand(Choice->Id,Error);
+}
+bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName CommandId,FString& Error)
+{
+    Error.Reset();
+    if (!IsFoundationWorldInputAllowed())
+    { Error=TEXT("World battle input is currently suspended."); return false; }
+    FOGNativeBattleCommandSet Set;
+    if (!ReadOwnedLuminousBattleCommands(Set,Error)) return false;
+    const auto* Command=Set.Commands.FindByPredicate([CommandId](const FOGNativeBattleCommand& C) { return C.Id==CommandId; });
+    if (!Command) { Error=TEXT("The selected command is not part of this approved kit."); return false; }
+    auto* Core=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
+    const auto* Session=GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+    const auto* Encounter=Core->GetOwnedLuminousTurnBattle();
+    const FOGEntityId BattleId=Encounter->GetState().BattleId;
+    const FOGEntityId SourceId=Session->SelectedManifestationId;
+    const auto* Source=Encounter->GetState().Units.FindByPredicate(
+        [&SourceId](const FOGCombatUnitState& U) { return U.UnitEntityId==SourceId; });
+    if (!Source) { Error=TEXT("The owned battle participant is unavailable."); return false; }
+    TArray<FOGEntityId> Selected;
+    if (SelectedCanonicalBattleId==BattleId) Selected=SelectedCanonicalTurnTargets;
+    if (Selected.IsEmpty() && HasTargetHudProjectionForHud() && GetTargetHudProjectionForHud().TargetEntityId.IsValid())
+        Selected.Add(GetTargetHudProjectionForHud().TargetEntityId);
+    FOGResolvedCombatAction Proposed,Action;
+    Command->BuildAction(*Source,Selected,Proposed);
+    if (!Encounter->ValidateResolvedAction(Proposed,Action,Error)) return false;
+    for (const auto& Id:Action.TargetUnitIds)
     {
-        OutError=TEXT("Native Luminous World input is not active.");
-        return false;
+        const auto* Target=Encounter->GetState().Units.FindByPredicate(
+            [&Id](const FOGCombatUnitState& U) { return U.UnitEntityId==Id; });
+        if (!Target || !Target->CanAct())
+        { Error=TEXT("Select a living participant currently on the battlefield."); return false; }
+        if (Id!=SourceId && !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Id))
+        { Error=TEXT("A required battle character is unavailable in the World."); return false; }
     }
-    UGameInstance* GI=GetGameInstance();
-    UOGGameCoreSubsystem* Core=GI?
-        GI->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
-    UOGGate12RulerSessionSubsystem* Session=GI?
-        GI->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
-    if(!Core || !Session || !Session->IsBoundToStoredRuler() ||
-       !HasNativeOwnedLuminousEncounter())
-    {
-        OutError=TEXT("No real locally owned Luminous encounter.");
-        return false;
-    }
-    const FOGEntityId Manifestation=Session->SelectedManifestationId;
-    const FOGEntityId Ruler=Session->BoundRulerId;
-    FOGResolvedSkillSet ApprovedSkills;
-    if(!Core->ReadOwnedApprovedLuminousSkills(
-         Manifestation,Ruler,ApprovedSkills,OutError))
-        return false;
-    AOGLuminousV3PlayableCharacter* ActiveLuminous=
-        Cast<AOGLuminousV3PlayableCharacter>(this);
-    if(!ActiveLuminous ||
-       !ActiveLuminous->IsBoundToOwnedLuminousCombatUnit(
-           Ruler,Manifestation,ApprovedSkills.CurrentForm))
-    {
-        OutError=TEXT("Selected Manifestation is not the actually possessed Luminous World character.");
-        return false;
-    }
-    // Different approved forms expose different active-skill counts:
-    // Base/Alter/Grand 3, Awakened 4, Berserker 2. An invalid slot must
-    // never index outside the currently owned canonical skill set.
-    if(Slot < -1 || (Slot >= 0 && !ApprovedSkills.ActiveSkills.IsValidIndex(Slot)))
-    {
-        OutError=TEXT("The selected form has no authored active skill in this slot.");
-        return false;
-    }
-    FOGContentId Skill;
-    if(Slot>=0)
-        Skill=ApprovedSkills.ActiveSkills[Slot];
-    else
-        Skill=ApprovedSkills.UltimateSkill;
-    if(!Skill.IsValid())
-    {
-        OutError=TEXT("Exact approved active/ultimate skill ID is missing.");
-        return false;
-    }
-    FString Resolution=TEXT("{}");
-    if(Slot==-1)
-    {
-        const FString Form=ApprovedSkills.CurrentForm.ToString();
-        const FString Choice=Branch.ToString().ToLower();
-        if(Form==TEXT("character:luminous_valentine.version_ln_base"))
-        {
-            if(Choice!=TEXT("day") && Choice!=TEXT("night"))
-            {
-                OutError=TEXT("Base Ultimate requires its approved Day or Night branch.");
-                return false;
-            }
-            Resolution=FString::Printf(TEXT("{\"branch\":\"%s\"}"),*Choice);
-        }
-        else if(Form==TEXT("character:luminous_valentine.version_alter_v1"))
-        {
-            if(Choice!=TEXT("ruin") && Choice!=TEXT("harvest"))
-            {
-                OutError=TEXT("Alter Ultimate requires Ruin or Hollow Crown.");
-                return false;
-            }
-            Resolution=FString::Printf(TEXT("{\"branch\":\"%s\"}"),*Choice);
-        }
-        else if(Form==TEXT("character:luminous_valentine.version_awakened_v4") ||
-                Form==TEXT("character:luminous_valentine.version_berserker_v4"))
-        {
-            if(!Branch.IsNone())
-            {
-                OutError=TEXT("This v4 form has one Ultimate, not an Alter branch.");
-                return false;
-            }
-            // Its single approved native UltimateSkill must still pass the
-            // central executor's exact content/ability preflight.
-        }
-        else
-        {
-            // Grand has THREE distinct authored Ultimate IDs. The current
-            // FOGResolvedSkillSet single UltimateSkill cannot represent
-            // them faithfully. Fail closed rather than launch a false spell.
-            OutError=TEXT("The selected form's distinct approved v4 Ultimate IDs are not yet bound.");
-            return false;
-        }
-    }
-    const FOGTurnBattle* Encounter=Core->GetOwnedLuminousTurnBattle();
-    if(!Encounter || Encounter->GetState().Status!=EOGTurnBattleStatus::Running)
-    {
-        OutError=TEXT("Live encounter ended before the action was submitted.");
-        return false;
-    }
-    const FOGTurnBattleState& Battle=Encounter->GetState();
-    const int32 ActingIndex=Encounter->SelectNextActingUnitIndex();
-    if(!Battle.Units.IsValidIndex(ActingIndex) ||
-       Battle.Units[ActingIndex].UnitEntityId!=Manifestation)
-    {
-        OutError=TEXT("Only the canonical next acting possessed Manifestation may submit a turn.");
-        return false;
-    }
-    const FOGCombatUnitState* Source=nullptr;
-    for(const FOGCombatUnitState& Unit:Battle.Units)
-        if(Unit.UnitEntityId==Manifestation){Source=&Unit;break;}
-    if(!Source || !Source->CanAct() ||
-       Source->SkillSet.CurrentForm!=ApprovedSkills.CurrentForm)
-    {
-        OutError=TEXT("The owned Luminous unit is not a legal active battle participant.");
-        return false;
-    }
-    TArray<FOGEntityId> Chosen;
-    if(SelectedCanonicalBattleId==Battle.BattleId &&
-       !SelectedCanonicalTurnTargets.IsEmpty())
-        Chosen=SelectedCanonicalTurnTargets;
-    else if(bHasTargetHudProjection && TargetHudProjection.TargetEntityId.IsValid())
-        Chosen.Add(TargetHudProjection.TargetEntityId);
-    // The central executor, not the HUD, classifies an AoE and expands it
-    // to EVERY eligible on-field enemy/ally (with no 3/4 target ceiling).
-    // Optional manual focus is only the primary strike's bonus recipient.
-    FOGResolvedCombatAction Proposed;
-    Proposed.SourceUnitId=Manifestation;
-    Proposed.SkillId=Skill;
-    Proposed.TargetUnitIds=Chosen;
-    Proposed.ResolutionJson=Resolution;
-    FOGResolvedCombatAction Expanded;
-    bool bArea=false;
-    if (!Encounter->ExpandApprovedFieldTargets(Proposed,Expanded,bArea,OutError))
-        return false;
-    Chosen=Expanded.TargetUnitIds;
-    if(Chosen.IsEmpty())
-    {
-        OutError=TEXT("Select a legal target for single-target actions; area skills use all eligible active participants.");
-        return false;
-    }
-    // No presentation-side target count/allegiance restrictions: the exact
-    // approved Gate04 preflight still validates every native gameplay action.
-    TMap<FOGEntityId,FOGLargeNumber> HpBefore;
-    for(const FOGEntityId& Selected:Chosen)
-    {
-        const FOGCombatUnitState* Actual=Battle.Units.FindByPredicate(
-            [&Selected](const FOGCombatUnitState& U)
-            { return U.UnitEntityId==Selected; });
-        if(!Actual || !Actual->CanAct() || HpBefore.Contains(Selected))
-        {
-            OutError=TEXT("An actual active, nonduplicated battle target is required.");
-            return false;
-        }
-        HpBefore.Add(Selected,Actual->CurrentHp);
-    }
-    FOGResolvedCombatAction Action;
+    // Include self-costs, self-restoration, ongoing effects and unselected AoE
+    // participants in feedback; direct selected targets are not the full result.
+    TMap<FOGEntityId,FOGLargeNumber> Before;
+    for (const auto& Unit:Encounter->GetState().Units) Before.Add(Unit.UnitEntityId,Unit.CurrentHp);
+    const FName Semantic=Command->MotionSemantic();
+    const bool UseAuthoredMap=Command->Branch.IsNone() && Command->Mode.IsNone();
+    const FOGContentId Skill=Command->SkillId;
     Action.ActionId=FOGEntityId::NewId();
-    Action.SourceUnitId=Manifestation;
-    Action.SkillId=Skill;
-    Action.TargetUnitIds=Chosen;
-    Action.ResolutionJson=Resolution;
-    Action.ActionDelay=FMath::Max<int64>(1,Source->DefaultActionDelay);
-    Action.InterruptPriority=0;
-    // Preserve the authoritative executor as the only source of gameplay truth.
-    // Presentation is attempted only after the action has been accepted.
-    const bool bApplied = Core->ApplyApprovedLuminousResolvedAction(Action, OutError);
-    if (bApplied && ActiveLuminous)
+    if (!Core->ApplyApprovedLuminousResolvedAction(Action,Error)) return false;
+    ClearSelectedCanonicalTurnTargets();
+    const auto* Updated=Core->GetOwnedLuminousTurnBattle();
+    if (!Updated || Updated->GetState().BattleId!=BattleId) return true;
+    AActor* FirstTarget=nullptr;
+    auto* PC=Cast<APlayerController>(GetController());
+    auto* Hud=PC?Cast<AOGWorldPresentationHud>(PC->GetHUD()):nullptr;
+    for (const auto& Unit:Updated->GetState().Units)
     {
-        ClearSelectedCanonicalTurnTargets();
-        // Actual actor facing and reactions are presentation of a committed
-        // native action. The selected physical target must be a source-backed
-        // embodied participant, never an inferred temporary mesh or proxy.
-        if (const FOGTurnBattle* Updated=Core->GetOwnedLuminousTurnBattle())
+        AActor* Body=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Unit.UnitEntityId);
+        if (!Body && Unit.UnitEntityId==SourceId) Body=this;
+        if (!FirstTarget && Body && Action.TargetUnitIds.Contains(Unit.UnitEntityId)) FirstTarget=Body;
+        const auto* Old=Before.Find(Unit.UnitEntityId);
+        if (!Body || !Old || FOGLargeNumber::Compare(*Old,Unit.CurrentHp)==0) continue;
+        if (Hud) Hud->RegisterCanonicalCombatImpact(Body,*Old,Unit.CurrentHp);
+        if (auto* Motion=BattleMotion(Body))
         {
-            AActor* FirstActualTarget=nullptr;
-            for(const FOGEntityId& TargetId:Chosen)
-            {
-                AActor* TargetActor=
-                    UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
-                        GetWorld(),Battle.BattleId,TargetId);
-                if(!TargetActor) continue;
-                if(!FirstActualTarget) FirstActualTarget=TargetActor;
-                const FOGCombatUnitState* After=Updated->GetState().Units.FindByPredicate(
-                    [&TargetId](const FOGCombatUnitState& U)
-                    { return U.UnitEntityId==TargetId; });
-                const FOGLargeNumber* Before=HpBefore.Find(TargetId);
-                if(!After || !Before) continue;
-                const int32 Change=FOGLargeNumber::Compare(After->CurrentHp,*Before);
-                if(Change!=0)
-                {
-                    if (APlayerController* PC=Cast<APlayerController>(GetController()))
-                        if (AOGWorldPresentationHud* NativeHud=
-                            Cast<AOGWorldPresentationHud>(PC->GetHUD()))
-                            NativeHud->RegisterCanonicalCombatImpact(
-                                TargetActor,*Before,After->CurrentHp);
-                }
-                if(Change!=0)
-                    if(UOGSharedMotionControllerComponent* Motion=
-                        TargetActor->FindComponentByClass<UOGSharedMotionControllerComponent>())
-                    {
-                        const FName Reaction=After->IsAlive()
-                            ? (Change<0 ? FName(TEXT("Combat.Reaction.Hit")) :
-                               FName(TEXT("Combat.Reaction.Heal")))
-                            : FName(TEXT("Combat.Reaction.Death"));
-                        // No registered exact-rig clip = NO fake reaction.
-                        Motion->PlayAction(Reaction,TEXT("Combat"),false,1);
-                    }
-            }
-            if(FirstActualTarget && FirstActualTarget!=ActiveLuminous)
-            {
-                const FVector Delta=FirstActualTarget->GetActorLocation()-GetActorLocation();
-                if(Delta.SizeSquared2D()>FMath::Square(5.f))
-                    SetActorRotation(FRotator(0.f,Delta.Rotation().Yaw,0.f));
-            }
+            if (!Unit.IsAlive()) Motion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
+            else Motion->EnqueueCombatCue(FOGLargeNumber::Compare(Unit.CurrentHp,*Old)<0?
+                FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),BattleId,Action.ActionId,Unit.UnitEntityId);
         }
-        // Central semantic keys identify the ACTUAL approved skill and
-        // Ultimate branch, not one generic Luminous pose for every Version.
-        // Content artists register exact-rig derivatives globally under the
-        // same action. Missing approved combat clips never trigger a fake pose.
-        const FString MotionKey = Slot != -1
-            ? FString::Printf(TEXT("Combat.Skill.%s"),*Skill.ToString())
-            : Branch.IsNone()
-                ? FString::Printf(TEXT("Combat.Ultimate.%s"),*Skill.ToString())
-                : FString::Printf(TEXT("Combat.Ultimate.%s.%s"),
-                    *Skill.ToString(),*Branch.ToString().ToLower());
-        const FName Semantic(*MotionKey);
-        if (!ActiveLuminous->PlaySharedGameplayAction(Semantic))
-            UE_LOG(LogTemp, Warning,
-                TEXT("Gate12 combat accepted but no approved exact-rig native clip for %s; not substituting unrelated motion"),
-                *Semantic.ToString());
     }
-    return bApplied;
+    if (FirstTarget && FirstTarget!=this)
+    {
+        const FVector Delta=FirstTarget->GetActorLocation()-GetActorLocation();
+        if (Delta.SizeSquared2D()>FMath::Square(5.f)) SetActorRotation(FRotator(0,Delta.Rotation().Yaw,0));
+    }
+    const auto* SurvivingSource=Updated->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==SourceId;});
+    if (!SurvivingSource || !SurvivingSource->IsAlive()) return true;
+    const auto* BoundBody=FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+    if (BoundBody && BoundBody->IsBoundTo(BattleId,SourceId)) return true;
+    if (auto* Legacy=Cast<AOGLuminousV3PlayableCharacter>(this)) Legacy->PlaySharedGameplayAction(Semantic);
+    if (auto* Content=Cast<AOGContentPlayableCharacter>(this); Content && Content->Appearance)
+    {
+        const FName* Authored=UseAuthoredMap?Content->CombatActionSemantics.Find(Skill):nullptr;
+        const FName Key=Authored?*Authored:Semantic;
+        auto* Motion=Content->Appearance->GetMotionController();
+        if (!Motion || !Motion->IsPlayingAction() || Motion->CurrentAction!=Key)
+        { FString MotionError; Content->Appearance->PlaySemanticAction(Key,TEXT("Combat"),false,1,NAME_None,MotionError); }
+    }
+    return true;
 }

@@ -126,7 +126,7 @@ struct OFFLINEGAME_API FOGSharedMotionEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Content")
     bool bAdultRestricted = false;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Eligibility", meta=(ClampMin="1", ClampMax="13"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Eligibility", meta=(ClampMin="1"))
     int32 RequiredParticipants = 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Eligibility")

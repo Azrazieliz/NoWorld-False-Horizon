@@ -121,5 +121,6 @@ bool FOGLuminousAlterV1Projection::LoadApprovedV1(
         OutError=TEXT("Alter v1 exact kit shape, stat projection or resource cap invalid.");
         return false;
     }
+    Out.AuthoritativeSourceJson=MoveTemp(Text);
     return true;
 }

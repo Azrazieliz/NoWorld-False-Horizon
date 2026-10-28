@@ -15,6 +15,9 @@ bool FOGTurnBattle::ExpandApprovedFieldTargets(
     Expanded=Original;
     bOutArea=false;
     OutError.Reset();
+    bool Handled=false;
+    if (!ExpandNativeAbilityTargets(Original,Expanded,Handled,bOutArea,OutError)) return false;
+    if (Handled) return true;
     const FOGCombatUnitState* Source=State.Units.FindByPredicate(
         [&Original](const FOGCombatUnitState& Unit)
         { return Unit.UnitEntityId==Original.SourceUnitId; });

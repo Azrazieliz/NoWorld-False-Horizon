@@ -6,6 +6,8 @@
 #include "Combat/OGCombatRankHooks.h"
 #include "Combat/OGCombatTriggerRuntime.h"
 #include "Combat/OGCombatTypes.h"
+#include "Combat/OGNativeCombatAbility.h"
+#include "Combat/OGNativeCombatPassive.h"
 #include "Rules/OGRulePriority.h"
 #include "OGTurnBattle.generated.h"
 
@@ -152,6 +154,13 @@ public:
         FOGRankSuppressionResolver RankResolver,
         FString& OutError);
 
+    bool Initialize(const FOGTurnBattleState& InitialState,TArray<FOGCombatTriggerBinding> TriggerBindings,
+        FOGCombatConditionEvaluator Conditions,FOGIdentityExclusivityContext Identity,
+        FOGRankSuppressionResolver Rank,TArray<FOGNativePassiveBinding> Passives,FString& Error);
+    /** Complete opening reactions after native ability/resource admission. Atomic on failure. */
+    bool ResolveNativeOpeningReactions(FString& Error);
+    const TArray<FOGNativeReactionRecord>& GetLastNativeReactions() const { return LastNativeReactions; }
+    bool CanAdmitNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
     const FOGTurnBattleState& GetState() const { return State; }
     const FOGCombatLog& GetLog() const { return Log; }
 
@@ -204,6 +213,24 @@ public:
     bool ExpandApprovedFieldTargets(const FOGResolvedCombatAction& Original,
         FOGResolvedCombatAction& Expanded, bool& bOutArea,
         FString& OutError) const;
+
+    /** Read-only command readiness: same expansion, actor/timeline and approved preflight used on submission. */
+    bool ValidateResolvedAction(const FOGResolvedCombatAction& Action,
+        FOGResolvedCombatAction& Expanded, FString& OutError) const;
+    bool ReadLuminousCommandResources(const FOGEntityId& UnitId,
+        int32& Resource, int32& Charge, int32& OwnerActions) const;
+
+    /** Production sessions require an actual executor; isolated timeline/replay adapters opt in explicitly. */
+    void RequireNativeActionExecutors(bool Required) { bRequireNativeExecutors=Required; }
+    bool ConfigureNativeResource(const FOGEntityId& UnitId,const FOGCombatResourceSpecification& Specification,FString& Error);
+    bool RegisterNativeAbility(const FOGNativeAbilityDefinition& Definition,FString& Error);
+    bool HasNativeActionExecutor(const FOGCombatUnitState& Source,const FOGContentId& Skill,FString& Error) const;
+    FName ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool RegisterNativeEffect(const FOGNativeEffectDefinition& Definition,FString& Error);
+    FOGCombatStats GetNativeEffectiveStats(const FOGEntityId& UnitId) const;
+    bool HasNativeEffect(const FOGEntityId& UnitId,const FOGContentId& Id,bool Family=false) const;
+    FString DescribeNativeEffects(const FOGEntityId& UnitId) const;
+    int64 GetNativeAbilityRevision() const { return NativeAbilityRevision; }
 
     bool ApplyResolvedAction(
         const FOGResolvedCombatAction& Action,
@@ -264,6 +291,44 @@ public:
         FString& OutError);
 
 private:
+    struct FNativePassiveRule { FOGEntityId OwnerUnitId; FOGContentId PassiveSkillId; FOGNativePassiveTrigger Rule; };
+    TMap<FString,FNativePassiveRule> NativePassiveRules;
+    TSet<FString> NativePassiveActionOwners;
+    FOGCombatConditionEvaluator NativeFallbackConditions;
+    TOptional<FOGQueuedTriggeredAction> NativeReactionProof;
+    TArray<FOGNativeReactionRecord> LastNativeReactions;
+    bool InitializeNativePassives(const TArray<FOGNativePassiveBinding>& Passives,
+        TArray<FOGCombatTriggerBinding>& Bindings,FString& Error);
+    bool EvaluateNativePassiveCondition(const FOGCombatTriggerBinding& Binding,
+        const FOGConditionDefinition& Condition,const FOGCombatTriggerContext& Context) const;
+    bool IsNativeAbilityAuthorized(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool HasNativeReactionProof(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool AllowsNativeReactionSource(const FOGCombatUnitState& Source,const FOGResolvedCombatAction& Action) const;
+    bool ResolveNativeReactions(FString& Error);
+    bool SelectNativeReactionTarget(const FOGQueuedTriggeredAction& Queued,const FNativePassiveRule& Rule,
+        FOGResolvedCombatAction& Action,FString& Error) const;
+    TMap<FOGContentId,FOGNativeEffectDefinition> NativeEffectDefinitions;
+    bool ExecuteNativeEffects(const FOGResolvedCombatAction& Action,bool BeforePackets,FOGDeterministicRng& Rng,FString& Error);
+    bool ApplyNativeEffect(const FOGNativeEffectDefinition& Definition,const FOGNativeAbilityEffectOperation& Operation,
+        const FOGResolvedCombatAction& Action,const FOGEntityId& TargetId,int32 OperationIndex,FString& Error);
+    bool ProcessNativeEffectOwnerAction(const FOGEntityId& Owner,FString& Error);
+    void RemoveNativeEffectsOnDefeat(const FOGEntityId& Target);
+    void ClearNativeEncounterEffects();
+    void RecordNativeEffect(EOGCombatLogEventType Type,const FOGEntityId& Source,const FOGEntityId& Target,
+        const FOGContentId& Skill,const FOGNativeEffectInstance& Instance,const TCHAR* Reason);
+    FOGLargeNumber AbsorbNativeBarriers(const FOGEntityId& Target,FOGLargeNumber& Amount);
+    int64 NativeEffectActionDelay(const FOGCombatUnitState& Source,int64 Delay) const;
+    bool bRequireNativeExecutors=false;
+    int64 NativeAbilityRevision=0;
+    TMap<FString,FOGNativeAbilityDefinition> NativeAbilities;
+    TMap<FString,FOGCombatResourceSpecification> NativeResourceSpecifications;
+    TMap<FOGEntityId,int64> NativeOwnerActions;
+    TMap<FString,int64> NativeAbilityReadyActions;
+    const FOGNativeAbilityDefinition* FindNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool ValidateNativeAbility(const FOGResolvedCombatAction& Action,const FOGCombatUnitState& Source,FString& Error) const;
+    bool ExecuteNativeAbility(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error);
+    bool ExpandNativeAbilityTargets(const FOGResolvedCombatAction& Original,FOGResolvedCombatAction& Expanded,
+        bool& Handled,bool& Area,FString& Error) const;
     // Atomic action transaction: the currently committed Battle must never
     // retain partial HP, resource, trigger or log changes from a rejected
     // authored multi-hit or revival action.

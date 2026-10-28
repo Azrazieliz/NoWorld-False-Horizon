@@ -16,7 +16,11 @@ enum class EOGCombatLogEventType : uint8
     HealingApplied,
     UnitDefeated,
     PresenceChanged,
-    BattleEnded
+    BattleEnded,
+    EffectApplied,
+    EffectRemoved,
+    EffectTicked,
+    EffectResisted
 };
 
 USTRUCT(BlueprintType)

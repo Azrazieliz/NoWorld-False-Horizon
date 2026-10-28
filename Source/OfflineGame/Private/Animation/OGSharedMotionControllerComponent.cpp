@@ -1,4 +1,5 @@
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Misc/SecureHash.h"
 
 #include "Animation/AnimSequence.h"
 #include "Animation/Skeleton.h"
@@ -8,11 +9,14 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Animation/AnimationAsset.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/OGSharedReferenceAnimInstance.h"
 
 UOGSharedMotionControllerComponent::UOGSharedMotionControllerComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bStartWithTickEnabled = false;
+    PrimaryComponentTick.TickGroup = TG_PrePhysics;
 }
 
 bool UOGSharedMotionControllerComponent::HaveIdenticalReferencePose(
@@ -48,8 +52,19 @@ bool UOGSharedMotionControllerComponent::RegisterNativeParts(
         Unique.Add(Part);
         Verified.Add(Part);
     }
+    TArray<FOGReferenceRigAdapter> Adapters;
+    for (USkeletalMeshComponent* Part : Parts)
+    {
+        FOGReferenceRigAdapter Adapter; FString Error;
+        if (!Adapter.Bind(Part, Error)) return false;
+        Adapters.Add(MoveTemp(Adapter));
+    }
     StopAction();
+    for (USkeletalMeshComponent* Previous : RegisteredParts)
+        if (Previous) Previous->RemoveTickPrerequisiteComponent(this);
     RegisteredParts = MoveTemp(Verified);
+    ReferenceRigs = MoveTemp(Adapters);
+    for (USkeletalMeshComponent* Part : RegisteredParts) Part->AddTickPrerequisiteComponent(this);
     return true;
 }
 
@@ -90,8 +105,13 @@ bool UOGSharedMotionControllerComponent::CanPlayAction(
     int32 ParticipantCount, FName ParticipantRole) const
 {
     if (RigProfile.IsNone() || GameplayAction.IsNone() || Context.IsNone() ||
-        RegisteredParts.IsEmpty() || ParticipantCount < 1 || ParticipantCount > 13)
+        RegisteredParts.IsEmpty() || ParticipantCount < 1)
         return false;
+    FOGSharedMotionEntry Shared;
+    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
+    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
+        Shared, Source, Mapping, SharedError)) return true;
     const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
         ? nullptr : SharedLibrary.LoadSynchronous();
     if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
@@ -134,6 +154,15 @@ bool UOGSharedMotionControllerComponent::PreviewSourceClipId(
     OutSourceClipId = NAME_None;
     if (!CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
         ParticipantCount, ParticipantRole)) return false;
+    FOGSharedMotionEntry Shared;
+    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
+    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
+        Shared, Source, Mapping, SharedError))
+    {
+        OutSourceClipId = Shared.SourceClipId;
+        return !OutSourceClipId.IsNone();
+    }
     const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
         ? nullptr : SharedLibrary.LoadSynchronous();
     if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
@@ -154,6 +183,15 @@ bool UOGSharedMotionControllerComponent::PreviewAuthoredSceneId(
     if (ParticipantCount < 2 ||
         !CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
             ParticipantCount, ParticipantRole)) return false;
+    FOGSharedMotionEntry Shared;
+    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
+    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
+        Shared, Source, Mapping, SharedError))
+    {
+        OutSceneId = Shared.AuthoredSceneId;
+        return !OutSceneId.IsNone();
+    }
     const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
         ? nullptr : SharedLibrary.LoadSynchronous();
     if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
@@ -171,7 +209,32 @@ void UOGSharedMotionControllerComponent::SynchronizeToWorldTime(float SceneStart
     if (!bPlaying || !GetWorld()) return;
     bSceneTimeLocked = true;
     SceneWorldStartTime = SceneStartTime;
-    ElapsedSeconds = FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime);
+    SceneAnchorElapsed = 0.f;
+    ElapsedSeconds = FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime) * ExternalPacing;
+}
+
+bool UOGSharedMotionControllerComponent::SetExternalPacing(float Rate)
+{
+    if (!FMath::IsFinite(Rate) || Rate < 0.f) return false;
+    if (Rate == ExternalPacing) return true;
+    if (bSceneTimeLocked && GetWorld())
+    {
+        const float Now = GetWorld()->GetTimeSeconds();
+        // Preserve phase at the speed boundary, including a paused interval.
+        SceneAnchorElapsed += FMath::Max(0.f, Now - SceneWorldStartTime) * ExternalPacing;
+        ElapsedSeconds = SceneAnchorElapsed;
+        SceneWorldStartTime = Now;
+    }
+    ExternalPacing = Rate;
+    for (int32 I = 0; I < PlayingParts.Num(); ++I)
+        if (PlayingParts[I])
+        {
+            const float LengthScale = CurrentLeader ? 1.f :
+                (PlayingSequenceLengths.IsValidIndex(I) && SequenceSeconds > 0.f
+                    ? PlayingSequenceLengths[I] / SequenceSeconds : 1.f);
+            PlayingParts[I]->SetPlayRate(PlaybackRate * ExternalPacing * LengthScale);
+        }
+    return true;
 }
 
 bool UOGSharedMotionControllerComponent::SetMorphLayer(
@@ -318,6 +381,12 @@ bool UOGSharedMotionControllerComponent::PlayAction(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
     int32 ParticipantCount, FName ParticipantRole)
 {
+    FOGSharedMotionEntry Shared;
+    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
+    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
+        Shared, Source, Mapping, SharedError))
+        return StartReference(Shared, MoveTemp(Source), MoveTemp(Mapping));
     if (!CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
         ParticipantCount, ParticipantRole)) return false;
 
@@ -383,6 +452,8 @@ bool UOGSharedMotionControllerComponent::PlayAction(
     bApplyingRootMotion = PrimaryEntry->bUsesRootMotion;
     AuthoredMorphTracks = PrimaryEntry->MorphTracks;
     bSceneTimeLocked = false;
+    SceneAnchorElapsed = 0.f;
+    ExternalPacing = 1.f;
     bLooping = PrimaryEntry->bLoop;
     bHasContact = PrimaryEntry->ContactSeconds >= 0.f;
     SourceContactSeconds = PrimaryEntry->ContactSeconds;
@@ -440,6 +511,10 @@ bool UOGSharedMotionControllerComponent::PlayAction(
 
 void UOGSharedMotionControllerComponent::StopAction()
 {
+    if (!bPreserveCombatQueue) { CombatQueue.Reset(); CombatReceipts.Reset(); CombatScope=FOGEntityId(); }
+    bPlayingQueuedCombat=false;
+    ++PlaybackGeneration;
+    RestoreReferencePose();
     SetComponentTickEnabled(!MorphOverlays.IsEmpty());
     for (USkeletalMeshComponent* Part : PlayingParts)
     {
@@ -466,6 +541,8 @@ void UOGSharedMotionControllerComponent::StopAction()
     SourceContactSeconds = -1.f;
     ElapsedSeconds = 0.f;
     SequenceSeconds = 0.f;
+    SceneAnchorElapsed = 0.f;
+    ExternalPacing = 1.f;
     LastContactCycle = -1;
     ApplyMorphOverlays();
 }
@@ -477,17 +554,21 @@ void UOGSharedMotionControllerComponent::TickComponent(
     if (DeltaSeconds <= 0.f) return;
     if (!bPlaying)
     {
+        StartNextCombatMotion();
         ApplyMorphOverlays();
         return;
     }
+    const uint64 Generation = PlaybackGeneration;
     const float Before = ElapsedSeconds * PlaybackRate;
     ElapsedSeconds = bSceneTimeLocked && GetWorld()
-        ? FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime)
-        : ElapsedSeconds + DeltaSeconds;
+        ? SceneAnchorElapsed + FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime) * ExternalPacing
+        : ElapsedSeconds + DeltaSeconds * ExternalPacing;
     const float SourceTime = ElapsedSeconds * PlaybackRate;
+    if (ReferenceClip) UpdateReferencePose();
+    if (!bPlaying) return;
     ApplyAuthoredRootMotion(Before, SourceTime);
     ApplyMorphOverlays();
-    if (!CurrentLeader && bPhaseLockIndependentParts)
+    if (!ReferenceClip && !CurrentLeader && bPhaseLockIndependentParts)
     {
         // Synchronize independently imported part skeletons by normalized
         // source phase, not by assuming their native durations are identical.
@@ -512,14 +593,22 @@ void UOGSharedMotionControllerComponent::TickComponent(
         {
             LastContactCycle = ContactCycle;
             OnAuthoredContact.Broadcast(CurrentAction, CurrentMotionId);
+            // A contact receiver may finish or replace this action synchronously.
+            // Never stop the new action using the old action's elapsed time.
+            if (Generation != PlaybackGeneration) return;
         }
     }
     if (!bLooping && SourceTime >= SequenceSeconds)
     {
         const FName FinishedAction = CurrentAction;
         const FName FinishedMotion = CurrentMotionId;
-        StopAction();
+        {
+            TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
+            StopAction();
+        }
+        const uint64 FinishedGeneration=PlaybackGeneration;
         OnMotionFinished.Broadcast(FinishedAction, FinishedMotion);
+        if (!bPlaying && PlaybackGeneration==FinishedGeneration) StartNextCombatMotion();
     }
 }
 
@@ -529,6 +618,206 @@ void UOGSharedMotionControllerComponent::EndPlay(
     StopAction();
     MorphOverlays.Reset();
     ApplyMorphOverlays();
-    RegisteredParts.Reset();
+    for (USkeletalMeshComponent* Part : RegisteredParts)
+        if (Part) Part->RemoveTickPrerequisiteComponent(this);
+    ReferenceRigs.Reset(); RegisteredParts.Reset();
     Super::EndPlay(EndPlayReason);
+}
+
+bool UOGSharedMotionControllerComponent::PrepareReference(const FOGReferenceMotionClip& Clip,
+    TArray<TArray<FOGReferenceBoneConnection>>& Out, FString& Error) const
+{
+    Out.Reset();
+    if (RegisteredParts.IsEmpty() || ReferenceRigs.Num()!=RegisteredParts.Num())
+    { Error=TEXT("Register the character's actual native rigs first."); return false; }
+    for (int32 I=0; I<RegisteredParts.Num(); ++I)
+    {
+        const auto* Part=RegisteredParts[I].Get();
+        if (!Part || ReferenceRigs[I].Mesh.Get()!=Part->GetSkeletalMeshAsset())
+        { Out.Reset(); Error=TEXT("Character rig changed; refresh its shared-library connection."); return false; }
+        TArray<FOGReferenceBoneConnection> Indices;
+        if (!ReferenceRigs[I].Map(Clip,SharedSourceBoneAliases,Indices,Error)) { Out.Reset(); return false; }
+        Out.Add(MoveTemp(Indices));
+    }
+    return true;
+}
+bool UOGSharedMotionControllerComponent::FindReference(FName Action,FName Context,int32 Count,FName Role,
+    FOGSharedMotionEntry& OutEntry,TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe>& OutClip,
+    TArray<TArray<FOGReferenceBoneConnection>>& OutMapping,FString& Error) const
+{
+    OutClip.Reset(); OutMapping.Reset();
+    for (const auto& Entry:FOGSharedReferenceLibrary::Find(Action,Context,RigProfile,AnatomyProfile,Capabilities,Count,Role))
+    {
+        if (Entry.bUsesRootMotion || (!Entry.ContactNotify.IsNone() && Entry.ContactSeconds<0)) continue; // Existing collision-authorized native root path remains authoritative.
+        if (!SharedLibrary.IsNull())
+        {
+            const auto* Explicit=SharedLibrary.LoadSynchronous();
+            if (!Explicit) continue;
+            bool Declared=false;
+            for (const auto& Choice:Explicit->Motions)
+                if (Choice.bApprovedForGameplay && Choice.GameplayAction==Action &&
+                    Choice.CompatibleRigProfile==RigProfile &&
+                    (Choice.GameplayContext.IsNone() || Choice.GameplayContext==Context) &&
+                    Choice.RequiredParticipants==Count &&
+                    (Count==1 ? Choice.SceneRole.IsNone() : Choice.SceneRole==Role) &&
+                    FOGSharedReferenceLibrary::CanonicalId(Choice.SourceClipId)==Entry.SourceClipId)
+                { Declared=true; break; }
+            if (!Declared) continue;
+        }
+        auto Clip=FOGSharedReferenceLibrary::Load(Entry.SourceClipId,Error);
+        if (Clip && PrepareReference(*Clip,OutMapping,Error))
+        { OutEntry=Entry; OutClip=MoveTemp(Clip); return true; }
+    }
+    return false;
+}
+TArray<FName> UOGSharedMotionControllerComponent::GetSharedSourceMotionIds() const
+{
+    return FOGSharedReferenceLibrary::GetClipIds();
+}
+bool UOGSharedMotionControllerComponent::PlaySharedSourceMotion(FName Id,bool Loop)
+{
+    FString Error;
+    auto Clip=FOGSharedReferenceLibrary::Load(Id,Error);
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping;
+    if (!Clip || !PrepareReference(*Clip,Mapping,Error)) return false;
+    FOGSharedMotionEntry Entry; Entry.SourceClipId=Id; Entry.MotionId=Id;
+    Entry.GameplayAction=FName(*(TEXT("Library.Source.")+Id.ToString()));
+    Entry.bLoop=Loop;
+    return StartReference(Entry,MoveTemp(Clip),MoveTemp(Mapping));
+}
+bool UOGSharedMotionControllerComponent::StartReference(const FOGSharedMotionEntry& Entry,
+    TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Clip,TArray<TArray<FOGReferenceBoneConnection>>&& Mapping)
+{
+    if (!Clip || Mapping.Num()!=RegisteredParts.Num()) return false;
+    // Every native part is checked before interrupting the previous action.
+    StopAction();
+    ReferenceClip=MoveTemp(Clip); ReferenceMappings=MoveTemp(Mapping);
+    for (USkeletalMeshComponent* Part:RegisteredParts)
+    {
+        FReferencePartRestore Saved; Saved.Part=Part; Saved.Mesh=Part->GetSkeletalMeshAsset();
+        Saved.Mode=static_cast<uint8>(Part->GetAnimationMode());
+        Saved.PreviousClass=TStrongObjectPtr<UClass>(Part->GetAnimClass());
+        Saved.Leader=Part->GetLeaderPoseComponent();
+        if (auto* Node=Part->GetSingleNodeInstance())
+        {
+            Saved.PreviousAsset=TStrongObjectPtr<UAnimationAsset>(Node->GetCurrentAsset());
+            Saved.Rate=Node->GetPlayRate(); Saved.Position=Node->GetCurrentTime();
+            Saved.bLoop=Node->IsLooping(); Saved.bWasPlaying=Node->IsPlaying();
+        }
+        ReferenceRestores.Add(MoveTemp(Saved));
+        Part->SetLeaderPoseComponent(nullptr);
+        Part->SetAnimInstanceClass(UOGSharedReferenceAnimInstance::StaticClass());
+        auto* Instance=Cast<UOGSharedReferenceAnimInstance>(Part->GetAnimInstance());
+        ReferenceRestores.Last().Instance=Instance;
+        if (!Instance) { StopAction(); return false; }
+    }
+    bPlaying=true; bLooping=Entry.bLoop; PlaybackRate=Entry.PlayRate;
+    SequenceSeconds=FMath::Max(ReferenceClip->Duration,1.f/ReferenceClip->Rate);
+    CurrentAction=Entry.GameplayAction; CurrentMotionId=Entry.MotionId; CurrentSourceClipId=ReferenceClip->Id;
+    AuthoredMorphTracks=Entry.MorphTracks;
+    bHasContact=Entry.ContactSeconds>=0; SourceContactSeconds=Entry.ContactSeconds;
+    ElapsedSeconds=0; LastContactCycle=-1; bSceneTimeLocked=false;
+    UpdateReferencePose(); SetComponentTickEnabled(true);
+    return true;
+}
+void UOGSharedMotionControllerComponent::UpdateReferencePose()
+{
+    if (!ReferenceClip) return;
+    const double Raw=static_cast<double>(ElapsedSeconds)*PlaybackRate;
+    const double Time=bLooping && SequenceSeconds>0 ? FMath::Fmod(Raw,static_cast<double>(SequenceSeconds)) : Raw;
+    for (int32 I=0; I<ReferenceRestores.Num(); ++I)
+    {
+        auto* Part=ReferenceRestores[I].Part.Get();
+        auto* Instance=ReferenceRestores[I].Instance.Get();
+        if (!Part || !Instance || Part->GetAnimInstance()!=Instance ||
+            ReferenceRigs[I].Mesh.Get()!=Part->GetSkeletalMeshAsset())
+        { StopAction(); return; }
+        TArray<FTransform> Pose;
+        if (!ReferenceRigs[I].Evaluate(*ReferenceClip,ReferenceMappings[I],Time,Pose))
+        { StopAction(); return; }
+        Instance->SetSharedPose(Pose);
+    }
+}
+void UOGSharedMotionControllerComponent::RestoreReferencePose()
+{
+    for (auto& Saved:ReferenceRestores)
+    {
+        auto* Part=Saved.Part.Get();
+        if (!Part || (Saved.Instance.IsValid() ? Part->GetAnimInstance()!=Saved.Instance.Get() :
+            Part->GetAnimClass()!=UOGSharedReferenceAnimInstance::StaticClass())) continue;
+        if (Part->GetSkeletalMeshAsset()!=Saved.Mesh.Get())
+        {
+            // A real form/wardrobe replacement owns the new rig; never replay an old-rig asset on it.
+            Part->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Part->Stop();
+            continue;
+        }
+        if (static_cast<EAnimationMode::Type>(Saved.Mode)==EAnimationMode::AnimationSingleNode)
+        {
+            Part->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            if (Saved.PreviousAsset.IsValid())
+            {
+                Part->PlayAnimation(Saved.PreviousAsset.Get(),Saved.bLoop);
+                Part->SetPosition(Saved.Position,false); Part->SetPlayRate(Saved.Rate);
+                if (!Saved.bWasPlaying) Part->Stop();
+            }
+        }
+        else
+        {
+            Part->SetAnimInstanceClass(Saved.PreviousClass.Get());
+            Part->SetAnimationMode(static_cast<EAnimationMode::Type>(Saved.Mode));
+        }
+        Part->SetLeaderPoseComponent(Saved.Leader.Get());
+    }
+    ReferenceRestores.Reset(); ReferenceMappings.Reset(); ReferenceClip.Reset();
+}
+
+bool UOGSharedMotionControllerComponent::EnqueueCombatAction(FName Action,
+    const FOGEntityId& Battle,const FOGEntityId& Receipt)
+{
+    if (!IsInGameThread() || !Battle.IsValid() || !Receipt.IsValid() || Action.IsNone()) return false;
+    if (CombatScope==Battle && CombatReceipts.Contains(Receipt)) return true;
+    if (bSceneTimeLocked && !bPlayingQueuedCombat) return false;
+    if (!CanPlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
+    // A coordinated scene owns its current playback until it explicitly exits.
+    if (bPlaying && !bPlayingQueuedCombat && !CurrentAction.ToString().StartsWith(TEXT("Traversal.")) &&
+        !CurrentAction.ToString().StartsWith(TEXT("Combat."))) return false;
+    if (CombatScope!=Battle)
+    {
+        const bool StopOld=bPlayingQueuedCombat;
+        CombatQueue.Reset(); CombatReceipts.Reset(); CombatScope=Battle;
+        if (StopOld) { TGuardValue<bool> Preserve(bPreserveCombatQueue,true); StopAction(); }
+    }
+    CombatReceipts.Add(Receipt);
+    FQueuedCombatMotion Queued; Queued.Action=Action; Queued.Receipt=Receipt; CombatQueue.Add(Queued);
+    if (!bPlaying || bLooping || CurrentAction.ToString().StartsWith(TEXT("Traversal.")))
+        return StartNextCombatMotion();
+    SetComponentTickEnabled(true); return true;
+}
+bool UOGSharedMotionControllerComponent::StartNextCombatMotion()
+{
+    while (!CombatQueue.IsEmpty())
+    {
+        const auto Next=CombatQueue[0]; CombatQueue.RemoveAt(0);
+        TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
+        if (PlayAction(Next.Action,TEXT("Combat"),false,1,NAME_None))
+        { bPlayingQueuedCombat=true; return true; }
+        UE_LOG(LogTemp,Warning,TEXT("Accepted combat motion %s became unavailable for the current rig."),*Next.Action.ToString());
+    }
+    return false;
+}
+void UOGSharedMotionControllerComponent::CancelCombatActions(const FOGEntityId& Battle)
+{
+    if (CombatScope!=Battle) return;
+    const bool StopCurrent=bPlayingQueuedCombat;
+    CombatQueue.Reset(); CombatReceipts.Reset(); CombatScope=FOGEntityId();
+    if (StopCurrent) StopAction();
+}
+bool UOGSharedMotionControllerComponent::EnqueueCombatCue(FName Cue,const FOGEntityId& Battle,
+    const FOGEntityId& Action,const FOGEntityId& Subject)
+{
+    if (!Action.IsValid() || !Subject.IsValid()) return false;
+    const FString Text=TEXT("presentation|")+Action.ToString()+TEXT("|")+Subject.ToString()+TEXT("|")+Cue.ToString();
+    FGuid Id; FGuid::ParseExact(FMD5::HashAnsiString(*Text),EGuidFormats::Digits,Id);
+    return EnqueueCombatAction(Cue,Battle,FOGEntityId(Id));
 }

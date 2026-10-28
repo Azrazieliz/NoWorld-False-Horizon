@@ -20,7 +20,7 @@ struct OFFLINEGAME_API FOGSharedMotionParticipant
 };
 
 /**
- * Synchronized real native AnimSequence playback across 2-13 actors.
+ * Synchronized real native AnimSequence playback across authored role tracks.
  * Authoritative scene/gameplay eligibility is verified by the caller; this
  * component independently requires compatible approved native source clips.
  */

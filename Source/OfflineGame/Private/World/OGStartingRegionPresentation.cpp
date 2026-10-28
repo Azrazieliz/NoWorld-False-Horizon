@@ -1,4 +1,6 @@
 #include "World/OGStartingRegionPresentation.h"
+#include "Gacha/OGSharedGachaBannerDefinition.h"
+#include "UI/OGNativeBattleWidget.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
@@ -15,9 +17,12 @@
 #include "World/OGFoundationIntegrationWorld.h"
 #include "Animation/OGDiagnosticAnimationPresentation.h"
 #include "Runtime/OGSemanticAudioRuntime.h"
+#include "Runtime/OGAdaptiveScoreComponent.h"
 #include "Runtime/OGFoundationDiagnosticMenu.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "Interaction/OGFoundationInteractionHost.h"
+#include "UI/OGNativeInteractionWidget.h"
+#include "Interaction/OGInteractionParticipantComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -1822,8 +1827,10 @@ AOGWorldPrototypeCharacter::AOGWorldPrototypeCharacter()
     DiagnosticAnimations = CreateDefaultSubobject<UOGDiagnosticAnimationPresentation>(TEXT("DiagnosticAnimations"));
     SemanticAudio = CreateDefaultSubobject<UOGSemanticAudioRuntime>(TEXT("SemanticAudio"));
     SemanticAudio->ComponentTags.Add(TEXT("OG.PresentationPersistent"));
+    AdaptiveScore = CreateDefaultSubobject<UOGAdaptiveScoreComponent>(TEXT("AdaptiveScore"));
     DiagnosticMenu = CreateDefaultSubobject<UOGFoundationDiagnosticMenu>(TEXT("DiagnosticMenu"));
     InteractionHost = CreateDefaultSubobject<UOGFoundationInteractionHost>(TEXT("InteractionHost"));
+    CreateDefaultSubobject<UOGInteractionParticipantComponent>(TEXT("CanonicalInteractionParticipant"));
     CanonicalPresentation = CreateDefaultSubobject<UOGCanonicalCharacterPresentation>(TEXT("CanonicalCharacterPresentation"));
     CanonicalPresentation->bUseNeutralDiagnosticTint = true;
     Movement->NavAgentProps.bCanSwim = TraversalCapabilities->HasCapability(FOGTraversalCapabilityIds::Swim);
@@ -3684,7 +3691,7 @@ bool AOGWorldPrototypeCharacter::HasUltimateForHud() const
     return Slots.IsValidIndex(ControlledSlot) &&
         Slots[ControlledSlot].bAvailable &&
         !Slots[ControlledSlot].bDefeated &&
-        Slots[ControlledSlot].Unit.SkillSet.UltimateSkill.IsValid();
+        !Slots[ControlledSlot].Unit.SkillSet.GetUltimateSkills().IsEmpty();
 }
 
 void AOGWorldPrototypeCharacter::TriggerSkillFromHud(int32 SkillSlot)
@@ -5916,6 +5923,9 @@ bool AOGWorldPresentationHud::ExecuteActiveGachaDraw(
         return false;
     }
     const int64 Tick = Core->GetCanonicalWorldTick();
+    const FOGContentId CurrentBannerId=ActiveGachaBanner.BannerId;
+    if (!SelectInstalledGachaBanner(CurrentBannerId,OutError))
+    { FoundationStatusMessage=OutError; return false; }
     if (Tick < 0 ||
         !FOGGachaService::ValidateBanner(ActiveGachaBanner, OutError) ||
         !ValidateInstalledPlayableGachaPool(ActiveGachaBanner, OutError))
@@ -5938,6 +5948,7 @@ bool AOGWorldPresentationHud::ExecuteActiveGachaDraw(
         GachaCommandSeed = static_cast<int64>(
             static_cast<uint64>(GachaCommandSeed) +
             static_cast<uint64>(FMath::Max<int64>(1, Result.RngDrawCount + 1)));
+    GachaSeedsByBanner.Add(ActiveGachaBanner.BannerId,GachaCommandSeed);
     GachaOverlay = TEXT("results");
     GachaDetailsPage = 0;
     FoundationStatusMessage = FString::Printf(
@@ -5955,53 +5966,68 @@ bool AOGWorldPresentationHud::ExecuteActiveGachaDraw(
 bool AOGWorldPresentationHud::LoadInstalledGachaBannerForRuler(
     FString& OutError)
 {
-    OutError.Reset();
-    // Respect an already-activated banner supplied by the authorized
-    // installed-content service; never replace it with a guessed pool.
-    if (bHasActiveGachaPresentation) return true;
-    UGameInstance* GI = GetGameInstance();
-    UOGGameCoreSubsystem* Core =
-        GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
-    UOGGate12RulerSessionSubsystem* Session =
-        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
-    if (!Core || !Core->IsCoreReady() || !Session ||
-        !Session->IsBoundToStoredRuler())
+    TArray<FOGGachaBannerDefinition> Banners;
+    if (!ListInstalledGachaBanners(Banners,OutError)) return false;
+    if (bHasActiveGachaPresentation && Banners.ContainsByPredicate([this](const auto& B){return B.BannerId==ActiveGachaBanner.BannerId;}))
+        return SelectInstalledGachaBanner(ActiveGachaBanner.BannerId,OutError);
+    for (const auto& Banner:Banners)
+        if (SelectInstalledGachaBanner(Banner.BannerId,OutError)) return true;
+    ClearActiveGachaPresentation();
+    if (OutError.IsEmpty()) OutError=TEXT("No currently eligible installed authored banner.");
+    return false;
+}
+bool AOGWorldPresentationHud::ListInstalledGachaBanners(TArray<FOGGachaBannerDefinition>& Out,FString& Error) const
+{
+    const auto* GI=GetGameInstance();
+    const auto* Core=GI?GI->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    const auto* Session=GI?GI->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+    if (!Core || !Core->IsCoreReady() || !Session || !Session->IsBoundToStoredRuler())
+    { Out.Reset(); Error=TEXT("No stored player World for live banner discovery."); return false; }
+    return FOGInstalledGachaBannerLibrary::Collect(Core->GetCanonicalWorldTick(),Out,Error);
+}
+bool AOGWorldPresentationHud::SelectInstalledGachaBanner(const FOGContentId& Id,FString& Error)
+{
+    const FOGContentId RequestedId=Id;
+    TArray<FOGGachaBannerDefinition> Banners;
+    if (!ListInstalledGachaBanners(Banners,Error)) return false;
+    const auto* Selected=Banners.FindByPredicate([&](const auto& B){return B.BannerId==RequestedId;});
+    if (!Selected) { Error=TEXT("Selected banner is absent, inactive or outside its World schedule."); return false; }
+    if (!ValidateInstalledPlayableGachaPool(*Selected,Error)) return false;
+    const auto* GI=GetGameInstance();
+    const auto* Core=GI->GetSubsystem<UOGGameCoreSubsystem>();
+    const auto* Session=GI->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+    if (GachaSeedOwner!=Session->BoundRulerId)
     {
-        OutError=TEXT("No stored player World for live banner resolution.");
-        return false;
+        ClearActiveGachaPresentation(); GachaSeedsByBanner.Reset();
+        GachaSeedOwner=Session->BoundRulerId;
     }
-    UOGApprovedGachaBannerCatalog* Catalog =
-        LoadObject<UOGApprovedGachaBannerCatalog>(nullptr,
-            TEXT("/Game/NoWorld/Gacha/DA_NoWorld_ApprovedBanners."
-                 "DA_NoWorld_ApprovedBanners"));
-    if (!Catalog)
+    if (bHasActiveGachaPresentation) GachaSeedsByBanner.Add(ActiveGachaBanner.BannerId,GachaCommandSeed);
+    const int64 Tick=Core->GetCanonicalWorldTick();
+    const int64 Seed=GachaSeedsByBanner.Contains(RequestedId)?GachaSeedsByBanner[RequestedId]:static_cast<int64>(
+        HashCombine(GetTypeHash(Session->BoundRulerId.ToString()),GetTypeHash(Tick)));
+    const bool Changed=!bHasActiveGachaPresentation || ActiveGachaBanner.BannerId!=RequestedId;
+    SetActiveGachaPresentation(*Selected,Tick,Seed);
+    if (Changed) { LastGachaResults.Reset(); GachaOverlay=NAME_None; }
+    return bHasActiveGachaPresentation;
+}
+bool AOGWorldPresentationHud::StepInstalledGachaBanner(int32 Direction,FString& Error)
+{
+    TArray<FOGGachaBannerDefinition> Banners;
+    if (!ListInstalledGachaBanners(Banners,Error)) return false;
+    if (Banners.IsEmpty()) { Error=TEXT("No active installed banners."); return false; }
+    int32 Index=Banners.IndexOfByPredicate([this](const auto& B){return B.BannerId==ActiveGachaBanner.BannerId;});
+    if (Index==INDEX_NONE) Index=Direction<0?0:-1;
+    for (int32 Attempt=0;Attempt<Banners.Num();++Attempt)
     {
-        OutError=TEXT("No installed accepted banner catalog.");
-        return false;
+        Index=(Index+(Direction<0?-1:1)+Banners.Num())%Banners.Num();
+        if (SelectInstalledGachaBanner(Banners[Index].BannerId,Error)) return true;
     }
-    const int64 WorldTick=Core->GetCanonicalWorldTick();
-    for (const FOGInstalledScheduledGachaBanner& Scheduled:
-         Catalog->ActiveSchedules)
-    {
-        if (!Scheduled.bAcceptedInstalledAndActivated ||
-            WorldTick < Scheduled.BeginsAtWorldTick ||
-            WorldTick >= Scheduled.EndsBeforeWorldTick)
-            continue;
-        // Every pull is still Ruler-access, payment and Registry-gated.
-        // Seed is tied to the actual World and owner, not an invented
-        // Ruler account or developer wallet.
-        const int64 Seed=static_cast<int64>(
-            HashCombine(GetTypeHash(Session->BoundRulerId.ToString()),
-                        GetTypeHash(WorldTick)));
-        SetActiveGachaPresentation(Scheduled.Banner,WorldTick,Seed);
-        if (bHasActiveGachaPresentation) return true;
-    }
-    OutError=TEXT("No currently eligible installed authored banner.");
     return false;
 }
 
 void AOGWorldPresentationHud::ClearActiveGachaPresentation()
 {
+    if (bHasActiveGachaPresentation) GachaSeedsByBanner.Add(ActiveGachaBanner.BannerId,GachaCommandSeed);
     bHasActiveGachaPresentation = false;
     LastGachaResults.Reset();
     ActiveGachaBanner = FOGGachaBannerDefinition();
@@ -6063,6 +6089,16 @@ void AOGWorldPresentationHud::SetGate12NativeRulerUMGEnabled(bool bEnabled)
     if (!bEnabled) SynchronizeGate12NativeRulerUMG(false);
 }
 
+void AOGWorldPresentationHud::RememberEmbodiedOwnedCharacter(AOGWorldPrototypeCharacter* Character)
+{
+    if (!IsValid(Character)) return;
+    const auto* Participant = Character->FindComponentByClass<UOGInteractionParticipantComponent>();
+    FOGFoundationCharacterProjection Projection; FString Error;
+    if (Participant && Participant->GetCurrentProjection(Projection, Error) && Projection.bHasManifestation &&
+        Projection.Context.OwnerEntityId == GetFoundationRulerPresentationOwner())
+        EmbodiedOwnedWorldPawns.Add(Projection.Manifestation.ManifestationId, Character);
+}
+
 void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
 {
     UGameInstance* GI = GetGameInstance();
@@ -6099,30 +6135,23 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 UOGGate12OwnedWorldCharacterBinding::StaticClass());
         if (bWasControllingSummon)
         {
-            FActorSpawnParameters Spawn;
-            Spawn.Owner = PlayerOwner;
-            Spawn.SpawnCollisionHandlingOverride =
-                ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            AOGWorldPrototypeCharacter* OriginalRuler =
-                GetWorld()->SpawnActor<AOGWorldPrototypeCharacter>(
-                    AOGWorldPrototypeCharacter::StaticClass(),
-                    Previous->GetActorTransform(), Spawn);
+            AOGWorldPrototypeCharacter* OriginalRuler = PreservedRulerOwnerId == Session->BoundRulerId
+                ? PreservedRulerWorldPawn.Get() : nullptr;
             if (!IsValid(OriginalRuler))
             {
-                FailAndReturnToRuler(TEXT("Original Ruler World pawn could not be restored."));
+                FailAndReturnToRuler(TEXT("The canonical Ruler's existing physical body is unavailable; current character preserved."));
                 return;
             }
             PlayerOwner->Possess(OriginalRuler);
             if (PlayerOwner->GetPawn() != OriginalRuler)
             {
-                OriginalRuler->Destroy();
                 if (IsValid(Previous)) PlayerOwner->Possess(Previous);
                 FailAndReturnToRuler(TEXT("Ruler possession failed; previous pawn preserved."));
                 return;
             }
             // The existing World is already initialized. Preserve its actors,
             // player location and state rather than rebuilding the test course.
-            Previous->Destroy();
+            RememberEmbodiedOwnedCharacter(Previous);
         }
     }
     else
@@ -6154,9 +6183,18 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
         Spawn.Instigator = Previous;
         Spawn.SpawnCollisionHandlingOverride =
             ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        AOGWorldPrototypeCharacter* Replacement =
-            GetWorld()->SpawnActor<AOGWorldPrototypeCharacter>(
-                Class, Previous->GetActorTransform(), Spawn);
+        AOGWorldPrototypeCharacter* Replacement = nullptr;
+        if (auto* Existing = EmbodiedOwnedWorldPawns.Find(Session->SelectedManifestationId))
+            if (Existing->IsValid() && Existing->Get()->IsA(Class))
+            {
+                const auto* Participant = Existing->Get()->FindComponentByClass<UOGInteractionParticipantComponent>();
+                FOGFoundationCharacterProjection Projection;
+                if (Participant && Participant->GetCurrentProjection(Projection, Error) && Projection.bHasManifestation &&
+                    Projection.Manifestation.ActiveVersionId == VersionId && Projection.Manifestation.OwningRulerId == Session->BoundRulerId)
+                    Replacement = Existing->Get();
+            }
+        const bool bReusingBody = Replacement != nullptr;
+        if (!Replacement) Replacement = GetWorld()->SpawnActor<AOGWorldPrototypeCharacter>(Class, Previous->GetActorTransform(), Spawn);
         if (!IsValid(Replacement))
         {
             FailAndReturnToRuler(
@@ -6169,31 +6207,121 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
             Profile, Error);
         // Fail-safe visual state if the Privacy profile is unreadable.
         const bool bSafePresentation = !bProfileLoaded || Profile.bSfwPresentation;
-        const bool bBound =
+        const bool bBound = bReusingBody ||
             IOGGate12OwnedWorldCharacterBinding::Execute_BindOwnedWorldCharacter(
                 Replacement, Session->BoundRulerId,
                 Session->SelectedIdentityId, VersionId,
                 Session->SelectedManifestationId, bSafePresentation);
         if (!bBound)
         {
-            Replacement->Destroy();
+            if (!bReusingBody) Replacement->Destroy();
             FailAndReturnToRuler(TEXT(
                 "Approved World actor failed canonical owned-character/wardrobe binding."));
             return;
         }
+        const bool bPreviousIsOwned = Previous->GetClass()->ImplementsInterface(UOGGate12OwnedWorldCharacterBinding::StaticClass());
+        if (!bPreviousIsOwned)
+        {
+            auto* Participant = Previous->FindComponentByClass<UOGInteractionParticipantComponent>();
+            if (!Participant)
+            {
+                Participant = NewObject<UOGInteractionParticipantComponent>(Previous);
+                Previous->AddInstanceComponent(Participant); Participant->RegisterComponent();
+            }
+            if (Previous->GetMesh() && Previous->GetMesh()->GetSkeletalMeshAsset() && Previous->GetMesh()->GetSkeletalMeshAsset()->GetSkeleton())
+            {
+                const FOGContentId Rig(TEXT("rig:") + Previous->GetMesh()->GetSkeletalMeshAsset()->GetSkeleton()->GetPathName().ToLower());
+                if (!Participant->BindActualNativeParticipant(Session->BoundRulerId, Rig, Error))
+                {
+                    if (!bReusingBody) Replacement->Destroy();
+                    FailAndReturnToRuler(Error); return;
+                }
+                PreservedRulerWorldPawn = Previous; PreservedRulerOwnerId = Session->BoundRulerId;
+            }
+        }
         PlayerOwner->Possess(Replacement);
         if (PlayerOwner->GetPawn() != Replacement)
         {
-            Replacement->Destroy();
+            if (!bReusingBody) Replacement->Destroy();
             if (IsValid(Previous)) PlayerOwner->Possess(Previous);
             FailAndReturnToRuler(
                 TEXT("Player possession failed; old playable character restored."));
             return;
         }
-        Previous->Destroy();
+        RememberEmbodiedOwnedCharacter(Replacement);
+        if (bPreviousIsOwned && Previous != Replacement) RememberEmbodiedOwnedCharacter(Previous);
     }
 
+    if (auto* Current = Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn()); Current &&
+        !Current->GetClass()->ImplementsInterface(UOGGate12OwnedWorldCharacterBinding::StaticClass()))
+    {
+        PreservedRulerWorldPawn = Current; PreservedRulerOwnerId = Session->BoundRulerId;
+        auto* Participant = Current->FindComponentByClass<UOGInteractionParticipantComponent>();
+        if (!Participant)
+        {
+            Participant = NewObject<UOGInteractionParticipantComponent>(Current);
+            Current->AddInstanceComponent(Participant); Participant->RegisterComponent();
+        }
+        if (Current->GetMesh() && Current->GetMesh()->GetSkeletalMeshAsset() && Current->GetMesh()->GetSkeletalMeshAsset()->GetSkeleton())
+        {
+            FString BindingError;
+            Participant->BindActualNativeParticipant(Session->BoundRulerId,
+                FOGContentId(TEXT("rig:") + Current->GetMesh()->GetSkeletalMeshAsset()->GetSkeleton()->GetPathName().ToLower()), BindingError);
+        }
+    }
     SetFoundationSurface(FName(TEXT("world")));
+}
+
+bool AOGWorldPresentationHud::ShowNativeInteractionSurface(FString& OutError)
+{
+    OutError.Reset();
+    const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    if (const auto* Battle = NativeCore ? NativeCore->GetOwnedLuminousTurnBattle() : nullptr;
+        Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running)
+    { OutError = TEXT("Interaction controls close while the combat encounter is active."); return false; }
+    auto* Character = PlayerOwner ? Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn()) : nullptr;
+    auto* Host = Character ? Character->FindComponentByClass<UOGFoundationInteractionHost>() : nullptr;
+    if (Host && NativeInteractionWidget && NativeInteractionWidget->IsInViewport()) return true;
+    if (!Host || !PlayerOwner->GetLocalPlayer() || !Host->Initialize())
+    { OutError = Host ? Host->GetStatus() : TEXT("A playable World character is required."); return false; }
+    if (!NativeInteractionWidget)
+    {
+        NativeInteractionWidget = CreateWidget<UOGNativeInteractionWidget>(PlayerOwner);
+        if (!NativeInteractionWidget) { OutError = TEXT("Interaction screen could not open."); return false; }
+        NativeInteractionWidget->OnClosed.AddUObject(this, &AOGWorldPresentationHud::CloseNativeInteractionSurface);
+    }
+    bDiagnosticMenuOpen = false; bInteractionMenuOpen = true;
+    NativeInteractionWidget->BindHost(Host);
+    if (!NativeInteractionWidget->IsInViewport()) NativeInteractionWidget->AddToViewport(120);
+    FInputModeGameAndUI Mode; Mode.SetHideCursorDuringCapture(false); PlayerOwner->SetInputMode(Mode);
+    PlayerOwner->bShowMouseCursor = true;
+    return true;
+}
+
+void AOGWorldPresentationHud::CloseNativeInteractionSurface()
+{
+    bInteractionMenuOpen = false;
+    if (NativeInteractionWidget) NativeInteractionWidget->RemoveFromParent();
+    SetFoundationSurface(FoundationSurface);
+    if (PlayerOwner)
+    {
+        if (FoundationSurface == TEXT("world"))
+        { PlayerOwner->SetInputMode(FInputModeGameOnly()); PlayerOwner->bShowMouseCursor = false; }
+        else
+        { FInputModeGameAndUI Mode; PlayerOwner->SetInputMode(Mode); PlayerOwner->bShowMouseCursor = true; }
+    }
+}
+
+void AOGWorldPresentationHud::CloseInteractionForCombat()
+{
+    if (NativeInteractionWidget) NativeInteractionWidget->InterruptForCombat();
+    SetFoundationSurface(TEXT("world"));
+    CloseNativeInteractionSurface();
+}
+
+void AOGWorldPresentationHud::SetInteractionSurface(FName Surface)
+{
+    if (Surface == TEXT("world") || Surface == TEXT("ruler")) SetFoundationSurface(Surface);
 }
 
 void AOGWorldPresentationHud::SynchronizeGate12NativeRulerUMG(bool bShouldShow)
@@ -6362,6 +6490,28 @@ void AOGWorldPresentationHud::SetFoundationSurface(FName Surface)
         }
     }
     if (Character) Character->RefreshFoundationInputState();
+}
+
+bool AOGWorldPresentationHud::ShowNativeRulerSurface(FString& OutError)
+{
+    OutError.Reset();
+    UOGGate12RulerSessionSubsystem* Session = GetGameInstance()
+        ? GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    if (!bGate12NativeRulerUMGEnabled || !PlayerOwner || !PlayerOwner->IsLocalController() ||
+        !PlayerOwner->GetLocalPlayer() || !Session || !Session->IsBoundToStoredRuler())
+    { OutError = TEXT("The native Ruler interface is unavailable for this local player."); return false; }
+    const FName PreviousSurface = FoundationSurface;
+    if (!Session->ReturnToRuler(OutError)) return false;
+    SetFoundationSurface(TEXT("ruler"));
+    SynchronizeGate12NativeRulerUMG(true);
+    if (!IsValid(Gate12NativeRulerWidget) || !Gate12NativeRulerWidget->IsInViewport())
+    {
+        SetFoundationSurface(PreviousSurface);
+        OutError = TEXT("The native Ruler interface could not be opened.");
+        return false;
+    }
+    Gate12NativeRulerWidget->RefreshFromCanonical();
+    return true;
 }
 
 void AOGWorldPresentationHud::DrawFoundationOpening(
@@ -8620,6 +8770,15 @@ void AOGWorldPresentationHud::DrawHUD()
         Character && Character->IsFoundationSettingsOpen();
     const bool bPauseOpen =
         Character && Character->IsFoundationPauseMenuOpen();
+    if (NativeBattleWidget && (!Character || !NativeBattleWidget->IsForCharacter(Character) ||
+        FoundationSurface!=TEXT("world") || bSettingsOpen || bPauseOpen || bInteractionMenuOpen ||
+        !Character->HasNativeOwnedLuminousEncounter()))
+        NativeBattleWidget->SetVisibility(ESlateVisibility::Collapsed);
+    if (bInteractionMenuOpen)
+        if (const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
+            if (const auto* Battle = NativeCore->GetOwnedLuminousTurnBattle();
+                Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running)
+                CloseInteractionForCombat();
 
     const bool bNativeOpeningVisible =
         bGate12NativeOpeningUMGEnabled && !bSettingsOpen && !bPauseOpen &&
@@ -8630,13 +8789,20 @@ void AOGWorldPresentationHud::DrawHUD()
         return;
 
     const bool bNativeRulerVisible =
-        bGate12NativeRulerUMGEnabled && !bSettingsOpen && !bPauseOpen &&
+        bGate12NativeRulerUMGEnabled && !bSettingsOpen && !bPauseOpen && !bInteractionMenuOpen &&
         FoundationSurface == FName(TEXT("ruler"));
     SynchronizeGate12NativeRulerUMG(bNativeRulerVisible);
     if (bNativeRulerVisible && Gate12NativeRulerWidget &&
         Gate12NativeRulerWidget->IsInViewport())
         return;
 
+    if (bInteractionMenuOpen || (Character && Character->FindComponentByClass<UOGFoundationInteractionHost>() &&
+        Character->FindComponentByClass<UOGFoundationInteractionHost>()->IsActive()))
+    {
+        FString InteractionError;
+        if (ShowNativeInteractionSurface(InteractionError)) return;
+        FoundationStatusMessage = InteractionError;
+    }
     float Scale =
         FMath::Clamp(Canvas->ClipY / 1080.0f, 0.72f, 1.2f);
     FLinearColor MainText(0.94f, 0.94f, 0.89f, 1.0f);
@@ -8678,9 +8844,9 @@ void AOGWorldPresentationHud::DrawHUD()
     }
 
     if (!bSettingsOpen && DrawFoundationDiagnosticSurface(Character, Scale, true)) return;
-    if (!bSettingsOpen && FoundationSurface == TEXT("world") &&
+    if (!bSettingsOpen && !bPauseOpen && FoundationSurface == TEXT("world") &&
         DrawOwnedLuminousCombatSurface(Character, Scale)) return;
-    if (!bSettingsOpen && FoundationSurface == TEXT("world") && DrawCanonicalTurnSurface(Character, Scale)) return;
+    if (!bSettingsOpen && !bPauseOpen && FoundationSurface == TEXT("world") && DrawCanonicalTurnSurface(Character, Scale)) return;
 
     if (!bSettingsOpen &&
         FoundationSurface == FName(TEXT("opening")))
@@ -10024,7 +10190,7 @@ void AOGWorldPresentationHud::DrawHUD()
                         !Expanded.PreciseEffectTextKey.IsEmpty()
                             ? Expanded.PreciseEffectTextKey
                             : FString::Printf(
-                                TEXT("%s — exact details unknown"),
+                                TEXT("%s â€” exact details unknown"),
                                 *Expanded.EffectId.ToString());
                     DrawFoundationText(
                         Detail,
@@ -10292,7 +10458,8 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         }
         else
         {
-            int32 Slot = INDEX_NONE;
+            // -1 is the valid Ultimate command, so it cannot also mean unknown.
+            int32 Slot = MIN_int32;
             FName Branch = NAME_None;
             if (Hit == TEXT("OG.Battle.A1")) Slot = 0;
             else if (Hit == TEXT("OG.Battle.A2")) Slot = 1;
@@ -10307,7 +10474,7 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
             else if (Hit == TEXT("OG.Battle.Ultimate.GrandGenesis")) { Slot=-1;Branch=TEXT("genesis"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.GrandRuin")) { Slot=-1;Branch=TEXT("grand_ruin"); }
             else if (Hit == TEXT("OG.Battle.Ultimate.GrandVerdict")) { Slot=-1;Branch=TEXT("verdict"); }
-            if (Slot == INDEX_NONE ||
+            if (Slot == MIN_int32 ||
                 !Character->SubmitApprovedLuminousWorldAction(Slot, Branch, Error))
                 FoundationStatusMessage = Error.IsEmpty() ?
                     TEXT("The selected battle action is unavailable.") : Error;
@@ -11681,6 +11848,8 @@ FString AOGWorldPrototypeCharacter::GetCanonicalHealthText() const
 void AOGWorldPrototypeCharacter::UpdateDiagnosticAnimationState()
 {
     if (!DiagnosticAnimations || !GetCharacterMovement() || (InteractionHost && InteractionHost->IsActive())) return;
+    if (const auto* Participant = FindComponentByClass<UOGInteractionParticipantComponent>();
+        Participant && Participant->IsInInteractionPresentation()) return;
     FName State = TEXT("Idle");
     const float FacingYaw = GetActorRotation().Yaw;
     const float FacingRate = bHasDiagnosticFacingSample && GetWorld()
@@ -11964,7 +12133,7 @@ bool AOGWorldPresentationHud::HandleFoundationDiagnosticClick(FName Name, AOGWor
 {
     if (!Character) return false;
     if (Name == TEXT("OG.Diagnostics.Open")) { bDiagnosticMenuOpen = true; bInteractionMenuOpen = false; return true; }
-    if (Name == TEXT("OG.InteractionMenu.Open")) { bDiagnosticMenuOpen = false; bInteractionMenuOpen = true; return true; }
+    if (Name == TEXT("OG.InteractionMenu.Open")) { FString Error; ShowNativeInteractionSurface(Error); FoundationStatusMessage = Error; return true; }
     if (Name == TEXT("OG.Diagnostics.Close")) { bDiagnosticMenuOpen = bInteractionMenuOpen = false; return true; }
     if (Name.ToString().StartsWith(TEXT("OG.Diagnostic.")))
     {
@@ -12020,6 +12189,9 @@ void AOGWorldPrototypeCharacter::ApplyInteractionCharacterPresentation(const FOG
 {
     AActor* Actor = State.Binding.Actor.Get();
     if (!Actor) return;
+    // The production participant adapter already refreshed its exact native parts.
+    // Never rebind its inherited hidden prototype mesh over a modular appearance.
+    if (Actor->FindComponentByClass<UOGInteractionParticipantComponent>()) return;
     auto* Character = Cast<ACharacter>(Actor);
     if (!Character) return;
     auto* Presenter = Actor->FindComponentByClass<UOGCanonicalCharacterPresentation>();

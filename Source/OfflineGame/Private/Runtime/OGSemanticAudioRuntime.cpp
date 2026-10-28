@@ -385,6 +385,53 @@ void UOGSemanticAudioRuntime::StopSemanticEvent(FName EventName)
     SetComponentTickEnabled(!ActiveEvents.IsEmpty());
 }
 
+float UOGSemanticAudioRuntime::GetEnvelopeGain(const FActiveEvent& Event) const
+{
+    const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : Event.EnvelopeStartedAt;
+    const float Alpha = Event.EnvelopeSeconds > 0.f
+        ? static_cast<float>(FMath::Clamp((Now - Event.EnvelopeStartedAt) / Event.EnvelopeSeconds, 0.0, 1.0)) : 1.f;
+    return FMath::Lerp(Event.EnvelopeFrom, Event.EnvelopeTo, Alpha);
+}
+
+bool UOGSemanticAudioRuntime::IsSemanticEventActiveOrPending(FName EventName) const
+{
+    return ActiveEvents.ContainsByPredicate([EventName](const FActiveEvent& E) { return E.Name == EventName; }) ||
+        PendingEvents.ContainsByPredicate([EventName](const FPendingEvent& E) { return E.Name == EventName; });
+}
+
+bool UOGSemanticAudioRuntime::TransitionSemanticEvent(FName EventName, float TargetGain,
+    float Seconds, bool bStopWhenSilent)
+{
+    if (!FMath::IsFinite(TargetGain) || TargetGain < 0.f || TargetGain > 1.f ||
+        !FMath::IsFinite(Seconds) || Seconds < 0.f || !GetWorld()) return false;
+    // A pending old score must be cancelled before its delayed load can play.
+    if (bStopWhenSilent && TargetGain == 0.f)
+    {
+        for (int32 I = PendingEvents.Num() - 1; I >= 0; --I)
+        {
+            if (PendingEvents[I].Name != EventName) continue;
+            auto Handle = PendingEvents[I].Handle;
+            PendingEvents.RemoveAt(I);
+            if (Handle) Handle->CancelHandle();
+        }
+    }
+    bool bFound = false;
+    for (FActiveEvent& Event : ActiveEvents)
+    {
+        if (Event.Name != EventName) continue;
+        bFound = true;
+        Event.EnvelopeFrom = GetEnvelopeGain(Event);
+        Event.EnvelopeTo = TargetGain;
+        Event.EnvelopeStartedAt = GetWorld()->GetTimeSeconds();
+        Event.EnvelopeSeconds = Seconds;
+        Event.bStopAtEnvelopeEnd = bStopWhenSilent && TargetGain == 0.f;
+        if (UAudioComponent* Audio = Event.Audio.Get())
+            Audio->SetVolumeMultiplier(GetEventGain(Event.Definition) * GetEnvelopeGain(Event));
+    }
+    if (bFound) SetComponentTickEnabled(true);
+    return bFound;
+}
+
 void UOGSemanticAudioRuntime::CancelOwnedPresentation()
 {
     TArray<FPendingEvent> Cancelled = MoveTemp(PendingEvents);
@@ -420,7 +467,7 @@ void UOGSemanticAudioRuntime::UpdateActiveGains()
 {
     for (auto& Event : ActiveEvents)
     {
-        if (UAudioComponent* Audio = Event.Audio.Get()) Audio->SetVolumeMultiplier(GetEventGain(Event.Definition));
+        if (UAudioComponent* Audio = Event.Audio.Get()) Audio->SetVolumeMultiplier(GetEventGain(Event.Definition) * GetEnvelopeGain(Event));
         if (UForceFeedbackComponent* Feedback = Event.Feedback.Get())
         {
             if (!AppliedProfile.bHapticsEnabled || SafeUnit(AppliedProfile.HapticsIntensity) <= 0.0f)
@@ -482,6 +529,14 @@ void UOGSemanticAudioRuntime::TickComponent(float DeltaTime, ELevelTick TickType
     for (int32 I = ActiveEvents.Num() - 1; I >= 0; --I)
     {
         auto& Event = ActiveEvents[I];
+        if (Event.bStopAtEnvelopeEnd && Now - Event.EnvelopeStartedAt >= Event.EnvelopeSeconds)
+        {
+            StopActiveEvent(Event);
+            ActiveEvents.RemoveAt(I);
+            continue;
+        }
+        if (UAudioComponent* Audio = Event.Audio.Get())
+            Audio->SetVolumeMultiplier(GetEventGain(Event.Definition) * GetEnvelopeGain(Event));
         bool bPendingCaption = false;
         if (Event.bSoundStarted || Event.Definition.bAllowCaptionWithoutSound)
             for (const auto& Cue : Event.Definition.Captions)

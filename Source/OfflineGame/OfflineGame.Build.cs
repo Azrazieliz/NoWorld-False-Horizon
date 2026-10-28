@@ -20,6 +20,7 @@ public class OfflineGame : ModuleRules
         {
             "AndroidPermission",
             "ApplicationCore",
+            "AssetRegistry",
             "InputCore",
             "Json",
             "JsonUtilities",
@@ -46,6 +47,13 @@ public class OfflineGame : ModuleRules
         RuntimeDependencies.Add(
             "$(ProjectDir)/Content/NoWorld/Animation/SharedMotionCatalog.json",
             StagedFileType.UFS);
+
+        // Shared source packets are ordinary offline UFS content, never per-character assets.
+        string SharedMotionRoot = Path.GetFullPath(Path.Combine(ModuleDirectory,
+            "../../Content/NoWorld/Animation/SharedSource"));
+        if (Directory.Exists(SharedMotionRoot))
+            foreach (string MotionFile in Directory.EnumerateFiles(SharedMotionRoot, "*", SearchOption.AllDirectories))
+                RuntimeDependencies.Add(MotionFile, StagedFileType.UFS);
 
         if (Target.Platform == UnrealTargetPlatform.Android)
         {

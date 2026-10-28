@@ -258,7 +258,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         FOGCombatUnitState* T=FindMutableUnit(It.Key());
         if(!T || !T->IsAlive())continue;
         FOGLargeNumber Tick=FOGLargeNumber::ScaleByBasisPoints(
-            Source.Stats.Attack,1600*It.Value());
+            GetNativeEffectiveStats(Source.UnitEntityId).Attack,1600*It.Value());
         // Martyr Crown P2: stance raises only the proven registered
         // Bleed-derived Severing Wound potency, never generic DoT.
         if(Current<=Own.MartyrStanceExpires)
@@ -297,7 +297,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         LastEffectiveHpDamage.Remove(Id);
         FOGCombatUnitState* T=FindMutableUnit(Id);
         if(!T || !T->IsAlive())return true;
-        FOGCombatStats Attacker=Source.Stats;
+        FOGCombatStats Attacker=GetNativeEffectiveStats(Source.UnitEntityId);
         int32 DawnAtk=0,DawnSpd=0,DawnHeal=0,DawnReduction=0;
         GetApprovedDawnBlessingBps(Source.UnitEntityId,
             DawnAtk,DawnSpd,DawnHeal,DawnReduction);
@@ -325,7 +325,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
         FOGDamageRequest Req;
         Req.BaseDamage=FOGLargeNumber::ScaleByBasisPoints(
             Attacker.Attack,AtkBps);
-        Req.DefenseReference=Source.Stats.Attack;
+        Req.DefenseReference=GetNativeEffectiveStats(Source.UnitEntityId).Attack;
         Req.bAllowHitOverflowReplication=false;
         // Martyr Crown is already included in Attacker's actual ATK,
         // CritRate, Speed and conditional Bleed penetration; don't apply
@@ -337,7 +337,7 @@ bool FOGTurnBattle::ExecuteApprovedLuminousAlterAction(
            Own.SeveringWounds.FindRef(Id)>0)
             Req.AdditionalMultiplierBps.Add(11200);
         const FOGDamageResolution D=FOGCombatMath::ResolveDamage(
-            Req,Attacker,T->Stats,Rng);
+            Req,Attacker,GetNativeEffectiveStats(T->UnitEntityId),Rng);
         if(D.TotalDamage.IsZero())return true;
         const FOGLargeNumber Before=T->CurrentHp;
         if(!ApplyDamage(Source.UnitEntityId,Id,D.TotalDamage,

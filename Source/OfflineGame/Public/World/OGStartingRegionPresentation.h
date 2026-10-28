@@ -23,6 +23,7 @@ class UTouchInterface;
 class UOGDiagnosticCombatComponent;
 class UOGDiagnosticAnimationPresentation;
 class UOGSemanticAudioRuntime;
+class UOGAdaptiveScoreComponent;
 class UOGFoundationDiagnosticMenu;
 class UOGCanonicalCharacterPresentation;
 struct FOGFoundationCharacterContext;
@@ -39,6 +40,7 @@ class APlayerController;
 enum class EOGActionCancelDestination : uint8;
 enum class EOGTraversalMode : uint8;
 struct FOGEntityId;
+struct FOGNativeBattleCommandSet;
 
 /** Pure traversal-safety policy shared by runtime and regression tests. */
 struct OFFLINEGAME_API FOGWorldSafetyPolicy
@@ -662,6 +664,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
     bool SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,
         FString& OutError);
+    bool ReadOwnedLuminousBattleCommands(FOGNativeBattleCommandSet& Out,FString& Error) const;
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
+    bool SubmitApprovedLuminousWorldCommand(FName CommandId,FString& Error);
     bool HasNativeOwnedLuminousEncounter() const;
     // Advance non-player participants on the REAL canonical encounter timeline,
     // using their existing approved skills and world actors. Never spawn foes.
@@ -773,6 +778,8 @@ protected:
     UPROPERTY() TObjectPtr<UOGDiagnosticCombatComponent> DiagnosticCombat;
     UPROPERTY() TObjectPtr<UOGDiagnosticAnimationPresentation> DiagnosticAnimations;
     UPROPERTY() TObjectPtr<UOGSemanticAudioRuntime> SemanticAudio;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="OfflineGame|Audio", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UOGAdaptiveScoreComponent> AdaptiveScore;
     UPROPERTY() TObjectPtr<UOGFoundationDiagnosticMenu> DiagnosticMenu;
     UPROPERTY() TObjectPtr<UOGCanonicalCharacterPresentation> CanonicalPresentation;
     UPROPERTY() TObjectPtr<UOGFoundationInteractionHost> InteractionHost;
@@ -960,6 +967,9 @@ private:
     UPROPERTY(Transient)
     FOGEntityId SelectedCanonicalBattleId;
     FOGEntityId AutonomousCombatBattleId;
+    FOGEntityId MissingExecutorUnit;
+    int64 MissingExecutorSequence=-1;
+    int64 MissingExecutorRevision=-1;
     double NextCanonicalOpponentActionAt = 0.0;
     FVector ClimbSurfaceNormal = FVector::ZeroVector;
     TWeakObjectPtr<AActor> CurrentCarrier;
@@ -998,6 +1008,7 @@ class OFFLINEGAME_API AOGWorldPresentationHud : public AHUD
 
 public:
     virtual void DrawHUD() override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
     /** Opt-in native UMG Ruler presentation. Canvas remains the safe fallback. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
@@ -1009,6 +1020,15 @@ public:
     /** Native UMG world transition uses existing HUD/presentation contracts. */
     UFUNCTION()
     void OnGate12NativeWorldRequested();
+    /** Content-driven World interactions enter the actual native HUD surface. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
+    bool ShowNativeRulerSurface(FString& OutError);
+    FName GetInteractionReturnSurface() const { return FoundationSurface; }
+    /** Existing native HUD/presentation transition, without changing possession. */
+    void SetInteractionSurface(FName Surface);
+    bool ShowNativeInteractionSurface(FString& OutError);
+    void CloseInteractionForCombat();
+    void RememberEmbodiedOwnedCharacter(AOGWorldPrototypeCharacter* Character);
     virtual void NotifyHitBoxClick(FName BoxName) override;
     virtual void NotifyHitBoxRelease(FName BoxName) override;
     TSet<FName> PressedWorldControls;
@@ -1039,6 +1059,9 @@ public:
     const TArray<FOGGachaPullResult>& GetLastGachaResults() const { return LastGachaResults; }
     bool ExecuteActiveGachaDraw(int32 Count, FString& OutError);
     bool LoadInstalledGachaBannerForRuler(FString& OutError);
+    bool ListInstalledGachaBanners(TArray<FOGGachaBannerDefinition>& Out,FString& Error) const;
+    bool SelectInstalledGachaBanner(const FOGContentId& BannerId,FString& Error);
+    bool StepInstalledGachaBanner(int32 Direction,FString& Error);
 
 #if WITH_DEV_AUTOMATION_TESTS
     /** Test-only HUD geometry seam, deliberately unavailable to shipping. */
@@ -1049,6 +1072,12 @@ public:
 #endif
 
 private:
+    TWeakObjectPtr<AOGWorldPrototypeCharacter> PreservedRulerWorldPawn;
+    FOGEntityId PreservedRulerOwnerId;
+    TMap<FOGEntityId, TWeakObjectPtr<AOGWorldPrototypeCharacter>> EmbodiedOwnedWorldPawns;
+    UPROPERTY(Transient) TObjectPtr<class UOGNativeInteractionWidget> NativeInteractionWidget;
+    UPROPERTY(Transient) TObjectPtr<class UOGNativeBattleWidget> NativeBattleWidget;
+    void CloseNativeInteractionSurface();
     /** Native editable opening: preserves existing Canvas events/saves. */
     void SynchronizeGate12NativeOpeningUMG(bool bShouldShow);
 
@@ -1167,4 +1196,6 @@ private:
     TArray<FOGGachaPullResult> LastGachaResults;
     int64 GachaCommandWorldTick = 0;
     int64 GachaCommandSeed = 0;
+    FOGEntityId GachaSeedOwner;
+    TMap<FOGContentId,int64> GachaSeedsByBanner;
 };

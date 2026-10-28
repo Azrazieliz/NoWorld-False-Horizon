@@ -123,6 +123,11 @@ public:
     bool PlaySemanticEvent(FName EventName, FVector Location = FVector::ZeroVector);
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Audio")
     void StopSemanticEvent(FName EventName);
+    /** Per-instance envelope; leaves authored/profile gain intact. Zero can retire the event. */
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|Audio")
+    bool TransitionSemanticEvent(FName EventName, float TargetGain, float Seconds, bool bStopWhenSilent);
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Audio")
+    bool IsSemanticEventActiveOrPending(FName EventName) const;
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Audio")
     void CancelOwnedPresentation();
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Audio")
@@ -154,6 +159,11 @@ private:
         double StartedAt = 0.0;
         uint64 Sequence = 0;
         bool bSoundStarted = false;
+        float EnvelopeFrom = 1.f;
+        float EnvelopeTo = 1.f;
+        double EnvelopeStartedAt = 0.0;
+        float EnvelopeSeconds = 0.f;
+        bool bStopAtEnvelopeEnd = false;
     };
     struct FPendingEvent
     {
@@ -165,6 +175,7 @@ private:
     bool PlayResolvedEvent(FName EventName, const FOGSemanticAudioEventDefinition& Definition, const FVector& Location);
     void FinishPendingEvent(uint64 Token);
     void StopActiveEvent(FActiveEvent& Event);
+    float GetEnvelopeGain(const FActiveEvent& Event) const;
     void UpdateCaption();
     void ApplyDynamicRangeMix();
     void UpdateActiveGains();

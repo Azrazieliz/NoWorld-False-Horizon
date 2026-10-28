@@ -15,6 +15,7 @@ public:
     virtual void Close() override;
     virtual bool IsOpen() const override { return Database != nullptr; }
 
+    virtual bool IsWriteTransactionActive() const override { return bTransactionActive; }
     virtual bool BeginTransaction(FString&) override;
     virtual bool CommitTransaction(FString&) override;
     virtual bool RollbackTransaction(FString&) override;
@@ -395,6 +396,8 @@ public:
     virtual bool ListWorldEvents(
         const FOGEntityId&, FName, bool, int32,
         TArray<FOGWorldEvent>&, FString&) const override;
+    virtual bool ListWorldEventsPage(const FOGEntityId&, FName, bool, int32,
+        const FOGWorldEventCursor&, TArray<FOGWorldEvent>&, FOGWorldEventCursor&, FString&) const override;
 
     virtual bool BackupTo(const FString&, FString&) override;
     virtual bool RestoreFrom(const FString&, FString&) override;

@@ -45,12 +45,36 @@ struct OFFLINEGAME_API FOGInteractionAnimationBinding
     FOGOptionalAssetReference Expression;
     FOGOptionalAssetReference Reaction;
 };
+/** Sparse completion-time changes. Role must resolve to exactly one canonical
+ * participant. Objects merge recursively; other JSON values replace, including
+ * null (no deletion). An unset optional ID preserves the current selection. */
+struct OFFLINEGAME_API FOGInteractionPresentationPatch
+{
+    FName Role = NAME_None;
+    TOptional<FOGContentId> SelectedSkinId;
+    FString OutfitMergeJson = TEXT("{}");
+    FString VariantMergeJson = TEXT("{}");
+};
+struct OFFLINEGAME_API FOGInteractionAdultContextPatch
+{
+    FName Role = NAME_None;
+    TOptional<FOGContentId> CurrentProfileVariantId;
+    FString MutableContextMergeJson = TEXT("{}");
+};
+/** Original source role offset/orientation; actor body scale stays canonical. */
+struct OFFLINEGAME_API FOGInteractionRolePlacement
+{
+    FName Role = NAME_None;
+    FTransform RelativeToAnchor = FTransform::Identity;
+};
 struct OFFLINEGAME_API FOGInteractionAuthoredConsequences
 {
     TArray<FOGKnowledgeFactRecord> Knowledge;
     TArray<FOGSemanticMemoryRecord> Memories;
     TArray<FOGManifestationPresentationStateRecord> Presentation;
     TArray<FOGWorldPresenceRecord> Presence;
+    TArray<FOGInteractionPresentationPatch> PresentationPatches;
+    TArray<FOGInteractionAdultContextPatch> AdultContextPatches;
 };
 struct OFFLINEGAME_API FOGInteractionActionNode
 {
@@ -68,12 +92,19 @@ struct OFFLINEGAME_API FOGInteractionActionNode
     TArray<FOGInteractionConstraint> Constraints;
     FOGInteractionAuthoredConsequences Consequences;
     FName EnvironmentAnchorTag = NAME_None;
+    FString DisplayName;
+    TArray<FOGInteractionRolePlacement> RolePlacements;
 };
 struct OFFLINEGAME_API FOGInteractionActionGraph
 {
     FOGContentId GraphId;
     FName StartNode;
     TArray<FOGInteractionActionNode> Nodes;
+    FString DisplayName;
+    FString Description;
+    // Source classification/privacy hint only, including nonsexual mature
+    // categories. Never a mutable permission or participant eligibility gate.
+    bool bMaturePresentation = false;
 };
 struct OFFLINEGAME_API FOGInteractionEntry
 {
@@ -115,6 +146,9 @@ public:
     virtual bool PlaySharedScene(const FOGInteractionActionNode&,
         const TArray<FOGInteractionParticipantState>&) { return false; }
     virtual void StopSharedScene() {}
+    // Release action-scoped solo clips, reactions and constraints while keeping
+    // session/character presentation ownership. Default preserves old bridges.
+    virtual void EndAction() {}
     virtual void ApplyReaction(const FOGEntityId&, UObject* Expression, UObject* Reaction) = 0;
     virtual void SetPrivacy(bool bPrivacy) = 0;
     virtual void RestoreGameplay() = 0;
@@ -147,6 +181,9 @@ public:
     bool IsActive() const { return bActive; }
     bool IsAwaitingAction() const { return bActive && CurrentNode.IsNone(); }
     FName GetCurrentNode() const { return CurrentNode; }
+    TArray<FName> GetAvailableActions() const;
+    const TArray<FName>& GetSequence() const { return Sequence; }
+    const TArray<FName>& GetQueuedActions() const { return Sequence; }
     double GetPacing() const { return Pacing; }
     const TArray<FOGInteractionParticipantState>& GetParticipants() const { return Participants; }
     static FOGInteractionActionGraph MakeNeutralDiagnosticGraph();
@@ -164,10 +201,12 @@ private:
     };
     const FOGInteractionActionNode* FindNode(FName Id) const;
     bool RefreshCharacters(FString&);
-    bool SolveStaging(const FVector&, FName AnchorTag, FString&);
+    bool SolveStaging(const FVector&, const FOGInteractionActionNode*, FString&);
     bool StartNode(FName, FString&);
     bool CommitEvent(FName Type, FName Reason, int64 Tick,
         const FOGInteractionAuthoredConsequences* Consequences, FString&);
+    bool ApplyStatePatches(const FOGInteractionAuthoredConsequences&, int64 Tick, FString&);
+    void StopActionPresentation();
     void RestoreGameplay();
     void UpdatePresentation(const FOGInteractionActionNode&);
     bool LoadOptional(const FOGOptionalAssetReference&, UObject*&, FString&);
@@ -185,6 +224,7 @@ private:
     TArray<FName> Sequence;
     FName CurrentNode;
     FName LastCompletedNode;
+    bool bCompletionRefreshPending = false;
     double Elapsed = 0;
     double Pacing = 1;
     bool bActive = false;

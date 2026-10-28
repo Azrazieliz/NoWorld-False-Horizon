@@ -6,12 +6,20 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/OGUiViewModels.h"
 #include "Runtime/OGPackageReportManagementRecords.h"
+#include "Objects/OGObjectActionDefinition.h"
 #include "OGGate12RulerSessionSubsystem.generated.h"
 
 class UOGGameCoreSubsystem;
 class IOGWorldStore;
 class UOGGate12CharacterVisualCatalog;
 class AOGWorldPrototypeCharacter;
+struct FOGCharacterDevelopmentPreview;
+struct FOGCharacterManifestationRecord;
+struct FOGOwnedInventorySnapshot;
+struct FOGOwnedEquipmentPreview;
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOGGate12CharacterDevelopmentApplied,
+    const FOGEntityId&, const FOGContentId&);
 
 /**
  * Post-Android P0: live Ruler navigation and authoritative service projections.
@@ -74,6 +82,49 @@ public:
         const FOGContentId& IdentityId,
         const FOGEntityId& ManifestationId,
         FString& OutError);
+
+    /** Read canonical state even when no authored development choices exist.
+     * None means no reinforcement record, rather than an invented starting tier. */
+    bool ReadOwnedDevelopmentState(const FOGContentId& IdentityId,
+        const FOGEntityId& ManifestationId,
+        FOGCharacterManifestationRecord& OutCurrent,
+        FName& OutReinforcementState, bool& bOutMaxReinforced,
+        FString& OutError);
+
+    /** Only installed choices for this owned Manifestation's exact Identity/Version. */
+    bool ReadOwnedDevelopmentOptions(const FOGContentId& IdentityId,
+        const FOGEntityId& ManifestationId,
+        TArray<FOGCharacterDevelopmentPreview>& OutOptions, FString& OutError);
+
+    /** Re-read content and ownership, then let the canonical service transact.
+     * A true result means Apply succeeded, even if OutError reports a subsequent
+     * projection refresh warning. RequestId belongs to the reviewed command. */
+    bool ConfirmOwnedDevelopment(const FOGContentId& IdentityId,
+        const FOGEntityId& ManifestationId, const FOGContentId& DevelopmentId,
+        const FString& ConfirmationToken, const FOGEntityId& RequestId,
+        FString& OutError);
+
+    // Presentation notification after a new committed transaction; no state authority.
+    FOGGate12CharacterDevelopmentApplied OnCharacterDevelopmentApplied;
+
+    /** Real item instances only; browsing also works before selecting a copy. */
+    bool ReadOwnedInventory(FOGOwnedInventorySnapshot& Out, FString& OutError);
+    bool ReviewOwnedEquipment(const FOGContentId& SlotId, const FOGEntityId& ItemId,
+        bool bUnequip, FOGOwnedEquipmentPreview& Out, FString& OutError);
+    /** A committed command returns true even when OutError contains a later
+     * live-party/projection refresh warning. No UI quote is state authority. */
+    bool ConfirmOwnedEquipment(const FOGOwnedEquipmentPreview& Reviewed,
+        const FOGEntityId& RequestId, FString& OutError);
+
+    /** Shared object operations use the selected real instances and canonical wallets/stock. */
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool ReadOwnedObjectActions(const FOGEntityId& SelectedItem,const FOGEntityId& Counterparty,
+        TArray<FOGObjectActionPreview>& Out,FString& Error);
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool ReviewOwnedObjectAction(const FOGContentId& ActionId,const FOGEntityId& SelectedItem,
+        const FOGEntityId& Counterparty,FOGObjectActionPreview& Out,FString& Error);
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool ConfirmOwnedObjectAction(const FOGObjectActionPreview& Reviewed,const FOGEntityId& RequestId,FString& Error);
 
     /** Writes only an authored, version-exact real wardrobe value in canonical
      * presentation JSON, preserving other physical outfit/equipment/world data.
@@ -157,6 +208,10 @@ private:
         UOGGameCoreSubsystem*& OutCore,
         IOGWorldStore*& OutStore,
         FString& OutError) const;
+
+    bool ValidateOwnedDevelopmentTarget(IOGWorldStore& Store,
+        const FOGContentId& IdentityId, const FOGEntityId& ManifestationId,
+        FOGCharacterManifestationRecord& OutCurrent, FString& OutError) const;
 
     void ClearProjectionAndSelection();
     void HandleCanonicalRuntimeReleasing();

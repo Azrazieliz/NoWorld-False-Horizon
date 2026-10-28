@@ -106,8 +106,10 @@ struct FInteractionPresentationProbe : IOGSystemicInteractionPresentation
     int32 RestoreCalls = 0;
     int32 ConstraintCalls = 0;
     bool bPrivacy = false;
+    TFunction<void()> OnCharacter;
+    int32 StopCalls = 0;
     virtual void ApplyCharacter(const FOGInteractionParticipantState& State) override
-    { ++CharacterCalls; Projected.Add(State.Binding.Character.EntityId); }
+    { ++CharacterCalls; Projected.Add(State.Binding.Character.EntityId); if (OnCharacter) OnCharacter(); }
     virtual void SetSignificance(const FOGEntityId& Entity, bool, bool) override
     { Significant.Add(Entity); }
     virtual void ApplyConstraint(const FOGInteractionConstraint&,
@@ -115,6 +117,7 @@ struct FInteractionPresentationProbe : IOGSystemicInteractionPresentation
     virtual void ApplyAnimation(const FOGEntityId&, UObject*) override {}
     virtual void ApplyReaction(const FOGEntityId&, UObject*, UObject*) override {}
     virtual void SetPrivacy(bool bValue) override { bPrivacy = bValue; }
+    virtual void StopSharedScene() override { ++StopCalls; }
     virtual void RestoreGameplay() override { ++RestoreCalls; }
 };
 
@@ -522,6 +525,287 @@ bool FOGSystemicInteractionGameplayRestoreTest::RunTest(const FString& Parameter
     TestTrue(TEXT("Failed exit persistence restores ordinary camera"), Controller->GetViewTarget() == Actor);
     TestEqual(TEXT("Every active session restores character bridge once"), Presentation.RestoreCalls, 2);
     Runtime.SetPresentationBridge(nullptr);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionStateFreshPatchTest,
+    "OfflineGame.Foundation.Interaction.State.FreshRoleRelativeNpcPatches",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionStateFreshPatchTest::RunTest(const FString& Parameters)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open ordinary NPC fixture"), F.Open(2))) return false;
+    const auto Npc = F.Entry.Participants[1].Character.EntityId;
+    FOGInteractionPresentationPatch Appearance;
+    Appearance.Role = TEXT("participant");
+    Appearance.OutfitMergeJson = TEXT("{\"layers\":{\"outer\":\"updated\"},\"slots\":[\"new\"],\"nullable\":null}");
+    Appearance.VariantMergeJson = TEXT("{\"hairstyle_id\":\"test:hair.selected\"}");
+    FOGInteractionAdultContextPatch Context;
+    Context.Role = Appearance.Role; Context.MutableContextMergeJson = TEXT("{\"expression\":{\"current\":\"neutral\"}}");
+    auto Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    Graph.bMaturePresentation = true; Graph.DisplayName = TEXT("Neutral state fixture");
+    Graph.Nodes[0].Consequences.PresentationPatches.Add(Appearance);
+    Graph.Nodes[0].Consequences.AdultContextPatches.Add(Context);
+    FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler);
+    if (!TestTrue(TEXT("Classification adds no gameplay gate"), Runtime.Enter(F.Entry, Graph, 5, F.Error))) return false;
+    // Deliberately update the canonical records AFTER the entry projection.
+    const FString NpcJson = TEXT("{\"history\":\"fresh\",\"precise\":9007199254740993,\"foundation_presentation\":{\"skin_id\":\"test:skin.current\",\"outfit_state_json\":\"{\\\"layers\\\":{\\\"inner\\\":\\\"retained\\\"},\\\"damage_bps\\\":17}\",\"variant_state_json\":\"{\\\"other\\\":true}\",\"extension\":\"preserved\"}}");
+    TestTrue(TEXT("Persist fresh ordinary NPC state"), F.Store.UpsertEntity(Npc, TEXT("npc"), 6, NpcJson, F.Error));
+    FOGCharacterAdultRuntimeStateRecord Adult; Adult.CharacterEntityId = Npc;
+    Adult.CurrentProfileVariantId = FOGContentId(TEXT("test:profile.current"));
+    Adult.MutableContextStateJson = TEXT("{\"expression\":{\"other\":true},\"precise\":9007199254740993}");
+    TestTrue(TEXT("Persist fresh context independently"), F.Store.UpsertCharacterAdultRuntimeState(Adult, F.Error));
+    TestTrue(TEXT("Partial progress has no patches"), Runtime.Advance(0.5, 7, F.Error));
+    bool Found = false; FName Kind; FString Json; int64 Revision = 0;
+    TestTrue(TEXT("Read uncompleted NPC"), F.Store.TryReadEntity(Npc, Found, Kind, Json, Revision, F.Error));
+    TestEqual(TEXT("Patches wait for actual completion"), Json, NpcJson);
+    Runtime.SetPrivacyPresentation(true);
+    if (!TestTrue(TEXT("Complete canonical patches with privacy substitution"), Runtime.Advance(0.5, 8, F.Error))) return false;
+    FOGFoundationCharacterProjection Projection;
+    TestTrue(TEXT("Ordinary character projection sees patches"), FOGFoundationCharacterRuntime(F.Store).Project(F.Entry.Participants[1].Character, Projection, F.Error));
+    TestTrue(TEXT("No Manifestation is required for NPC presentation"), !Projection.bHasManifestation && Projection.bHasPresentation);
+    TestEqual(TEXT("Unset optional skin preserves fresh selection"), Projection.Presentation.SelectedSkinId.ToString(), FString(TEXT("test:skin.current")));
+    TestTrue(TEXT("Nested outfit sibling retained"), Projection.Presentation.OutfitStateJson.Contains(TEXT("retained")));
+    TestTrue(TEXT("Authored outfit field updated"), Projection.Presentation.OutfitStateJson.Contains(TEXT("updated")));
+    TestTrue(TEXT("Hairstyle flows through existing variant JSON"), Projection.Presentation.PresentationVariantStateJson.Contains(TEXT("test:hair.selected")));
+    TestTrue(TEXT("Untouched variant retained"), Projection.Presentation.PresentationVariantStateJson.Contains(TEXT("other")));
+    TestTrue(TEXT("Fresh entity history and presentation extensions retained"), Projection.EntityStateJson.Contains(TEXT("fresh")) && Projection.EntityStateJson.Contains(TEXT("preserved")));
+    TestTrue(TEXT("Untouched large JSON numbers remain exact"), Projection.EntityStateJson.Contains(TEXT("9007199254740993")) && Projection.AdultContext.MutableContextStateJson.Contains(TEXT("9007199254740993")));
+    TestEqual(TEXT("Fresh profile selection retained"), Projection.AdultContext.CurrentProfileVariantId.ToString(), Adult.CurrentProfileVariantId.ToString());
+    TestTrue(TEXT("Nested expression sibling retained"), Projection.AdultContext.MutableContextStateJson.Contains(TEXT("other")));
+    TestEqual(TEXT("State uses actual completion tick"), Projection.AdultContext.UpdatedWorldTick, int64(8));
+    TestTrue(TEXT("Idle advances cannot repeat completion"), Runtime.Advance(10, 9, F.Error));
+    TestTrue(TEXT("Exit never reapplies patches"), Runtime.Exit(TEXT("interrupted"), 10, F.Error));
+    TArray<FOGWorldEvent> Events; TestTrue(TEXT("Read event ledger"), F.Events(Events));
+    TestEqual(TEXT("One entry, one completion, one exit"), Events.Num(), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionStateRollbackRetryTest,
+    "OfflineGame.Foundation.Interaction.State.RollbackFreshRetryAndExit",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionStateRollbackRetryTest::RunTest(const FString& Parameters)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open transaction fixture"), F.Open(1))) return false;
+    auto Graph = F.GraphWithConsequences();
+    FOGInteractionPresentationPatch Appearance; Appearance.Role = TEXT("player");
+    Appearance.VariantMergeJson = TEXT("{\"hairstyle_id\":\"test:hair.updated\"}");
+    Graph.Nodes[0].Consequences.PresentationPatches.Add(Appearance);
+    FOGInteractionAdultContextPatch Context; Context.Role = TEXT("player");
+    Context.MutableContextMergeJson = TEXT("{\"expression\":\"neutral\"}");
+    Graph.Nodes[0].Consequences.AdultContextPatches.Add(Context);
+    FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler);
+    if (!TestTrue(TEXT("Enter before external state corruption"), Runtime.Enter(F.Entry, Graph, 5, F.Error))) return false;
+    FOGCharacterAdultRuntimeStateRecord Adult; Adult.CharacterEntityId = F.Ruler;
+    Adult.MutableContextStateJson = TEXT("{\"duplicate\":1,\"duplicate\":2}");
+    TestTrue(TEXT("Store accepts legacy invalid payload for negative fixture"), F.Store.UpsertCharacterAdultRuntimeState(Adult, F.Error));
+    TestFalse(TEXT("Malformed fresh context aborts all completion writes"), Runtime.Advance(1, 6, F.Error));
+    TestEqual(TEXT("Uncommitted action remains retryable"), Runtime.GetCurrentNode(), Graph.StartNode);
+    TArray<FOGWorldEvent> Events; F.Events(Events);
+    TestEqual(TEXT("Failed completion rolls back its event"), Events.Num(), 1);
+    bool Found = false; FName Kind; FString Json; int64 Revision = 0;
+    F.Store.TryReadEntity(F.Ruler, Found, Kind, Json, Revision, F.Error);
+    TestFalse(TEXT("Earlier presentation write rolled back"), Json.Contains(TEXT("foundation_presentation")));
+    Adult.MutableContextStateJson = TEXT("{\"external\":true}");
+    TestTrue(TEXT("Repair canonical context"), F.Store.UpsertCharacterAdultRuntimeState(Adult, F.Error));
+    TestTrue(TEXT("Retry rereads fresh records and commits once"), Runtime.Advance(0, 7, F.Error));
+    TestTrue(TEXT("Idle retry cannot duplicate consequences"), Runtime.Advance(0, 7, F.Error));
+    FOGCharacterAdultRuntimeStateRecord Result;
+    F.Store.TryReadCharacterAdultRuntimeState(F.Ruler, Found, Result, F.Error);
+    TestTrue(TEXT("Retry preserves repair made after failure"), Found && Result.MutableContextStateJson.Contains(TEXT("external")));
+    TestTrue(TEXT("Clean exit after successful retry"), Runtime.Exit(TEXT("interrupted"), 8, F.Error));
+    F.Events(Events); TestEqual(TEXT("Retry produces one canonical completion"), Events.Num(), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionStateValidationTest,
+    "OfflineGame.Foundation.Interaction.State.StrictJsonAndUnambiguousRoleValidation",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionStateValidationTest::RunTest(const FString& Parameters)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open validation fixture"), F.Open())) return false;
+    const TArray<FString> Invalid = {
+        TEXT(""), TEXT("[]"), TEXT("null"), TEXT("{\"x\":1,\"x\":2}"),
+        TEXT("{\"x\":1,\"\\u0078\":2}"), TEXT("{} {}"), TEXT("{\"x\":NaN}"),
+        TEXT("{\"x\":1e999}"), TEXT("{\"x\":01}"), TEXT("{\"x\":true,}"),
+        TEXT("{/*comment*/\"x\":true}"), TEXT("{\"x\":\"\\q\"}"),
+        TEXT("{\"expression\":{\"eligible\":true}}"), TEXT("{\"consent\":true}"),
+        TEXT("{\"affection\":100}"), TEXT("{\"active_version_id\":\"test:version.forbidden\"}")
+    };
+    for (const FString& BadJson : Invalid)
+    {
+        auto Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+        FOGInteractionAdultContextPatch Patch; Patch.Role = TEXT("player"); Patch.MutableContextMergeJson = BadJson;
+        Graph.Nodes[0].Consequences.AdultContextPatches.Add(Patch);
+        FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler);
+        TestFalse(TEXT("Invalid authored JSON fails before entry"), Runtime.Enter(F.Entry, Graph, 5, F.Error));
+        TestFalse(TEXT("Invalid graph does not own gameplay"), Runtime.IsActive());
+    }
+    auto Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    FOGInteractionPresentationPatch Patch; Patch.Role = TEXT("participant");
+    Graph.Nodes[0].Consequences.PresentationPatches.Add(Patch);
+    FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler);
+    TestFalse(TEXT("Group roles cannot silently select arbitrary NPC"), Runtime.Enter(F.Entry, Graph, 5, F.Error));
+    Graph.Nodes[0].Consequences.PresentationPatches[0].Role = TEXT("missing");
+    TestFalse(TEXT("Missing role rejected"), Runtime.Enter(F.Entry, Graph, 5, F.Error));
+    TArray<FOGWorldEvent> Events; F.Events(Events);
+    TestEqual(TEXT("Invalid patch graphs persist no event"), Events.Num(), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionStateCompletionRecoveryTest,
+    "OfflineGame.Foundation.Interaction.State.CommittedCompletionQueueRecoveryAndMonotonicClock",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionStateCompletionRecoveryTest::RunTest(const FString& Parameters)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open completion fixture"), F.Open(1))) return false;
+    FInteractionPresentationProbe Presentation;
+    FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler); Runtime.SetPresentationBridge(&Presentation);
+    const auto Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    if (!TestTrue(TEXT("Enter queue fixture"), Runtime.Enter(F.Entry, Graph, 5, F.Error))) return false;
+    TestTrue(TEXT("Active-node available actions follow source edges"), Runtime.GetAvailableActions().Contains(FName(TEXT("handoff"))));
+    TestTrue(TEXT("Queue transition"), Runtime.SetSequence({FName(TEXT("handoff"))}, F.Error));
+    TestEqual(TEXT("Read-only queue excludes the active node"), Runtime.GetQueuedActions().Num(), 1);
+    TestFalse(TEXT("Backward canonical tick rejected before progress"), Runtime.Advance(1, 4, F.Error));
+    const int32 Stops = Presentation.StopCalls;
+    Presentation.OnCharacter = [&F]() { F.Store.Close(); };
+    TestFalse(TEXT("Post-commit next-node refresh failure reported"), Runtime.Advance(1, 6, F.Error));
+    TestTrue(TEXT("Committed action cannot be retried as unfinished"), Runtime.IsAwaitingAction());
+    TestTrue(TEXT("Awaiting available actions follow last completed source edges"), Runtime.GetAvailableActions().Contains(FName(TEXT("handoff"))));
+    TestTrue(TEXT("Completed action presentation stops while awaiting recovery"), Presentation.StopCalls > Stops);
+    Presentation.OnCharacter = nullptr;
+    TestTrue(TEXT("Restore canonical store"), F.Store.Open(F.DatabasePath, F.Error));
+    TestTrue(TEXT("Later advance recovers queued transition"), Runtime.Advance(0, 7, F.Error));
+    TestEqual(TEXT("Queued action no longer stranded"), Runtime.GetCurrentNode(), FName(TEXT("handoff")));
+    TArray<FOGWorldEvent> Events; F.Events(Events);
+    TestEqual(TEXT("Recovery never repeats committed completion event"), Events.Num(), 2);
+    TestTrue(TEXT("Pause does not freeze canonical tick"), Runtime.SetPacing(0, F.Error) && Runtime.Advance(100, 10, F.Error));
+    TestFalse(TEXT("Backward exit refuses stale event but restores gameplay"), Runtime.Exit(TEXT("stale_clock"), 9, F.Error));
+    TestFalse(TEXT("Failed exit still cleans up"), Runtime.IsActive());
+    TestEqual(TEXT("Inactive sessions expose no action rows"), Runtime.GetAvailableActions().Num(), 0);
+    TestEqual(TEXT("Bridge restored exactly once"), Presentation.RestoreCalls, 1);
+    Runtime.SetPresentationBridge(nullptr);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionStateManifestationPatchTest,
+    "OfflineGame.Foundation.Interaction.State.ManifestationPresentationKeepsCanonicalDevelopment",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionStateManifestationPatchTest::RunTest(const FString& Parameters)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open Manifestation fixture"), F.Open(2))) return false;
+    const auto Id = F.Entry.Participants[1].Character.EntityId;
+    FOGCharacterManifestationRecord Manifestation;
+    Manifestation.ManifestationId = Id; Manifestation.OwningRulerId = F.Ruler;
+    Manifestation.IdentityId = FOGContentId(TEXT("test:identity.exact"));
+    Manifestation.ActiveVersionId = FOGContentId(TEXT("test:version.exact"));
+    Manifestation.Level = 17; Manifestation.ProgressionStateJson = TEXT("{\"development\":\"retained\"}");
+    if (!TestTrue(TEXT("Persist actual canonical Manifestation"), F.Store.UpsertCharacterManifestation(Manifestation, 0, F.Error))) return false;
+    F.Entry.Participants[1].Character.ManifestationId = Id;
+    F.Entry.Participants[1].Character.OwnerEntityId = F.Ruler;
+    FOGManifestationPresentationStateRecord Presentation; Presentation.ManifestationId = Id;
+    Presentation.SelectedSkinId = FOGContentId(TEXT("test:skin.previous"));
+    Presentation.OutfitStateJson = TEXT("{\"damage_bps\":300,\"layers\":{\"inner\":true}}");
+    Presentation.PresentationVariantStateJson = TEXT("{\"hairstyle_id\":\"test:hair.previous\",\"other\":true}");
+    TestTrue(TEXT("Persist existing presentation"), F.Store.UpsertManifestationPresentationState(Presentation, F.Error));
+    auto Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    FOGInteractionPresentationPatch Patch; Patch.Role = TEXT("participant");
+    Patch.SelectedSkinId = FOGContentId(); // Explicit empty selection differs from unset.
+    Patch.OutfitMergeJson = TEXT("{\"layers\":{\"outer\":true}}");
+    Graph.Nodes[0].Consequences.PresentationPatches.Add(Patch);
+    Patch.SelectedSkinId.Reset(); Patch.OutfitMergeJson = TEXT("{}");
+    Patch.VariantMergeJson = TEXT("{\"hairstyle_id\":\"test:hair.current\"}");
+    Graph.Nodes[0].Consequences.PresentationPatches.Add(Patch);
+    FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler);
+    if (!TestTrue(TEXT("Enter canonical Manifestation graph"), Runtime.Enter(F.Entry, Graph, 5, F.Error))) return false;
+    TestTrue(TEXT("Complete ordered sparse patches"), Runtime.Advance(1, 6, F.Error));
+    bool Found = false; FOGManifestationPresentationStateRecord Result;
+    F.Store.TryReadManifestationPresentationState(Id, Found, Result, F.Error);
+    TestTrue(TEXT("Explicit empty selection clears only skin"), Found && Result.SelectedSkinId.IsEmpty());
+    TestTrue(TEXT("Both ordered patches compose with existing state"), Result.OutfitStateJson.Contains(TEXT("inner")) && Result.OutfitStateJson.Contains(TEXT("outer")) && Result.OutfitStateJson.Contains(TEXT("300")));
+    TestTrue(TEXT("Other variant data survives hairstyle change"), Result.PresentationVariantStateJson.Contains(TEXT("other")) && Result.PresentationVariantStateJson.Contains(TEXT("test:hair.current")));
+    FOGCharacterManifestationRecord Actual;
+    F.Store.TryReadCharacterManifestation(Id, Found, Actual, F.Error);
+    TestTrue(TEXT("Ownership, Identity and Version cannot be granted or replaced by appearance patches"), Found && Actual.OwningRulerId == Manifestation.OwningRulerId && Actual.IdentityId == Manifestation.IdentityId && Actual.ActiveVersionId == Manifestation.ActiveVersionId);
+    TestEqual(TEXT("Canonical level untouched"), Actual.Level, Manifestation.Level);
+    TestEqual(TEXT("Canonical development untouched"), Actual.ProgressionStateJson, Manifestation.ProgressionStateJson);
+    TestTrue(TEXT("Exit canonical graph"), Runtime.Exit(TEXT("finished"), 7, F.Error));
+    F.Store.Close(); TestTrue(TEXT("Reopen sole canonical store"), F.Store.Open(F.DatabasePath, F.Error));
+    F.Store.TryReadManifestationPresentationState(Id, Found, Result, F.Error);
+    TestTrue(TEXT("Patch survives canonical reload"), Found && Result.PresentationVariantStateJson.Contains(TEXT("test:hair.current")));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionStateAuthoredPlacementTest,
+    "OfflineGame.Foundation.Interaction.State.AuthoredRoleOffsetsAndObserverStaging",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionStateAuthoredPlacementTest::RunTest(const FString& Parameters)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open variable-arity placement fixture"), F.Open())) return false;
+    F.Entry.Participants[1].Role = TEXT("focus");
+    F.Entry.PreferredLocation = FVector(300, 400, 100);
+    auto Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    FOGInteractionRolePlacement Player; Player.Role = TEXT("player");
+    Player.RelativeToAnchor = FTransform(FRotator(0, 20, 0), FVector(15, 0, 7), FVector(3));
+    FOGInteractionRolePlacement Focus; Focus.Role = TEXT("focus");
+    Focus.RelativeToAnchor = FTransform(FRotator(0, -20, 0), FVector(45, 0, 27));
+    Graph.Nodes[0].RolePlacements = {Player, Focus};
+    FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler);
+    if (!TestTrue(TEXT("Authored source offsets support 13 logical participants"), Runtime.Enter(F.Entry, Graph, 5, F.Error))) return false;
+    const auto& States = Runtime.GetParticipants();
+    TestEqual(TEXT("Observers remain in authoritative state"), States.Num(), 13);
+    TestTrue(TEXT("Source role offsets remain together"), (States[1].StagingTransform.GetLocation() - States[0].StagingTransform.GetLocation()).Equals(FVector(30, 0, 20)));
+    TestTrue(TEXT("Source role orientation retained"), States[0].StagingTransform.GetRotation().Equals(Player.RelativeToAnchor.GetRotation()));
+    TestTrue(TEXT("Authored scale never resizes canonical body"), States[0].StagingTransform.GetScale3D().Equals(FVector::OneVector));
+    for (int32 I = 2; I < States.Num(); ++I)
+        TestTrue(TEXT("Observers are outside the authored source group"), FVector::Dist2D(States[I].StagingTransform.GetLocation(), F.Entry.PreferredLocation) > 100);
+    TestTrue(TEXT("Restage authored group"), Runtime.Restage(FVector(600, 700, 200), F.Error));
+    TestTrue(TEXT("Restaging retains relative source offsets"), (States[1].StagingTransform.GetLocation() - States[0].StagingTransform.GetLocation()).Equals(FVector(30, 0, 20)));
+    TestTrue(TEXT("Exit placement fixture"), Runtime.Exit(TEXT("finished"), 6, F.Error));
+    Graph.Nodes[0].RolePlacements.Add(Player);
+    TestFalse(TEXT("Duplicate placement role fails before entry"), Runtime.Enter(F.Entry, Graph, 7, F.Error));
+    Graph.Nodes[0].RolePlacements.Pop();
+    Graph.Nodes[0].RolePlacements[0].Role = TEXT("participant");
+    TestFalse(TEXT("Ambiguous observer group cannot be one source track"), Runtime.Enter(F.Entry, Graph, 7, F.Error));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionStateEmbodiedPlacementTest,
+    "OfflineGame.Foundation.Interaction.State.SourceGroupFloorFitScaleAndFailedRestage",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionStateEmbodiedPlacementTest::RunTest(const FString& Parameters)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open embodied source fixture"), F.Open(2))) return false;
+    FInteractionTestWorld W;
+    if (!TestNotNull(TEXT("Embodied source world"), W.World)) return false;
+    W.AddFloor();
+    FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    ACharacter* Player = W.World->SpawnActor<ACharacter>(ACharacter::StaticClass(), FVector(500, 0, 200), FRotator::ZeroRotator, Spawn);
+    ACharacter* Focus = W.World->SpawnActor<ACharacter>(ACharacter::StaticClass(), FVector(900, 0, 200), FRotator::ZeroRotator, Spawn);
+    if (!TestNotNull(TEXT("Player body"), Player) || !TestNotNull(TEXT("Focus body"), Focus)) return false;
+    Player->SetActorScale3D(FVector(1.5));
+    const auto OriginalPlayer = Player->GetActorTransform(); const auto OriginalFocus = Focus->GetActorTransform();
+    F.Entry.World = W.World; F.Entry.Participants[0].Actor = Player; F.Entry.Participants[1].Actor = Focus;
+    auto Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    FOGInteractionRolePlacement A; A.Role = TEXT("player");
+    FOGInteractionRolePlacement B; B.Role = TEXT("participant");
+    B.RelativeToAnchor = FTransform(FRotator(0, 40, 0), FVector(40, 0, 20));
+    Graph.Nodes[0].RolePlacements = {A, B};
+    FOGSystemicInteractionRuntime Runtime(F.Store, F.Ruler);
+    if (!TestTrue(TEXT("Nearby floor fits source group atomically"), Runtime.Enter(F.Entry, Graph, 5, F.Error))) return false;
+    TestTrue(TEXT("Common floor correction preserves exact source offsets"), (Focus->GetActorLocation() - Player->GetActorLocation()).Equals(FVector(40, 0, 20)));
+    TestTrue(TEXT("Canonical actor scale survives staging"), Player->GetActorScale3D().Equals(OriginalPlayer.GetScale3D()));
+    const auto StagedPlayer = Player->GetActorTransform(); const auto StagedFocus = Focus->GetActorTransform();
+    TestFalse(TEXT("No floor within bounded search fails restaging"), Runtime.Restage(FVector(1000000, 1000000, 0), F.Error));
+    TestTrue(TEXT("Failed candidate never moves either source role"), Player->GetActorTransform().Equals(StagedPlayer) && Focus->GetActorTransform().Equals(StagedFocus));
+    TestTrue(TEXT("Source group exits cleanly"), Runtime.Exit(TEXT("interrupted"), 6, F.Error));
+    TestTrue(TEXT("Exit restores both original transforms and scale"), Player->GetActorTransform().Equals(OriginalPlayer) && Focus->GetActorTransform().Equals(OriginalFocus));
     return true;
 }
 

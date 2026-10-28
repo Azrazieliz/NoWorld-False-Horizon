@@ -746,6 +746,14 @@ bool UOGDiagnosticCombatComponent::RefreshCanonicalPartyProjection(FString& Erro
         FOGFoundationCharacterProjection Character;
         if (!Characters.Project(Context, Character, Error)) return false;
         FOGCombatUnitState Resolved = Existing;
+        // Native authored equipment and development are applied by the party
+        // adapter after fresh content/form resolution, never stacked on a cache.
+        if (Existing.bHasEquipmentStatProjection)
+            Resolved.Stats = Existing.EquipmentBaseStats;
+        else if (Existing.bHasDevelopmentStatProjection)
+            Resolved.Stats = Existing.DevelopmentBaseStats;
+        Resolved.bHasDevelopmentStatProjection = false;
+        Resolved.bHasEquipmentStatProjection = false;
         if (CharacterCombatResolver)
         { if (!CharacterCombatResolver(Character, Resolved, Error)) return false; }
         else

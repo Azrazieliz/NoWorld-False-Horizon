@@ -165,7 +165,11 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
         Item->TryGetBoolField(TEXT("root_motion"), Entry.bUsesRootMotion);
         double Number = 0.;
         if (Item->TryGetNumberField(TEXT("participants"), Number))
-            Entry.RequiredParticipants = FMath::Clamp(FMath::RoundToInt(Number), 1, 13);
+        {
+            if (!FMath::IsFinite(Number) || Number < 1 || Number > MAX_int32 ||
+                FMath::FloorToDouble(Number) != Number) continue;
+            Entry.RequiredParticipants = static_cast<int32>(Number);
+        }
         if (Item->TryGetNumberField(TEXT("priority"), Number))
             Entry.Priority = FMath::RoundToInt(Number);
         if (Item->TryGetNumberField(TEXT("play_rate"), Number))
@@ -251,7 +255,7 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
 {
     if (OutEntry) *OutEntry = nullptr;
     if (!Library || Action.IsNone() || RigProfile.IsNone() ||
-        ActiveParts.IsEmpty() || ParticipantCount < 1 || ParticipantCount > 13)
+        ActiveParts.IsEmpty() || ParticipantCount < 1)
         return nullptr;
 
     // Gameplay authority has already resolved the action before presentation.

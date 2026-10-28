@@ -1,0 +1,112 @@
+name: Shared Animation Reference Library
+
+on:
+  push:
+    branches: ["gate12/**"]
+    paths:
+      - "SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks/**"
+      - "Content/NoWorld/Animation/SharedMotionCatalog.json"
+      - "Scripts/production/build_shared_reference_library.py"
+      - "Scripts/production/test_build_shared_reference_library.py"
+      - ".github/workflows/shared-animation-library.yml"
+  pull_request:
+    paths:
+      - "SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks/**"
+      - "Content/NoWorld/Animation/SharedMotionCatalog.json"
+      - "Scripts/production/build_shared_reference_library.py"
+      - "Scripts/production/test_build_shared_reference_library.py"
+      - ".github/workflows/shared-animation-library.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shared-animation-library-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  shared-reference-library:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks/
+            /Content/NoWorld/Animation/SharedMotionCatalog.json
+            /Content/NoWorld/Animation/SharedSource/
+            /Scripts/production/build_shared_reference_library.py
+            /Scripts/production/test_build_shared_reference_library.py
+            /.github/workflows/shared-animation-library.yml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Exercise complete producer and corruption/provenance regressions
+        run: python -B -m unittest discover -s Scripts/production -p test_build_shared_reference_library.py -v
+      - name: Build every repository-available calibrated source packet
+        run: |
+          python -B Scripts/production/build_shared_reference_library.py \
+            --source-root SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks \
+            --catalog Content/NoWorld/Animation/SharedMotionCatalog.json \
+            --output-root Content/NoWorld/Animation/SharedSource
+      - name: Reopen every generated packet and verify CRC32, calibration basis, identity and routes
+        run: |
+          python -B Scripts/production/build_shared_reference_library.py \
+            --output-root Content/NoWorld/Animation/SharedSource --validate-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shared-reference-library-${{ github.sha }}
+          path: Content/NoWorld/Animation/SharedSource/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Publish generated content to the same branch after all checks
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/gate12/')
+        shell: bash
+        env:
+          BUILD_SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          OUTPUT=Content/NoWorld/Animation/SharedSource
+          git config core.hooksPath /dev/null
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all -- "$OUTPUT"
+          if git diff --cached --quiet; then
+            echo "Generated library is unchanged." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "Build source-unique shared reference animation library [skip ci]"
+          # Native C++ work may advance the branch while this hosted build runs.
+          # Rebase only generated content when every producer input is unchanged.
+          git fetch --no-tags --depth=100 origin "$BRANCH"
+          EXPECTED=$(git rev-parse FETCH_HEAD)
+          git merge-base --is-ancestor "$BUILD_SHA" "$EXPECTED" || {
+            echo "Branch history changed; refusing publication." >&2
+            exit 1
+          }
+          git diff --quiet "$BUILD_SHA" "$EXPECTED" -- \
+            SourceAssets/Gate12/Animations20261023/KoikatsuCalibratedNativeTracks \
+            Content/NoWorld/Animation/SharedMotionCatalog.json \
+            Scripts/production/build_shared_reference_library.py \
+            Scripts/production/test_build_shared_reference_library.py \
+            .github/workflows/shared-animation-library.yml || {
+            echo "Producer inputs changed; the newer queued build must publish." >&2
+            exit 1
+          }
+          if [ "$EXPECTED" != "$BUILD_SHA" ]; then
+            git rebase --onto "$EXPECTED" "$BUILD_SHA"
+          fi
+          ACTUAL=$(git ls-remote --exit-code origin "refs/heads/$BRANCH" | cut -f1)
+          [ "$ACTUAL" = "$EXPECTED" ] || {
+            echo "Branch lease changed; refusing publication." >&2
+            exit 1
+          }
+          # Normal fast-forward push also carries Git's expected old ref value.
+          # Never force, rewrite native commits, push a PR, or execute self-hosted jobs.
+          git push origin "HEAD:refs/heads/$BRANCH"
+          echo "Published validated shared reference library: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"

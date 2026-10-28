@@ -4,6 +4,7 @@
 #include "Containers/Ticker.h"
 #include "Persistence/OGWorldStore.h"
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
+#include "Combat/OGCombatRewardDefinition.h"
 #include "Runtime/OGPerformanceTelemetry.h"
 #include "Runtime/OGCanonicalClockRuntime.h"
 #include "Runtime/OGFoundationStrategicRuntime.h"
@@ -20,6 +21,28 @@ DECLARE_MULTICAST_DELEGATE(FOGCanonicalRuntimeReleasing);
 // No gameplay executor may infer a hit or award a resource from this event.
 DECLARE_MULTICAST_DELEGATE_TwoParams(
     FOGLuminousCombatActionResolvedEvent,const FOGEntityId&,const FOGContentId&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOGNativeCombatActionResolvedEvent, const FOGResolvedCombatAction&);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOGNativeBattleStateCommittedEvent,
+    const FOGTurnBattleState&,const FOGEntityId&);
+
+/** Read-only provenance of the last successfully journaled native combat action.
+ * EventId is the actual canonical ledger ID, not the action or battle ID.
+ * BattleStatus is the executor's status AFTER that recorded action. */
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGNativeCombatEventProvenance
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly) FOGEntityId EventId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId BattleId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId OwningRulerId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId ActionId;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId SourceUnitId;
+    UPROPERTY(BlueprintReadOnly) TArray<FOGEntityId> TargetUnitIds;
+    UPROPERTY(BlueprintReadOnly) FOGContentId SkillId;
+    UPROPERTY(BlueprintReadOnly) int64 WorldTick = -1;
+    UPROPERTY(BlueprintReadOnly) EOGTurnBattleStatus BattleStatus = EOGTurnBattleStatus::NotStarted;
+};
 
 /**
  * Application-level owner of the authoritative game-core lifetime.
@@ -36,6 +59,10 @@ class OFFLINEGAME_API UOGGameCoreSubsystem : public UGameInstanceSubsystem
 public:
     FOGCanonicalRuntimeReleasing OnCanonicalRuntimeReleasing;
     FOGLuminousCombatActionResolvedEvent OnLuminousCombatActionResolved;
+    // Full accepted branch/target context for generic native character presentation.
+    FOGNativeCombatActionResolvedEvent OnNativeCombatActionResolved;
+    /** Actual battle state, once per successful durable root transaction/opening. */
+    FOGNativeBattleStateCommittedEvent OnNativeBattleStateCommitted;
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
@@ -98,6 +125,11 @@ public:
         FOGResolvedSkillSet& OutSkills,FString& OutError) const;
 
 
+    /** Resolve any installed shared kit for an existing active, actually owned Manifestation. */
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Characters")
+    bool ReadOwnedCharacterSkills(const FOGEntityId& ManifestationId,const FOGEntityId& RulerId,
+        FOGResolvedSkillSet& OutSkills,FString& Error) const;
+
     /** Production encounter integration: bind the EXISTING FOGTurnBattle to
      * real Registry, World and soul/blood providers. No fabricated defaults. */
     bool BindOwnedLuminousCombatAuthority(
@@ -117,6 +149,9 @@ public:
         const FOGEntityId& RulerId,
         FOGLuminousCanonicalSources TrustedProviders,
         FString& OutError);
+    /** Admit only installed authored assets for one existing participant, atomically. No command JSON can register effects. */
+    bool ConfigureOwnedNativeAbilities(const FOGEntityId& UnitId,
+        const TArray<UOGNativeCombatAbility*>& Abilities,const TArray<FOGContentId>& RequiredSkills,FString& Error);
     bool ApplyOwnedLuminousTurnAction(const FOGResolvedCombatAction& Action,
         FString& OutError);
     bool ResolveOwnedLuminousRegisteredContest(
@@ -124,6 +159,20 @@ public:
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
+    const FOGNativeBattleOutcome& GetLastNativeBattleOutcome() const { return LastNativeBattleOutcome; }
+    FOGEntityId GetLastNativeBattleReceipt() const { return LastNativeBattleReceipt; }
+    bool IsNativeOpeningPresentationCurrent() const { return LastNativeOpeningReceipt.IsValid() && LastNativeOpeningReceipt==LastNativeBattleReceipt; }
+    FOGEntityId GetOwnedBattleRulerId() const { return OwnedLuminousTurnBattle ? ActiveCombatRulerId : FOGEntityId(); }
+
+    /** Available before the existing resolved-action notifications fire. Empty
+     * until an actual journal append succeeds; cleared on canonical release
+     * and successful encounter replacement. Failed actions preserve the last
+     * successfully recorded event. Shared by World and Ruler combat entry paths. */
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Combat|Provenance")
+    FOGEntityId GetLastNativeCombatEventId() const { return LastNativeCombatEvent.EventId; }
+
+    UFUNCTION(BlueprintPure, Category="OfflineGame|Combat|Provenance")
+    FOGNativeCombatEventProvenance GetLastNativeCombatEventProvenance() const { return LastNativeCombatEvent; }
 
     UFUNCTION(BlueprintPure, Category = "OfflineGame|Core")
     int64 GetCanonicalWorldTick() const
@@ -154,6 +203,12 @@ public:
     }
 
 private:
+    bool bSubmittingNativeAction=false;
+    TSet<FOGEntityId> CommittedNativeActionIds;
+    void PublishNativeAction(const FOGResolvedCombatAction& Action,const FOGWorldEvent& Event,const FOGTurnBattleState& Accepted);
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FOGNativeCombatEventProvenanceTest;
+#endif
     bool InitializeCanonicalClock(FString& OutError);
     bool PumpCanonicalClock(FString& OutError);
     bool FlushCanonicalClockBoundary(FString& OutError);
@@ -174,6 +229,11 @@ private:
     TUniquePtr<IOGWorldStore> WorldStore;
     // Owned solely by canonical GameCore; torn down before replacing Store.
     TUniquePtr<FOGTurnBattle> OwnedLuminousTurnBattle;
+    FOGEntityId ActiveCombatRulerId;
+    FOGNativeCombatEventProvenance LastNativeCombatEvent;
+    FOGEntityId LastNativeBattleReceipt;
+    FOGEntityId LastNativeOpeningReceipt;
+    FOGNativeBattleOutcome LastNativeBattleOutcome;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;
