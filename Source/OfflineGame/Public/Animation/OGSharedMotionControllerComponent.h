@@ -206,16 +206,16 @@ private:
         bool bLoop = false, bWasPlaying = false;
     };
     TArray<FOGReferenceRigAdapter> ReferenceRigs;
-    TArray<TArray<int32>> ReferenceMappings;
+    TArray<TArray<FOGReferenceBoneConnection>> ReferenceMappings;
     TArray<FReferencePartRestore> ReferenceRestores;
     TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> ReferenceClip;
-    bool PrepareReference(const FOGReferenceMotionClip&, TArray<TArray<int32>>&, FString&) const;
+    bool PrepareReference(const FOGReferenceMotionClip&, TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
     bool FindReference(FName Action, FName Context, int32 Count, FName Role,
         FOGSharedMotionEntry&, TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>&,
-        TArray<TArray<int32>>&, FString&) const;
+        TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
     bool StartReference(const FOGSharedMotionEntry&,
         TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>,
-        TArray<TArray<int32>>&&);
+        TArray<TArray<FOGReferenceBoneConnection>>&&);
     void UpdateReferencePose();
     void RestoreReferencePose();
 

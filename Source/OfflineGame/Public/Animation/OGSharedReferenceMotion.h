@@ -10,6 +10,7 @@ class USkeletalMesh;
 struct OFFLINEGAME_API FOGReferenceMotionTrack
 {
     FName Bone;
+    FName CalibrationBone; // Original decoder's measured native target identity.
     TArray<FName> Aliases;
     TArray<FQuat> Rotations;
     TArray<FVector> Translations;
@@ -27,16 +28,34 @@ struct OFFLINEGAME_API FOGReferenceMotionClip
     FTransform Sample(int32 Track, double Seconds) const;
 };
 
+/** Shared canonical component-space reference orientations from the actual calibration Skeleton. */
+struct OFFLINEGAME_API FOGReferenceCalibrationBasis
+{
+    TMap<FName, int32> Bones;
+    TArray<int32> Parents;
+    TArray<FQuat> ComponentRotations;
+};
+struct OFFLINEGAME_API FOGReferenceBoneConnection
+{
+    int32 Bone = INDEX_NONE;
+    FQuat RotationBasis = FQuat::Identity;
+    FQuat TranslationBasis = FQuat::Identity;
+    bool bScaleAxesMatch = true;
+};
+
 /** One adapter per actual character part/rig. Clips never contain character indices. */
 struct OFFLINEGAME_API FOGReferenceRigAdapter
 {
     TWeakObjectPtr<USkeletalMesh> Mesh;
     TMap<FName, int32> Bones;
     TArray<FTransform> ReferencePose;
+    TArray<int32> Parents;
+    TArray<FQuat> ComponentRotations;
+    mutable TSharedPtr<const FOGReferenceCalibrationBasis, ESPMode::ThreadSafe> Calibration;
     bool Bind(USkeletalMeshComponent* Part, FString& Error);
     bool Map(const FOGReferenceMotionClip& Clip, const TMap<FName, FName>& Aliases,
-        TArray<int32>& OutIndices, FString& Error) const;
-    bool Evaluate(const FOGReferenceMotionClip& Clip, const TArray<int32>& Indices,
+        TArray<FOGReferenceBoneConnection>& OutConnections, FString& Error) const;
+    bool Evaluate(const FOGReferenceMotionClip& Clip, const TArray<FOGReferenceBoneConnection>& Connections,
         double Seconds, TArray<FTransform>& OutPose) const;
 };
 

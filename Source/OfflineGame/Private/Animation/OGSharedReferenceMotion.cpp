@@ -2,6 +2,8 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Animation/Skeleton.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Dom/JsonObject.h"
 #include "HAL/PlatformFileManager.h"
 #include "Misc/Compression.h"
@@ -28,6 +30,9 @@ struct FReferenceRegistry
     TArray<FOGSharedMotionEntry> Routes;
     TMap<FName, TSet<FName>> Aliases;
     TMap<FName, FCachedReference> Cache;
+    FString CalibrationPath;
+    TStrongObjectPtr<USkeleton> CalibrationSkeleton;
+    TSharedPtr<const FOGReferenceCalibrationBasis, ESPMode::ThreadSafe> Calibration;
     void Ensure()
     {
         if (bLoaded) return;
@@ -38,6 +43,11 @@ struct FReferenceRegistry
             !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root.IsValid()) return;
         FString Schema;
         if (!Root->TryGetStringField(TEXT("schema"), Schema) || Schema != TEXT("noworld.shared_reference_library.v1")) return;
+        FString Basis;
+        if (!Root->TryGetStringField(TEXT("calibration_basis"), Basis) ||
+            Basis != TEXT("koikatsu.native_original.reference_delta.v1") ||
+            !Root->TryGetStringField(TEXT("calibration_skeleton"), CalibrationPath) ||
+            !CalibrationPath.StartsWith(TEXT("/Game/")) || CalibrationPath.Contains(TEXT(".."))) return;
         const TArray<TSharedPtr<FJsonValue>>* Clips = nullptr;
         if (!Root->TryGetArrayField(TEXT("clips"), Clips)) return;
         for (const auto& Value : *Clips)
@@ -117,6 +127,53 @@ struct FReferenceRegistry
     }
 };
 FReferenceRegistry& Registry() { static FReferenceRegistry Value; return Value; }
+bool BuildBasis(const FReferenceSkeleton& Ref, FOGReferenceCalibrationBasis& Out, FString& Error)
+{
+    if (!Ref.GetNum()) return Fail(Error, TEXT("Reference basis has no actual bones."));
+    Out.Bones.Reset(); Out.Parents.Reset(); Out.ComponentRotations.Reset();
+    for (int32 I=0; I<Ref.GetNum(); ++I)
+    {
+        const int32 Parent=Ref.GetParentIndex(I);
+        const FQuat Rotation=Ref.GetRefBonePose()[I].GetRotation();
+        if (Out.Bones.Contains(Ref.GetBoneName(I)) || Parent>=I ||
+            Parent<INDEX_NONE || Rotation.ContainsNaN() || !Rotation.IsNormalized())
+            return Fail(Error, TEXT("Actual reference basis is invalid."));
+        Out.Bones.Add(Ref.GetBoneName(I),I); Out.Parents.Add(Parent);
+        Out.ComponentRotations.Add((Parent==INDEX_NONE ? Rotation :
+            Out.ComponentRotations[Parent]*Rotation).GetNormalized());
+    }
+    return true;
+}
+TSharedPtr<const FOGReferenceCalibrationBasis, ESPMode::ThreadSafe> CalibrationBasis(FString& Error)
+{
+    if (!IsInGameThread()) { Fail(Error,TEXT("Reference basis loads on the game thread.")); return nullptr; }
+    auto& R=Registry(); R.Ensure();
+    if (R.Calibration) return R.Calibration;
+    if (R.CalibrationPath.IsEmpty())
+    { Fail(Error,TEXT("Recorded native source calibration is unavailable.")); return nullptr; }
+    USkeleton* Skeleton=LoadObject<USkeleton>(nullptr,*R.CalibrationPath);
+    if (!Skeleton)
+    { Fail(Error,TEXT("Recorded native calibration Skeleton is not installed.")); return nullptr; }
+    auto Basis=MakeShared<FOGReferenceCalibrationBasis,ESPMode::ThreadSafe>();
+    if (!BuildBasis(Skeleton->GetReferenceSkeleton(),*Basis,Error)) return nullptr;
+    R.CalibrationSkeleton=TStrongObjectPtr<USkeleton>(Skeleton);
+    R.Calibration=Basis;
+    return R.Calibration;
+}
+bool ScaleAxesMatch(const FQuat& Rotation)
+{
+    for (const FVector& Axis : {FVector::XAxisVector,FVector::YAxisVector,FVector::ZAxisVector})
+    {
+        const FVector Mapped=Rotation.RotateVector(Axis).GetAbs();
+        if (FMath::Max3(Mapped.X,Mapped.Y,Mapped.Z)<1.-KINDA_SMALL_NUMBER) return false;
+    }
+    return true;
+}
+bool UniformScale(const FVector& Scale)
+{
+    return FMath::IsNearlyEqual(Scale.X,Scale.Y,KINDA_SMALL_NUMBER) &&
+        FMath::IsNearlyEqual(Scale.X,Scale.Z,KINDA_SMALL_NUMBER);
+}
 bool VectorFrames(const TSharedPtr<FJsonObject>& Track, const TCHAR* Key, int32 Width, int32 Frames,
     TArray<TArray<double>>& Out, FString& Error)
 {
@@ -166,9 +223,11 @@ TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> FOGSharedReference
     TSharedPtr<FJsonObject> Root;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Root) || !Root.IsValid())
     { Fail(Error, TEXT("Shared reference motion JSON is invalid.")); return nullptr; }
-    FString Schema, Id; double Rate = 0, Duration = 0, Count = 0;
+    FString Schema, Id, Basis; double Rate = 0, Duration = 0, Count = 0;
     if (!Root->TryGetStringField(TEXT("schema"), Schema) || Schema != TEXT("noworld.shared_reference_motion.v1") ||
         !Root->TryGetStringField(TEXT("id"), Id) || Id.IsEmpty() ||
+        !Root->TryGetStringField(TEXT("calibration_basis"), Basis) ||
+        Basis != TEXT("koikatsu.native_original.reference_delta.v1") ||
         !Root->TryGetNumberField(TEXT("rate"), Rate) || !Root->TryGetNumberField(TEXT("duration"), Duration) ||
         !Root->TryGetNumberField(TEXT("frames"), Count) ||
         !FMath::IsFinite(Rate) || Rate <= 0 || Rate > MAX_flt ||
@@ -185,11 +244,13 @@ TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> FOGSharedReference
     for (const auto& Value : *Tracks)
     {
         const auto O = Value.IsValid() ? Value->AsObject() : nullptr;
-        FString Bone;
-        if (!O || !O->TryGetStringField(TEXT("bone"), Bone) || Bone.IsEmpty() || Names.Contains(FName(*Bone)))
+        FString Bone, CalibrationBone;
+        if (!O || !O->TryGetStringField(TEXT("bone"), Bone) || Bone.IsEmpty() || Names.Contains(FName(*Bone)) ||
+            !O->TryGetStringField(TEXT("calibration_bone"), CalibrationBone) || CalibrationBone.IsEmpty())
         { Fail(Error, TEXT("Ambiguous source bone identity.")); return nullptr; }
         Names.Add(FName(*Bone));
         auto& Track = Clip->Tracks.AddDefaulted_GetRef(); Track.Bone = FName(*Bone);
+        Track.CalibrationBone=FName(*CalibrationBone);
         const TArray<TSharedPtr<FJsonValue>>* Aliases = nullptr;
         if (O->TryGetArrayField(TEXT("aliases"), Aliases)) for (const auto& Alias : *Aliases)
             if (Alias.IsValid() && Alias->Type == EJson::String && !Alias->AsString().IsEmpty())
@@ -238,63 +299,77 @@ FTransform FOGReferenceMotionClip::Sample(int32 Index, double Seconds) const
 
 bool FOGReferenceRigAdapter::Bind(USkeletalMeshComponent* Part, FString& Error)
 {
-    Mesh.Reset(); Bones.Reset(); ReferencePose.Reset();
-    USkeletalMesh* Asset = Part ? Part->GetSkeletalMeshAsset() : nullptr;
-    if (!Asset || !Asset->GetSkeleton()) return Fail(Error, TEXT("Actual native rig is unavailable."));
-    const auto& Ref = Asset->GetRefSkeleton();
-    if (!Ref.GetNum()) return Fail(Error, TEXT("Native rig has no reference bones."));
-    for (int32 I=0; I<Ref.GetNum(); ++I)
-    {
-        if (Bones.Contains(Ref.GetBoneName(I)) || Ref.GetRefBonePose()[I].ContainsNaN())
-            return Fail(Error, TEXT("Actual native rig reference contract is invalid."));
-        Bones.Add(Ref.GetBoneName(I),I);
-    }
-    ReferencePose = Ref.GetRefBonePose(); Mesh = Asset;
+    Mesh.Reset(); Bones.Reset(); ReferencePose.Reset(); Parents.Reset();
+    ComponentRotations.Reset(); Calibration.Reset();
+    USkeletalMesh* Asset=Part?Part->GetSkeletalMeshAsset():nullptr;
+    if (!Asset || !Asset->GetSkeleton()) return Fail(Error,TEXT("Actual native rig is unavailable."));
+    const auto& Ref=Asset->GetRefSkeleton();
+    FOGReferenceCalibrationBasis Actual;
+    if (!BuildBasis(Ref,Actual,Error)) return false;
+    for (const auto& Pose:Ref.GetRefBonePose())
+        if (Pose.ContainsNaN()) return Fail(Error,TEXT("Actual native reference pose is invalid."));
+    Bones=MoveTemp(Actual.Bones); Parents=MoveTemp(Actual.Parents);
+    ComponentRotations=MoveTemp(Actual.ComponentRotations);
+    ReferencePose=Ref.GetRefBonePose(); Mesh=Asset;
     return true;
 }
-bool FOGReferenceRigAdapter::Map(const FOGReferenceMotionClip& Clip, const TMap<FName,FName>& Aliases,
-    TArray<int32>& Out, FString& Error) const
+bool FOGReferenceRigAdapter::Map(const FOGReferenceMotionClip& Clip,const TMap<FName,FName>& Aliases,
+    TArray<FOGReferenceBoneConnection>& Out,FString& Error) const
 {
     Out.Reset();
     if (!Mesh.IsValid()) return Fail(Error,TEXT("Character rig adapter expired."));
+    if (!Calibration) Calibration=CalibrationBasis(Error);
+    if (!Calibration) return false;
     TSet<int32> Used;
-    for (const auto& Track : Clip.Tracks)
+    for (const auto& Track:Clip.Tracks)
     {
-        const FName* Explicit = Aliases.Find(Track.Bone);
-        int32 Selected = INDEX_NONE;
-        if (Explicit)
-        {
-            if (const int32* Bone = Bones.Find(*Explicit)) Selected = *Bone;
-        }
-        else
-        {
-            TSet<int32> Matches;
-            if (const int32* Bone = Bones.Find(Track.Bone)) Matches.Add(*Bone);
-            for (FName Alias : Track.Aliases)
-                if (const int32* Bone = Bones.Find(Alias)) Matches.Add(*Bone);
-            // Two real bones matching different names require one explicit rig
-            // adapter choice; array ordering must never decide the skeleton.
-            if (Matches.Num()==1) for (int32 Bone : Matches) Selected = Bone;
-        }
-        if (Selected==INDEX_NONE || Used.Contains(Selected))
-        { Out.Reset(); return Fail(Error,TEXT("Rig needs a complete, unambiguous source-bone adapter.")); }
-        Used.Add(Selected); Out.Add(Selected);
+        const int32* Canonical=Calibration->Bones.Find(Track.CalibrationBone);
+        const FName* Explicit=Aliases.Find(Track.Bone);
+        const int32* Target=Bones.Find(Explicit?*Explicit:Track.CalibrationBone);
+        if (!Canonical || !Target || Used.Contains(*Target) ||
+            !ComponentRotations.IsValidIndex(*Target) || !Parents.IsValidIndex(*Target))
+        { Out.Reset(); return Fail(Error,TEXT("Rig needs a complete calibrated source-bone connection.")); }
+        FOGReferenceBoneConnection Connection; Connection.Bone=*Target;
+        Connection.RotationBasis=(ComponentRotations[*Target].Inverse()*
+            Calibration->ComponentRotations[*Canonical]).GetNormalized();
+        const int32 SourceParent=Calibration->Parents[*Canonical],TargetParent=Parents[*Target];
+        const FQuat SourceParentRotation=SourceParent==INDEX_NONE?FQuat::Identity:
+            Calibration->ComponentRotations[SourceParent];
+        const FQuat TargetParentRotation=TargetParent==INDEX_NONE?FQuat::Identity:
+            ComponentRotations[TargetParent];
+        Connection.TranslationBasis=(TargetParentRotation.Inverse()*SourceParentRotation).GetNormalized();
+        Connection.bScaleAxesMatch=ScaleAxesMatch(Connection.RotationBasis);
+        if (!Connection.bScaleAxesMatch)
+            for (const FVector& Scale:Track.Scales) if (!UniformScale(Scale))
+            { Out.Reset(); return Fail(Error,TEXT("Original nonuniform scale needs a shear-compatible native rig.")); }
+        Used.Add(*Target); Out.Add(Connection);
     }
     return true;
 }
-bool FOGReferenceRigAdapter::Evaluate(const FOGReferenceMotionClip& Clip, const TArray<int32>& Indices,
-    double Seconds, TArray<FTransform>& Out) const
+bool FOGReferenceRigAdapter::Evaluate(const FOGReferenceMotionClip& Clip,
+    const TArray<FOGReferenceBoneConnection>& Connections,double Seconds,TArray<FTransform>& Out) const
 {
-    if (!Mesh.IsValid() || Indices.Num()!=Clip.Tracks.Num()) return false;
-    Out = ReferencePose;
-    for (int32 I=0; I<Indices.Num(); ++I)
+    if (!Mesh.IsValid() || Connections.Num()!=Clip.Tracks.Num()) return false;
+    Out=ReferencePose;
+    for (int32 I=0; I<Connections.Num(); ++I)
     {
-        if (!Out.IsValidIndex(Indices[I])) return false;
-        FTransform& Pose = Out[Indices[I]];
-        const FTransform Delta = Clip.Sample(I,Seconds);
-        Pose.SetRotation((Pose.GetRotation()*Delta.GetRotation()).GetNormalized());
-        Pose.AddToTranslation(Delta.GetTranslation());
-        Pose.SetScale3D(Pose.GetScale3D()*Delta.GetScale3D());
+        const auto& Connection=Connections[I];
+        if (!Out.IsValidIndex(Connection.Bone)) return false;
+        FTransform& Pose=Out[Connection.Bone];
+        const FTransform Delta=Clip.Sample(I,Seconds);
+        const FQuat Rotation=Connection.RotationBasis*Delta.GetRotation()*Connection.RotationBasis.Inverse();
+        Pose.SetRotation((Pose.GetRotation()*Rotation).GetNormalized());
+        Pose.AddToTranslation(Connection.TranslationBasis.RotateVector(Delta.GetTranslation()));
+        const FVector SourceScale=Delta.GetScale3D();
+        if (UniformScale(SourceScale)) Pose.SetScale3D(Pose.GetScale3D()*SourceScale);
+        else
+        {
+            if (!Connection.bScaleAxesMatch) return false; // A TRS pose cannot represent arbitrary shear.
+            const FVector Scale=Connection.RotationBasis.RotateVector(FVector::XAxisVector).GetAbs()*SourceScale.X+
+                Connection.RotationBasis.RotateVector(FVector::YAxisVector).GetAbs()*SourceScale.Y+
+                Connection.RotationBasis.RotateVector(FVector::ZAxisVector).GetAbs()*SourceScale.Z;
+            Pose.SetScale3D(Pose.GetScale3D()*Scale);
+        }
     }
     return true;
 }

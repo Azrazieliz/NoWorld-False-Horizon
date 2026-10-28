@@ -108,7 +108,7 @@ bool UOGSharedMotionControllerComponent::CanPlayAction(
         return false;
     FOGSharedMotionEntry Shared;
     TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
-    TArray<TArray<int32>> Mapping; FString SharedError;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
     if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
         Shared, Source, Mapping, SharedError)) return true;
     const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
@@ -155,7 +155,7 @@ bool UOGSharedMotionControllerComponent::PreviewSourceClipId(
         ParticipantCount, ParticipantRole)) return false;
     FOGSharedMotionEntry Shared;
     TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
-    TArray<TArray<int32>> Mapping; FString SharedError;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
     if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
         Shared, Source, Mapping, SharedError))
     {
@@ -184,7 +184,7 @@ bool UOGSharedMotionControllerComponent::PreviewAuthoredSceneId(
             ParticipantCount, ParticipantRole)) return false;
     FOGSharedMotionEntry Shared;
     TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
-    TArray<TArray<int32>> Mapping; FString SharedError;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
     if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
         Shared, Source, Mapping, SharedError))
     {
@@ -382,7 +382,7 @@ bool UOGSharedMotionControllerComponent::PlayAction(
 {
     FOGSharedMotionEntry Shared;
     TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
-    TArray<TArray<int32>> Mapping; FString SharedError;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
     if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
         Shared, Source, Mapping, SharedError))
         return StartReference(Shared, MoveTemp(Source), MoveTemp(Mapping));
@@ -616,7 +616,7 @@ void UOGSharedMotionControllerComponent::EndPlay(
 }
 
 bool UOGSharedMotionControllerComponent::PrepareReference(const FOGReferenceMotionClip& Clip,
-    TArray<TArray<int32>>& Out, FString& Error) const
+    TArray<TArray<FOGReferenceBoneConnection>>& Out, FString& Error) const
 {
     Out.Reset();
     if (RegisteredParts.IsEmpty() || ReferenceRigs.Num()!=RegisteredParts.Num())
@@ -626,7 +626,7 @@ bool UOGSharedMotionControllerComponent::PrepareReference(const FOGReferenceMoti
         const auto* Part=RegisteredParts[I].Get();
         if (!Part || ReferenceRigs[I].Mesh.Get()!=Part->GetSkeletalMeshAsset())
         { Out.Reset(); Error=TEXT("Character rig changed; refresh its shared-library connection."); return false; }
-        TArray<int32> Indices;
+        TArray<FOGReferenceBoneConnection> Indices;
         if (!ReferenceRigs[I].Map(Clip,SharedSourceBoneAliases,Indices,Error)) { Out.Reset(); return false; }
         Out.Add(MoveTemp(Indices));
     }
@@ -634,7 +634,7 @@ bool UOGSharedMotionControllerComponent::PrepareReference(const FOGReferenceMoti
 }
 bool UOGSharedMotionControllerComponent::FindReference(FName Action,FName Context,int32 Count,FName Role,
     FOGSharedMotionEntry& OutEntry,TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe>& OutClip,
-    TArray<TArray<int32>>& OutMapping,FString& Error) const
+    TArray<TArray<FOGReferenceBoneConnection>>& OutMapping,FString& Error) const
 {
     OutClip.Reset(); OutMapping.Reset();
     for (const auto& Entry:FOGSharedReferenceLibrary::Find(Action,Context,RigProfile,AnatomyProfile,Capabilities,Count,Role))
@@ -669,7 +669,7 @@ bool UOGSharedMotionControllerComponent::PlaySharedSourceMotion(FName Id,bool Lo
 {
     FString Error;
     auto Clip=FOGSharedReferenceLibrary::Load(Id,Error);
-    TArray<TArray<int32>> Mapping;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping;
     if (!Clip || !PrepareReference(*Clip,Mapping,Error)) return false;
     FOGSharedMotionEntry Entry; Entry.SourceClipId=Id; Entry.MotionId=Id;
     Entry.GameplayAction=FName(*(TEXT("Library.Source.")+Id.ToString()));
@@ -677,7 +677,7 @@ bool UOGSharedMotionControllerComponent::PlaySharedSourceMotion(FName Id,bool Lo
     return StartReference(Entry,MoveTemp(Clip),MoveTemp(Mapping));
 }
 bool UOGSharedMotionControllerComponent::StartReference(const FOGSharedMotionEntry& Entry,
-    TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Clip,TArray<TArray<int32>>&& Mapping)
+    TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Clip,TArray<TArray<FOGReferenceBoneConnection>>&& Mapping)
 {
     if (!Clip || Mapping.Num()!=RegisteredParts.Num()) return false;
     // Every native part is checked before interrupting the previous action.
