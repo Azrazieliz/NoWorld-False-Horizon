@@ -1,0 +1,56 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Animation/OGSharedMotionLibrary.h"
+
+class USkeletalMeshComponent;
+class USkeletalMesh;
+
+/** A source track shared by every connected character; no target Skeleton or wardrobe. */
+struct OFFLINEGAME_API FOGReferenceMotionTrack
+{
+    FName Bone;
+    TArray<FName> Aliases;
+    TArray<FQuat> Rotations;
+    TArray<FVector> Translations;
+    TArray<FVector> Scales;
+};
+struct OFFLINEGAME_API FOGReferenceMotionClip
+{
+    FName Id;
+    float Rate = 0;
+    float Duration = 0;
+    int32 Frames = 0;
+    TArray<FOGReferenceMotionTrack> Tracks;
+    int64 ResidentBytes = 0;
+    /** Sample original reference-local deltas. Missing channels preserve the target reference pose. */
+    FTransform Sample(int32 Track, double Seconds) const;
+};
+
+/** One adapter per actual character part/rig. Clips never contain character indices. */
+struct OFFLINEGAME_API FOGReferenceRigAdapter
+{
+    TWeakObjectPtr<USkeletalMesh> Mesh;
+    TMap<FName, int32> Bones;
+    TArray<FTransform> ReferencePose;
+    bool Bind(USkeletalMeshComponent* Part, FString& Error);
+    bool Map(const FOGReferenceMotionClip& Clip, const TMap<FName, FName>& Aliases,
+        TArray<int32>& OutIndices, FString& Error) const;
+    bool Evaluate(const FOGReferenceMotionClip& Clip, const TArray<int32>& Indices,
+        double Seconds, TArray<FTransform>& OutPose) const;
+};
+
+/** Offline shared source registry, lazy bounded cache and semantic routing.
+ * Source files are loaded once globally, independently of actor/Version/outfit. */
+class OFFLINEGAME_API FOGSharedReferenceLibrary
+{
+public:
+    static TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Load(FName Id, FString& Error);
+    static TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Decode(
+        const TArray<uint8>& Bytes, FString& Error);
+    static TArray<FOGSharedMotionEntry> Find(FName Action, FName Context, FName Rig,
+        FName Anatomy, const TArray<FName>& Capabilities, int32 Count, FName Role);
+    static TArray<FName> GetClipIds();
+    static FName CanonicalId(FName ExistingSourceId);
+    static void TrimCache(int64 BudgetBytes = 128ll * 1024 * 1024);
+};

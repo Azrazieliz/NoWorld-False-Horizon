@@ -3,10 +3,15 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Animation/OGSharedMotionLibrary.h"
+#include "Animation/OGSharedReferenceMotion.h"
+#include "UObject/StrongObjectPtr.h"
 #include "OGSharedMotionControllerComponent.generated.h"
 
 class USkeletalMeshComponent;
 class UAnimSequence;
+class UAnimationAsset;
+class UOGSharedReferenceAnimInstance;
+class USkinnedMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOGSharedMotionSignal, FName, GameplayAction, FName, MotionId);
 
@@ -80,6 +85,17 @@ public:
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     bool PlayAction(FName GameplayAction, FName Context, bool bAdultContextAuthorized = false,
         int32 ParticipantCount = 1, FName ParticipantRole = NAME_None);
+
+    /** Every installed source is available by stable identity; no character clip copies. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Library")
+    bool PlaySharedSourceMotion(FName SourceId, bool bLoop = false);
+
+    UFUNCTION(BlueprintPure, Category="Motion|Library")
+    TArray<FName> GetSharedSourceMotionIds() const;
+
+    /** Character-side rig aliases, authored once for the actual rig. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
+    TMap<FName, FName> SharedSourceBoneAliases;
 
     /** Pure preflight for synchronized scene start. No actor or animation state changes. */
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
@@ -175,6 +191,32 @@ private:
     TArray<FMorphOverlay> MorphOverlays;
     TSet<FName> AppliedMorphs;
     TArray<FOGSharedMorphTrack> AuthoredMorphTracks;
+
+    struct FReferencePartRestore
+    {
+        TWeakObjectPtr<USkeletalMeshComponent> Part;
+        TWeakObjectPtr<USkeletalMesh> Mesh;
+        TWeakObjectPtr<UOGSharedReferenceAnimInstance> Instance;
+        TWeakObjectPtr<USkinnedMeshComponent> Leader;
+        TStrongObjectPtr<UClass> PreviousClass;
+        TStrongObjectPtr<UAnimationAsset> PreviousAsset;
+        uint8 Mode = 0;
+        float Rate = 1, Position = 0;
+        bool bLoop = false, bWasPlaying = false;
+    };
+    TArray<FOGReferenceRigAdapter> ReferenceRigs;
+    TArray<TArray<int32>> ReferenceMappings;
+    TArray<FReferencePartRestore> ReferenceRestores;
+    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> ReferenceClip;
+    bool PrepareReference(const FOGReferenceMotionClip&, TArray<TArray<int32>>&, FString&) const;
+    bool FindReference(FName Action, FName Context, int32 Count, FName Role,
+        FOGSharedMotionEntry&, TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>&,
+        TArray<TArray<int32>>&, FString&) const;
+    bool StartReference(const FOGSharedMotionEntry&,
+        TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>,
+        TArray<TArray<int32>>&&);
+    void UpdateReferencePose();
+    void RestoreReferencePose();
 
     void ApplyMorphOverlays();
     bool ResolveForPart(const UOGSharedMotionLibrary* Library,
