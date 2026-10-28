@@ -1,3 +1,4 @@
+#include "Content/OGSystemBindingComponent.h"
 #include "Narrative/OGNarrativeWorldActor.h"
 
 #include "Components/SceneComponent.h"
@@ -7,6 +8,7 @@
 AOGNarrativeWorldActor::AOGNarrativeWorldActor()
 {
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("AuthoredNarrativeRoot"));
+    SystemBindings=CreateDefaultSubobject<UOGSystemBindingComponent>(TEXT("SharedSystemBindings"));
 }
 
 bool AOGNarrativeWorldActor::CanInteract_Implementation(AActor* Interactor) const
@@ -29,4 +31,15 @@ void AOGNarrativeWorldActor::Interact_Implementation(AActor* Interactor)
     FString Error;
     if (!Session || !Session->OpenWorldSubject(this, Interactor, Error))
         UE_LOG(LogTemp, Warning, TEXT("Narrative interaction unavailable: %s"), *Error);
+}
+
+void AOGNarrativeWorldActor::BeginPlay()
+{
+    Super::BeginPlay();
+    if (CanonicalSubjectId.IsValid() && SystemBindings)
+    {
+        FString Error;
+        if (!SystemBindings->BindCanonicalEntity(CanonicalSubjectId,Error))
+            UE_LOG(LogTemp,Warning,TEXT("Canonical subject system binding unavailable: %s"),*Error);
+    }
 }

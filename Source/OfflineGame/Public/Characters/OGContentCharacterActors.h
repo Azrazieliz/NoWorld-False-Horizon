@@ -10,6 +10,7 @@ class UOGCharacterAppearanceComponent;
 class UOGSharedMotionControllerComponent;
 class UOGCanonicalCombatActorBindingComponent;
 class UOGGameCoreSubsystem;
+class UOGSystemBindingComponent;
 struct FOGResolvedCombatAction;
 
 /** Content Blueprint supplies appearance definitions and visual action maps.
@@ -24,6 +25,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Character|Appearance")
     TObjectPtr<UOGCharacterAppearanceComponent> Appearance;
+
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Character|Systems")
+    TObjectPtr<UOGSystemBindingComponent> SystemBindings;
 
     /** Exact approved skill ID -> shared source motion semantic. Missing
      * presentation never executes a substitute skill or alters damage. */

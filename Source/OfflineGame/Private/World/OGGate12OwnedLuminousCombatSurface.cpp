@@ -20,8 +20,7 @@ namespace
 bool MatchesActualOwnedLuminousBody(const AOGWorldPrototypeCharacter* Character,
     const UOGGate12RulerSessionSubsystem& Session, const FOGCombatUnitState& Unit)
 {
-    if (!Character || Unit.UnitEntityId != Session.SelectedManifestationId ||
-        Unit.IdentityId != FOGContentId(TEXT("character:luminous_valentine.identity"))) return false;
+    if (!Character || Unit.UnitEntityId != Session.SelectedManifestationId) return false;
     const AOGLuminousV3PlayableCharacter* Legacy = Cast<AOGLuminousV3PlayableCharacter>(Character);
     const AOGContentPlayableCharacter* Content = Cast<AOGContentPlayableCharacter>(Character);
     return (Legacy && Legacy->IsBoundToOwnedLuminousCombatUnit(Session.BoundRulerId,
@@ -69,7 +68,7 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
         // Ally, self and enemy targets are all meaningful in the approved
         // Base/Alter skills. Gate04's exact skill preflight, not this UI,
         // determines allegiance, number, revival and target eligibility.
-        OutError = TEXT("Select a live canonical battle participant on the actual possessed Luminous turn.");
+        OutError = TEXT("Select a live canonical battle participant on the actual possessed character's turn.");
         return false;
     }
     // Tap selects only a PRIMARY focus for primary-specific skill bonuses;

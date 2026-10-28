@@ -12,6 +12,7 @@ struct OFFLINEGAME_API FOGNativeBattleCommand
     int32 ActiveSlot = INDEX_NONE;
     FName Branch;
     FName Mode;
+    FName AuthoredMotion;
     bool bFantasm = false;
     bool bSelfTarget = false;
 

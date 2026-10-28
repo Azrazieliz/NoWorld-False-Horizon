@@ -13,15 +13,17 @@ bool FOGNativeAbilityDefinition::operator==(const FOGNativeAbilityDefinition& V)
         bNoResourceCost==V.bNoResourceCost && CooldownOwnerActions==V.CooldownOwnerActions && Targets==V.Targets &&
         bIncludeSelf==V.bIncludeSelf && Packets==V.Packets;
 }
+bool FOGNativeAbilityDefinition::MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const
+{ return (IdentityId.IsEmpty() || IdentityId==Identity) && (VersionId.IsEmpty() || VersionId==Version); }
 bool FOGNativeAbilityDefinition::Validate(FString& Error) const
 {
     Error.Reset();
-    if (!IdentityId.IsValid() || !VersionId.IsValid() || !SkillId.IsValid() ||
+    if ((!IdentityId.IsEmpty() && !IdentityId.IsValid()) || (!VersionId.IsEmpty() && !VersionId.IsValid()) || !SkillId.IsValid() ||
         IdentityId.Value.StartsWith(TEXT("diagnostic:")) || VersionId.Value.StartsWith(TEXT("diagnostic:")) ||
         SkillId.Value.StartsWith(TEXT("diagnostic:")) || OriginalSourceReference.TrimStartAndEnd().IsEmpty() ||
         static_cast<uint8>(Targets)>static_cast<uint8>(EOGNativeAbilityTargets::AllAllies) ||
         Packets.IsEmpty() || Packets.Num()>4096)
-    { Error=TEXT("Native ability needs exact source identity, Version, skill, provenance and packets."); return false; }
+    { Error=TEXT("Native ability needs valid optional source restrictions, skill, provenance and packets."); return false; }
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity")))
     { Error=TEXT("Luminous requires its complete specialized kit executor; ordinary packets cannot replace it."); return false; }
     if (!bNoResourceCost || CooldownOwnerActions<0)

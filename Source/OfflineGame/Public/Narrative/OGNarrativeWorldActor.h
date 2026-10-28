@@ -6,6 +6,8 @@
 #include "World/OGWorldModeInterfaces.h"
 #include "OGNarrativeWorldActor.generated.h"
 
+class UOGSystemBindingComponent;
+
 /** Authored placed/streamed interaction body for an EXISTING canonical subject.
  * Content supplies visuals and IDs; this actor never creates NPCs or story facts. */
 UCLASS(Blueprintable)
@@ -14,6 +16,7 @@ class OFFLINEGAME_API AOGNarrativeWorldActor : public AActor, public IOGWorldInt
     GENERATED_BODY()
 public:
     AOGNarrativeWorldActor();
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Systems") TObjectPtr<UOGSystemBindingComponent> SystemBindings;
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Narrative") FOGEntityId CanonicalSubjectId;
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Narrative") FOGEntityId CanonicalLocationId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Narrative") FText InteractionPrompt;
@@ -22,4 +25,6 @@ public:
     virtual bool CanInteract_Implementation(AActor* Interactor) const override;
     virtual FText GetInteractionPrompt_Implementation(AActor* Interactor) const override;
     virtual void Interact_Implementation(AActor* Interactor) override;
+protected:
+    virtual void BeginPlay() override;
 };

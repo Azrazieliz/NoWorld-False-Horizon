@@ -1,3 +1,4 @@
+#include "Content/OGDefinitionLibrary.h"
 #include "Progression/OGCharacterDevelopmentService.h"
 
 #include "Dom/JsonObject.h"
@@ -439,9 +440,10 @@ bool FOGCharacterDevelopmentCatalog::LoadInstalled(
     const FString Path = FPaths::Combine(FPaths::ProjectContentDir(),
         TEXT("NoWorld/Progression/DevelopmentCatalog.json"));
     FString Json;
-    if (!FFileHelper::LoadFileToString(Json, *Path))
-        return Fail(Error, Path,
-            TEXT("cannot read installed development catalog; restore the file and stage NoWorld/Progression as UFS"));
+    FFileHelper::LoadFileToString(Json, *Path);
+    FString Merged;
+    if (!UOGDefinitionLibrary::LoadCatalog(TEXT("development"),Json,Merged,Error)) return false;
+    Json=MoveTemp(Merged);
     if (!Parse(Json, Out, Error))
     {
         Error = Path + TEXT(": ") + Error;

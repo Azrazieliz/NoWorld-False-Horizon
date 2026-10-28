@@ -120,6 +120,11 @@ public:
         FOGResolvedSkillSet& OutSkills,FString& OutError) const;
 
 
+    /** Resolve any installed shared kit for an existing active, actually owned Manifestation. */
+    UFUNCTION(BlueprintCallable,Category="OfflineGame|Characters")
+    bool ReadOwnedCharacterSkills(const FOGEntityId& ManifestationId,const FOGEntityId& RulerId,
+        FOGResolvedSkillSet& OutSkills,FString& Error) const;
+
     /** Production encounter integration: bind the EXISTING FOGTurnBattle to
      * real Registry, World and soul/blood providers. No fabricated defaults. */
     bool BindOwnedLuminousCombatAuthority(

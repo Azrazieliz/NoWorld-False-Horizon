@@ -1,3 +1,4 @@
+#include "Content/OGDefinitionLibrary.h"
 #include "Narrative/OGNarrativeService.h"
 #include "Narrative/OGNarrativeJson.h"
 #include "Misc/FileHelper.h"
@@ -171,7 +172,10 @@ bool FOGNarrativeCatalog::LoadInstalled(FOGNarrativeCatalog& Out, FString& Error
 {
     Out = FOGNarrativeCatalog(); Error.Reset(); FString Json;
     const FString Path = FPaths::Combine(FPaths::ProjectContentDir(),TEXT("NoWorld/Narrative/NarrativeCatalog.json"));
-    if (!FFileHelper::LoadFileToString(Json,*Path)) return OGNarrative::Fail(Error,Path,TEXT("cannot read approved catalog; restore file and stage NoWorld/Narrative as UFS"));
+    FFileHelper::LoadFileToString(Json, *Path);
+    FString Merged;
+    if (!UOGDefinitionLibrary::LoadCatalog(TEXT("narrative"),Json,Merged,Error)) return false;
+    Json=MoveTemp(Merged);
     if (!Parse(Json,Out,Error)) { Error = Path + TEXT(": ") + Error; return false; }
     return true;
 }

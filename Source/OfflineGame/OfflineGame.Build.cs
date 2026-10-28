@@ -20,6 +20,7 @@ public class OfflineGame : ModuleRules
         {
             "AndroidPermission",
             "ApplicationCore",
+            "AssetRegistry",
             "InputCore",
             "Json",
             "JsonUtilities",

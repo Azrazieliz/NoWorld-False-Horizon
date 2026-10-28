@@ -1,3 +1,6 @@
+#include "Content/OGDefinitionLibrary.h"
+#include "Characters/OGCharacterGameplayDefinition.h"
+#include "Combat/OGNativeCombatAbility.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Progression/OGCharacterDevelopmentService.h"
 #include "World/OGOwnedEquipmentService.h"
@@ -896,26 +899,25 @@ bool UOGGameCoreSubsystem::ReadOwnedApprovedLuminousSkills(
     const FOGEntityId& ManifestationId,const FOGEntityId& RulerId,
     FOGResolvedSkillSet& OutSkills,FString& OutError) const
 {
-    OutSkills=FOGResolvedSkillSet();
-    OutError.Reset();
-    if(!bCoreReady || !WorldStore || !WorldStore->IsOpen() ||
-       !ManifestationId.IsValid() || !RulerId.IsValid())
+    return ReadOwnedCharacterSkills(ManifestationId,RulerId,OutSkills,OutError);
+}
+bool UOGGameCoreSubsystem::ReadOwnedCharacterSkills(
+    const FOGEntityId& ManifestationId,const FOGEntityId& RulerId,
+    FOGResolvedSkillSet& OutSkills,FString& OutError) const
+{
+    OutSkills=FOGResolvedSkillSet(); OutError.Reset();
+    if (!bCoreReady || !WorldStore || !WorldStore->IsOpen() || !ManifestationId.IsValid() || !RulerId.IsValid())
+    { OutError=TEXT("No live owned Manifestation or canonical WorldStore."); return false; }
+    FOGCharacterManifestationRecord Record; bool Found=false;
+    if (!WorldStore->TryReadCharacterManifestation(ManifestationId,Found,Record,OutError)) return false;
+    if (!Found || Record.ManifestationId!=ManifestationId || Record.OwningRulerId!=RulerId ||
+        Record.LifecycleState!=FName(TEXT("active")))
+    { OutError=TEXT("Manifestation is not active or does not belong to this Ruler."); return false; }
+    if (Record.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")))
     {
-        OutError=TEXT("No live owned Luminous Manifestation or canonical WorldStore.");
-        return false;
-    }
-    FOGCharacterManifestationRecord Record;
-    bool bFound=false;
-    if(!WorldStore->TryReadCharacterManifestation(
-         ManifestationId,bFound,Record,OutError))
-        return false;
-    if(!bFound || Record.ManifestationId!=ManifestationId ||
-       Record.OwningRulerId!=RulerId ||
-       Record.LifecycleState!=FName(TEXT("active")) ||
-       Record.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")))
-    {
-        OutError=TEXT("Manifestation is not an active, exact Luminous belonging to the Ruler.");
-        return false;
+        const auto* Definition=UOGCharacterGameplayDefinition::Find(Record.IdentityId,Record.ActiveVersionId,OutError);
+        if (!Definition) return false;
+        OutSkills=Definition->Skills; return true;
     }
     FOGApprovedLuminousSourceKitView BaseKit;
     FOGLuminousAlterV1Projection AlterKit;
@@ -988,6 +990,22 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     if(!BindOwnedLuminousCombatAuthority(
         *Candidate,RulerId,MoveTemp(TrustedProviders),OutError))
         return false;
+    // Admit the shared skill library once per encounter. Copies connect by their actual owned kit.
+    TArray<UDataAsset*> SharedAbilities;
+    if (auto* Library=UOGDefinitionLibrary::Get())
+        Library->List(TEXT("ability"),UOGNativeCombatAbility::StaticClass(),SharedAbilities);
+    for (auto* Asset:SharedAbilities)
+    {
+        const auto* Ability=CastChecked<UOGNativeCombatAbility>(Asset);
+        const auto& D=Ability->Definition;
+        const bool Used=Candidate->GetState().Units.ContainsByPredicate([&](const FOGCombatUnitState& U)
+        {
+            return U.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")) &&
+                D.MatchesSource(U.IdentityId,U.SkillSet.CurrentForm) &&
+                (U.SkillSet.ActiveSkills.Contains(D.SkillId) || U.SkillSet.UltimateSkill==D.SkillId);
+        });
+        if (Used && (!Ability->ValidateInstalled(OutError) || !Candidate->RegisterNativeAbility(D,OutError))) return false;
+    }
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
     ActiveCombatRulerId=RulerId;
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
@@ -1009,7 +1027,7 @@ bool UOGGameCoreSubsystem::ConfigureOwnedNativeAbilities(const FOGEntityId& Unit
     {
         if (!Ability || !Ability->ValidateInstalled(Error)) return false;
         const auto& D=Ability->Definition;
-        if (D.IdentityId!=Unit->IdentityId || D.VersionId!=Unit->SkillSet.CurrentForm || !RequiredSkills.Contains(D.SkillId))
+        if (!D.MatchesSource(Unit->IdentityId,Unit->SkillSet.CurrentForm) || !RequiredSkills.Contains(D.SkillId))
         { Error=TEXT("An authored ability asset belongs to a different source kit or policy."); return false; }
         if (!Candidate.RegisterNativeAbility(D,Error)) return false;
     }

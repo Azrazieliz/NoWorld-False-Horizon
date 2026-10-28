@@ -157,4 +157,28 @@ bool FOGNativeAbilityCooldownTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedNativeAbilityTest,
+    "OfflineGame.Combat.NativeAbilities.SharedSkillConnectsDifferentSources",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGSharedNativeAbilityTest::RunTest(const FString&)
+{
+    auto Source=NativeTestUnit(0,TEXT("test:shared.source"));
+    auto Enemy=NativeTestUnit(1,TEXT("test:shared.other"));
+    const FOGContentId SharedSkill(TEXT("test:shared.skill"));
+    Source.SkillSet.ActiveSkills={SharedSkill}; Enemy.SkillSet.ActiveSkills={SharedSkill};
+    Enemy.SkillSet.CurrentForm=FOGContentId(TEXT("test:shared.other_version"));
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(NativeInitial(Source,{Enemy}),Error)) return false;
+    Battle.RequireNativeActionExecutors(true);
+    auto Definition=NativeStrike(Source); Definition.IdentityId=FOGContentId(); Definition.VersionId=FOGContentId();
+    if (!TestTrue(TEXT("One global skill admission"),Battle.RegisterNativeAbility(Definition,Error))) return false;
+    TestTrue(TEXT("Original source owns registered executor"),Battle.HasNativeActionExecutor(Source,SharedSkill,Error));
+    TestTrue(TEXT("Different Identity/Version connects without a duplicate definition"),Battle.HasNativeActionExecutor(Enemy,SharedSkill,Error));
+    auto Override=Definition; Override.IdentityId=Source.IdentityId;
+    TestFalse(TEXT("Later narrower scope cannot replace admitted shared mechanics"),Battle.RegisterNativeAbility(Override,Error));
+    TestTrue(TEXT("Shared ability executes real packets"),Battle.ApplyResolvedAction(NativeAction(Source,Enemy.UnitEntityId),Error));
+    const auto* Actual=Battle.GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Enemy.UnitEntityId;});
+    TestTrue(TEXT("Shared executor changes actual battle HP"),Actual && FOGLargeNumber::Compare(Actual->CurrentHp,Enemy.CurrentHp)<0);
+    return true;
+}
 #endif

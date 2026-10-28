@@ -36,12 +36,13 @@ struct OFFLINEGAME_API FOGNativeAbilityPacket
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bAllowHitOverflow=false;
     bool operator==(const FOGNativeAbilityPacket& V) const;
 };
-/** Complete ordinary damage/restoration definition, bound to an exact real kit.
+/** Shared skill mechanics. Empty scope accepts any real kit owning this skill ID.
  * Special mechanics retain their own native executors, including every Luminous form. */
 USTRUCT(BlueprintType)
 struct OFFLINEGAME_API FOGNativeAbilityDefinition
 {
     GENERATED_BODY()
+    /** Optional source restrictions; a shared skill need not be duplicated per character. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId IdentityId;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId VersionId;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId SkillId;
@@ -55,6 +56,7 @@ struct OFFLINEGAME_API FOGNativeAbilityDefinition
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeAbilityTargets Targets=EOGNativeAbilityTargets::SingleEnemy;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bIncludeSelf=false;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGNativeAbilityPacket> Packets;
+    bool MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const;
     bool Validate(FString& Error) const;
     bool operator==(const FOGNativeAbilityDefinition& V) const;
 };
@@ -65,5 +67,7 @@ class OFFLINEGAME_API UOGNativeCombatAbility : public UDataAsset
     GENERATED_BODY()
 public:
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGNativeAbilityDefinition Definition;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FText DisplayName;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,meta=(MultiLine=true)) FText Description;
     bool ValidateInstalled(FString& Error) const;
 };

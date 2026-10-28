@@ -32,7 +32,13 @@ uint64 AbilitySeed(const FOGTurnBattleState& State,const FOGResolvedCombatAction
 }
 }
 const FOGNativeAbilityDefinition* FOGTurnBattle::FindNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const
-{ return NativeAbilities.Find(AbilityKey(Source.IdentityId,Source.SkillSet.CurrentForm,Skill)); }
+{
+    const FOGContentId Any;
+    for (const FString& Key:{AbilityKey(Source.IdentityId,Source.SkillSet.CurrentForm,Skill),
+        AbilityKey(Source.IdentityId,Any,Skill),AbilityKey(Any,Source.SkillSet.CurrentForm,Skill),AbilityKey(Any,Any,Skill)})
+        if (const auto* Found=NativeAbilities.Find(Key)) return Found;
+    return nullptr;
+}
 FName FOGTurnBattle::ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const
 {
     if (const auto* Definition=FindNativeAbility(Source,Skill)) return Definition->MotionSemantic;
@@ -43,7 +49,8 @@ bool FOGTurnBattle::RegisterNativeAbility(const FOGNativeAbilityDefinition& Defi
     if (State.Status!=EOGTurnBattleStatus::Running) { Error=TEXT("Native abilities require a running battle."); return false; }
     if (!Definition.Validate(Error)) return false;
     if (!State.Units.ContainsByPredicate([&Definition](const FOGCombatUnitState& U)
-        { return U.IdentityId==Definition.IdentityId && U.SkillSet.CurrentForm==Definition.VersionId && Owns(U,Definition.SkillId); }))
+        { return Definition.MatchesSource(U.IdentityId,U.SkillSet.CurrentForm) &&
+            U.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")) && Owns(U,Definition.SkillId); }))
     { Error=TEXT("Native ability has no matching actual battle participant/owned kit."); return false; }
     const FString Key=AbilityKey(Definition.IdentityId,Definition.VersionId,Definition.SkillId);
     if (const auto* Existing=NativeAbilities.Find(Key))
@@ -51,6 +58,12 @@ bool FOGTurnBattle::RegisterNativeAbility(const FOGNativeAbilityDefinition& Defi
         if (*Existing==Definition) return true;
         Error=TEXT("An admitted battle ability cannot change midway through an encounter."); return false;
     }
+    for (const auto& Pair:NativeAbilities)
+        if (Pair.Value.SkillId==Definition.SkillId)
+            for (const auto& Unit:State.Units)
+                if (Definition.MatchesSource(Unit.IdentityId,Unit.SkillSet.CurrentForm) &&
+                    Pair.Value.MatchesSource(Unit.IdentityId,Unit.SkillSet.CurrentForm) && Owns(Unit,Definition.SkillId))
+                { Error=TEXT("Overlapping source scopes cannot replace an admitted shared ability."); return false; }
     NativeAbilities.Add(Key,Definition); ++NativeAbilityRevision; return true;
 }
 bool FOGTurnBattle::HasNativeActionExecutor(const FOGCombatUnitState& Source,const FOGContentId& Skill,FString& Error) const

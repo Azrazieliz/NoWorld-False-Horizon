@@ -1,3 +1,4 @@
+#include "Content/OGSystemBindingComponent.h"
 #include "Characters/OGContentCharacterActors.h"
 
 #include "Animation/OGSharedMotionControllerComponent.h"
@@ -19,6 +20,7 @@ AOGContentPlayableCharacter::AOGContentPlayableCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
     Appearance = CreateDefaultSubobject<UOGCharacterAppearanceComponent>(TEXT("ContentAppearance"));
+    SystemBindings = CreateDefaultSubobject<UOGSystemBindingComponent>(TEXT("SharedSystemBindings"));
     CombatBody = CreateDefaultSubobject<UOGCanonicalCombatActorBindingComponent>(TEXT("CanonicalCombatBody"));
     if (GetMesh()) Appearance->BodyComponentNamesToReplace.Add(GetMesh()->GetFName());
 }
@@ -52,6 +54,8 @@ bool AOGContentPlayableCharacter::BindOwnedWorldCharacter_Implementation(
         if (!Participant->BindActualNativeParticipant(Manifestation, Family, Error))
         { UE_LOG(LogTemp, Warning, TEXT("Native participant binding unavailable: %s"), *Error); return false; }
     }
+    if (SystemBindings && !SystemBindings->BindCanonicalEntity(Manifestation,Error))
+        UE_LOG(LogTemp,Warning,TEXT("Optional shared character bindings unavailable: %s"),*Error);
     return true;
 }
 
@@ -85,7 +89,8 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     FString Key = FString(Fantasm ? TEXT("Combat.Fantasm.") : bUltimate ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.")) + Action.SkillId.ToString();
     if (bUltimate && !Branch.IsEmpty()) Key += TEXT(".") + Branch.ToLower();
     if (!Mode.IsEmpty()) Key += TEXT(".") + Mode.ToLower();
-    const FName Semantic = Authored ? *Authored : FName(*Key);
+    const FName Registered=Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId);
+    const FName Semantic = Authored ? *Authored : !Registered.IsNone() ? Registered : FName(*Key);
     FString Error;
     if (!Appearance->PlaySemanticAction(Semantic, TEXT("Combat"), false, 1, NAME_None, Error))
         UE_LOG(LogTemp, Warning, TEXT("Source combat motion %s is unavailable: %s"), *Semantic.ToString(), *Error);

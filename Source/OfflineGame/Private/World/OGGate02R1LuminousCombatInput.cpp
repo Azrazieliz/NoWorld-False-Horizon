@@ -47,7 +47,7 @@ bool AOGWorldPrototypeCharacter::ReadOwnedLuminousBattleCommands(
         (Content && Content->IsBoundToOwnedCombatUnit(Session->BoundRulerId,Unit->UnitEntityId,Unit->SkillSet.CurrentForm))))
     { Error=TEXT("Battle controls require the actual possessed owned character."); return false; }
     FOGResolvedSkillSet Owned;
-    if (!Core->ReadOwnedApprovedLuminousSkills(Unit->UnitEntityId,Session->BoundRulerId,Owned,Error) ||
+    if (!Core->ReadOwnedCharacterSkills(Unit->UnitEntityId,Session->BoundRulerId,Owned,Error) ||
         Owned.CurrentForm!=Unit->SkillSet.CurrentForm)
     { if (Error.IsEmpty()) Error=TEXT("The stored character Version changed."); return false; }
     return FOGNativeBattleCommands::BuildFor(*Unit,Out,Error);

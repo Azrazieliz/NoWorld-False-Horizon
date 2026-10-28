@@ -1,3 +1,4 @@
+#include "Content/OGDefinitionLibrary.h"
 #include "Interaction/OGFoundationInteractionHost.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
@@ -215,17 +216,26 @@ void UOGFoundationInteractionHost::RefreshProductionSelection()
     UOGInteractionCatalog* Content = Catalog.IsNull()
         ? LoadObject<UOGInteractionCatalog>(nullptr, TEXT("/Game/NoWorld/Interactions/DA_NoWorld_InteractionCatalog.DA_NoWorld_InteractionCatalog"))
         : Catalog.LoadSynchronous();
+    TArray<UDataAsset*> Shared;
+    if (auto* Library=UOGDefinitionLibrary::Get())
+        Library->List(TEXT("interaction"),UOGInteractionDefinition::StaticClass(),Shared);
+    TArray<UOGInteractionDefinition*> Definitions;
+    for (auto* Asset:Shared) Definitions.AddUnique(CastChecked<UOGInteractionDefinition>(Asset));
     if (Content)
+        for (const auto& Reference:Content->Definitions)
+        {
+            auto* Definition=Reference.LoadSynchronous();
+            if (!Definition || Definition->GetPathName()!=Reference.ToSoftObjectPath().ToString())
+            { Status=TEXT("Installed interaction definition is missing or redirected."); SelectedDefinition=nullptr; return; }
+            Definitions.AddUnique(Definition);
+        }
+    TSet<FOGContentId> Ids;
+    for (auto* Definition:Definitions)
     {
-        TSet<FOGContentId> Ids;
-        for (const auto& Reference : Content->Definitions)
-            if (auto* Definition = Reference.LoadSynchronous())
-            {
-                FOGInteractionActionGraph Checked; FString Error;
-                if (!Definition->BuildGraph(Checked, Error) || Ids.Contains(Definition->GraphId))
-                { Status = TEXT("Installed interaction catalog contains an invalid or duplicate definition."); AvailableDefinitions.Reset(); SelectedDefinition = nullptr; return; }
-                Ids.Add(Definition->GraphId); AvailableDefinitions.Add(Definition);
-            }
+        FOGInteractionActionGraph Checked; FString Error;
+        if (!Definition->BuildGraph(Checked,Error) || Ids.Contains(Definition->GraphId))
+        { Status=TEXT("Installed interaction library contains an invalid or duplicate definition."); AvailableDefinitions.Reset(); SelectedDefinition=nullptr; return; }
+        Ids.Add(Definition->GraphId); AvailableDefinitions.Add(Definition);
     }
     if (!AvailableDefinitions.Contains(SelectedDefinition))
         SelectedDefinition = AvailableDefinitions.IsEmpty() ? nullptr : AvailableDefinitions[0];

@@ -1,3 +1,4 @@
+#include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 
 #include "Animation/OGSharedMotionControllerComponent.h"
@@ -72,25 +73,27 @@ UOGCharacterAppearanceComponent::UOGCharacterAppearanceComponent()
 UOGCharacterAppearanceDefinition* UOGCharacterAppearanceComponent::FindDefinition(
     const FOGContentId& Identity, const FOGContentId& Version, FString& Error) const
 {
-    TStrongObjectPtr<UOGCharacterAppearanceDefinition> Match;
-    for (const TSoftObjectPtr<UOGCharacterAppearanceDefinition>& Reference : Definitions)
+    TArray<UDataAsset*> Shared;
+    if (auto* Library=UOGDefinitionLibrary::Get())
+        Library->List(TEXT("appearance"),UOGCharacterAppearanceDefinition::StaticClass(),Shared);
+    TArray<UOGCharacterAppearanceDefinition*> Candidates;
+    for (auto* Asset:Shared) Candidates.AddUnique(CastChecked<UOGCharacterAppearanceDefinition>(Asset));
+    for (const auto& Reference:Definitions)
     {
-        TStrongObjectPtr<UOGCharacterAppearanceDefinition> Definition(Reference.LoadSynchronous());
-        if (!Definition.IsValid() || Definition->GetPathName() != Reference.ToSoftObjectPath().ToString())
-        {
-            Error = TEXT("An authored appearance definition is missing, redirected or has the wrong native class.");
-            return nullptr;
-        }
-        if (Definition->IdentityId != Identity || Definition->VersionId != Version) continue;
-        if (Match.IsValid())
-        {
-            Error = TEXT("Duplicate exact Identity/Version appearance definitions.");
-            return nullptr;
-        }
-        Match = MoveTemp(Definition);
+        auto* Definition=Reference.LoadSynchronous();
+        if (!Definition || Definition->GetPathName()!=Reference.ToSoftObjectPath().ToString())
+        { Error=TEXT("An authored appearance definition is missing, redirected or has the wrong native class."); return nullptr; }
+        Candidates.AddUnique(Definition);
     }
-    if (!Match.IsValid()) Error = TEXT("No authored native appearance for this exact Identity/Version.");
-    return Match.Get();
+    UOGCharacterAppearanceDefinition* Match=nullptr;
+    for (auto* Definition:Candidates)
+    {
+        if (Definition->IdentityId!=Identity || Definition->VersionId!=Version) continue;
+        if (Match) { Error=TEXT("Duplicate exact Identity/Version appearance definitions."); return nullptr; }
+        Match=Definition;
+    }
+    if (!Match) Error=TEXT("No authored native appearance for this exact Identity/Version.");
+    return Match;
 }
 
 bool UOGCharacterAppearanceComponent::ReadCanonicalWardrobe(

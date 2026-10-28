@@ -1,3 +1,5 @@
+#include "Characters/OGCharacterGameplayDefinition.h"
+#include "Combat/OGNativeCombatAbility.h"
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGApprovedLuminousSourceKit.h"
 #include "Combat/OGLuminousAlterV1Projection.h"
@@ -53,6 +55,7 @@ void FOGNativeBattleCommand::BuildAction(const FOGCombatUnitState& Source,
 }
 FName FOGNativeBattleCommand::MotionSemantic() const
 {
+    if (!AuthoredMotion.IsNone()) return AuthoredMotion;
     FString Key=bFantasm?TEXT("Combat.Fantasm."):ActiveSlot==INDEX_NONE?TEXT("Combat.Ultimate."):TEXT("Combat.Skill.");
     Key+=SkillId.ToString();
     if (!Branch.IsNone()) Key+=TEXT(".")+Branch.ToString().ToLower();
@@ -63,7 +66,29 @@ bool FOGNativeBattleCommands::BuildFor(const FOGCombatUnitState& Source,FOGNativ
 {
     Out=FOGNativeBattleCommandSet(); Error.Reset();
     if (Source.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")))
-    { Error=TEXT("No approved native command set is bound to this character."); return false; }
+    {
+        const auto* Definition=UOGCharacterGameplayDefinition::Find(Source.IdentityId,Source.SkillSet.CurrentForm,Error);
+        if (!Definition || !Definition->MatchesKit(Source.SkillSet))
+        { if (Error.IsEmpty()) Error=TEXT("The current character does not carry its exact registered kit."); return false; }
+        auto* Library=UOGDefinitionLibrary::Get();
+        Out.ApprovedSkills=Definition->Skills;
+        TArray<FOGContentId> Skills=Source.SkillSet.ActiveSkills;
+        if (Source.SkillSet.UltimateSkill.IsValid()) Skills.Add(Source.SkillSet.UltimateSkill);
+        for (int32 Index=0;Index<Skills.Num();++Index)
+        {
+            const auto* Ability=Cast<UOGNativeCombatAbility>(Library->Resolve(TEXT("ability"),Skills[Index]));
+            if (!Ability || !Ability->ValidateInstalled(Error) ||
+                !Ability->Definition.MatchesSource(Source.IdentityId,Source.SkillSet.CurrentForm))
+            { if (Error.IsEmpty()) Error=TEXT("A kit command has no compatible registered skill definition."); Out=FOGNativeBattleCommandSet(); return false; }
+            FOGNativeBattleCommand C; C.Id=FName(*Skills[Index].ToString()); C.SkillId=Skills[Index];
+            C.Label=Ability->DisplayName.IsEmpty()?Skills[Index].ToString():Ability->DisplayName.ToString();
+            C.Hint=Ability->Description.ToString(); C.AuthoredMotion=Ability->Definition.MotionSemantic;
+            C.bSelfTarget=Ability->Definition.Targets==EOGNativeAbilityTargets::Self;
+            C.ActiveSlot=Index<Source.SkillSet.ActiveSkills.Num()?Index:INDEX_NONE;
+            Out.Commands.Add(MoveTemp(C));
+        }
+        return true;
+    }
     const FString Form=Source.SkillSet.CurrentForm.ToString();
     const bool Base=Form==TEXT("character:luminous_valentine.version_ln_base");
     const bool Alter=Form==TEXT("character:luminous_valentine.version_alter_v1");
