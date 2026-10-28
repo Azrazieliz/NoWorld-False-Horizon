@@ -11,7 +11,16 @@ namespace
 FString AbilityKey(const FOGContentId& Identity,const FOGContentId& Version,const FOGContentId& Skill)
 { return Identity.ToString()+TEXT("|")+Version.ToString()+TEXT("|")+Skill.ToString(); }
 bool Owns(const FOGCombatUnitState& Source,const FOGContentId& Skill)
-{ return Source.SkillSet.ActiveSkills.Contains(Skill) || Source.SkillSet.UltimateSkill==Skill; }
+{ return !Source.SkillSet.HasDuplicateSkills() && (Source.SkillSet.ActiveSkills.Contains(Skill) || Source.SkillSet.UltimateSkill==Skill); }
+bool CompleteKit(const FOGResolvedSkillSet& Source,const FOGResolvedSkillSet& Approved)
+{
+    if (Source.CurrentForm!=Approved.CurrentForm || Source.ActiveSkills.Num()!=Approved.ActiveSkills.Num() ||
+        Source.PassiveSkills.Num()!=Approved.PassiveSkills.Num() || Source.UltimateSkill!=Approved.UltimateSkill ||
+        Source.HasDuplicateSkills()) return false;
+    for (const auto& Skill:Approved.ActiveSkills) if (!Source.ActiveSkills.Contains(Skill)) return false;
+    for (const auto& Skill:Approved.PassiveSkills) if (!Source.PassiveSkills.Contains(Skill)) return false;
+    return true;
+}
 FOGLargeNumber StatValue(const FOGCombatStats& S,EOGNativeScaleStat Stat)
 { return Stat==EOGNativeScaleStat::Attack?S.Attack:Stat==EOGNativeScaleStat::MaxHp?S.MaxHp:S.Defense; }
 uint64 AbilitySeed(const FOGTurnBattleState& State,const FOGResolvedCombatAction& Action,int64 Sequence)
@@ -51,9 +60,9 @@ bool FOGTurnBattle::HasNativeActionExecutor(const FOGCombatUnitState& Source,con
     {
         FOGApprovedLuminousSourceKitView Base; FOGLuminousAlterV1Projection Alter;
         if (!FOGApprovedLuminousSourceKit::LoadBaseV6(Base,Error) || !FOGLuminousAlterV1Projection::LoadApprovedV1(Alter,Error)) return false;
-        if (Source.SkillSet.CurrentForm==Base.VersionId &&
+        if (CompleteKit(Source.SkillSet,Base.CoreSkills) &&
             (Base.CoreSkills.ActiveSkills.Contains(Skill) || Base.CoreSkills.UltimateSkill==Skill || Base.WorldFantasmId==Skill)) return true;
-        if (Source.SkillSet.CurrentForm==Alter.NativeVersionId &&
+        if (CompleteKit(Source.SkillSet,Alter.Skills) &&
             (Alter.Skills.ActiveSkills.Contains(Skill) || Alter.Skills.UltimateSkill==Skill || Alter.WorldFantasmId==Skill)) return true;
     }
     else if (Owns(Source,Skill) && FindNativeAbility(Source,Skill)) return true;
