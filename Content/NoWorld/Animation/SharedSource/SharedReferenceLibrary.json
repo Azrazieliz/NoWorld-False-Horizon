@@ -1,4 +1,6 @@
 {
+  "calibration_basis": "koikatsu.native_original.reference_delta.v1",
+  "calibration_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
   "clips": [
     {
       "duration": 1.3333330154418945,
@@ -12055,6 +12057,7 @@
   ],
   "coverage": {
     "boundary": "repository_available_relative_reference_channels_only_no_missing_source_synthesis",
+    "calibration_tracks": 183600,
     "catalog_rows": 3222,
     "catalog_rows_with_available_source": 3098,
     "catalog_rows_without_actual_id": 40,
@@ -12063,7 +12066,8 @@
     "native_acceptance": false,
     "repository_input_files": 1038,
     "source_inventory_complete": false,
-    "source_unique_clips": 1036
+    "source_unique_clips": 1036,
+    "tracks_missing_calibration": 0
   },
   "routes": [
     {
