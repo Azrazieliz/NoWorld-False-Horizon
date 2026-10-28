@@ -18,6 +18,16 @@ const FOGCombatUnitState* FindUnit(
         });
 }
 
+void AddOutcomeState(const FOGTurnBattleState& State,const TSharedRef<FJsonObject>& Payload)
+{
+    Payload->SetNumberField(TEXT("battle_status_after"),static_cast<uint8>(State.Status));
+    TArray<int32> Living;
+    for (const auto& Unit:State.Units)
+        if (Unit.IsAlive() && Unit.Presence!=EOGCombatPresence::Removed) Living.AddUnique(Unit.TeamIndex);
+    Living.Sort(); TArray<TSharedPtr<FJsonValue>> Teams;
+    for (const auto Team:Living) Teams.Add(MakeShared<FJsonValueNumber>(Team));
+    Payload->SetArrayField(TEXT("living_team_indices_after"),MoveTemp(Teams));
+}
 bool AddUnitDelta(
     const FOGCombatUnitState& Before,
     const FOGCombatUnitState& After,
@@ -174,6 +184,7 @@ bool FOGCombatActionJournal::BuildResolvedActionEvent(
 
     TSharedRef<FJsonObject> Payload = MakeShared<FJsonObject>();
     Payload->SetStringField(TEXT("battle_id"), Before.BattleId.ToString());
+    AddOutcomeState(After,Payload);
     Payload->SetStringField(TEXT("action_id"), Action.ActionId.ToString());
     Payload->SetStringField(TEXT("source_unit_id"), Action.SourceUnitId.ToString());
     Payload->SetStringField(TEXT("skill_id"), Action.SkillId.ToString());
@@ -252,6 +263,7 @@ bool FOGCombatActionJournal::BuildEncounterStartedEvent(const FOGTurnBattleState
         Before.Units.IsEmpty() || Before.Units.Num()!=After.Units.Num())
     { Error=TEXT("Native encounter opening has incomplete canonical identity."); return false; }
     auto Payload=MakeShared<FJsonObject>(); Payload->SetStringField(TEXT("battle_id"),After.BattleId.ToString());
+    AddOutcomeState(After,Payload);
     TArray<TSharedPtr<FJsonValue>> Units; TArray<FOGEntityId> Related; TSet<FOGEntityId> Seen;
     for (const auto& Unit:After.Units)
     {

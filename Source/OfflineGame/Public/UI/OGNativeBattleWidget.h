@@ -1,5 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "Core/OGEntityId.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "OGNativeBattleWidget.generated.h"
@@ -48,6 +49,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UScrollBox> ActionScroll;
     UPROPERTY(Transient) TObjectPtr<UWrapBox> Commands;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> ActionPanelSlot;
+    FOGEntityId DismissedResultReceipt;
     FString Signature;
     FString LastActionMessage;
     float RefreshElapsed=0;

@@ -4,6 +4,7 @@
 #include "Containers/Ticker.h"
 #include "Persistence/OGWorldStore.h"
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
+#include "Combat/OGCombatRewardDefinition.h"
 #include "Runtime/OGPerformanceTelemetry.h"
 #include "Runtime/OGCanonicalClockRuntime.h"
 #include "Runtime/OGFoundationStrategicRuntime.h"
@@ -158,6 +159,7 @@ public:
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
+    const FOGNativeBattleOutcome& GetLastNativeBattleOutcome() const { return LastNativeBattleOutcome; }
     FOGEntityId GetLastNativeBattleReceipt() const { return LastNativeBattleReceipt; }
     bool IsNativeOpeningPresentationCurrent() const { return LastNativeOpeningReceipt.IsValid() && LastNativeOpeningReceipt==LastNativeBattleReceipt; }
     FOGEntityId GetOwnedBattleRulerId() const { return OwnedLuminousTurnBattle ? ActiveCombatRulerId : FOGEntityId(); }
@@ -231,6 +233,7 @@ private:
     FOGNativeCombatEventProvenance LastNativeCombatEvent;
     FOGEntityId LastNativeBattleReceipt;
     FOGEntityId LastNativeOpeningReceipt;
+    FOGNativeBattleOutcome LastNativeBattleOutcome;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;

@@ -13,11 +13,16 @@ public:
         int64 WorldTick,FOGObjectActionPreview& Out,FString& Error) const;
     bool Apply(const UOGObjectActionDefinition& Definition,const FOGObjectActionPreview& Reviewed,
         const FOGEntityId& RequestId,int64 WorldTick,bool& AlreadyApplied,TArray<FOGEntityId>& CreatedItems,FString& Error);
+    /** Native orchestration only: caller owns commit/rollback of an already-open Store transaction. */
+    bool ApplyWithinTransaction(const UOGObjectActionDefinition& Definition,const FOGObjectActionPreview& Reviewed,
+        const FOGEntityId& RequestId,int64 WorldTick,bool& AlreadyApplied,TArray<FOGEntityId>& CreatedItems,FString& Error);
     /** Native shop/world producer publishes access, never creates stock/currency or an NPC.
      * RemainingUses=-1 is an explicit unlimited offer; zero closes it. */
     bool PublishOffer(const UOGObjectActionDefinition& Definition,const FOGEntityId& Counterparty,
         const FOGEntityId& AllowedRuler,int64 RemainingUses,int64 OpensTick,int64 ClosesTick,
         const FOGEntityId& RequestId,int64 WorldTick,FString& Error);
 private:
+    bool ApplyImpl(const UOGObjectActionDefinition&,const FOGObjectActionPreview&,const FOGEntityId&,int64,
+        bool&,TArray<FOGEntityId>&,FString&,bool OwnTransaction);
     IOGWorldStore& Store;
 };

@@ -5,6 +5,7 @@
 #include "Characters/OGCharacterGameplayDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
 #include "Effects/OGNativeCombatEffect.h"
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Progression/OGCharacterDevelopmentService.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
@@ -297,6 +298,7 @@ bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
     bReleasingCanonicalRuntime = true;
     // Clear causal entry context before consumers observe a world release.
     LastNativeBattleReceipt=LastNativeOpeningReceipt=FOGEntityId();
+    LastNativeBattleOutcome=FOGNativeBattleOutcome();
     CommittedNativeActionIds.Reset();
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     OnCanonicalRuntimeReleasing.Broadcast();
@@ -1048,8 +1050,15 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     if (!Candidate->ResolveNativeOpeningReactions(OutError)) return false;
     FOGWorldEvent OpeningEvent;
     if (!FOGCombatActionJournal::BuildEncounterStartedEvent(DevelopedState,Candidate->GetState(),
-        Candidate->GetLastNativeReactions(),RulerId,GetCanonicalWorldTick(),OpeningEvent,OutError) ||
-        !WorldStore->AppendWorldEvent(OpeningEvent,OutError)) return false;
+        Candidate->GetLastNativeReactions(),RulerId,GetCanonicalWorldTick(),OpeningEvent,OutError)) return false;
+    if (!WorldStore->BeginTransaction(OutError)) return false;
+    auto RollbackOpening=[&](){FString Ignored; WorldStore->RollbackTransaction(Ignored); return false;};
+    FOGNativeBattleOutcome OpeningOutcome;
+    if (!WorldStore->AppendWorldEvent(OpeningEvent,OutError) ||
+        (Candidate->GetState().Status==EOGTurnBattleStatus::Completed &&
+         !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate->GetState(),RulerId,OpeningEvent,OpeningOutcome,OutError)) ||
+        !WorldStore->CommitTransaction(OutError)) return RollbackOpening();
+    LastNativeBattleOutcome=MoveTemp(OpeningOutcome);
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
     ActiveCombatRulerId=RulerId;
     CommittedNativeActionIds.Reset();
@@ -1059,6 +1068,10 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     const auto OpeningReactions=OwnedLuminousTurnBattle->GetLastNativeReactions();
     const auto OpeningState=OwnedLuminousTurnBattle->GetState();
     LastNativeOpeningReceipt=LastNativeBattleReceipt=OpeningEvent.EventId;
+    if (!LastNativeBattleOutcome.RewardEventIds.IsEmpty())
+        if (auto* Session=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+            Session && Session->BoundRulerId==ActiveCombatRulerId)
+        { FString Warning; if (!Session->RefreshCanonicalProjections(Warning)) UE_LOG(LogTemp,Warning,TEXT("Opening rewards saved; Ruler view refresh failed: %s"),*Warning); }
     OnNativeBattleStateCommitted.Broadcast(OpeningState,OpeningEvent.EventId);
     for (const auto& Reaction:OpeningReactions)
         if (Reaction.bExecuted) PublishNativeAction(Reaction.Action,OpeningEvent,OpeningState);
@@ -1120,16 +1133,26 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
          Before, Candidate.GetState(), CompleteAction, Candidate.GetLastNativeReactions(), ActiveCombatRulerId,
          WorldTick, ActionEvent, OutError))
         return false;
-    if(!WorldStore->AppendWorldEvent(ActionEvent,OutError))
-        return false;
+    if (!WorldStore->BeginTransaction(OutError)) return false;
+    auto RollbackAction=[&](){FString Ignored; WorldStore->RollbackTransaction(Ignored); return false;};
+    FOGNativeBattleOutcome Outcome;
+    if (!WorldStore->AppendWorldEvent(ActionEvent,OutError) ||
+        (Candidate.GetState().Status==EOGTurnBattleStatus::Completed &&
+         !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate.GetState(),ActiveCombatRulerId,ActionEvent,Outcome,OutError)) ||
+        !WorldStore->CommitTransaction(OutError)) return RollbackAction();
 
     *OwnedLuminousTurnBattle=MoveTemp(Candidate);
+    LastNativeBattleOutcome=MoveTemp(Outcome);
     // Copy notifications before invoking external presentation listeners.
     const auto Reactions=OwnedLuminousTurnBattle->GetLastNativeReactions();
     const auto AcceptedState=OwnedLuminousTurnBattle->GetState();
     CommittedNativeActionIds.Add(CompleteAction.ActionId);
     for (const auto& Reaction:Reactions) if (Reaction.bExecuted) CommittedNativeActionIds.Add(Reaction.Action.ActionId);
     LastNativeBattleReceipt=ActionEvent.EventId;
+    if (!LastNativeBattleOutcome.RewardEventIds.IsEmpty())
+        if (auto* Session=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+            Session && Session->BoundRulerId==ActiveCombatRulerId)
+        { FString Warning; if (!Session->RefreshCanonicalProjections(Warning)) UE_LOG(LogTemp,Warning,TEXT("Rewards saved; Ruler view refresh failed: %s"),*Warning); }
     OnNativeBattleStateCommitted.Broadcast(AcceptedState,ActionEvent.EventId);
     PublishNativeAction(CompleteAction,ActionEvent,AcceptedState);
     for (const auto& Reaction:Reactions) if (Reaction.bExecuted)

@@ -189,13 +189,19 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
     }
     Out.bCanApply=Out.MissingRequirements.IsEmpty(); Out.ConfirmationToken=Digest(Quote); return true;
 }
-bool FOGObjectActionService::Apply(const UOGObjectActionDefinition& D,const FOGObjectActionPreview& Reviewed,
-    const FOGEntityId& RequestId,int64 Tick,bool& AlreadyApplied,TArray<FOGEntityId>& CreatedItems,FString& Error)
+bool FOGObjectActionService::Apply(const UOGObjectActionDefinition& Definition,const FOGObjectActionPreview& Reviewed,
+    const FOGEntityId& Request,int64 Tick,bool& Already,TArray<FOGEntityId>& Created,FString& Error)
+{ return ApplyImpl(Definition,Reviewed,Request,Tick,Already,Created,Error,true); }
+bool FOGObjectActionService::ApplyWithinTransaction(const UOGObjectActionDefinition& Definition,const FOGObjectActionPreview& Reviewed,
+    const FOGEntityId& Request,int64 Tick,bool& Already,TArray<FOGEntityId>& Created,FString& Error)
+{ return ApplyImpl(Definition,Reviewed,Request,Tick,Already,Created,Error,false); }
+bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const FOGObjectActionPreview& Reviewed,
+    const FOGEntityId& RequestId,int64 Tick,bool& AlreadyApplied,TArray<FOGEntityId>& CreatedItems,FString& Error,bool OwnTransaction)
 {
     AlreadyApplied=false; CreatedItems.Reset(); Error.Reset();
     if (!IsInGameThread() || !RequestId.IsValid() || Reviewed.ConfirmationToken.IsEmpty() || Reviewed.ActionId!=D.DefinitionId || Tick<0 ||
-        !Store.BeginTransaction(Error)) return false;
-    auto Fail=[&](){FString Ignored; Store.RollbackTransaction(Ignored); CreatedItems.Reset(); return false;};
+        (OwnTransaction && !Store.BeginTransaction(Error))) return false;
+    auto Fail=[&](){FString Ignored; if (OwnTransaction) Store.RollbackTransaction(Ignored); CreatedItems.Reset(); return false;};
     bool Found=false; FOGWorldEvent Previous;
     if (!Store.TryReadWorldEvent(RequestId,Found,Previous,Error)) return Fail();
     if (Found)
@@ -216,7 +222,7 @@ bool FOGObjectActionService::Apply(const UOGObjectActionDefinition& D,const FOGO
             if (!Value->TryGetString(Text) || !FGuid::Parse(Text,Id) || !Id.IsValid()) { Error=TEXT("Stored created-item ID is invalid."); return Fail(); }
             CreatedItems.Add(FOGEntityId(Id));
         }
-        if (!Store.CommitTransaction(Error)) return Fail();
+        if (OwnTransaction && !Store.CommitTransaction(Error)) return Fail();
         AlreadyApplied=true; return true;
     }
     FOGObjectActionPreview Fresh;
@@ -308,7 +314,7 @@ bool FOGObjectActionService::Apply(const UOGObjectActionDefinition& D,const FOGO
     for (const auto& I:Fresh.Inputs) Event.RelatedEntities.AddUnique(I.Item.ItemId);
     for (const auto& Id:CreatedItems) Event.RelatedEntities.AddUnique(Id);
     if (Fresh.bRepairsSubject) Event.RelatedEntities.AddUnique(Fresh.SubjectBefore.ItemId);
-    if (!Store.AppendWorldEvent(Event,Error) || !Store.CommitTransaction(Error)) return Fail();
+    if (!Store.AppendWorldEvent(Event,Error) || (OwnTransaction && !Store.CommitTransaction(Error))) return Fail();
     return true;
 }
 bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& D,const FOGEntityId& Counterparty,

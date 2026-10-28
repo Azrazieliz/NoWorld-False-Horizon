@@ -1,6 +1,8 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Objects/OGObjectActionService.h"
+#include "Combat/OGCombatRewardDefinition.h"
+#include "Combat/OGCombatActionJournal.h"
 #include "Persistence/OGSQLiteWorldStore.h"
 #include "World/OGInventoryEquipmentService.h"
 #include "HAL/FileManager.h"
@@ -189,6 +191,56 @@ bool FOGObjectActionLateRollbackTest::RunTest(const FString&)
     FOGWorldEvent Receipt; if (!F.Store.TryReadWorldEvent(Request,Found,Receipt,F.Error)) return false;
     TestFalse(TEXT("Failed action left no success receipt"),Found);
     TestTrue(TEXT("Failed action returns no fabricated outputs"),Created.IsEmpty());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeVictoryRewardsTest,
+    "OfflineGame.Combat.Rewards.DurableVictoryPaysActualEnemyLifeOnce",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGNativeVictoryRewardsTest::RunTest(const FString&)
+{
+    FObjectActionFixture F; if (!F.Open()) return false;
+    auto* Reward=NewObject<UOGCombatRewardDefinition>(F.Material->GetOutermost(),TEXT("VictoryReward"),RF_Public|RF_Standalone);
+    Reward->DefinitionId=ObjectTestId(TEXT("victory_reward")); Reward->DisplayName=FText::FromString(TEXT("Fixture victory reward"));
+    Reward->OriginalSourceReference=TEXT("native victory transaction fixture"); Reward->EnemyEntityKind=TEXT("npc");
+    Reward->Objects=F.Craft->Outputs; auto Currency=F.Craft->Resources[0]; Currency.Amount=5; Reward->Resources={Currency};
+    FOGDefinitionAssetEntry Entry; Entry.System=Reward->System; Entry.Id=Reward->DefinitionId; Entry.Asset=Reward;
+    F.Bundle->Assets.Add(Entry); ++F.Bundle->Version;
+    if (!F.Library->InstallBundle(F.Bundle,F.Error)) return false;
+    const FString EnemyJson=TEXT("{\"combat_reward_definition_id\":\"")+Reward->DefinitionId.ToString()+TEXT("\"}");
+    if (!F.Store.UpsertEntity(F.Merchant,TEXT("npc"),1,EnemyJson,F.Error)) return false;
+    FOGCombatUnitState Player,Enemy; Player.UnitEntityId=F.Ruler; Enemy.UnitEntityId=F.Merchant;
+    Player.TeamIndex=0; Enemy.TeamIndex=1; Player.Presence=EOGCombatPresence::Active; Enemy.Presence=EOGCombatPresence::Defeated;
+    Player.CurrentHp=FOGLargeNumber::FromInt64(100);
+    FOGTurnBattleState After; After.BattleId=FOGEntityId::NewId(); After.Status=EOGTurnBattleStatus::Completed; After.Units={Player,Enemy};
+    auto Before=After; Before.Status=EOGTurnBattleStatus::Running; Before.Units[1].CurrentHp=FOGLargeNumber::FromInt64(10);
+    Before.Units[1].Presence=EOGCombatPresence::Active;
+    auto Commit=[&](FOGNativeBattleOutcome& Outcome)
+    {
+        FOGResolvedCombatAction Action; Action.ActionId=FOGEntityId::NewId(); Action.SourceUnitId=F.Ruler;
+        Action.SkillId=ObjectTestId(TEXT("finishing_action")); Action.TargetUnitIds={F.Merchant}; Action.ActionDelay=100;
+        FOGWorldEvent Completion;
+        if (!FOGCombatActionJournal::BuildResolvedActionEvent(Before,After,Action,F.Ruler,2,Completion,F.Error) ||
+            !F.Store.BeginTransaction(F.Error)) return false;
+        if (!F.Store.AppendWorldEvent(Completion,F.Error) ||
+            !FOGCombatRewardService(F.Store).ApplyCommittedVictory(After,F.Ruler,Completion,Outcome,F.Error) ||
+            !F.Store.CommitTransaction(F.Error))
+        { FString Ignored; F.Store.RollbackTransaction(Ignored); return false; }
+        return true;
+    };
+    FOGNativeBattleOutcome Outcome;
+    if (!TestTrue(TEXT("Commit finishing action and source rewards together"),Commit(Outcome))) return false;
+    TestTrue(TEXT("Actual victory and actual created item recorded"),Outcome.bVictory && Outcome.RewardEventIds.Num()==1 && Outcome.CreatedItemIds.Num()==1);
+    TestEqual(TEXT("Real wallet receives exact reward"),F.Balance(F.Ruler),static_cast<int64>(25));
+    const auto GrantedItem=Outcome.CreatedItemIds[0];
+    Before.BattleId=After.BattleId=FOGEntityId::NewId();
+    if (!TestTrue(TEXT("A second encounter can finish against the same canonical life"),Commit(Outcome))) return false;
+    TestTrue(TEXT("The same enemy life never pays twice"),Outcome.RewardEventIds.IsEmpty() && Outcome.CreatedItemIds.IsEmpty());
+    TestEqual(TEXT("No repeat currency grant"),F.Balance(F.Ruler),static_cast<int64>(25));
+    F.Store.Close(); if (!F.Store.Open(F.Database,F.Error)) return false;
+    bool Found=false; FOGItemInstanceRecord Item;
+    if (!F.Store.TryReadItemInstance(GrantedItem,Found,Item,F.Error)) return false;
+    TestTrue(TEXT("Victory output survives cold reopen"),Found && Item.OwnerEntityId==F.Ruler && Item.DefinitionId==F.Product->DefinitionId);
     return true;
 }
 #endif

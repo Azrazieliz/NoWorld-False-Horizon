@@ -103,12 +103,36 @@ void UOGNativeBattleWidget::Refresh()
     const auto* Battle=Core?Core->GetOwnedLuminousTurnBattle():nullptr;
     if (!Core || !Core->IsCoreReady() || !Battle || !Session ||
         Core->GetOwnedBattleRulerId()!=Session->BoundRulerId ||
-        Battle->GetState().Status!=EOGTurnBattleStatus::Running)
+        Battle->GetState().Status==EOGTurnBattleStatus::NotStarted)
     { SetVisibility(ESlateVisibility::Collapsed); return; }
     const auto& State=Battle->GetState();
+    if (State.Status==EOGTurnBattleStatus::Completed)
+    {
+        const auto& Outcome=Core->GetLastNativeBattleOutcome();
+        if (Outcome.BattleId!=State.BattleId || !Outcome.CompletionEventId.IsValid() || DismissedResultReceipt==Outcome.CompletionEventId)
+        { SetVisibility(ESlateVisibility::Collapsed); return; }
+        SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+        const FString ResultKey=TEXT("result|")+Outcome.CompletionEventId.ToString()+FString::Printf(TEXT("|%d|%d"),FMath::RoundToInt(ViewWidth),FMath::RoundToInt(ViewHeight));
+        if (Signature==ResultKey) return;
+        Signature=ResultKey; Targets->ClearChildren(); Commands->ClearChildren();
+        Heading->SetText(FText::FromString(!Outcome.bHasPlayerTeam?TEXT("ENCOUNTER COMPLETE"):Outcome.bVictory?TEXT("VICTORY"):TEXT("DEFEAT")));
+        Resources->SetText(FText::GetEmpty());
+        Feedback->SetText(FText::FromString(Outcome.RewardEventIds.IsEmpty()?TEXT("Encounter complete."):TEXT("Rewards saved.")));
+        const float Width=FMath::Max(200.f,ViewWidth*.90f-32.f); Commands->SetWrapSize(Width);
+        AddButton(Commands,TEXT("CONTINUE"),TEXT("Return to the World."),TEXT("screen_results_close"),INDEX_NONE,true,false,Width);
+        AddButton(Commands,TEXT("RULER"),TEXT("Open your Ruler screen."),TEXT("screen_ruler"),INDEX_NONE,true,false,Width);
+        for (const auto& Line:Outcome.RewardLines)
+        {
+            auto* Bounds=WidgetTree->ConstructWidget<USizeBox>(); Bounds->SetWidthOverride(Width); Bounds->SetMinDesiredHeight(40);
+            auto* Text=WidgetTree->ConstructWidget<UTextBlock>(); Text->SetFont(BattleFont(17)); Text->SetColorAndOpacity(Gold);
+            Text->SetAutoWrapText(true); Text->SetText(FText::FromString(Line)); Bounds->AddChild(Text); Commands->AddChildToWrapBox(Bounds);
+        }
+        return;
+    }
     const auto* Source=State.Units.FindByPredicate([Session](const FOGCombatUnitState& U)
         { return U.UnitEntityId==Session->SelectedManifestationId; });
     if (!Source) { SetVisibility(ESlateVisibility::Collapsed); return; }
+    SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     int32 Resource=0,Charge=0,OwnerActions=0;
     Battle->ReadLuminousCommandResources(Source->UnitEntityId,Resource,Charge,OwnerActions);
     FString Key=State.BattleId.ToString()+Source->UnitEntityId.ToString()+
@@ -199,6 +223,12 @@ void UOGNativeBattleWidget::Refresh()
 void UOGNativeBattleWidget::Activate(FName Command,int32 TargetIndex)
 {
     if (!Character.IsValid()) return;
+    if (Command==TEXT("screen_results_close"))
+    {
+        const auto* Game=Character->GetGameInstance(); const auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+        if (Core) DismissedResultReceipt=Core->GetLastNativeBattleOutcome().CompletionEventId;
+        SetVisibility(ESlateVisibility::Collapsed); return;
+    }
     if (Command==TEXT("screen_pause")) { Character->SetFoundationPauseMenuOpen(true); return; }
     if (Command==TEXT("screen_settings")) { Character->SetFoundationSettingsOpen(true); return; }
     if (Command==TEXT("screen_ruler"))
