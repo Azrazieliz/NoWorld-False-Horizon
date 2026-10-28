@@ -2,6 +2,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Engine/GameInstance.h"
+#include "Combat/OGNativeCombatAbility.h"
 #include "HAL/FileManager.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"
@@ -17,6 +18,9 @@ FOGCombatUnitState ProvenanceUnit(const FOGEntityId& Id, int32 Team, int64 Actio
     Unit.UnitEntityId = Id;
     Unit.IdentityId = FOGContentId(Team == 0
         ? TEXT("test:identity.native_event_source") : TEXT("test:identity.native_event_target"));
+    Unit.SkillSet.CurrentForm=FOGContentId(TEXT("test:version.native_event"));
+    if (Team==0) Unit.SkillSet.ActiveSkills={FOGContentId(TEXT("test:skill.basic")),FOGContentId(TEXT("test:skill.restore"))};
+    Unit.Stats.Attack=FOGLargeNumber::FromInt64(100); Unit.Stats.HitBps=10000;
     Unit.TeamIndex = Team;
     Unit.Presence = EOGCombatPresence::Active;
     Unit.CurrentHp = Unit.Stats.MaxHp = FOGLargeNumber::FromInt64(100);
@@ -83,6 +87,20 @@ bool FOGNativeCombatEventProvenanceTest::RunTest(const FString& Parameters)
     State.Teams = {ProvenanceTeam(0, Source), ProvenanceTeam(1, Target)};
     Core->OwnedLuminousTurnBattle = MakeUnique<FOGTurnBattle>();
     if (!TestTrue(TEXT("Use the existing native executor"), Core->OwnedLuminousTurnBattle->Initialize(State, Error))) return false;
+    auto InstallFixtureExecutors=[&]()
+    {
+        Core->OwnedLuminousTurnBattle->RequireNativeActionExecutors(true);
+        FOGNativeAbilityDefinition Damage; Damage.SkillId=FOGContentId(TEXT("test:skill.basic"));
+        Damage.OriginalSourceReference=TEXT("native ledger integration fixture"); Damage.bNoResourceCost=true;
+        FOGNativeAbilityPacket Packet; Packet.FlatAmount=FOGLargeNumber::FromInt64(1);
+        Packet.DefenseReference=EOGNativeDefenseReference::Attack; Damage.Packets={Packet};
+        if (!Core->OwnedLuminousTurnBattle->RegisterNativeAbility(Damage,Error)) return false;
+        auto Restore=Damage; Restore.SkillId=FOGContentId(TEXT("test:skill.restore")); Restore.Targets=EOGNativeAbilityTargets::Self;
+        Restore.Packets[0].Effect=EOGNativeAbilityEffect::Healing;
+        Restore.Packets[0].DefenseReference=EOGNativeDefenseReference::Unspecified;
+        return Core->OwnedLuminousTurnBattle->RegisterNativeAbility(Restore,Error);
+    };
+    if (!InstallFixtureExecutors()) return false;
     Core->ActiveCombatRulerId = Ruler;
     Core->bCoreReady = true;
     auto Action = [Source, Target]()
@@ -91,7 +109,7 @@ bool FOGNativeCombatEventProvenanceTest::RunTest(const FString& Parameters)
         Out.ActionId = FOGEntityId::NewId();
         Out.SourceUnitId = Source;
         Out.TargetUnitIds.Add(Target);
-        // Existing ordinary-action test fixture, with no new damage mechanics.
+        // Exercise an actual installed native packet executor, not an empty timeline action.
         Out.SkillId = FOGContentId(TEXT("test:skill.basic"));
         Out.ActionDelay = 100;
         return Out;
@@ -118,6 +136,10 @@ bool FOGNativeCombatEventProvenanceTest::RunTest(const FString& Parameters)
         Recorded.OwningRulerId == Ruler && Recorded.SourceUnitId == Source && Recorded.TargetUnitIds == First.TargetUnitIds && Recorded.SkillId == First.SkillId);
     TestEqual(TEXT("Actual canonical tick retained"), Recorded.WorldTick, Core->GetCanonicalWorldTick());
     TestTrue(TEXT("Ongoing action is not mislabeled post-combat"), Recorded.BattleStatus == EOGTurnBattleStatus::Running);
+    const auto BeforeDuplicate=Core->GetApprovedLuminousEncounterState();
+    TestFalse(TEXT("Retrying an accepted request cannot execute twice"),Core->ApplyOwnedLuminousTurnAction(First,Error));
+    TestEqual(TEXT("Duplicate request emits no extra notification"),Notifications,1);
+    TestTrue(TEXT("Duplicate request changes no target HP"),Core->GetApprovedLuminousEncounterState().Units[1].CurrentHp==BeforeDuplicate.Units[1].CurrentHp);
     auto Rejected = Action();
     Rejected.SourceUnitId = FOGEntityId::NewId();
     TestFalse(TEXT("Rejected action cannot replace context"), Core->ApplyOwnedLuminousTurnAction(Rejected, Error));
@@ -143,6 +165,7 @@ bool FOGNativeCombatEventProvenanceTest::RunTest(const FString& Parameters)
         Source, Target, FOGLargeNumber::FromInt64(100), First.SkillId, Error))) return false;
     auto Completed = Action();
     Completed.TargetUnitIds = {Source};
+    Completed.SkillId=FOGContentId(TEXT("test:skill.restore"));
     if (!TestTrue(TEXT("Only the accepted action window publishes post-combat context"), Core->ApplyOwnedLuminousTurnAction(Completed, Error))) return false;
     TestTrue(TEXT("Post-combat classification mirrors actual executor completion"),
         Core->GetLastNativeCombatEventProvenance().BattleStatus == EOGTurnBattleStatus::Completed &&
@@ -152,6 +175,9 @@ bool FOGNativeCombatEventProvenanceTest::RunTest(const FString& Parameters)
     NextState.BattleId = FOGEntityId::NewId();
     if (!TestTrue(TEXT("Actual production encounter start accepts the next fixture battle"), Core->StartApprovedLuminousEncounter(NextState, Ruler, Error))) return false;
     TestFalse(TEXT("New encounter cannot reuse a previous battle's post-combat event"), Core->GetLastNativeCombatEventId().IsValid());
+    TestTrue(TEXT("Both public starts establish a durable opening receipt"),Core->GetLastNativeBattleReceipt().IsValid());
+    TestFalse(TEXT("Public World startup rejects journal-only commands before admission"),Core->ApplyApprovedLuminousResolvedAction(Action(),Error));
+    if (!InstallFixtureExecutors()) return false;
     if (!TestTrue(TEXT("New battle publishes only its own committed action"), Core->ApplyApprovedLuminousResolvedAction(Action(), Error))) return false;
     TestTrue(TEXT("Exact new battle provenance replaces the previous battle"), Core->GetLastNativeCombatEventProvenance().BattleId == NextState.BattleId);
     bool ClearedBeforeReleaseNotification = false;

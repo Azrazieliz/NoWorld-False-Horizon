@@ -777,6 +777,7 @@ bool UOGSharedMotionControllerComponent::EnqueueCombatAction(FName Action,
 {
     if (!IsInGameThread() || !Battle.IsValid() || !Receipt.IsValid() || Action.IsNone()) return false;
     if (CombatScope==Battle && CombatReceipts.Contains(Receipt)) return true;
+    if (bSceneTimeLocked && !bPlayingQueuedCombat) return false;
     if (!CanPlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
     // A coordinated scene owns its current playback until it explicitly exits.
     if (bPlaying && !bPlayingQueuedCombat && !CurrentAction.ToString().StartsWith(TEXT("Traversal.")) &&

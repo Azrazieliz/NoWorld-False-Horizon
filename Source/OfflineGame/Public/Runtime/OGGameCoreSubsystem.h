@@ -202,6 +202,7 @@ public:
 
 private:
     bool bSubmittingNativeAction=false;
+    TSet<FOGEntityId> CommittedNativeActionIds;
     void PublishNativeAction(const FOGResolvedCombatAction& Action,const FOGWorldEvent& Event,const FOGTurnBattleState& Accepted);
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FOGNativeCombatEventProvenanceTest;
