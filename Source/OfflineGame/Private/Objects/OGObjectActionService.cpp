@@ -199,6 +199,8 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
     const FOGEntityId& RequestId,int64 Tick,bool& AlreadyApplied,TArray<FOGEntityId>& CreatedItems,FString& Error,bool OwnTransaction)
 {
     AlreadyApplied=false; CreatedItems.Reset(); Error.Reset();
+    if (!OwnTransaction && !Store.IsWriteTransactionActive())
+    { Error=TEXT("Cross-system object execution requires the caller's active write transaction."); return false; }
     if (!IsInGameThread() || !RequestId.IsValid() || Reviewed.ConfirmationToken.IsEmpty() || Reviewed.ActionId!=D.DefinitionId || Tick<0 ||
         (OwnTransaction && !Store.BeginTransaction(Error))) return false;
     auto Fail=[&](){FString Ignored; if (OwnTransaction) Store.RollbackTransaction(Ignored); CreatedItems.Reset(); return false;};

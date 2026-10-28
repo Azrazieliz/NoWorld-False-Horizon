@@ -15,6 +15,7 @@ public:
     virtual void Close() override;
     virtual bool IsOpen() const override { return Database != nullptr; }
 
+    virtual bool IsWriteTransactionActive() const override { return bTransactionActive; }
     virtual bool BeginTransaction(FString&) override;
     virtual bool CommitTransaction(FString&) override;
     virtual bool RollbackTransaction(FString&) override;

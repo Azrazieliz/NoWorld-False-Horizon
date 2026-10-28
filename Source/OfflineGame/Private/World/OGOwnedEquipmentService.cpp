@@ -383,7 +383,16 @@ bool FOGOwnedEquipmentService::ProjectCombatUnit(FOGCombatUnitState& Unit,
         if (!bManagedDefinition) return true;
         if (!Rule || !Item.Modifiers.IsEmpty())
         { E = TEXT("Stored equipment mechanics need an approved exact native rule; preserving the live snapshot."); return false; }
-        Out.StatContributions = Rule->StatBonuses;
+        TSharedPtr<FJsonObject> Condition; bool Broken=false; double ConditionBps=10000;
+        if (!EquipmentObject(Item.Item.DurabilityStateJson,Condition) ||
+            (Condition->HasField(TEXT("broken")) && !Condition->TryGetBoolField(TEXT("broken"),Broken)) ||
+            (Condition->HasField(TEXT("condition_bps")) && !Condition->TryGetNumberField(TEXT("condition_bps"),ConditionBps)) ||
+            !FMath::IsFinite(ConditionBps) || ConditionBps<0 || ConditionBps>10000)
+        { E=TEXT("Stored equipment condition is invalid; preserving the live projection."); return false; }
+        // An unusable bound item remains owned/equipped, but supplies no working stat contribution.
+        // Repair restores the exact authored bonuses on the normal projection refresh; it never heals HP.
+        Out.StatContributions.Reset();
+        if (!Broken && ConditionBps>0) Out.StatContributions=Rule->StatBonuses;
         return true;
     };
     if (!FOGFoundationCharacterRuntime(Store).ProjectEquipmentFunctions(

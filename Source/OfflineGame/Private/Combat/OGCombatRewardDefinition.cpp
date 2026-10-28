@@ -63,6 +63,7 @@ bool FOGCombatRewardService::ApplyCommittedVictory(const FOGTurnBattleState& Sta
     const FOGWorldEvent& Completion,FOGNativeBattleOutcome& Out,FString& Error)
 {
     Out=FOGNativeBattleOutcome(); Error.Reset();
+    if (!Store.IsWriteTransactionActive()) { Error=TEXT("Victory grants require the finishing action's active write transaction."); return false; }
     if (State.Status!=EOGTurnBattleStatus::Completed || !Ruler.IsValid() || Completion.PrimaryEntity!=Ruler ||
         !Completion.EventId.IsValid() || Completion.WorldTick<0)
     { Error=TEXT("Victory resolution requires an actual completed owned battle and durable finishing event."); return false; }
@@ -166,10 +167,10 @@ bool FOGCombatRewardService::ApplyCommittedVictory(const FOGTurnBattleState& Sta
         Grant->Kind=EOGObjectActionKind::Craft; Grant->bExplicitNoCost=true; Grant->Outputs=D->Objects; Grant->Resources=D->Resources;
         FOGObjectActionContext Context; Context.RulerId=Ruler; FOGObjectActionPreview Review;
         FOGObjectActionService Objects(Store);
-        if (!Objects.Preview(*Grant,Context,Completion.WorldTick,Review,Error)) return false;
+        if (!Objects.Preview(*Grant.Get(),Context,Completion.WorldTick,Review,Error)) return false;
         bool Already=false; TArray<FOGEntityId> Created;
         const auto InventoryEvent=RewardId(Claim.ToString()+TEXT("|inventory"));
-        if (!Objects.ApplyWithinTransaction(*Grant,Review,InventoryEvent,Completion.WorldTick,Already,Created,Error)) return false;
+        if (!Objects.ApplyWithinTransaction(*Grant.Get(),Review,InventoryEvent,Completion.WorldTick,Already,Created,Error)) return false;
         auto Payload=MakeShared<FJsonObject>();
         Payload->SetStringField(TEXT("enemy_id"),Unit->UnitEntityId.ToString());
         Payload->SetStringField(TEXT("enemy_life_id"),Life.ToString());

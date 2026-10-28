@@ -24,6 +24,8 @@ public:
     virtual void Close() = 0;
     virtual bool IsOpen() const = 0;
 
+    /** Backends explicitly expose transaction ownership for cross-system atomic commands. */
+    virtual bool IsWriteTransactionActive() const { return false; }
     virtual bool BeginTransaction(FString& OutError) = 0;
     virtual bool CommitTransaction(FString& OutError) = 0;
     virtual bool RollbackTransaction(FString& OutError) = 0;
