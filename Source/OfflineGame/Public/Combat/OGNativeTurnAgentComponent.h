@@ -8,6 +8,7 @@
 
 class UOGGameCoreSubsystem;
 class UOGCanonicalCombatActorBindingComponent;
+class UOGNativeCombatAbility;
 
 UENUM(BlueprintType)
 enum class EOGNativeTurnTarget : uint8
@@ -23,6 +24,8 @@ struct OFFLINEGAME_API FOGNativeTurnRule
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName RuleId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 Priority = 0;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FOGContentId SkillId;
+    /** Exact installed ordinary effect definition; special kit executors may already be installed. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UOGNativeCombatAbility> NativeAbility;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) EOGNativeTurnTarget Targets = EOGNativeTurnTarget::FirstEnemy;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) bool bIncludeSelf = false;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName RequiredPhase;
@@ -86,7 +89,9 @@ private:
     FOGEntityId BoundUnitId;
     FOGEntityId LastAutoBattleId;
     FOGEntityId LastAutoUnitId;
+    int64 LastAutoAbilityRevision=-1;
     int64 FailedSequence = -1;
+    int64 FailedAbilityRevision = -1;
     double ReadyAtSeconds = -1.0;
     int64 ObservedSequence = -1;
     bool bSubmitting = false;

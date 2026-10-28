@@ -984,12 +984,38 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         MoveTemp(NativeConditions),MoveTemp(IdentityContext),
         MoveTemp(RankResolver),OutError))
         return false;
+    Candidate->RequireNativeActionExecutors(true);
     if(!BindOwnedLuminousCombatAuthority(
         *Candidate,RulerId,MoveTemp(TrustedProviders),OutError))
         return false;
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
     ActiveCombatRulerId=RulerId;
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
+    return true;
+}
+
+bool UOGGameCoreSubsystem::ConfigureOwnedNativeAbilities(const FOGEntityId& UnitId,
+    const TArray<UOGNativeCombatAbility*>& Abilities,const TArray<FOGContentId>& RequiredSkills,FString& Error)
+{
+    Error.Reset();
+    if (!IsInGameThread() || !bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle ||
+        OwnedLuminousTurnBattle->GetState().Status!=EOGTurnBattleStatus::Running || RequiredSkills.IsEmpty())
+    { Error=TEXT("No live owned encounter is available for native ability admission."); return false; }
+    FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
+    const auto* Unit=Candidate.GetState().Units.FindByPredicate(
+        [&UnitId](const FOGCombatUnitState& U) { return U.UnitEntityId==UnitId; });
+    if (!Unit || !Unit->CanAct()) { Error=TEXT("Native ability source is not an active real battle participant."); return false; }
+    for (const auto* Ability:Abilities)
+    {
+        if (!Ability || !Ability->ValidateInstalled(Error)) return false;
+        const auto& D=Ability->Definition;
+        if (D.IdentityId!=Unit->IdentityId || D.VersionId!=Unit->SkillSet.CurrentForm || !RequiredSkills.Contains(D.SkillId))
+        { Error=TEXT("An authored ability asset belongs to a different source kit or policy."); return false; }
+        if (!Candidate.RegisterNativeAbility(D,Error)) return false;
+    }
+    for (const auto& Skill:RequiredSkills)
+        if (!Candidate.HasNativeActionExecutor(*Unit,Skill,Error)) return false;
+    *OwnedLuminousTurnBattle=MoveTemp(Candidate);
     return true;
 }
 

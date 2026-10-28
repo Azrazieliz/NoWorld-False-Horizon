@@ -57,6 +57,7 @@ bool FOGTurnBattle::Initialize(
     FString& OutError)
 {
     State = InitialState;
+    NativeAbilities.Reset(); NativeAbilityRevision=0;
     Log.Reset();
     TriggerRuntime.Reset();
     PendingTriggeredActions.Reset();
@@ -453,6 +454,9 @@ bool FOGTurnBattle::ValidateResolvedAction(const FOGResolvedCombatAction& Origin
         }
     }
 
+    if (bRequireNativeExecutors && !HasNativeActionExecutor(*Source,Action.SkillId,OutError)) return false;
+    if (!ValidateNativeAbility(Action,*Source,OutError)) return false;
+
     // Validate the approved 3A/6P action BEFORE writing the declared event
     // or advancing the action-value timeline. A rejected cast must not
     // consume a player turn or leave a false combat event in the log.
@@ -562,7 +566,8 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
     // active/ultimate actions instead of only logging their resolution JSON.
     // Non-Luminous actions remain on the existing standard effect pipeline.
     if (!ExecuteApprovedLuminousBaseAction(Action,*Source,OutError) ||
-        !ExecuteApprovedLuminousAlterAction(Action,*Source,OutError))
+        !ExecuteApprovedLuminousAlterAction(Action,*Source,OutError) ||
+        !ExecuteNativeAbility(Action,*Source,OutError))
         return false;
 
     // Alter v1 Eclipse Harrier P4: apply only after verified final HP damage

@@ -6,6 +6,7 @@
 #include "Combat/OGCombatRankHooks.h"
 #include "Combat/OGCombatTriggerRuntime.h"
 #include "Combat/OGCombatTypes.h"
+#include "Combat/OGNativeCombatAbility.h"
 #include "Rules/OGRulePriority.h"
 #include "OGTurnBattle.generated.h"
 
@@ -211,6 +212,13 @@ public:
     bool ReadLuminousCommandResources(const FOGEntityId& UnitId,
         int32& Resource, int32& Charge, int32& OwnerActions) const;
 
+    /** Production sessions require an actual executor; isolated timeline/replay adapters opt in explicitly. */
+    void RequireNativeActionExecutors(bool Required) { bRequireNativeExecutors=Required; }
+    bool RegisterNativeAbility(const FOGNativeAbilityDefinition& Definition,FString& Error);
+    bool HasNativeActionExecutor(const FOGCombatUnitState& Source,const FOGContentId& Skill,FString& Error) const;
+    FName ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    int64 GetNativeAbilityRevision() const { return NativeAbilityRevision; }
+
     bool ApplyResolvedAction(
         const FOGResolvedCombatAction& Action,
         FString& OutError);
@@ -270,6 +278,14 @@ public:
         FString& OutError);
 
 private:
+    bool bRequireNativeExecutors=false;
+    int64 NativeAbilityRevision=0;
+    TMap<FString,FOGNativeAbilityDefinition> NativeAbilities;
+    const FOGNativeAbilityDefinition* FindNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool ValidateNativeAbility(const FOGResolvedCombatAction& Action,const FOGCombatUnitState& Source,FString& Error) const;
+    bool ExecuteNativeAbility(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error);
+    bool ExpandNativeAbilityTargets(const FOGResolvedCombatAction& Original,FOGResolvedCombatAction& Expanded,
+        bool& Handled,bool& Area,FString& Error) const;
     // Atomic action transaction: the currently committed Battle must never
     // retain partial HP, resource, trigger or log changes from a rejected
     // authored multi-hit or revival action.

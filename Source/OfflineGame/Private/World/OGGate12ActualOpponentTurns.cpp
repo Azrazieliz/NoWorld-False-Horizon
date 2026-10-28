@@ -8,6 +8,7 @@
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnBattle.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
@@ -16,6 +17,18 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+
+namespace
+{
+UOGSharedMotionControllerComponent* OpponentMotion(AActor* Actor)
+{
+    if (!Actor) return nullptr;
+    if (const auto* Appearance=Actor->FindComponentByClass<UOGCharacterAppearanceComponent>())
+        if (auto* Motion=Appearance->GetMotionController()) return Motion;
+    return Actor->FindComponentByClass<UOGSharedMotionControllerComponent>();
+}
+}
+
 
 void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
 {
@@ -69,17 +82,24 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     if (ExistingSourceBody->FindComponentByClass<UOGNativeTurnAgentComponent>())
         return; // Its exact authored policy owns decisions; never race or bypass it with this fallback.
 
+    const int64 Sequence=Battle->GetLog().GetNextSequence(),Revision=Battle->GetNativeAbilityRevision();
+    if (MissingExecutorUnit==ActingId && MissingExecutorSequence==Sequence && MissingExecutorRevision==Revision) return;
     // All choices are already authored abilities on the actual participating
     // unit. The approved resolver owns targeting, AoE expansion, costs,
     // status effects, health, turn delay, and every world consequence.
     TArray<FOGContentId> Authored;
     Authored.Reserve(Acting.SkillSet.ActiveSkills.Num() + 1);
     for (const FOGContentId& Id : Acting.SkillSet.ActiveSkills)
-        if (Id.IsValid() && !Authored.Contains(Id)) Authored.Add(Id);
+        if (Id.IsValid() && !Authored.Contains(Id)) { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Id,Missing)) Authored.Add(Id); }
     if (Acting.SkillSet.UltimateSkill.IsValid() &&
         !Authored.Contains(Acting.SkillSet.UltimateSkill))
-        Authored.Add(Acting.SkillSet.UltimateSkill);
-    if (Authored.IsEmpty()) return; // Do not fabricate a basic attack.
+    { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Acting.SkillSet.UltimateSkill,Missing)) Authored.Add(Acting.SkillSet.UltimateSkill); }
+    if (Authored.IsEmpty())
+    {
+        MissingExecutorUnit=ActingId; MissingExecutorSequence=Sequence; MissingExecutorRevision=Revision;
+        UE_LOG(LogTemp,Warning,TEXT("Actual opponent %s waits for registered source ability content; no empty action was accepted."),*ActingId.ToString());
+        return;
+    }
 
     // Prefer living opponents for offensive actions. For authored support
     // skills try eligible allies as well; the canonical skill preflight
@@ -124,15 +144,13 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                 Proposal, Expanded, bArea, Error))
                 continue;
             TMap<FOGEntityId, FOGLargeNumber> HpBefore;
-            for (const FOGEntityId& TargetId : Expanded.TargetUnitIds)
-                if (const FOGCombatUnitState* U = State.Units.FindByPredicate(
-                    [&TargetId](const FOGCombatUnitState& X)
-                    { return X.UnitEntityId == TargetId; }))
-                    HpBefore.Add(TargetId, U->CurrentHp);
+            for (const auto& Unit:State.Units) HpBefore.Add(Unit.UnitEntityId,Unit.CurrentHp);
             Expanded.ActionId = FOGEntityId::NewId();
             if (!Core->ApplyApprovedLuminousResolvedAction(Expanded, Error))
                 continue; // Atomic failed preflight: no turn consumed.
 
+            const auto* Committed=Core->GetOwnedLuminousTurnBattle();
+            if (!Committed || Committed->GetState().BattleId!=ActualBattleId) return;
             AActor* SourceActor =
                 UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
                     GetWorld(), ActualBattleId, ActingId);
@@ -140,13 +158,14 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
             if (const FOGTurnBattle* AfterBattle =
                 Core->GetOwnedLuminousTurnBattle())
             {
-                for (const FOGEntityId& TargetId : Expanded.TargetUnitIds)
+                for (const auto& ResolvedUnit:AfterBattle->GetState().Units)
                 {
+                    const FOGEntityId TargetId=ResolvedUnit.UnitEntityId;
                     AActor* Body =
                         UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
                             GetWorld(), ActualBattleId, TargetId);
                     if (!IsValid(Body)) continue;
-                    if (!FirstActor) FirstActor = Body;
+                    if (!FirstActor && Expanded.TargetUnitIds.Contains(TargetId)) FirstActor = Body;
                     const FOGLargeNumber* Before = HpBefore.Find(TargetId);
                     const FOGCombatUnitState* After =
                         AfterBattle->GetState().Units.FindByPredicate(
@@ -162,7 +181,7 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                             Hud->RegisterCanonicalCombatImpact(
                                 Body, *Before, After->CurrentHp);
                     if (UOGSharedMotionControllerComponent* Motion =
-                        Body->FindComponentByClass<UOGSharedMotionControllerComponent>())
+                        OpponentMotion(Body))
                     {
                         const FName Reaction = !After->IsAlive()
                             ? FName(TEXT("Combat.Reaction.Death")) :
@@ -184,13 +203,16 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                             FRotator(0.f, Delta.Rotation().Yaw, 0.f));
                 }
                 if (UOGSharedMotionControllerComponent* Motion =
-                    SourceActor->FindComponentByClass<UOGSharedMotionControllerComponent>())
+                    OpponentMotion(SourceActor))
                 {
                     FString Semantic = FString(bUltimate ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.")) + Skill.ToString();
                     TSharedPtr<FJsonObject> Resolution; FString Branch;
                     if (bUltimate && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Expanded.ResolutionJson), Resolution) &&
                         Resolution && Resolution->TryGetStringField(TEXT("branch"), Branch) && !Branch.IsEmpty()) Semantic += TEXT(".") + Branch.ToLower();
-                    const FName ActionName(*Semantic);
+                    const auto* Unit=Committed->GetState().Units.FindByPredicate(
+                        [&ActingId](const FOGCombatUnitState& U) { return U.UnitEntityId==ActingId; });
+                    const FName AuthoredMotion=Unit?Committed->ResolveNativeAbilityMotion(*Unit,Skill):NAME_None;
+                    const FName ActionName=AuthoredMotion.IsNone()?FName(*Semantic):AuthoredMotion;
                     Motion->PlayAction(ActionName, TEXT("Combat"), false, 1);
                 }
             }

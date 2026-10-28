@@ -3,6 +3,7 @@
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Combat/OGNativeCombatAbility.h"
 #include "Dom/JsonObject.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -109,6 +110,21 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
     FName Phase;
     if (!ReadActualNpc(*Runtime->GetWorldStore(), *CandidatePolicy, *Unit,
         Session ? Session->BoundRulerId : FOGEntityId(), Phase, Error)) return false;
+    TArray<UOGNativeCombatAbility*> Abilities; TArray<FOGContentId> Required;
+    for (const auto& Rule:CandidatePolicy->Rules)
+    {
+        Required.AddUnique(Rule.SkillId);
+        if (!Rule.NativeAbility.IsNull())
+        {
+            auto* Ability=Rule.NativeAbility.LoadSynchronous();
+            if (!Ability) { Error=TEXT("Authored opponent ability asset is unavailable."); return false; }
+            if (Ability->Definition.SkillId!=Rule.SkillId)
+            { Error=TEXT("AI rule and actual ability asset have different skill identities."); return false; }
+            Abilities.AddUnique(Ability);
+        }
+    }
+    if (!Runtime->ConfigureOwnedNativeAbilities(UnitId,Abilities,Required,Error)) return false;
+
     if (Core.IsValid()) Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
     Core = Runtime; Body = CandidateBody; ActivePolicy = CandidatePolicy;
     BoundBattleId = BattleId; BoundUnitId = UnitId;
@@ -121,9 +137,9 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
 void UOGNativeTurnAgentComponent::RetryDecision()
 {
     bAutoBindingEnabled = true;
-    FailedSequence = ObservedSequence = -1;
+    FailedSequence = ObservedSequence = -1; FailedAbilityRevision=-1;
     ReadyAtSeconds = -1.0;
-    LastAutoBattleId = LastAutoUnitId = FOGEntityId();
+    LastAutoBattleId = LastAutoUnitId = FOGEntityId(); LastAutoAbilityRevision=-1;
 }
 
 void UOGNativeTurnAgentComponent::ReleaseBattleUnit()
@@ -160,11 +176,11 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
     const int32 Acting = Battle->SelectNextActingUnitIndex();
     if (!Battle->GetState().Units.IsValidIndex(Acting) || Battle->GetState().Units[Acting].UnitEntityId != BoundUnitId) return false;
     const int64 Sequence = Battle->GetLog().GetNextSequence();
-    if (FailedSequence == Sequence) { Error = Status; return false; }
+    if (FailedSequence == Sequence && FailedAbilityRevision==Battle->GetNativeAbilityRevision()) { Error = Status; return false; }
     TGuardValue<bool> Submitting(bSubmitting, true);
     FName Phase;
     if (!ReadCanonicalPhase(Battle->GetState().Units[Acting], Phase, Error))
-    { FailedSequence = Sequence; Status = Error; return false; }
+    { FailedSequence = Sequence; FailedAbilityRevision=Battle->GetNativeAbilityRevision(); Status = Error; return false; }
     TSet<FName> RejectedRules;
     FString LastFailure;
     for (int32 Attempt = 0; Attempt < ActivePolicy->Rules.Num(); ++Attempt)
@@ -208,12 +224,13 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
             TSharedPtr<FJsonObject> Resolution; FString Branch;
             if (FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson), Resolution) && Resolution &&
                 Resolution->TryGetStringField(TEXT("branch"), Branch) && !Branch.IsEmpty()) Semantic += TEXT(".") + Branch.ToLower();
-            Motion->PlayAction(FName(*Semantic), TEXT("Combat"), false, 1);
+            const FName Authored=Source?Battle->ResolveNativeAbilityMotion(*Source,Action.SkillId):NAME_None;
+            Motion->PlayAction(Authored.IsNone()?FName(*Semantic):Authored, TEXT("Combat"), false, 1);
         }
         Status.Reset(); FailedSequence = -1; ReadyAtSeconds = -1.0;
         return true;
     }
-    FailedSequence = Battle->GetLog().GetNextSequence();
+    FailedSequence = Battle->GetLog().GetNextSequence(); FailedAbilityRevision=Battle->GetNativeAbilityRevision();
     Error = LastFailure.IsEmpty() ? Error : LastFailure;
     Status = Error.IsEmpty() ? TEXT("No approved opponent rule can execute in the current battle state.") : Error;
     UE_LOG(LogTemp, Warning, TEXT("Native opponent waits for a changed state or repaired source: %s"), *Status);
@@ -234,8 +251,10 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     {
         UOGCanonicalCombatActorBindingComponent* Existing = GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
         if (!Existing || Existing->GetBoundBattleId() != Battle->GetState().BattleId || !Existing->GetBoundUnitId().IsValid()) return;
-        if (LastAutoBattleId == Existing->GetBoundBattleId() && LastAutoUnitId == Existing->GetBoundUnitId()) return;
+        if (LastAutoBattleId == Existing->GetBoundBattleId() && LastAutoUnitId == Existing->GetBoundUnitId() &&
+            LastAutoAbilityRevision==Battle->GetNativeAbilityRevision()) return;
         LastAutoBattleId = Existing->GetBoundBattleId(); LastAutoUnitId = Existing->GetBoundUnitId();
+        LastAutoAbilityRevision=Battle->GetNativeAbilityRevision();
         FString Error;
         if (!ConfigureBattleUnit(LastAutoBattleId, LastAutoUnitId, Error)) { Status = Error; return; }
     }
@@ -243,7 +262,7 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     if (!Battle->GetState().Units.IsValidIndex(Acting) || Battle->GetState().Units[Acting].UnitEntityId != BoundUnitId)
     { ReadyAtSeconds = -1.0; return; }
     const int64 Sequence = Battle->GetLog().GetNextSequence();
-    if (FailedSequence == Sequence) return;
+    if (FailedSequence == Sequence && FailedAbilityRevision==Battle->GetNativeAbilityRevision()) return;
     const double Now = GetWorld()->GetTimeSeconds();
     if (ObservedSequence != Sequence || ReadyAtSeconds < 0.0)
     { ObservedSequence = Sequence; ReadyAtSeconds = Now + ActivePolicy->DecisionDelaySeconds; }

@@ -130,6 +130,16 @@ void UOGNativeBattleWidget::Refresh()
         *Source->CurrentHp.ToDebugString(),*Source->Stats.MaxHp.ToDebugString(),*Set.ResourceLabel,Resource,Set.ResourceCap,Charge,Set.ChargeCap)));
     Feedback->SetText(FText::FromString(LastActionMessage.IsEmpty()?
         TEXT("Choose a primary target. Area effects include every eligible field participant."):LastActionMessage));
+    if (!Own && State.Units.IsValidIndex(Acting))
+    {
+        bool Executable=false; FString Missing;
+        const auto& Next=State.Units[Acting];
+        for (const auto& Skill:Next.SkillSet.ActiveSkills)
+            if (Battle->HasNativeActionExecutor(Next,Skill,Missing)) { Executable=true; break; }
+        if (!Executable && Next.SkillSet.UltimateSkill.IsValid())
+            Executable=Battle->HasNativeActionExecutor(Next,Next.SkillSet.UltimateSkill,Missing);
+        if (!Executable) Feedback->SetText(FText::FromString(TEXT("Waiting for this combatant's authored abilities.")));
+    }
     const float TargetOffset=Targets->GetScrollOffset(),ActionOffset=ActionScroll->GetScrollOffset();
     Targets->ClearChildren(); Commands->ClearChildren();
     // One actor pass per refresh; expose only existing native battle bodies.

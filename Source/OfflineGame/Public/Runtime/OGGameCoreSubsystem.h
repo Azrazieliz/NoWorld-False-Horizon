@@ -139,6 +139,9 @@ public:
         const FOGEntityId& RulerId,
         FOGLuminousCanonicalSources TrustedProviders,
         FString& OutError);
+    /** Admit only installed authored assets for one existing participant, atomically. No command JSON can register effects. */
+    bool ConfigureOwnedNativeAbilities(const FOGEntityId& UnitId,
+        const TArray<UOGNativeCombatAbility*>& Abilities,const TArray<FOGContentId>& RequiredSkills,FString& Error);
     bool ApplyOwnedLuminousTurnAction(const FOGResolvedCombatAction& Action,
         FString& OutError);
     bool ResolveOwnedLuminousRegisteredContest(

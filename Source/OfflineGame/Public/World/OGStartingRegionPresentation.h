@@ -967,6 +967,9 @@ private:
     UPROPERTY(Transient)
     FOGEntityId SelectedCanonicalBattleId;
     FOGEntityId AutonomousCombatBattleId;
+    FOGEntityId MissingExecutorUnit;
+    int64 MissingExecutorSequence=-1;
+    int64 MissingExecutorRevision=-1;
     double NextCanonicalOpponentActionAt = 0.0;
     FVector ClimbSurfaceNormal = FVector::ZeroVector;
     TWeakObjectPtr<AActor> CurrentCarrier;
