@@ -1,4 +1,5 @@
 #include "World/OGStartingRegionPresentation.h"
+#include "UI/OGNativeBattleWidget.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
@@ -8749,6 +8750,10 @@ void AOGWorldPresentationHud::DrawHUD()
         Character && Character->IsFoundationSettingsOpen();
     const bool bPauseOpen =
         Character && Character->IsFoundationPauseMenuOpen();
+    if (NativeBattleWidget && (!Character || !NativeBattleWidget->IsForCharacter(Character) ||
+        FoundationSurface!=TEXT("world") || bSettingsOpen || bPauseOpen || bInteractionMenuOpen ||
+        !Character->HasNativeOwnedLuminousEncounter()))
+        NativeBattleWidget->SetVisibility(ESlateVisibility::Collapsed);
     if (bInteractionMenuOpen)
         if (const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
             if (const auto* Battle = NativeCore->GetOwnedLuminousTurnBattle();
@@ -8819,9 +8824,9 @@ void AOGWorldPresentationHud::DrawHUD()
     }
 
     if (!bSettingsOpen && DrawFoundationDiagnosticSurface(Character, Scale, true)) return;
-    if (!bSettingsOpen && FoundationSurface == TEXT("world") &&
+    if (!bSettingsOpen && !bPauseOpen && FoundationSurface == TEXT("world") &&
         DrawOwnedLuminousCombatSurface(Character, Scale)) return;
-    if (!bSettingsOpen && FoundationSurface == TEXT("world") && DrawCanonicalTurnSurface(Character, Scale)) return;
+    if (!bSettingsOpen && !bPauseOpen && FoundationSurface == TEXT("world") && DrawCanonicalTurnSurface(Character, Scale)) return;
 
     if (!bSettingsOpen &&
         FoundationSurface == FName(TEXT("opening")))

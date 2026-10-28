@@ -7,6 +7,7 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Combat/OGTurnBattle.h"
+#include "UI/OGNativeBattleWidget.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "EngineUtils.h"
 #include "Engine/Canvas.h"
@@ -201,6 +202,31 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     }
     if (State.Status != EOGTurnBattleStatus::Running)
         return false;
+    if (PlayerOwner)
+    {
+        bool Created=false;
+        if (!NativeBattleWidget)
+        {
+            NativeBattleWidget=CreateWidget<UOGNativeBattleWidget>(PlayerOwner,UOGNativeBattleWidget::StaticClass());
+            if (NativeBattleWidget) { NativeBattleWidget->AddToViewport(180); Created=true; }
+        }
+        if (NativeBattleWidget)
+        {
+            const bool WasHidden=!NativeBattleWidget->IsVisible();
+            if (Created || WasHidden)
+            {
+                FInputModeGameAndUI Input;
+                Input.SetHideCursorDuringCapture(false);
+                Input.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+                PlayerOwner->SetInputMode(Input);
+            }
+            NativeBattleWidget->BindCharacter(Character);
+            if (WasHidden && !Created) NativeBattleWidget->RefreshBattle();
+            NativeBattleWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+            DrawNativeCombatImpacts(Scale);
+            return true;
+        }
+    }
     const int32 ActingIndex = Battle->SelectNextActingUnitIndex();
     if (!State.Units.IsValidIndex(ActingIndex))
         return false;
@@ -404,4 +430,10 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         DrawGameText(FoundationStatusMessage,Edge+5.f*S,
             Bottom-35.f*S,18.f*S,Accent,W-2.f*Edge);
     return true;
+}
+
+void AOGWorldPresentationHud::EndPlay(const EEndPlayReason::Type Reason)
+{
+    if (NativeBattleWidget) { NativeBattleWidget->RemoveFromParent(); NativeBattleWidget=nullptr; }
+    Super::EndPlay(Reason);
 }

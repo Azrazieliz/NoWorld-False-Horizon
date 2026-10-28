@@ -5,6 +5,7 @@
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGNativeBattleCommands.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/GameInstance.h"
@@ -72,12 +73,18 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     if (!Unit) return;
     TSharedPtr<FJsonObject> Resolution;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson), Resolution) || !Resolution) return;
-    FString Branch;
+    FString Branch,Mode;
     if (Resolution->HasField(TEXT("branch")) && !Resolution->TryGetStringField(TEXT("branch"), Branch)) return;
+    if (Resolution->HasField(TEXT("mode")) && !Resolution->TryGetStringField(TEXT("mode"), Mode)) return;
     const bool bUltimate = Action.SkillId == Unit->SkillSet.UltimateSkill;
-    const FName* Authored = Branch.IsEmpty() ? CombatActionSemantics.Find(Action.SkillId) : nullptr;
-    FString Key = FString(bUltimate ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.")) + Action.SkillId.ToString();
+    FOGNativeBattleCommandSet Commands; FString CommandError;
+    bool Fantasm=false;
+    if (FOGNativeBattleCommands::BuildFor(*Unit,Commands,CommandError))
+        for (const auto& Command:Commands.Commands) if (Command.bFantasm && Command.SkillId==Action.SkillId) Fantasm=true;
+    const FName* Authored = Branch.IsEmpty() && Mode.IsEmpty() ? CombatActionSemantics.Find(Action.SkillId) : nullptr;
+    FString Key = FString(Fantasm ? TEXT("Combat.Fantasm.") : bUltimate ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.")) + Action.SkillId.ToString();
     if (bUltimate && !Branch.IsEmpty()) Key += TEXT(".") + Branch.ToLower();
+    if (!Mode.IsEmpty()) Key += TEXT(".") + Mode.ToLower();
     const FName Semantic = Authored ? *Authored : FName(*Key);
     FString Error;
     if (!Appearance->PlaySemanticAction(Semantic, TEXT("Combat"), false, 1, NAME_None, Error))

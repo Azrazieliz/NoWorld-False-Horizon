@@ -205,6 +205,12 @@ public:
         FOGResolvedCombatAction& Expanded, bool& bOutArea,
         FString& OutError) const;
 
+    /** Read-only command readiness: same expansion, actor/timeline and approved preflight used on submission. */
+    bool ValidateResolvedAction(const FOGResolvedCombatAction& Action,
+        FOGResolvedCombatAction& Expanded, FString& OutError) const;
+    bool ReadLuminousCommandResources(const FOGEntityId& UnitId,
+        int32& Resource, int32& Charge, int32& OwnerActions) const;
+
     bool ApplyResolvedAction(
         const FOGResolvedCombatAction& Action,
         FString& OutError);

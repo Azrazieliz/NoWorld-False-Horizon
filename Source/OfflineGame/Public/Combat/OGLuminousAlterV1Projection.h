@@ -18,6 +18,7 @@ struct OFFLINEGAME_API FOGLuminousAlterV1Projection
     int32 InitialRedTithe=0;
     int32 RedTitheMaximum=0;
     int32 UltimateChargeCapPercent=0;
+    FString AuthoritativeSourceJson; // The same verified bytes used for native labels.
 
     /** Fail closed on any changed source bytes or incomplete 3A+6P schema. */
     static bool LoadApprovedV1(

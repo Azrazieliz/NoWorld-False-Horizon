@@ -40,6 +40,7 @@ class APlayerController;
 enum class EOGActionCancelDestination : uint8;
 enum class EOGTraversalMode : uint8;
 struct FOGEntityId;
+struct FOGNativeBattleCommandSet;
 
 /** Pure traversal-safety policy shared by runtime and regression tests. */
 struct OFFLINEGAME_API FOGWorldSafetyPolicy
@@ -663,6 +664,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
     bool SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,
         FString& OutError);
+    bool ReadOwnedLuminousBattleCommands(FOGNativeBattleCommandSet& Out,FString& Error) const;
+    UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
+    bool SubmitApprovedLuminousWorldCommand(FName CommandId,FString& Error);
     bool HasNativeOwnedLuminousEncounter() const;
     // Advance non-player participants on the REAL canonical encounter timeline,
     // using their existing approved skills and world actors. Never spawn foes.
@@ -1001,6 +1005,7 @@ class OFFLINEGAME_API AOGWorldPresentationHud : public AHUD
 
 public:
     virtual void DrawHUD() override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
     /** Opt-in native UMG Ruler presentation. Canvas remains the safe fallback. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
@@ -1065,6 +1070,7 @@ private:
     FOGEntityId PreservedRulerOwnerId;
     TMap<FOGEntityId, TWeakObjectPtr<AOGWorldPrototypeCharacter>> EmbodiedOwnedWorldPawns;
     UPROPERTY(Transient) TObjectPtr<class UOGNativeInteractionWidget> NativeInteractionWidget;
+    UPROPERTY(Transient) TObjectPtr<class UOGNativeBattleWidget> NativeBattleWidget;
     void CloseNativeInteractionSurface();
     /** Native editable opening: preserves existing Canvas events/saves. */
     void SynchronizeGate12NativeOpeningUMG(bool bShouldShow);

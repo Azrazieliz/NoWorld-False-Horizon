@@ -407,37 +407,12 @@ int32 FOGTurnBattle::SelectNextActingUnitIndex() const
     return BestIndex;
 }
 
-bool FOGTurnBattle::ApplyResolvedAction(
-    const FOGResolvedCombatAction& Action,
-    FString& OutError)
+bool FOGTurnBattle::ValidateResolvedAction(const FOGResolvedCombatAction& Original,
+    FOGResolvedCombatAction& Expanded,FString& OutError) const
 {
-    // Existing FOGTurnBattle copy semantics are used by the deterministic
-    // diagnostic encounter and replay path. Execute on a detached snapshot,
-    // then move only successful results into the real combat state.
-    // Critical for multi-strike costs, Dawn barriers, OnDefeat reactions,
-    // field contests, event queues and action-value timeline consistency.
-    FOGResolvedCombatAction CompleteAction;
-    bool bArea=false;
-    if(!ExpandApprovedFieldTargets(Action,CompleteAction,bArea,OutError))
-        return false;
-    FOGTurnBattle Candidate=*this;
-    FString CandidateError;
-    if(!Candidate.ApplyResolvedActionMutating(CompleteAction,CandidateError))
-    {
-        OutError=CandidateError.IsEmpty()
-            ?TEXT("Resolved action rejected; no battle state was committed.")
-            :MoveTemp(CandidateError);
-        return false;
-    }
-    *this=MoveTemp(Candidate);
-    OutError.Reset();
-    return true;
-}
-
-bool FOGTurnBattle::ApplyResolvedActionMutating(
-    const FOGResolvedCombatAction& Action,
-    FString& OutError)
-{
+    bool Area=false;
+    if (!ExpandApprovedFieldTargets(Original,Expanded,Area,OutError)) return false;
+    const FOGResolvedCombatAction& Action=Expanded;
     OutError.Reset();
 
     if (State.Status != EOGTurnBattleStatus::Running)
@@ -446,7 +421,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
         return false;
     }
 
-    FOGCombatUnitState* Source = FindMutableUnit(Action.SourceUnitId);
+    const FOGCombatUnitState* Source = FindUnit(Action.SourceUnitId);
     if (!Source || !Source->CanAct())
     {
         OutError = TEXT("Resolved action source is missing, defeated, or not active.");
@@ -483,6 +458,68 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
     // consume a player turn or leave a false combat event in the log.
     if(!PrevalidateLuminousActionWithoutSideEffects(Action,*Source,OutError))
         return false;
+
+
+    return true;
+}
+
+bool FOGTurnBattle::ReadLuminousCommandResources(const FOGEntityId& UnitId,
+    int32& Resource,int32& Charge,int32& OwnerActions) const
+{
+    Resource=Charge=OwnerActions=0;
+    const auto* Unit=FindUnit(UnitId);
+    if (!Unit || Unit->IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity"))) return false;
+    if (Unit->SkillSet.ActiveSkills.Contains(FOGContentId(TEXT("combat:luminous_valentine.base.skill.scarlet_cadence"))))
+    {
+        const FLuminousBaseBattleRuntime Default;
+        const auto* Stored=LuminousBaseStates.Find(UnitId);
+        const auto& Runtime=Stored?*Stored:Default;
+        Resource=Runtime.ScarletReserve; Charge=Runtime.UltimateChargePercent; OwnerActions=Runtime.OwnerActions; return true;
+    }
+    if (Unit->SkillSet.ActiveSkills.Contains(FOGContentId(TEXT("combat:luminous_valentine.alter.active_1"))))
+    {
+        const FLuminousAlterBattleRuntime Default;
+        const auto* Stored=LuminousAlterStates.Find(UnitId);
+        const auto& Runtime=Stored?*Stored:Default;
+        Resource=Runtime.RedTithe; Charge=Runtime.UltimateChargePercent; OwnerActions=Runtime.OwnerActions; return true;
+    }
+    return false;
+}
+
+bool FOGTurnBattle::ApplyResolvedAction(
+    const FOGResolvedCombatAction& Action,
+    FString& OutError)
+{
+    // Existing FOGTurnBattle copy semantics are used by the deterministic
+    // diagnostic encounter and replay path. Execute on a detached snapshot,
+    // then move only successful results into the real combat state.
+    // Critical for multi-strike costs, Dawn barriers, OnDefeat reactions,
+    // field contests, event queues and action-value timeline consistency.
+    FOGResolvedCombatAction CompleteAction;
+    if(!ValidateResolvedAction(Action,CompleteAction,OutError))
+        return false;
+    FOGTurnBattle Candidate=*this;
+    FString CandidateError;
+    if(!Candidate.ApplyResolvedActionMutating(CompleteAction,CandidateError))
+    {
+        OutError=CandidateError.IsEmpty()
+            ?TEXT("Resolved action rejected; no battle state was committed.")
+            :MoveTemp(CandidateError);
+        return false;
+    }
+    *this=MoveTemp(Candidate);
+    OutError.Reset();
+    return true;
+}
+
+bool FOGTurnBattle::ApplyResolvedActionMutating(
+    const FOGResolvedCombatAction& Action,
+    FString& OutError)
+{
+    OutError.Reset();
+    FOGCombatUnitState* Source=FindMutableUnit(Action.SourceUnitId);
+    if (!Source) { OutError=TEXT("Validated combat source is unavailable."); return false; }
+    const bool bInterrupt=Action.InterruptPriority>0;
 
     FOGCombatLogEvent Declared;
     Declared.Type = EOGCombatLogEventType::ActionDeclared;
