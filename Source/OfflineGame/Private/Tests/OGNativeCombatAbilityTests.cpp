@@ -24,6 +24,7 @@ FOGTurnTeamState NativeTestTeam(int32 Index,const TArray<FOGEntityId>& Ids)
 FOGNativeAbilityDefinition NativeStrike(const FOGCombatUnitState& Source,EOGNativeAbilityTargets Targets=EOGNativeAbilityTargets::SingleEnemy)
 {
     FOGNativeAbilityDefinition D; D.IdentityId=Source.IdentityId; D.VersionId=Source.SkillSet.CurrentForm;
+    D.bNoResourceCost=true;
     D.SkillId=Source.SkillSet.ActiveSkills[0]; D.OriginalSourceReference=TEXT("test-only exact authored fixture"); D.Targets=Targets;
     FOGNativeAbilityPacket P; P.DefenseReference=EOGNativeDefenseReference::Attack; P.Repeats=2;
     FOGNativeAbilityScale S; S.Stat=EOGNativeScaleStat::Attack; S.MultiplierBps=10000; P.Scaling.Add(S); D.Packets.Add(P);
@@ -120,6 +121,8 @@ bool FOGNativeAbilityHealingTest::RunTest(const FString& Parameters)
     if (!TestTrue(TEXT("Self target expansion ignores stale opponent focus"),Battle.ApplyResolvedAction(Action,Error))) return false;
     TestTrue(TEXT("Healing changes genuine caster HP"),
         FOGLargeNumber::Compare(Battle.GetState().Units[0].CurrentHp,FOGLargeNumber::FromInt64(150))==0);
+    auto Paid=D; Paid.bNoResourceCost=false;
+    TestFalse(TEXT("Missing resource executor cannot silently make a skill free"),Paid.Validate(Error));
     auto Invalid=NativeStrike(Source); Invalid.Packets[0].DefenseReference=EOGNativeDefenseReference::Unspecified;
     TestFalse(TEXT("Physical damage never gets an invented default DEF reference"),Invalid.Validate(Error));
     Invalid=D; Invalid.IdentityId=FOGContentId(TEXT("character:luminous_valentine.identity"));
@@ -128,4 +131,30 @@ bool FOGNativeAbilityHealingTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Transient command objects cannot enter production admission"),Transient->ValidateInstalled(Error));
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeAbilityCooldownTest,
+    "OfflineGame.Combat.NativeAbility.PerSourceCooldown",
+    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGNativeAbilityCooldownTest::RunTest(const FString& Parameters)
+{
+    auto Source=NativeTestUnit(0,TEXT("test:native.actor"));
+    Source.SkillSet.ActiveSkills={FOGContentId(TEXT("test:native.primary")),FOGContentId(TEXT("test:native.other"))};
+    const auto Enemy=NativeTestUnit(1,TEXT("test:native.enemy"));
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(NativeInitial(Source,{Enemy}),Error)) return false;
+    Battle.RequireNativeActionExecutors(true);
+    auto First=NativeStrike(Source); First.CooldownOwnerActions=1;
+    auto Other=NativeStrike(Source); Other.SkillId=Source.SkillSet.ActiveSkills[1];
+    if (!Battle.RegisterNativeAbility(First,Error) || !Battle.RegisterNativeAbility(Other,Error)) return false;
+    auto Action=NativeAction(Source,Enemy.UnitEntityId);
+    if (!TestTrue(TEXT("First ability executes"),Battle.ApplyResolvedAction(Action,Error))) return false;
+    const int64 Sequence=Battle.GetLog().GetNextSequence();
+    TestFalse(TEXT("One intervening own action is required"),Battle.ApplyResolvedAction(Action,Error));
+    TestEqual(TEXT("Cooldown rejection consumes no turn"),Battle.GetLog().GetNextSequence(),Sequence);
+    Action.SkillId=Other.SkillId;
+    if (!TestTrue(TEXT("A distinct owned ability advances this source's action count"),Battle.ApplyResolvedAction(Action,Error))) return false;
+    Action.SkillId=First.SkillId;
+    TestTrue(TEXT("Primary is ready after the exact intervening own action"),Battle.ApplyResolvedAction(Action,Error));
+    return true;
+}
+
 #endif

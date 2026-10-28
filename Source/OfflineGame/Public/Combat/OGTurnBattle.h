@@ -281,6 +281,8 @@ private:
     bool bRequireNativeExecutors=false;
     int64 NativeAbilityRevision=0;
     TMap<FString,FOGNativeAbilityDefinition> NativeAbilities;
+    TMap<FOGEntityId,int64> NativeOwnerActions;
+    TMap<FString,int64> NativeAbilityReadyActions;
     const FOGNativeAbilityDefinition* FindNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
     bool ValidateNativeAbility(const FOGResolvedCombatAction& Action,const FOGCombatUnitState& Source,FString& Error) const;
     bool ExecuteNativeAbility(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error);

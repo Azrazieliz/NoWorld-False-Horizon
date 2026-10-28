@@ -57,7 +57,7 @@ bool FOGTurnBattle::Initialize(
     FString& OutError)
 {
     State = InitialState;
-    NativeAbilities.Reset(); NativeAbilityRevision=0;
+    NativeAbilities.Reset(); NativeAbilityRevision=0; NativeOwnerActions.Reset(); NativeAbilityReadyActions.Reset();
     Log.Reset();
     TriggerRuntime.Reset();
     PendingTriggeredActions.Reset();
@@ -569,6 +569,8 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
         !ExecuteApprovedLuminousAlterAction(Action,*Source,OutError) ||
         !ExecuteNativeAbility(Action,*Source,OutError))
         return false;
+
+    if (!bInterrupt) ++NativeOwnerActions.FindOrAdd(Source->UnitEntityId);
 
     // Alter v1 Eclipse Harrier P4: apply only after verified final HP damage
     // by Alter to an actively source-bleeding enemy, once per owner action.

@@ -94,6 +94,9 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
 {
     const auto* Definition=FindNativeAbility(Source,Action.SkillId);
     if (!Definition) return true;
+    const FString CooldownKey=Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString();
+    if (NativeOwnerActions.FindRef(Source.UnitEntityId)+1<NativeAbilityReadyActions.FindRef(CooldownKey))
+    { Error=TEXT("The authored own-action cooldown is not ready."); return false; }
     TSharedPtr<FJsonObject> Context;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson),Context) ||
         !Context || !Context->Values.IsEmpty())
@@ -156,5 +159,7 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
         const auto Damage=FOGCombatMath::ResolveDamage(Request,Attacker,Target->Stats,Rng);
         if (!Damage.TotalDamage.IsZero() && !ApplyDamage(Source.UnitEntityId,Id,Damage.TotalDamage,Action.SkillId,Error)) return false;
     }
+    NativeAbilityReadyActions.Add(Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString(),
+        NativeOwnerActions.FindRef(Source.UnitEntityId)+Definition->CooldownOwnerActions+2);
     return true;
 }

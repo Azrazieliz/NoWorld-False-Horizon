@@ -48,6 +48,10 @@ struct OFFLINEGAME_API FOGNativeAbilityDefinition
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FString OriginalSourceReference;
     /** Existing global semantic motion key; independent of actor/wardrobe clip assets. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FName MotionSemantic;
+    /** Must be declared by the complete source definition; paid abilities need their resource executor. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bNoResourceCost=false;
+    /** Number of intervening own actions; no arbitrary timer or global team cooldown. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 CooldownOwnerActions=0;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeAbilityTargets Targets=EOGNativeAbilityTargets::SingleEnemy;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bIncludeSelf=false;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGNativeAbilityPacket> Packets;

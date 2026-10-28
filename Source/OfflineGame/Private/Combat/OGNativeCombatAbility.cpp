@@ -9,7 +9,8 @@ bool FOGNativeAbilityPacket::operator==(const FOGNativeAbilityPacket& V) const
 bool FOGNativeAbilityDefinition::operator==(const FOGNativeAbilityDefinition& V) const
 {
     return IdentityId==V.IdentityId && VersionId==V.VersionId && SkillId==V.SkillId &&
-        OriginalSourceReference==V.OriginalSourceReference && MotionSemantic==V.MotionSemantic && Targets==V.Targets &&
+        OriginalSourceReference==V.OriginalSourceReference && MotionSemantic==V.MotionSemantic &&
+        bNoResourceCost==V.bNoResourceCost && CooldownOwnerActions==V.CooldownOwnerActions && Targets==V.Targets &&
         bIncludeSelf==V.bIncludeSelf && Packets==V.Packets;
 }
 bool FOGNativeAbilityDefinition::Validate(FString& Error) const
@@ -23,6 +24,8 @@ bool FOGNativeAbilityDefinition::Validate(FString& Error) const
     { Error=TEXT("Native ability needs exact source identity, Version, skill, provenance and packets."); return false; }
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity")))
     { Error=TEXT("Luminous requires its complete specialized kit executor; ordinary packets cannot replace it."); return false; }
+    if (!bNoResourceCost || CooldownOwnerActions<0)
+    { Error=TEXT("Ordinary packets require an explicit no-resource-cost source contract and valid own-action cooldown; paid abilities need their exact executor."); return false; }
     for (const auto& Packet:Packets)
     {
         if (static_cast<uint8>(Packet.Effect)>static_cast<uint8>(EOGNativeAbilityEffect::Healing) ||
