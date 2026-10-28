@@ -295,6 +295,7 @@ bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
 {
     bReleasingCanonicalRuntime = true;
     // Clear causal entry context before consumers observe a world release.
+    LastNativeBattleReceipt=LastNativeOpeningReceipt=FOGEntityId();
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     OnCanonicalRuntimeReleasing.Broadcast();
     // Combat callbacks borrow live canonical Registry/WorldStore authority.
@@ -1028,7 +1029,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         {
             if (Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) continue;
             TArray<FOGContentId> Skills=Unit.SkillSet.ActiveSkills;
-            if (Unit.SkillSet.UltimateSkill.IsValid()) Skills.Add(Unit.SkillSet.UltimateSkill);
+            Skills.Append(Unit.SkillSet.GetUltimateSkills());
             for (const auto& Skill:Skills)
                 if (auto* Ability=Cast<UOGNativeCombatAbility>(Library->Resolve(TEXT("ability"),Skill)))
                     SharedAbilities.AddUnique(Ability);
@@ -1066,6 +1067,8 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     const auto OpeningReactions=OwnedLuminousTurnBattle->GetLastNativeReactions();
     const auto OpeningState=OwnedLuminousTurnBattle->GetState();
+    LastNativeOpeningReceipt=LastNativeBattleReceipt=OpeningEvent.EventId;
+    OnNativeBattleStateCommitted.Broadcast(OpeningState,OpeningEvent.EventId);
     for (const auto& Reaction:OpeningReactions)
         if (Reaction.bExecuted) PublishNativeAction(Reaction.Action,OpeningEvent,OpeningState);
     return true;
@@ -1129,6 +1132,8 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
     // Copy notifications before invoking external presentation listeners.
     const auto Reactions=OwnedLuminousTurnBattle->GetLastNativeReactions();
     const auto AcceptedState=OwnedLuminousTurnBattle->GetState();
+    LastNativeBattleReceipt=ActionEvent.EventId;
+    OnNativeBattleStateCommitted.Broadcast(AcceptedState,ActionEvent.EventId);
     PublishNativeAction(Action,ActionEvent,AcceptedState);
     for (const auto& Reaction:Reactions) if (Reaction.bExecuted)
         PublishNativeAction(Reaction.Action,ActionEvent,AcceptedState);

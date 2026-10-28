@@ -82,7 +82,7 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     FString Branch,Mode;
     if (Resolution->HasField(TEXT("branch")) && !Resolution->TryGetStringField(TEXT("branch"), Branch)) return;
     if (Resolution->HasField(TEXT("mode")) && !Resolution->TryGetStringField(TEXT("mode"), Mode)) return;
-    const bool bUltimate = Action.SkillId == Unit->SkillSet.UltimateSkill;
+    const bool bUltimate = Unit->SkillSet.IsUltimate(Action.SkillId);
     FOGNativeBattleCommandSet Commands; FString CommandError;
     bool Fantasm=false;
     if (FOGNativeBattleCommands::BuildFor(*Unit,Commands,CommandError))

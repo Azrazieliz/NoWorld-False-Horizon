@@ -233,6 +233,8 @@ bool FOGFoundationCharacterRuntime::ProjectIntegratedKit(const FOGFoundationChar
         if (!Skill.IsValid()) { Error = TEXT("Integrated active skill is invalid."); return false; }
     for (const auto& Skill : Kit.PassiveSkills)
         if (!Skill.IsValid()) { Error = TEXT("Integrated passive skill is invalid."); return false; }
+    for (const auto& Ultimate:Kit.GetUltimateSkills())
+        if (!Ultimate.IsValid()) { Error=TEXT("Integrated Ultimate is invalid."); return false; }
     if ((!Kit.UltimateSkill.IsEmpty() && !Kit.UltimateSkill.IsValid()) ||
         (!Kit.CurrentForm.IsEmpty() && !Kit.CurrentForm.IsValid()))
     { Error = TEXT("Integrated kit form/ultimate identity is invalid."); return false; }

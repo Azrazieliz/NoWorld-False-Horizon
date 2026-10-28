@@ -116,7 +116,7 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
         UnitId == Session->BoundRulerId || UnitId == Session->SelectedManifestationId)
     { Error = TEXT("Opponent policy cannot borrow a different source unit, kit or the local player."); return false; }
     for (const FOGNativeTurnRule& Rule : CandidatePolicy->Rules)
-        if (!Unit->SkillSet.ActiveSkills.Contains(Rule.SkillId) && Unit->SkillSet.UltimateSkill != Rule.SkillId)
+        if (!Unit->SkillSet.ActiveSkills.Contains(Rule.SkillId) && !Unit->SkillSet.IsUltimate(Rule.SkillId))
         { Error = TEXT("An AI rule refers to an ability absent from the source unit's exact kit."); return false; }
     FName Phase;
     if (!ReadActualNpc(*Runtime->GetWorldStore(), *CandidatePolicy, *Unit,

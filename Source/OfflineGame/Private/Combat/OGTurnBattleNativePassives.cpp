@@ -6,7 +6,7 @@ namespace
 FString PassiveKey(const FOGEntityId& Owner,const FOGContentId& Id)
 { return Owner.ToString()+TEXT("|")+Id.ToString(); }
 bool OrdinaryOwns(const FOGCombatUnitState& Unit,const FOGContentId& Skill)
-{ return !Unit.SkillSet.HasDuplicateSkills() && (Unit.SkillSet.ActiveSkills.Contains(Skill) || Unit.SkillSet.UltimateSkill==Skill); }
+{ return !Unit.SkillSet.HasDuplicateSkills() && (Unit.SkillSet.ActiveSkills.Contains(Skill) || Unit.SkillSet.IsUltimate(Skill)); }
 }
 bool FOGTurnBattle::InitializeNativePassives(const TArray<FOGNativePassiveBinding>& Passives,
     TArray<FOGCombatTriggerBinding>& Bindings,FString& Error)

@@ -108,6 +108,11 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::UnbindVisual);
     BoundBattleId=State.BattleId;
     BoundUnitId=UnitId;
+    // Encounter opening is committed before a body can bind to its live battle ID.
+    // Catch up those factual source actions only while the opening is still current.
+    if (Core->IsNativeOpeningPresentationCurrent())
+        for (const auto& Reaction:Battle->GetLastNativeReactions())
+            if (Reaction.bExecuted && Reaction.Action.SourceUnitId==UnitId) HandleNativeAction(Reaction.Action);
     return true;
 }
 

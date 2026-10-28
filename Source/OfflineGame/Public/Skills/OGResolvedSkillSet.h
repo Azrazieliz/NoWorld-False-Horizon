@@ -24,8 +24,16 @@ struct OFFLINEGAME_API FOGResolvedSkillSet
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGContentId UltimateSkill;
 
+    /** Ordered authored Ultimates. The legacy field may alias only the first entry. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly)
+    TArray<FOGContentId> UltimateSkills;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGContentId CurrentForm;
 
     bool HasDuplicateSkills() const;
+    TArray<FOGContentId> GetUltimateSkills() const;
+    FOGContentId GetPrimaryUltimateSkill() const;
+    bool IsUltimate(const FOGContentId& Skill) const;
+    bool HasSameUltimates(const FOGResolvedSkillSet& Other) const;
 };

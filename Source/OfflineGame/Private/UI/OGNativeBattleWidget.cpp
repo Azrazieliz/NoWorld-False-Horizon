@@ -142,8 +142,9 @@ void UOGNativeBattleWidget::Refresh()
         const auto& Next=State.Units[Acting];
         for (const auto& Skill:Next.SkillSet.ActiveSkills)
             if (Battle->HasNativeActionExecutor(Next,Skill,Missing)) { Executable=true; break; }
-        if (!Executable && Next.SkillSet.UltimateSkill.IsValid())
-            Executable=Battle->HasNativeActionExecutor(Next,Next.SkillSet.UltimateSkill,Missing);
+        if (!Executable)
+            for (const auto& Ultimate:Next.SkillSet.GetUltimateSkills())
+                if (Battle->HasNativeActionExecutor(Next,Ultimate,Missing)) { Executable=true; break; }
         if (!Executable) Feedback->SetText(FText::FromString(TEXT("Waiting for this combatant's authored abilities.")));
     }
     const float TargetOffset=Targets->GetScrollOffset(),ActionOffset=ActionScroll->GetScrollOffset();

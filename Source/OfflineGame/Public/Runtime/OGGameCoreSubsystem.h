@@ -21,6 +21,8 @@ DECLARE_MULTICAST_DELEGATE(FOGCanonicalRuntimeReleasing);
 DECLARE_MULTICAST_DELEGATE_TwoParams(
     FOGLuminousCombatActionResolvedEvent,const FOGEntityId&,const FOGContentId&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOGNativeCombatActionResolvedEvent, const FOGResolvedCombatAction&);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOGNativeBattleStateCommittedEvent,
+    const FOGTurnBattleState&,const FOGEntityId&);
 
 /** Read-only provenance of the last successfully journaled native combat action.
  * EventId is the actual canonical ledger ID, not the action or battle ID.
@@ -58,6 +60,8 @@ public:
     FOGLuminousCombatActionResolvedEvent OnLuminousCombatActionResolved;
     // Full accepted branch/target context for generic native character presentation.
     FOGNativeCombatActionResolvedEvent OnNativeCombatActionResolved;
+    /** Actual battle state, once per successful durable root transaction/opening. */
+    FOGNativeBattleStateCommittedEvent OnNativeBattleStateCommitted;
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
@@ -154,6 +158,8 @@ public:
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
+    FOGEntityId GetLastNativeBattleReceipt() const { return LastNativeBattleReceipt; }
+    bool IsNativeOpeningPresentationCurrent() const { return LastNativeOpeningReceipt.IsValid() && LastNativeOpeningReceipt==LastNativeBattleReceipt; }
     FOGEntityId GetOwnedBattleRulerId() const { return OwnedLuminousTurnBattle ? ActiveCombatRulerId : FOGEntityId(); }
 
     /** Available before the existing resolved-action notifications fire. Empty
@@ -222,6 +228,8 @@ private:
     TUniquePtr<FOGTurnBattle> OwnedLuminousTurnBattle;
     FOGEntityId ActiveCombatRulerId;
     FOGNativeCombatEventProvenance LastNativeCombatEvent;
+    FOGEntityId LastNativeBattleReceipt;
+    FOGEntityId LastNativeOpeningReceipt;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;

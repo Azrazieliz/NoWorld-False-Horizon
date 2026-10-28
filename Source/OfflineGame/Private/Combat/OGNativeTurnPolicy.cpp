@@ -97,7 +97,7 @@ bool UOGNativeTurnPolicy::BuildDecision(const FOGTurnBattleState& State, const F
     {
         if (ExcludedRules && ExcludedRules->Contains(Rule.RuleId)) continue;
         if ((!Rule.RequiredPhase.IsNone() && Rule.RequiredPhase != Phase) ||
-            (!Source->SkillSet.ActiveSkills.Contains(Rule.SkillId) && Source->SkillSet.UltimateSkill != Rule.SkillId)) continue;
+            (!Source->SkillSet.ActiveSkills.Contains(Rule.SkillId) && !Source->SkillSet.IsUltimate(Rule.SkillId))) continue;
         if (Rule.bUseOwnHealthWindow &&
             (FOGLargeNumber::Compare(Source->CurrentHp, FOGLargeNumber::ScaleByBasisPoints(Source->Stats.MaxHp, Rule.MinimumOwnHealthBps)) < 0 ||
              FOGLargeNumber::Compare(Source->CurrentHp, FOGLargeNumber::ScaleByBasisPoints(Source->Stats.MaxHp, Rule.MaximumOwnHealthBps)) > 0)) continue;

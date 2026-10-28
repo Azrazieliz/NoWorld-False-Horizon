@@ -5,6 +5,9 @@
 #include "Combat/OGCombatTypes.h"
 #include "OGWorldActionRuntime.generated.h"
 
+class UOGGameCoreSubsystem;
+struct FOGTurnBattleState;
+
 UENUM(BlueprintType)
 enum class EOGActionCancelDestination : uint8
 {
@@ -121,6 +124,8 @@ class OFFLINEGAME_API UOGWorldPartyRuntimeComponent : public UActorComponent
 public:
     UOGWorldPartyRuntimeComponent();
     bool RefreshDevelopmentStats(FString& Error);
+    /** Projection of already committed native battle truth; never executes damage or grants revival. */
+    bool ApplyCommittedBattleState(const FOGTurnBattleState& State,const FOGEntityId& Receipt,FString& Error);
     bool RefreshEquipmentStats(FString& Error);
     bool ApplyResolvedCharacterProjection(int32 SlotIndex, const FOGCombatUnitState& Projection, FString& Error);
     bool ApplyResolvedHp(int32 SlotIndex, const FOGEntityId& ExpectedUnitId,
@@ -156,7 +161,16 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category="OfflineGame|World|Party")
     void OnQteRequested(int32 SourceSlot, int32 QteSlot);
 
+protected:
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
+    TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
+    FOGEntityId LastBattleReceipt;
+    FOGEntityId LastSyncedBattle;
+    void BindBattleProjection(UOGGameCoreSubsystem* Core);
+    void HandleBattleCommitted(const FOGTurnBattleState& State,const FOGEntityId& Receipt);
+    void ReleaseBattleProjection();
     UPROPERTY()
     TArray<FOGWorldPartySlot> Slots;
 

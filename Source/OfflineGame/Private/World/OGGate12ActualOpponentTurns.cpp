@@ -88,12 +88,12 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     // unit. The approved resolver owns targeting, AoE expansion, costs,
     // status effects, health, turn delay, and every world consequence.
     TArray<FOGContentId> Authored;
-    Authored.Reserve(Acting.SkillSet.ActiveSkills.Num() + 1);
+    Authored.Reserve(Acting.SkillSet.ActiveSkills.Num()+Acting.SkillSet.GetUltimateSkills().Num());
     for (const FOGContentId& Id : Acting.SkillSet.ActiveSkills)
         if (Id.IsValid() && !Authored.Contains(Id)) { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Id,Missing)) Authored.Add(Id); }
-    if (Acting.SkillSet.UltimateSkill.IsValid() &&
-        !Authored.Contains(Acting.SkillSet.UltimateSkill))
-    { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Acting.SkillSet.UltimateSkill,Missing)) Authored.Add(Acting.SkillSet.UltimateSkill); }
+    for (const auto& Ultimate:Acting.SkillSet.GetUltimateSkills())
+        if (!Authored.Contains(Ultimate))
+        { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Ultimate,Missing)) Authored.Add(Ultimate); }
     if (Authored.IsEmpty())
     {
         MissingExecutorUnit=ActingId; MissingExecutorSequence=Sequence; MissingExecutorRevision=Revision;
@@ -121,7 +121,6 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     {
         const FOGContentId Skill =
             Authored[(Start + Offset) % Authored.Num()];
-        const bool bUltimate = Skill == Acting.SkillSet.UltimateSkill;
         for (const FOGCombatUnitState* Focus : Candidates)
         {
             FOGResolvedCombatAction Proposal;
@@ -188,7 +187,8 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                             FOGLargeNumber::Compare(After->CurrentHp, *Before) < 0
                             ? FName(TEXT("Combat.Reaction.Hit")) :
                             FName(TEXT("Combat.Reaction.Heal"));
-                        Motion->PlayAction(Reaction, TEXT("Combat"), false, 1);
+                        if (!After->IsAlive()) Motion->PlayAction(Reaction,TEXT("Combat"),false,1);
+                        else Motion->EnqueueCombatCue(Reaction,ActualBattleId,Expanded.ActionId,TargetId);
                     }
                 }
             }
@@ -202,19 +202,7 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
                         SourceActor->SetActorRotation(
                             FRotator(0.f, Delta.Rotation().Yaw, 0.f));
                 }
-                if (UOGSharedMotionControllerComponent* Motion =
-                    OpponentMotion(SourceActor))
-                {
-                    FString Semantic = FString(bUltimate ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.")) + Skill.ToString();
-                    TSharedPtr<FJsonObject> Resolution; FString Branch;
-                    if (bUltimate && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Expanded.ResolutionJson), Resolution) &&
-                        Resolution && Resolution->TryGetStringField(TEXT("branch"), Branch) && !Branch.IsEmpty()) Semantic += TEXT(".") + Branch.ToLower();
-                    const auto* Unit=Committed->GetState().Units.FindByPredicate(
-                        [&ActingId](const FOGCombatUnitState& U) { return U.UnitEntityId==ActingId; });
-                    const FName AuthoredMotion=Unit?Committed->ResolveNativeAbilityMotion(*Unit,Skill):NAME_None;
-                    const FName ActionName=AuthoredMotion.IsNone()?FName(*Semantic):AuthoredMotion;
-                    Motion->PlayAction(ActionName, TEXT("Combat"), false, 1);
-                }
+                // Canonical body binding queues every accepted root/reaction motion once.
             }
             UE_LOG(LogTemp, Display,
                 TEXT("Gate12 actual non-player turn committed: unit %s source skill %s targets %d"),

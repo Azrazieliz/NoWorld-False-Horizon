@@ -13,7 +13,7 @@ FString AbilityKey(const FOGContentId& Identity,const FOGContentId& Version,cons
 bool CompleteKit(const FOGResolvedSkillSet& Source,const FOGResolvedSkillSet& Approved)
 {
     if (Source.CurrentForm!=Approved.CurrentForm || Source.ActiveSkills.Num()!=Approved.ActiveSkills.Num() ||
-        Source.PassiveSkills.Num()!=Approved.PassiveSkills.Num() || Source.UltimateSkill!=Approved.UltimateSkill ||
+        Source.PassiveSkills.Num()!=Approved.PassiveSkills.Num() || !Source.HasSameUltimates(Approved) ||
         Source.HasDuplicateSkills()) return false;
     for (const auto& Skill:Approved.ActiveSkills) if (!Source.ActiveSkills.Contains(Skill)) return false;
     for (const auto& Skill:Approved.PassiveSkills) if (!Source.PassiveSkills.Contains(Skill)) return false;

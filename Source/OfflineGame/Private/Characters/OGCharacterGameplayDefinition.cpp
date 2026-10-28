@@ -12,7 +12,7 @@ bool UOGCharacterGameplayDefinition::ValidateDefinition_Implementation(FString& 
         IdentityId.Value.StartsWith(TEXT("diagnostic:")) || DefinitionId.Value.StartsWith(TEXT("diagnostic:")))
     { Error=TEXT("A character kit requires exact sourced Identity/Version and distinct skills."); return false; }
     TArray<FOGContentId> All=Skills.ActiveSkills; All.Append(Skills.PassiveSkills);
-    if (!Skills.UltimateSkill.IsEmpty()) All.Add(Skills.UltimateSkill);
+    All.Append(Skills.GetUltimateSkills());
     for (const auto& Skill:All)
         if (!Skill.IsValid() || Skill.Value.StartsWith(TEXT("diagnostic:")))
         { Error=TEXT("Invalid skill in shared character definition."); return false; }
@@ -39,7 +39,7 @@ const UOGCharacterGameplayDefinition* UOGCharacterGameplayDefinition::Find(
 bool UOGCharacterGameplayDefinition::MatchesKit(const FOGResolvedSkillSet& Kit) const
 {
     if (Kit.CurrentForm!=Skills.CurrentForm || Kit.ActiveSkills.Num()!=Skills.ActiveSkills.Num() ||
-        Kit.PassiveSkills.Num()!=Skills.PassiveSkills.Num() || Kit.UltimateSkill!=Skills.UltimateSkill ||
+        Kit.PassiveSkills.Num()!=Skills.PassiveSkills.Num() || !Kit.HasSameUltimates(Skills) ||
         Kit.HasDuplicateSkills()) return false;
     for (const auto& Skill:Skills.ActiveSkills) if (!Kit.ActiveSkills.Contains(Skill)) return false;
     for (const auto& Skill:Skills.PassiveSkills) if (!Kit.PassiveSkills.Contains(Skill)) return false;
@@ -53,7 +53,7 @@ void UOGCharacterGameplayDefinition::CollectRequiredDefinitions(TArray<FOGDefini
     // Existing specialized canonical kits keep their native executors.
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) return;
     TArray<FOGContentId> Commands=Skills.ActiveSkills;
-    if (Skills.UltimateSkill.IsValid()) Commands.Add(Skills.UltimateSkill);
+    Commands.Append(Skills.GetUltimateSkills());
     for (const auto& Skill:Skills.PassiveSkills)
     { FOGDefinitionReference R; R.System=TEXT("passive"); R.Id=Skill; Out.Add(R); }
     for (const auto& Skill:Commands) { FOGDefinitionReference R; R.System=TEXT("ability"); R.Id=Skill; Out.Add(R); }
@@ -66,7 +66,7 @@ bool UOGCharacterGameplayDefinition::ValidateResolvedReferences(const FOGDefinit
         if (!Policy || !Policy->MatchesSource(IdentityId,DefinitionId))
         { Error=TEXT("Character turn policy does not accept this source kit."); return false; }
         for (const auto& Rule:Policy->Rules)
-            if (!Skills.ActiveSkills.Contains(Rule.SkillId) && Skills.UltimateSkill!=Rule.SkillId)
+            if (!Skills.ActiveSkills.Contains(Rule.SkillId) && !Skills.IsUltimate(Rule.SkillId))
             { Error=TEXT("Shared AI policy references an ability outside this character's actual kit."); return false; }
     }
     TSet<FOGContentId> ResourceIds;

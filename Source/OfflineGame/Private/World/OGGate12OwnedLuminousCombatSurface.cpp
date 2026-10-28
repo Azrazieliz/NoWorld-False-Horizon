@@ -412,9 +412,9 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     }
     for (int32 U=0; U<UltimateControls.Num(); ++U)
     {
-        // FOGResolvedSkillSet still stores only ONE UltimateSkill. In
-        // particular, Grand's three distinct v4 abilities MUST remain
-        // inactive until their registered IDs and executors are integrated.
+        // The shared kit supports multiple distinct Ultimates. Grand's
+        // controls still require its exact registered v4 executors before
+        // this legacy canvas fallback may activate them.
         // No generic/Alter ultimate is a permissible gameplay substitute.
         const bool bExecutable = !bGrand && bOwnTurn &&
             Owned->SkillSet.UltimateSkill.IsValid();

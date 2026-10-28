@@ -3691,7 +3691,7 @@ bool AOGWorldPrototypeCharacter::HasUltimateForHud() const
     return Slots.IsValidIndex(ControlledSlot) &&
         Slots[ControlledSlot].bAvailable &&
         !Slots[ControlledSlot].bDefeated &&
-        Slots[ControlledSlot].Unit.SkillSet.UltimateSkill.IsValid();
+        !Slots[ControlledSlot].Unit.SkillSet.GetUltimateSkills().IsEmpty();
 }
 
 void AOGWorldPrototypeCharacter::TriggerSkillFromHud(int32 SkillSlot)

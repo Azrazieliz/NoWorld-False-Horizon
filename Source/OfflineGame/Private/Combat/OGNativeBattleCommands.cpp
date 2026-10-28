@@ -33,7 +33,7 @@ bool ReadNames(const FString& Text, bool Base, TArray<FString>& Actives, FString
 bool SameKit(const FOGResolvedSkillSet& A,const FOGResolvedSkillSet& B)
 {
     if (A.CurrentForm!=B.CurrentForm || A.ActiveSkills.Num()!=B.ActiveSkills.Num() ||
-        A.PassiveSkills.Num()!=B.PassiveSkills.Num() || A.UltimateSkill!=B.UltimateSkill ||
+        A.PassiveSkills.Num()!=B.PassiveSkills.Num() || !A.HasSameUltimates(B) ||
         A.HasDuplicateSkills()) return false;
     for (const auto& Id:B.ActiveSkills) if (!A.ActiveSkills.Contains(Id)) return false;
     for (const auto& Id:B.PassiveSkills) if (!A.PassiveSkills.Contains(Id)) return false;
@@ -73,7 +73,7 @@ bool FOGNativeBattleCommands::BuildFor(const FOGCombatUnitState& Source,FOGNativ
         auto* Library=UOGDefinitionLibrary::Get();
         Out.ApprovedSkills=Definition->Skills;
         TArray<FOGContentId> Skills=Source.SkillSet.ActiveSkills;
-        if (Source.SkillSet.UltimateSkill.IsValid()) Skills.Add(Source.SkillSet.UltimateSkill);
+        Skills.Append(Source.SkillSet.GetUltimateSkills());
         for (int32 Index=0;Index<Skills.Num();++Index)
         {
             const auto* Ability=Cast<UOGNativeCombatAbility>(Library->Resolve(TEXT("ability"),Skills[Index]));

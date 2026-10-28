@@ -1,4 +1,5 @@
 #include "Combat/OGWorldActionRuntime.h"
+#include "Combat/OGTurnBattle.h"
 #include "Combat/OGActionCombatAdapter.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
@@ -114,7 +115,7 @@ bool UOGWorldPartyRuntimeComponent::ConfigureParty(const TArray<FOGCombatUnitSta
     if (Core && Core->IsCoreReady() && Core->GetWorldStore())
         for (FOGCombatUnitState& Unit : Developed)
             if (!ProjectLiveDevelopment(GetWorld(), Unit, OutError)) return false;
-    Slots.Reset(); ControlledSlot = INDEX_NONE;
+    Slots.Reset(); ControlledSlot = INDEX_NONE; LastBattleReceipt=FOGEntityId();
     for (const FOGCombatUnitState& Unit : Developed)
     {
         FOGWorldPartySlot& Slot = Slots.AddDefaulted_GetRef();
@@ -125,6 +126,7 @@ bool UOGWorldPartyRuntimeComponent::ConfigureParty(const TArray<FOGCombatUnitSta
         if (ControlledSlot == INDEX_NONE && Slot.bAvailable) ControlledSlot = Slots.Num() - 1;
     }
     if (Slots.IsValidIndex(ControlledSlot)) Slots[ControlledSlot].Unit.Presence = EOGCombatPresence::Active;
+    if (Core && Core->IsCoreReady()) BindBattleProjection(Core);
     return true;
 }
 
@@ -293,5 +295,94 @@ bool UOGWorldPartyRuntimeComponent::ApplyResolvedCharacterProjection(int32 SlotI
     Unit.bHasDevelopmentStatProjection = Developed.bHasDevelopmentStatProjection;
     Unit.RankProjection = Developed.RankProjection;
     Unit.SkillSet = Developed.SkillSet;
+    return true;
+}
+
+void UOGWorldPartyRuntimeComponent::BeginPlay()
+{
+    Super::BeginPlay();
+    auto* Core=GetWorld() && GetWorld()->GetGameInstance()?GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    BindBattleProjection(Core);
+}
+void UOGWorldPartyRuntimeComponent::BindBattleProjection(UOGGameCoreSubsystem* Core)
+{
+    if (BoundCore.Get()!=Core)
+    {
+        ReleaseBattleProjection(); BoundCore=Core;
+        if (Core)
+        {
+            Core->OnNativeBattleStateCommitted.AddUObject(this,&ThisClass::HandleBattleCommitted);
+            Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::ReleaseBattleProjection);
+        }
+    }
+    if (Core && Core->IsCoreReady() && Core->GetOwnedLuminousTurnBattle() && Core->GetLastNativeBattleReceipt().IsValid())
+        HandleBattleCommitted(Core->GetOwnedLuminousTurnBattle()->GetState(),Core->GetLastNativeBattleReceipt());
+}
+void UOGWorldPartyRuntimeComponent::ReleaseBattleProjection()
+{
+    if (BoundCore.IsValid())
+    {
+        BoundCore->OnNativeBattleStateCommitted.RemoveAll(this);
+        BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    }
+    BoundCore.Reset(); LastBattleReceipt=LastSyncedBattle=FOGEntityId();
+}
+void UOGWorldPartyRuntimeComponent::EndPlay(const EEndPlayReason::Type Reason)
+{ ReleaseBattleProjection(); Super::EndPlay(Reason); }
+void UOGWorldPartyRuntimeComponent::HandleBattleCommitted(const FOGTurnBattleState& State,const FOGEntityId& Receipt)
+{
+    FString Error;
+    if (!ApplyCommittedBattleState(State,Receipt,Error))
+        UE_LOG(LogTemp,Warning,TEXT("Committed battle party projection unavailable: %s"),*Error);
+}
+bool UOGWorldPartyRuntimeComponent::ApplyCommittedBattleState(
+    const FOGTurnBattleState& State,const FOGEntityId& Receipt,FString& Error)
+{
+    Error.Reset();
+    if (!State.BattleId.IsValid() || !Receipt.IsValid() || (State.Status!=EOGTurnBattleStatus::Running && State.Status!=EOGTurnBattleStatus::Completed))
+    { Error=TEXT("Party projection requires an actual committed native encounter receipt."); return false; }
+    if (LastBattleReceipt==Receipt) return true;
+    auto Candidate=Slots; bool Changed=false;
+    TSet<FOGEntityId> Seen;
+    for (const auto& U:State.Units)
+    {
+        if (!U.UnitEntityId.IsValid() || Seen.Contains(U.UnitEntityId))
+        { Error=TEXT("Committed battle has duplicate or invalid participant identity."); return false; }
+        Seen.Add(U.UnitEntityId);
+    }
+    for (auto& Slot:Candidate)
+    {
+        const auto* Actual=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Slot.Unit.UnitEntityId;});
+        if (!Actual) continue;
+        if (Actual->IdentityId!=Slot.Unit.IdentityId || Actual->SkillSet.CurrentForm!=Slot.Unit.SkillSet.CurrentForm ||
+            Actual->CurrentHp.GetSign()<0 || Actual->Stats.MaxHp.GetSign()<=0 ||
+            (Actual->Presence==EOGCombatPresence::Defeated && Actual->IsAlive()))
+        { Error=TEXT("Battle/party Identity, Version or HP projection differs; no partial party update applied."); return false; }
+        if (Slot.bDefeated && Actual->IsAlive() && LastSyncedBattle!=State.BattleId)
+        { Error=TEXT("A different encounter cannot restore a previously defeated World party member."); return false; }
+        const bool WasDefeated=Slot.bDefeated;
+        Slot.Unit.CurrentHp=Actual->CurrentHp;
+        Slot.Unit.BattleResources=Actual->BattleResources;
+        Slot.bDefeated=!Actual->IsAlive() || Actual->Presence==EOGCombatPresence::Defeated;
+        if (Slot.bDefeated) { Slot.bAvailable=false; Slot.bQteReady=false; Slot.Unit.Presence=EOGCombatPresence::Defeated; }
+        else if (WasDefeated)
+        {
+            // Only an already accepted revival within this same battle can reach this branch.
+            Slot.bAvailable=true; Slot.bQteReady=false; Slot.Unit.Presence=EOGCombatPresence::Reserve;
+        }
+        Changed=true;
+    }
+    if (!Changed) return true;
+    const int32 Previous=ControlledSlot; int32 Next=Previous;
+    if (!Candidate.IsValidIndex(Next) || Candidate[Next].bDefeated || !Candidate[Next].bAvailable)
+    {
+        Next=INDEX_NONE;
+        for (int32 I=0;I<Candidate.Num();++I)
+            if (Candidate[I].bAvailable && !Candidate[I].bDefeated && Candidate[I].Unit.IsAlive()) { Next=I; break; }
+    }
+    for (int32 I=0;I<Candidate.Num();++I)
+        if (!Candidate[I].bDefeated) Candidate[I].Unit.Presence=I==Next?EOGCombatPresence::Active:EOGCombatPresence::Reserve;
+    Slots=MoveTemp(Candidate); ControlledSlot=Next; LastBattleReceipt=Receipt; LastSyncedBattle=State.BattleId;
+    if (Previous!=Next) OnControlTransferRequested(Previous,Next);
     return true;
 }
