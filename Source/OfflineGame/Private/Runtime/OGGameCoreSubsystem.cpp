@@ -1,4 +1,5 @@
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Combat/OGNativeCombatPassive.h"
 #include "Combat/OGCombatResourceDefinition.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
@@ -966,6 +967,8 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     FOGLuminousCanonicalSources TrustedProviders,
     FString& OutError)
 {
+    if (!IsInGameThread() || bSubmittingNativeAction) { OutError=TEXT("Native encounter replacement cannot reenter an action transaction."); return false; }
+    TGuardValue<bool> Submitting(bSubmittingNativeAction,true);
     if(OwnedLuminousTurnBattle &&
        OwnedLuminousTurnBattle->GetState().Status==EOGTurnBattleStatus::Running)
     {
@@ -983,9 +986,23 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     for (FOGCombatUnitState& Unit : DevelopedState.Units)
         if (!FOGOwnedEquipmentService(*WorldStore).ProjectCombatUnit(Unit, OutError) ||
             !FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
+    TArray<FOGNativePassiveBinding> NativePassives;
+    auto* Definitions=UOGDefinitionLibrary::Get();
+    for (const auto& Unit:DevelopedState.Units)
+    {
+        if (Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) continue;
+        for (const auto& Skill:Unit.SkillSet.PassiveSkills)
+        {
+            const auto* Passive=Definitions?Cast<UOGNativeCombatPassive>(Definitions->Resolve(TEXT("passive"),Skill)):nullptr;
+            if (!Passive || !Passive->ValidateDefinition(OutError) || !Passive->Specification.MatchesSource(Unit))
+            { if (OutError.IsEmpty()) OutError=TEXT("Missing compatible native passive: ")+Skill.ToString(); return false; }
+            FOGNativePassiveBinding Binding; Binding.OwnerUnitId=Unit.UnitEntityId; Binding.Specification=Passive->Specification;
+            NativePassives.Add(MoveTemp(Binding));
+        }
+    }
     if(!Candidate->Initialize(DevelopedState,MoveTemp(RegisteredTriggers),
         MoveTemp(NativeConditions),MoveTemp(IdentityContext),
-        MoveTemp(RankResolver),OutError))
+        MoveTemp(RankResolver),NativePassives,OutError))
         return false;
     Candidate->RequireNativeActionExecutors(true);
     if(!BindOwnedLuminousCombatAuthority(
@@ -1016,6 +1033,17 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
                 if (auto* Ability=Cast<UOGNativeCombatAbility>(Library->Resolve(TEXT("ability"),Skill)))
                     SharedAbilities.AddUnique(Ability);
         }
+    if (Definitions)
+        for (const auto& Binding:NativePassives) for (const auto& Rule:Binding.Specification.Triggers)
+            for (const auto& Skill:Rule.Trigger.ActionIds)
+            {
+                auto* Ability=Cast<UOGNativeCombatAbility>(Definitions->Resolve(TEXT("ability"),Skill));
+                const auto* Owner=Candidate->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Binding.OwnerUnitId;});
+                if (!Ability || !Owner || !Ability->ValidateInstalled(OutError) ||
+                    !Ability->Definition.MatchesSource(Owner->IdentityId,Owner->SkillSet.CurrentForm))
+                { if (OutError.IsEmpty()) OutError=TEXT("Missing source-compatible native reaction action: ")+Skill.ToString(); return false; }
+                SharedAbilities.AddUnique(Ability);
+            }
     for (auto* Asset:SharedAbilities)
     {
         const auto* Ability=CastChecked<UOGNativeCombatAbility>(Asset);
@@ -1024,13 +1052,22 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         {
             return U.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")) &&
                 D.MatchesSource(U.IdentityId,U.SkillSet.CurrentForm) &&
-                (U.SkillSet.ActiveSkills.Contains(D.SkillId) || U.SkillSet.UltimateSkill==D.SkillId);
+                Candidate->CanAdmitNativeAbility(U,D.SkillId);
         });
         if (Used && (!Ability->ValidateInstalled(OutError) || !Candidate->RegisterNativeAbility(D,OutError))) return false;
     }
+    if (!Candidate->ResolveNativeOpeningReactions(OutError)) return false;
+    FOGWorldEvent OpeningEvent;
+    if (!FOGCombatActionJournal::BuildEncounterStartedEvent(DevelopedState,Candidate->GetState(),
+        Candidate->GetLastNativeReactions(),RulerId,GetCanonicalWorldTick(),OpeningEvent,OutError) ||
+        !WorldStore->AppendWorldEvent(OpeningEvent,OutError)) return false;
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
     ActiveCombatRulerId=RulerId;
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
+    const auto OpeningReactions=OwnedLuminousTurnBattle->GetLastNativeReactions();
+    const auto OpeningState=OwnedLuminousTurnBattle->GetState();
+    for (const auto& Reaction:OpeningReactions)
+        if (Reaction.bExecuted) PublishNativeAction(Reaction.Action,OpeningEvent,OpeningState);
     return true;
 }
 
@@ -1038,7 +1075,7 @@ bool UOGGameCoreSubsystem::ConfigureOwnedNativeAbilities(const FOGEntityId& Unit
     const TArray<UOGNativeCombatAbility*>& Abilities,const TArray<FOGContentId>& RequiredSkills,FString& Error)
 {
     Error.Reset();
-    if (!IsInGameThread() || !bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle ||
+    if (!IsInGameThread() || bSubmittingNativeAction || !bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle ||
         OwnedLuminousTurnBattle->GetState().Status!=EOGTurnBattleStatus::Running || RequiredSkills.IsEmpty())
     { Error=TEXT("No live owned encounter is available for native ability admission."); return false; }
     FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
@@ -1062,6 +1099,8 @@ bool UOGGameCoreSubsystem::ConfigureOwnedNativeAbilities(const FOGEntityId& Unit
 bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
     const FOGResolvedCombatAction& Action,FString& OutError)
 {
+    if (!IsInGameThread() || bSubmittingNativeAction) { OutError=TEXT("Native combat actions cannot reenter an active transaction."); return false; }
+    TGuardValue<bool> Submitting(bSubmittingNativeAction,true);
     if(!bCoreReady || bReleasingCanonicalRuntime ||
        !WorldStore || !WorldStore->IsOpen() ||
        !OwnedLuminousTurnBattle ||
@@ -1080,30 +1119,19 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
         : -1;
     FOGWorldEvent ActionEvent;
     if(!FOGCombatActionJournal::BuildResolvedActionEvent(
-         Before, Candidate.GetState(), Action, ActiveCombatRulerId,
+         Before, Candidate.GetState(), Action, Candidate.GetLastNativeReactions(), ActiveCombatRulerId,
          WorldTick, ActionEvent, OutError))
         return false;
     if(!WorldStore->AppendWorldEvent(ActionEvent,OutError))
         return false;
 
     *OwnedLuminousTurnBattle=MoveTemp(Candidate);
-    // Publish provenance ONLY after the real journal append succeeded. Both
-    // World/Ruler callers and narrative/interaction consumers read this same
-    // ledger ID; no synthetic encounter event or inferred outcome is created.
-    LastNativeCombatEvent.EventId = ActionEvent.EventId;
-    LastNativeCombatEvent.BattleId = Before.BattleId;
-    LastNativeCombatEvent.OwningRulerId = ActionEvent.PrimaryEntity;
-    LastNativeCombatEvent.ActionId = Action.ActionId;
-    LastNativeCombatEvent.SourceUnitId = Action.SourceUnitId;
-    LastNativeCombatEvent.TargetUnitIds = Action.TargetUnitIds;
-    LastNativeCombatEvent.SkillId = Action.SkillId;
-    LastNativeCombatEvent.WorldTick = ActionEvent.WorldTick;
-    LastNativeCombatEvent.BattleStatus = OwnedLuminousTurnBattle->GetState().Status;
-    // This is a non-authoritative visual notification, emitted ONLY after
-    // the existing source-approved battle executor and canonical event ledger
-    // accepted the action.
-    OnLuminousCombatActionResolved.Broadcast(Action.SourceUnitId,Action.SkillId);
-    OnNativeCombatActionResolved.Broadcast(Action);
+    // Copy notifications before invoking external presentation listeners.
+    const auto Reactions=OwnedLuminousTurnBattle->GetLastNativeReactions();
+    const auto AcceptedState=OwnedLuminousTurnBattle->GetState();
+    PublishNativeAction(Action,ActionEvent,AcceptedState);
+    for (const auto& Reaction:Reactions) if (Reaction.bExecuted)
+        PublishNativeAction(Reaction.Action,ActionEvent,AcceptedState);
     return true;
 }
 
@@ -1122,4 +1150,19 @@ bool UOGGameCoreSubsystem::ResolveOwnedLuminousRegisteredContest(
     }
     return OwnedLuminousTurnBattle->TryResolveLuminousRegisteredFieldContest(
         Contest,RemoveExactRegisteredInstance,bOutWon,OutError);
+}
+
+void UOGGameCoreSubsystem::PublishNativeAction(const FOGResolvedCombatAction& Action,
+    const FOGWorldEvent& Event,const FOGTurnBattleState& Accepted)
+{
+    if (!bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle ||
+        OwnedLuminousTurnBattle->GetState().BattleId!=Accepted.BattleId || ActiveCombatRulerId!=Event.PrimaryEntity) return;
+    LastNativeCombatEvent.EventId=Event.EventId; LastNativeCombatEvent.BattleId=Accepted.BattleId;
+    LastNativeCombatEvent.OwningRulerId=Event.PrimaryEntity; LastNativeCombatEvent.ActionId=Action.ActionId;
+    LastNativeCombatEvent.SourceUnitId=Action.SourceUnitId; LastNativeCombatEvent.TargetUnitIds=Action.TargetUnitIds;
+    LastNativeCombatEvent.SkillId=Action.SkillId; LastNativeCombatEvent.WorldTick=Event.WorldTick;
+    LastNativeCombatEvent.BattleStatus=Accepted.Status;
+    OnLuminousCombatActionResolved.Broadcast(Action.SourceUnitId,Action.SkillId);
+    if (bCoreReady && !bReleasingCanonicalRuntime && OwnedLuminousTurnBattle &&
+        OwnedLuminousTurnBattle->GetState().BattleId==Accepted.BattleId) OnNativeCombatActionResolved.Broadcast(Action);
 }

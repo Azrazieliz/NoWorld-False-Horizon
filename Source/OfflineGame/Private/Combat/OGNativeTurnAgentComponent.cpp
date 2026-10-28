@@ -217,27 +217,18 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
             if (!Target || !OldHp || FOGLargeNumber::Compare(*OldHp, Unit.CurrentHp) == 0) continue;
             if (Hud) Hud->RegisterCanonicalCombatImpact(Target, *OldHp, Unit.CurrentHp);
             if (UOGSharedMotionControllerComponent* Motion = ActualMotion(Target))
-                Motion->PlayAction(!Unit.IsAlive() ? FName(TEXT("Combat.Reaction.Death")) :
-                    FOGLargeNumber::Compare(Unit.CurrentHp, *OldHp) < 0 ? FName(TEXT("Combat.Reaction.Hit")) : FName(TEXT("Combat.Reaction.Heal")),
-                    TEXT("Combat"), false, 1);
+            {
+                if (!Unit.IsAlive()) Motion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
+                else Motion->EnqueueCombatCue(FOGLargeNumber::Compare(Unit.CurrentHp,*OldHp)<0?
+                    FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),BoundBattleId,Action.ActionId,Unit.UnitEntityId);
+            }
         }
         if (FirstTarget && FirstTarget != GetOwner())
         {
             const FVector Delta = FirstTarget->GetActorLocation() - GetOwner()->GetActorLocation();
             if (Delta.SizeSquared2D() > SMALL_NUMBER) GetOwner()->SetActorRotation(FRotator(0.f, Delta.Rotation().Yaw, 0.f));
         }
-        if (UOGSharedMotionControllerComponent* Motion = ActualMotion(GetOwner()))
-        {
-            const FOGCombatUnitState* Source = Battle->GetState().Units.FindByPredicate(
-                [this](const FOGCombatUnitState& U) { return U.UnitEntityId == BoundUnitId; });
-            FString Semantic = Source && Action.SkillId == Source->SkillSet.UltimateSkill ? TEXT("Combat.Ultimate.") : TEXT("Combat.Skill.");
-            Semantic += Action.SkillId.ToString();
-            TSharedPtr<FJsonObject> Resolution; FString Branch;
-            if (FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson), Resolution) && Resolution &&
-                Resolution->TryGetStringField(TEXT("branch"), Branch) && !Branch.IsEmpty()) Semantic += TEXT(".") + Branch.ToLower();
-            const FName Authored=Source?Battle->ResolveNativeAbilityMotion(*Source,Action.SkillId):NAME_None;
-            Motion->PlayAction(Authored.IsNone()?FName(*Semantic):Authored, TEXT("Combat"), false, 1);
-        }
+        // The bound canonical body receives every accepted root/reaction action from GameCore.
         Status.Reset(); FailedSequence = -1; ReadyAtSeconds = -1.0;
         return true;
     }

@@ -76,7 +76,7 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     const FOGTurnBattle* Battle = BoundCore.IsValid() ? BoundCore->GetOwnedLuminousTurnBattle() : nullptr;
     const FOGCombatUnitState* Unit = Battle ? Battle->GetState().Units.FindByPredicate(
         [this](const FOGCombatUnitState& U) { return U.UnitEntityId == BoundManifestation; }) : nullptr;
-    if (!Unit) return;
+    if (!Unit || !Unit->IsAlive()) return;
     TSharedPtr<FJsonObject> Resolution;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson), Resolution) || !Resolution) return;
     FString Branch,Mode;
@@ -94,7 +94,8 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     const FName Registered=Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId);
     const FName Semantic = Authored ? *Authored : !Registered.IsNone() ? Registered : FName(*Key);
     FString Error;
-    if (!Appearance->PlaySemanticAction(Semantic, TEXT("Combat"), false, 1, NAME_None, Error))
+    auto* Controller=Appearance->GetMotionController();
+    if (!Controller || !Controller->EnqueueCombatAction(Semantic,Battle->GetState().BattleId,Action.ActionId))
         UE_LOG(LogTemp, Warning, TEXT("Source combat motion %s is unavailable: %s"), *Semantic.ToString(), *Error);
     else LastPresentedActionId = Action.ActionId;
 }

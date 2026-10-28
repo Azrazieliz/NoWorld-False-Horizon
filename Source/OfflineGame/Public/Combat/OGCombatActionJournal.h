@@ -15,6 +15,12 @@
 class OFFLINEGAME_API FOGCombatActionJournal
 {
 public:
+    static bool BuildEncounterStartedEvent(const FOGTurnBattleState& Before,const FOGTurnBattleState& After,
+        const TArray<FOGNativeReactionRecord>& Reactions,const FOGEntityId& RulerId,int64 WorldTick,
+        FOGWorldEvent& Out,FString& Error);
+    static bool BuildResolvedActionEvent(const FOGTurnBattleState& Before,const FOGTurnBattleState& After,
+        const FOGResolvedCombatAction& Action,const TArray<FOGNativeReactionRecord>& Reactions,
+        const FOGEntityId& RulerId,int64 WorldTick,FOGWorldEvent& Out,FString& Error);
     static bool BuildResolvedActionEvent(
         const FOGTurnBattleState& Before,
         const FOGTurnBattleState& After,

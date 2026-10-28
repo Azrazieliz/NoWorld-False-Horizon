@@ -56,7 +56,17 @@ bool FOGTurnBattle::Initialize(
     FOGRankSuppressionResolver InRankResolver,
     FString& OutError)
 {
+    return Initialize(InitialState,MoveTemp(TriggerBindings),MoveTemp(ConditionEvaluator),
+        MoveTemp(InIdentityContext),MoveTemp(InRankResolver),{},OutError);
+}
+bool FOGTurnBattle::Initialize(
+    const FOGTurnBattleState& InitialState,TArray<FOGCombatTriggerBinding> TriggerBindings,
+    FOGCombatConditionEvaluator ConditionEvaluator,FOGIdentityExclusivityContext InIdentityContext,
+    FOGRankSuppressionResolver InRankResolver,TArray<FOGNativePassiveBinding> Passives,FString& OutError)
+{
     State = InitialState;
+    NativePassiveRules.Reset(); NativePassiveActionOwners.Reset(); NativeReactionProof.Reset(); LastNativeReactions.Reset();
+    NativeFallbackConditions=ConditionEvaluator;
     // Opening resource truth comes only from admitted shared specifications, never caller snapshots.
     for (auto& Unit:State.Units) Unit.BattleResources.Reset();
     NativeResourceSpecifications.Reset();
@@ -89,6 +99,8 @@ bool FOGTurnBattle::Initialize(
         return false;
     }
 
+    if (!InitializeNativePassives(Passives,TriggerBindings,OutError))
+    { State.Status=EOGTurnBattleStatus::NotStarted; return false; }
     if (!NormalizeOpeningLanes(OutError))
     {
         State.Status = EOGTurnBattleStatus::NotStarted;
@@ -426,7 +438,7 @@ bool FOGTurnBattle::ValidateResolvedAction(const FOGResolvedCombatAction& Origin
     }
 
     const FOGCombatUnitState* Source = FindUnit(Action.SourceUnitId);
-    if (!Source || !Source->CanAct())
+    if (!Source || (!Source->CanAct() && !AllowsNativeReactionSource(*Source,Action)))
     {
         OutError = TEXT("Resolved action source is missing, defeated, or not active.");
         return false;
@@ -506,8 +518,9 @@ bool FOGTurnBattle::ApplyResolvedAction(
     if(!ValidateResolvedAction(Action,CompleteAction,OutError))
         return false;
     FOGTurnBattle Candidate=*this;
+    Candidate.LastNativeReactions.Reset();
     FString CandidateError;
-    if(!Candidate.ApplyResolvedActionMutating(CompleteAction,CandidateError))
+    if(!Candidate.ApplyResolvedActionMutating(CompleteAction,CandidateError) || !Candidate.ResolveNativeReactions(CandidateError))
     {
         OutError=CandidateError.IsEmpty()
             ?TEXT("Resolved action rejected; no battle state was committed.")
@@ -633,7 +646,11 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
     Resolved.SourceUnitId = Action.SourceUnitId;
     Resolved.SkillId = Action.SkillId;
     Resolved.PayloadJson = Action.ResolutionJson;
+    const int64 ResolvedSequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Resolved));
+    QueueTriggerEvent(TEXT("OnActionResolved"),Action.SourceUnitId,
+        Action.TargetUnitIds.IsEmpty()?FOGEntityId():Action.TargetUnitIds[0],Action.SkillId,ResolvedSequence);
+    if (!bInterrupt) QueueTriggerEvent(TEXT("OnOwnerActionEnd"),Action.SourceUnitId,Action.SourceUnitId,Action.SkillId,ResolvedSequence);
 
     FlushTriggerRuntimeQueueToBattleQueue();
 
@@ -735,6 +752,7 @@ bool FOGTurnBattle::ApplyDamage(
         : FString::Printf(TEXT("{\"amount\":\"%s\",\"dawn_barrier_absorbed\":\"%s\",\"nominal\":\"%s\"}"),
               *EffectiveAmount.ToDebugString(),*Absorbed.ToDebugString(),
               *Amount.ToDebugString());
+    const int64 DamageSequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Damage));
 
     if (FOGLargeNumber::Compare(
@@ -776,6 +794,11 @@ bool FOGTurnBattle::ApplyDamage(
         TryResolveApprovedLuminousAlterRevival(TargetUnitId);
     }
 
+    if (LastEffectiveHpDamage.FindRef(TargetUnitId).GetSign()>0)
+    {
+        QueueTriggerEvent(TEXT("OnDamageDealt"),SourceUnitId,TargetUnitId,SkillId,DamageSequence);
+        QueueTriggerEvent(TEXT("OnDamageReceived"),SourceUnitId,TargetUnitId,SkillId,DamageSequence);
+    }
     return true;
 }
 
@@ -846,7 +869,10 @@ bool FOGTurnBattle::ApplyHealing(
     Healing.PayloadJson = FString::Printf(
         TEXT("{\"amount\":\"%s\",\"nominal_healing\":\"%s\"}"),
         *ActuallyRestored.ToDebugString(),*Amount.ToDebugString());
+    const int64 HealingSequence=Log.GetNextSequence();
     Log.Append(MoveTemp(Healing));
+    if (ActuallyRestored.GetSign()>0)
+        QueueTriggerEvent(TEXT("OnHealingApplied"),SourceUnitId,TargetUnitId,SkillId,HealingSequence);
 
     return true;
 }
@@ -1350,8 +1376,10 @@ void FOGTurnBattle::QueueTriggerEvent(
     Context.SourceSequence =
         SourceSequence;
 
-    TriggerRuntime.QueueForEvent(
-        Context);
+    const FOGCombatConditionEvaluator Evaluate=[this](const FOGCombatTriggerBinding& B,
+        const FOGConditionDefinition& C,const FOGCombatTriggerContext& E)
+        { return EvaluateNativePassiveCondition(B,C,E); };
+    TriggerRuntime.QueueForEvent(Context,&Evaluate);
 }
 
 void FOGTurnBattle::FlushTriggerRuntimeQueueToBattleQueue()

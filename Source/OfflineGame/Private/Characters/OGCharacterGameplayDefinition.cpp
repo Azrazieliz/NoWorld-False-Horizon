@@ -1,4 +1,5 @@
 #include "Characters/OGCharacterGameplayDefinition.h"
+#include "Combat/OGNativeCombatPassive.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "Combat/OGCombatResourceDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
@@ -53,6 +54,8 @@ void UOGCharacterGameplayDefinition::CollectRequiredDefinitions(TArray<FOGDefini
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) return;
     TArray<FOGContentId> Commands=Skills.ActiveSkills;
     if (Skills.UltimateSkill.IsValid()) Commands.Add(Skills.UltimateSkill);
+    for (const auto& Skill:Skills.PassiveSkills)
+    { FOGDefinitionReference R; R.System=TEXT("passive"); R.Id=Skill; Out.Add(R); }
     for (const auto& Skill:Commands) { FOGDefinitionReference R; R.System=TEXT("ability"); R.Id=Skill; Out.Add(R); }
 }
 bool UOGCharacterGameplayDefinition::ValidateResolvedReferences(const FOGDefinitionResolver& Resolve,FString& Error) const
@@ -76,6 +79,15 @@ bool UOGCharacterGameplayDefinition::ValidateResolvedReferences(const FOGDefinit
     if (IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"))) return true;
     TArray<FOGContentId> Commands=Skills.ActiveSkills;
     if (Skills.UltimateSkill.IsValid()) Commands.Add(Skills.UltimateSkill);
+    FOGCombatUnitState Source; Source.IdentityId=IdentityId; Source.SkillSet=Skills;
+    for (const auto& Skill:Skills.PassiveSkills)
+    {
+        const auto* Passive=Cast<UOGNativeCombatPassive>(Resolve(TEXT("passive"),Skill));
+        if (!Passive || !Passive->Specification.MatchesSource(Source))
+        { Error=TEXT("Every generic passive must resolve to its compatible shared native definition."); return false; }
+        for (const auto& Rule:Passive->Specification.Triggers)
+            for (const auto& Action:Rule.Trigger.ActionIds) Commands.AddUnique(Action);
+    }
     for (const auto& Skill:Commands)
     {
         const auto* Ability=Cast<UOGNativeCombatAbility>(Resolve(TEXT("ability"),Skill));

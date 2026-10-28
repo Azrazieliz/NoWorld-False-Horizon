@@ -7,6 +7,7 @@
 #include "Combat/OGCombatTriggerRuntime.h"
 #include "Combat/OGCombatTypes.h"
 #include "Combat/OGNativeCombatAbility.h"
+#include "Combat/OGNativeCombatPassive.h"
 #include "Rules/OGRulePriority.h"
 #include "OGTurnBattle.generated.h"
 
@@ -153,6 +154,13 @@ public:
         FOGRankSuppressionResolver RankResolver,
         FString& OutError);
 
+    bool Initialize(const FOGTurnBattleState& InitialState,TArray<FOGCombatTriggerBinding> TriggerBindings,
+        FOGCombatConditionEvaluator Conditions,FOGIdentityExclusivityContext Identity,
+        FOGRankSuppressionResolver Rank,TArray<FOGNativePassiveBinding> Passives,FString& Error);
+    /** Complete opening reactions after native ability/resource admission. Atomic on failure. */
+    bool ResolveNativeOpeningReactions(FString& Error);
+    const TArray<FOGNativeReactionRecord>& GetLastNativeReactions() const { return LastNativeReactions; }
+    bool CanAdmitNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
     const FOGTurnBattleState& GetState() const { return State; }
     const FOGCombatLog& GetLog() const { return Log; }
 
@@ -279,6 +287,22 @@ public:
         FString& OutError);
 
 private:
+    struct FNativePassiveRule { FOGEntityId OwnerUnitId; FOGContentId PassiveSkillId; FOGNativePassiveTrigger Rule; };
+    TMap<FString,FNativePassiveRule> NativePassiveRules;
+    TSet<FString> NativePassiveActionOwners;
+    FOGCombatConditionEvaluator NativeFallbackConditions;
+    TOptional<FOGQueuedTriggeredAction> NativeReactionProof;
+    TArray<FOGNativeReactionRecord> LastNativeReactions;
+    bool InitializeNativePassives(const TArray<FOGNativePassiveBinding>& Passives,
+        TArray<FOGCombatTriggerBinding>& Bindings,FString& Error);
+    bool EvaluateNativePassiveCondition(const FOGCombatTriggerBinding& Binding,
+        const FOGConditionDefinition& Condition,const FOGCombatTriggerContext& Context) const;
+    bool IsNativeAbilityAuthorized(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool HasNativeReactionProof(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool AllowsNativeReactionSource(const FOGCombatUnitState& Source,const FOGResolvedCombatAction& Action) const;
+    bool ResolveNativeReactions(FString& Error);
+    bool SelectNativeReactionTarget(const FOGQueuedTriggeredAction& Queued,const FNativePassiveRule& Rule,
+        FOGResolvedCombatAction& Action,FString& Error) const;
     bool bRequireNativeExecutors=false;
     int64 NativeAbilityRevision=0;
     TMap<FString,FOGNativeAbilityDefinition> NativeAbilities;

@@ -1,4 +1,10 @@
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
+#include "Combat/OGNativeBattleCommands.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 #include "Combat/OGTurnBattle.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -26,7 +32,7 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
         return false;
     }
     UGameInstance* GI=World->GetGameInstance();
-    const UOGGameCoreSubsystem* Core=GI
+    UOGGameCoreSubsystem* Core=GI
         ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
     const FOGTurnBattle* Battle=Core
         ? Core->GetOwnedLuminousTurnBattle() : nullptr;
@@ -94,6 +100,12 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
             return false;
         }
     }
+    if (BoundBattleId!=State.BattleId || BoundUnitId!=UnitId) UnbindVisual();
+    if (BoundCore.IsValid())
+    { BoundCore->OnNativeCombatActionResolved.RemoveAll(this); BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this); }
+    BoundCore=Core;
+    Core->OnNativeCombatActionResolved.AddUObject(this,&ThisClass::HandleNativeAction);
+    Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::UnbindVisual);
     BoundBattleId=State.BattleId;
     BoundUnitId=UnitId;
     return true;
@@ -101,6 +113,14 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
 
 void UOGCanonicalCombatActorBindingComponent::UnbindVisual()
 {
+    if (BoundCore.IsValid())
+    { BoundCore->OnNativeCombatActionResolved.RemoveAll(this); BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this); }
+    BoundCore.Reset();
+    auto* Appearance=GetOwner()?GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>():nullptr;
+    auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
+    if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
+    if (Motion) Motion->CancelCombatActions(BoundBattleId);
+    LastPresentedAction=FOGEntityId();
     BoundBattleId=FOGEntityId();
     BoundUnitId=FOGEntityId();
 }
@@ -134,4 +154,29 @@ void UOGCanonicalCombatActorBindingComponent::EndPlay(
 {
     UnbindVisual();
     Super::EndPlay(Reason);
+}
+
+void UOGCanonicalCombatActorBindingComponent::HandleNativeAction(const FOGResolvedCombatAction& Action)
+{
+    if (!BoundCore.IsValid() || Action.SourceUnitId!=BoundUnitId || !Action.ActionId.IsValid() || LastPresentedAction==Action.ActionId) return;
+    const auto* Battle=BoundCore->GetOwnedLuminousTurnBattle();
+    if (!Battle || Battle->GetState().BattleId!=BoundBattleId) return;
+    const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;});
+    if (!Unit || !Unit->IsAlive()) return;
+    FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId);
+    if (Semantic.IsNone())
+    {
+        FOGNativeBattleCommandSet Set; FString Error; TSharedPtr<FJsonObject> Context; FString Branch,Mode;
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson),Context);
+        if (Context) { Context->TryGetStringField(TEXT("branch"),Branch); Context->TryGetStringField(TEXT("mode"),Mode); }
+        if (FOGNativeBattleCommands::BuildFor(*Unit,Set,Error))
+            for (const auto& Command:Set.Commands)
+                if (Command.SkillId==Action.SkillId && Command.Branch==FName(*Branch) && Command.Mode==FName(*Mode))
+                { Semantic=Command.MotionSemantic(); break; }
+    }
+    auto* Appearance=GetOwner()?GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>():nullptr;
+    auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
+    if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
+    if (Motion && !Semantic.IsNone() && Motion->EnqueueCombatAction(Semantic,BoundBattleId,Action.ActionId))
+        LastPresentedAction=Action.ActionId;
 }

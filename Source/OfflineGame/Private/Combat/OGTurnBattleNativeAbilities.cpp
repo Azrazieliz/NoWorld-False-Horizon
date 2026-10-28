@@ -10,8 +10,6 @@ namespace
 {
 FString AbilityKey(const FOGContentId& Identity,const FOGContentId& Version,const FOGContentId& Skill)
 { return Identity.ToString()+TEXT("|")+Version.ToString()+TEXT("|")+Skill.ToString(); }
-bool Owns(const FOGCombatUnitState& Source,const FOGContentId& Skill)
-{ return !Source.SkillSet.HasDuplicateSkills() && (Source.SkillSet.ActiveSkills.Contains(Skill) || Source.SkillSet.UltimateSkill==Skill); }
 bool CompleteKit(const FOGResolvedSkillSet& Source,const FOGResolvedSkillSet& Approved)
 {
     if (Source.CurrentForm!=Approved.CurrentForm || Source.ActiveSkills.Num()!=Approved.ActiveSkills.Num() ||
@@ -69,10 +67,17 @@ bool FOGTurnBattle::RegisterNativeAbility(const FOGNativeAbilityDefinition& Defi
 {
     if (State.Status!=EOGTurnBattleStatus::Running) { Error=TEXT("Native abilities require a running battle."); return false; }
     if (!Definition.Validate(Error)) return false;
-    if (!State.Units.ContainsByPredicate([&Definition](const FOGCombatUnitState& U)
+    if (!State.Units.ContainsByPredicate([this,&Definition](const FOGCombatUnitState& U)
         { return Definition.MatchesSource(U.IdentityId,U.SkillSet.CurrentForm) &&
-            U.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")) && Owns(U,Definition.SkillId); }))
+            U.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")) && CanAdmitNativeAbility(U,Definition.SkillId); }))
     { Error=TEXT("Native ability has no matching actual battle participant/owned kit."); return false; }
+    for (const auto& Unit:State.Units)
+        if (Unit.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")) &&
+            Definition.MatchesSource(Unit.IdentityId,Unit.SkillSet.CurrentForm) && CanAdmitNativeAbility(Unit,Definition.SkillId))
+            for (const auto* Rows:{&Definition.ResourceCosts,&Definition.ResourceChanges})
+                for (const auto& Resource:*Rows)
+                    if (!NativeResourceSpecifications.Contains(Unit.UnitEntityId.ToString()+TEXT("|")+Resource.ResourceId.ToString()))
+                    { Error=TEXT("A shared ability references a battle resource not admitted for an actual source unit."); return false; }
     const FString Key=AbilityKey(Definition.IdentityId,Definition.VersionId,Definition.SkillId);
     if (const auto* Existing=NativeAbilities.Find(Key))
     {
@@ -83,7 +88,7 @@ bool FOGTurnBattle::RegisterNativeAbility(const FOGNativeAbilityDefinition& Defi
         if (Pair.Value.SkillId==Definition.SkillId)
             for (const auto& Unit:State.Units)
                 if (Definition.MatchesSource(Unit.IdentityId,Unit.SkillSet.CurrentForm) &&
-                    Pair.Value.MatchesSource(Unit.IdentityId,Unit.SkillSet.CurrentForm) && Owns(Unit,Definition.SkillId))
+                    Pair.Value.MatchesSource(Unit.IdentityId,Unit.SkillSet.CurrentForm) && CanAdmitNativeAbility(Unit,Definition.SkillId))
                 { Error=TEXT("Overlapping source scopes cannot replace an admitted shared ability."); return false; }
     NativeAbilities.Add(Key,Definition); ++NativeAbilityRevision; return true;
 }
@@ -99,7 +104,7 @@ bool FOGTurnBattle::HasNativeActionExecutor(const FOGCombatUnitState& Source,con
         if (CompleteKit(Source.SkillSet,Alter.Skills) &&
             (Alter.Skills.ActiveSkills.Contains(Skill) || Alter.Skills.UltimateSkill==Skill || Alter.WorldFantasmId==Skill)) return true;
     }
-    else if (Owns(Source,Skill) && FindNativeAbility(Source,Skill)) return true;
+    else if (IsNativeAbilityAuthorized(Source,Skill) && FindNativeAbility(Source,Skill)) return true;
     Error=TEXT("No real native executor is registered for this exact source Version and ability."); return false;
 }
 bool FOGTurnBattle::ExpandNativeAbilityTargets(const FOGResolvedCombatAction& Original,FOGResolvedCombatAction& Expanded,
@@ -144,7 +149,8 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson),Context) ||
         !Context || !Context->Values.IsEmpty())
     { Error=TEXT("Ordinary authored packets do not accept unregistered branches or numerical command overrides."); return false; }
-    if (!Owns(Source,Action.SkillId) || Action.InterruptPriority!=0)
+    if (!IsNativeAbilityAuthorized(Source,Action.SkillId) ||
+        (Action.InterruptPriority!=0 && !HasNativeReactionProof(Source,Action.SkillId)))
     { Error=TEXT("Ordinary registered ability is not owned or cannot resolve an interrupt."); return false; }
     const bool Self=Definition->Targets==EOGNativeAbilityTargets::Self;
     const bool Allies=Self || Definition->Targets==EOGNativeAbilityTargets::SingleAlly || Definition->Targets==EOGNativeAbilityTargets::AllAllies;
@@ -155,7 +161,9 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
     for (const auto& Id:Action.TargetUnitIds)
     {
         const auto* Target=FindUnit(Id);
-        if (!Target || !Target->CanAct() || Seen.Contains(Id) || (Self && Id!=Source.UnitEntityId) ||
+        const bool ReserveSelf=Target && Id==Source.UnitEntityId &&
+            AllowsNativeReactionSource(Source,Action) && Target->Presence==EOGCombatPresence::Reserve && Target->IsAlive();
+        if (!Target || (!Target->CanAct() && !ReserveSelf) || Seen.Contains(Id) || (Self && Id!=Source.UnitEntityId) ||
             (!Self && ((Target->TeamIndex==Source.TeamIndex)!=Allies)) ||
             (!Self && Id==Source.UnitEntityId && !Definition->bIncludeSelf))
         { Error=TEXT("Registered ability target is absent, off-field, duplicate or has the wrong allegiance."); return false; }
@@ -185,7 +193,7 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
     for (int32 Hit=0;Hit<Packet.Repeats;++Hit)
     for (const auto& Id:Action.TargetUnitIds)
     {
-        auto* Target=FindMutableUnit(Id); if (!Target || !Target->CanAct()) continue;
+        auto* Target=FindMutableUnit(Id); if (!Target || (!Target->CanAct() && !(Id==Source.UnitEntityId && AllowsNativeReactionSource(Source,Action)))) continue;
         FOGCombatStats Attacker=Source.Stats;
         int32 Attack=0,Speed=0,Healing=0,Reduction=0;
         GetApprovedDawnBlessingBps(Source.UnitEntityId,Attack,Speed,Healing,Reduction);
@@ -218,6 +226,6 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
             : (Change.Amount < -Resource->Value?0:Resource->Value+Change.Amount);
     }
     NativeAbilityReadyActions.Add(Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString(),
-        NativeOwnerActions.FindRef(Source.UnitEntityId)+Definition->CooldownOwnerActions+2);
+        NativeOwnerActions.FindRef(Source.UnitEntityId)+Definition->CooldownOwnerActions+(Action.InterruptPriority>0?1:2));
     return true;
 }

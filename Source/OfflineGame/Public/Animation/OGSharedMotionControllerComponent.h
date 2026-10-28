@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/OGEntityId.h"
 #include "Components/ActorComponent.h"
 #include "Animation/OGSharedMotionLibrary.h"
 #include "Animation/OGSharedReferenceMotion.h"
@@ -86,6 +87,15 @@ public:
     bool PlayAction(FName GameplayAction, FName Context, bool bAdultContextAuthorized = false,
         int32 ParticipantCount = 1, FName ParticipantRole = NAME_None);
 
+    /** Accepted combat presentation is queued once per real action and battle.
+     * Ordinary interaction playback keeps its own source/authorization contract. */
+    UFUNCTION(BlueprintCallable,Category="Motion|Combat")
+    bool EnqueueCombatAction(FName GameplayAction,const FOGEntityId& BattleId,const FOGEntityId& ActionId);
+    UFUNCTION(BlueprintCallable,Category="Motion|Combat")
+    void CancelCombatActions(const FOGEntityId& BattleId);
+    /** A visual HP-result cue. Its deduplication ID never enters canonical gameplay state. */
+    bool EnqueueCombatCue(FName Cue,const FOGEntityId& BattleId,const FOGEntityId& ActionId,const FOGEntityId& SubjectId);
+
     /** Every installed source is available by stable identity; no character clip copies. */
     UFUNCTION(BlueprintCallable, Category="Motion|Library")
     bool PlaySharedSourceMotion(FName SourceId, bool bLoop = false);
@@ -168,6 +178,13 @@ private:
 
     TArray<float> PlayingSequenceLengths;
 
+    struct FQueuedCombatMotion { FName Action; FOGEntityId Receipt; };
+    TArray<FQueuedCombatMotion> CombatQueue;
+    TSet<FOGEntityId> CombatReceipts;
+    FOGEntityId CombatScope;
+    bool bPreserveCombatQueue=false;
+    bool bPlayingQueuedCombat=false;
+    bool StartNextCombatMotion();
     bool bPlaying = false;
     bool bLooping = false;
     bool bHasContact = false;

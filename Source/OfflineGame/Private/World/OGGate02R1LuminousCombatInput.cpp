@@ -118,15 +118,21 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
         if (!Body || !Old || FOGLargeNumber::Compare(*Old,Unit.CurrentHp)==0) continue;
         if (Hud) Hud->RegisterCanonicalCombatImpact(Body,*Old,Unit.CurrentHp);
         if (auto* Motion=BattleMotion(Body))
-            Motion->PlayAction(!Unit.IsAlive()?FName(TEXT("Combat.Reaction.Death")):
-                FOGLargeNumber::Compare(Unit.CurrentHp,*Old)<0?FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),
-                TEXT("Combat"),false,1);
+        {
+            if (!Unit.IsAlive()) Motion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
+            else Motion->EnqueueCombatCue(FOGLargeNumber::Compare(Unit.CurrentHp,*Old)<0?
+                FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),BattleId,Action.ActionId,Unit.UnitEntityId);
+        }
     }
     if (FirstTarget && FirstTarget!=this)
     {
         const FVector Delta=FirstTarget->GetActorLocation()-GetActorLocation();
         if (Delta.SizeSquared2D()>FMath::Square(5.f)) SetActorRotation(FRotator(0,Delta.Rotation().Yaw,0));
     }
+    const auto* SurvivingSource=Updated->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==SourceId;});
+    if (!SurvivingSource || !SurvivingSource->IsAlive()) return true;
+    const auto* BoundBody=FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+    if (BoundBody && BoundBody->IsBoundTo(BattleId,SourceId)) return true;
     if (auto* Legacy=Cast<AOGLuminousV3PlayableCharacter>(this)) Legacy->PlaySharedGameplayAction(Semantic);
     if (auto* Content=Cast<AOGContentPlayableCharacter>(this); Content && Content->Appearance)
     {

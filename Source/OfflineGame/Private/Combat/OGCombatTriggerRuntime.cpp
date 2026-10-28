@@ -26,7 +26,7 @@ void FOGCombatTriggerRuntime::SetBindings(
 }
 
 void FOGCombatTriggerRuntime::QueueForEvent(
-    const FOGCombatTriggerContext& Context)
+    const FOGCombatTriggerContext& Context,const FOGCombatConditionEvaluator* Override)
 {
     if (Context.EventType.IsNone())
     {
@@ -36,7 +36,7 @@ void FOGCombatTriggerRuntime::QueueForEvent(
     for (const FOGCombatTriggerBinding& Binding : Bindings)
     {
         if (Binding.Trigger.EventType != Context.EventType ||
-            !ConditionsPass(Binding, Context))
+            !ConditionsPass(Binding, Context,Override))
         {
             continue;
         }
@@ -54,6 +54,8 @@ void FOGCombatTriggerRuntime::QueueForEvent(
             Queued.TriggerId = Binding.Trigger.TriggerId;
             Queued.ActionId = ActionId;
             Queued.SourceSequence = Context.SourceSequence;
+            Queued.EventType=Context.EventType; Queued.EventSourceUnitId=Context.SourceUnitId;
+            Queued.EventTargetUnitId=Context.TargetUnitId; Queued.EventSkillId=Context.SkillId;
             QueuedActions.Add(MoveTemp(Queued));
         }
     }
@@ -78,14 +80,15 @@ void FOGCombatTriggerRuntime::Reset()
 
 bool FOGCombatTriggerRuntime::ConditionsPass(
     const FOGCombatTriggerBinding& Binding,
-    const FOGCombatTriggerContext& Context) const
+    const FOGCombatTriggerContext& Context,const FOGCombatConditionEvaluator* Override) const
 {
     if (Binding.Trigger.Conditions.IsEmpty())
     {
         return true;
     }
 
-    if (!ConditionEvaluator)
+    const auto& Evaluate=Override?*Override:ConditionEvaluator;
+    if (!Evaluate)
     {
         return false;
     }
@@ -93,7 +96,7 @@ bool FOGCombatTriggerRuntime::ConditionsPass(
     for (const FOGConditionDefinition& Condition : Binding.Trigger.Conditions)
     {
         bool bResult =
-            ConditionEvaluator(
+            Evaluate(
                 Binding,
                 Condition,
                 Context);

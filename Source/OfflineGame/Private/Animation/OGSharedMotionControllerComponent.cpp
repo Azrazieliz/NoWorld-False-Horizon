@@ -1,4 +1,5 @@
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Misc/SecureHash.h"
 
 #include "Animation/AnimSequence.h"
 #include "Animation/Skeleton.h"
@@ -510,6 +511,8 @@ bool UOGSharedMotionControllerComponent::PlayAction(
 
 void UOGSharedMotionControllerComponent::StopAction()
 {
+    if (!bPreserveCombatQueue) { CombatQueue.Reset(); CombatReceipts.Reset(); CombatScope=FOGEntityId(); }
+    bPlayingQueuedCombat=false;
     ++PlaybackGeneration;
     RestoreReferencePose();
     SetComponentTickEnabled(!MorphOverlays.IsEmpty());
@@ -551,6 +554,7 @@ void UOGSharedMotionControllerComponent::TickComponent(
     if (DeltaSeconds <= 0.f) return;
     if (!bPlaying)
     {
+        StartNextCombatMotion();
         ApplyMorphOverlays();
         return;
     }
@@ -598,8 +602,13 @@ void UOGSharedMotionControllerComponent::TickComponent(
     {
         const FName FinishedAction = CurrentAction;
         const FName FinishedMotion = CurrentMotionId;
-        StopAction();
+        {
+            TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
+            StopAction();
+        }
+        const uint64 FinishedGeneration=PlaybackGeneration;
         OnMotionFinished.Broadcast(FinishedAction, FinishedMotion);
+        if (!bPlaying && PlaybackGeneration==FinishedGeneration) StartNextCombatMotion();
     }
 }
 
@@ -761,4 +770,53 @@ void UOGSharedMotionControllerComponent::RestoreReferencePose()
         Part->SetLeaderPoseComponent(Saved.Leader.Get());
     }
     ReferenceRestores.Reset(); ReferenceMappings.Reset(); ReferenceClip.Reset();
+}
+
+bool UOGSharedMotionControllerComponent::EnqueueCombatAction(FName Action,
+    const FOGEntityId& Battle,const FOGEntityId& Receipt)
+{
+    if (!IsInGameThread() || !Battle.IsValid() || !Receipt.IsValid() || Action.IsNone()) return false;
+    if (CombatScope==Battle && CombatReceipts.Contains(Receipt)) return true;
+    if (!CanPlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
+    // A coordinated scene owns its current playback until it explicitly exits.
+    if (bPlaying && !bPlayingQueuedCombat && !CurrentAction.ToString().StartsWith(TEXT("Traversal.")) &&
+        !CurrentAction.ToString().StartsWith(TEXT("Combat."))) return false;
+    if (CombatScope!=Battle)
+    {
+        const bool StopOld=bPlayingQueuedCombat;
+        CombatQueue.Reset(); CombatReceipts.Reset(); CombatScope=Battle;
+        if (StopOld) { TGuardValue<bool> Preserve(bPreserveCombatQueue,true); StopAction(); }
+    }
+    CombatReceipts.Add(Receipt);
+    FQueuedCombatMotion Queued; Queued.Action=Action; Queued.Receipt=Receipt; CombatQueue.Add(Queued);
+    if (!bPlaying || bLooping || CurrentAction.ToString().StartsWith(TEXT("Traversal.")))
+        return StartNextCombatMotion();
+    SetComponentTickEnabled(true); return true;
+}
+bool UOGSharedMotionControllerComponent::StartNextCombatMotion()
+{
+    while (!CombatQueue.IsEmpty())
+    {
+        const auto Next=CombatQueue[0]; CombatQueue.RemoveAt(0);
+        TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
+        if (PlayAction(Next.Action,TEXT("Combat"),false,1,NAME_None))
+        { bPlayingQueuedCombat=true; return true; }
+        UE_LOG(LogTemp,Warning,TEXT("Accepted combat motion %s became unavailable for the current rig."),*Next.Action.ToString());
+    }
+    return false;
+}
+void UOGSharedMotionControllerComponent::CancelCombatActions(const FOGEntityId& Battle)
+{
+    if (CombatScope!=Battle) return;
+    const bool StopCurrent=bPlayingQueuedCombat;
+    CombatQueue.Reset(); CombatReceipts.Reset(); CombatScope=FOGEntityId();
+    if (StopCurrent) StopAction();
+}
+bool UOGSharedMotionControllerComponent::EnqueueCombatCue(FName Cue,const FOGEntityId& Battle,
+    const FOGEntityId& Action,const FOGEntityId& Subject)
+{
+    if (!Action.IsValid() || !Subject.IsValid()) return false;
+    const FString Text=TEXT("presentation|")+Action.ToString()+TEXT("|")+Subject.ToString()+TEXT("|")+Cue.ToString();
+    FGuid Id; FGuid::ParseExact(FMD5::HashAnsiString(*Text),EGuidFormats::Digits,Id);
+    return EnqueueCombatAction(Cue,Battle,FOGEntityId(Id));
 }
