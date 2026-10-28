@@ -15,6 +15,7 @@ UOGSharedMotionControllerComponent::UOGSharedMotionControllerComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bStartWithTickEnabled = false;
+    PrimaryComponentTick.TickGroup = TG_PrePhysics;
 }
 
 bool UOGSharedMotionControllerComponent::HaveIdenticalReferencePose(

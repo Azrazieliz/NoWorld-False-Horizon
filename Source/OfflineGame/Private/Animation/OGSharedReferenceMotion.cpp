@@ -84,6 +84,33 @@ struct FReferenceRegistry
             const TArray<TSharedPtr<FJsonValue>>* Caps = nullptr;
             if (O->TryGetArrayField(TEXT("capabilities"), Caps)) for (const auto& Cap : *Caps)
                 if (Cap.IsValid() && Cap->Type == EJson::String) E.RequiredCapabilities.Add(FName(*Cap->AsString()));
+            const TArray<TSharedPtr<FJsonValue>>* Morphs=nullptr;
+            if (O->TryGetArrayField(TEXT("morph_tracks"),Morphs)) for (const auto& MorphValue:*Morphs)
+            {
+                const auto Morph=MorphValue.IsValid()?MorphValue->AsObject():nullptr;
+                if (!Morph) continue;
+                FString Layer,Name;
+                if (!Morph->TryGetStringField(TEXT("layer"),Layer) || Layer.IsEmpty() ||
+                    !Morph->TryGetStringField(TEXT("morph"),Name) || Name.IsEmpty()) continue;
+                FOGSharedMorphTrack Track; Track.Layer=FName(*Layer); Track.Morph=FName(*Name);
+                const TArray<TSharedPtr<FJsonValue>>* Keys=nullptr;
+                if (!Morph->TryGetArrayField(TEXT("keys"),Keys)) continue;
+                double Previous=-1; bool Valid=true;
+                for (const auto& KeyValue:*Keys)
+                {
+                    const auto Key=KeyValue.IsValid()?KeyValue->AsObject():nullptr;
+                    double Time=0,Weight=0;
+                    if (!Key || !Key->TryGetNumberField(TEXT("time"),Time) ||
+                        !Key->TryGetNumberField(TEXT("weight"),Weight) ||
+                        !FMath::IsFinite(Time) || !FMath::IsFinite(Weight) ||
+                        Time<0 || Time<=Previous || Time>MAX_flt)
+                    { Valid=false; break; }
+                    FOGSharedMorphKey Frame; Frame.TimeSeconds=static_cast<float>(Time);
+                    Frame.Weight=FMath::Clamp(static_cast<float>(Weight),-1.f,1.f);
+                    Track.Keys.Add(Frame); Previous=Time;
+                }
+                if (Valid && !Track.Keys.IsEmpty()) E.MorphTracks.Add(MoveTemp(Track));
+            }
             if (!LegacyId.IsNone()) Aliases.FindOrAdd(LegacyId).Add(E.SourceClipId);
             Routes.Add(MoveTemp(E));
         }
