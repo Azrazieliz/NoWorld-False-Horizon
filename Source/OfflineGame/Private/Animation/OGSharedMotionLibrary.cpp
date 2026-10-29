@@ -328,7 +328,7 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
     const TArray<FName>& Capabilities,
     const TArray<TObjectPtr<USkeletalMeshComponent>>& ActiveParts,
     bool bAdultContextAuthorized, int32 ParticipantCount,
-    const FOGSharedMotionEntry** OutEntry, FName SceneRole)
+    const FOGSharedMotionEntry** OutEntry, FName SceneRole, FName RequiredSourceClip)
 {
     if (OutEntry) *OutEntry = nullptr;
     if (!Library || Action.IsNone() || RigProfile.IsNone() ||
@@ -347,6 +347,7 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
         if (!Entry.bApprovedForGameplay || Entry.MotionId.IsNone() ||
             Entry.SourceClipId.IsNone() || Entry.NativeSequence.IsNull() ||
             Entry.GameplayAction != Action ||
+            (!RequiredSourceClip.IsNone() && Entry.SourceClipId != RequiredSourceClip) ||
             Entry.CompatibleRigProfile != RigProfile ||
             (!Entry.AnatomyProfile.IsNone() && Entry.AnatomyProfile != AnatomyProfile) ||
             // Wardrobe is a preference, not a separate authored motion library.

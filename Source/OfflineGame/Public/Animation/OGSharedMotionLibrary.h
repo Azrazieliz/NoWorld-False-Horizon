@@ -168,5 +168,6 @@ public:
         bool bAdultContextAuthorized,
         int32 ParticipantCount,
         const FOGSharedMotionEntry** OutEntry = nullptr,
-        FName SceneRole = NAME_None);
+        FName SceneRole = NAME_None,
+        FName RequiredSourceClip = NAME_None);
 };

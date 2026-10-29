@@ -245,18 +245,24 @@ private:
     bool PrepareReference(const FOGReferenceMotionClip&, TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
     bool FindReference(FName Action, FName Context, int32 Count, FName Role,
         FOGSharedMotionEntry&, TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>&,
-        TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
+        TArray<TArray<FOGReferenceBoneConnection>>&, FString&,
+        FName RequiredSourceClip = NAME_None) const;
     bool StartReference(const FOGSharedMotionEntry&,
         TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>,
         TArray<TArray<FOGReferenceBoneConnection>>&&);
     void UpdateReferencePose();
     void RestoreReferencePose();
 
+    bool CanPlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
+        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip) const;
+    bool PlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
+        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip);
     void ApplyMorphOverlays();
     bool ResolveForPart(const UOGSharedMotionLibrary* Library,
         USkeletalMeshComponent* Part, FName Action, FName Context,
         bool bAuthorizedAdult, int32 ParticipantCount, FName ParticipantRole,
-        UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry) const;
+        UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry,
+        FName RequiredSourceClip = NAME_None) const;
     void ApplyAuthoredRootMotion(float PreviousSourceTime, float SourceTime);
 
     static bool HaveIdenticalReferencePose(const USkeletalMeshComponent* A,
