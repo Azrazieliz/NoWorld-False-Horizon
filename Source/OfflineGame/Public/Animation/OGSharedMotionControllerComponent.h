@@ -13,6 +13,8 @@ class UAnimSequence;
 class UAnimationAsset;
 class UOGSharedReferenceAnimInstance;
 class USkinnedMeshComponent;
+class UOGSharedMotionControllerComponent;
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOGSharedNativeMotionFinished,UOGSharedMotionControllerComponent*,FName,FName);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOGSharedMotionSignal, FName, GameplayAction, FName, MotionId);
 
@@ -65,6 +67,8 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="Motion|Events")
     FOGSharedMotionSignal OnMotionFinished;
+    /** Native owners receive the actual controller, including after natural completion. */
+    FOGSharedNativeMotionFinished OnNativeMotionFinished;
 
     UPROPERTY(BlueprintReadOnly, Category="Motion|State")
     FName CurrentAction = NAME_None;
@@ -151,6 +155,7 @@ public:
     /** Source expression channels connect once to real morph names on a rig. */
     UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Motion|Rig") TMap<FName,FName> SharedSourceMorphAliases;
     FName ResolveSourceMorph(FName SourceMorph) const;
+    bool HasSourceMorph(FName SourceMorph) const;
     bool SetSourceMorphLayer(FName Layer,FName SourceMorph,float Weight);
 
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
@@ -226,6 +231,15 @@ private:
     };
     TArray<FMorphOverlay> MorphOverlays;
     TSet<FName> AppliedMorphs;
+    struct FMorphBaseline
+    {
+        TWeakObjectPtr<USkeletalMeshComponent> Part;
+        TWeakObjectPtr<USkeletalMesh> Mesh;
+        FName Morph;
+        float Weight=0;
+    };
+    TArray<FMorphBaseline> MorphBaselines;
+    void RestoreMorphBaselines();
     TArray<FOGSharedMorphTrack> AuthoredMorphTracks;
 
     struct FReferencePartRestore

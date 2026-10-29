@@ -305,8 +305,11 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
         if (Node.SharedSceneAction.IsNone() != Node.SharedSceneContext.IsNone())
             return Fail(Error, TEXT("A shared scene requires both authored semantic action and context."));
         for (const auto& Binding : Node.AnimationBindings)
+        {
             if (!Roles.Contains(Binding.Role))
                 return Fail(Error, TEXT("Animation bindings must reference an existing participant role."));
+            if (!Binding.ValidateExpressionTracks(Node.DurationSeconds,Error)) return false;
+        }
     }
     if (!NodeIds.Contains(Definition.StartNode)) return Fail(Error, TEXT("Graph start node is missing."));
     for (const auto& Node : Definition.Nodes) for (FName Next : Node.NextNodes)
@@ -314,7 +317,7 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
     LastWorldTick = Tick;
     Entry = Request; Graph = Definition; SessionId = FOGEntityId::NewId();
     CurrentNode = NAME_None; LastCompletedNode = NAME_None;
-    Elapsed = 0; Pacing = 1; bCompletionRefreshPending = false; Sequence.Reset(); Participants.Reset(); Restore.Reset();
+    Elapsed = 0; Pacing = 1; bCompletionRefreshPending = false; LastPresentationError.Reset(); Sequence.Reset(); Participants.Reset(); Restore.Reset();
     for (const auto& Binding : Entry.Participants)
     {
         FOGInteractionParticipantState State; State.Binding = Binding;
@@ -322,6 +325,9 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
     }
     if (!RefreshCharacters(Error)) { Participants.Reset(); return false; }
     if (!SolveStaging(Entry.PreferredLocation, FindNode(Graph.StartNode), Error))
+    { Participants.Reset(); return false; }
+    if (Presentation && !Presentation->PrepareActionPresentation(*FindNode(Graph.StartNode),Participants,
+        Entry.bPrivacyPresentation,Error))
     { Participants.Reset(); return false; }
     // Persist entry before touching ordinary movement/camera state.
     if (!CommitEvent(FName(TEXT("interaction.entered")), Entry.Context, Tick, nullptr, Error))
@@ -525,12 +531,26 @@ bool FOGSystemicInteractionRuntime::StartNode(FName Id, FString& Error)
 {
     const auto* Node = FindNode(Id);
     if (!Node || !RefreshCharacters(Error)) return false;
-    if (!SolveStaging(Entry.PreferredLocation, Node, Error)) return false;
-    bCompletionRefreshPending = false;
-    CurrentNode = Id; Elapsed = 0;
-    for (const auto& Participant : Participants) if (auto* Actor = Participant.Binding.Actor.Get())
-        Actor->SetActorTransform(Participant.StagingTransform, false, nullptr, ETeleportType::TeleportPhysics);
+    const auto PreviousParticipants=Participants;
+    if (!SolveStaging(Entry.PreferredLocation,Node,Error)) return false;
+    if (Presentation && !Presentation->PrepareActionPresentation(*Node,Participants,Entry.bPrivacyPresentation,Error))
+    { Participants=PreviousParticipants; return false; }
+    const FName PreviousNode=CurrentNode; const double PreviousElapsed=Elapsed;
+    TArray<FTransform> Before;
+    for (const auto& Participant:Participants)
+        Before.Add(Participant.Binding.Actor.IsValid()?Participant.Binding.Actor->GetActorTransform():FTransform::Identity);
+    bCompletionRefreshPending=false; CurrentNode=Id; Elapsed=0; LastPresentationError.Reset();
+    for (const auto& Participant:Participants) if (auto* Actor=Participant.Binding.Actor.Get())
+        Actor->SetActorTransform(Participant.StagingTransform,false,nullptr,ETeleportType::TeleportPhysics);
     UpdatePresentation(*Node);
+    if (!LastPresentationError.IsEmpty())
+    {
+        Error=LastPresentationError; StopActionPresentation();
+        for (int32 I=0;I<Participants.Num();++I)
+            if (auto* Actor=Participants[I].Binding.Actor.Get())
+                Actor->SetActorTransform(Before[I],false,nullptr,ETeleportType::TeleportPhysics);
+        Participants=PreviousParticipants; CurrentNode=PreviousNode; Elapsed=PreviousElapsed; return false;
+    }
     return true;
 }
 
@@ -552,6 +572,7 @@ bool FOGSystemicInteractionRuntime::Advance(double Delta, int64 Tick, FString& E
     if (!bActive) return true;
     if (!FMath::IsFinite(Delta) || Delta < 0 || Tick < 0 || Tick < LastWorldTick) return Fail(Error, TEXT("Invalid frame duration or backward canonical tick."));
     LastWorldTick = Tick;
+    if (!LastPresentationError.IsEmpty()) { Error=LastPresentationError; return false; }
     for (const auto& Saved : Restore)
         if (!Saved.Actor.IsValid()) return Exit(FName(TEXT("participant_unloaded")), Tick, Error);
     if (bCompletionRefreshPending)
@@ -568,15 +589,18 @@ bool FOGSystemicInteractionRuntime::Advance(double Delta, int64 Tick, FString& E
         return true;
     }
     if (const auto* ActiveNode = FindNode(CurrentNode)) UpdateSignificance(*ActiveNode);
-    if (CurrentNode.IsNone() || Pacing == 0) return true;
+    if (CurrentNode.IsNone()) return true;
     const auto* Node = FindNode(CurrentNode);
     if (!Node) return Fail(Error, TEXT("Current action no longer exists."));
     const double Progress = Delta * Pacing;
     if (!FMath::IsFinite(Progress)) return Fail(Error, TEXT("Pacing duration overflow."));
     // At most one completion per call. Surplus duration is discarded; the host
     // continues advancing world time independently of action pacing/progress.
-    Elapsed = FMath::Min(Node->DurationSeconds, Elapsed + Progress);
-    if (Elapsed < Node->DurationSeconds) return true;
+    const double NextElapsed=FMath::Min(Node->DurationSeconds,Elapsed+Progress);
+    if (Presentation && !Presentation->AdvanceActionPresentation(*Node,Participants,NextElapsed,Entry.bPrivacyPresentation,Error))
+        return false;
+    Elapsed=NextElapsed;
+    if (Elapsed < Node->DurationSeconds || Pacing==0) return true;
     if (!CommitEvent(FName(TEXT("interaction.action_completed")), Node->NodeId, Tick, &Node->Consequences, Error)) return false;
     LastCompletedNode = CurrentNode; CurrentNode = NAME_None; Elapsed = 0;
     bCompletionRefreshPending = true;
@@ -687,6 +711,10 @@ void FOGSystemicInteractionRuntime::UpdatePresentation(const FOGInteractionActio
     }
     UpdateSignificance(Node);
     if (Presentation) for (const auto& Constraint : Node.Constraints) Presentation->ApplyConstraint(Constraint, Participants);
+    LastPresentationError.Reset();
+    if (Presentation && !Presentation->AdvanceActionPresentation(Node,Participants,Elapsed,Entry.bPrivacyPresentation,LastPresentationError) &&
+        LastPresentationError.IsEmpty())
+        LastPresentationError=TEXT("The action's required native presentation is unavailable.");
 }
 
 void FOGSystemicInteractionRuntime::UpdateSignificance(const FOGInteractionActionNode& Node)
@@ -977,5 +1005,26 @@ bool FOGInteractionActionNode::ResolveAnimationBinding(const FOGInteractionParti
         if (Specificity>Best) { Out=&Binding; Best=Specificity; Ambiguous=false; }
     }
     if (Ambiguous) { Out=nullptr; Error=TEXT("Original motion selectors are ambiguous for this actual role/rig."); return false; }
+    return true;
+}
+
+bool FOGInteractionAnimationBinding::ValidateExpressionTracks(double Duration,FString& Error) const
+{
+    TSet<FString> Channels;
+    for (const auto& Track:ExpressionTracks)
+    {
+        const FString Key=Track.Layer.ToString()+TEXT("|")+Track.Morph.ToString();
+        if (Track.Layer.IsNone() || Track.Morph.IsNone() || Track.Keys.IsEmpty() || Channels.Contains(Key))
+            return Fail(Error,TEXT("Original expression channels require distinct layers/morphs and actual source keys."));
+        Channels.Add(Key); double Previous=-1;
+        for (const auto& Frame:Track.Keys)
+        {
+            if (!FMath::IsFinite(Frame.TimeSeconds) || !FMath::IsFinite(Frame.Weight) ||
+                Frame.TimeSeconds<0 || Frame.TimeSeconds<=Previous || Frame.TimeSeconds>Duration ||
+                Frame.Weight < -1.f || Frame.Weight>1.f)
+                return Fail(Error,TEXT("Original expression keys must be ordered, finite and within the action's source clock."));
+            Previous=Frame.TimeSeconds;
+        }
+    }
     return true;
 }

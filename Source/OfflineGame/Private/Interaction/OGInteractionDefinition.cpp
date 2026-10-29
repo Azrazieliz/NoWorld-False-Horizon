@@ -61,6 +61,8 @@ bool UOGInteractionDefinition::BuildGraph(FOGInteractionActionGraph& Out, FStrin
             Binding.ManifestationId = Track.ManifestationId; Binding.VersionId = Track.VersionId;
             Binding.SharedGameplayAction = Track.Action; Binding.SharedGameplayContext = Track.Context;
             Binding.SharedSceneRole = Track.SourceSceneRole;
+            Binding.ExpressionTracks = Track.ExpressionTracks;
+            if (!Binding.ValidateExpressionTracks(Node.DurationSeconds,Error)) return false;
         }
         if (!Node.SharedSceneAction.IsNone())
         {
@@ -78,6 +80,10 @@ bool UOGInteractionDefinition::BuildGraph(FOGInteractionActionGraph& Out, FStrin
             FOGInteractionRolePlacement Native; Native.Role = Placement.Role;
             Native.RelativeToAnchor = Placement.RelativeToAnchor; Node.RolePlacements.Add(Native);
         }
+        if (!Node.SharedSceneAction.IsNone())
+            for (FName Role:Required)
+                if (!Placements.Contains(Role))
+                    return InvalidInteraction(Error,TEXT("Synchronized source tracks require their original active-role placements."));
         for (const auto& Change : Source.StateChanges)
         {
             if (!RoleSet.Contains(Change.Role)) return InvalidInteraction(Error, TEXT("State change names an unknown role."));

@@ -60,6 +60,10 @@ public:
     FOGInteractionReactionPresentation OnReactionPresentation;
 
     virtual void ApplyCharacter(const FOGInteractionParticipantState&) override;
+    virtual bool PrepareActionPresentation(const FOGInteractionActionNode&,
+        const TArray<FOGInteractionParticipantState>&,bool,FString&) override;
+    virtual bool AdvanceActionPresentation(const FOGInteractionActionNode&,
+        const TArray<FOGInteractionParticipantState>&,double,bool,FString&) override;
     virtual void SetSignificance(const FOGEntityId&, bool, bool) override;
     virtual void ApplyConstraint(const FOGInteractionConstraint&, const TArray<FOGInteractionParticipantState>&) override;
     virtual void ApplyAnimation(const FOGEntityId&, UObject*) override;
@@ -84,6 +88,9 @@ private:
     FOGEntityId GetAcceptedContextEvent(bool bCompletedBattle) const;
     UOGSharedMotionControllerComponent* FindMotionController(AActor*) const;
     void OwnMotion(UOGSharedMotionControllerComponent*);
+    void MarkOwnedPlayback(UOGSharedMotionControllerComponent*);
+    void HandleOwnedMotionFinished(UOGSharedMotionControllerComponent*,FName,FName);
+    void ClearActionExpressions();
     void UpdateAnimationPacing();
     AActor* FindBoundActor(const FOGEntityId&) const;
     struct FMeshRestore
@@ -123,8 +130,15 @@ private:
         TWeakObjectPtr<UOGSharedMotionControllerComponent> Motion;
         bool bRootMotion = false;
         float Pacing = 1.f;
+        uint64 Generation=0;
+        FName Action,Source;
+        bool bOwnsPlayback=false;
+        bool bFinished=false;
+        bool bPhaseRestored=false;
     };
     TArray<FMotionRestore> OwnedMotions;
+    struct FExpressionRestore { TWeakObjectPtr<UOGSharedMotionControllerComponent> Motion; FName Layer; };
+    TArray<FExpressionRestore> ActionExpressionLayers;
     FOGInteractionActionGraph ActiveGraph;
     FString Status = TEXT("Choose participants and an entry context.");
     int64 LastTick = -1;

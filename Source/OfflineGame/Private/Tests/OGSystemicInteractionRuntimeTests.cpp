@@ -106,6 +106,12 @@ struct FInteractionPresentationProbe : IOGSystemicInteractionPresentation
     int32 RestoreCalls = 0;
     int32 ConstraintCalls = 0;
     bool bPrivacy = false;
+    bool bPrepared=true,bNativeReady=true;
+    TArray<double> PresentationTimes;
+    virtual bool PrepareActionPresentation(const FOGInteractionActionNode&,const TArray<FOGInteractionParticipantState>&,bool,FString& Error) override
+    { if (!bPrepared) Error=TEXT("Source adapter unavailable"); return bPrepared; }
+    virtual bool AdvanceActionPresentation(const FOGInteractionActionNode&,const TArray<FOGInteractionParticipantState>&,double Time,bool,FString& Error) override
+    { PresentationTimes.Add(Time); if (!bNativeReady) Error=TEXT("Source adapter interrupted"); return bNativeReady; }
     TFunction<void()> OnCharacter;
     int32 StopCalls = 0;
     virtual void ApplyCharacter(const FOGInteractionParticipantState& State) override
@@ -809,4 +815,44 @@ bool FOGInteractionStateEmbodiedPlacementTest::RunTest(const FString& Parameters
     return true;
 }
 
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionNativePresentationClockTest,
+    "OfflineGame.Foundation.Interaction.NativeClockAndUnavailablePresentation",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionNativePresentationClockTest::RunTest(const FString&)
+{
+    FInteractionFixture F;
+    if (!TestTrue(TEXT("Open canonical fixture"),F.Open(2))) return false;
+    FOGSystemicInteractionRuntime Runtime(F.Store,F.Ruler); FInteractionPresentationProbe Probe;
+    Runtime.SetPresentationBridge(&Probe); const auto Graph=F.GraphWithConsequences();
+    Probe.bPrepared=false;
+    TestFalse(TEXT("Missing source adapter rejects entry"),Runtime.Enter(F.Entry,Graph,0,F.Error));
+    TArray<FOGWorldEvent> Events;
+    TestTrue(TEXT("Read rejected entry events"),F.Events(Events));
+    TestEqual(TEXT("Source preflight cannot create an entered event"),Events.Num(),0);
+    Probe.bPrepared=true;
+    if (!TestTrue(TEXT("Prepared source action enters"),Runtime.Enter(F.Entry,Graph,0,F.Error))) return false;
+    TestTrue(TEXT("Pause action pacing"),Runtime.SetPacing(0,F.Error));
+    TestTrue(TEXT("Paused frame remains native-valid"),Runtime.Advance(10,1,F.Error));
+    TestEqual(TEXT("Facial source clock stays paused"),Probe.PresentationTimes.Last(),0.0);
+    TestTrue(TEXT("Set half pacing"),Runtime.SetPacing(.5,F.Error));
+    TestTrue(TEXT("Advance actual action source time"),Runtime.Advance(1,2,F.Error));
+    TestEqual(TEXT("Native presentation shares paced action time"),Probe.PresentationTimes.Last(),.5);
+    Runtime.SetPrivacyPresentation(true); Runtime.SetPrivacyPresentation(false);
+    TestEqual(TEXT("Unmasking resumes existing source phase"),Probe.PresentationTimes.Last(),.5);
+    Probe.bNativeReady=false;
+    TestFalse(TEXT("Interrupted source cannot complete logical action"),Runtime.Advance(10,3,F.Error));
+    TestTrue(TEXT("Read interrupted events"),F.Events(Events));
+    TestEqual(TEXT("No phantom completed-action event"),Events.Num(),1);
+    bool Found=false; FOGKnowledgeFactRecord Fact;
+    TestTrue(TEXT("Read withheld consequence"),F.Store.TryReadKnowledgeFact(F.Ruler,
+        TEXT("neutral_handoff_observed"),F.Entry.Participants.Last().Character.EntityId,Found,Fact,F.Error));
+    TestFalse(TEXT("Unavailable native presentation grants no completion consequence"),Found);
+    Probe.bNativeReady=true;
+    TestTrue(TEXT("Native source recovers at retained phase"),Runtime.Advance(1,4,F.Error));
+    TestTrue(TEXT("Read recovered events"),F.Events(Events));
+    TestEqual(TEXT("Recovery produces exactly one completion"),Events.Num(),2);
+    TestTrue(TEXT("Close fixture interaction"),Runtime.Exit(TEXT("test_finished"),4,F.Error));
+    return true;
+}
 #endif

@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Core/OGEntityId.h"
+#include "Animation/OGSharedMotionLibrary.h"
 #include "Runtime/OGFoundationCharacterRuntime.h"
 #include "Runtime/OGOptionalAssetRuntime.h"
 #include "World/OGWorldStateRecords.h"
@@ -46,6 +47,9 @@ struct OFFLINEGAME_API FOGInteractionAnimationBinding
     FName SharedSceneRole = NAME_None;
     FOGOptionalAssetReference Expression;
     FOGOptionalAssetReference Reaction;
+    /** Original facial/secondary channels, shared by every compatible rig. */
+    TArray<FOGSharedMorphTrack> ExpressionTracks;
+    bool ValidateExpressionTracks(double Duration,FString& Error) const;
 };
 /** Sparse completion-time changes. Role must resolve to exactly one canonical
  * participant. Objects merge recursively; other JSON values replace, including
@@ -143,6 +147,12 @@ class OFFLINEGAME_API IOGSystemicInteractionPresentation
 public:
     virtual ~IOGSystemicInteractionPresentation() = default;
     virtual void ApplyCharacter(const FOGInteractionParticipantState&) = 0;
+    /** Pure native-source preparation; no playback or canonical state changes. */
+    virtual bool PrepareActionPresentation(const FOGInteractionActionNode&,
+        const TArray<FOGInteractionParticipantState>&,bool,FString&) { return true; }
+    /** Uses the action's paced clock; false prevents an unavailable native action from completing. */
+    virtual bool AdvanceActionPresentation(const FOGInteractionActionNode&,
+        const TArray<FOGInteractionParticipantState>&,double,bool,FString&) { return true; }
     virtual void SetSignificance(const FOGEntityId&, bool bActionRelevant, bool bCameraRelevant) = 0;
     virtual void ApplyConstraint(const FOGInteractionConstraint&, const TArray<FOGInteractionParticipantState>&) = 0;
     virtual void ApplyAnimation(const FOGEntityId&, UObject* Animation) = 0;
@@ -231,6 +241,7 @@ private:
     FName CurrentNode;
     FName LastCompletedNode;
     bool bCompletionRefreshPending = false;
+    FString LastPresentationError;
     double Elapsed = 0;
     double Pacing = 1;
     bool bActive = false;
