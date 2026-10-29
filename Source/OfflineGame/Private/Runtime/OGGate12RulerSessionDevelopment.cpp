@@ -2,6 +2,8 @@
 
 #include "Combat/OGTurnBattle.h"
 #include "Combat/OGDiagnosticCombatComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
+#include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "Combat/OGWorldActionRuntime.h"
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
@@ -10,7 +12,42 @@
 
 namespace
 {
-bool IsDevelopmentBattleRunning(const UOGGameCoreSubsystem& Core, UWorld* World)
+bool IsDevelopmentUnit(const FOGCombatUnitState& Unit, const FOGEntityId& Ruler,
+    const FOGCharacterManifestationRecord& Target)
+{
+    return Unit.UnitEntityId == Ruler ||
+        (Unit.UnitEntityId == Target.ManifestationId && Unit.IdentityId == Target.IdentityId &&
+            Unit.SkillSet.CurrentForm == Target.ActiveVersionId);
+}
+
+bool IsDevelopmentBody(const AActor& Actor, const FOGEntityId& Ruler,
+    const FOGCharacterManifestationRecord& Target)
+{
+    // Existing canonical presentation/appearance bindings are evidence of the
+    // actual body. Possession, actor names and other NPCs' actions are not.
+    TArray<UOGCanonicalCharacterPresentation*> Projections;
+    Actor.GetComponents<UOGCanonicalCharacterPresentation>(Projections);
+    for (const auto* Presentation : Projections)
+    {
+        if (!IsValid(Presentation) || !Presentation->HasProjection()) continue;
+        const auto& P = Presentation->GetProjection();
+        if (!P.bHasManifestation && P.EntityKind == FName(TEXT("ruler")) &&
+            P.Context.EntityId == Ruler && P.Context.OwnerEntityId == Ruler) return true;
+        if (P.bHasManifestation && P.Context.EntityId == Target.ManifestationId &&
+            P.Context.ManifestationId == Target.ManifestationId && P.Context.OwnerEntityId == Ruler &&
+            P.Manifestation.OwningRulerId == Ruler && P.Manifestation.IdentityId == Target.IdentityId &&
+            P.Manifestation.ActiveVersionId == Target.ActiveVersionId) return true;
+    }
+    TArray<UOGCharacterAppearanceComponent*> Appearances;
+    Actor.GetComponents<UOGCharacterAppearanceComponent>(Appearances);
+    for (const auto* Appearance : Appearances)
+        if (IsValid(Appearance) && Appearance->MatchesOwnedManifestation(Ruler, Target.ManifestationId))
+            return true; // Revalidates live ownership, exact Version and lifecycle.
+    return false;
+}
+
+bool IsDevelopmentBattleRunning(const UOGGameCoreSubsystem& Core, UWorld* World,
+    const FOGEntityId& Ruler, const FOGCharacterManifestationRecord& Target)
 {
     const FOGTurnBattle* Battle = Core.GetOwnedLuminousTurnBattle();
     if (Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running) return true;
@@ -20,12 +57,17 @@ bool IsDevelopmentBattleRunning(const UOGGameCoreSubsystem& Core, UWorld* World)
         TArray<UOGDiagnosticCombatComponent*> Combats;
         It->GetComponents<UOGDiagnosticCombatComponent>(Combats);
         for (const auto* Combat : Combats)
-            if (IsValid(Combat) && Combat->GetWorld() == World &&
-                (Combat->IsInTurn() || Combat->GetTurnState().Status == EOGTurnBattleStatus::Running)) return true;
+        {
+            if (!IsValid(Combat) || Combat->GetWorld() != World ||
+                (!Combat->IsInTurn() && Combat->GetTurnState().Status != EOGTurnBattleStatus::Running)) continue;
+            if (Combat->GetTurnState().Units.ContainsByPredicate([&](const auto& Unit)
+                { return IsDevelopmentUnit(Unit, Ruler, Target); })) return true;
+        }
         TArray<UOGWorldActionRuntimeComponent*> Actions;
         It->GetComponents<UOGWorldActionRuntimeComponent>(Actions);
         for (const auto* Action : Actions)
-            if (IsValid(Action) && Action->GetWorld() == World && Action->HasActiveAction()) return true;
+            if (IsValid(Action) && Action->GetWorld() == World && Action->HasActiveAction() &&
+                IsDevelopmentBody(**It, Ruler, Target)) return true;
     }
     return false;
 }
@@ -136,7 +178,7 @@ bool UOGGate12RulerSessionSubsystem::ReadOwnedDevelopmentOptions(
 
     FOGCharacterDevelopmentService Development(*Store);
     TArray<FOGCharacterDevelopmentPreview> Options;
-    const bool bBattleRunning = IsDevelopmentBattleRunning(*Core, GetWorld());
+    const bool bBattleRunning = IsDevelopmentBattleRunning(*Core, GetWorld(), BoundRulerId, Current);
     for (const FOGCharacterDevelopmentDefinition& Definition : Definitions)
     {
         if (Definition.IdentityId != IdentityId ||
@@ -184,7 +226,7 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedDevelopment(
         OutError = TEXT("Review a valid authored development choice before confirming it.");
         return false;
     }
-    if (IsDevelopmentBattleRunning(*Core, GetWorld()))
+    if (IsDevelopmentBattleRunning(*Core, GetWorld(), BoundRulerId, Current))
     {
         OutError = TEXT("Finish the active battle or action before developing a character; its combat snapshot is already active.");
         return false;

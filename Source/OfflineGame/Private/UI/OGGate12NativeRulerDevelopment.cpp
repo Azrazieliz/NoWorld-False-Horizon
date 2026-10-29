@@ -141,8 +141,6 @@ void UOGGate12NativeRulerWidget::AddDevelopmentPreview(
             (Input.Cost.RankId.IsEmpty() ? TEXT("Unranked") : Input.Cost.RankId.ToString()) +
             TEXT(" / quality: ") + (Input.Cost.QualityId.IsEmpty() ? TEXT("Ungraded") : Input.Cost.QualityId.ToString()),
             15, DevelopmentMuted);
-        for (const auto& Item : Input.SelectedInstances)
-            AddMessage(Parent, TEXT("Consume copy: ") + Item.ItemId.ToString(), 14, DevelopmentMuted);
     }
 
     AddMessage(Parent, TEXT("EARNED STAT INCREASES"), 18, DevelopmentGold);
