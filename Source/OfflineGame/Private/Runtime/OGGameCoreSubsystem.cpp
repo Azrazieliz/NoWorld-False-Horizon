@@ -566,7 +566,7 @@ bool UOGGameCoreSubsystem::CreateManualRecoverySnapshot(
         OutError = TEXT("Authoritative game core is not ready.");
         return false;
     }
-    if (!FlushCanonicalClockBoundary(OutError)) return false;
+    if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
@@ -605,7 +605,7 @@ bool UOGGameCoreSubsystem::ExportCanonicalWorldBackup(
         OutError = TEXT("Authoritative game core is not ready.");
         return false;
     }
-    if (!FlushCanonicalClockBoundary(OutError)) return false;
+    if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
 
     FString CheckpointError;
     if (!WorldStore->Checkpoint(CheckpointError))
@@ -647,7 +647,7 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
         OutError = TEXT("Authoritative game core is not ready.");
         return false;
     }
-    if (!FlushCanonicalClockBoundary(OutError)) return false;
+    if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(

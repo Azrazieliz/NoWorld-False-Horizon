@@ -40,6 +40,10 @@ struct OFFLINEGAME_API FOGCombatBodyCheckpoint
     GENERATED_BODY()
     UPROPERTY() FOGEntityId UnitId;
     UPROPERTY() FTransform Transform;
+    UPROPERTY() bool bCharacterMovement=false;
+    UPROPERTY() FVector Velocity=FVector::ZeroVector;
+    UPROPERTY() uint8 MovementMode=0;
+    UPROPERTY() uint8 CustomMovementMode=0;
 };
 USTRUCT()
 struct OFFLINEGAME_API FOGWorldEncounterPresentationCheckpoint

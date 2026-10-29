@@ -189,7 +189,11 @@ bool UOGGate12RulerSessionSubsystem::BindExistingRuler(
 
     if (bRulerValidated && CandidateOwner == BoundRulerId)
     {
-        return RefreshCanonicalProjections(OutError);
+        if (!RefreshCanonicalProjections(OutError)) return false;
+        bool Restored=false; FString RecoveryError;
+        if (!Core->RestoreOwnedNativeEncounter(BoundRulerId,Restored,RecoveryError))
+            Core->NativeEncounterRecoveryStatus=RecoveryError;
+        return true;
     }
 
     ClearProjectionAndSelection();

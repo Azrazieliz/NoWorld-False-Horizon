@@ -1,5 +1,8 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Combat/OGNativeEncounterDefinition.h"
+#include "Combat/OGNativeTurnAgentComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
@@ -59,7 +62,15 @@ bool UOGGameCoreSubsystem::PersistNativeEncounter(const FOGTurnBattle& Candidate
             for (const auto& Unit:Candidate.GetState().Units)
                 if (const auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
                     GetWorld(),Candidate.GetState().BattleId,Unit.UnitEntityId))
-                { FOGCombatBodyCheckpoint Body; Body.UnitId=Unit.UnitEntityId; Body.Transform=Actor->GetActorTransform(); Physical.Bodies.Add(Body); }
+                {
+                    FOGCombatBodyCheckpoint Body; Body.UnitId=Unit.UnitEntityId; Body.Transform=Actor->GetActorTransform();
+                    if (const auto* Character=Cast<ACharacter>(Actor))
+                    {
+                        const auto* Movement=Character->GetCharacterMovement(); Body.bCharacterMovement=true;
+                        Body.Velocity=Movement->Velocity; Body.MovementMode=Movement->MovementMode; Body.CustomMovementMode=Movement->CustomMovementMode;
+                    }
+                    Physical.Bodies.Add(Body);
+                }
             TArray<FOGWorldAbilityCastView> Casts; Candidate.GetWorldCasts(Casts);
             for (const auto& Cast:Casts)
             {
@@ -154,6 +165,24 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
         if (HasCopy && (Copy.IdentityId!=Unit.IdentityId || Copy.ActiveVersionId!=Unit.SkillSet.CurrentForm ||
             Copy.LifecycleState!=TEXT("active")))
         { Error=TEXT("Recovered Manifestation no longer matches its canonical identity/version/lifecycle."); return false; }
+        if (!HasCopy && Unit.UnitEntityId!=Ruler)
+        {
+            auto* Library=UOGDefinitionLibrary::Get();
+            const auto* Plan=Library?Cast<UOGNativeEncounterDefinition>(Library->Resolve(TEXT("encounter"),Candidate->GetState().EncounterDefinitionId)):nullptr;
+            if (!Plan) { Error=TEXT("Recovered NPC encounter requires its original shared plan."); return false; }
+            FName IdentityField=Plan->CanonicalIdentityField,VersionField=Plan->CanonicalVersionField;
+            if (Kit->TurnPolicy.Id.IsValid())
+            {
+                const auto* Policy=Cast<UOGNativeTurnPolicy>(Library->Resolve(Kit->TurnPolicy.System,Kit->TurnPolicy.Id));
+                if (!Policy || !Policy->Validate(Error)) return false;
+                IdentityField=Policy->CanonicalIdentityField; VersionField=Policy->CanonicalVersionField;
+            }
+            TSharedPtr<FJsonObject> Entity; FString Identity,Version;
+            if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json),Entity) || !Entity ||
+                !Entity->TryGetStringField(IdentityField.ToString(),Identity) || Identity!=Unit.IdentityId.ToString() ||
+                !Entity->TryGetStringField(VersionField.ToString(),Version) || Version!=Unit.SkillSet.CurrentForm.ToString())
+            { Error=TEXT("Recovered NPC no longer matches its actual canonical identity/version."); return false; }
+        }
     }
     if (Ranked>1 && Rank.IsEmpty()) { Error=TEXT("Ranked encounter recovery has no original suppression profile."); return false; }
     const TArray<TSharedPtr<FJsonValue>>* SavedIds=nullptr; TSet<FOGEntityId> Seen;
@@ -179,7 +208,8 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
     for (const auto& Body:Physical.Bodies)
     {
         if (!Candidate->GetState().Units.ContainsByPredicate([&](const auto& U){return U.UnitEntityId==Body.UnitId;}) ||
-            Bodies.Contains(Body.UnitId) || Body.Transform.ContainsNaN() || !Body.Transform.GetRotation().IsNormalized())
+            Bodies.Contains(Body.UnitId) || Body.Transform.ContainsNaN() || !Body.Transform.GetRotation().IsNormalized() ||
+            Body.Velocity.ContainsNaN() || (Body.bCharacterMovement && Body.MovementMode>=MOVE_MAX))
         { Error=TEXT("Encounter physical body checkpoint is inconsistent."); return false; }
         Bodies.Add(Body.UnitId);
     }
@@ -218,6 +248,8 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
 bool UOGGameCoreSubsystem::CompleteNativeWorldRecovery(FString& Error)
 {
     Error.Reset();
+    if (!IsInGameThread() || bSubmittingNativeAction || bReleasingCanonicalRuntime)
+    { Error=TEXT("World recovery waits for the settled native game thread."); return false; }
     if (!bNativeRecoveryAwaitingWorld) return true;
     if (!OwnedLuminousTurnBattle || !GetWorld()) { Error=TEXT("Recovered World is not available."); return false; }
     const auto& State=OwnedLuminousTurnBattle->GetState();
@@ -230,14 +262,8 @@ bool UOGGameCoreSubsystem::CompleteNativeWorldRecovery(FString& Error)
         if (!OwnedLuminousTurnBattle->ReadWorldCast(Cast.CastId,View)) { Error=TEXT("Recovered native cast disappeared before physical reconnection."); return false; }
         auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,View.SourceUnitId);
         auto* Runner=Actor?Actor->FindComponentByClass<UOGWorldAbilityExecutionComponent>():nullptr;
-        if (!Runner || !Runner->CanRecoverAcceptedCast(Cast,Error)) return false;
-    }
-    if (!bNativeRecoveryBodiesRestored)
-    {
-        for (const auto& Body:NativeWorldRecoveryPresentation.Bodies)
-            if (auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Body.UnitId))
-                Actor->SetActorTransform(Body.Transform,false,nullptr,ETeleportType::TeleportPhysics);
-        bNativeRecoveryBodiesRestored=true;
+        if (!Runner) { Error=TEXT("Recovered encounter waits for its native cast runner."); return false; }
+        if (!Runner->CanRecoverAcceptedCast(Cast,Error)) return false;
     }
     for (const auto& Cast:NativeWorldRecoveryPresentation.Casts)
     {
@@ -246,7 +272,28 @@ bool UOGGameCoreSubsystem::CompleteNativeWorldRecovery(FString& Error)
         auto* Runner=Actor?Actor->FindComponentByClass<UOGWorldAbilityExecutionComponent>():nullptr;
         if (!Runner || !Runner->RecoverAcceptedCast(Cast,Error)) return false;
     }
+    if (!bNativeRecoveryBodiesRestored)
+    {
+        for (const auto& Body:NativeWorldRecoveryPresentation.Bodies)
+            if (auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Body.UnitId))
+            {
+                Actor->SetActorTransform(Body.Transform,false,nullptr,ETeleportType::TeleportPhysics);
+                if (Body.bCharacterMovement) if (auto* Character=Cast<ACharacter>(Actor))
+                {
+                    auto* Movement=Character->GetCharacterMovement();
+                    Movement->SetMovementMode(static_cast<EMovementMode>(Body.MovementMode),Body.CustomMovementMode); Movement->Velocity=Body.Velocity;
+                }
+            }
+        bNativeRecoveryBodiesRestored=true;
+    }
     bNativeRecoveryAwaitingWorld=false; LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0;
+    for (const auto& Cast:NativeWorldRecoveryPresentation.Casts)
+    {
+        FOGWorldAbilityCastView View; OwnedLuminousTurnBattle->ReadWorldCast(Cast.CastId,View);
+        auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,View.SourceUnitId);
+        if (auto* Runner=Actor?Actor->FindComponentByClass<UOGWorldAbilityExecutionComponent>():nullptr)
+        { FString PresentationError; Runner->RecoverAcceptedCast(Cast,PresentationError); }
+    }
     NativeEncounterRecoveryStatus=TEXT("World encounter recovered; native bodies and cast runners reconnected.");
     return true;
 }

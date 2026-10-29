@@ -203,7 +203,8 @@ void UOGWorldAbilityExecutionComponent::CapturePresentationCheckpoint(FOGWorldCa
 bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCastPresentationCheckpoint& Saved,FString& Error)
 {
     if (!ResolveRuntime(Error)) return false;
-    if (ActiveCast.IsValid()) return ActiveCast==Saved.CastId;
+    if (ActiveCast.IsValid())
+    { if (ActiveCast==Saved.CastId) return true; Error=TEXT("Another native cast already owns this body's playback."); return false; }
     const auto* Battle=Core->GetOwnedLuminousTurnBattle();
     FOGResolvedCombatAction Request; FOGWorldAbilitySpecification Spec; TSet<int32> Steps; int64 Start=0;
     if (!Battle->ReadWorldCastRecovery(Saved.CastId,Request,Spec,Steps,Start) ||
@@ -241,7 +242,17 @@ bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCas
 bool UOGWorldAbilityExecutionComponent::RecoverAcceptedCast(const FOGWorldCastPresentationCheckpoint& Saved,FString& Error)
 {
     if (!CanRecoverAcceptedCast(Saved,Error)) return false;
-    if (ActiveCast==Saved.CastId) return true;
+    if (ActiveCast==Saved.CastId)
+    {
+        if (auto* Motion=WorldMotion(GetOwner())) Motion->SetExternalPacing(IsRecoveryPaused()?0.f:1.f);
+        if (!IsRecoveryPaused()) if (auto* Actions=GetOwner()->FindComponentByClass<UOGWorldActionRuntimeComponent>())
+        {
+            auto State=Specification.TraversalAndCancel; State.ActionId=FName(*Root.SkillId.ToString());
+            const int64 Now=Core->GetOwnedLuminousTurnBattle()->GetState().WorldElapsedMilliseconds;
+            Actions->RestoreAuthoredAction(State,static_cast<float>((Now-StartedAt)/1000.0));
+        }
+        return true;
+    }
     const auto* Battle=Core->GetOwnedLuminousTurnBattle();
     if (!Battle->ReadWorldCastRecovery(Saved.CastId,Root,Specification,Completed,StartedAt)) return false;
     BattleId=Battle->GetState().BattleId; ActiveCast=Saved.CastId; SpawnedProjectiles=Saved.SpawnedSteps;
@@ -272,6 +283,7 @@ bool UOGWorldAbilityExecutionComponent::RecoverAcceptedCast(const FOGWorldCastPr
         if (!Motion->StartImmediateCombatAction(Semantic,BattleId,ActiveCast)) { EndLocalCast(); return false; }
         const float Elapsed=static_cast<float>((Battle->GetState().WorldElapsedMilliseconds-StartedAt)/1000.0);
         Motion->RestorePlaybackPhase(Elapsed);
+        Motion->SetExternalPacing(IsRecoveryPaused()?0.f:1.f);
     }
     Status=TEXT("Accepted World cast recovered without repeating costs or committed contacts.");
     return true;
