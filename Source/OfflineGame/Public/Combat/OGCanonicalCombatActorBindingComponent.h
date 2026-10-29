@@ -21,6 +21,10 @@ class OFFLINEGAME_API UOGCanonicalCombatActorBindingComponent : public UActorCom
     GENERATED_BODY()
 public:
     UOGCanonicalCombatActorBindingComponent();
+    UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="OfflineGame|Combat|World")
+    bool bAutoConnectCanonicalEncounters=true;
+    /** Connect this actual persistent body to a fresh/restored encounter; creates no character. */
+    bool RefreshCanonicalEncounter(FString& Error);
     /** Calls against the actual GameCore battle; rejects fake unit IDs, cross-
      * world actors, absent real geometry, duplicates and wrong source identity.
      * Returns false without changing any previous valid binding. */
@@ -47,6 +51,7 @@ private:
     FOGEntityId LastPresentedAction;
     FOGLargeNumber LastVisualHp;
     bool bHasVisualHp=false;
+    bool bAutomaticBinding=false;
     void HandleCommittedState(const FOGTurnBattleState& State,const FOGEntityId& Receipt);
     void HandleNativeAction(const FOGResolvedCombatAction& Action);
     UPROPERTY(Transient)

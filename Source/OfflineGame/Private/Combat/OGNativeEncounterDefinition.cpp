@@ -1,4 +1,7 @@
 #include "Combat/OGNativeEncounterDefinition.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Interaction/OGInteractionParticipantComponent.h"
+#include "EngineUtils.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
@@ -159,6 +162,28 @@ bool UOGNativeEncounterReceiver::StartEncounter(const TArray<FOGResolvedEncounte
     if (!IsActive() || !D || !Core || !Session || !Session->IsBoundToStoredRuler())
     { Error=TEXT("Encounter trigger requires its actual World and stored Ruler session."); Status=Error; return false; }
     const bool Started=Core->StartOwnedNativeEncounter(*D,Participants,Session->BoundRulerId,{},Error);
-    if (Started) LastStartedBattle=Core->GetOwnedLuminousTurnBattle()->GetState().BattleId;
-    Status=Error; return Started;
+    if (!Started) { Status=Error; return false; }
+    const auto State=Core->GetOwnedLuminousTurnBattle()->GetState(); LastStartedBattle=State.BattleId;
+    TSet<FOGEntityId> Connected;
+    for (TActorIterator<AActor> It(GetWorld());It;++It)
+    {
+        auto* Participant=It->FindComponentByClass<UOGInteractionParticipantComponent>();
+        const auto Id=Participant?Participant->GetBoundCanonicalEntityId():FOGEntityId();
+        const auto* Unit=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Id;});
+        if (!Unit || !Unit->CanAct()) continue;
+        auto* Body=It->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+        if (!Body)
+        {
+            Body=NewObject<UOGCanonicalCombatActorBindingComponent>(*It);
+            It->AddInstanceComponent(Body); Body->RegisterComponent();
+        }
+        FString BindingError;
+        if (Body->RefreshCanonicalEncounter(BindingError)) Connected.Add(Id);
+    }
+    int32 Missing=0;
+    for (const auto& Unit:State.Units) if (Unit.CanAct() && !Connected.Contains(Unit.UnitEntityId)) ++Missing;
+    Status=Missing
+        ? FString::Printf(TEXT("Encounter saved; %d active participant bodies are not connected yet."),Missing)
+        : TEXT("Encounter saved; actual participant bodies connected.");
+    return true;
 }
