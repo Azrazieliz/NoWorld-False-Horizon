@@ -1,4 +1,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "Combat/OGNativeEncounterDefinition.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "GameFramework/Character.h"
@@ -42,6 +44,11 @@ bool UOGGameCoreSubsystem::PersistNativeEncounter(const FOGTurnBattle& Candidate
     Record->SetStringField(TEXT("battle_id"),Candidate.GetState().BattleId.ToString());
     Record->SetStringField(TEXT("receipt_id"),Receipt.EventId.ToString());
     Record->SetStringField(TEXT("world_tick_exact"),LexToString(Receipt.WorldTick));
+    FOGEntityId Controlled=Ruler;
+    if (const auto* Session=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+        Session && Session->BoundRulerId==Ruler && Session->SelectedManifestationId.IsValid())
+        Controlled=Session->SelectedManifestationId;
+    Record->SetStringField(TEXT("controlled_entity_id"),Controlled.ToString());
     const bool Complete=Candidate.GetState().Status==EOGTurnBattleStatus::Completed;
     Record->SetStringField(TEXT("state"),Complete?TEXT("completed"):(Supported?TEXT("available"):TEXT("provider_required")));
     if (Supported && !Complete)
@@ -124,11 +131,12 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
     if (!WorldStore->TryReadEntity(RecoveryId(Ruler),Found,Kind,Json,Revision,Error)) return false;
     if (!Found) return true;
     TSharedPtr<FJsonObject> Record; FString Schema,State,Runtime,Rank,Tick;
-    FOGEntityId Owner,BattleId,Receipt;
+    FOGEntityId Owner,BattleId,Receipt,Controlled;
     if (Kind!=TEXT("native_encounter_recovery") || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json),Record) ||
         !Record || !Record->TryGetStringField(TEXT("schema"),Schema) || Schema!=TEXT("noworld.native_encounter_recovery.v1") ||
         !ReadId(*Record,TEXT("ruler_id"),Owner) || Owner!=Ruler || !ReadId(*Record,TEXT("battle_id"),BattleId) ||
-        !ReadId(*Record,TEXT("receipt_id"),Receipt) || !Record->TryGetStringField(TEXT("state"),State) ||
+        !ReadId(*Record,TEXT("receipt_id"),Receipt) || !ReadId(*Record,TEXT("controlled_entity_id"),Controlled) ||
+        !Record->TryGetStringField(TEXT("state"),State) ||
         !Record->TryGetStringField(TEXT("world_tick_exact"),Tick) || Tick!=LexToString(Revision) || Revision>GetCanonicalWorldTick())
     { Error=TEXT("Native encounter recovery record is inconsistent; original bytes preserved."); return false; }
     if (State==TEXT("completed")) { NativeEncounterRecoveryStatus=TEXT("Previous encounter completed; no opening or rewards replayed."); return true; }
@@ -240,6 +248,19 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
         ? TEXT("Encounter recovered; waiting for its real World bodies and cast runners.")
         : TEXT("Turn encounter recovered at its last committed action.");
     Restored=true;
+    if (auto* Session=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+        Session && Session->BoundRulerId==Ruler)
+    {
+        FString SelectionError; bool Selected=false;
+        if (Controlled==Ruler) Selected=Session->SelectRulerForWorld(SelectionError);
+        else
+        {
+            bool HasCopy=false; FOGCharacterManifestationRecord Copy;
+            if (WorldStore->TryReadCharacterManifestation(Controlled,HasCopy,Copy,SelectionError) && HasCopy && Copy.OwningRulerId==Ruler)
+                Selected=Session->SelectOwnedManifestation(Copy.IdentityId,Controlled,SelectionError);
+        }
+        if (!Selected) NativeEncounterRecoveryStatus+=TEXT(" Select an available owned character to continue.");
+    }
     // Restore is a presentation refresh, not a new combat action or World event.
     const auto RestoredState=OwnedLuminousTurnBattle->GetState();
     OnNativeBattleStateCommitted.Broadcast(RestoredState,Receipt);
