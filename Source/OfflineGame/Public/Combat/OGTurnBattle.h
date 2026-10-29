@@ -8,6 +8,7 @@
 #include "Combat/OGCombatTypes.h"
 #include "Combat/OGNativeCombatAbility.h"
 #include "Combat/OGNativeCombatPassive.h"
+#include "Combat/OGWorldAbilityDefinition.h"
 #include "Rules/OGRulePriority.h"
 #include "OGTurnBattle.generated.h"
 
@@ -66,6 +67,10 @@ struct OFFLINEGAME_API FOGTurnBattleState
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGEntityId BattleId;
+
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGCombatExecutionMode ExecutionMode=EOGCombatExecutionMode::Turn;
+    /** Local gameplay milliseconds; menu/offline calendar time cannot silently advance an active cast. */
+    UPROPERTY(BlueprintReadOnly) int64 WorldElapsedMilliseconds=0;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     EOGTurnBattleStatus Status = EOGTurnBattleStatus::NotStarted;
@@ -226,6 +231,23 @@ public:
     bool RegisterNativeAbility(const FOGNativeAbilityDefinition& Definition,FString& Error);
     bool HasNativeActionExecutor(const FOGCombatUnitState& Source,const FOGContentId& Skill,FString& Error) const;
     FName ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    bool RegisterWorldAbility(const FOGWorldAbilitySpecification& Specification,FString& Error);
+    const FOGWorldAbilitySpecification* FindWorldAbility(const FOGCombatUnitState& Unit,const FOGContentId& Skill) const;
+    bool FilterWorldContacts(const FOGResolvedCombatAction& Root,const TArray<FOGEntityId>& Raw,TArray<FOGEntityId>& Out,FString& Error) const;
+    bool SetExecutionMode(EOGCombatExecutionMode Mode,FString& Error);
+    bool BeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error);
+    bool ApplyWorldAbilityStep(const FOGEntityId& CastId,int32 StepIndex,const TArray<FOGEntityId>& Contacts,FString& Error);
+    bool CancelWorldAbility(const FOGEntityId& CastId,FString& Error);
+    bool AdvanceWorldCombatClock(int64 TargetMilliseconds,FString& Error);
+    bool ReadWorldCast(const FOGEntityId& CastId,FOGWorldAbilityCastView& Out) const;
+    FOGEntityId GetUnitWorldCast(const FOGEntityId& UnitId) const;
+    int64 GetWorldAbilityReadyAt(const FOGEntityId& UnitId,const FOGContentId& Skill) const;
+    void GetWorldCasts(TArray<FOGWorldAbilityCastView>& Out) const
+    {
+        Out.Reset(); for (const auto& Pair:WorldCasts) { FOGWorldAbilityCastView View; if (ReadWorldCast(Pair.Key,View)) Out.Add(View); }
+        Out.Sort([](const auto& A,const auto& B){return A.CastId.ToString()<B.CastId.ToString();});
+    }
+    bool HasPendingWorldCasts() const { return !WorldCasts.IsEmpty(); }
     bool RegisterNativeEffect(const FOGNativeEffectDefinition& Definition,FString& Error);
     FOGCombatStats GetNativeEffectiveStats(const FOGEntityId& UnitId) const;
     bool HasNativeEffect(const FOGEntityId& UnitId,const FOGContentId& Id,bool Family=false) const;
@@ -304,11 +326,34 @@ private:
     bool IsNativeAbilityAuthorized(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
     bool HasNativeReactionProof(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
     bool AllowsNativeReactionSource(const FOGCombatUnitState& Source,const FOGResolvedCombatAction& Action) const;
-    bool ResolveNativeReactions(FString& Error);
+    bool ResolveNativeReactions(FString& Error,TMap<FString,int32>* RootActivations=nullptr);
     bool SelectNativeReactionTarget(const FOGQueuedTriggeredAction& Queued,const FNativePassiveRule& Rule,
         FOGResolvedCombatAction& Action,FString& Error) const;
+    struct FWorldCast
+    {
+        FOGResolvedCombatAction Root;
+        FOGWorldAbilitySpecification Specification;
+        int64 StartedAt=0;
+        uint64 Seed=0;
+        TSet<int32> CompletedSteps;
+        TMap<FString,int32> Activations;
+        bool bCostsPaid=false;
+        bool bHadContact=false;
+        TSet<FOGEntityId> BeforeEffectTargets;
+        TArray<FOGEntityId> ContactTargets;
+    };
+    TMap<FOGContentId,FOGWorldAbilitySpecification> WorldAbilities;
+    TMap<FOGEntityId,FWorldCast> WorldCasts;
+    TMap<FString,int64> WorldAbilityReadyAt;
+    TOptional<FOGResolvedCombatAction> WorldExecutionProof;
+    bool SpendNativeAbilityCosts(const FOGResolvedCombatAction&,FOGCombatUnitState&,FString&);
+    bool GrantNativeAbilityResources(const FOGResolvedCombatAction&,FOGCombatUnitState&,FString&);
+    bool ExecuteNativePacketSlices(const FOGResolvedCombatAction&,FOGCombatUnitState&,const TArray<FOGNativeAbilityPacketSlice>&,FOGDeterministicRng&,FString&);
+    bool FinishWorldAbility(const FOGEntityId& CastId,FString& Error);
+    bool CancelWorldAbilityMutating(const FOGEntityId& CastId,FString& Error);
+    bool CompleteWorldOwnerAction(const FOGResolvedCombatAction& Root,FString& Error,TMap<FString,int32>* RootActivations=nullptr);
     TMap<FOGContentId,FOGNativeEffectDefinition> NativeEffectDefinitions;
-    bool ExecuteNativeEffects(const FOGResolvedCombatAction& Action,bool BeforePackets,FOGDeterministicRng& Rng,FString& Error);
+    bool ExecuteNativeEffects(const FOGResolvedCombatAction& Action,bool BeforePackets,FOGDeterministicRng& Rng,FString& Error,uint8 Scope=0);
     bool ApplyNativeEffect(const FOGNativeEffectDefinition& Definition,const FOGNativeAbilityEffectOperation& Operation,
         const FOGResolvedCombatAction& Action,const FOGEntityId& TargetId,int32 OperationIndex,FString& Error);
     bool ProcessNativeEffectOwnerAction(const FOGEntityId& Owner,FString& Error);

@@ -6,6 +6,7 @@
 #include "Combat/OGNativeCombatAbility.h"
 #include "Effects/OGNativeCombatEffect.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "Combat/OGWorldAbilityDefinition.h"
 #include "Progression/OGCharacterDevelopmentService.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Runtime/OGLocallyInstalledPackageProvider.h"
@@ -38,6 +39,7 @@
 void UOGGameCoreSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    WorldCombatTickerHandle=FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this,&ThisClass::TickWorldCombat),0.05f);
     OGAndroidMediaVolumeBridge::Start();
 
     PerformanceTelemetry.Reset();
@@ -298,7 +300,7 @@ bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
     bReleasingCanonicalRuntime = true;
     // Clear causal entry context before consumers observe a world release.
     LastNativeBattleReceipt=LastNativeOpeningReceipt=FOGEntityId();
-    LastNativeBattleOutcome=FOGNativeBattleOutcome();
+    LastNativeBattleOutcome=FOGNativeBattleOutcome(); NativeWorldCastRequests.Reset(); LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0; WorldCombatClockWorld.Reset();
     CommittedNativeActionIds.Reset();
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     OnCanonicalRuntimeReleasing.Broadcast();
@@ -850,6 +852,7 @@ void UOGGameCoreSubsystem::Deinitialize()
     }
 
     UE_LOG(LogOfflineGame, Log, TEXT("Authoritative game core subsystem deinitialized."));
+    if (WorldCombatTickerHandle.IsValid()) { FTSTicker::GetCoreTicker().RemoveTicker(WorldCombatTickerHandle); WorldCombatTickerHandle.Reset(); }
     OGAndroidMediaVolumeBridge::Stop();
     Super::Deinitialize();
 }
@@ -974,6 +977,8 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     }
     TUniquePtr<FOGTurnBattle> Candidate=MakeUnique<FOGTurnBattle>();
     FOGTurnBattleState DevelopedState = InitialState;
+    const EOGCombatExecutionMode RequestedMode=InitialState.ExecutionMode;
+    DevelopedState.ExecutionMode=RequestedMode;
     for (FOGCombatUnitState& Unit : DevelopedState.Units)
         if (!FOGOwnedEquipmentService(*WorldStore).ProjectCombatUnit(Unit, OutError) ||
             !FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
@@ -1047,6 +1052,18 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         });
         if (Used && (!Ability->ValidateInstalled(OutError) || !AdmitSharedNativeEffects(*Candidate,D,OutError) || !Candidate->RegisterNativeAbility(D,OutError))) return false;
     }
+    if (auto* Library=UOGDefinitionLibrary::Get())
+    {
+        TArray<UDataAsset*> WorldDefinitions; Library->List(TEXT("world_ability"),UOGWorldAbilityDefinition::StaticClass(),WorldDefinitions);
+        for (auto* Asset:WorldDefinitions)
+        {
+            const auto* D=CastChecked<UOGWorldAbilityDefinition>(Asset);
+            if (Candidate->GetState().Units.ContainsByPredicate([&](const auto& Unit)
+                { return D->Specification.Matches(Unit) && Candidate->CanAdmitNativeAbility(Unit,D->Specification.SkillId); }) &&
+                (!D->ValidateDefinition(OutError) || !Candidate->RegisterWorldAbility(D->Specification,OutError))) return false;
+        }
+    }
+    if (RequestedMode!=EOGCombatExecutionMode::Turn && !Candidate->SetExecutionMode(RequestedMode,OutError)) return false;
     if (!Candidate->ResolveNativeOpeningReactions(OutError)) return false;
     FOGWorldEvent OpeningEvent;
     if (!FOGCombatActionJournal::BuildEncounterStartedEvent(DevelopedState,Candidate->GetState(),
@@ -1061,6 +1078,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     LastNativeBattleOutcome=MoveTemp(OpeningOutcome);
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
     ActiveCombatRulerId=RulerId;
+    NativeWorldCastRequests.Reset(); LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0;
     CommittedNativeActionIds.Reset();
     for (const auto& R:OwnedLuminousTurnBattle->GetLastNativeReactions())
         if (R.bExecuted) CommittedNativeActionIds.Add(R.Action.ActionId);
@@ -1118,6 +1136,8 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
     }
     if (!Action.ActionId.IsValid() || CommittedNativeActionIds.Contains(Action.ActionId))
     { OutError=TEXT("Native command requires a fresh request ID; this action is invalid or already committed."); return false; }
+    if (OwnedLuminousTurnBattle->GetState().ExecutionMode!=EOGCombatExecutionMode::Turn)
+    { OutError=TEXT("World commands execute through their native cast/contact pipeline."); return false; }
     const FOGTurnBattleState Before = OwnedLuminousTurnBattle->GetState();
     FOGTurnBattle Candidate = *OwnedLuminousTurnBattle;
     FOGResolvedCombatAction CompleteAction;

@@ -40,6 +40,8 @@ const FOGNativeAbilityDefinition* FOGTurnBattle::FindNativeAbility(const FOGComb
 }
 FName FOGTurnBattle::ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const
 {
+    if (State.ExecutionMode==EOGCombatExecutionMode::World)
+        if (const auto* World=FindWorldAbility(Source,Skill); World && !World->MotionSemantic.IsNone()) return World->MotionSemantic;
     if (const auto* Definition=FindNativeAbility(Source,Skill)) return Definition->MotionSemantic;
     return NAME_None;
 }
@@ -137,7 +139,15 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
     const auto* Definition=FindNativeAbility(Source,Action.SkillId);
     if (!Definition) return true;
     const FString CooldownKey=Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString();
-    if (NativeOwnerActions.FindRef(Source.UnitEntityId)+1<NativeAbilityReadyActions.FindRef(CooldownKey))
+    const FWorldCast* PaidCast=WorldExecutionProof.IsSet()?WorldCasts.Find(WorldExecutionProof.GetValue().ActionId):nullptr;
+    const bool Continuation=PaidCast && PaidCast->Root.SourceUnitId==Source.UnitEntityId &&
+        PaidCast->Root.SkillId==Action.SkillId && WorldExecutionProof.GetValue().SourceUnitId==Source.UnitEntityId;
+    const bool AlreadyPaid=Continuation && PaidCast->bCostsPaid;
+    if (State.ExecutionMode==EOGCombatExecutionMode::World && FindWorldAbility(Source,Action.SkillId) &&
+        !Continuation && State.WorldElapsedMilliseconds<WorldAbilityReadyAt.FindRef(CooldownKey))
+    { Error=TEXT("The authored World cooldown is not ready."); return false; }
+    if ((State.ExecutionMode==EOGCombatExecutionMode::Turn || !FindWorldAbility(Source,Action.SkillId)) &&
+        NativeOwnerActions.FindRef(Source.UnitEntityId)+1<NativeAbilityReadyActions.FindRef(CooldownKey))
     { Error=TEXT("The authored own-action cooldown is not ready."); return false; }
     for (const auto* Rows:{&Definition->ResourceCosts,&Definition->ResourceChanges})
     for (const auto& Row:*Rows)
@@ -145,7 +155,7 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
         const auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Row.ResourceId;});
         const FString Key=Source.UnitEntityId.ToString()+TEXT("|")+Row.ResourceId.ToString();
         if (!Resource || !NativeResourceSpecifications.Contains(Key) || Resource->Value<0 ||
-            Resource->Value>Resource->Maximum || (Rows==&Definition->ResourceCosts && Resource->Value<Row.Amount))
+            Resource->Value>Resource->Maximum || (Rows==&Definition->ResourceCosts && !AlreadyPaid && Resource->Value<Row.Amount))
         { Error=TEXT("An authored battle resource is unavailable or its exact cost is unaffordable."); return false; }
     }
     TSharedPtr<FJsonObject> Context;
@@ -158,7 +168,10 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
     const bool Self=Definition->Targets==EOGNativeAbilityTargets::Self;
     const bool Allies=Self || Definition->Targets==EOGNativeAbilityTargets::SingleAlly || Definition->Targets==EOGNativeAbilityTargets::AllAllies;
     const bool Single=Self || Definition->Targets==EOGNativeAbilityTargets::SingleAlly || Definition->Targets==EOGNativeAbilityTargets::SingleEnemy;
-    if (Action.TargetUnitIds.IsEmpty() || (Single && Action.TargetUnitIds.Num()!=1))
+    const bool FreeAimStart=State.ExecutionMode==EOGCombatExecutionMode::World && WorldExecutionProof.IsSet() &&
+        WorldExecutionProof.GetValue().ActionId==Action.ActionId && WorldExecutionProof.GetValue().SourceUnitId==Source.UnitEntityId &&
+        Action.TargetUnitIds.IsEmpty() && !Self;
+    if (!FreeAimStart && (Action.TargetUnitIds.IsEmpty() || (Single && Action.TargetUnitIds.Num()!=1)))
     { Error=TEXT("Registered ability requires its authored single/field target set."); return false; }
     TSet<FOGEntityId> Seen;
     for (const auto& Id:Action.TargetUnitIds)
@@ -182,22 +195,47 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
         }
     return true;
 }
-bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error)
+bool FOGTurnBattle::SpendNativeAbilityCosts(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error)
 {
     const auto* Definition=FindNativeAbility(Source,Action.SkillId);
-    if (!Definition) return true; // Strict production dispatch was checked before mutation.
+    if (!Definition) { Error=TEXT("Shared packet executor is absent."); return false; }
     for (const auto& Cost:Definition->ResourceCosts)
     {
         auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Cost.ResourceId;});
         if (!Resource || Resource->Value<Cost.Amount) { Error=TEXT("Battle resource cost changed before execution."); return false; }
         Resource->Value-=Cost.Amount;
     }
-    FOGDeterministicRng Rng(AbilitySeed(State,Action,Log.GetNextSequence()));
-    if (!ExecuteNativeEffects(Action,true,Rng,Error)) return false;
-    for (const auto& Packet:Definition->Packets)
-    for (int32 Hit=0;Hit<Packet.Repeats;++Hit)
-    for (const auto& Id:Action.TargetUnitIds)
+    return true;
+}
+bool FOGTurnBattle::GrantNativeAbilityResources(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error)
+{
+    const auto* Definition=FindNativeAbility(Source,Action.SkillId);
+    if (!Definition) { Error=TEXT("Shared packet executor is absent."); return false; }
+    for (const auto& Change:Definition->ResourceChanges)
     {
+        auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Change.ResourceId;});
+        if (!Resource) { Error=TEXT("Battle resource change has no admitted destination."); return false; }
+        // Saturation without signed overflow, including capacities near int64 maximum.
+        Resource->Value=Change.Amount>0
+            ? (Change.Amount>Resource->Maximum-Resource->Value?Resource->Maximum:Resource->Value+Change.Amount)
+            : (Change.Amount < -Resource->Value?0:Resource->Value+Change.Amount);
+    }
+    return true;
+}
+bool FOGTurnBattle::ExecuteNativePacketSlices(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,
+    const TArray<FOGNativeAbilityPacketSlice>& Slices,FOGDeterministicRng& Rng,FString& Error)
+{
+    const auto* Definition=FindNativeAbility(Source,Action.SkillId);
+    if (!Definition) { Error=TEXT("Shared packet executor is absent."); return false; }
+    for (const auto& Slice:Slices)
+    {
+        if (!Definition->Packets.IsValidIndex(Slice.PacketIndex) || Slice.FirstRepeat<0 || Slice.RepeatCount<1 ||
+            Slice.FirstRepeat>Definition->Packets[Slice.PacketIndex].Repeats-Slice.RepeatCount)
+        { Error=TEXT("Packet staging is outside the admitted original repeat interval."); return false; }
+        const auto& Packet=Definition->Packets[Slice.PacketIndex];
+        for (int32 Hit=Slice.FirstRepeat;Hit<Slice.FirstRepeat+Slice.RepeatCount;++Hit)
+        for (const auto& Id:Action.TargetUnitIds)
+        {
         auto* Target=FindMutableUnit(Id); if (!Target || (!Target->CanAct() && !(Id==Source.UnitEntityId && AllowsNativeReactionSource(Source,Action)))) continue;
         FOGCombatStats Attacker=GetNativeEffectiveStats(Source.UnitEntityId);
         int32 Attack=0,Speed=0,Healing=0,Reduction=0;
@@ -221,17 +259,26 @@ bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,F
         const auto Damage=FOGCombatMath::ResolveDamage(Request,Attacker,GetNativeEffectiveStats(Id),Rng);
         if (!Damage.TotalDamage.IsZero() && !ApplyDamage(Source.UnitEntityId,Id,Damage.TotalDamage,Action.SkillId,Error)) return false;
     }
-    if (!ExecuteNativeEffects(Action,false,Rng,Error)) return false;
-    for (const auto& Change:Definition->ResourceChanges)
-    {
-        auto* Resource=Source.BattleResources.FindByPredicate([&](const auto& R){return R.ResourceId==Change.ResourceId;});
-        if (!Resource) { Error=TEXT("Battle resource change has no admitted destination."); return false; }
-        // Saturation without signed overflow, including capacities near int64 maximum.
-        Resource->Value=Change.Amount>0
-            ? (Change.Amount>Resource->Maximum-Resource->Value?Resource->Maximum:Resource->Value+Change.Amount)
-            : (Change.Amount < -Resource->Value?0:Resource->Value+Change.Amount);
     }
-    NativeAbilityReadyActions.Add(Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString(),
+    return true;
+}
+bool FOGTurnBattle::ExecuteNativeAbility(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error)
+{
+    const auto* Definition=FindNativeAbility(Source,Action.SkillId); if (!Definition) return true;
+    const uint64 Seed=AbilitySeed(State,Action,Log.GetNextSequence()); FOGDeterministicRng Effects(Seed);
+    TArray<FOGNativeAbilityPacketSlice> Slices;
+    for (int32 Index=0;Index<Definition->Packets.Num();++Index)
+    { FOGNativeAbilityPacketSlice Slice; Slice.PacketIndex=Index; Slice.RepeatCount=Definition->Packets[Index].Repeats; Slices.Add(Slice); }
+    if (!SpendNativeAbilityCosts(Action,Source,Error) || !ExecuteNativeEffects(Action,true,Effects,Error) ||
+        !ExecuteNativePacketSlices(Action,Source,Slices,Effects,Error) ||
+        !ExecuteNativeEffects(Action,false,Effects,Error) || !GrantNativeAbilityResources(Action,Source,Error)) return false;
+    if (State.ExecutionMode==EOGCombatExecutionMode::World && FindWorldAbility(Source,Action.SkillId))
+    {
+        const int64 Cooldown=FindWorldAbility(Source,Action.SkillId)->CooldownMilliseconds;
+        WorldAbilityReadyAt.Add(Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString(),
+            Cooldown>MAX_int64-State.WorldElapsedMilliseconds?MAX_int64:State.WorldElapsedMilliseconds+Cooldown);
+    }
+    else NativeAbilityReadyActions.Add(Source.UnitEntityId.ToString()+TEXT("|")+Action.SkillId.ToString(),
         NativeOwnerActions.FindRef(Source.UnitEntityId)+Definition->CooldownOwnerActions+(Action.InterruptPriority>0?1:2));
     return true;
 }

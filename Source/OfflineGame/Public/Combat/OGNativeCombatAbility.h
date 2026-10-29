@@ -46,6 +46,15 @@ struct OFFLINEGAME_API FOGNativeAbilityResourceAmount
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 Amount=0;
     bool operator==(const FOGNativeAbilityResourceAmount& V) const { return ResourceId==V.ResourceId && Amount==V.Amount; }
 };
+/** Exact repeat interval from one shared packet; staging never copies or rescales skill numbers. */
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGNativeAbilityPacketSlice
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 PacketIndex=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 FirstRepeat=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 RepeatCount=1;
+};
 /** Shared skill mechanics. Empty scope accepts any real kit owning this skill ID.
  * Special mechanics retain their own native executors, including every Luminous form. */
 USTRUCT(BlueprintType)

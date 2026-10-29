@@ -4,10 +4,12 @@
 #include "Components/ActorComponent.h"
 #include "Core/OGEntityId.h"
 #include "Content/OGContentId.h"
+#include "Math/OGLargeNumber.h"
 #include "OGCanonicalCombatActorBindingComponent.generated.h"
 
 class UOGGameCoreSubsystem;
 struct FOGResolvedCombatAction;
+struct FOGTurnBattleState;
 
 /** Physical 3D body of an existing canonical encounter unit; no authority over
  * combat, ownership, NPC identity, saved state, damage or content approval.
@@ -41,6 +43,9 @@ protected:
 private:
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
     FOGEntityId LastPresentedAction;
+    FOGLargeNumber LastVisualHp;
+    bool bHasVisualHp=false;
+    void HandleCommittedState(const FOGTurnBattleState& State,const FOGEntityId& Receipt);
     void HandleNativeAction(const FOGResolvedCombatAction& Action);
     UPROPERTY(Transient)
     FOGEntityId BoundBattleId;

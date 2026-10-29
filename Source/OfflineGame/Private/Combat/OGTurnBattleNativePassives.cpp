@@ -124,9 +124,11 @@ bool FOGTurnBattle::ResolveNativeOpeningReactions(FString& Error)
     if (!Candidate.ResolveNativeReactions(Error)) return false;
     *this=MoveTemp(Candidate); return true;
 }
-bool FOGTurnBattle::ResolveNativeReactions(FString& Error)
+bool FOGTurnBattle::ResolveNativeReactions(FString& Error,TMap<FString,int32>* RootActivations)
 {
-    TMap<FString,int32> Activations; TSet<FString> AcceptedGroups,RejectedGroups;
+    TMap<FString,int32> LocalActivations;
+    auto& Activations=RootActivations?*RootActivations:LocalActivations;
+    TSet<FString> AcceptedGroups,RejectedGroups;
     while (true)
     {
         int32 Index=INDEX_NONE; int32 BestPriority=MIN_int32;

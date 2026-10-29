@@ -4,6 +4,7 @@
 #include "Characters/OGContentCharacterActors.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -84,6 +85,12 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
         Selected.Add(GetTargetHudProjectionForHud().TargetEntityId);
     FOGResolvedCombatAction Proposed,Action;
     Command->BuildAction(*Source,Selected,Proposed);
+    if (Encounter->GetState().ExecutionMode==EOGCombatExecutionMode::World)
+    {
+        auto* Execution=FindComponentByClass<UOGWorldAbilityExecutionComponent>();
+        if (!Execution) { Error=TEXT("The actual character has no connected World executor."); return false; }
+        return Execution->BeginNativeAction(Proposed,false,Error);
+    }
     if (!Encounter->ValidateResolvedAction(Proposed,Action,Error)) return false;
     for (const auto& Id:Action.TargetUnitIds)
     {

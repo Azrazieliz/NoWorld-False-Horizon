@@ -2,6 +2,9 @@
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGWorldAbilityExecutionComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerController.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -102,12 +105,17 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     }
     if (BoundBattleId!=State.BattleId || BoundUnitId!=UnitId) UnbindVisual();
     if (BoundCore.IsValid())
-    { BoundCore->OnNativeCombatActionResolved.RemoveAll(this); BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this); }
+    { BoundCore->OnNativeCombatActionResolved.RemoveAll(this); BoundCore->OnNativeBattleStateCommitted.RemoveAll(this); BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this); }
     BoundCore=Core;
     Core->OnNativeCombatActionResolved.AddUObject(this,&ThisClass::HandleNativeAction);
+    Core->OnNativeBattleStateCommitted.AddUObject(this,&ThisClass::HandleCommittedState);
     Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::UnbindVisual);
     BoundBattleId=State.BattleId;
-    BoundUnitId=UnitId;
+    BoundUnitId=UnitId; LastVisualHp=Unit->CurrentHp; bHasVisualHp=true;
+    if (!Owner->FindComponentByClass<UOGWorldActionRuntimeComponent>())
+    { auto* Actions=NewObject<UOGWorldActionRuntimeComponent>(Owner); Owner->AddInstanceComponent(Actions); Actions->RegisterComponent(); }
+    if (!Owner->FindComponentByClass<UOGWorldAbilityExecutionComponent>())
+    { auto* Execution=NewObject<UOGWorldAbilityExecutionComponent>(Owner); Owner->AddInstanceComponent(Execution); Execution->RegisterComponent(); }
     // Encounter opening is committed before a body can bind to its live battle ID.
     // Catch up those factual source actions only while the opening is still current.
     if (Core->IsNativeOpeningPresentationCurrent())
@@ -119,13 +127,13 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
 void UOGCanonicalCombatActorBindingComponent::UnbindVisual()
 {
     if (BoundCore.IsValid())
-    { BoundCore->OnNativeCombatActionResolved.RemoveAll(this); BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this); }
+    { BoundCore->OnNativeCombatActionResolved.RemoveAll(this); BoundCore->OnNativeBattleStateCommitted.RemoveAll(this); BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this); }
     BoundCore.Reset();
     auto* Appearance=GetOwner()?GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>():nullptr;
     auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
     if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
     if (Motion) Motion->CancelCombatActions(BoundBattleId);
-    LastPresentedAction=FOGEntityId();
+    LastPresentedAction=FOGEntityId(); bHasVisualHp=false;
     BoundBattleId=FOGEntityId();
     BoundUnitId=FOGEntityId();
 }
@@ -184,4 +192,21 @@ void UOGCanonicalCombatActorBindingComponent::HandleNativeAction(const FOGResolv
     if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
     if (Motion && !Semantic.IsNone() && Motion->EnqueueCombatAction(Semantic,BoundBattleId,Action.ActionId))
         LastPresentedAction=Action.ActionId;
+}
+
+void UOGCanonicalCombatActorBindingComponent::HandleCommittedState(const FOGTurnBattleState& State,const FOGEntityId& Receipt)
+{
+    if (State.BattleId!=BoundBattleId || !GetOwner()) return;
+    const auto* Unit=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;}); if (!Unit) return;
+    const auto Before=LastVisualHp; const bool Changed=bHasVisualHp && Before!=Unit->CurrentHp;
+    LastVisualHp=Unit->CurrentHp; bHasVisualHp=true;
+    if (!Changed || State.ExecutionMode!=EOGCombatExecutionMode::World) return;
+    if (auto* Player=UGameplayStatics::GetPlayerController(this,0))
+        if (auto* Hud=Cast<AOGWorldPresentationHud>(Player->GetHUD())) Hud->RegisterCanonicalCombatImpact(GetOwner(),Before,Unit->CurrentHp);
+    auto* Appearance=GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>();
+    auto* Motion=Appearance?Appearance->GetMotionController():GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
+    if (!Motion) return;
+    if (!Unit->IsAlive()) Motion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
+    else Motion->EnqueueCombatCue(FOGLargeNumber::Compare(Unit->CurrentHp,Before)<0?
+        FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),State.BattleId,Receipt,BoundUnitId);
 }

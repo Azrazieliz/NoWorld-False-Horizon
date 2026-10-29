@@ -185,14 +185,15 @@ bool FOGTurnBattle::ApplyNativeEffect(const FOGNativeEffectDefinition& D,const F
     RecordNativeEffect(EOGCombatLogEventType::EffectApplied,Action.SourceUnitId,TargetId,Action.SkillId,I,New?TEXT("applied"):TEXT("refreshed"));
     return true;
 }
-bool FOGTurnBattle::ExecuteNativeEffects(const FOGResolvedCombatAction& Action,bool BeforePackets,FOGDeterministicRng& Rng,FString& Error)
+bool FOGTurnBattle::ExecuteNativeEffects(const FOGResolvedCombatAction& Action,bool BeforePackets,FOGDeterministicRng& Rng,FString& Error,uint8 Scope)
 {
     const auto* Source=FindUnit(Action.SourceUnitId);
     const auto* Ability=Source?FindNativeAbility(*Source,Action.SkillId):nullptr;
     if (!Ability) return true;
     for (int32 Index=0;Index<Ability->Effects.Num();++Index)
     {
-        const auto& Op=Ability->Effects[Index]; if (Op.bBeforePackets!=BeforePackets) continue;
+        const auto& Op=Ability->Effects[Index]; if (Op.bBeforePackets!=BeforePackets ||
+            (Scope==1 && !Op.bToSource) || (Scope==2 && Op.bToSource)) continue;
         const TArray<FOGEntityId> Targets=Op.bToSource?TArray<FOGEntityId>{Action.SourceUnitId}:Action.TargetUnitIds;
         for (const auto& TargetId:Targets)
         {
