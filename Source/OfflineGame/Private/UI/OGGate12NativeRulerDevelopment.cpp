@@ -328,10 +328,10 @@ void UOGGate12NativeRulerWidget::HandleDevelopmentAction(
 {
     if (bDevelopmentCommandInFlight) return;
     TGuardValue<bool> CommandGuard(bDevelopmentCommandInFlight, true);
+    SynchronizeDevelopmentContext(&Session);
     // A second queued tap must not replace a saved result with a purchase error.
     if (Action == TEXT("development/confirm") &&
         PendingDevelopmentReview.ConfirmationToken.IsEmpty() && !DevelopmentFeedback.IsEmpty()) return;
-    SynchronizeDevelopmentContext(&Session);
     LastUiError.Reset();
     DevelopmentFeedback.Reset();
     DevelopmentRefreshWarning.Reset();
