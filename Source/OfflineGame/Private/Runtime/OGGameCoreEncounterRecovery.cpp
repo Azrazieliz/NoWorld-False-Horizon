@@ -106,7 +106,8 @@ bool UOGGameCoreSubsystem::CheckpointOwnedNativeEncounter(FString& Error)
     if (bSubmittingNativeAction) { Error=TEXT("Encounter checkpoint waits for the current action transaction."); return false; }
     if (!WorldStore || !WorldStore->IsOpen() || !LastNativeBattleReceipt.IsValid())
     { Error=TEXT("No committed native receipt is available for encounter recovery."); return false; }
-    FOGWorldEvent Receipt; Receipt.EventId=LastNativeBattleReceipt; Receipt.WorldTick=GetCanonicalWorldTick();
+    FOGWorldEvent Receipt; Receipt.EventId=LastNativeBattleReceipt;
+    Receipt.WorldTick=CanonicalClock?CanonicalClock->GetCanonicalWorldTick():-1;
     if (!WorldStore->BeginTransaction(Error)) return false;
     if (!PersistNativeEncounter(*OwnedLuminousTurnBattle,ActiveCombatRulerId,Receipt,nullptr,false,Error) ||
         !WorldStore->CommitTransaction(Error))
@@ -269,7 +270,7 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
 bool UOGGameCoreSubsystem::CompleteNativeWorldRecovery(FString& Error)
 {
     Error.Reset();
-    if (!IsInGameThread() || bSubmittingNativeAction || bReleasingCanonicalRuntime)
+    if (!IsInGameThread() || bSubmittingNativeAction || !bCoreReady || bReleasingCanonicalRuntime)
     { Error=TEXT("World recovery waits for the settled native game thread."); return false; }
     if (!bNativeRecoveryAwaitingWorld) return true;
     if (!OwnedLuminousTurnBattle || !GetWorld()) { Error=TEXT("Recovered World is not available."); return false; }
