@@ -156,6 +156,7 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     if ((!FromAI && (!Human || !Session || Core->GetOwnedBattleRulerId()!=Session->BoundRulerId ||
         (Unit->UnitEntityId!=Session->SelectedManifestationId && Unit->UnitEntityId!=Session->BoundRulerId))) || (FromAI && Human))
     { Error=TEXT("World command does not belong to this local player or canonical AI body."); return false; }
+    if (HasActiveCast() && Battle->GetUnitWorldCast(Unit->UnitEntityId)!=ActiveCast) EndLocalCast();
     const auto* Spec=Battle->FindWorldAbility(*Unit,Request.SkillId);
     if (!Spec) { Error=TEXT("This skill's original World staging is not installed."); return false; }
     for (const auto& Step:Spec->Steps)
@@ -179,6 +180,7 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
         const auto Destination=Unit->SkillSet.IsUltimate(Request.SkillId)?EOGActionCancelDestination::Ultimate:EOGActionCancelDestination::Skill;
         if (!Actions->CanCancelTo(Destination)) { Error=TEXT("Current action has no authored cancel window for this command."); return false; }
         Actions->EndAuthoredAction();
+        if (HasActiveCast()) { Error=TEXT("The previous World cast could not be cancelled."); return false; }
     }
     else if (HasActiveCast())
     { Error=TEXT("Finish the active World action before starting another."); return false; }
@@ -189,7 +191,37 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     ActiveCast=Root.ActionId; BattleId=Battle->GetState().BattleId; Specification=FrozenSpec; StartedAt=View.StartedAtMilliseconds;
     Completed.Reset(); SpawnedProjectiles.Reset(); PreviousStarts.Reset(); PreviousEnds.Reset();
     if (Actions) { auto State=Specification.TraversalAndCancel; State.ActionId=FName(*Root.SkillId.ToString()); Actions->BeginAuthoredAction(State); }
+    if (!TrackAcceptedMotion(Error))
+    {
+        // Already committed: cancel through canonical authority, never refund or apply packets locally.
+        Status=Error; CancelActiveCast(); return true;
+    }
     return true;
+}
+bool UOGWorldAbilityExecutionComponent::TrackAcceptedMotion(FString& Error)
+{
+    if (SourceMotion.IsValid()) SourceMotion->OnMotionFinished.RemoveAll(this);
+    SourceMotion.Reset(); bSourceMotionFinished=false; bTracksSourceMotion=false;
+    auto* Motion=WorldMotion(GetOwner());
+    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast)
+    {
+        SourceMotion=Motion; bTracksSourceMotion=true;
+        Motion->OnMotionFinished.AddUniqueDynamic(this,&ThisClass::HandleSourceMotionFinished);
+        AddTickPrerequisiteComponent(Motion);
+        // Physical sweeps observe the evaluated source rig, including independently animated parts.
+        for (USkeletalMeshComponent* Part:Motion->GetNativeParts()) if (Part) AddTickPrerequisiteComponent(Part);
+        return true;
+    }
+    const auto* Battle=Core.IsValid()?Core->GetOwnedLuminousTurnBattle():nullptr;
+    const auto* Unit=Battle?Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Root.SourceUnitId;}):nullptr;
+    if (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone())
+    { Error=TEXT("Accepted World action has no matching source-motion receipt on its actual body."); return false; }
+    return true; // Motionless source staging remains valid.
+}
+void UOGWorldAbilityExecutionComponent::HandleSourceMotionFinished(FName,FName)
+{
+    if (SourceMotion.IsValid() && SourceMotion->GetFinishingCombatReceipt()==ActiveCast)
+        bSourceMotionFinished=true; // Original finish is distinct from the authored cast recovery interval.
 }
 bool UOGWorldAbilityExecutionComponent::IsRecoveryPaused() const
 { return Core.IsValid() && Core->IsNativeEncounterAwaitingWorldRebind(); }
@@ -285,6 +317,7 @@ bool UOGWorldAbilityExecutionComponent::RecoverAcceptedCast(const FOGWorldCastPr
         Motion->RestorePlaybackPhase(Elapsed);
         Motion->SetExternalPacing(IsRecoveryPaused()?0.f:1.f);
     }
+    if (!TrackAcceptedMotion(Error)) { EndLocalCast(); return false; }
     Status=TEXT("Accepted World cast recovered without repeating costs or committed contacts.");
     return true;
 }
@@ -358,16 +391,32 @@ bool UOGWorldAbilityExecutionComponent::CommitProjectileContact(const FOGEntityI
 {
     if (Cast!=ActiveCast || Completed.Contains(Step) || !Specification.Steps.IsValidIndex(Step)) return false;
     TArray<FOGEntityId> Targets; const auto Id=BodyId(Contact,BattleId); if (Id.IsValid()) Targets.Add(Id);
+    const auto* Binding=GetOwner()?GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>():nullptr;
+    if (!Binding || !Binding->IsBoundTo(BattleId,Root.SourceUnitId) ||
+        (bTracksSourceMotion && !bSourceMotionFinished &&
+            (!SourceMotion.IsValid() || SourceMotion->GetActiveCombatReceipt()!=ActiveCast)))
+    { CancelActiveCast(); return false; }
     const bool Accepted=CommitContacts(Step,Targets,Error); if (!Accepted) Status=Error; return Accepted;
 }
 void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tick,FActorComponentTickFunction* Function)
 {
     Super::TickComponent(Delta,Tick,Function); if (!ActiveCast.IsValid() || !Core.IsValid()) return;
     FString Error;
+    const auto* Binding=GetOwner()?GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>():nullptr;
+    if (!Binding || !Binding->IsBoundTo(BattleId,Root.SourceUnitId) ||
+        (bTracksSourceMotion && !bSourceMotionFinished &&
+            (!SourceMotion.IsValid() || SourceMotion->GetActiveCombatReceipt()!=ActiveCast)))
+    { CancelActiveCast(); return; }
     if (!Core->AdvanceOwnedWorldCombatTime(Error)) { Status=Error; return; }
     const auto* Battle=Core->GetOwnedLuminousTurnBattle(); FOGWorldAbilityCastView View;
     if (!Battle || Battle->GetState().BattleId!=BattleId || !Battle->ReadWorldCast(ActiveCast,View))
-    { EndLocalCast(); return; }
+    {
+        const auto* Unit=Battle?Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Root.SourceUnitId;}):nullptr;
+        EndLocalCast(Battle && Battle->GetState().BattleId==BattleId && Unit && Unit->CanAct() &&
+            Completed.Num()==Specification.Steps.Num() &&
+            Battle->GetState().WorldElapsedMilliseconds>=StartedAt+Specification.DurationMilliseconds);
+        return;
+    }
     const int64 Elapsed=Battle->GetState().WorldElapsedMilliseconds-StartedAt;
     for (int32 Index=0;Index<Specification.Steps.Num();++Index)
     {
@@ -388,7 +437,11 @@ void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tic
                 GetOwner()->GetActorLocation(),Direction.Rotation(),Params);
             if (!Projectile || !Projectile->InitializeAcceptedStep(this,ActiveCast,Index,Step,Direction,Error))
             { if (Projectile) Projectile->Destroy(); Status=Error; CommitContacts(Index,{},Error); }
-            else Projectiles.Add(Projectile);
+            else
+            {
+                Projectile->SetLifeSpan(FMath::Max(.001,static_cast<double>(Step.ClosesAtMilliseconds-Elapsed)/1000.0));
+                Projectiles.Add(Projectile);
+            }
             SpawnedProjectiles.Add(Index); continue;
         }
         TArray<FOGEntityId> Targets; QueryContacts(Step,Index,Targets);
@@ -399,23 +452,36 @@ void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tic
 void UOGWorldAbilityExecutionComponent::CancelActiveCast()
 {
     if (bEndingLocal || !ActiveCast.IsValid()) return;
-    FString Error; if (Core.IsValid() && !Core->CancelOwnedWorldAbility(ActiveCast,Error)) { Status=Error; return; }
-    if (auto* Motion=WorldMotion(GetOwner())) Motion->CancelCombatAction(BattleId,ActiveCast);
+    FString Error;
+    if (Core.IsValid() && !Core->CancelOwnedWorldAbility(ActiveCast,Error)) Status=Error;
+    // A commit notification can forbid reentry. Release contact now; the World clock
+    // cancels accepted casts whose exact runner has gone away on its next transaction.
     EndLocalCast();
 }
-void UOGWorldAbilityExecutionComponent::EndLocalCast()
+void UOGWorldAbilityExecutionComponent::EndLocalCast(bool CompletedNormally)
 {
     TGuardValue<bool> Ending(bEndingLocal,true);
     const auto EndingCast=ActiveCast,EndingBattle=BattleId;
     TWeakObjectPtr<UOGSharedMotionControllerComponent> EndingMotion=WorldMotion(GetOwner());
-    const bool CompleteLoop=EndingMotion.IsValid() && EndingMotion->IsLoopingAction();
+    const bool CompleteLoop=CompletedNormally && EndingMotion.IsValid() && EndingMotion->IsLoopingAction();
+    if (SourceMotion.IsValid())
+    {
+        SourceMotion->OnMotionFinished.RemoveAll(this);
+        RemoveTickPrerequisiteComponent(SourceMotion.Get());
+        for (USkeletalMeshComponent* Part:SourceMotion->GetNativeParts()) if (Part) RemoveTickPrerequisiteComponent(Part);
+    }
+    SourceMotion.Reset(); bSourceMotionFinished=false; bTracksSourceMotion=false;
     ActiveCast=FOGEntityId(); Completed.Reset(); SpawnedProjectiles.Reset();
     for (auto& Projectile:Projectiles) if (Projectile.IsValid()) Projectile->Destroy();
     Projectiles.Reset(); PreviousStarts.Reset(); PreviousEnds.Reset();
     if (auto* Actions=GetOwner()?GetOwner()->FindComponentByClass<UOGWorldActionRuntimeComponent>():nullptr)
         if (Actions->HasActiveAction()) Actions->EndAuthoredAction();
     // Completion listeners may start a new cast. All old local state is released before publishing the final cue.
-    if (CompleteLoop && EndingMotion.IsValid()) EndingMotion->CompleteCombatAction(EndingBattle,EndingCast);
+    if (EndingMotion.IsValid())
+    {
+        if (CompleteLoop) EndingMotion->CompleteCombatAction(EndingBattle,EndingCast);
+        else if (!CompletedNormally) EndingMotion->CancelCombatAction(EndingBattle,EndingCast);
+    }
 }
 void UOGWorldAbilityExecutionComponent::EndPlay(const EEndPlayReason::Type Reason)
 {

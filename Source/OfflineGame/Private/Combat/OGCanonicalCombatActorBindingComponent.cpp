@@ -182,6 +182,8 @@ void UOGCanonicalCombatActorBindingComponent::UnbindVisual()
 {
     if (BoundCore.IsValid())
     { BoundCore->OnNativeCombatActionResolved.RemoveAll(this); BoundCore->OnNativeBattleStateCommitted.RemoveAll(this); BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this); }
+    if (auto* Execution=GetOwner()?GetOwner()->FindComponentByClass<UOGWorldAbilityExecutionComponent>():nullptr)
+        Execution->CancelActiveCast();
     BoundCore.Reset();
     auto* Appearance=GetOwner()?GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>():nullptr;
     auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
@@ -207,7 +209,7 @@ AActor* UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
     for (TActorIterator<AActor> It(World); It; ++It)
     {
         AActor* Actor=*It;
-        if (!IsValid(Actor)) continue;
+        if (!IsValid(Actor) || Actor->IsActorBeingDestroyed()) continue;
         const UOGCanonicalCombatActorBindingComponent* Binding=
             Actor->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
         if (Binding && Binding->IsBoundTo(BattleId,UnitId))
@@ -230,6 +232,13 @@ void UOGCanonicalCombatActorBindingComponent::HandleNativeAction(const FOGResolv
     if (!Battle || Battle->GetState().BattleId!=BoundBattleId) return;
     const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;});
     if (!Unit || !Unit->IsAlive()) return;
+    for (const auto& TargetId:Action.TargetUnitIds)
+        if (auto* Target=FindActualWorldActor(GetWorld(),BoundBattleId,TargetId); Target && Target!=GetOwner())
+        {
+            const FVector Direction=Target->GetActorLocation()-GetOwner()->GetActorLocation();
+            if (!Direction.IsNearlyZero()) GetOwner()->SetActorRotation(FRotator(0,Direction.Rotation().Yaw,0));
+            break;
+        }
     if (auto* Routes=GetOwner()->FindComponentByClass<UOGSharedAnimationReceiver>())
     {
         bool Handled=false; FString Error;
@@ -265,11 +274,12 @@ void UOGCanonicalCombatActorBindingComponent::HandleCommittedState(const FOGTurn
     const auto* Unit=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;}); if (!Unit) return;
     const auto Before=LastVisualHp; const bool Changed=bHasVisualHp && Before!=Unit->CurrentHp;
     LastVisualHp=Unit->CurrentHp; bHasVisualHp=true;
-    if (!Changed || State.ExecutionMode!=EOGCombatExecutionMode::World) return;
+    if (!Changed) return; // All canonical commits, including turn reactions and owner-action effects.
     if (auto* Player=UGameplayStatics::GetPlayerController(this,0))
         if (auto* Hud=Cast<AOGWorldPresentationHud>(Player->GetHUD())) Hud->RegisterCanonicalCombatImpact(GetOwner(),Before,Unit->CurrentHp);
     auto* Appearance=GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>();
-    auto* Motion=Appearance?Appearance->GetMotionController():GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
+    auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
+    if (!Motion) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
     if (!Motion) return;
     if (!Unit->IsAlive()) Motion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
     else Motion->EnqueueCombatCue(FOGLargeNumber::Compare(Unit->CurrentHp,Before)<0?

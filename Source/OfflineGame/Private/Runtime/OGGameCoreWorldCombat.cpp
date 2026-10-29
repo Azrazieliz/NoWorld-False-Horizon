@@ -1,6 +1,7 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Combat/OGCombatActionJournal.h"
 #include "Combat/OGCombatVitalityService.h"
 #include "Engine/GameInstance.h"
@@ -139,14 +140,23 @@ bool UOGGameCoreSubsystem::AdvanceOwnedWorldCombatTime(FString& Error)
     if (!Whole) return true;
     if (bNativeRecoveryAwaitingWorld)
     { Error=TEXT("Recovered World encounter waits for native bodies and cast runners."); return false; }
+    TArray<FOGEntityId> MissingBodies;
+    for (const auto& Entry:NativeWorldCastRequests)
+    {
+        const auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(World,OwnedLuminousTurnBattle->GetState().BattleId,Entry.Value.SourceUnitId);
+        const auto* Runner=Actor?Actor->FindComponentByClass<UOGWorldAbilityExecutionComponent>():nullptr;
+        // A streamed replacement cannot inherit another actor's accepted cast or fabricate missed contacts.
+        if (!Runner || Runner->GetActiveCastId()!=Entry.Key) MissingBodies.Add(Entry.Key);
+    }
+    // Commit separately: later clock events must not erase cancellation owner-action reactions/rewards.
+    MissingBodies.Sort([](const auto& A,const auto& B){return A.ToString()<B.ToString();});
+    for (const auto& Id:MissingBodies) if (!CancelOwnedWorldAbility(Id,Error)) return false;
     const auto Current=OwnedLuminousTurnBattle->GetState();
+    if (Current.Status!=EOGTurnBattleStatus::Running)
+    { LastWorldCombatSeconds=Now; WorldCombatFractionalMilliseconds=0; return true; }
     if (Whole>MAX_int64-Current.WorldElapsedMilliseconds) { Error=TEXT("World gameplay clock exhausted."); return false; }
     TGuardValue<bool> Guard(bSubmittingNativeAction,true); FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
     const int64 Sequence=Candidate.GetLog().GetNextSequence();
-    TArray<FOGEntityId> MissingBodies;
-    for (const auto& Entry:NativeWorldCastRequests)
-        if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(World,Current.BattleId,Entry.Value.SourceUnitId)) MissingBodies.Add(Entry.Key);
-    for (const auto& Id:MissingBodies) if (!Candidate.CancelWorldAbility(Id,Error)) return false;
     if (Candidate.GetState().Status==EOGTurnBattleStatus::Running &&
         !Candidate.AdvanceWorldCombatClock(Current.WorldElapsedMilliseconds+Whole,Error)) return false;
     if (Candidate.GetLog().GetNextSequence()!=Sequence || Candidate.GetState().Status!=Current.Status)

@@ -13,6 +13,7 @@ class UStaticMeshComponent;
 class UProjectileMovementComponent;
 class UPrimitiveComponent;
 class USceneComponent;
+class UOGSharedMotionControllerComponent;
 
 USTRUCT()
 struct OFFLINEGAME_API FOGNativeProjectileCheckpoint
@@ -112,9 +113,14 @@ private:
     TArray<TWeakObjectPtr<AOGNativeWorldProjectile>> Projectiles;
     TMap<int32,FVector> PreviousStarts,PreviousEnds;
     bool bEndingLocal=false;
+    bool bSourceMotionFinished=false;
+    bool bTracksSourceMotion=false;
+    TWeakObjectPtr<UOGSharedMotionControllerComponent> SourceMotion;
+    bool TrackAcceptedMotion(FString& Error);
+    UFUNCTION() void HandleSourceMotionFinished(FName Action,FName MotionId);
     bool ResolveRuntime(FString& Error);
     USceneComponent* TracePart(const FOGWorldAbilityStep& Step,FName& Start,FName& End,FString& Error) const;
     void QueryContacts(const FOGWorldAbilityStep&,int32 StepIndex,TArray<FOGEntityId>& Out);
     bool CommitContacts(int32 Step,const TArray<FOGEntityId>& Contacts,FString& Error);
-    void EndLocalCast();
+    void EndLocalCast(bool CompletedNormally=false);
 };

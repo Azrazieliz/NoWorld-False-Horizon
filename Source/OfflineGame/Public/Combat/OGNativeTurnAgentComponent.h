@@ -9,6 +9,7 @@
 class UOGGameCoreSubsystem;
 class UOGCanonicalCombatActorBindingComponent;
 class UOGNativeCombatAbility;
+class AController;
 
 UENUM(BlueprintType)
 enum class EOGNativeTurnTarget : uint8
@@ -96,6 +97,8 @@ private:
     int64 FailedAbilityRevision = -1;
     double ReadyAtSeconds = -1.0;
     int64 ObservedSequence = -1;
+    TWeakObjectPtr<AController> ObservedController;
+    bool ObserveHumanControl();
     bool bSubmitting = false;
     bool bAutoBindingEnabled = true;
     bool ReadCanonicalPhase(const FOGCombatUnitState& Unit, FName& OutPhase, FString& Error) const;

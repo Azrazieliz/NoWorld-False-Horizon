@@ -14,16 +14,6 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 
-namespace
-{
-UOGSharedMotionControllerComponent* BattleMotion(AActor* Actor)
-{
-    if (!Actor) return nullptr;
-    if (auto* Appearance=Actor->FindComponentByClass<UOGCharacterAppearanceComponent>())
-        if (auto* Motion=Appearance->GetMotionController()) return Motion;
-    return Actor->FindComponentByClass<UOGSharedMotionControllerComponent>();
-}
-}
 bool AOGWorldPrototypeCharacter::HasNativeOwnedLuminousEncounter() const
 {
     const auto* Core=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
@@ -123,10 +113,6 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
         if (Id!=SourceId && !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Id))
         { Error=TEXT("A required battle character is unavailable in the World."); return false; }
     }
-    // Include self-costs, self-restoration, ongoing effects and unselected AoE
-    // participants in feedback; direct selected targets are not the full result.
-    TMap<FOGEntityId,FOGLargeNumber> Before;
-    for (const auto& Unit:Encounter->GetState().Units) Before.Add(Unit.UnitEntityId,Unit.CurrentHp);
     const FName Semantic=Command->MotionSemantic();
     const bool UseAuthoredMap=Command->Branch.IsNone() && Command->Mode.IsNone();
     const FOGContentId Skill=Command->SkillId;
@@ -135,29 +121,6 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
     ClearSelectedCanonicalTurnTargets();
     const auto* Updated=Core->GetOwnedLuminousTurnBattle();
     if (!Updated || Updated->GetState().BattleId!=BattleId) return true;
-    AActor* FirstTarget=nullptr;
-    auto* PC=Cast<APlayerController>(GetController());
-    auto* Hud=PC?Cast<AOGWorldPresentationHud>(PC->GetHUD()):nullptr;
-    for (const auto& Unit:Updated->GetState().Units)
-    {
-        AActor* Body=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Unit.UnitEntityId);
-        if (!Body && Unit.UnitEntityId==SourceId) Body=this;
-        if (!FirstTarget && Body && Action.TargetUnitIds.Contains(Unit.UnitEntityId)) FirstTarget=Body;
-        const auto* Old=Before.Find(Unit.UnitEntityId);
-        if (!Body || !Old || FOGLargeNumber::Compare(*Old,Unit.CurrentHp)==0) continue;
-        if (Hud) Hud->RegisterCanonicalCombatImpact(Body,*Old,Unit.CurrentHp);
-        if (auto* Motion=BattleMotion(Body))
-        {
-            if (!Unit.IsAlive()) Motion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
-            else Motion->EnqueueCombatCue(FOGLargeNumber::Compare(Unit.CurrentHp,*Old)<0?
-                FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),BattleId,Action.ActionId,Unit.UnitEntityId);
-        }
-    }
-    if (FirstTarget && FirstTarget!=this)
-    {
-        const FVector Delta=FirstTarget->GetActorLocation()-GetActorLocation();
-        if (Delta.SizeSquared2D()>FMath::Square(5.f)) SetActorRotation(FRotator(0,Delta.Rotation().Yaw,0));
-    }
     const auto* SurvivingSource=Updated->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==SourceId;});
     if (!SurvivingSource || !SurvivingSource->IsAlive()) return true;
     const auto* BoundBody=FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
