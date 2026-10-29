@@ -3,6 +3,7 @@
 #include "Content/OGSystemBindingComponent.h"
 
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Animation/OGSharedAnimationRoutes.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
@@ -118,10 +119,14 @@ void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
         // Turn animation is driven by accepted combat events rather than
         // ground locomotion overwriting a visible attack or defeat.
         UOGSharedMotionControllerComponent* Motion = Appearance->GetMotionController();
-        if (Motion && Motion->IsPlayingAction() && Motion->CurrentAction.ToString().StartsWith(TEXT("Traversal.")))
-            Motion->StopAction();
-        return;
+        if (Battle->GetState().ExecutionMode==EOGCombatExecutionMode::Turn)
+        {
+            if (Motion && Motion->IsPlayingAction() && Motion->CurrentAction.ToString().StartsWith(TEXT("Traversal.")))
+                Motion->StopAction();
+            return;
+        }
     }
+    if (UOGSharedAnimationReceiver::DrivesAutomaticMotion(this)) return;
     UOGSharedMotionControllerComponent* Controller = Appearance->GetMotionController();
     if (!Controller) return;
     if (LastMotionController.Get() != Controller)

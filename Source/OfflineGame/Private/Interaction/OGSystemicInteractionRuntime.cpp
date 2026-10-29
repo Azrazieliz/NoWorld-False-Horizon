@@ -638,22 +638,8 @@ void FOGSystemicInteractionRuntime::UpdatePresentation(const FOGInteractionActio
     for (auto& Participant : Participants)
     {
         Participant.bAnimationCompatible = false; Participant.bHasOptionalPresentation = false; Participant.PresentationReason.Reset();
-        const FOGInteractionAnimationBinding* Binding = nullptr;
-        for (const auto& Candidate : Node.AnimationBindings)
-        {
-            const bool bSharedSource = !Candidate.SharedGameplayAction.IsNone() ||
-                !Candidate.SharedSceneRole.IsNone();
-            if (Candidate.Role != Participant.Binding.Role ||
-                (Candidate.RigFamilyId.IsValid()
-                    ? Candidate.RigFamilyId != Participant.Binding.RigFamilyId
-                    : !bSharedSource)) continue;
-            const FOGEntityId ActualManifestation = Participant.Character.bHasManifestation ?
-                Participant.Character.Manifestation.ManifestationId : Participant.Binding.Character.ManifestationId;
-            if (Candidate.ManifestationId.IsValid() && Candidate.ManifestationId != ActualManifestation) continue;
-            if (!Candidate.VersionId.IsEmpty() && (!Participant.Character.bHasManifestation ||
-                Candidate.VersionId != Participant.Character.Manifestation.ActiveVersionId)) continue;
-            if (!Binding || Candidate.ManifestationId.IsValid()) Binding = &Candidate;
-        }
+        const FOGInteractionAnimationBinding* Binding=nullptr;
+        if (!Node.ResolveAnimationBinding(Participant,Binding,Participant.PresentationReason)) continue;
         if (!Binding) { Participant.PresentationReason = TEXT("No compatible optional rig binding; current character state retained."); continue; }
         Participant.bAnimationCompatible = true;
         if (Entry.bPrivacyPresentation) { Participant.PresentationReason = TEXT("Privacy framing uses the same logical action and consequences."); continue; }
@@ -970,4 +956,26 @@ FOGInteractionActionGraph FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGr
     Handoff.ActionId = FOGContentId(TEXT("foundation:action.handoff")); Handoff.DurationSeconds = 2.0;
     Handoff.RequiredRoles.Add(PlayerRole); Handoff.NextNodes.Add(Align.NodeId); Handoff.NextNodes.Add(Handoff.NodeId);
     Graph.Nodes.Add(Align); Graph.Nodes.Add(Handoff); return Graph;
+}
+
+bool FOGInteractionActionNode::ResolveAnimationBinding(const FOGInteractionParticipantState& Participant,
+    const FOGInteractionAnimationBinding*& Out,FString& Error) const
+{
+    Out=nullptr; Error.Reset(); int32 Best=-1; bool Ambiguous=false;
+    const auto Manifestation=Participant.Character.bHasManifestation?Participant.Character.Manifestation.ManifestationId:
+        Participant.Binding.Character.ManifestationId;
+    for (const auto& Binding:AnimationBindings)
+    {
+        const bool Shared=!Binding.SharedGameplayAction.IsNone() || !Binding.SharedSceneRole.IsNone();
+        if (Binding.Role!=Participant.Binding.Role ||
+            (Binding.RigFamilyId.IsValid()?Binding.RigFamilyId!=Participant.Binding.RigFamilyId:!Shared) ||
+            (Binding.ManifestationId.IsValid() && Binding.ManifestationId!=Manifestation) ||
+            (!Binding.VersionId.IsEmpty() && (!Participant.Character.bHasManifestation ||
+                Binding.VersionId!=Participant.Character.Manifestation.ActiveVersionId))) continue;
+        const int32 Specificity=(Binding.ManifestationId.IsValid()?4:0)+(!Binding.VersionId.IsEmpty()?2:0)+(Binding.RigFamilyId.IsValid()?1:0);
+        if (Specificity==Best) Ambiguous=true;
+        if (Specificity>Best) { Out=&Binding; Best=Specificity; Ambiguous=false; }
+    }
+    if (Ambiguous) { Out=nullptr; Error=TEXT("Original motion selectors are ambiguous for this actual role/rig."); return false; }
+    return true;
 }

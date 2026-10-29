@@ -153,6 +153,8 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Motion|Shared")
     bool IsPlayingAction() const { return bPlaying; }
+    uint64 GetPlaybackGeneration() const { return PlaybackGeneration; }
+    bool IsSceneTimeLocked() const { return bSceneTimeLocked; }
 
     UFUNCTION(BlueprintPure, Category="Motion|Shared")
     int32 GetNativePartCount() const { return RegisteredParts.Num(); }

@@ -94,6 +94,12 @@ bool UOGSharedMotionControllerComponent::ResolveForPart(
         Library, Action, RigProfile, AnatomyProfile, OutfitProfile,
         Context, Capabilities, SearchParts, bAuthorizedAdult,
         ParticipantCount, &OutEntry, ParticipantRole);
+    if (!OutSequence)
+    {
+        const auto* Global=FOGSharedMotionResolver::GetInstalledLibrary();
+        if (Library!=Global) OutSequence=FOGSharedMotionResolver::Resolve(Global,Action,RigProfile,AnatomyProfile,OutfitProfile,
+            Context,Capabilities,SearchParts,bAuthorizedAdult,ParticipantCount,&OutEntry,ParticipantRole);
+    }
     return OutSequence && OutEntry && OutSequence->GetSkeleton() &&
         (!OutEntry->bUsesRootMotion ||
             (bPermitAuthoritativeRootMotion && GetOwner() &&

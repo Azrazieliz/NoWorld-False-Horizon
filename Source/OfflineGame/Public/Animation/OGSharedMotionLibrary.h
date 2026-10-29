@@ -141,6 +141,7 @@ class OFFLINEGAME_API UOGSharedMotionLibrary : public UDataAsset
 public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion")
     TArray<FOGSharedMotionEntry> Motions;
+    bool ValidateLibrary(FString& Error) const;
 };
 
 /** Pure presentation resolution: does not authorize gameplay or change actor state. */
@@ -149,6 +150,11 @@ class OFFLINEGAME_API FOGSharedMotionResolver
 public:
     /** Ready-to-use native clips already present in this production checkout. */
     static const UOGSharedMotionLibrary* GetInstalledLibrary();
+    /** Immutable packaged source layer, independent of definition discovery. */
+    static const UOGSharedMotionLibrary* GetBuiltInLibrary();
+    /** Same merge is used before bundle publication and by every runtime consumer. */
+    static bool ComposeLibraries(const UOGSharedMotionLibrary& Base,const TArray<UOGSharedMotionLibrary*>& Extensions,
+        TArray<FOGSharedMotionEntry>& Out,FString& Error);
 
     static UAnimSequence* Resolve(
         const UOGSharedMotionLibrary* Library,

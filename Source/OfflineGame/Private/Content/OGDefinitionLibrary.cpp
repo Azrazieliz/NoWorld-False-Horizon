@@ -107,7 +107,8 @@ bool ValidateAsset(const FOGDefinitionAssetEntry& E,UDataAsset* A,FString& Error
         return (E.System==TEXT("agent") && D->Validate(Error)) || Fail(Error,Error.IsEmpty()?TEXT("Turn policy definition key mismatch."):Error);
     if (const auto* D=Cast<UOGAdaptiveScoreDefinition>(A))
         return (E.System==TEXT("score") && D->Validate(Error)) || Fail(Error,Error.IsEmpty()?TEXT("Score definition key mismatch."):Error);
-    if (Cast<UOGSharedMotionLibrary>(A)) return E.System==TEXT("motion") || Fail(Error,TEXT("Motion definition key mismatch."));
+    if (const auto* Motion=Cast<UOGSharedMotionLibrary>(A))
+        return (E.System==TEXT("motion") && Motion->ValidateLibrary(Error)) || Fail(Error,Error.IsEmpty()?TEXT("Motion definition key mismatch."):Error);
     if (const auto* D=Cast<UOGReusableDefinition>(A))
         return (D->System==E.System && D->DefinitionId==E.Id && D->ValidateDefinition(Error)) || Fail(Error,Error.IsEmpty()?TEXT("Reusable definition key mismatch."):Error);
     return Fail(Error,TEXT("Definition type must implement the reusable definition contract."));
@@ -259,6 +260,11 @@ bool UOGDefinitionLibrary::BuildCandidate(const TArray<FInstalledBundle>& Bundle
                 if (Op.Operation==EOGNativeEffectOperation::Apply &&
                     !Cast<UOGNativeCombatEffect>(Resolve(TEXT("effect"),Op.Id)))
                     return Fail(Error,TEXT("Shared ability effect reference has the wrong native definition class."));
+    TArray<UOGSharedMotionLibrary*> MotionLibraries;
+    for (const auto& Pair:OutEntries)
+        if (auto* Motion=Cast<UOGSharedMotionLibrary>(Pair.Value.Asset)) MotionLibraries.Add(Motion);
+    TArray<FOGSharedMotionEntry> SharedMotions;
+    if (!FOGSharedMotionResolver::ComposeLibraries(*FOGSharedMotionResolver::GetBuiltInLibrary(),MotionLibraries,SharedMotions,Error)) return false;
     for (const auto& Pair:OutCatalogs)
     {
         const auto& A=CatalogAdapters[Pair.Key]; FString Base,Merged;
