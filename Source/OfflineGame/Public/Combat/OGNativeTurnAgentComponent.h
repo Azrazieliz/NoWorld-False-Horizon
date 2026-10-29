@@ -10,6 +10,7 @@ class UOGGameCoreSubsystem;
 class UOGCanonicalCombatActorBindingComponent;
 class UOGNativeCombatAbility;
 class AController;
+class AAIController;
 
 UENUM(BlueprintType)
 enum class EOGNativeTurnTarget : uint8
@@ -98,6 +99,8 @@ private:
     double ReadyAtSeconds = -1.0;
     int64 ObservedSequence = -1;
     TWeakObjectPtr<AController> ObservedController;
+    TWeakObjectPtr<AAIController> ApproachController;
+    void StopAbilityApproach();
     friend struct FOGNativeCombatExecutionTestAccess;
     bool ObserveHumanControl();
     bool bSubmitting = false;

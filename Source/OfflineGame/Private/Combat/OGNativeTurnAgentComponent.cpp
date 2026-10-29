@@ -139,6 +139,7 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
 
 void UOGNativeTurnAgentComponent::RetryDecision()
 {
+    StopAbilityApproach();
     bAutoBindingEnabled = true;
     FailedSequence = ObservedSequence = -1; FailedAbilityRevision=-1;
     ReadyAtSeconds = -1.0;
@@ -221,14 +222,19 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
                         if (!Pawn->GetController())
                         { Pawn->AIControllerClass=AAIController::StaticClass(); Pawn->SpawnDefaultController(); }
                         if (auto* AI=Cast<AAIController>(Pawn->GetController()))
+                        {
+                            if (ApproachController.Get()!=AI) StopAbilityApproach();
+                            ApproachController=AI;
                             AI->MoveToActor(Target,Blocked?0.f:Range,false,true,true,nullptr,true);
+                        }
                     }
                     Status=TEXT("Approaching the authored ability range."); return false;
                 }
-                if (auto* Pawn=Cast<APawn>(GetOwner())) if (auto* AI=Cast<AAIController>(Pawn->GetController())) AI->StopMovement();
+                StopAbilityApproach();
                 const auto Direction=Target->GetActorLocation()-GetOwner()->GetActorLocation();
                 if (!Direction.IsNearlyZero()) GetOwner()->SetActorRotation(FRotator(0,Direction.Rotation().Yaw,0));
             }
+            StopAbilityApproach();
             if (!Execution->BeginNativeAction(Proposal,true,LastFailure)) continue;
             Status.Reset(); ReadyAtSeconds=-1; return true;
         }
@@ -244,6 +250,7 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
         Status.Reset(); FailedSequence = -1; ReadyAtSeconds = -1.0;
         return true;
     }
+    StopAbilityApproach();
     FailedSequence = Battle->GetLog().GetNextSequence(); FailedAbilityRevision=Battle->GetNativeAbilityRevision();
     Error = LastFailure.IsEmpty() ? Error : LastFailure;
     const FString Failure=Error.IsEmpty()?TEXT("No approved opponent rule can execute in the current battle state."):Error;
@@ -261,9 +268,9 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     if (Mode && Mode->GetMode()!=EOGPresentationMode::World &&
         (!CurrentBattle || CurrentBattle->GetState().ExecutionMode!=EOGCombatExecutionMode::World))
     { ReadyAtSeconds=-1.0; return; }
-    if (ObserveHumanControl() || Core->IsNativeEncounterAwaitingWorldRebind()) { ReadyAtSeconds=-1.0; return; }
+    if (ObserveHumanControl() || Core->IsNativeEncounterAwaitingWorldRebind()) { StopAbilityApproach(); ReadyAtSeconds=-1.0; return; }
     const FOGTurnBattle* Battle = Core->GetOwnedLuminousTurnBattle();
-    if (!Battle || Battle->GetState().Status != EOGTurnBattleStatus::Running) { ReadyAtSeconds = -1.0; return; }
+    if (!Battle || Battle->GetState().Status != EOGTurnBattleStatus::Running) { StopAbilityApproach(); ReadyAtSeconds = -1.0; return; }
     if (BoundBattleId != Battle->GetState().BattleId || !Body.IsValid() || !Body->IsBoundTo(BoundBattleId, BoundUnitId))
     {
         UOGCanonicalCombatActorBindingComponent* Existing = GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
@@ -280,12 +287,13 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     if (Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World)
     {
         const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;});
-        if (!Unit || !Unit->CanAct() || Battle->GetUnitWorldCast(BoundUnitId).IsValid()) { ReadyAtSeconds=-1; return; }
+        if (!Unit || !Unit->CanAct() || Battle->GetUnitWorldCast(BoundUnitId).IsValid()) { StopAbilityApproach(); ReadyAtSeconds=-1; return; }
         const double Now=GetWorld()->GetTimeSeconds();
         if (ReadyAtSeconds<0) ReadyAtSeconds=Now+ActivePolicy->DecisionDelaySeconds;
         if (Now<ReadyAtSeconds) return;
         FString Error; StepOwnTurn(Error); ReadyAtSeconds=Now+ActivePolicy->DecisionDelaySeconds; return;
     }
+    StopAbilityApproach();
     const int32 Acting = Battle->SelectNextActingUnitIndex();
     if (!Battle->GetState().Units.IsValidIndex(Acting) || Battle->GetState().Units[Acting].UnitEntityId != BoundUnitId)
     { ReadyAtSeconds = -1.0; return; }
@@ -299,13 +307,18 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     StepOwnTurn(Error);
 }
 
+void UOGNativeTurnAgentComponent::StopAbilityApproach()
+{
+    if (ApproachController.IsValid()) ApproachController->StopMovement();
+    ApproachController.Reset();
+}
 bool UOGNativeTurnAgentComponent::ObserveHumanControl()
 {
     const auto* Pawn=Cast<APawn>(GetOwner());
     AController* Controller=Pawn?Pawn->GetController():nullptr;
     if (ObservedController.Get()!=Controller)
     {
-        if (auto* PreviousAI=Cast<AAIController>(ObservedController.Get())) PreviousAI->StopMovement();
+        StopAbilityApproach();
         ObservedController=Controller;
         FailedSequence=ObservedSequence=-1; FailedAbilityRevision=-1; ReadyAtSeconds=-1.0;
     }

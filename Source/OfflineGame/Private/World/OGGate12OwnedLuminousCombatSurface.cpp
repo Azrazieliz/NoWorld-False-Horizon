@@ -189,17 +189,17 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
             if (NativeBattleWidget)
             {
                 const bool WasHidden=!NativeBattleWidget->IsVisible();
-                if (Created || WasHidden)
+                NativeBattleWidget->BindCharacter(Character);
+                if (WasHidden && !Created) NativeBattleWidget->RefreshBattle();
+                if (NativeBattleWidget->IsVisible() && (Created || WasHidden))
                 {
                     FInputModeGameAndUI Input;
                     Input.SetHideCursorDuringCapture(false);
                     Input.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
                     PlayerOwner->SetInputMode(Input);
                 }
-                NativeBattleWidget->BindCharacter(Character);
-                if (WasHidden && !Created) NativeBattleWidget->RefreshBattle();
                 DrawNativeCombatImpacts(Scale);
-                return true;
+                return State.Status==EOGTurnBattleStatus::Running || NativeBattleWidget->IsVisible();
             }
         }
     }
