@@ -150,7 +150,11 @@ bool UOGGameCoreSubsystem::AdvanceOwnedWorldCombatTime(FString& Error)
     }
     // Commit separately: later clock events must not erase cancellation owner-action reactions/rewards.
     MissingBodies.Sort([](const auto& A,const auto& B){return A.ToString()<B.ToString();});
-    for (const auto& Id:MissingBodies) if (!CancelOwnedWorldAbility(Id,Error)) return false;
+    for (const auto& Id:MissingBodies)
+    {
+        if (OwnedLuminousTurnBattle->GetState().Status!=EOGTurnBattleStatus::Running) break;
+        if (!CancelOwnedWorldAbility(Id,Error)) return false;
+    }
     const auto Current=OwnedLuminousTurnBattle->GetState();
     if (Current.Status!=EOGTurnBattleStatus::Running)
     { LastWorldCombatSeconds=Now; WorldCombatFractionalMilliseconds=0; return true; }

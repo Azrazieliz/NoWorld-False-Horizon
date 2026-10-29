@@ -113,6 +113,7 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
         if (Id!=SourceId && !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Id))
         { Error=TEXT("A required battle character is unavailable in the World."); return false; }
     }
+    const auto BeforeSourceHp=Source->CurrentHp;
     const FName Semantic=Command->MotionSemantic();
     const bool UseAuthoredMap=Command->Branch.IsNone() && Command->Mode.IsNone();
     const FOGContentId Skill=Command->SkillId;
@@ -122,9 +123,33 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
     const auto* Updated=Core->GetOwnedLuminousTurnBattle();
     if (!Updated || Updated->GetState().BattleId!=BattleId) return true;
     const auto* SurvivingSource=Updated->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==SourceId;});
-    if (!SurvivingSource || !SurvivingSource->IsAlive()) return true;
+    if (!SurvivingSource) return true;
     const auto* BoundBody=FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
     if (BoundBody && BoundBody->IsBoundTo(BattleId,SourceId)) return true;
+    // Preserve the verified owned legacy adapter when no canonical visual binding was installed.
+    auto* Appearance=FindComponentByClass<UOGCharacterAppearanceComponent>();
+    auto* SourceMotion=Appearance?Appearance->GetMotionController():nullptr;
+    if (!SourceMotion) SourceMotion=FindComponentByClass<UOGSharedMotionControllerComponent>();
+    if (BeforeSourceHp!=SurvivingSource->CurrentHp)
+    {
+        if (auto* Player=Cast<APlayerController>(GetController()))
+            if (auto* Hud=Cast<AOGWorldPresentationHud>(Player->GetHUD()))
+                Hud->RegisterCanonicalCombatImpact(this,BeforeSourceHp,SurvivingSource->CurrentHp);
+        if (SourceMotion)
+        {
+            if (!SurvivingSource->IsAlive()) SourceMotion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
+            else SourceMotion->EnqueueCombatCue(FOGLargeNumber::Compare(SurvivingSource->CurrentHp,BeforeSourceHp)<0?
+                FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),BattleId,Action.ActionId,SourceId);
+        }
+    }
+    if (!SurvivingSource->IsAlive()) return true;
+    for (const auto& TargetId:Action.TargetUnitIds)
+        if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,TargetId); Target && Target!=this)
+        {
+            const FVector Direction=Target->GetActorLocation()-GetActorLocation();
+            if (!Direction.IsNearlyZero()) SetActorRotation(FRotator(0,Direction.Rotation().Yaw,0));
+            break;
+        }
     if (auto* Legacy=Cast<AOGLuminousV3PlayableCharacter>(this)) Legacy->PlaySharedGameplayAction(Semantic);
     if (auto* Content=Cast<AOGContentPlayableCharacter>(this); Content && Content->Appearance)
     {

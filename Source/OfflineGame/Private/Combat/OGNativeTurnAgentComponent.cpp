@@ -52,8 +52,6 @@ bool ReadActualNpc(IOGWorldStore& Store, const UOGNativeTurnPolicy& Policy,
     }
     return true;
 }
-
-
 }
 
 UOGNativeTurnAgentComponent::UOGNativeTurnAgentComponent()

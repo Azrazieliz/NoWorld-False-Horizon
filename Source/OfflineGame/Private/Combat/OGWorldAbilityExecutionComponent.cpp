@@ -198,6 +198,14 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     }
     return true;
 }
+bool UOGWorldAbilityExecutionComponent::IsAcceptedBodyCurrent() const
+{
+    const auto* Binding=GetOwner()?GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>():nullptr;
+    return ActiveCast.IsValid() && Binding && Binding->IsBoundTo(BattleId,Root.SourceUnitId) &&
+        (!bTracksSourceMotion || bSourceMotionFinished ||
+            (SourceMotion.IsValid() && WorldMotion(GetOwner())==SourceMotion.Get() &&
+             SourceMotion->GetActiveCombatReceipt()==ActiveCast));
+}
 bool UOGWorldAbilityExecutionComponent::TrackAcceptedMotion(FString& Error)
 {
     if (SourceMotion.IsValid()) SourceMotion->OnMotionFinished.RemoveAll(this);
@@ -391,10 +399,7 @@ bool UOGWorldAbilityExecutionComponent::CommitProjectileContact(const FOGEntityI
 {
     if (Cast!=ActiveCast || Completed.Contains(Step) || !Specification.Steps.IsValidIndex(Step)) return false;
     TArray<FOGEntityId> Targets; const auto Id=BodyId(Contact,BattleId); if (Id.IsValid()) Targets.Add(Id);
-    const auto* Binding=GetOwner()?GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>():nullptr;
-    if (!Binding || !Binding->IsBoundTo(BattleId,Root.SourceUnitId) ||
-        (bTracksSourceMotion && !bSourceMotionFinished &&
-            (!SourceMotion.IsValid() || SourceMotion->GetActiveCombatReceipt()!=ActiveCast)))
+    if (!IsAcceptedBodyCurrent())
     { CancelActiveCast(); return false; }
     const bool Accepted=CommitContacts(Step,Targets,Error); if (!Accepted) Status=Error; return Accepted;
 }
@@ -402,10 +407,7 @@ void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tic
 {
     Super::TickComponent(Delta,Tick,Function); if (!ActiveCast.IsValid() || !Core.IsValid()) return;
     FString Error;
-    const auto* Binding=GetOwner()?GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>():nullptr;
-    if (!Binding || !Binding->IsBoundTo(BattleId,Root.SourceUnitId) ||
-        (bTracksSourceMotion && !bSourceMotionFinished &&
-            (!SourceMotion.IsValid() || SourceMotion->GetActiveCombatReceipt()!=ActiveCast)))
+    if (!IsAcceptedBodyCurrent())
     { CancelActiveCast(); return; }
     if (!Core->AdvanceOwnedWorldCombatTime(Error)) { Status=Error; return; }
     const auto* Battle=Core->GetOwnedLuminousTurnBattle(); FOGWorldAbilityCastView View;

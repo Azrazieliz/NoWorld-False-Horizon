@@ -98,6 +98,7 @@ private:
     double ReadyAtSeconds = -1.0;
     int64 ObservedSequence = -1;
     TWeakObjectPtr<AController> ObservedController;
+    friend struct FOGNativeCombatExecutionTestAccess;
     bool ObserveHumanControl();
     bool bSubmitting = false;
     bool bAutoBindingEnabled = true;

@@ -116,6 +116,8 @@ private:
     bool bSourceMotionFinished=false;
     bool bTracksSourceMotion=false;
     TWeakObjectPtr<UOGSharedMotionControllerComponent> SourceMotion;
+    friend struct FOGNativeCombatExecutionTestAccess;
+    bool IsAcceptedBodyCurrent() const;
     bool TrackAcceptedMotion(FString& Error);
     UFUNCTION() void HandleSourceMotionFinished(FName Action,FName MotionId);
     bool ResolveRuntime(FString& Error);
