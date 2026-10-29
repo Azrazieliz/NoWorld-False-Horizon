@@ -53,17 +53,20 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
     }
     const FOGTurnBattleState& State = Battle->GetState();
     const int32 ActingIndex = Battle->SelectNextActingUnitIndex();
-    if (State.Status != EOGTurnBattleStatus::Running ||
-        !State.Units.IsValidIndex(ActingIndex) ||
+    FOGEntityId Controlled;
+    if (!ReadControlledCanonicalBattleUnit(Controlled,OutError)) return false;
+    const auto* Source=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Controlled;});
+    if (State.Status != EOGTurnBattleStatus::Running || !Source ||
+        (State.ExecutionMode==EOGCombatExecutionMode::Turn &&
+            (!State.Units.IsValidIndex(ActingIndex) || State.Units[ActingIndex].UnitEntityId!=Controlled)) ||
         !State.Units.IsValidIndex(UnitIndex))
     {
         OutError = TEXT("No legal actor or selected target exists in the live turn state.");
         return false;
     }
-    const FOGCombatUnitState& Source = State.Units[ActingIndex];
     const FOGCombatUnitState& Target = State.Units[UnitIndex];
-    if (!MatchesActualOwnedLuminousBody(this, *Session, Source) ||
-        !Source.CanAct() || !Target.CanAct())
+    if (!Source->CanAct() || !Target.CanAct() ||
+        !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Target.UnitEntityId))
     {
         // Ally, self and enemy targets are all meaningful in the approved
         // Base/Alter skills. Gate04's exact skill preflight, not this UI,
@@ -164,12 +167,14 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     if (!Battle || !Session || !Session->IsBoundToStoredRuler())
         return false;
     const FOGTurnBattleState& State = Battle->GetState();
+    FOGEntityId Controlled; FString ControlError;
+    if (!Character->ReadControlledCanonicalBattleUnit(Controlled,ControlError)) return false;
     // A completed battle may outlive possession; don't display an old
     // Ruler's private battle results over a different character.
     const FOGCombatUnitState* ActualOwned=State.Units.FindByPredicate(
-        [Session](const FOGCombatUnitState& Unit)
-        { return Unit.UnitEntityId==Session->SelectedManifestationId; });
-    if(!ActualOwned || !MatchesActualOwnedLuminousBody(Character, *Session, *ActualOwned))return false;
+        [&Controlled](const FOGCombatUnitState& Unit)
+        { return Unit.UnitEntityId==Controlled; });
+    if(!ActualOwned)return false;
     if (State.Status == EOGTurnBattleStatus::Completed)
     {
         const double Now=GetWorld()?GetWorld()->GetTimeSeconds():0.;

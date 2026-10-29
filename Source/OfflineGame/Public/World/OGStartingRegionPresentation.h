@@ -664,6 +664,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
     bool SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,
         FString& OutError);
+    /** Resolve controls from the real possessed Ruler or owned Manifestation. */
+    bool ReadControlledCanonicalBattleUnit(FOGEntityId& Out,FString& Error) const;
     bool ReadOwnedLuminousBattleCommands(FOGNativeBattleCommandSet& Out,FString& Error) const;
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
     bool SubmitApprovedLuminousWorldCommand(FName CommandId,FString& Error);
