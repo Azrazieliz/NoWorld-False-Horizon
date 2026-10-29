@@ -26,7 +26,8 @@ bool FOGTurnBattle::InitializeNativePassives(const TArray<FOGNativePassiveBindin
             Keys.Add(Key);
             FNativePassiveRule Native; Native.OwnerUnitId=B.OwnerUnitId; Native.PassiveSkillId=B.Specification.PassiveSkillId; Native.Rule=Rule;
             NativePassiveRules.Add(Key,Native);
-            FOGCombatTriggerBinding Trigger; Trigger.OwnerUnitId=B.OwnerUnitId; Trigger.Trigger=Rule.Trigger; Bindings.Add(Trigger);
+            FOGCombatTriggerBinding Trigger; Trigger.OwnerUnitId=B.OwnerUnitId; Trigger.Trigger=Rule.Trigger;
+            Trigger.bAllowReactionOrigin=Rule.bAllowReactionOrigin; Bindings.Add(Trigger);
             for (const auto& Action:Rule.Trigger.ActionIds) NativePassiveActionOwners.Add(PassiveKey(B.OwnerUnitId,Action));
         }
     }
@@ -158,10 +159,20 @@ bool FOGTurnBattle::ResolveNativeReactions(FString& Error,TMap<FString,int32>* R
             Unavailable=TEXT("reaction_owner_unavailable");
         if (!AcceptedGroups.Contains(Group) && !RejectedGroups.Contains(Group))
         {
-            if (Activations.FindRef(Trigger)>=Registered.Rule.MaximumActivationsPerRoot) RejectedGroups.Add(Group);
-            else { AcceptedGroups.Add(Group); ++Activations.FindOrAdd(Trigger); }
+            auto& OwnerBound=NativeOwnerActivationCounts.FindOrAdd(Trigger);
+            const int64 Epoch=NativeOwnerActionEpochs.FindRef(Q.OwnerUnitId);
+            if (OwnerBound.Epoch!=Epoch) { OwnerBound.Epoch=Epoch; OwnerBound.Count=0; }
+            if (Activations.FindRef(Trigger)>=Registered.Rule.MaximumActivationsPerRoot ||
+                (Registered.Rule.MaximumActivationsPerOwnerAction>0 &&
+                 OwnerBound.Count>=Registered.Rule.MaximumActivationsPerOwnerAction)) RejectedGroups.Add(Group);
+            else
+            { AcceptedGroups.Add(Group); ++Activations.FindOrAdd(Trigger);
+              if (Registered.Rule.MaximumActivationsPerOwnerAction>0) ++OwnerBound.Count; }
         }
-        if (RejectedGroups.Contains(Group)) Record.Outcome=TEXT("authored_root_activation_limit");
+        if (RejectedGroups.Contains(Group))
+            Record.Outcome=Registered.Rule.MaximumActivationsPerOwnerAction>0 &&
+                NativeOwnerActivationCounts.FindChecked(Trigger).Count>=Registered.Rule.MaximumActivationsPerOwnerAction?
+                TEXT("authored_owner_action_activation_limit"):TEXT("authored_root_activation_limit");
         else
         {
             NativeReactionProof=Q;
@@ -191,4 +202,11 @@ bool FOGTurnBattle::ResolveNativeReactions(FString& Error,TMap<FString,int32>* R
     if (bRequireNativeExecutors && !OutstandingTriggeredActionSequences.IsEmpty())
     { Error=TEXT("An existing trigger has no installed automatic native executor; its registration requires a concrete source action binding."); return false; }
     return true;
+}
+
+bool FOGTurnBattle::BeginNativeOwnerAction(const FOGEntityId& Unit,FString& Error)
+{
+    auto& Epoch=NativeOwnerActionEpochs.FindOrAdd(Unit);
+    if (Epoch==MAX_int64) { Error=TEXT("Native owner action epoch exhausted."); return false; }
+    ++Epoch; return true;
 }

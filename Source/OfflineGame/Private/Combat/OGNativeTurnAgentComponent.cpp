@@ -24,7 +24,7 @@
 namespace
 {
 bool ReadActualNpc(IOGWorldStore& Store, const UOGNativeTurnPolicy& Policy,
-    const FOGCombatUnitState& Unit, const FOGEntityId& LocalRuler, FName& Phase, FString& Error)
+    const FOGCombatUnitState& Unit, const FOGEntityId& LocalRuler, bool AllowOwnedCompanion,FName& Phase, FString& Error)
 {
     Phase = NAME_None;
     bool bFound = false; FName Kind; FString Saved; int64 Revision = 0;
@@ -42,7 +42,7 @@ bool ReadActualNpc(IOGWorldStore& Store, const UOGNativeTurnPolicy& Policy,
     FOGCharacterManifestationRecord Copy;
     if (!Store.TryReadCharacterManifestation(Unit.UnitEntityId, bFound, Copy, Error)) return false;
     if (bFound && (Copy.IdentityId != Unit.IdentityId || Copy.ActiveVersionId != Unit.SkillSet.CurrentForm ||
-        Copy.LifecycleState != TEXT("active") || (LocalRuler.IsValid() && Copy.OwningRulerId == LocalRuler)))
+        Copy.LifecycleState != TEXT("active") || (!AllowOwnedCompanion && LocalRuler.IsValid() && Copy.OwningRulerId == LocalRuler)))
     { Error = TEXT("An opponent agent cannot control the local Ruler's owned roster or an invalid manifestation."); return false; }
     FOGWorldPresenceRecord Presence;
     if (!Store.TryReadWorldPresence(Unit.UnitEntityId, bFound, Presence, Error) || !bFound)
@@ -115,14 +115,16 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
     const UOGGate12RulerSessionSubsystem* Session = GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
     if (!Session || !Session->IsBoundToStoredRuler() || Session->BoundRulerId != Runtime->GetOwnedBattleRulerId() ||
         !Unit || !Unit->CanAct() || !CandidatePolicy->MatchesSource(Unit->IdentityId,Unit->SkillSet.CurrentForm) ||
-        UnitId == Session->BoundRulerId || UnitId == Session->SelectedManifestationId)
+        UnitId == Session->BoundRulerId || (UnitId == Session->SelectedManifestationId &&
+         Battle->GetState().ExecutionMode!=EOGCombatExecutionMode::World))
     { Error = TEXT("Opponent policy cannot borrow a different source unit, kit or the local player."); return false; }
     for (const FOGNativeTurnRule& Rule : CandidatePolicy->Rules)
         if (!Unit->SkillSet.ActiveSkills.Contains(Rule.SkillId) && !Unit->SkillSet.IsUltimate(Rule.SkillId))
         { Error = TEXT("An AI rule refers to an ability absent from the source unit's exact kit."); return false; }
     FName Phase;
     if (!ReadActualNpc(*Runtime->GetWorldStore(), *CandidatePolicy, *Unit,
-        Session ? Session->BoundRulerId : FOGEntityId(), Phase, Error)) return false;
+        Session ? Session->BoundRulerId : FOGEntityId(),
+        Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World,Phase, Error)) return false;
     TArray<UOGNativeCombatAbility*> Abilities; TArray<FOGContentId> Required;
     for (const auto& Rule:CandidatePolicy->Rules)
     {
@@ -170,7 +172,8 @@ bool UOGNativeTurnAgentComponent::ReadCanonicalPhase(const FOGCombatUnitState& U
     if (!Session || !Session->IsBoundToStoredRuler() || Session->BoundRulerId != Core->GetOwnedBattleRulerId())
     { Error = TEXT("The local Ruler no longer owns this actual encounter."); return false; }
     return ReadActualNpc(*Core->GetWorldStore(), *ActivePolicy, Unit,
-        Session ? Session->BoundRulerId : FOGEntityId(), OutPhase, Error);
+        Session ? Session->BoundRulerId : FOGEntityId(),
+        Core->GetOwnedLuminousTurnBattle() && Core->GetOwnedLuminousTurnBattle()->GetState().ExecutionMode==EOGCombatExecutionMode::World,OutPhase, Error);
 }
 
 bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
@@ -273,8 +276,9 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
     }
     FailedSequence = Battle->GetLog().GetNextSequence(); FailedAbilityRevision=Battle->GetNativeAbilityRevision();
     Error = LastFailure.IsEmpty() ? Error : LastFailure;
-    Status = Error.IsEmpty() ? TEXT("No approved opponent rule can execute in the current battle state.") : Error;
-    UE_LOG(LogTemp, Warning, TEXT("Native opponent waits for a changed state or repaired source: %s"), *Status);
+    const FString Failure=Error.IsEmpty()?TEXT("No approved opponent rule can execute in the current battle state."):Error;
+    if (Failure!=Status) UE_LOG(LogTemp, Warning, TEXT("Native opponent waits for a changed state or repaired source: %s"), *Failure);
+    Status=Failure;
     return false;
 }
 

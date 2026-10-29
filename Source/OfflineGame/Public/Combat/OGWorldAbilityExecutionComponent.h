@@ -31,6 +31,8 @@ private:
     TWeakObjectPtr<UOGWorldAbilityExecutionComponent> Source;
     FOGEntityId CastId;
     int32 StepIndex=INDEX_NONE;
+    FVector LaunchOrigin=FVector::ZeroVector;
+    float MaximumTravelCentimeters=0;
     UFUNCTION() void OnPhysicalHit(UPrimitiveComponent*,AActor*,UPrimitiveComponent*,FVector,const FHitResult&);
 };
 

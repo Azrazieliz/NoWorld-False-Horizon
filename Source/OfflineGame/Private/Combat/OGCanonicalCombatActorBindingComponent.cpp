@@ -190,8 +190,13 @@ void UOGCanonicalCombatActorBindingComponent::HandleNativeAction(const FOGResolv
     auto* Appearance=GetOwner()?GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>():nullptr;
     auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
     if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
-    if (Motion && !Semantic.IsNone() && Motion->EnqueueCombatAction(Semantic,BoundBattleId,Action.ActionId))
-        LastPresentedAction=Action.ActionId;
+    if (Motion && !Semantic.IsNone())
+    {
+        const bool Presented=Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World && Action.InterruptPriority==0?
+            Motion->StartImmediateCombatAction(Semantic,BoundBattleId,Action.ActionId):
+            Motion->EnqueueCombatAction(Semantic,BoundBattleId,Action.ActionId);
+        if (Presented) LastPresentedAction=Action.ActionId;
+    }
 }
 
 void UOGCanonicalCombatActorBindingComponent::HandleCommittedState(const FOGTurnBattleState& State,const FOGEntityId& Receipt)

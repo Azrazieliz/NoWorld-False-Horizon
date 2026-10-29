@@ -979,6 +979,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     FOGTurnBattleState DevelopedState = InitialState;
     const EOGCombatExecutionMode RequestedMode=InitialState.ExecutionMode;
     DevelopedState.ExecutionMode=RequestedMode;
+    if (RequestedMode==EOGCombatExecutionMode::World && !ValidateOwnedWorldParticipants(DevelopedState,RulerId,OutError)) return false;
     for (FOGCombatUnitState& Unit : DevelopedState.Units)
         if (!FOGOwnedEquipmentService(*WorldStore).ProjectCombatUnit(Unit, OutError) ||
             !FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;

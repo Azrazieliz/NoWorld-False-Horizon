@@ -16,6 +16,8 @@ struct OFFLINEGAME_API FOGCombatTriggerBinding
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGTriggerDefinition Trigger;
+    /** Legacy bindings preserve behavior; native passives set their explicit authored rule. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bAllowReactionOrigin=true;
 };
 
 USTRUCT(BlueprintType)
@@ -37,6 +39,7 @@ struct OFFLINEGAME_API FOGCombatTriggerContext
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int64 SourceSequence = 0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bReactionOrigin=false;
 };
 
 USTRUCT(BlueprintType)

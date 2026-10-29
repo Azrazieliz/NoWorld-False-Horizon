@@ -4,6 +4,7 @@
 #include "Combat/OGCombatActionJournal.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "World/OGStartingRegionPresentation.h"
 
 bool UOGGameCoreSubsystem::CommitWorldCombatCandidate(FOGTurnBattle&& Candidate,FName Operation,
     const FOGResolvedCombatAction* Cause,int32 StepIndex,bool PublishRoot,FString& Error)
@@ -48,22 +49,7 @@ bool UOGGameCoreSubsystem::SetOwnedCombatExecutionMode(EOGCombatExecutionMode Mo
     if (!IsInGameThread() || bSubmittingNativeAction || !bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle)
     { Error=TEXT("No live canonical encounter is available."); return false; }
     if (OwnedLuminousTurnBattle->GetState().ExecutionMode==Mode) return true;
-    if (Mode==EOGCombatExecutionMode::World)
-    {
-        int32 OwnedActive=0;
-        for (const auto& Unit:OwnedLuminousTurnBattle->GetState().Units) if (Unit.CanAct())
-        {
-            bool Owned=Unit.UnitEntityId==ActiveCombatRulerId;
-            if (!Owned)
-            {
-                bool Found=false; FOGCharacterManifestationRecord M;
-                if (!WorldStore->TryReadCharacterManifestation(Unit.UnitEntityId,Found,M,Error)) return false;
-                Owned=Found && M.OwningRulerId==ActiveCombatRulerId;
-            }
-            if (Owned) ++OwnedActive;
-        }
-        if (OwnedActive>3) { Error=TEXT("World Mode requires the protagonist and at most two companions."); return false; }
-    }
+    if (!CanSetOwnedCombatExecutionMode(Mode,Error)) return false;
     TGuardValue<bool> Guard(bSubmittingNativeAction,true); FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
     if (!Candidate.SetExecutionMode(Mode,Error)) return false;
     if (!CommitWorldCombatCandidate(MoveTemp(Candidate),TEXT("combat.world_mode_changed"),nullptr,INDEX_NONE,false,Error)) return false;
@@ -97,10 +83,24 @@ bool UOGGameCoreSubsystem::ApplyOwnedWorldAbilityStep(const FOGEntityId& CastId,
         if (UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),OwnedLuminousTurnBattle->GetState().BattleId,Id))
             Physical.AddUnique(Id);
     if (!OwnedLuminousTurnBattle->FilterWorldContacts(Cause,Physical,Eligible,Error)) return false;
+    TArray<TWeakObjectPtr<AOGWorldPrototypeCharacter>> Dodged;
+    const auto& State=OwnedLuminousTurnBattle->GetState();
+    const auto* Source=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Cause.SourceUnitId;});
+    if (Source && OwnedLuminousTurnBattle->IsWorldDamagingStep(*Source,Cause.SkillId,Step))
+        Eligible.RemoveAll([&](const auto& Id)
+        {
+            const auto* Unit=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Id;});
+            auto* Body=Cast<AOGWorldPrototypeCharacter>(UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Id));
+            if (Unit && Unit->TeamIndex!=Source->TeamIndex && Body && Body->IsDodgeInvulnerable())
+            { Dodged.Add(Body); return true; }
+            return false;
+        });
     FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
     if (!Candidate.ApplyWorldAbilityStep(CastId,Step,Eligible,Error)) return false;
     Cause.TargetUnitIds=Eligible;
-    return CommitWorldCombatCandidate(MoveTemp(Candidate),TEXT("combat.world_impact_resolved"),&Cause,Step,false,Error);
+    if (!CommitWorldCombatCandidate(MoveTemp(Candidate),TEXT("combat.world_impact_resolved"),&Cause,Step,false,Error)) return false;
+    for (const auto& Body:Dodged) if (Body.IsValid()) Body->NotifyPerfectDodge();
+    return true;
 }
 bool UOGGameCoreSubsystem::CancelOwnedWorldAbility(const FOGEntityId& CastId,FString& Error)
 {
@@ -130,7 +130,7 @@ bool UOGGameCoreSubsystem::AdvanceOwnedWorldCombatTime(FString& Error)
     { Error=TEXT("World gameplay clock delta is invalid."); return false; }
     const int64 Whole=static_cast<int64>(Delta);
     if (!Whole) return true;
-    const auto& Current=OwnedLuminousTurnBattle->GetState();
+    const auto Current=OwnedLuminousTurnBattle->GetState();
     if (Whole>MAX_int64-Current.WorldElapsedMilliseconds) { Error=TEXT("World gameplay clock exhausted."); return false; }
     TGuardValue<bool> Guard(bSubmittingNativeAction,true); FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
     const int64 Sequence=Candidate.GetLog().GetNextSequence();
@@ -145,7 +145,8 @@ bool UOGGameCoreSubsystem::AdvanceOwnedWorldCombatTime(FString& Error)
         if (!CommitWorldCombatCandidate(MoveTemp(Candidate),TEXT("combat.world_clock_advanced"),nullptr,INDEX_NONE,false,Error)) return false;
     }
     else *OwnedLuminousTurnBattle=MoveTemp(Candidate); // Cursor-only updates do not create per-frame database events.
-    LastWorldCombatSeconds=Now; WorldCombatFractionalMilliseconds=Delta-Whole; return true;
+    const int64 Consumed=OwnedLuminousTurnBattle->GetState().WorldElapsedMilliseconds-Current.WorldElapsedMilliseconds;
+    LastWorldCombatSeconds=Now; WorldCombatFractionalMilliseconds=Delta-Consumed; return true;
 }
 bool UOGGameCoreSubsystem::TickWorldCombat(float)
 {
@@ -153,7 +154,42 @@ bool UOGGameCoreSubsystem::TickWorldCombat(float)
     {
         FString Error;
         if (!AdvanceOwnedWorldCombatTime(Error))
-        { UE_LOG(LogTemp,Warning,TEXT("Native World combat waits for a valid clock/state: %s"),*Error); LastWorldCombatSeconds=-1; }
+        {
+            if (Error!=LastWorldCombatClockError)
+                UE_LOG(LogTemp,Warning,TEXT("Native World combat waits for a valid clock/state: %s"),*Error);
+            LastWorldCombatClockError=Error;
+        }
+        else LastWorldCombatClockError.Reset();
     }
     return true;
+}
+
+bool UOGGameCoreSubsystem::ValidateOwnedWorldParticipants(const FOGTurnBattleState& State,const FOGEntityId& Ruler,FString& Error) const
+{
+    if (!WorldStore || !WorldStore->IsOpen() || !Ruler.IsValid())
+    { Error=TEXT("World party validation requires its stored Ruler."); return false; }
+    int32 OwnedActive=0;
+    for (const auto& Unit:State.Units) if (Unit.CanAct())
+    {
+        bool Owned=Unit.UnitEntityId==Ruler;
+        if (!Owned)
+        {
+            bool Found=false; FOGCharacterManifestationRecord M;
+            if (!WorldStore->TryReadCharacterManifestation(Unit.UnitEntityId,Found,M,Error)) return false;
+            Owned=Found && M.OwningRulerId==Ruler;
+        }
+        if (Owned) ++OwnedActive;
+    }
+    if (OwnedActive>3) { Error=TEXT("World Mode requires the protagonist and at most two companions."); return false; }
+    return true;
+}
+bool UOGGameCoreSubsystem::CanSetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error) const
+{
+    Error.Reset();
+    if (!bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle)
+    { Error=TEXT("No live canonical encounter is available."); return false; }
+    if (Mode==EOGCombatExecutionMode::World &&
+        !ValidateOwnedWorldParticipants(OwnedLuminousTurnBattle->GetState(),ActiveCombatRulerId,Error)) return false;
+    FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
+    return Candidate.SetExecutionMode(Mode,Error);
 }

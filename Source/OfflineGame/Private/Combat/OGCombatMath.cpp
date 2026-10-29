@@ -1,4 +1,5 @@
 #include "Combat/OGCombatMath.h"
+#include <cmath>
 
 namespace
 {
@@ -69,10 +70,8 @@ FOGCritResolution FOGCombatMath::ResolveCrit(
 
     // Settled order: opposing Crit Rate Resistance is deducted first.
     Result.EffectiveCritRateBps =
-        FMath::Max(
-            0,
-            Attacker.CritRateBps -
-            Defender.CritRateResistanceBps);
+        ClampToInt32(FMath::Max<int64>(0,
+            static_cast<int64>(Attacker.CritRateBps)-Defender.CritRateResistanceBps));
 
     Result.CritChanceBps =
         FMath::Min(Result.EffectiveCritRateBps, 10000);
@@ -113,9 +112,7 @@ FOGHitResolution FOGCombatMath::ResolveHit(
     FOGHitResolution Result;
 
     Result.EffectiveHitBps =
-        FMath::Max(
-            0,
-            Attacker.HitBps - Defender.DodgeBps);
+        ClampToInt32(FMath::Max<int64>(0,static_cast<int64>(Attacker.HitBps)-Defender.DodgeBps));
 
     if (!bAllowOverflowReplication)
     {
@@ -202,8 +199,8 @@ int32 FOGCombatMath::RatioBps(
     A.Normalize();
     B.Normalize();
 
-    const int32 ExponentDelta =
-        A.Exponent10 - B.Exponent10;
+    const int64 ExponentDelta =
+        static_cast<int64>(A.Exponent10) - B.Exponent10;
 
     // More than 9 decimal orders apart is below our stored significand precision.
     if (ExponentDelta > 9)
@@ -224,14 +221,14 @@ int32 FOGCombatMath::RatioBps(
         AlignedB =
             DivideRoundedNonNegative(
                 AlignedB,
-                Pow10Int64(ExponentDelta));
+                Pow10Int64(static_cast<int32>(ExponentDelta)));
     }
     else if (ExponentDelta < 0)
     {
         AlignedA =
             DivideRoundedNonNegative(
                 AlignedA,
-                Pow10Int64(-ExponentDelta));
+                Pow10Int64(static_cast<int32>(-ExponentDelta)));
     }
 
     const int64 Denominator =
@@ -253,41 +250,39 @@ int32 FOGCombatMath::RatioBps(
             10000));
 }
 
-int32 FOGCombatMath::ResolveDefenseMultiplierBps(
-    const FOGLargeNumber& DefenseReference,
-    const FOGLargeNumber& DefenderDefense,
-    int32 DefensePenetrationBps)
+FOGLargeNumber FOGCombatMath::ResolveDefenseMultiplier(
+    const FOGLargeNumber& DefenseReference,const FOGLargeNumber& DefenderDefense,int32 DefensePenetrationBps)
 {
-    if (DefenderDefense.GetSign() <= 0)
-    {
-        return 10000;
-    }
+    // The caller must supply the skill's positive authored reference; no universal fallback.
+    if (DefenseReference.GetSign()<=0) return FOGLargeNumber();
+    const int64 Remaining=10000LL-static_cast<int64>(DefensePenetrationBps);
+    const auto Effective=FOGLargeNumber::Multiply(DefenderDefense,FOGLargeNumber(Remaining,-4));
+    if (Effective.GetSign()==0) return FOGLargeNumber::FromInt64(1);
+    if (Effective.GetSign()>0) return FOGLargeNumber(RatioBps(DefenseReference,Effective),-4);
 
-    // Effective DEF = DEF * (1 - penetration).
-    // Penetration above 100% becomes negative-defense pressure.
-    const int64 RemainingDefenseBps =
-        10000LL -
-        static_cast<int64>(DefensePenetrationBps);
-
-    if (RemainingDefenseBps >= 0)
-    {
-        const FOGLargeNumber EffectiveDefense =
-            FOGLargeNumber::ScaleByBasisPoints(
-                DefenderDefense,
-                ClampToInt32(RemainingDefenseBps));
-
-        return RatioBps(
-            DefenseReference,
-            EffectiveDefense);
-    }
-
-    const int64 NegativePressureBps =
-        -RemainingDefenseBps;
-
-    // Beyond 100% penetration we convert excess into an explicit multiplier.
-    // This keeps negative-defense pressure readable and data-driven.
-    return ClampToInt32(
-        10000LL + NegativePressureBps);
+    auto Magnitude=Effective; Magnitude.Significand=-Magnitude.Significand; Magnitude.Normalize();
+    auto Reference=DefenseReference; Reference.Normalize();
+    const double LogRatio=std::log10(static_cast<double>(Magnitude.Significand)/Reference.Significand)+
+        (static_cast<int64>(Magnitude.Exponent10)-Reference.Exponent10);
+    constexpr double Log10Two=0.30102999566398119521;
+    const double MaximumLog10=static_cast<double>(MAX_int32)+std::log10(static_cast<double>(FOGLargeNumber::MaxSignificand));
+    if (LogRatio>=std::log10(MaximumLog10/Log10Two))
+        return FOGLargeNumber(FOGLargeNumber::MaxSignificand,MAX_int32);
+    const double LogFactor=std::pow(10.0,LogRatio)*Log10Two;
+    const double DecimalOrder=std::floor(LogFactor);
+    const int64 Mantissa=static_cast<int64>(std::llround(std::pow(10.0,LogFactor-DecimalOrder+8.0)));
+    return FOGLargeNumber(Mantissa,static_cast<int32>(DecimalOrder-8.0));
+}
+int32 FOGCombatMath::ResolveDefenseMultiplierBps(
+    const FOGLargeNumber& DefenseReference,const FOGLargeNumber& DefenderDefense,int32 DefensePenetrationBps)
+{
+    auto Factor=ResolveDefenseMultiplier(DefenseReference,DefenderDefense,DefensePenetrationBps);
+    if (Factor.GetSign()<=0) return 0;
+    const int64 Order=static_cast<int64>(Factor.Exponent10)+4;
+    if (Order>9) return MAX_int32;
+    if (Order < -18) return 0;
+    const double Value=static_cast<double>(Factor.Significand)*std::pow(10.0,static_cast<double>(Order));
+    return Value>=MAX_int32?MAX_int32:static_cast<int32>(std::llround(Value));
 }
 
 FOGDamageResolution FOGCombatMath::ResolveDamage(
@@ -328,16 +323,14 @@ FOGDamageResolution FOGCombatMath::ResolveDamage(
 
     if (Request.DamageType == EOGBaseDamageType::Physical)
     {
+        Result.DefenseMultiplier=ResolveDefenseMultiplier(Request.DefenseReference,Defender.Defense,Attacker.DefensePenetrationBps);
         Result.DefenseMultiplierBps =
             ResolveDefenseMultiplierBps(
                 Request.DefenseReference,
                 Defender.Defense,
                 Attacker.DefensePenetrationBps);
 
-        Damage =
-            FOGLargeNumber::ScaleByBasisPoints(
-                Damage,
-                Result.DefenseMultiplierBps);
+        Damage=FOGLargeNumber::Multiply(Damage,Result.DefenseMultiplier);
 
         Damage =
             FOGLargeNumber::ScaleByBasisPoints(

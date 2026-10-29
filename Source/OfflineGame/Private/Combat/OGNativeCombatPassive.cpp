@@ -35,7 +35,7 @@ bool FOGNativePassiveSpecification::Validate(FString& Error) const
             T.EventType==TEXT("OnEffectApplied") || T.EventType==TEXT("OnEffectRemoved") ||
             T.EventType==TEXT("OnEffectTicked") || T.EventType==TEXT("OnEffectResisted");
         if (!T.TriggerId.IsValid() || T.TriggerId.Value.StartsWith(TEXT("diagnostic:")) || Ids.Contains(T.TriggerId) || !Event || T.ActionIds.IsEmpty() ||
-            Rule.MaximumActivationsPerRoot<1 || Rule.Priority<1 ||
+            Rule.MaximumActivationsPerRoot<1 || Rule.MaximumActivationsPerOwnerAction<0 || Rule.Priority<1 ||
             static_cast<uint8>(Rule.Target)>static_cast<uint8>(EOGNativeReactionTarget::LowestHealthAlly) ||
             Rule.Unavailable==EOGNativeReactionUnavailable::Unspecified ||
             static_cast<uint8>(Rule.Unavailable)>static_cast<uint8>(EOGNativeReactionUnavailable::RejectRootAction))

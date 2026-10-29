@@ -55,6 +55,7 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
     if (!InSource || !Cast.IsValid() || Step<0 || !Mesh || Direction.IsNearlyZero() || Spec.ProjectileSpeed<=0)
     { Error=TEXT("Projectile requires its accepted cast and original installed visual/kinematics."); return false; }
     Source=InSource; CastId=Cast; StepIndex=Step;
+    LaunchOrigin=GetActorLocation(); MaximumTravelCentimeters=Spec.RangeCentimeters;
     Collision->SetSphereRadius(Spec.RadiusCentimeters); Collision->SetCollisionProfileName(Spec.ProjectileCollisionProfile);
     Collision->SetNotifyRigidBodyCollision(true); Collision->IgnoreActorWhenMoving(InSource->GetOwner(),true);
     Visual->SetStaticMesh(Mesh); Visual->SetRelativeTransform(Spec.ProjectileMeshTransform);
@@ -65,13 +66,15 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
 void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,UPrimitiveComponent*,FVector,const FHitResult&)
 {
     if (Other==GetOwner()) return;
+    if (FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) { Destroy(); return; }
     if (Source.IsValid()) { FString Error; Source->CommitProjectileContact(CastId,StepIndex,Other,Error); }
     Destroy();
 }
 void AOGNativeWorldProjectile::Tick(float Delta)
 {
     Super::Tick(Delta);
-    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId) Destroy();
+    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId ||
+        FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) Destroy();
 }
 UOGWorldAbilityExecutionComponent::UOGWorldAbilityExecutionComponent()
 {
@@ -140,6 +143,13 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
         { FName Start,End; if (!TracePart(Step,Start,End,Error)) return false; }
         if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
         { Error=TEXT("The original projectile mesh is unavailable."); return false; }
+    }
+    const FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Request.SkillId);
+    if (!Semantic.IsNone())
+    {
+        auto* Motion=WorldMotion(GetOwner());
+        if (!Motion || !Motion->CanPlayAction(Semantic,TEXT("Combat"),false,1,NAME_None))
+        { Error=TEXT("The original action motion is not connected to this actual rig."); return false; }
     }
     const auto FrozenSpec=*Spec;
     auto* Actions=GetOwner()->FindComponentByClass<UOGWorldActionRuntimeComponent>();
@@ -272,6 +282,7 @@ void UOGWorldAbilityExecutionComponent::CancelActiveCast()
 {
     if (bEndingLocal || !ActiveCast.IsValid()) return;
     FString Error; if (Core.IsValid() && !Core->CancelOwnedWorldAbility(ActiveCast,Error)) { Status=Error; return; }
+    if (auto* Motion=WorldMotion(GetOwner())) Motion->CancelCombatAction(BattleId,ActiveCast);
     EndLocalCast();
 }
 void UOGWorldAbilityExecutionComponent::EndLocalCast()

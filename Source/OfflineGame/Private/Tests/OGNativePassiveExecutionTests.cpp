@@ -77,7 +77,9 @@ bool FOGNativePassiveChainTest::RunTest(const FString&)
     A.SkillSet.PassiveSkills={FOGContentId(TEXT("test:a.counter"))}; B.SkillSet.PassiveSkills={FOGContentId(TEXT("test:b.counter"))};
     const FOGContentId ChildA(TEXT("test:a.counter_action")),ChildB(TEXT("test:b.counter_action"));
     FOGTurnBattle Battle; FString Error;
-    if (!Battle.Initialize(PassiveState(A,B),{}, {},{}, {},{Counter(A,ChildA),Counter(B,ChildB)},Error)) return false;
+    auto Left=Counter(A,ChildA),Right=Counter(B,ChildB);
+    Left.Specification.Triggers[0].bAllowReactionOrigin=Right.Specification.Triggers[0].bAllowReactionOrigin=true;
+    if (!Battle.Initialize(PassiveState(A,B),{}, {},{}, {},{Left,Right},Error)) return false;
     Battle.RequireNativeActionExecutors(true);
     if (!Battle.RegisterNativeAbility(PassiveDamage(A.SkillSet.ActiveSkills[0],100),Error) ||
         !Battle.RegisterNativeAbility(PassiveDamage(ChildA,30),Error) || !Battle.RegisterNativeAbility(PassiveDamage(ChildB,50),Error)) return false;
@@ -141,6 +143,49 @@ bool FOGNativePassiveOpeningTest::RunTest(const FString&)
         Initial,Battle.GetState(),Battle.GetLastNativeReactions(),Ruler,10,Event,Error));
     TestTrue(TEXT("Opening has an independent valid causal receipt ID"),Event.EventId.IsValid() && Event.EventId!=Initial.BattleId);
     TestTrue(TEXT("Receipt records the actual resource result"),Event.PayloadJson.Contains(TEXT("value_exact")) && Event.PayloadJson.Contains(Child.ToString()));
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeNoRecursiveProcsTest,
+    "OfflineGame.Combat.Passives.DefaultDoesNotProcFromPassiveFollowups",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGNativeNoRecursiveProcsTest::RunTest(const FString&)
+{
+    auto A=PassiveUnit(0),B=PassiveUnit(1); A.SkillSet.ActiveSkills={FOGContentId(TEXT("test:root.strike"))};
+    A.SkillSet.PassiveSkills={FOGContentId(TEXT("test:a.counter"))}; B.SkillSet.PassiveSkills={FOGContentId(TEXT("test:b.counter"))};
+    const FOGContentId ChildA(TEXT("test:a.counter_action")),ChildB(TEXT("test:b.counter_action"));
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(PassiveState(A,B),{}, {},{}, {},{Counter(A,ChildA),Counter(B,ChildB)},Error)) return false;
+    Battle.RequireNativeActionExecutors(true);
+    if (!Battle.RegisterNativeAbility(PassiveDamage(A.SkillSet.ActiveSkills[0],100),Error) ||
+        !Battle.RegisterNativeAbility(PassiveDamage(ChildA,30),Error) || !Battle.RegisterNativeAbility(PassiveDamage(ChildB,50),Error) ||
+        !Battle.ApplyResolvedAction(Strike(A,B),Error)) return false;
+    TestTrue(TEXT("Root and first counter apply real damage"),Battle.GetState().Units[0].CurrentHp==FOGLargeNumber::FromInt64(950));
+    TestTrue(TEXT("A passive hit cannot activate the opposing passive by default"),Battle.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(900));
+    TestEqual(TEXT("Only the real first reaction is emitted"),Battle.GetLastNativeReactions().Num(),1); return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeOwnerBoundTest,
+    "OfflineGame.Combat.Passives.OwnerBoundSurvivesOtherActorsAndResetsOnOwnerAction",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGNativeOwnerBoundTest::RunTest(const FString&)
+{
+    auto A=PassiveUnit(0),B=PassiveUnit(1);
+    A.SkillSet.ActiveSkills={FOGContentId(TEXT("test:root.strike"))};
+    B.SkillSet.ActiveSkills={FOGContentId(TEXT("test:enemy.strike"))};
+    B.SkillSet.PassiveSkills={FOGContentId(TEXT("test:enemy.counter"))}; B.NextActionValue=150;
+    const FOGContentId Child(TEXT("test:enemy.counter_action")); auto Passive=Counter(B,Child);
+    Passive.Specification.Triggers[0].MaximumActivationsPerOwnerAction=1;
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(PassiveState(A,B),{}, {},{}, {},{Passive},Error)) return false;
+    Battle.RequireNativeActionExecutors(true);
+    if (!Battle.RegisterNativeAbility(PassiveDamage(A.SkillSet.ActiveSkills[0],100),Error) ||
+        !Battle.RegisterNativeAbility(PassiveDamage(B.SkillSet.ActiveSkills[0],1),Error) ||
+        !Battle.RegisterNativeAbility(PassiveDamage(Child,50),Error) ||
+        !Battle.ApplyResolvedAction(Strike(A,B),Error) || !Battle.ApplyResolvedAction(Strike(A,B),Error)) return false;
+    TestTrue(TEXT("Other actors' root actions do not reset this owner's bound"),
+        Battle.GetState().Units[0].CurrentHp==FOGLargeNumber::FromInt64(950));
+    if (!Battle.ApplyResolvedAction(Strike(B,A),Error) || !Battle.ApplyResolvedAction(Strike(A,B),Error)) return false;
+    TestTrue(TEXT("The next real owner action renews the source-authored bound"),
+        Battle.GetState().Units[0].CurrentHp==FOGLargeNumber::FromInt64(899));
     return true;
 }
 #endif

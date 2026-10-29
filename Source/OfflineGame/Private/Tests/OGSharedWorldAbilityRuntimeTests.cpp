@@ -11,7 +11,7 @@ struct FSharedWorldFixture
     FOGEntityId A=FOGEntityId::NewId(),B=FOGEntityId::NewId();
     FOGNativeAbilityDefinition Ability;
     FOGWorldAbilitySpecification World;
-    bool Open(EOGWorldAbilityCostTiming Cost=EOGWorldAbilityCostTiming::AcceptedStart,bool Refund=false)
+    bool Open(EOGWorldAbilityCostTiming Cost=EOGWorldAbilityCostTiming::AcceptedStart,bool Refund=false,bool WithEffect=false)
     {
         FOGCombatUnitState Source,Target; Source.UnitEntityId=A; Target.UnitEntityId=B;
         Source.IdentityId=WorldTestId(TEXT("source")); Target.IdentityId=WorldTestId(TEXT("target"));
@@ -36,6 +36,18 @@ struct FSharedWorldFixture
         auto Gain=CostRow; Gain.Amount=3; Ability.ResourceChanges={Gain};
         FOGNativeAbilityPacket Packet; Packet.FlatAmount=FOGLargeNumber::FromInt64(10);
         Packet.DefenseReference=EOGNativeDefenseReference::Attack; Packet.Repeats=3; Ability.Packets={Packet};
+        if (WithEffect)
+        {
+            FOGNativeEffectDefinition Effect; Effect.Effect.EffectId=WorldTestId(TEXT("periodic"));
+            Effect.Effect.FamilyId=WorldTestId(TEXT("periodic_family")); Effect.Effect.MechanicKind=TEXT("periodic_hp");
+            Effect.Effect.RulePriority.SourceRuleId=Effect.Effect.EffectId;
+            Effect.Effect.Lifetime.Kind=EOGEffectLifetimeKind::RealTimeMilliseconds; Effect.Effect.Lifetime.Magnitude=600;
+            Effect.Mechanic=EOGNativeEffectMechanic::PeriodicDamage; Effect.FlatMagnitude=FOGLargeNumber::FromInt64(5);
+            Effect.WorldTickIntervalMilliseconds=200; Effect.OriginalSourceReference=TEXT("isolated real-time fixture");
+            if (!Battle.RegisterNativeEffect(Effect,Error)) return false;
+            FOGNativeAbilityEffectOperation Apply; Apply.Id=Effect.Effect.EffectId; Apply.bBeforePackets=true;
+            Ability.Effects={Apply};
+        }
         if (!Battle.RegisterNativeAbility(Ability,Error)) return false;
         World.SkillId=Ability.SkillId; World.OriginalSourceReference=TEXT("native source timing fixture");
         World.CostTiming=Cost; World.DurationMilliseconds=1000; World.CooldownMilliseconds=1500; World.bRefundCostsOnCancel=Refund;
@@ -110,6 +122,28 @@ bool FOGSharedWorldCancelAndCoverageTest::RunTest(const FString&)
     TestEqual(TEXT("Only the authored cancellation policy refunds"),F.Energy(),static_cast<int64>(20));
     TestFalse(TEXT("Refund does not reset the accepted cooldown"),F.Battle.BeginWorldAbility(F.Root(),F.Error));
     TestTrue(TEXT("Cancellation never invents target damage"),F.Battle.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(100));
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGWorldPeriodicLifetimeTest,
+    "OfflineGame.Combat.World.PeriodicStatusUsesGameplayMilliseconds",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGWorldPeriodicLifetimeTest::RunTest(const FString&)
+{
+    FSharedWorldFixture F; if (!F.Open(EOGWorldAbilityCostTiming::AcceptedStart,false,true)) return false;
+    auto Root=F.Root(); if (!F.Battle.BeginWorldAbility(Root,F.Error) ||
+        !F.Battle.AdvanceWorldCombatClock(100,F.Error) ||
+        !F.Battle.ApplyWorldAbilityStep(Root.ActionId,0,{F.B},F.Error) ||
+        !F.Battle.CancelWorldAbility(Root.ActionId,F.Error)) return false;
+    TestEqual(TEXT("A finite real-time status is actually installed"),F.Battle.GetState().Units[1].NativeEffects.Num(),1);
+    TestFalse(TEXT("Changing combat mode cannot erase an active status clock"),F.Battle.SetExecutionMode(EOGCombatExecutionMode::Turn,F.Error));
+    if (!F.Battle.AdvanceWorldCombatClock(299,F.Error)) return false;
+    TestTrue(TEXT("No early periodic damage"),F.Battle.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(90));
+    if (!F.Battle.AdvanceWorldCombatClock(300,F.Error)) return false;
+    TestTrue(TEXT("The exact interval deals its sourced packet"),F.Battle.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(85));
+    if (!F.Battle.AdvanceWorldCombatClock(701,F.Error)) return false;
+    TestTrue(TEXT("Catch-up preserves every endpoint-inclusive tick"),F.Battle.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(75));
+    TestEqual(TEXT("Finite status expires without requiring an owner action"),F.Battle.GetState().Units[1].NativeEffects.Num(),0);
+    TestEqual(TEXT("Status processing does not fabricate additional skill costs"),F.Energy(),static_cast<int64>(0));
     return true;
 }
 #endif

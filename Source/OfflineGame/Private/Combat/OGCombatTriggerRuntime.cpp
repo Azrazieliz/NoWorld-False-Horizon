@@ -35,7 +35,8 @@ void FOGCombatTriggerRuntime::QueueForEvent(
 
     for (const FOGCombatTriggerBinding& Binding : Bindings)
     {
-        if (Binding.Trigger.EventType != Context.EventType ||
+        if ((Context.bReactionOrigin && !Binding.bAllowReactionOrigin) ||
+            Binding.Trigger.EventType != Context.EventType ||
             !ConditionsPass(Binding, Context,Override))
         {
             continue;

@@ -233,6 +233,7 @@ public:
     FName ResolveNativeAbilityMotion(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
     bool RegisterWorldAbility(const FOGWorldAbilitySpecification& Specification,FString& Error);
     const FOGWorldAbilitySpecification* FindWorldAbility(const FOGCombatUnitState& Unit,const FOGContentId& Skill) const;
+    bool IsWorldDamagingStep(const FOGCombatUnitState& Unit,const FOGContentId& Skill,int32 Step) const;
     bool FilterWorldContacts(const FOGResolvedCombatAction& Root,const TArray<FOGEntityId>& Raw,TArray<FOGEntityId>& Out,FString& Error) const;
     bool SetExecutionMode(EOGCombatExecutionMode Mode,FString& Error);
     bool BeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error);
@@ -313,8 +314,13 @@ public:
         FString& OutError);
 
 private:
+    bool SetExecutionModeMutating(EOGCombatExecutionMode Mode,FString& Error);
     struct FNativePassiveRule { FOGEntityId OwnerUnitId; FOGContentId PassiveSkillId; FOGNativePassiveTrigger Rule; };
     TMap<FString,FNativePassiveRule> NativePassiveRules;
+    struct FNativeOwnerActivation { int64 Epoch=-1; int32 Count=0; };
+    TMap<FOGEntityId,int64> NativeOwnerActionEpochs;
+    TMap<FString,FNativeOwnerActivation> NativeOwnerActivationCounts;
+    bool BeginNativeOwnerAction(const FOGEntityId& Unit,FString& Error);
     TSet<FString> NativePassiveActionOwners;
     FOGCombatConditionEvaluator NativeFallbackConditions;
     TOptional<FOGQueuedTriggeredAction> NativeReactionProof;
@@ -357,6 +363,9 @@ private:
     bool ApplyNativeEffect(const FOGNativeEffectDefinition& Definition,const FOGNativeAbilityEffectOperation& Operation,
         const FOGResolvedCombatAction& Action,const FOGEntityId& TargetId,int32 OperationIndex,FString& Error);
     bool ProcessNativeEffectOwnerAction(const FOGEntityId& Owner,FString& Error);
+    int64 GetNextNativeWorldEffectTime() const;
+    bool ProcessNativeWorldEffectClock(int64 Target,FString& Error);
+    bool ValidateNativeWorldEffectTiming(const FOGNativeEffectDefinition& Definition,FString& Error) const;
     void RemoveNativeEffectsOnDefeat(const FOGEntityId& Target);
     void ClearNativeEncounterEffects();
     void RecordNativeEffect(EOGCombatLogEventType Type,const FOGEntityId& Source,const FOGEntityId& Target,

@@ -45,6 +45,10 @@ struct OFFLINEGAME_API FOGNativeEffectDefinition
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeEffectMechanic Mechanic=EOGNativeEffectMechanic::StatModifier;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeEffectStacking Stacking=EOGNativeEffectStacking::Refresh;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeEffectClock Clock=EOGNativeEffectClock::TargetActions;
+    /** Exact World counterpart for Turns. Zero requires source timing before World admission. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 WorldDurationMilliseconds=0;
+    /** Required for periodic World packets; never inferred from turn count or frame rate. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 WorldTickIntervalMilliseconds=0;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bPerSource=true;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bBeneficial=false;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bDispellable=true;
@@ -93,6 +97,9 @@ struct OFFLINEGAME_API FOGNativeEffectInstance
     UPROPERTY(BlueprintReadOnly) int32 Stacks=1;
     UPROPERTY(BlueprintReadOnly) int64 RemainingActions=-1;
     UPROPERTY(BlueprintReadOnly) int64 AppliedAtOwnerAction=0;
+    UPROPERTY(BlueprintReadOnly) int64 ExpiresAtWorldMilliseconds=-1;
+    UPROPERTY(BlueprintReadOnly) int64 NextWorldTickMilliseconds=-1;
+    UPROPERTY(BlueprintReadOnly) int64 WorldTickIntervalMilliseconds=0;
     UPROPERTY(BlueprintReadOnly) FOGLargeNumber MagnitudePerStack;
     UPROPERTY(BlueprintReadOnly) FOGLargeNumber BarrierRemaining;
     bool operator==(const FOGNativeEffectInstance& V) const;

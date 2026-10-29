@@ -235,8 +235,12 @@ void UOGNativeBattleWidget::Refresh()
         const FString Label=Command.Label+(Own && !Enabled?TEXT("\n")+Reason:FString());
         AddButton(Commands,Label,Enabled?Command.Hint:Reason,Command.Id,INDEX_NONE,Enabled,false,Width);
     }
-    AddButton(Commands,WorldMode?TEXT("TURN MODE"):TEXT("WORLD MODE"),TEXT("Keep the current combatants and state."),
-        TEXT("screen_combat_mode"),INDEX_NONE,true,false,Width);
+    FString ModeReason;
+    const bool CanChangeMode=Core->CanSetOwnedCombatExecutionMode(
+        WorldMode?EOGCombatExecutionMode::Turn:EOGCombatExecutionMode::World,ModeReason);
+    AddButton(Commands,WorldMode?TEXT("TURN MODE"):TEXT("WORLD MODE"),
+        CanChangeMode?TEXT("Keep the current combatants and state."):ModeReason,
+        TEXT("screen_combat_mode"),INDEX_NONE,CanChangeMode,false,Width);
     AddButton(Commands,TEXT("Pause"),TEXT("Open the existing pause controls."),TEXT("screen_pause"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Settings"),TEXT("Open the existing game settings."),TEXT("screen_settings"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Ruler"),TEXT("Return to the existing Ruler interface."),TEXT("screen_ruler"),INDEX_NONE,true,false,Width);

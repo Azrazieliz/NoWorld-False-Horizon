@@ -19,6 +19,10 @@ struct OFFLINEGAME_API FOGNativePassiveTrigger
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGNativeReactionTarget Target=EOGNativeReactionTarget::Owner;
     /** Source-authored finite activation limit for one root action and all its reactions. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 MaximumActivationsPerRoot=0;
+    /** Zero leaves only the root bound. Positive values persist across other actors' actions. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 MaximumActivationsPerOwnerAction=0;
+    /** Approved native default: passive follow-ups cannot recursively create more passive procs. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bAllowReactionOrigin=false;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 Priority=1;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bAllowReserveSource=false;
     /** Explicit behavior for missing live targets, insufficient resources or a cooling-down reaction. */

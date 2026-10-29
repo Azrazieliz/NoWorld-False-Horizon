@@ -86,6 +86,9 @@ bool AddUnitDelta(
             Row->SetNumberField(TEXT("stacks"),I.Stacks);
             Row->SetStringField(TEXT("remaining_actions_exact"),LexToString(I.RemainingActions));
             Row->SetStringField(TEXT("applied_at_owner_action_exact"),LexToString(I.AppliedAtOwnerAction));
+            Row->SetStringField(TEXT("expires_world_ms_exact"),LexToString(I.ExpiresAtWorldMilliseconds));
+            Row->SetStringField(TEXT("next_world_tick_ms_exact"),LexToString(I.NextWorldTickMilliseconds));
+            Row->SetStringField(TEXT("world_tick_interval_ms_exact"),LexToString(I.WorldTickIntervalMilliseconds));
             Row->SetStringField(TEXT("magnitude_per_stack"),I.MagnitudePerStack.ToDebugString());
             Row->SetStringField(TEXT("barrier_remaining"),I.BarrierRemaining.ToDebugString());
             Rows.Add(MakeShared<FJsonValueObject>(Row));

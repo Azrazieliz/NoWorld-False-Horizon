@@ -160,6 +160,7 @@ public:
         bool& bOutWon, FString& OutError);
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
     bool SetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error);
+    bool CanSetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error) const;
     bool BeginOwnedWorldAbility(const FOGResolvedCombatAction& Root,FString& Error);
     bool ApplyOwnedWorldAbilityStep(const FOGEntityId& CastId,int32 Step,const TArray<FOGEntityId>& Contacts,FString& Error);
     bool CancelOwnedWorldAbility(const FOGEntityId& CastId,FString& Error);
@@ -241,7 +242,9 @@ private:
     FOGNativeBattleOutcome LastNativeBattleOutcome;
     bool CommitWorldCombatCandidate(FOGTurnBattle&& Candidate,FName Operation,const FOGResolvedCombatAction* Cause,
         int32 StepIndex,bool PublishRootMotion,FString& Error);
+    bool ValidateOwnedWorldParticipants(const FOGTurnBattleState& State,const FOGEntityId& Ruler,FString& Error) const;
     bool TickWorldCombat(float DeltaSeconds);
+    FString LastWorldCombatClockError;
     FTSTicker::FDelegateHandle WorldCombatTickerHandle;
     TWeakObjectPtr<UWorld> WorldCombatClockWorld;
     double LastWorldCombatSeconds=-1;

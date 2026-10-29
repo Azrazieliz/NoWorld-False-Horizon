@@ -181,4 +181,28 @@ bool FOGTrueDamageBypassTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGApprovedNegativeDefenseTest,
+    "OfflineGame.Combat.Math.ApprovedNegativeDefenseExponential",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FOGApprovedNegativeDefenseTest::RunTest(const FString&)
+{
+    const auto Ref=FOGLargeNumber::FromInt64(100);
+    TestEqual(TEXT("Positive defense uses the authored reference"),FOGCombatMath::ResolveDefenseMultiplierBps(Ref,Ref,0),5000);
+    TestEqual(TEXT("Full penetration removes mitigation"),FOGCombatMath::ResolveDefenseMultiplierBps(Ref,Ref,10000),10000);
+    TestEqual(TEXT("Negative defense is exponential relative to the actual reference"),
+        FOGCombatMath::ResolveDefenseMultiplierBps(Ref,FOGLargeNumber::FromInt64(200),20000),40000);
+    TestEqual(TEXT("An actual negative stat follows the same rule"),
+        FOGCombatMath::ResolveDefenseMultiplierBps(Ref,FOGLargeNumber::FromInt64(-300),0),80000);
+    TestEqual(TEXT("A missing authored reference cannot select a global default"),
+        FOGCombatMath::ResolveDefenseMultiplierBps(FOGLargeNumber(),Ref,0),0);
+    const auto Factor=FOGCombatMath::ResolveDefenseMultiplier(Ref,FOGLargeNumber::FromInt64(-20000),0);
+    TestTrue(TEXT("High-rank factors retain scientific magnitude beyond int32 basis points"),
+        FOGLargeNumber::Compare(Factor,FOGLargeNumber::FromInt64(MAX_int32))>0);
+    FOGCombatStats A,D; A.HitBps=10000; A.CritRateBps=0; D.Defense=FOGLargeNumber::FromInt64(-300);
+    FOGDamageRequest R; R.BaseDamage=Ref; R.DefenseReference=Ref; R.bCanCrit=false; R.bCanBeBlocked=false;
+    FOGDeterministicRng Rng(72);
+    TestTrue(TEXT("Resolved damage consumes the full exponential factor"),
+        FOGCombatMath::ResolveDamage(R,A,D,Rng).TotalDamage==FOGLargeNumber::FromInt64(800));
+    return true;
+}
 #endif

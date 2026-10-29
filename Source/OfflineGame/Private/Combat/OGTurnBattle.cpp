@@ -65,6 +65,7 @@ bool FOGTurnBattle::Initialize(
     FOGRankSuppressionResolver InRankResolver,TArray<FOGNativePassiveBinding> Passives,FString& OutError)
 {
     State = InitialState;
+    NativeOwnerActionEpochs.Reset(); NativeOwnerActivationCounts.Reset();
     NativePassiveRules.Reset(); NativePassiveActionOwners.Reset(); NativeReactionProof.Reset(); LastNativeReactions.Reset();
     NativeFallbackConditions=ConditionEvaluator;
     // Opening resource truth comes only from admitted shared specifications, never caller snapshots.
@@ -550,6 +551,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
     FOGCombatUnitState* Source=FindMutableUnit(Action.SourceUnitId);
     if (!Source) { OutError=TEXT("Validated combat source is unavailable."); return false; }
     const bool bInterrupt=Action.InterruptPriority>0;
+    if (!bInterrupt && !BeginNativeOwnerAction(Action.SourceUnitId,OutError)) return false;
 
     FOGCombatLogEvent Declared;
     Declared.Type = EOGCombatLogEventType::ActionDeclared;
@@ -1400,6 +1402,7 @@ void FOGTurnBattle::QueueTriggerEvent(
     Context.SkillId = SkillId;
     Context.SourceSequence =
         SourceSequence;
+    Context.bReactionOrigin=NativeReactionProof.IsSet();
 
     const FOGCombatConditionEvaluator Evaluate=[this](const FOGCombatTriggerBinding& B,
         const FOGConditionDefinition& C,const FOGCombatTriggerContext& E)

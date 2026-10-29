@@ -74,11 +74,26 @@ bool FOGTurnBattle::FilterWorldContacts(const FOGResolvedCombatAction& Root,cons
 }
 bool FOGTurnBattle::SetExecutionMode(EOGCombatExecutionMode Mode,FString& Error)
 {
+    FOGTurnBattle Candidate=*this;
+    if (!Candidate.SetExecutionModeMutating(Mode,Error)) return false;
+    *this=MoveTemp(Candidate); return true;
+}
+bool FOGTurnBattle::SetExecutionModeMutating(EOGCombatExecutionMode Mode,FString& Error)
+{
     Error.Reset();
     if (State.Status!=EOGTurnBattleStatus::Running || !WorldCasts.IsEmpty() ||
         !OutstandingTriggeredActionSequences.IsEmpty() || static_cast<uint8>(Mode)>static_cast<uint8>(EOGCombatExecutionMode::World))
     { Error=TEXT("Combat mode changes require a running encounter at a completed action boundary."); return false; }
+    if (Mode!=State.ExecutionMode)
+        for (const auto& Unit:State.Units) for (const auto& I:Unit.NativeEffects)
+        {
+            const auto* D=NativeEffectDefinitions.Find(I.EffectId);
+            if (!D || D->Effect.Lifetime.Kind!=EOGEffectLifetimeKind::Encounter)
+            { Error=TEXT("Complete finite status lifetimes before changing combat clocks."); return false; }
+        }
     if (Mode==EOGCombatExecutionMode::World)
+    {
+        for (const auto& Pair:NativeEffectDefinitions) if (!ValidateNativeWorldEffectTiming(Pair.Value,Error)) return false;
         for (const auto& Unit:State.Units)
         {
             if (!Unit.CanAct()) continue;
@@ -90,12 +105,22 @@ bool FOGTurnBattle::SetExecutionMode(EOGCombatExecutionMode Mode,FString& Error)
                 { Error=TEXT("Finish active own-action cooldowns before changing combat mode."); return false; }
             }
         }
+    }
     else
         for (const auto& Pair:WorldAbilityReadyAt) if (Pair.Value>State.WorldElapsedMilliseconds)
         { Error=TEXT("Finish active World cooldowns before changing combat mode."); return false; }
     if (State.ExecutionMode==Mode) return true;
     const auto Previous=State.ExecutionMode; State.ExecutionMode=Mode;
     if (Mode==EOGCombatExecutionMode::Turn && !ValidateInitialState(Error)) { State.ExecutionMode=Previous; return false; }
+    for (auto& Unit:State.Units) for (auto& I:Unit.NativeEffects)
+    {
+        const auto& D=NativeEffectDefinitions.FindChecked(I.EffectId);
+        const int64 Interval=Mode==EOGCombatExecutionMode::World?D.WorldTickIntervalMilliseconds:0;
+        if (Interval>MAX_int64-State.WorldElapsedMilliseconds)
+        { State.ExecutionMode=Previous; Error=TEXT("World effect interval exhausted."); return false; }
+        I.WorldTickIntervalMilliseconds=Interval;
+        I.NextWorldTickMilliseconds=Interval>0?State.WorldElapsedMilliseconds+Interval:-1;
+    }
     LastNativeReactions.Reset(); ++NativeAbilityRevision; return true;
 }
 bool FOGTurnBattle::BeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error)
@@ -112,6 +137,7 @@ bool FOGTurnBattle::BeginWorldAbility(const FOGResolvedCombatAction& Root,FStrin
     FOGTurnBattle Candidate=*this; Candidate.LastNativeReactions.Reset(); Candidate.WorldExecutionProof=Root;
     if (!Candidate.ValidateNativeAbility(Root,*Candidate.FindMutableUnit(Root.SourceUnitId),Error)) return false;
     Candidate.WorldExecutionProof.Reset();
+    if (!Candidate.BeginNativeOwnerAction(Root.SourceUnitId,Error)) return false;
     FWorldCast Cast; Cast.Root=Root; Cast.Specification=*Spec; Cast.StartedAt=State.WorldElapsedMilliseconds;
     Cast.Seed=WorldSeed(State.BattleId,Root.SourceUnitId,Root.SkillId,Log.GetNextSequence());
     auto* Owner=Candidate.FindMutableUnit(Root.SourceUnitId);
@@ -243,19 +269,47 @@ bool FOGTurnBattle::AdvanceWorldCombatClock(int64 Target,FString& Error)
 {
     if (State.ExecutionMode!=EOGCombatExecutionMode::World || State.Status!=EOGTurnBattleStatus::Running ||
         Target<State.WorldElapsedMilliseconds) { Error=TEXT("World combat clock must advance monotonically in a live World encounter."); return false; }
-    FOGTurnBattle Candidate=*this; Candidate.LastNativeReactions.Reset(); Candidate.State.WorldElapsedMilliseconds=Target;
-    TArray<FOGEntityId> CastIds; Candidate.WorldCasts.GetKeys(CastIds);
-    CastIds.Sort([](const auto& A,const auto& B){return A.ToString()<B.ToString();});
-    for (const auto& Id:CastIds)
+    FOGTurnBattle Candidate=*this; Candidate.LastNativeReactions.Reset();
+    // Bounded catch-up preserves the unconsumed elapsed time in GameCore; no periodic packets are dropped.
+    constexpr int32 MaximumEventsPerAdvance=2048;
+    for (int32 EventIndex=0;EventIndex<MaximumEventsPerAdvance && Candidate.State.Status==EOGTurnBattleStatus::Running;++EventIndex)
     {
-        const auto* Cast=Candidate.WorldCasts.Find(Id); if (!Cast) continue;
-        const auto* Owner=Candidate.FindUnit(Cast->Root.SourceUnitId);
-        if (!Owner || !Owner->CanAct())
-        { if (!Candidate.CancelWorldAbilityMutating(Id,Error)) return false; }
-        else if (Target>=Cast->StartedAt+Cast->Specification.DurationMilliseconds &&
-            Cast->CompletedSteps.Num()==Cast->Specification.Steps.Num())
-            if (!Candidate.FinishWorldAbility(Id,Error)) return false;
+        TArray<FOGEntityId> CastIds; Candidate.WorldCasts.GetKeys(CastIds);
+        CastIds.Sort([](const auto& A,const auto& B){return A.ToString()<B.ToString();});
+        FOGEntityId ReadyCast; int64 NextCast=MAX_int64;
+        for (const auto& Id:CastIds)
+        {
+            const auto& Cast=Candidate.WorldCasts.FindChecked(Id);
+            const auto* Owner=Candidate.FindUnit(Cast.Root.SourceUnitId);
+            const int64 Due=(!Owner || !Owner->CanAct())?Candidate.State.WorldElapsedMilliseconds:
+                (Cast.CompletedSteps.Num()==Cast.Specification.Steps.Num()?Cast.StartedAt+Cast.Specification.DurationMilliseconds:MAX_int64);
+            if (!ReadyCast.IsValid() || Due<NextCast) { ReadyCast=Id; NextCast=Due; }
+        }
+        const int64 NextEffect=Candidate.GetNextNativeWorldEffectTime();
+        const int64 Next=FMath::Min(NextCast,NextEffect);
+        if (Next==MAX_int64 || Next>Target)
+        { Candidate.State.WorldElapsedMilliseconds=Target; break; }
+        Candidate.State.WorldElapsedMilliseconds=FMath::Max(Candidate.State.WorldElapsedMilliseconds,Next);
+        if (NextEffect<=NextCast)
+        { if (!Candidate.ProcessNativeWorldEffectClock(Next,Error)) return false; }
+        else
+        {
+            const auto* Cast=Candidate.WorldCasts.Find(ReadyCast);
+            const auto* Owner=Cast?Candidate.FindUnit(Cast->Root.SourceUnitId):nullptr;
+            if (!Owner || !Owner->CanAct())
+            { if (!Candidate.CancelWorldAbilityMutating(ReadyCast,Error)) return false; }
+            else if (!Candidate.FinishWorldAbility(ReadyCast,Error)) return false;
+        }
     }
     if (Candidate.Log.GetNextSequence()==Log.GetNextSequence()) Candidate.LastNativeReactions=LastNativeReactions;
     *this=MoveTemp(Candidate); return true;
+}
+
+bool FOGTurnBattle::IsWorldDamagingStep(const FOGCombatUnitState& Unit,const FOGContentId& Skill,int32 Step) const
+{
+    const auto* World=FindWorldAbility(Unit,Skill); const auto* Ability=FindNativeAbility(Unit,Skill);
+    if (!World || !Ability || !World->Steps.IsValidIndex(Step) || World->Steps[Step].bIgnoreDodgeInvulnerability) return false;
+    for (const auto& Slice:World->Steps[Step].Packets)
+        if (Ability->Packets.IsValidIndex(Slice.PacketIndex) && Ability->Packets[Slice.PacketIndex].Effect==EOGNativeAbilityEffect::Damage) return true;
+    return false;
 }

@@ -60,7 +60,9 @@ FOGCombatStats FOGTurnBattle::GetNativeEffectiveStats(const FOGEntityId& UnitId)
         switch (Pair.Key)
         {
         case EOGNativeEffectStat::Attack: Result.Attack=Large(Result.Attack); break;
-        case EOGNativeEffectStat::Defense: Result.Defense=Large(Result.Defense); break;
+        case EOGNativeEffectStat::Defense:
+            Result.Defense=FOGLargeNumber::Add(FOGLargeNumber::ScaleByBasisPoints(Result.Defense,Multiplier),
+                FOGLargeNumber::FromInt64(Pair.Value.Flat)); break;
         case EOGNativeEffectStat::Speed: Result.Speed=Integer(Result.Speed); break;
         case EOGNativeEffectStat::CritRate: Result.CritRateBps=Integer(Result.CritRateBps); break;
         case EOGNativeEffectStat::CritDamage: Result.CritDamageBonusBps=Integer(Result.CritDamageBonusBps); break;
@@ -106,7 +108,9 @@ FString FOGTurnBattle::DescribeNativeEffects(const FOGEntityId& UnitId) const
         const auto* D=NativeEffectDefinitions.Find(I.EffectId); if (!D) continue;
         FString Label=D->DisplayName.IsEmpty()?I.EffectId.ToString():D->DisplayName.ToString();
         Label+=FString::Printf(TEXT(" x%d"),I.Stacks);
-        if (I.RemainingActions>=0) Label+=FString::Printf(TEXT(" (%lld actions)"),static_cast<long long>(I.RemainingActions));
+        if (State.ExecutionMode==EOGCombatExecutionMode::World && I.ExpiresAtWorldMilliseconds>=0)
+            Label+=FString::Printf(TEXT(" (%.1fs)"),FMath::Max<int64>(0,I.ExpiresAtWorldMilliseconds-State.WorldElapsedMilliseconds)/1000.0);
+        else if (I.RemainingActions>=0) Label+=FString::Printf(TEXT(" (%lld actions)"),static_cast<long long>(I.RemainingActions));
         if (D->Mechanic==EOGNativeEffectMechanic::Barrier) Label+=TEXT(" [")+I.BarrierRemaining.ToDebugString()+TEXT("]");
         Labels.Add(MoveTemp(Label));
     }
@@ -121,6 +125,8 @@ void FOGTurnBattle::RecordNativeEffect(EOGCombatLogEventType Type,const FOGEntit
     Json->SetStringField(TEXT("reason"),Reason);
     Json->SetNumberField(TEXT("stacks"),Instance.Stacks);
     Json->SetStringField(TEXT("remaining_actions_exact"),LexToString(Instance.RemainingActions));
+    Json->SetStringField(TEXT("expires_world_ms_exact"),LexToString(Instance.ExpiresAtWorldMilliseconds));
+    Json->SetStringField(TEXT("next_world_tick_ms_exact"),LexToString(Instance.NextWorldTickMilliseconds));
     Json->SetStringField(TEXT("barrier_remaining"),Instance.BarrierRemaining.ToDebugString());
     FOGCombatLogEvent Event; Event.Type=Type; Event.SourceUnitId=Source; Event.TargetUnitId=Target; Event.SkillId=Skill;
     Event.PayloadJson.Reset();
@@ -135,6 +141,9 @@ void FOGTurnBattle::RecordNativeEffect(EOGCombatLogEventType Type,const FOGEntit
 bool FOGTurnBattle::ApplyNativeEffect(const FOGNativeEffectDefinition& D,const FOGNativeAbilityEffectOperation& Op,
     const FOGResolvedCombatAction& Action,const FOGEntityId& TargetId,int32 OperationIndex,FString& Error)
 {
+    if (State.ExecutionMode==EOGCombatExecutionMode::World && !ValidateNativeWorldEffectTiming(D,Error)) return false;
+    if (State.ExecutionMode==EOGCombatExecutionMode::Turn && D.Effect.Lifetime.Kind==EOGEffectLifetimeKind::RealTimeMilliseconds)
+    { Error=TEXT("A millisecond-only status requires World execution."); return false; }
     auto* Target=FindMutableUnit(TargetId);
     if (!Target || !Target->IsAlive() || Target->Presence==EOGCombatPresence::Removed) return true;
     if (!Action.ActionId.IsValid()) { Error=TEXT("Effect application requires the actual accepted action ID."); return false; }
@@ -153,6 +162,16 @@ bool FOGTurnBattle::ApplyNativeEffect(const FOGNativeEffectDefinition& D,const F
         ++I.AppliedAtOwnerAction; // The applying ordinary action never consumes its own new duration.
     }
     I.RemainingActions=D.Effect.Lifetime.Kind==EOGEffectLifetimeKind::Turns?D.Effect.Lifetime.Magnitude:-1;
+    const int64 Duration=D.Effect.Lifetime.Kind==EOGEffectLifetimeKind::RealTimeMilliseconds?
+        D.Effect.Lifetime.Magnitude:D.WorldDurationMilliseconds;
+    const bool World=State.ExecutionMode==EOGCombatExecutionMode::World;
+    if (World && (Duration>MAX_int64-State.WorldElapsedMilliseconds ||
+        D.WorldTickIntervalMilliseconds>MAX_int64-State.WorldElapsedMilliseconds))
+    { Error=TEXT("World effect clock exhausted."); return false; }
+    I.ExpiresAtWorldMilliseconds=World && D.Effect.Lifetime.Kind!=EOGEffectLifetimeKind::Encounter?
+        State.WorldElapsedMilliseconds+Duration:-1;
+    I.WorldTickIntervalMilliseconds=World?D.WorldTickIntervalMilliseconds:0;
+    I.NextWorldTickMilliseconds=I.WorldTickIntervalMilliseconds>0?State.WorldElapsedMilliseconds+I.WorldTickIntervalMilliseconds:-1;
     if (D.Stacking==EOGNativeEffectStacking::Independent)
     {
         int32 Occupied=0; for (const auto& Other:Target->NativeEffects) if (Same(Other)) Occupied+=Other.Stacks;
@@ -278,6 +297,7 @@ FOGLargeNumber FOGTurnBattle::AbsorbNativeBarriers(const FOGEntityId& TargetId,F
 }
 bool FOGTurnBattle::ProcessNativeEffectOwnerAction(const FOGEntityId& Owner,FString& Error)
 {
+    if (State.ExecutionMode==EOGCombatExecutionMode::World) return true;
     struct FDue { FOGEntityId Target,Instance; };
     TArray<FDue> Due;
     for (const auto& Target:State.Units) for (const auto& I:Target.NativeEffects)

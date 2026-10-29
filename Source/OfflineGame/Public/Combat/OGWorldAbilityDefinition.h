@@ -24,6 +24,8 @@ struct OFFLINEGAME_API FOGWorldAbilityStep
     UPROPERTY(EditAnywhere,BlueprintReadOnly) float RangeCentimeters=0;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) float RadiusCentimeters=0;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bRequireLineOfSight=true;
+    /** Only a source-authored undodgeable impact bypasses the native dodge window. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bIgnoreDodgeInvulnerability=false;
     /** Empty selects the character's native mesh; explicit names must resolve uniquely. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FName TraceComponentName;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FName StartSocket;
