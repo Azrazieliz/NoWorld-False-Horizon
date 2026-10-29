@@ -96,6 +96,8 @@ public:
     /** Accepted real-time casts begin now; their physical contact clock must not wait behind queued cues. */
     bool StartImmediateCombatAction(FName GameplayAction,const FOGEntityId& BattleId,const FOGEntityId& ActionId);
     void CancelCombatAction(const FOGEntityId& BattleId,const FOGEntityId& ActionId);
+    void CompleteCombatAction(const FOGEntityId& BattleId,const FOGEntityId& ActionId);
+    bool IsLoopingAction() const { return bLooping; }
     /** A visual HP-result cue. Its deduplication ID never enters canonical gameplay state. */
     bool EnqueueCombatCue(FName Cue,const FOGEntityId& BattleId,const FOGEntityId& ActionId,const FOGEntityId& SubjectId);
 

@@ -809,7 +809,7 @@ bool UOGSharedMotionControllerComponent::StartNextCombatMotion()
         const auto Next=CombatQueue[0]; CombatQueue.RemoveAt(0);
         TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
         if (PlayAction(Next.Action,TEXT("Combat"),false,1,NAME_None))
-        { bPlayingQueuedCombat=true; ActiveCombatReceipt=Next.Receipt; return true; }
+        { bPlayingQueuedCombat=true; ActiveCombatReceipt=Next.Receipt; bLooping=false; return true; }
         UE_LOG(LogTemp,Warning,TEXT("Accepted combat motion %s became unavailable for the current rig."),*Next.Action.ToString());
     }
     return false;
@@ -861,3 +861,15 @@ FName UOGSharedMotionControllerComponent::ResolveSourceMorph(FName Source) const
 { const auto* Native=SharedSourceMorphAliases.Find(Source); return Native?*Native:Source; }
 bool UOGSharedMotionControllerComponent::SetSourceMorphLayer(FName Layer,FName Source,float Weight)
 { return SetMorphLayer(Layer,ResolveSourceMorph(Source),Weight); }
+
+void UOGSharedMotionControllerComponent::CompleteCombatAction(const FOGEntityId& Battle,const FOGEntityId& Receipt)
+{
+    if (CombatScope!=Battle || !Receipt.IsValid()) return;
+    CombatQueue.RemoveAll([&](const auto& Entry){return Entry.Receipt==Receipt;});
+    if (!bPlayingQueuedCombat || ActiveCombatReceipt!=Receipt) return;
+    const FName Action=CurrentAction,Motion=CurrentMotionId;
+    { TGuardValue<bool> Preserve(bPreserveCombatQueue,true); StopAction(); }
+    const uint64 Generation=PlaybackGeneration;
+    { TGuardValue<FOGEntityId> Finished(FinishingCombatReceipt,Receipt); OnMotionFinished.Broadcast(Action,Motion); }
+    if (!bPlaying && PlaybackGeneration==Generation) StartNextCombatMotion();
+}

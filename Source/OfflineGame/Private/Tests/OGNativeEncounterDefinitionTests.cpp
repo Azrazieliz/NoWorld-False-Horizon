@@ -28,9 +28,11 @@ bool FOGReusableEncounterFormationTest::RunTest(const FString&)
     auto* D=EncounterFixture(EOGCombatExecutionMode::Turn); TArray<FOGResolvedEncounterParticipant> Inputs;
     for (int32 I=0;I<18;++I) Inputs.Add(EncounterUnit(TEXT("allies"),I));
     Inputs.Add(EncounterUnit(TEXT("opponents"),0));
+    Inputs[0].Unit.NextActionValue=999999; Inputs[0].OpeningActionValue=10;
     FOGTurnBattleState State; FString Error; const auto Id=FOGEntityId::NewId();
     if (!TestTrue(TEXT("Assemble actual supplied participants"),D->Assemble(Inputs,Id,State,Error))) return false;
     TestEqual(TEXT("Exact source plan is retained"),State.EncounterDefinitionId,D->DefinitionId);
+    TestEqual(TEXT("A fresh encounter uses its authored opening timeline"),State.Units[0].NextActionValue,static_cast<int64>(10));
     TestEqual(TEXT("Six real succession lanes"),State.Teams[0].Lanes.Num(),6);
     TestEqual(TEXT("Third wave remains the actual supplied entity"),State.Teams[0].Lanes[0].OrderedUnitIds[2],Inputs[12].Unit.UnitEntityId);
     TestEqual(TEXT("Reserve is not a generated duplicate"),State.Units[6].Presence,EOGCombatPresence::Reserve);

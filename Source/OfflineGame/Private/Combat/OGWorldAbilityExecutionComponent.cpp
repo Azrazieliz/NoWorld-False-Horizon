@@ -288,11 +288,16 @@ void UOGWorldAbilityExecutionComponent::CancelActiveCast()
 void UOGWorldAbilityExecutionComponent::EndLocalCast()
 {
     TGuardValue<bool> Ending(bEndingLocal,true);
+    const auto EndingCast=ActiveCast,EndingBattle=BattleId;
+    TWeakObjectPtr<UOGSharedMotionControllerComponent> EndingMotion=WorldMotion(GetOwner());
+    const bool CompleteLoop=EndingMotion.IsValid() && EndingMotion->IsLoopingAction();
     ActiveCast=FOGEntityId(); Completed.Reset(); SpawnedProjectiles.Reset();
     for (auto& Projectile:Projectiles) if (Projectile.IsValid()) Projectile->Destroy();
     Projectiles.Reset(); PreviousStarts.Reset(); PreviousEnds.Reset();
     if (auto* Actions=GetOwner()?GetOwner()->FindComponentByClass<UOGWorldActionRuntimeComponent>():nullptr)
         if (Actions->HasActiveAction()) Actions->EndAuthoredAction();
+    // Completion listeners may start a new cast. All old local state is released before publishing the final cue.
+    if (CompleteLoop && EndingMotion.IsValid()) EndingMotion->CompleteCombatAction(EndingBattle,EndingCast);
 }
 void UOGWorldAbilityExecutionComponent::EndPlay(const EEndPlayReason::Type Reason)
 {

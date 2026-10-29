@@ -91,11 +91,11 @@ bool UOGNativeEncounterDefinition::Assemble(const TArray<FOGResolvedEncounterPar
         const auto& U=Input.Unit;
         if (!Plan || !U.UnitEntityId.IsValid() || Entities.Contains(U.UnitEntityId) || !U.IdentityId.IsValid() ||
             !U.SkillSet.CurrentForm.IsValid() || U.Stats.MaxHp.GetSign()<=0 || U.CurrentHp.GetSign()<0 ||
-            FOGLargeNumber::Compare(U.CurrentHp,U.Stats.MaxHp)>0 || U.DefaultActionDelay<1 ||
+            FOGLargeNumber::Compare(U.CurrentHp,U.Stats.MaxHp)>0 || U.DefaultActionDelay<1 || Input.OpeningActionValue<0 ||
             U.Presence==EOGCombatPresence::Removed)
         { Error=TEXT("Encounter participants must be distinct actual resolved units bound to authored roles."); return false; }
         Entities.Add(U.UnitEntityId); ++Counts.FindOrAdd(Input.Role); ++Rosters.FindOrAdd(Plan->TeamIndex);
-        auto Unit=U; Unit.TeamIndex=Plan->TeamIndex;
+        auto Unit=U; Unit.TeamIndex=Plan->TeamIndex; Unit.NextActionValue=Input.OpeningActionValue;
         if (Mode==EOGCombatExecutionMode::Turn)
         {
             if (Input.FormationIndex<0 || Input.FormationIndex>=FOGTurnTeamState::MaxRosterSize ||

@@ -203,11 +203,19 @@ bool UOGSharedAnimationReceiver::PlaySystemEvent(FName System,FName Event,const 
 void UOGSharedAnimationReceiver::StopSystemEvent(const FOGEntityId& Request)
 {
     const auto* D=Cast<UOGSharedAnimationRoutes>(BoundDefinition); if (!D) return;
+    const uint64 Lifecycle=LifecycleGeneration;
     if (BodyRequest==Request && D->Routes.IsValidIndex(BodyRoute))
-    { const auto R=D->Routes[BodyRoute]; StopOwnedBody(); OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("cancelled")); }
-    for (int32 I=Expressions.Num()-1;I>=0;--I) if (Expressions[I].Request==Request)
-    { const auto E=Expressions[I]; const auto R=D->Routes[E.Route]; ClearExpression(E); Expressions.RemoveAt(I);
-      OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("cancelled")); }
+    {
+        const auto R=D->Routes[BodyRoute]; StopOwnedBody();
+        OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("cancelled"));
+        if (!IsActive() || LifecycleGeneration!=Lifecycle || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
+    }
+    const int32 At=Expressions.IndexOfByPredicate([&](const auto& E){return E.Request==Request;});
+    if (At!=INDEX_NONE)
+    {
+        const auto E=Expressions[At]; const auto R=D->Routes[E.Route]; ClearExpression(E); Expressions.RemoveAt(At);
+        OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("cancelled"));
+    }
 }
 void UOGSharedAnimationReceiver::HandleContact(FName Action,FName)
 {

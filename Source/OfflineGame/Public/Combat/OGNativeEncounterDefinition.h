@@ -55,6 +55,8 @@ struct OFFLINEGAME_API FOGResolvedEncounterParticipant
     UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGCombatUnitState Unit;
     /** Turn formation: lane=index%6, succession depth=index/6. Independent of character identity. */
     UPROPERTY(EditAnywhere,BlueprintReadWrite) int32 FormationIndex=0;
+    /** Fresh encounter timeline; retained party snapshots cannot carry an old battle's turn position. */
+    UPROPERTY(EditAnywhere,BlueprintReadWrite) int64 OpeningActionValue=0;
     UPROPERTY(EditAnywhere,BlueprintReadWrite) bool bWorldActive=true;
 };
 UCLASS(BlueprintType)
