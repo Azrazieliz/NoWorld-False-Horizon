@@ -90,6 +90,37 @@ bool Decode(const FOGEntityId& Entity,const FJsonObject& Root,bool& Found,FOGSto
     // Only the existing canonical life epoch can authorize a real respawn.
     Found=Out.LifeId==CurrentLife; return true;
 }
+bool ValidateSavedReceipt(IOGWorldStore& Store,const FOGStoredCombatVitality& Saved,FString& Error)
+{
+    bool Found=false; FOGWorldEvent Event; TSharedPtr<FJsonObject> Payload; FString Battle;
+    if (!Store.TryReadWorldEvent(Saved.ReceiptId,Found,Event,Error)) return false;
+    if (!Found || Event.WorldTick!=Saved.WorldTick || !Event.RelatedEntities.Contains(Saved.EntityId) ||
+        !Parse(Event.PayloadJson,Payload) || !Payload->TryGetStringField(TEXT("battle_id"),Battle) ||
+        Battle!=Saved.BattleId.ToString())
+    { Error=TEXT("Stored health lost its actual gameplay receipt."); return false; }
+    const bool Opening=Event.EventType==TEXT("combat.encounter_started");
+    const bool Allowed=Opening || Event.EventType==TEXT("combat.turn_action_resolved") ||
+        Event.EventType==TEXT("combat.world_mode_changed") || Event.EventType==TEXT("combat.world_cast_started") ||
+        Event.EventType==TEXT("combat.world_impact_resolved") || Event.EventType==TEXT("combat.world_cast_cancelled") ||
+        Event.EventType==TEXT("combat.world_clock_advanced");
+    const TArray<TSharedPtr<FJsonValue>>* Rows=nullptr; int32 Matches=0;
+    if (Allowed && Payload->TryGetArrayField(Opening?TEXT("opening_units"):TEXT("unit_deltas"),Rows) && Rows)
+        for (const auto& Value:*Rows)
+        {
+            if (!Value || Value->Type!=EJson::Object) continue;
+            const auto Row=Value->AsObject(); FString Id,Hp,Digits,Exponent;
+            if (!Row || !Row->TryGetStringField(TEXT("unit_id"),Id) || Id!=Saved.EntityId.ToString()) continue;
+            int64 Significand=0,Power=0;
+            if (!Row->TryGetStringField(TEXT("hp_after"),Hp) || !Hp.Split(TEXT("e"),&Digits,&Exponent) ||
+                !LexTryParseString(Significand,*Digits) || Significand<0 ||
+                !LexTryParseString(Power,*Exponent) || Power<MIN_int32 || Power>MAX_int32 ||
+                FOGLargeNumber::Compare(FOGLargeNumber(Significand,static_cast<int32>(Power)),Saved.CurrentHp)!=0)
+            { Error=TEXT("Stored HP conflicts with its gameplay receipt."); return false; }
+            ++Matches;
+        }
+    if (Matches!=1) { Error=TEXT("Stored health has no unique proven HP result."); return false; }
+    return true;
+}
 const FOGCombatUnitState* UnitById(const FOGTurnBattleState& State,const FOGEntityId& Id)
 { return State.Units.FindByPredicate([&](const auto& Unit){return Unit.UnitEntityId==Id;}); }
 bool HasHealthProof(const FJsonObject& Payload,const FOGCombatUnitState& Before,const FOGCombatUnitState& After,bool Opening)
@@ -114,7 +145,8 @@ bool FOGCombatVitalityService::Read(const FOGEntityId& Entity,bool& Found,FOGSto
 {
     Error.Reset(); Found=false; Out=FOGStoredCombatVitality();
     FName Kind; TSharedPtr<FJsonObject> Root;
-    return ReadRoot(Store,Entity,Kind,Root,Error) && Decode(Entity,*Root,Found,Out,Error);
+    return ReadRoot(Store,Entity,Kind,Root,Error) && Decode(Entity,*Root,Found,Out,Error) &&
+        (!Found || ValidateSavedReceipt(Store,Out,Error));
 }
 bool FOGCombatVitalityService::Project(FOGCombatUnitState& Unit,FString& Error) const
 {
@@ -163,6 +195,7 @@ bool FOGCombatVitalityService::Commit(const FOGTurnBattleState& Before,const FOG
         if (!Decode(Unit.UnitEntityId,*Root,Found,Prior,Error)) return false;
         if (Found)
         {
+            if (!ValidateSavedReceipt(Store,Prior,Error)) return false;
             if (Prior.IdentityId!=Unit.IdentityId)
             { Error=TEXT("Canonical combat vitality belongs to another identity."); return false; }
             if (Prior.ReceiptId==Receipt.EventId)
