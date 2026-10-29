@@ -242,4 +242,32 @@ bool FOGNativeResourceSaturationTest::RunTest(const FString&)
     TestEqual(TEXT("Near-int64 resource gain saturates safely"),Battle.GetState().Units[0].BattleResources[0].Value,int64(MAX_int64));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeTurnCheckpointTest,
+    "OfflineGame.Combat.Recovery.ExactTurnTimelineAndNativeCooldown",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGNativeTurnCheckpointTest::RunTest(const FString&)
+{
+    auto Source=NativeTestUnit(0,TEXT("test:recovery.source"));
+    Source.SkillSet.ActiveSkills={FOGContentId(TEXT("test:recovery.strike"))};
+    auto Enemy=NativeTestUnit(1,TEXT("test:recovery.enemy"));
+    const int64 Exact=9007199254740993LL;
+    Source.NextActionValue=Exact; Enemy.NextActionValue=Exact+10000;
+    auto Initial=NativeInitial(Source,{Enemy}); Initial.CurrentActionValue=Exact;
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(Initial,Error)) return false;
+    Battle.RequireNativeActionExecutors(true);
+    auto Ability=NativeStrike(Source); Ability.CooldownOwnerActions=3;
+    if (!Battle.RegisterNativeAbility(Ability,Error) || !Battle.ApplyResolvedAction(NativeAction(Source,Enemy.UnitEntityId),Error)) return false;
+    TArray<uint8> Bytes; if (!Battle.ExportNativeCheckpoint(Bytes,Error)) { AddError(Error); return false; }
+    FOGTurnBattle Restored; if (!Restored.RestoreNativeCheckpoint(Bytes,{},Error)) { AddError(Error); return false; }
+    TestEqual(TEXT("Timeline beyond floating-point integer precision remains exact"),
+        Restored.GetState().CurrentActionValue,Battle.GetState().CurrentActionValue);
+    TestEqual(TEXT("Per-unit next action is restored exactly"),Restored.GetState().Units[0].NextActionValue,Battle.GetState().Units[0].NextActionValue);
+    TestTrue(TEXT("Actual HP is restored without replaying damage"),Restored.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(800));
+    FOGResolvedCombatAction Expanded;
+    TestFalse(TEXT("Restoring does not reset the native owner-action cooldown"),
+        Restored.ValidateResolvedAction(NativeAction(Source,Enemy.UnitEntityId),Expanded,Error));
+    return true;
+}
 #endif

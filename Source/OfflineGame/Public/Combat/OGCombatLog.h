@@ -63,6 +63,7 @@ public:
     }
 
 private:
+    friend class FOGNativeCombatCheckpointCodec;
     TArray<FOGCombatLogEvent> Events;
     int64 NextSequence = 0;
 };

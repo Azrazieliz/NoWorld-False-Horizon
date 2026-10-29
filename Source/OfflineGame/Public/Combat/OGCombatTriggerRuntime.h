@@ -88,6 +88,7 @@ public:
     void Reset();
 
 private:
+    friend class FOGNativeCombatCheckpointCodec;
     bool ConditionsPass(
         const FOGCombatTriggerBinding& Binding,
         const FOGCombatTriggerContext& Context,const FOGCombatConditionEvaluator* Override) const;

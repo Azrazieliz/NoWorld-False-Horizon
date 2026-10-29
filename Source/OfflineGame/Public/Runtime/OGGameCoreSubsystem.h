@@ -5,6 +5,7 @@
 #include "Persistence/OGWorldStore.h"
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
 #include "Combat/OGCombatRewardDefinition.h"
+#include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Runtime/OGPerformanceTelemetry.h"
 #include "Runtime/OGCanonicalClockRuntime.h"
 #include "Runtime/OGFoundationStrategicRuntime.h"
@@ -163,6 +164,14 @@ public:
         const FOGLuminousRegisteredEffectContest& Contest,
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
+    /** Restores an existing committed generic encounter; never reruns costs/opening/rewards. */
+    bool RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,bool& Restored,FString& Error);
+    bool CheckpointOwnedNativeEncounter(FString& Error);
+    bool IsNativeEncounterAwaitingWorldRebind() const { return bNativeRecoveryAwaitingWorld; }
+    bool IsRestoredNativeEncounter() const { return bNativeEncounterRestored; }
+    /** Rebind notification is presentation-only and releases no gameplay event/reward. */
+    bool CompleteNativeWorldRecovery(FString& Error);
+    UPROPERTY(BlueprintReadOnly,Category="OfflineGame|Combat|Recovery") FString NativeEncounterRecoveryStatus;
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
     /** Generic definition-based entry; resolved participants retain their existing canonical identities. */
     bool StartOwnedNativeEncounter(const UOGNativeEncounterDefinition& Definition,
@@ -218,6 +227,16 @@ public:
     }
 
 private:
+    bool bPendingNativeRecovery=false;
+    bool bActiveNativeRecovery=false;
+    bool bNativeRecoveryAwaitingWorld=false;
+    bool bNativeRecoveryBodiesRestored=false;
+    bool bNativeEncounterRestored=false;
+    FOGWorldEncounterPresentationCheckpoint NativeWorldRecoveryPresentation;
+    FString PendingNativeRankRecovery;
+    FString ActiveNativeRankRecovery;
+    bool PersistNativeEncounter(const FOGTurnBattle& Candidate,const FOGEntityId& Ruler,
+        const FOGWorldEvent& Receipt,const FOGResolvedCombatAction* Root,bool Opening,FString& Error);
     bool bSubmittingNativeAction=false;
     TSet<FOGEntityId> CommittedNativeActionIds;
     void PublishNativeAction(const FOGResolvedCombatAction& Action,const FOGWorldEvent& Event,const FOGTurnBattleState& Accepted);

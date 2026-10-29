@@ -131,6 +131,8 @@ void UOGNativeBattleWidget::Refresh()
     }
     const auto* Source=State.Units.FindByPredicate([Session](const FOGCombatUnitState& U)
         { return U.UnitEntityId==Session->SelectedManifestationId; });
+    if (!Source && Session->SelectedManifestationId.IsValid()==false)
+        Source=State.Units.FindByPredicate([Session](const auto& U){return U.UnitEntityId==Session->BoundRulerId;});
     if (!Source) { SetVisibility(ESlateVisibility::Collapsed); return; }
     SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     int32 Resource=0,Charge=0,OwnerActions=0;
@@ -142,6 +144,7 @@ void UOGNativeBattleWidget::Refresh()
     if (State.ExecutionMode==EOGCombatExecutionMode::World) Key+=LexToString(State.WorldElapsedMilliseconds/100);
     for (const auto& Id:Body->GetSelectedCanonicalTurnTargets()) Key+=Id.ToString();
     if (Body->HasTargetHudProjectionForHud()) Key+=Body->GetTargetHudProjectionForHud().TargetEntityId.ToString();
+    Key+=Core->NativeEncounterRecoveryStatus;
     if (Key==Signature) return;
     Signature=Key;
     FOGNativeBattleCommandSet Set; FString Error;
@@ -150,7 +153,7 @@ void UOGNativeBattleWidget::Refresh()
     const bool WorldMode=State.ExecutionMode==EOGCombatExecutionMode::World;
     const int32 Acting=Battle->SelectNextActingUnitIndex();
     const bool Own=(WorldMode || (State.Units.IsValidIndex(Acting) && State.Units[Acting].UnitEntityId==Source->UnitEntityId)) &&
-        Source->CanAct() && Body->IsFoundationWorldInputAllowed();
+        Source->CanAct() && Body->IsFoundationWorldInputAllowed() && !Core->IsNativeEncounterAwaitingWorldRebind();
     Heading->SetText(FText::FromString(WorldMode?TEXT("WORLD COMBAT"):Own?TEXT("YOUR TURN"):TEXT("OPPONENT / ALLY TURN")));
     FString ResourceText=FString::Printf(TEXT("HP %s / %s"),*Source->CurrentHp.ToDebugString(),*Source->Stats.MaxHp.ToDebugString());
     if (!Set.ResourceLabel.IsEmpty())
@@ -183,6 +186,8 @@ void UOGNativeBattleWidget::Refresh()
                 if (Battle->HasNativeActionExecutor(Next,Ultimate,Missing)) { Executable=true; break; }
         if (!Executable) Feedback->SetText(FText::FromString(TEXT("Waiting for this combatant's authored abilities.")));
     }
+    if (Core->IsNativeEncounterAwaitingWorldRebind())
+        Feedback->SetText(FText::FromString(Core->NativeEncounterRecoveryStatus));
     const float TargetOffset=Targets->GetScrollOffset(),ActionOffset=ActionScroll->GetScrollOffset();
     Targets->ClearChildren(); Commands->ClearChildren();
     // One actor pass per refresh; expose only existing native battle bodies.

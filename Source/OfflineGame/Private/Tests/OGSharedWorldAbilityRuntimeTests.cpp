@@ -146,4 +146,55 @@ bool FOGWorldPeriodicLifetimeTest::RunTest(const FString&)
     TestEqual(TEXT("Status processing does not fabricate additional skill costs"),F.Energy(),static_cast<int64>(0));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedWorldCheckpointTest,
+    "OfflineGame.Combat.Recovery.ActiveCastEffectsCostsAndCooldown",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGSharedWorldCheckpointTest::RunTest(const FString&)
+{
+    FSharedWorldFixture F; if (!F.Open(EOGWorldAbilityCostTiming::AcceptedStart,false,true)) return false;
+    const auto Root=F.Root();
+    if (!F.Battle.BeginWorldAbility(Root,F.Error) || !F.Battle.AdvanceWorldCombatClock(100,F.Error) ||
+        !F.Battle.ApplyWorldAbilityStep(Root.ActionId,0,{F.B},F.Error) ||
+        !F.Battle.AdvanceWorldCombatClock(250,F.Error)) return false;
+    TArray<uint8> Bytes;
+    if (!TestTrue(TEXT("Exports settled real cast runtime"),F.Battle.ExportNativeCheckpoint(Bytes,F.Error))) { AddError(F.Error); return false; }
+    FOGTurnBattle Restored;
+    if (!TestTrue(TEXT("Restores existing cast without opening/replay"),Restored.RestoreNativeCheckpoint(Bytes,{},F.Error)))
+    { AddError(F.Error); return false; }
+    TestEqual(TEXT("Offline elapsed time never advances the active cast"),Restored.GetState().WorldElapsedMilliseconds,int64(250));
+    TestEqual(TEXT("Accepted-start cost is not paid twice"),Restored.GetState().Units[0].BattleResources[0].Value,int64(0));
+    TestEqual(TEXT("Exact World cooldown survives"),Restored.GetWorldAbilityReadyAt(F.A,F.Ability.SkillId),F.Battle.GetWorldAbilityReadyAt(F.A,F.Ability.SkillId));
+    TestEqual(TEXT("No new opening/contact log events"),Restored.GetLog().GetNextSequence(),F.Battle.GetLog().GetNextSequence());
+    TestFalse(TEXT("A committed contact cannot be replayed"),Restored.ApplyWorldAbilityStep(Root.ActionId,0,{F.B},F.Error));
+    for (int32 Step=1;Step<3;++Step)
+    {
+        const int64 Time=100+Step*200;
+        if (!F.Battle.AdvanceWorldCombatClock(Time,F.Error) || !Restored.AdvanceWorldCombatClock(Time,F.Error) ||
+            !F.Battle.ApplyWorldAbilityStep(Root.ActionId,Step,{F.B},F.Error) ||
+            !Restored.ApplyWorldAbilityStep(Root.ActionId,Step,{F.B},F.Error)) return false;
+        TestTrue(TEXT("Original and restored effects/contacts resolve identical HP"),
+            F.Battle.GetState().Units[1].CurrentHp==Restored.GetState().Units[1].CurrentHp);
+    }
+    if (!F.Battle.AdvanceWorldCombatClock(1000,F.Error) || !Restored.AdvanceWorldCombatClock(1000,F.Error)) return false;
+    TestFalse(TEXT("Recovered action releases at its original deadline"),Restored.GetUnitWorldCast(F.A).IsValid());
+    TestEqual(TEXT("Completion grant occurs once"),Restored.GetState().Units[0].BattleResources[0].Value,int64(3));
+    TestTrue(TEXT("Periodic effect clock matches uninterrupted execution"),
+        F.Battle.GetState().Units[1].CurrentHp==Restored.GetState().Units[1].CurrentHp);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedWorldCheckpointIntegrityTest,
+    "OfflineGame.Combat.Recovery.CorruptionPreservesCurrentEncounter",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGSharedWorldCheckpointIntegrityTest::RunTest(const FString&)
+{
+    FSharedWorldFixture F; if (!F.Open()) return false;
+    TArray<uint8> Bytes; if (!F.Battle.ExportNativeCheckpoint(Bytes,F.Error)) return false;
+    const auto Before=F.Battle.GetState().BattleId; const auto Sequence=F.Battle.GetLog().GetNextSequence();
+    Bytes.Last()^=0x5a;
+    TestFalse(TEXT("Corrupt payload is rejected before state publication"),F.Battle.RestoreNativeCheckpoint(Bytes,{},F.Error));
+    TestTrue(TEXT("Current encounter survives failed restore"),F.Battle.GetState().BattleId==Before);
+    TestEqual(TEXT("Failed restore does not publish log events"),F.Battle.GetLog().GetNextSequence(),Sequence);
+    return true;
+}
 #endif

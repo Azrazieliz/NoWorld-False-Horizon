@@ -189,7 +189,11 @@ bool UOGGate12RulerSessionSubsystem::BindExistingRuler(
 
     if (bRulerValidated && CandidateOwner == BoundRulerId)
     {
-        return RefreshCanonicalProjections(OutError);
+        if (!RefreshCanonicalProjections(OutError)) return false;
+        bool Restored=false; FString RecoveryError;
+        if (!Core->RestoreOwnedNativeEncounter(BoundRulerId,Restored,RecoveryError))
+            Core->NativeEncounterRecoveryStatus=RecoveryError;
+        return true;
     }
 
     ClearProjectionAndSelection();
@@ -199,6 +203,13 @@ bool UOGGate12RulerSessionSubsystem::BindExistingRuler(
     {
         ClearProjectionAndSelection();
         return false;
+    }
+    bool Restored=false; FString RecoveryError;
+    if (!Core->RestoreOwnedNativeEncounter(BoundRulerId,Restored,RecoveryError))
+    {
+        // Keep the valid Ruler/save available; retain the original recovery record for a later retry.
+        Core->NativeEncounterRecoveryStatus=RecoveryError;
+        UE_LOG(LogTemp,Warning,TEXT("Native encounter recovery retained for retry: %s"),*RecoveryError);
     }
     return true;
 }

@@ -63,9 +63,27 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
     Movement->ProjectileGravityScale=Spec.ProjectileGravityScale; Movement->Velocity=Direction.GetSafeNormal()*Spec.ProjectileSpeed;
     SetLifeSpan((Spec.ClosesAtMilliseconds-Spec.OpensAtMilliseconds)/1000.0); return true;
 }
+bool AOGNativeWorldProjectile::CaptureCheckpoint(FOGNativeProjectileCheckpoint& Out) const
+{
+    if (!Source.IsValid() || !CastId.IsValid() || StepIndex<0 || !Movement || IsActorBeingDestroyed()) return false;
+    Out.StepIndex=StepIndex; Out.Transform=GetActorTransform(); Out.Velocity=Movement->Velocity;
+    Out.LaunchOrigin=LaunchOrigin; Out.RemainingLifeSeconds=bRecoveryPaused?RecoveryRemainingLife:GetLifeSpan();
+    return Out.RemainingLifeSeconds>0;
+}
+bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckpoint& State,FString& Error)
+{
+    if (State.StepIndex!=StepIndex || State.Transform.ContainsNaN() || State.Velocity.ContainsNaN() ||
+        State.LaunchOrigin.ContainsNaN() || !FMath::IsFinite(State.RemainingLifeSeconds) || State.RemainingLifeSeconds<=0)
+    { Error=TEXT("Saved projectile geometry or remaining lifetime is invalid."); return false; }
+    SetActorTransform(State.Transform,false,nullptr,ETeleportType::TeleportPhysics);
+    LaunchOrigin=State.LaunchOrigin; Movement->Velocity=State.Velocity;
+    bRecoveryPaused=Source.IsValid() && Source->IsRecoveryPaused(); RecoveryRemainingLife=State.RemainingLifeSeconds;
+    Movement->SetComponentTickEnabled(!bRecoveryPaused); SetLifeSpan(bRecoveryPaused?0:RecoveryRemainingLife);
+    return true;
+}
 void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,UPrimitiveComponent*,FVector,const FHitResult&)
 {
-    if (Other==GetOwner()) return;
+    if (Other==GetOwner() || (Source.IsValid() && Source->IsRecoveryPaused())) return;
     if (FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) { Destroy(); return; }
     if (Source.IsValid()) { FString Error; Source->CommitProjectileContact(CastId,StepIndex,Other,Error); }
     Destroy();
@@ -73,6 +91,9 @@ void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,
 void AOGNativeWorldProjectile::Tick(float Delta)
 {
     Super::Tick(Delta);
+    if (Source.IsValid() && Source->IsRecoveryPaused()) return;
+    if (bRecoveryPaused)
+    { bRecoveryPaused=false; Movement->SetComponentTickEnabled(true); SetLifeSpan(RecoveryRemainingLife); }
     if (!Source.IsValid() || Source->GetActiveCastId()!=CastId ||
         FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) Destroy();
 }
@@ -168,6 +189,103 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     ActiveCast=Root.ActionId; BattleId=Battle->GetState().BattleId; Specification=FrozenSpec; StartedAt=View.StartedAtMilliseconds;
     Completed.Reset(); SpawnedProjectiles.Reset(); PreviousStarts.Reset(); PreviousEnds.Reset();
     if (Actions) { auto State=Specification.TraversalAndCancel; State.ActionId=FName(*Root.SkillId.ToString()); Actions->BeginAuthoredAction(State); }
+    return true;
+}
+bool UOGWorldAbilityExecutionComponent::IsRecoveryPaused() const
+{ return Core.IsValid() && Core->IsNativeEncounterAwaitingWorldRebind(); }
+void UOGWorldAbilityExecutionComponent::CapturePresentationCheckpoint(FOGWorldCastPresentationCheckpoint& Out) const
+{
+    Out=FOGWorldCastPresentationCheckpoint(); Out.CastId=ActiveCast; Out.SpawnedSteps=SpawnedProjectiles;
+    Out.PreviousStarts=PreviousStarts; Out.PreviousEnds=PreviousEnds;
+    for (const auto& Ref:Projectiles) if (const auto* Projectile=Ref.Get())
+    { FOGNativeProjectileCheckpoint Saved; if (Projectile->CaptureCheckpoint(Saved)) Out.Projectiles.Add(MoveTemp(Saved)); }
+}
+bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCastPresentationCheckpoint& Saved,FString& Error)
+{
+    if (!ResolveRuntime(Error)) return false;
+    if (ActiveCast.IsValid())
+    { if (ActiveCast==Saved.CastId) return true; Error=TEXT("Another native cast already owns this body's playback."); return false; }
+    const auto* Battle=Core->GetOwnedLuminousTurnBattle();
+    FOGResolvedCombatAction Request; FOGWorldAbilitySpecification Spec; TSet<int32> Steps; int64 Start=0;
+    if (!Battle->ReadWorldCastRecovery(Saved.CastId,Request,Spec,Steps,Start) ||
+        BodyId(GetOwner(),Battle->GetState().BattleId)!=Request.SourceUnitId)
+    { Error=TEXT("Recovered cast does not belong to this actual native body."); return false; }
+    for (const auto& Step:Spec.Steps)
+    {
+        if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
+        { FName A,B; if (!TracePart(Step,A,B,Error)) return false; }
+        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
+        { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
+    }
+    TSet<int32> PhysicalSteps;
+    for (const auto& Projectile:Saved.Projectiles)
+    {
+        if (!Spec.Steps.IsValidIndex(Projectile.StepIndex) ||
+            Spec.Steps[Projectile.StepIndex].Delivery!=EOGWorldAbilityDelivery::Projectile ||
+            !Saved.SpawnedSteps.Contains(Projectile.StepIndex) || PhysicalSteps.Contains(Projectile.StepIndex) ||
+            Projectile.Transform.ContainsNaN() || !Projectile.Transform.GetRotation().IsNormalized() ||
+            Projectile.Velocity.ContainsNaN() || Projectile.LaunchOrigin.ContainsNaN() ||
+            !FMath::IsFinite(Projectile.RemainingLifeSeconds) || Projectile.RemainingLifeSeconds<=0)
+        { Error=TEXT("Recovered projectile has an inconsistent original cast/step or physical state."); return false; }
+        PhysicalSteps.Add(Projectile.StepIndex);
+    }
+    for (int32 Index:Saved.SpawnedSteps)
+        if (!Spec.Steps.IsValidIndex(Index) || Spec.Steps[Index].Delivery!=EOGWorldAbilityDelivery::Projectile)
+        { Error=TEXT("Recovered projectile step differs from the accepted original ability."); return false; }
+    const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Request.SourceUnitId;});
+    const FName Motion=Unit?Battle->ResolveNativeAbilityMotion(*Unit,Request.SkillId):NAME_None;
+    auto* Controller=WorldMotion(GetOwner());
+    if (!Motion.IsNone() && (!Controller || !Controller->CanPlayAction(Motion,TEXT("Combat"),false,1,NAME_None)))
+    { Error=TEXT("Recovered cast waits for its original native motion and rig."); return false; }
+    return true;
+}
+bool UOGWorldAbilityExecutionComponent::RecoverAcceptedCast(const FOGWorldCastPresentationCheckpoint& Saved,FString& Error)
+{
+    if (!CanRecoverAcceptedCast(Saved,Error)) return false;
+    if (ActiveCast==Saved.CastId)
+    {
+        if (auto* Motion=WorldMotion(GetOwner())) Motion->SetExternalPacing(IsRecoveryPaused()?0.f:1.f);
+        if (!IsRecoveryPaused()) if (auto* Actions=GetOwner()->FindComponentByClass<UOGWorldActionRuntimeComponent>())
+        {
+            auto State=Specification.TraversalAndCancel; State.ActionId=FName(*Root.SkillId.ToString());
+            const int64 Now=Core->GetOwnedLuminousTurnBattle()->GetState().WorldElapsedMilliseconds;
+            Actions->RestoreAuthoredAction(State,static_cast<float>((Now-StartedAt)/1000.0));
+        }
+        return true;
+    }
+    const auto* Battle=Core->GetOwnedLuminousTurnBattle();
+    if (!Battle->ReadWorldCastRecovery(Saved.CastId,Root,Specification,Completed,StartedAt)) return false;
+    BattleId=Battle->GetState().BattleId; ActiveCast=Saved.CastId; SpawnedProjectiles=Saved.SpawnedSteps;
+    PreviousStarts=Saved.PreviousStarts; PreviousEnds=Saved.PreviousEnds;
+    for (const auto& State:Saved.Projectiles)
+    {
+        if (Completed.Contains(State.StepIndex)) continue; // Contact already committed; never recreate its hit.
+        const auto& Step=Specification.Steps[State.StepIndex];
+        FActorSpawnParameters Params; Params.Owner=GetOwner(); Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        auto* Projectile=GetWorld()->SpawnActor<AOGNativeWorldProjectile>(AOGNativeWorldProjectile::StaticClass(),State.Transform,Params);
+        FVector Direction=State.Velocity.GetSafeNormal(); if (Direction.IsNearlyZero()) Direction=State.Transform.GetRotation().GetForwardVector();
+        if (!Projectile || !Projectile->InitializeAcceptedStep(this,ActiveCast,State.StepIndex,Step,Direction,Error) ||
+            !Projectile->RestoreCheckpoint(State,Error))
+        {
+            if (Projectile) Projectile->Destroy(); EndLocalCast(); return false;
+        }
+        Projectiles.Add(Projectile);
+    }
+    if (auto* Actions=GetOwner()->FindComponentByClass<UOGWorldActionRuntimeComponent>())
+    {
+        auto State=Specification.TraversalAndCancel; State.ActionId=FName(*Root.SkillId.ToString());
+        Actions->RestoreAuthoredAction(State,static_cast<float>((Battle->GetState().WorldElapsedMilliseconds-StartedAt)/1000.0));
+    }
+    const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Root.SourceUnitId;});
+    const FName Semantic=Unit?Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId):NAME_None;
+    if (!Semantic.IsNone()) if (auto* Motion=WorldMotion(GetOwner()))
+    {
+        if (!Motion->StartImmediateCombatAction(Semantic,BattleId,ActiveCast)) { EndLocalCast(); return false; }
+        const float Elapsed=static_cast<float>((Battle->GetState().WorldElapsedMilliseconds-StartedAt)/1000.0);
+        Motion->RestorePlaybackPhase(Elapsed);
+        Motion->SetExternalPacing(IsRecoveryPaused()?0.f:1.f);
+    }
+    Status=TEXT("Accepted World cast recovered without repeating costs or committed contacts.");
     return true;
 }
 void UOGWorldAbilityExecutionComponent::QueryContacts(const FOGWorldAbilityStep& Step,int32 Index,TArray<FOGEntityId>& Out)

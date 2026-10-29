@@ -40,6 +40,13 @@ void UOGWorldActionRuntimeComponent::BeginAuthoredAction(const FOGWorldActionSta
     bHasActiveAction = true;
 }
 
+bool UOGWorldActionRuntimeComponent::RestoreAuthoredAction(const FOGWorldActionState& State,float ElapsedSeconds)
+{
+    if (!GetWorld() || State.ActionId.IsNone() || !FMath::IsFinite(ElapsedSeconds) || ElapsedSeconds<0) return false;
+    ActiveAction=State; ActiveAction.StartedAtSeconds=GetWorld()->GetTimeSeconds()-ElapsedSeconds; bHasActiveAction=true;
+    return true;
+}
+
 void UOGWorldActionRuntimeComponent::EndAuthoredAction()
 {
     const bool WasActive=bHasActiveAction;

@@ -6,6 +6,9 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/MemoryWriter.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "Misc/Base64.h"
 
 bool UOGGameCoreSubsystem::StartOwnedNativeEncounter(const UOGNativeEncounterDefinition& Definition,
     const TArray<FOGResolvedEncounterParticipant>& Inputs,const FOGEntityId& Ruler,
@@ -58,14 +61,24 @@ bool UOGGameCoreSubsystem::StartOwnedNativeEncounter(const UOGNativeEncounterDef
     FOGTurnBattleState State;
     if (!Definition.Assemble(Participants,FOGEntityId::NewId(),State,Error)) return false;
     FOGRankSuppressionResolver RankResolver;
+    FString RankCheckpoint;
     if (Definition.RankRules.Id.IsValid())
     {
         const auto* Tuning=Library?Cast<UOGEncounterRankDefinition>(Library->Resolve(Definition.RankRules.System,Definition.RankRules.Id)):nullptr;
         if (!Tuning || !Tuning->ValidateDefinition(Error)) { if (Error.IsEmpty()) Error=TEXT("Shared encounter rank tuning is missing."); return false; }
+        auto RulesSnapshot=Tuning->Rules; TArray<uint8> RankBytes;
+        FMemoryWriter Memory(RankBytes,true); FObjectAndNameAsStringProxyArchive Archive(Memory,false);
+        FOGEncounterRankRules::StaticStruct()->SerializeItem(Archive,&RulesSnapshot,nullptr);
+        if (Archive.IsError()) { Error=TEXT("Cannot retain the exact encounter rank profile."); return false; }
+        RankCheckpoint=FBase64::Encode(RankBytes);
         RankResolver=[Rules=Tuning->Rules](const FOGRankSuppressionQuery& Query,int32& Multiplier,FString& Failure)
         { return Rules.Resolve(Query,Multiplier,Failure); };
     }
     int32 Ranked=0; for (const auto& Unit:State.Units) if (Unit.RankProjection.RankId.IsValid()) ++Ranked;
     if (Ranked>1 && !RankResolver) { Error=TEXT("Ranked encounter participants require their original shared suppression profile."); return false; }
+    const bool NativeOnly=!IdentityContext.Override && !State.Units.ContainsByPredicate([](const auto& Unit)
+        { return Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity")); });
+    TGuardValue<bool> RecoveryScope(bPendingNativeRecovery,NativeOnly);
+    TGuardValue<FString> RankScope(PendingNativeRankRecovery,RankCheckpoint);
     return StartOwnedLuminousTurnBattle(State,{}, {},MoveTemp(IdentityContext),MoveTemp(RankResolver),Ruler,{},Error);
 }
