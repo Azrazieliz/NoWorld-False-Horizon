@@ -123,7 +123,7 @@ bool FOGTurnBattle::SetExecutionModeMutating(EOGCombatExecutionMode Mode,FString
     }
     LastNativeReactions.Reset(); ++NativeAbilityRevision; return true;
 }
-bool FOGTurnBattle::BeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error)
+bool FOGTurnBattle::CanBeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error) const
 {
     Error.Reset(); const auto* Source=FindUnit(Root.SourceUnitId);
     const auto* Spec=Source?FindWorldAbility(*Source,Root.SkillId):nullptr;
@@ -134,9 +134,14 @@ bool FOGTurnBattle::BeginWorldAbility(const FOGResolvedCombatAction& Root,FStrin
         Spec->DurationMilliseconds>MAX_int64-State.WorldElapsedMilliseconds ||
         Spec->CooldownMilliseconds>MAX_int64-State.WorldElapsedMilliseconds)
     { Error=TEXT("No ready real World ability owner/staging or another cast is active."); return false; }
-    FOGTurnBattle Candidate=*this; Candidate.LastNativeReactions.Reset(); Candidate.WorldExecutionProof=Root;
-    if (!Candidate.ValidateNativeAbility(Root,*Candidate.FindMutableUnit(Root.SourceUnitId),Error)) return false;
-    Candidate.WorldExecutionProof.Reset();
+    FOGTurnBattle Preview=*this; Preview.WorldExecutionProof=Root;
+    return Preview.ValidateNativeAbility(Root,*Preview.FindMutableUnit(Root.SourceUnitId),Error);
+}
+bool FOGTurnBattle::BeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error)
+{
+    if (!CanBeginWorldAbility(Root,Error)) return false;
+    const auto* Spec=FindWorldAbility(*FindUnit(Root.SourceUnitId),Root.SkillId);
+    FOGTurnBattle Candidate=*this; Candidate.LastNativeReactions.Reset();
     if (!Candidate.BeginNativeOwnerAction(Root.SourceUnitId,Error)) return false;
     FWorldCast Cast; Cast.Root=Root; Cast.Specification=*Spec; Cast.StartedAt=State.WorldElapsedMilliseconds;
     Cast.Seed=WorldSeed(State.BattleId,Root.SourceUnitId,Root.SkillId,Log.GetNextSequence());
@@ -158,7 +163,7 @@ bool FOGTurnBattle::BeginWorldAbility(const FOGResolvedCombatAction& Root,FStrin
 bool FOGTurnBattle::ApplyWorldAbilityStep(const FOGEntityId& Id,int32 StepIndex,const TArray<FOGEntityId>& Contacts,FString& Error)
 {
     const auto* Current=WorldCasts.Find(Id);
-    if (!Current || !Current->Specification.Steps.IsValidIndex(StepIndex) || Current->CompletedSteps.Contains(StepIndex))
+    if (State.Status!=EOGTurnBattleStatus::Running || State.ExecutionMode!=EOGCombatExecutionMode::World || !Current || !Current->Specification.Steps.IsValidIndex(StepIndex) || Current->CompletedSteps.Contains(StepIndex))
     { Error=TEXT("World impact step is absent or was already committed."); return false; }
     const auto& Step=Current->Specification.Steps[StepIndex];
     if (State.WorldElapsedMilliseconds<Current->StartedAt+Step.OpensAtMilliseconds ||

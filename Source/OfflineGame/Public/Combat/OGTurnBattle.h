@@ -236,6 +236,7 @@ public:
     bool IsWorldDamagingStep(const FOGCombatUnitState& Unit,const FOGContentId& Skill,int32 Step) const;
     bool FilterWorldContacts(const FOGResolvedCombatAction& Root,const TArray<FOGEntityId>& Raw,TArray<FOGEntityId>& Out,FString& Error) const;
     bool SetExecutionMode(EOGCombatExecutionMode Mode,FString& Error);
+    bool CanBeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error) const;
     bool BeginWorldAbility(const FOGResolvedCombatAction& Root,FString& Error);
     bool ApplyWorldAbilityStep(const FOGEntityId& CastId,int32 StepIndex,const TArray<FOGEntityId>& Contacts,FString& Error);
     bool CancelWorldAbility(const FOGEntityId& CastId,FString& Error);

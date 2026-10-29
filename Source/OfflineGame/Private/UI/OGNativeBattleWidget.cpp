@@ -220,11 +220,12 @@ void UOGNativeBattleWidget::Refresh()
         if (WorldMode)
         {
             const auto* Timing=Battle->FindWorldAbility(*Source,Command.SkillId);
-            Enabled=Own && Timing && !Battle->GetUnitWorldCast(Source->UnitEntityId).IsValid() &&
-                State.WorldElapsedMilliseconds>=Battle->GetWorldAbilityReadyAt(Source->UnitEntityId,Command.SkillId);
+            Enabled=Own && Timing && Battle->CanBeginWorldAbility(Proposal,Reason);
             Expanded=Proposal;
             if (!Timing) Reason=TEXT("World staging unavailable.");
-            else if (!Enabled) Reason=TEXT("Current action or cooldown is active.");
+            else if (!Enabled && Reason.IsEmpty()) Reason=TEXT("Current action or cooldown is active.");
+            const int64 Cooldown=Battle->GetWorldAbilityReadyAt(Source->UnitEntityId,Command.SkillId)-State.WorldElapsedMilliseconds;
+            if (Cooldown>0) Reason=FString::Printf(TEXT("Ready in %.1f s"),Cooldown/1000.0);
         }
         else Enabled=Own && Battle->ValidateResolvedAction(Proposal,Expanded,Reason);
         if (Enabled) for (const auto& Id:Expanded.TargetUnitIds)
