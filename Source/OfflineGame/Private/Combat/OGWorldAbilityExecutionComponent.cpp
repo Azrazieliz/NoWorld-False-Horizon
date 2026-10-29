@@ -174,6 +174,12 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
         { Error=TEXT("The original action motion is not connected to this actual rig."); return false; }
     }
     const auto FrozenSpec=*Spec;
+    auto Pending=Request; if (!Pending.ActionId.IsValid()) Pending.ActionId=FOGEntityId::NewId();
+    // Validate the requested follow-up against a copy before ending the live action.
+    // An unaffordable, cooling-down or invalid-target command must not cancel the current cast.
+    FOGTurnBattle Preview=*Battle;
+    if (HasActiveCast() && !Preview.CancelWorldAbility(ActiveCast,Error)) return false;
+    if (!Preview.CanBeginWorldAbility(Pending,Error)) return false;
     auto* Actions=GetOwner()->FindComponentByClass<UOGWorldActionRuntimeComponent>();
     if (Actions && Actions->HasActiveAction())
     {
@@ -184,7 +190,7 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     }
     else if (HasActiveCast())
     { Error=TEXT("Finish the active World action before starting another."); return false; }
-    Root=Request; if (!Root.ActionId.IsValid()) Root.ActionId=FOGEntityId::NewId();
+    Root=MoveTemp(Pending);
     if (!Core->BeginOwnedWorldAbility(Root,Error)) return false;
     FOGWorldAbilityCastView View;
     if (!Core->GetOwnedLuminousTurnBattle()->ReadWorldCast(Root.ActionId,View)) return true;
