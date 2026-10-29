@@ -70,7 +70,9 @@ bool FOGCombatRewardService::ApplyCommittedVictory(const FOGTurnBattleState& Sta
     bool Found=false; FOGWorldEvent Stored; TSharedPtr<FJsonObject> Proof; FString BattleId; double Status=-1;
     if (!Store.TryReadWorldEvent(Completion.EventId,Found,Stored,Error)) return false;
     if (!Found || Stored.PrimaryEntity!=Ruler || Stored.EventType!=Completion.EventType ||
-        (Stored.EventType!=TEXT("combat.turn_action_resolved") && Stored.EventType!=TEXT("combat.encounter_started")) ||
+        (Stored.EventType!=TEXT("combat.turn_action_resolved") && Stored.EventType!=TEXT("combat.encounter_started") &&
+         Stored.EventType!=TEXT("combat.world_impact_resolved") && Stored.EventType!=TEXT("combat.world_clock_advanced") &&
+         Stored.EventType!=TEXT("combat.world_cast_cancelled")) ||
         Stored.PayloadJson!=Completion.PayloadJson || !Json(Stored.PayloadJson,Proof) ||
         !Proof->TryGetStringField(TEXT("battle_id"),BattleId) || BattleId!=State.BattleId.ToString() ||
         !Proof->TryGetNumberField(TEXT("battle_status_after"),Status) || Status!=static_cast<uint8>(EOGTurnBattleStatus::Completed))
@@ -91,10 +93,12 @@ bool FOGCombatRewardService::ApplyCommittedVictory(const FOGTurnBattleState& Sta
         Out.bHasPlayerTeam=true; Out.PlayerTeamIndex=Unit.TeamIndex;
     }
     Out.bVictory=Out.bHasPlayerTeam && State.Units.ContainsByPredicate([&](const auto& U)
-        { return U.TeamIndex==Out.PlayerTeamIndex && U.Presence!=EOGCombatPresence::Removed && U.IsAlive(); });
+        { return U.TeamIndex==Out.PlayerTeamIndex && U.Presence!=EOGCombatPresence::Removed && U.IsAlive() &&
+            (State.ExecutionMode!=EOGCombatExecutionMode::World || U.Presence==EOGCombatPresence::Active); });
     if (!Out.bVictory) return true;
     for (const auto& Unit:State.Units)
-        if (Unit.TeamIndex!=Out.PlayerTeamIndex && Unit.Presence!=EOGCombatPresence::Removed && Unit.IsAlive())
+        if (Unit.TeamIndex!=Out.PlayerTeamIndex && Unit.Presence!=EOGCombatPresence::Removed && Unit.IsAlive() &&
+            (State.ExecutionMode!=EOGCombatExecutionMode::World || Unit.Presence==EOGCombatPresence::Active))
         { Error=TEXT("A living opposing team remains; victory cannot grant rewards."); return false; }
     auto* Library=UOGDefinitionLibrary::Get();
     TArray<const FOGCombatUnitState*> Defeated;

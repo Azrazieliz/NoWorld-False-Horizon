@@ -139,6 +139,7 @@ void UOGNativeBattleWidget::Refresh()
         FString::Printf(TEXT("|%lld|%d|%d|%lld|%d|%d|"),static_cast<long long>(Battle->GetLog().GetNextSequence()),
             Resource,Charge,static_cast<long long>(Core->GetCanonicalWorldTick()/1000),
             FMath::RoundToInt(ViewWidth),FMath::RoundToInt(ViewHeight))+LastActionMessage;
+    if (State.ExecutionMode==EOGCombatExecutionMode::World) Key+=LexToString(State.WorldElapsedMilliseconds/100);
     for (const auto& Id:Body->GetSelectedCanonicalTurnTargets()) Key+=Id.ToString();
     if (Body->HasTargetHudProjectionForHud()) Key+=Body->GetTargetHudProjectionForHud().TargetEntityId.ToString();
     if (Key==Signature) return;
@@ -146,10 +147,11 @@ void UOGNativeBattleWidget::Refresh()
     FOGNativeBattleCommandSet Set; FString Error;
     if (!Body->ReadOwnedLuminousBattleCommands(Set,Error))
     { Heading->SetText(FText::FromString(TEXT("ENCOUNTER"))); Feedback->SetText(FText::FromString(Error)); Resources->SetText(FText::GetEmpty()); Targets->ClearChildren(); Commands->ClearChildren(); return; }
+    const bool WorldMode=State.ExecutionMode==EOGCombatExecutionMode::World;
     const int32 Acting=Battle->SelectNextActingUnitIndex();
-    const bool Own=State.Units.IsValidIndex(Acting) && State.Units[Acting].UnitEntityId==Source->UnitEntityId &&
+    const bool Own=(WorldMode || (State.Units.IsValidIndex(Acting) && State.Units[Acting].UnitEntityId==Source->UnitEntityId)) &&
         Source->CanAct() && Body->IsFoundationWorldInputAllowed();
-    Heading->SetText(FText::FromString(Own?TEXT("YOUR TURN"):TEXT("OPPONENT / ALLY TURN")));
+    Heading->SetText(FText::FromString(WorldMode?TEXT("WORLD COMBAT"):Own?TEXT("YOUR TURN"):TEXT("OPPONENT / ALLY TURN")));
     FString ResourceText=FString::Printf(TEXT("HP %s / %s"),*Source->CurrentHp.ToDebugString(),*Source->Stats.MaxHp.ToDebugString());
     if (!Set.ResourceLabel.IsEmpty())
         ResourceText+=FString::Printf(TEXT("   |   %s %d / %d   |   Ultimate %d%% / %d%%"),
@@ -157,6 +159,14 @@ void UOGNativeBattleWidget::Refresh()
     for (const auto& Value:Source->BattleResources)
         ResourceText+=FString::Printf(TEXT("   |   %s %lld / %lld"),*Value.DisplayName.ToString(),
             static_cast<long long>(Value.Value),static_cast<long long>(Value.Maximum));
+    if (WorldMode)
+    {
+        FOGWorldAbilityCastView Cast;
+        if (Battle->ReadWorldCast(Battle->GetUnitWorldCast(Source->UnitEntityId),Cast))
+            ResourceText+=FString::Printf(TEXT("   |   Action %.1f / %.1f s"),
+                (State.WorldElapsedMilliseconds-Cast.StartedAtMilliseconds)/1000.0,
+                (Cast.EndsAtMilliseconds-Cast.StartedAtMilliseconds)/1000.0);
+    }
     const FString Status=Battle->DescribeNativeEffects(Source->UnitEntityId);
     if (!Status.IsEmpty()) ResourceText+=TEXT("\n")+Status;
     Resources->SetText(FText::FromString(ResourceText));
@@ -206,15 +216,32 @@ void UOGNativeBattleWidget::Refresh()
     for (const auto& Command:Set.Commands)
     {
         FOGResolvedCombatAction Proposal,Expanded; Command.BuildAction(*Source,Selected,Proposal);
-        FString Reason; bool Enabled=Own && Battle->ValidateResolvedAction(Proposal,Expanded,Reason);
+        FString Reason; bool Enabled=false;
+        if (WorldMode)
+        {
+            const auto* Timing=Battle->FindWorldAbility(*Source,Command.SkillId);
+            Enabled=Own && Timing && Battle->CanBeginWorldAbility(Proposal,Reason);
+            Expanded=Proposal;
+            if (!Timing) Reason=TEXT("World staging unavailable.");
+            else if (!Enabled && Reason.IsEmpty()) Reason=TEXT("Current action or cooldown is active.");
+            const int64 Cooldown=Battle->GetWorldAbilityReadyAt(Source->UnitEntityId,Command.SkillId)-State.WorldElapsedMilliseconds;
+            if (Cooldown>0) Reason=FString::Printf(TEXT("Ready in %.1f s"),Cooldown/1000.0);
+        }
+        else Enabled=Own && Battle->ValidateResolvedAction(Proposal,Expanded,Reason);
         if (Enabled) for (const auto& Id:Expanded.TargetUnitIds)
             if (!Bodies.Contains(Id) || AmbiguousBodies.Contains(Id))
             { Enabled=false; Reason=TEXT("Waiting for the battlefield characters."); break; }
         if (!Own) Reason=TEXT("Available on this character's next turn.");
-        if (Own && !Enabled && Expanded.TargetUnitIds.IsEmpty()) Reason=TEXT("Select a primary target.");
+        if (!WorldMode && Own && !Enabled && Expanded.TargetUnitIds.IsEmpty()) Reason=TEXT("Select a primary target.");
         const FString Label=Command.Label+(Own && !Enabled?TEXT("\n")+Reason:FString());
         AddButton(Commands,Label,Enabled?Command.Hint:Reason,Command.Id,INDEX_NONE,Enabled,false,Width);
     }
+    FString ModeReason;
+    const bool CanChangeMode=Core->CanSetOwnedCombatExecutionMode(
+        WorldMode?EOGCombatExecutionMode::Turn:EOGCombatExecutionMode::World,ModeReason);
+    AddButton(Commands,WorldMode?TEXT("TURN MODE"):TEXT("WORLD MODE"),
+        CanChangeMode?TEXT("Keep the current combatants and state."):ModeReason,
+        TEXT("screen_combat_mode"),INDEX_NONE,CanChangeMode,false,Width);
     AddButton(Commands,TEXT("Pause"),TEXT("Open the existing pause controls."),TEXT("screen_pause"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Settings"),TEXT("Open the existing game settings."),TEXT("screen_settings"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Ruler"),TEXT("Return to the existing Ruler interface."),TEXT("screen_ruler"),INDEX_NONE,true,false,Width);
@@ -228,6 +255,17 @@ void UOGNativeBattleWidget::Activate(FName Command,int32 TargetIndex)
         const auto* Game=Character->GetGameInstance(); const auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
         if (Core) DismissedResultReceipt=Core->GetLastNativeBattleOutcome().CompletionEventId;
         SetVisibility(ESlateVisibility::Collapsed); return;
+    }
+    if (Command==TEXT("screen_combat_mode"))
+    {
+        auto* Game=Character->GetGameInstance(); auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+        FString Error;
+        if (Core && Core->GetOwnedLuminousTurnBattle())
+        {
+            const auto Mode=Core->GetOwnedLuminousTurnBattle()->GetState().ExecutionMode;
+            Core->SetOwnedCombatExecutionMode(Mode==EOGCombatExecutionMode::World?EOGCombatExecutionMode::Turn:EOGCombatExecutionMode::World,Error);
+        }
+        LastActionMessage=Error; Signature.Reset(); Refresh(); return;
     }
     if (Command==TEXT("screen_pause")) { Character->SetFoundationPauseMenuOpen(true); return; }
     if (Command==TEXT("screen_settings")) { Character->SetFoundationSettingsOpen(true); return; }

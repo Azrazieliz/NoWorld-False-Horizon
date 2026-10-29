@@ -159,6 +159,12 @@ public:
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
+    bool SetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error);
+    bool CanSetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error) const;
+    bool BeginOwnedWorldAbility(const FOGResolvedCombatAction& Root,FString& Error);
+    bool ApplyOwnedWorldAbilityStep(const FOGEntityId& CastId,int32 Step,const TArray<FOGEntityId>& Contacts,FString& Error);
+    bool CancelOwnedWorldAbility(const FOGEntityId& CastId,FString& Error);
+    bool AdvanceOwnedWorldCombatTime(FString& Error);
     const FOGNativeBattleOutcome& GetLastNativeBattleOutcome() const { return LastNativeBattleOutcome; }
     FOGEntityId GetLastNativeBattleReceipt() const { return LastNativeBattleReceipt; }
     bool IsNativeOpeningPresentationCurrent() const { return LastNativeOpeningReceipt.IsValid() && LastNativeOpeningReceipt==LastNativeBattleReceipt; }
@@ -234,6 +240,16 @@ private:
     FOGEntityId LastNativeBattleReceipt;
     FOGEntityId LastNativeOpeningReceipt;
     FOGNativeBattleOutcome LastNativeBattleOutcome;
+    bool CommitWorldCombatCandidate(FOGTurnBattle&& Candidate,FName Operation,const FOGResolvedCombatAction* Cause,
+        int32 StepIndex,bool PublishRootMotion,FString& Error);
+    bool ValidateOwnedWorldParticipants(const FOGTurnBattleState& State,const FOGEntityId& Ruler,FString& Error) const;
+    bool TickWorldCombat(float DeltaSeconds);
+    FString LastWorldCombatClockError;
+    FTSTicker::FDelegateHandle WorldCombatTickerHandle;
+    TWeakObjectPtr<UWorld> WorldCombatClockWorld;
+    double LastWorldCombatSeconds=-1;
+    double WorldCombatFractionalMilliseconds=0;
+    TMap<FOGEntityId,FOGResolvedCombatAction> NativeWorldCastRequests;
     TUniquePtr<FOGCanonicalClockRuntime> CanonicalClock;
     TUniquePtr<FOGFoundationStrategicRuntime> StrategicRuntime;
     TSharedPtr<FOGLocallyInstalledPackageProvider> InstalledPackageProvider;

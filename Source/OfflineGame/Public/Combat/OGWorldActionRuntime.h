@@ -5,6 +5,8 @@
 #include "Combat/OGCombatTypes.h"
 #include "OGWorldActionRuntime.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOGWorldAuthoredActionEnded);
+
 class UOGGameCoreSubsystem;
 struct FOGTurnBattleState;
 
@@ -75,6 +77,7 @@ class OFFLINEGAME_API UOGWorldActionRuntimeComponent : public UActorComponent
 
 public:
     UOGWorldActionRuntimeComponent();
+    FOGWorldAuthoredActionEnded OnAuthoredActionEnded;
 
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Action")
     void BeginAuthoredAction(const FOGWorldActionState& State);

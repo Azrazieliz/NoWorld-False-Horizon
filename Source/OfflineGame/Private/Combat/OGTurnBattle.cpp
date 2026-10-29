@@ -65,11 +65,13 @@ bool FOGTurnBattle::Initialize(
     FOGRankSuppressionResolver InRankResolver,TArray<FOGNativePassiveBinding> Passives,FString& OutError)
 {
     State = InitialState;
+    NativeOwnerActionEpochs.Reset(); NativeOwnerActivationCounts.Reset();
     NativePassiveRules.Reset(); NativePassiveActionOwners.Reset(); NativeReactionProof.Reset(); LastNativeReactions.Reset();
     NativeFallbackConditions=ConditionEvaluator;
     // Opening resource truth comes only from admitted shared specifications, never caller snapshots.
     for (auto& Unit:State.Units) { Unit.BattleResources.Reset(); Unit.NativeEffects.Reset(); }
-    NativeEffectDefinitions.Reset();
+    NativeEffectDefinitions.Reset(); WorldAbilities.Reset(); WorldCasts.Reset(); WorldAbilityReadyAt.Reset(); WorldExecutionProof.Reset();
+    State.WorldElapsedMilliseconds=0;
     NativeResourceSpecifications.Reset();
     NativeAbilities.Reset(); NativeAbilityRevision=0; NativeOwnerActions.Reset(); NativeAbilityReadyActions.Reset();
     Log.Reset();
@@ -183,6 +185,8 @@ bool FOGTurnBattle::ValidateInitialState(FString& OutError) const
         UnitIds.Add(Unit.UnitEntityId);
     }
 
+    if (State.ExecutionMode==EOGCombatExecutionMode::World)
+        return ValidateLocalIdentityExclusivity(State.Units,IdentityContext,OutError);
     TSet<FOGEntityId> FormationIds;
 
     for (const FOGTurnTeamState& Team : State.Teams)
@@ -288,6 +292,8 @@ bool FOGTurnBattle::ValidateInitialState(FString& OutError) const
 bool FOGTurnBattle::NormalizeOpeningLanes(FString& OutError)
 {
     OutError.Reset();
+    if (State.ExecutionMode==EOGCombatExecutionMode::World)
+    { for (auto& Unit:State.Units) Unit.OccupiedLaneIndex=INDEX_NONE; return true; }
 
     for (FOGCombatUnitState& Unit : State.Units)
     {
@@ -383,6 +389,7 @@ bool FOGTurnBattle::NormalizeOpeningLanes(FString& OutError)
 
 int32 FOGTurnBattle::SelectNextActingUnitIndex() const
 {
+    if (State.ExecutionMode==EOGCombatExecutionMode::World) return INDEX_NONE;
     if (!OutstandingTriggeredActionSequences.IsEmpty())
     {
         return INDEX_NONE;
@@ -447,7 +454,10 @@ bool FOGTurnBattle::ValidateResolvedAction(const FOGResolvedCombatAction& Origin
 
     const bool bInterrupt = Action.InterruptPriority > 0;
 
-    if (!bInterrupt)
+    if (State.ExecutionMode==EOGCombatExecutionMode::World && !bInterrupt &&
+        (!WorldExecutionProof.IsSet() || WorldExecutionProof.GetValue().ActionId!=Action.ActionId || WorldExecutionProof.GetValue().SourceUnitId!=Action.SourceUnitId))
+    { OutError=TEXT("World casts require their native staged execution context."); return false; }
+    if (!bInterrupt && State.ExecutionMode==EOGCombatExecutionMode::Turn)
     {
         if (!OutstandingTriggeredActionSequences.IsEmpty())
         {
@@ -541,6 +551,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
     FOGCombatUnitState* Source=FindMutableUnit(Action.SourceUnitId);
     if (!Source) { OutError=TEXT("Validated combat source is unavailable."); return false; }
     const bool bInterrupt=Action.InterruptPriority>0;
+    if (!bInterrupt && !BeginNativeOwnerAction(Action.SourceUnitId,OutError)) return false;
 
     FOGCombatLogEvent Declared;
     Declared.Type = EOGCombatLogEventType::ActionDeclared;
@@ -551,7 +562,7 @@ bool FOGTurnBattle::ApplyResolvedActionMutating(
         Action.InterruptPriority);
     Log.Append(MoveTemp(Declared));
 
-    if (!bInterrupt)
+    if (!bInterrupt && State.ExecutionMode==EOGCombatExecutionMode::Turn)
     {
         State.CurrentActionValue =
             FMath::Max(
@@ -964,6 +975,11 @@ bool FOGTurnBattle::ResolvePendingReplacements(
         return false;
     }
 
+    if (State.ExecutionMode==EOGCombatExecutionMode::World)
+    {
+        for (const auto& Id:PendingDefeatedUnitIds) if (auto* Unit=FindMutableUnit(Id)) Unit->OccupiedLaneIndex=INDEX_NONE;
+        PendingDefeatedUnitIds.Reset(); EvaluateBattleCompletion(); return true;
+    }
     TArray<FOGEntityId> Pending =
         MoveTemp(PendingDefeatedUnitIds);
     PendingDefeatedUnitIds.Reset();
@@ -1386,6 +1402,7 @@ void FOGTurnBattle::QueueTriggerEvent(
     Context.SkillId = SkillId;
     Context.SourceSequence =
         SourceSequence;
+    Context.bReactionOrigin=NativeReactionProof.IsSet();
 
     const FOGCombatConditionEvaluator Evaluate=[this](const FOGCombatTriggerBinding& B,
         const FOGConditionDefinition& C,const FOGCombatTriggerContext& E)
@@ -1432,7 +1449,7 @@ void FOGTurnBattle::EvaluateBattleCompletion()
         return;
     }
 
-    if (!OutstandingTriggeredActionSequences.IsEmpty())
+    if (!OutstandingTriggeredActionSequences.IsEmpty() || !WorldCasts.IsEmpty())
     {
         return;
     }
@@ -1444,10 +1461,10 @@ void FOGTurnBattle::EvaluateBattleCompletion()
     {
         const bool bHasLivingUnit =
             State.Units.ContainsByPredicate(
-                [&Team](
+                [this,&Team](
                     const FOGCombatUnitState& Unit)
                 {
-                    return Unit.TeamIndex ==
+                    return (State.ExecutionMode!=EOGCombatExecutionMode::World || Unit.Presence==EOGCombatPresence::Active) && Unit.TeamIndex ==
                                Team.TeamIndex &&
                            Unit.Presence !=
                                EOGCombatPresence::Removed &&

@@ -72,6 +72,7 @@ void FOGLargeNumber::Normalize()
 
     while (Absolute > static_cast<uint64>(MaxSignificand))
     {
+        if (Exponent10==MAX_int32) { Significand=Significand<0?-MaxSignificand:MaxSignificand; return; }
         Significand = DivideRounded(Significand, 10);
         ++Exponent10;
         Absolute = AbsMagnitude(Significand);
@@ -152,13 +153,13 @@ FOGLargeNumber FOGLargeNumber::Add(
         Swap(Left, Right);
     }
 
-    const int32 Delta = Left.Exponent10 - Right.Exponent10;
+    const int64 Delta = static_cast<int64>(Left.Exponent10) - Right.Exponent10;
     if (Delta > 9)
     {
         return Left;
     }
 
-    const int64 Scale = Pow10Int(Delta);
+    const int64 Scale = Pow10Int(static_cast<int32>(Delta));
     const int64 AdjustedRight = DivideRounded(Right.Significand, Scale);
 
     return FOGLargeNumber(
@@ -181,11 +182,18 @@ FOGLargeNumber FOGLargeNumber::Multiply(
     Right.Normalize();
 
     // Each normalized significand is <= 9 digits, so the product fits int64.
-    const int64 Product = Left.Significand * Right.Significand;
-
-    return FOGLargeNumber(
-        Product,
-        Left.Exponent10 + Right.Exponent10);
+    int64 Product = Left.Significand * Right.Significand;
+    int64 Exponent=static_cast<int64>(Left.Exponent10)+Right.Exponent10;
+    while (AbsMagnitude(Product)>static_cast<uint64>(MaxSignificand))
+    { Product=DivideRounded(Product,10); ++Exponent; }
+    if (Exponent>MAX_int32) return FOGLargeNumber(Product<0?-MaxSignificand:MaxSignificand,MAX_int32);
+    if (Exponent<MIN_int32)
+    {
+        const int64 Shift=static_cast<int64>(MIN_int32)-Exponent;
+        if (Shift>9) return FOGLargeNumber();
+        Product=DivideRounded(Product,Pow10Int(static_cast<int32>(Shift))); Exponent=MIN_int32;
+    }
+    return FOGLargeNumber(Product,static_cast<int32>(Exponent));
 }
 
 FOGLargeNumber FOGLargeNumber::ScaleByBasisPoints(

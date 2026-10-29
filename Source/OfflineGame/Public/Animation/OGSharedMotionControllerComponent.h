@@ -93,6 +93,9 @@ public:
     bool EnqueueCombatAction(FName GameplayAction,const FOGEntityId& BattleId,const FOGEntityId& ActionId);
     UFUNCTION(BlueprintCallable,Category="Motion|Combat")
     void CancelCombatActions(const FOGEntityId& BattleId);
+    /** Accepted real-time casts begin now; their physical contact clock must not wait behind queued cues. */
+    bool StartImmediateCombatAction(FName GameplayAction,const FOGEntityId& BattleId,const FOGEntityId& ActionId);
+    void CancelCombatAction(const FOGEntityId& BattleId,const FOGEntityId& ActionId);
     /** A visual HP-result cue. Its deduplication ID never enters canonical gameplay state. */
     bool EnqueueCombatCue(FName Cue,const FOGEntityId& BattleId,const FOGEntityId& ActionId,const FOGEntityId& SubjectId);
 
@@ -182,6 +185,7 @@ private:
     TArray<FQueuedCombatMotion> CombatQueue;
     TSet<FOGEntityId> CombatReceipts;
     FOGEntityId CombatScope;
+    FOGEntityId ActiveCombatReceipt;
     bool bPreserveCombatQueue=false;
     bool bPlayingQueuedCombat=false;
     bool StartNextCombatMotion();

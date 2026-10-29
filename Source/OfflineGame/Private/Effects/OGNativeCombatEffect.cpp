@@ -17,8 +17,15 @@ bool FOGNativeEffectDefinition::Validate(FString& Error) const
         static_cast<uint8>(Mechanic)>static_cast<uint8>(EOGNativeEffectMechanic::PeriodicHealing) ||
         static_cast<uint8>(Stacking)>static_cast<uint8>(EOGNativeEffectStacking::Independent) ||
         static_cast<uint8>(Clock)>static_cast<uint8>(EOGNativeEffectClock::TargetActions) ||
-        (Effect.Lifetime.Kind!=EOGEffectLifetimeKind::Turns && Effect.Lifetime.Kind!=EOGEffectLifetimeKind::Encounter))
-    { Error=TEXT("Native battle effects require sourced IDs, a supported mechanic and explicit turn/encounter lifetime."); return false; }
+        WorldDurationMilliseconds<0 || WorldTickIntervalMilliseconds<0 ||
+        (Effect.Lifetime.Kind!=EOGEffectLifetimeKind::Turns && Effect.Lifetime.Kind!=EOGEffectLifetimeKind::Encounter &&
+         Effect.Lifetime.Kind!=EOGEffectLifetimeKind::RealTimeMilliseconds))
+    { Error=TEXT("Native battle effects require sourced IDs, a supported mechanic and explicit supported lifetime."); return false; }
+    const bool Periodic=Mechanic==EOGNativeEffectMechanic::PeriodicDamage || Mechanic==EOGNativeEffectMechanic::PeriodicHealing;
+    if ((!Periodic && WorldTickIntervalMilliseconds!=0) ||
+        (Effect.Lifetime.Kind==EOGEffectLifetimeKind::RealTimeMilliseconds &&
+         (WorldDurationMilliseconds!=0 || (Periodic && WorldTickIntervalMilliseconds<=0))))
+    { Error=TEXT("Real-time effects require an exact periodic interval; finite lifetime is stored once in milliseconds."); return false; }
     TSet<EOGNativeEffectStat> Seen;
     for (const auto& M:Modifiers)
     {
@@ -47,6 +54,7 @@ bool FOGNativeEffectDefinition::operator==(const FOGNativeEffectDefinition& V) c
         Effect.Lifetime.Magnitude==V.Effect.Lifetime.Magnitude && SamePriority(Effect.RulePriority,V.Effect.RulePriority) &&
         Effect.MetadataTags==V.Effect.MetadataTags && OriginalSourceReference==V.OriginalSourceReference &&
         DisplayName.EqualTo(V.DisplayName) && Mechanic==V.Mechanic && Stacking==V.Stacking && Clock==V.Clock &&
+        WorldDurationMilliseconds==V.WorldDurationMilliseconds && WorldTickIntervalMilliseconds==V.WorldTickIntervalMilliseconds &&
         bPerSource==V.bPerSource && bBeneficial==V.bBeneficial && bDispellable==V.bDispellable &&
         bRemoveOnDefeat==V.bRemoveOnDefeat && bRefillBarrierOnRefresh==V.bRefillBarrierOnRefresh &&
         Modifiers==V.Modifiers && FlatMagnitude==V.FlatMagnitude && AttackScalingBps==V.AttackScalingBps &&
@@ -72,6 +80,8 @@ bool FOGNativeEffectInstance::operator==(const FOGNativeEffectInstance& V) const
     return InstanceId==V.InstanceId && EffectId==V.EffectId && SourceUnitId==V.SourceUnitId &&
         SourceSkillId==V.SourceSkillId && ClockUnitId==V.ClockUnitId && Stacks==V.Stacks &&
         RemainingActions==V.RemainingActions && AppliedAtOwnerAction==V.AppliedAtOwnerAction &&
+        ExpiresAtWorldMilliseconds==V.ExpiresAtWorldMilliseconds && NextWorldTickMilliseconds==V.NextWorldTickMilliseconds &&
+        WorldTickIntervalMilliseconds==V.WorldTickIntervalMilliseconds &&
         MagnitudePerStack==V.MagnitudePerStack && BarrierRemaining==V.BarrierRemaining;
 }
 bool UOGNativeCombatEffect::ValidateDefinition_Implementation(FString& Error) const

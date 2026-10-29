@@ -512,7 +512,7 @@ bool UOGSharedMotionControllerComponent::PlayAction(
 void UOGSharedMotionControllerComponent::StopAction()
 {
     if (!bPreserveCombatQueue) { CombatQueue.Reset(); CombatReceipts.Reset(); CombatScope=FOGEntityId(); }
-    bPlayingQueuedCombat=false;
+    bPlayingQueuedCombat=false; ActiveCombatReceipt=FOGEntityId();
     ++PlaybackGeneration;
     RestoreReferencePose();
     SetComponentTickEnabled(!MorphOverlays.IsEmpty());
@@ -801,7 +801,7 @@ bool UOGSharedMotionControllerComponent::StartNextCombatMotion()
         const auto Next=CombatQueue[0]; CombatQueue.RemoveAt(0);
         TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
         if (PlayAction(Next.Action,TEXT("Combat"),false,1,NAME_None))
-        { bPlayingQueuedCombat=true; return true; }
+        { bPlayingQueuedCombat=true; ActiveCombatReceipt=Next.Receipt; return true; }
         UE_LOG(LogTemp,Warning,TEXT("Accepted combat motion %s became unavailable for the current rig."),*Next.Action.ToString());
     }
     return false;
@@ -820,4 +820,26 @@ bool UOGSharedMotionControllerComponent::EnqueueCombatCue(FName Cue,const FOGEnt
     const FString Text=TEXT("presentation|")+Action.ToString()+TEXT("|")+Subject.ToString()+TEXT("|")+Cue.ToString();
     FGuid Id; FGuid::ParseExact(FMD5::HashAnsiString(*Text),EGuidFormats::Digits,Id);
     return EnqueueCombatAction(Cue,Battle,FOGEntityId(Id));
+}
+
+bool UOGSharedMotionControllerComponent::StartImmediateCombatAction(FName Action,
+    const FOGEntityId& Battle,const FOGEntityId& Receipt)
+{
+    if (!IsInGameThread() || !Battle.IsValid() || !Receipt.IsValid() || Action.IsNone()) return false;
+    if (CombatScope==Battle && CombatReceipts.Contains(Receipt)) return true;
+    if ((bSceneTimeLocked && !bPlayingQueuedCombat) || !CanPlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
+    if (bPlaying && !bPlayingQueuedCombat && !CurrentAction.ToString().StartsWith(TEXT("Traversal.")) &&
+        !CurrentAction.ToString().StartsWith(TEXT("Combat."))) return false;
+    if (CombatScope!=Battle) CombatReceipts.Reset();
+    CombatQueue.Reset(); CombatScope=Battle;
+    TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
+    if (!PlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
+    CombatReceipts.Add(Receipt); ActiveCombatReceipt=Receipt; bPlayingQueuedCombat=true; return true;
+}
+void UOGSharedMotionControllerComponent::CancelCombatAction(const FOGEntityId& Battle,const FOGEntityId& Receipt)
+{
+    if (CombatScope!=Battle || !Receipt.IsValid()) return;
+    CombatQueue.RemoveAll([&](const auto& Entry){return Entry.Receipt==Receipt;});
+    if (bPlayingQueuedCombat && ActiveCombatReceipt==Receipt)
+    { TGuardValue<bool> Preserve(bPreserveCombatQueue,true); StopAction(); StartNextCombatMotion(); }
 }

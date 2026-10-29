@@ -41,8 +41,10 @@ void UOGWorldActionRuntimeComponent::BeginAuthoredAction(const FOGWorldActionSta
 
 void UOGWorldActionRuntimeComponent::EndAuthoredAction()
 {
+    const bool WasActive=bHasActiveAction;
     bHasActiveAction = false;
     ActiveAction = FOGWorldActionState();
+    if (WasActive) OnAuthoredActionEnded.Broadcast();
 }
 
 bool UOGWorldActionRuntimeComponent::CanCancelTo(EOGActionCancelDestination Destination) const

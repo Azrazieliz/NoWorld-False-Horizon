@@ -86,6 +86,9 @@ bool AddUnitDelta(
             Row->SetNumberField(TEXT("stacks"),I.Stacks);
             Row->SetStringField(TEXT("remaining_actions_exact"),LexToString(I.RemainingActions));
             Row->SetStringField(TEXT("applied_at_owner_action_exact"),LexToString(I.AppliedAtOwnerAction));
+            Row->SetStringField(TEXT("expires_world_ms_exact"),LexToString(I.ExpiresAtWorldMilliseconds));
+            Row->SetStringField(TEXT("next_world_tick_ms_exact"),LexToString(I.NextWorldTickMilliseconds));
+            Row->SetStringField(TEXT("world_tick_interval_ms_exact"),LexToString(I.WorldTickIntervalMilliseconds));
             Row->SetStringField(TEXT("magnitude_per_stack"),I.MagnitudePerStack.ToDebugString());
             Row->SetStringField(TEXT("barrier_remaining"),I.BarrierRemaining.ToDebugString());
             Rows.Add(MakeShared<FJsonValueObject>(Row));
@@ -297,4 +300,58 @@ bool FOGCombatActionJournal::BuildEncounterStartedEvent(const FOGTurnBattleState
     Out.EventId=FOGEntityId(Receipt); Out.EventType=TEXT("combat.encounter_started"); Out.WorldTick=Tick;
     Out.PrimaryEntity=Ruler; Out.RelatedEntities=MoveTemp(Related); Out.RelatedEntities.AddUnique(Before.BattleId);
     Out.bChronicleEligible=true; return true;
+}
+
+bool FOGCombatActionJournal::BuildWorldRuntimeEvent(const FOGTurnBattleState& Before,const FOGTurnBattleState& After,
+    const TArray<FOGNativeReactionRecord>& Reactions,const FOGEntityId& Ruler,int64 Tick,FName Operation,
+    const FOGResolvedCombatAction* Cause,int32 StepIndex,const TArray<FOGWorldAbilityCastView>& ActiveCasts,
+    FOGWorldEvent& Out,FString& Error)
+{
+    Out=FOGWorldEvent(); Error.Reset();
+    if (!Before.BattleId.IsValid() || Before.BattleId!=After.BattleId || !Ruler.IsValid() || Tick<0 ||
+        (Operation!=TEXT("combat.world_mode_changed") && Operation!=TEXT("combat.world_cast_started") &&
+         Operation!=TEXT("combat.world_impact_resolved") && Operation!=TEXT("combat.world_cast_cancelled") &&
+         Operation!=TEXT("combat.world_clock_advanced")))
+    { Error=TEXT("World combat receipt requires exact encounter, owner, clock and operation."); return false; }
+    auto Payload=MakeShared<FJsonObject>(); Payload->SetStringField(TEXT("battle_id"),After.BattleId.ToString());
+    Payload->SetNumberField(TEXT("mode_before"),static_cast<uint8>(Before.ExecutionMode));
+    Payload->SetNumberField(TEXT("mode_after"),static_cast<uint8>(After.ExecutionMode));
+    Payload->SetStringField(TEXT("world_milliseconds_before_exact"),LexToString(Before.WorldElapsedMilliseconds));
+    Payload->SetStringField(TEXT("world_milliseconds_after_exact"),LexToString(After.WorldElapsedMilliseconds));
+    AddOutcomeState(After,Payload); Payload->SetNumberField(TEXT("step_index"),StepIndex);
+    TArray<FOGEntityId> Related; Related.Add(After.BattleId);
+    if (Cause)
+    {
+        if (!Cause->ActionId.IsValid() || !FindUnit(Before,Cause->SourceUnitId) || !Cause->SkillId.IsValid())
+        { Error=TEXT("World action cause has no actual admitted source."); return false; }
+        Payload->SetStringField(TEXT("action_id"),Cause->ActionId.ToString());
+        Payload->SetStringField(TEXT("source_unit_id"),Cause->SourceUnitId.ToString());
+        Payload->SetStringField(TEXT("skill_id"),Cause->SkillId.ToString()); Related.AddUnique(Cause->SourceUnitId);
+        TArray<TSharedPtr<FJsonValue>> Targets;
+        for (const auto& Id:Cause->TargetUnitIds)
+        { if (!FindUnit(Before,Id)) { Error=TEXT("World receipt target was not admitted."); return false; } Targets.Add(MakeShared<FJsonValueString>(Id.ToString())); Related.AddUnique(Id); }
+        Payload->SetArrayField(TEXT("target_unit_ids"),MoveTemp(Targets));
+    }
+    TArray<TSharedPtr<FJsonValue>> Deltas,Casts;
+    for (const auto& Unit:After.Units)
+    {
+        const auto* Previous=FindUnit(Before,Unit.UnitEntityId);
+        if (!Previous) { Error=TEXT("World action cannot invent a new combat participant."); return false; }
+        if (AddUnitDelta(*Previous,Unit,Deltas)) Related.AddUnique(Unit.UnitEntityId);
+    }
+    Payload->SetArrayField(TEXT("unit_deltas"),MoveTemp(Deltas));
+    for (const auto& Cast:ActiveCasts)
+    {
+        auto Row=MakeShared<FJsonObject>(); Row->SetStringField(TEXT("cast_id"),Cast.CastId.ToString());
+        Row->SetStringField(TEXT("source_unit_id"),Cast.SourceUnitId.ToString()); Row->SetStringField(TEXT("skill_id"),Cast.SkillId.ToString());
+        Row->SetStringField(TEXT("started_ms_exact"),LexToString(Cast.StartedAtMilliseconds));
+        Row->SetStringField(TEXT("ends_ms_exact"),LexToString(Cast.EndsAtMilliseconds));
+        Row->SetNumberField(TEXT("completed_steps"),Cast.CompletedSteps); Row->SetBoolField(TEXT("costs_paid"),Cast.bCostsPaid);
+        Casts.Add(MakeShared<FJsonValueObject>(Row));
+    }
+    Payload->SetArrayField(TEXT("active_world_casts"),MoveTemp(Casts));
+    if (!AddNativeReactions(Before,After,Reactions,Payload,Related,Error)) return false;
+    Out.EventId=FOGEntityId::NewId(); Out.EventType=Operation; Out.PrimaryEntity=Ruler; Out.RelatedEntities=MoveTemp(Related);
+    Out.WorldTick=Tick; Out.bChronicleEligible=After.Status==EOGTurnBattleStatus::Completed;
+    Out.PayloadJson.Reset(); return FJsonSerializer::Serialize(Payload.ToSharedRef(),TJsonWriterFactory<>::Create(&Out.PayloadJson));
 }

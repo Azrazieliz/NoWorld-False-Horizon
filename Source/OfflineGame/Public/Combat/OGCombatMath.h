@@ -134,6 +134,8 @@ struct OFFLINEGAME_API FOGDamageResolution
 
     UPROPERTY(BlueprintReadOnly)
     int32 DefenseMultiplierBps = 10000;
+    /** Full scientific factor. The basis-point field remains a bounded display projection. */
+    UPROPERTY(BlueprintReadOnly) FOGLargeNumber DefenseMultiplier=FOGLargeNumber::FromInt64(1);
 
     UPROPERTY(BlueprintReadOnly)
     int32 RankSuppressionMultiplierBps = 10000;
@@ -173,9 +175,14 @@ public:
     /**
      * Progressive DEF factor = reference / (reference + effective DEF).
      * DEF penetration is percentage-based and can exceed 100% where allowed.
-     * Negative-defense pressure is represented as bonus multiplier.
+     * Negative effective DEF uses the approved factor 2^(-effectiveDEF/reference).
      */
     static int32 ResolveDefenseMultiplierBps(
+        const FOGLargeNumber& DefenseReference,
+        const FOGLargeNumber& DefenderDefense,
+        int32 DefensePenetrationBps);
+
+    static FOGLargeNumber ResolveDefenseMultiplier(
         const FOGLargeNumber& DefenseReference,
         const FOGLargeNumber& DefenderDefense,
         int32 DefensePenetrationBps);
@@ -186,11 +193,12 @@ public:
         const FOGCombatStats& Defender,
         FOGDeterministicRng& Rng);
 
-private:
+    /** Shared explicit probability primitive used by native effects as well as damage. */
     static bool RollBasisPoints(
         int32 ChanceBps,
         FOGDeterministicRng& Rng);
 
+private:
     static int32 RatioBps(
         const FOGLargeNumber& Numerator,
         const FOGLargeNumber& OtherPositiveTerm);

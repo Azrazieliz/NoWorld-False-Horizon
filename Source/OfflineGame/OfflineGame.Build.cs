@@ -18,6 +18,7 @@ public class OfflineGame : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
+            "AIModule",
             "AndroidPermission",
             "ApplicationCore",
             "AssetRegistry",
