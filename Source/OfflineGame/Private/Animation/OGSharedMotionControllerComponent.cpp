@@ -826,7 +826,8 @@ bool UOGSharedMotionControllerComponent::StartImmediateCombatAction(FName Action
     const FOGEntityId& Battle,const FOGEntityId& Receipt)
 {
     if (!IsInGameThread() || !Battle.IsValid() || !Receipt.IsValid() || Action.IsNone()) return false;
-    if (CombatScope==Battle && CombatReceipts.Contains(Receipt)) return true;
+    if (CombatScope==Battle && CombatReceipts.Contains(Receipt) &&
+        (ActiveCombatReceipt==Receipt || !CombatQueue.ContainsByPredicate([&](const auto& Entry){return Entry.Receipt==Receipt;}))) return true;
     if ((bSceneTimeLocked && !bPlayingQueuedCombat) || !CanPlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
     if (bPlaying && !bPlayingQueuedCombat && !CurrentAction.ToString().StartsWith(TEXT("Traversal.")) &&
         !CurrentAction.ToString().StartsWith(TEXT("Combat."))) return false;

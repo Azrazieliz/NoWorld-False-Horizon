@@ -1,5 +1,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Combat/OGNativeCombatPassive.h"
+#include "Combat/OGCombatVitalityService.h"
 #include "Combat/OGCombatResourceDefinition.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
@@ -982,7 +983,8 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     if (RequestedMode==EOGCombatExecutionMode::World && !ValidateOwnedWorldParticipants(DevelopedState,RulerId,OutError)) return false;
     for (FOGCombatUnitState& Unit : DevelopedState.Units)
         if (!FOGOwnedEquipmentService(*WorldStore).ProjectCombatUnit(Unit, OutError) ||
-            !FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError)) return false;
+            !FOGCharacterDevelopmentService(*WorldStore).ProjectCombatUnit(Unit, OutError) ||
+            !FOGCombatVitalityService(*WorldStore).Project(Unit,OutError)) return false;
     TArray<FOGNativePassiveBinding> NativePassives;
     auto* Definitions=UOGDefinitionLibrary::Get();
     for (const auto& Unit:DevelopedState.Units)
@@ -1073,6 +1075,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     auto RollbackOpening=[&](){FString Ignored; WorldStore->RollbackTransaction(Ignored); return false;};
     FOGNativeBattleOutcome OpeningOutcome;
     if (!WorldStore->AppendWorldEvent(OpeningEvent,OutError) ||
+        !FOGCombatVitalityService(*WorldStore).Commit(DevelopedState,Candidate->GetState(),RulerId,OpeningEvent,OutError) ||
         (Candidate->GetState().Status==EOGTurnBattleStatus::Completed &&
          !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate->GetState(),RulerId,OpeningEvent,OpeningOutcome,OutError)) ||
         !WorldStore->CommitTransaction(OutError)) return RollbackOpening();
@@ -1158,6 +1161,7 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
     auto RollbackAction=[&](){FString Ignored; WorldStore->RollbackTransaction(Ignored); return false;};
     FOGNativeBattleOutcome Outcome;
     if (!WorldStore->AppendWorldEvent(ActionEvent,OutError) ||
+        !FOGCombatVitalityService(*WorldStore).Commit(Before,Candidate.GetState(),ActiveCombatRulerId,ActionEvent,OutError) ||
         (Candidate.GetState().Status==EOGTurnBattleStatus::Completed &&
          !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate.GetState(),ActiveCombatRulerId,ActionEvent,Outcome,OutError)) ||
         !WorldStore->CommitTransaction(OutError)) return RollbackAction();
