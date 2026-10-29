@@ -310,7 +310,7 @@ void UOGSharedMotionControllerComponent::ApplyMorphOverlays()
                 break;
             }
         }
-        Combined.FindOrAdd(Track.Morph) += Weight;
+        Combined.FindOrAdd(ResolveSourceMorph(Track.Morph)) += Weight;
     }
     for (USkeletalMeshComponent* Part : RegisteredParts)
     {
@@ -608,12 +608,14 @@ void UOGSharedMotionControllerComponent::TickComponent(
     {
         const FName FinishedAction = CurrentAction;
         const FName FinishedMotion = CurrentMotionId;
+        const FOGEntityId FinishedReceipt=ActiveCombatReceipt;
         {
             TGuardValue<bool> Preserve(bPreserveCombatQueue,true);
             StopAction();
         }
         const uint64 FinishedGeneration=PlaybackGeneration;
-        OnMotionFinished.Broadcast(FinishedAction, FinishedMotion);
+        { TGuardValue<FOGEntityId> FinishedScope(FinishingCombatReceipt,FinishedReceipt);
+          OnMotionFinished.Broadcast(FinishedAction, FinishedMotion); }
         if (!bPlaying && PlaybackGeneration==FinishedGeneration) StartNextCombatMotion();
     }
 }
@@ -850,3 +852,12 @@ void UOGSharedMotionControllerComponent::CancelCombatAction(const FOGEntityId& B
     if (bPlayingQueuedCombat && ActiveCombatReceipt==Receipt)
     { TGuardValue<bool> Preserve(bPreserveCombatQueue,true); StopAction(); StartNextCombatMotion(); }
 }
+
+bool UOGSharedMotionControllerComponent::IsCombatMotionPending(const FOGEntityId& Receipt) const
+{ return Receipt.IsValid() && ((bPlayingQueuedCombat && ActiveCombatReceipt==Receipt) ||
+    CombatQueue.ContainsByPredicate([&](const auto& Entry){return Entry.Receipt==Receipt;})); }
+
+FName UOGSharedMotionControllerComponent::ResolveSourceMorph(FName Source) const
+{ const auto* Native=SharedSourceMorphAliases.Find(Source); return Native?*Native:Source; }
+bool UOGSharedMotionControllerComponent::SetSourceMorphLayer(FName Layer,FName Source,float Weight)
+{ return SetMorphLayer(Layer,ResolveSourceMorph(Source),Weight); }

@@ -152,6 +152,7 @@ bool UOGGameCoreSubsystem::AdvanceOwnedWorldCombatTime(FString& Error)
 }
 bool UOGGameCoreSubsystem::TickWorldCombat(float)
 {
+    BindWorldEventFeed(); FlushCommittedWorldEvents();
     if (bCoreReady && !bReleasingCanonicalRuntime && !bSubmittingNativeAction)
     {
         FString Error;

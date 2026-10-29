@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Animation/OGSharedAnimationRoutes.h"
+#include "Animation/AnimSequence.h"
 #include "Interaction/OGSystemicInteractionRuntime.h"
 #include "Misc/AutomationTest.h"
 

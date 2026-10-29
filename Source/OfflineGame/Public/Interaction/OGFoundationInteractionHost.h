@@ -10,6 +10,7 @@
 #include "OGFoundationInteractionHost.generated.h"
 
 class UOGGameCoreSubsystem;
+struct FOGTurnBattleState;
 class UOGDiagnosticCombatComponent;
 class UOGDiagnosticAnimationPresentation;
 class UOGSharedMotionSceneComponent;
@@ -76,6 +77,7 @@ protected:
 private:
     void HandleCanonicalRuntimeReleasing();
     void HandleApplicationDeactivated();
+    void HandleBattleCommitted(const FOGTurnBattleState& State,const FOGEntityId& Receipt);
     bool EnsureRuntime();
     void BuildDiagnosticSelection(bool bAll);
     void RefreshProductionSelection();

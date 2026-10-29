@@ -16,6 +16,8 @@ public:
     virtual bool IsOpen() const override { return Database != nullptr; }
 
     virtual bool IsWriteTransactionActive() const override { return bTransactionActive; }
+    virtual TSharedPtr<FOGWorldStoreCommittedEvents> GetCommittedEventFeed() override
+    { if (!CommittedFeed) CommittedFeed=MakeShared<FOGWorldStoreCommittedEvents>(); return CommittedFeed; }
     virtual bool BeginTransaction(FString&) override;
     virtual bool CommitTransaction(FString&) override;
     virtual bool RollbackTransaction(FString&) override;
@@ -416,4 +418,7 @@ private:
     FString DatabasePath;
     bool bTransactionActive = false;
     int32 TransactionDepth = 0;
+    TSharedPtr<FOGWorldStoreCommittedEvents> CommittedFeed;
+    TArray<FOGWorldEvent> PendingCommittedEvents;
+    TArray<int32> EventSavepoints;
 };

@@ -247,6 +247,7 @@ bool UOGGameCoreSubsystem::InitializeCanonicalClock(FString& OutError)
     bCanonicalClockNeedsCatchup = false;
     CanonicalClock->ResetOnlineAnchor(FPlatformTime::Seconds());
     bCoreReady = true;
+    BindWorldEventFeed();
     return true;
 }
 
@@ -299,6 +300,7 @@ bool UOGGameCoreSubsystem::InstallVerifiedOptionalPackage(
 bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
 {
     bReleasingCanonicalRuntime = true;
+    ReleaseWorldEventFeed();
     // Clear causal entry context before consumers observe a world release.
     LastNativeBattleReceipt=LastNativeOpeningReceipt=FOGEntityId();
     LastNativeBattleOutcome=FOGNativeBattleOutcome(); NativeWorldCastRequests.Reset(); LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0; WorldCombatClockWorld.Reset();
@@ -1004,9 +1006,10 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         MoveTemp(RankResolver),NativePassives,OutError))
         return false;
     Candidate->RequireNativeActionExecutors(true);
-    if(!BindOwnedLuminousCombatAuthority(
-        *Candidate,RulerId,MoveTemp(TrustedProviders),OutError))
-        return false;
+    const bool HasSpecializedUnits=Candidate->GetState().Units.ContainsByPredicate([](const auto& Unit)
+        { return Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity")); });
+    if (HasSpecializedUnits && !BindOwnedLuminousCombatAuthority(
+        *Candidate,RulerId,MoveTemp(TrustedProviders),OutError)) return false;
     if (auto* Library=UOGDefinitionLibrary::Get())
         for (const auto& Unit:Candidate->GetState().Units)
         {

@@ -1,5 +1,6 @@
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Animation/OGSharedAnimationRoutes.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
@@ -176,6 +177,12 @@ void UOGCanonicalCombatActorBindingComponent::HandleNativeAction(const FOGResolv
     if (!Battle || Battle->GetState().BattleId!=BoundBattleId) return;
     const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;});
     if (!Unit || !Unit->IsAlive()) return;
+    if (auto* Routes=GetOwner()->FindComponentByClass<UOGSharedAnimationReceiver>())
+    {
+        bool Handled=false; FString Error;
+        if (!Routes->PresentAcceptedCombat(Action,*Battle,Handled,Error)) { UE_LOG(LogTemp,Warning,TEXT("%s"),*Error); return; }
+        if (Handled) { LastPresentedAction=Action.ActionId; return; }
+    }
     FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId);
     if (Semantic.IsNone())
     {

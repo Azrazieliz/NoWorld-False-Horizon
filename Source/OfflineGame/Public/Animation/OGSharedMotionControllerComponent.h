@@ -144,6 +144,10 @@ public:
     /** An authored facial/secondary morph layer that does not replace body animation. */
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
     bool SetMorphLayer(FName Layer, FName Morph, float Weight);
+    /** Source expression channels connect once to real morph names on a rig. */
+    UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Motion|Rig") TMap<FName,FName> SharedSourceMorphAliases;
+    FName ResolveSourceMorph(FName SourceMorph) const;
+    bool SetSourceMorphLayer(FName Layer,FName SourceMorph,float Weight);
 
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
     void ClearMorphLayer(FName Layer);
@@ -155,6 +159,9 @@ public:
     bool IsPlayingAction() const { return bPlaying; }
     uint64 GetPlaybackGeneration() const { return PlaybackGeneration; }
     bool IsSceneTimeLocked() const { return bSceneTimeLocked; }
+    FOGEntityId GetActiveCombatReceipt() const { return ActiveCombatReceipt; }
+    FOGEntityId GetFinishingCombatReceipt() const { return FinishingCombatReceipt; }
+    bool IsCombatMotionPending(const FOGEntityId& Receipt) const;
 
     UFUNCTION(BlueprintPure, Category="Motion|Shared")
     int32 GetNativePartCount() const { return RegisteredParts.Num(); }
@@ -188,6 +195,7 @@ private:
     TSet<FOGEntityId> CombatReceipts;
     FOGEntityId CombatScope;
     FOGEntityId ActiveCombatReceipt;
+    FOGEntityId FinishingCombatReceipt;
     bool bPreserveCombatQueue=false;
     bool bPlayingQueuedCombat=false;
     bool StartNextCombatMotion();

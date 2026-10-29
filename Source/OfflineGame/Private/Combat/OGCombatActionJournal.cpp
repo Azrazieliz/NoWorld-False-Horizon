@@ -20,6 +20,7 @@ const FOGCombatUnitState* FindUnit(
 
 void AddOutcomeState(const FOGTurnBattleState& State,const TSharedRef<FJsonObject>& Payload)
 {
+    if (State.EncounterDefinitionId.IsValid()) Payload->SetStringField(TEXT("encounter_definition_id"),State.EncounterDefinitionId.ToString());
     Payload->SetNumberField(TEXT("battle_status_after"),static_cast<uint8>(State.Status));
     TArray<int32> Living;
     for (const auto& Unit:State.Units)

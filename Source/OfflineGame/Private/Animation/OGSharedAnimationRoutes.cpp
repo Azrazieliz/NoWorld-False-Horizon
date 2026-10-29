@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Misc/SecureHash.h"
 
 namespace
 {
@@ -134,7 +135,15 @@ bool UOGSharedAnimationReceiver::PrepareDefinition_Implementation(UDataAsset* As
     return Routes && Routes->ValidateDefinition(Error) && ResolveMotion(Error);
 }
 void UOGSharedAnimationReceiver::ActivateDefinition_Implementation()
-{ SetActive(true); SetComponentTickEnabled(true); Status.Reset(); }
+{
+    ++LifecycleGeneration; SetActive(true); SetComponentTickEnabled(true); Status.Reset();
+    auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
+    if (auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr)
+    {
+        EntityFeed=Core->GetEntityEventFeed(BoundContext.EntityId);
+        if (EntityFeed) EntityFeedHandle=EntityFeed->AddUObject(this,&ThisClass::HandleCommittedWorldEvents);
+    }
+}
 bool UOGSharedAnimationReceiver::BodyIsOwned() const
 { return Motion.IsValid() && BodyRoute!=INDEX_NONE && Motion->IsPlayingAction() && Motion->GetPlaybackGeneration()==BodyGeneration; }
 bool UOGSharedAnimationReceiver::IsGameplayBodyBusy() const
@@ -163,7 +172,7 @@ bool UOGSharedAnimationReceiver::ApplyExpression(const FExpression& E,double Tim
     const auto* D=Cast<UOGSharedAnimationRoutes>(BoundDefinition);
     if (!D || !D->Routes.IsValidIndex(E.Route) || !Motion.IsValid()) return false;
     for (const auto& Track:D->Routes[E.Route].MorphTracks)
-        if (!Motion->SetMorphLayer(ExpressionLayer(E,Track.Layer),Track.Morph,Sample(Track,Time)))
+        if (!Motion->SetSourceMorphLayer(ExpressionLayer(E,Track.Layer),Track.Morph,Sample(Track,Time)))
         { Error=TEXT("The source expression channel is absent from this actual rig."); return false; }
     return true;
 }
@@ -203,12 +212,24 @@ void UOGSharedAnimationReceiver::StopSystemEvent(const FOGEntityId& Request)
 void UOGSharedAnimationReceiver::HandleContact(FName Action,FName)
 {
     const auto* D=Cast<UOGSharedAnimationRoutes>(BoundDefinition);
+    if (D && Motion.IsValid())
+        if (const auto* Index=CombatRoutes.Find(Motion->GetActiveCombatReceipt()); Index && D->Routes.IsValidIndex(*Index))
+        {
+            const auto R=D->Routes[*Index]; const auto Request=Motion->GetActiveCombatReceipt();
+            OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("contact")); return;
+        }
     if (D && BodyIsOwned() && D->Routes[BodyRoute].Action==Action && BodyRequest.IsValid())
     { const auto R=D->Routes[BodyRoute]; OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,BodyRequest,TEXT("contact")); }
 }
 void UOGSharedAnimationReceiver::HandleFinished(FName Action,FName)
 {
     const auto* D=Cast<UOGSharedAnimationRoutes>(BoundDefinition);
+    if (D && Motion.IsValid())
+        if (const auto* Index=CombatRoutes.Find(Motion->GetFinishingCombatReceipt()); Index && D->Routes.IsValidIndex(*Index))
+        {
+            const auto R=D->Routes[*Index]; const auto Request=Motion->GetFinishingCombatReceipt(); CombatRoutes.Remove(Request);
+            OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("completed")); return;
+        }
     if (!D || !D->Routes.IsValidIndex(BodyRoute) || !Motion.IsValid() || D->Routes[BodyRoute].Action!=Action ||
         Motion->GetPlaybackGeneration()!=BodyGeneration+1 || Motion->IsPlayingAction()) return;
     const auto R=D->Routes[BodyRoute]; const auto Request=BodyRequest; BodyRoute=INDEX_NONE; BodyRequest=FOGEntityId(); bAutomaticBody=false;
@@ -222,9 +243,11 @@ bool UOGSharedAnimationReceiver::DrivesAutomaticMotion(const AActor* Actor)
 }
 void UOGSharedAnimationReceiver::ReleaseDefinition_Implementation()
 {
-    SetComponentTickEnabled(false); SetActive(false); StopOwnedBody();
+    ++LifecycleGeneration; SetComponentTickEnabled(false); SetActive(false); StopOwnedBody();
+    if (EntityFeed) EntityFeed->Remove(EntityFeedHandle);
+    EntityFeed.Reset(); EntityFeedHandle.Reset(); PendingSystemEvents.Reset();
     for (const auto& E:Expressions) ClearExpression(E);
-    Expressions.Reset(); Receipts.Reset();
+    Expressions.Reset(); Receipts.Reset(); CombatRoutes.Reset();
     if (Motion.IsValid()) { Motion->OnAuthoredContact.RemoveAll(this); Motion->OnMotionFinished.RemoveAll(this); Motion->RemoveTickPrerequisiteComponent(this); }
     Motion.Reset();
 }
@@ -233,12 +256,22 @@ void UOGSharedAnimationReceiver::TickComponent(float Delta,ELevelTick Tick,FActo
     Super::TickComponent(Delta,Tick,Function);
     const auto* D=Cast<UOGSharedAnimationRoutes>(BoundDefinition);
     FString Error; if (!IsActive() || !D || !ResolveMotion(Error)) { Status=Error; return; }
+    const uint64 Lifecycle=LifecycleGeneration;
+    TArray<FOGEntityId> Interrupted;
+    for (const auto& Entry:CombatRoutes) if (!Motion->IsCombatMotionPending(Entry.Key)) Interrupted.Add(Entry.Key);
+    for (const auto& Request:Interrupted)
+    {
+        const int32 Index=CombatRoutes.FindChecked(Request); CombatRoutes.Remove(Request);
+        if (D->Routes.IsValidIndex(Index))
+        { const auto R=D->Routes[Index]; OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("interrupted")); }
+        if (!IsActive() || LifecycleGeneration!=Lifecycle || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
+    }
     if (BodyRoute!=INDEX_NONE && !BodyIsOwned())
     {
         const auto Route=D->Routes[BodyRoute]; const auto Request=BodyRequest;
         BodyRoute=INDEX_NONE; BodyRequest=FOGEntityId(); bAutomaticBody=false;
         if (Request.IsValid()) OnSystemAnimation.Broadcast(Route.SourceSystem,Route.Event,Request,TEXT("interrupted"));
-        if (!IsActive() || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
+        if (!IsActive() || LifecycleGeneration!=Lifecycle || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
     }
     TArray<FOGEntityId> ExpressionIds; for (const auto& E:Expressions) ExpressionIds.Add(E.Request);
     for (const auto& Request:ExpressionIds)
@@ -250,17 +283,29 @@ void UOGSharedAnimationReceiver::TickComponent(float Delta,ELevelTick Tick,FActo
         {
             const auto Failed=E; ClearExpression(Failed); Expressions.RemoveAt(At); Status=Error;
             OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("interrupted"));
-            if (!IsActive() || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
+            if (!IsActive() || LifecycleGeneration!=Lifecycle || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
             continue;
         }
         if (!E.ContactSent && R.ContactSeconds>=0 && E.Elapsed>=R.ContactSeconds)
         { E.ContactSent=true; OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("contact")); }
-        if (!IsActive() || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
+        if (!IsActive() || LifecycleGeneration!=Lifecycle || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
         At=Expressions.IndexOfByPredicate([&](const auto& V){return V.Request==Request;});
         if (At!=INDEX_NONE && Expressions[At].Elapsed>=R.DurationSeconds)
         { const auto Finished=Expressions[At]; ClearExpression(Finished); Expressions.RemoveAt(At);
           OnSystemAnimation.Broadcast(R.SourceSystem,R.Event,Request,TEXT("completed")); }
-        if (!IsActive() || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
+        if (!IsActive() || LifecycleGeneration!=Lifecycle || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
+    }
+    TArray<FOGEntityId> ReadyEvents; for (const auto& Pending:PendingSystemEvents) ReadyEvents.Add(Pending.Request);
+    for (const auto& Request:ReadyEvents)
+    {
+        const int32 At=PendingSystemEvents.IndexOfByPredicate([&](const auto& E){return E.Request==Request;});
+        if (At==INDEX_NONE) continue; const auto Pending=PendingSystemEvents[At];
+        const auto* Route=D->FindRoute(Pending.System,Pending.Event);
+        if (!Route) { PendingSystemEvents.RemoveAt(At); continue; }
+        if (Route->Kind==EOGSharedAnimationKind::Body && (IsGameplayBodyBusy() || (BodyIsOwned() && !bAutomaticBody))) continue;
+        PendingSystemEvents.RemoveAt(At);
+        if (!PlaySystemEvent(Pending.System,Pending.Event,Pending.Request,Error)) Status=Error;
+        if (!IsActive() || LifecycleGeneration!=Lifecycle || Cast<UOGSharedAnimationRoutes>(BoundDefinition)!=D) return;
     }
     if (IsGameplayBodyBusy() || (BodyIsOwned() && !bAutomaticBody)) return;
     const auto* Character=Cast<ACharacter>(GetOwner()); if (!Character) return;
@@ -303,3 +348,44 @@ void UOGSharedAnimationReceiver::TickComponent(float Delta,ELevelTick Tick,FActo
 
 void UOGSharedAnimationReceiver::EndPlay(const EEndPlayReason::Type Reason)
 { ReleaseDefinition(); Super::EndPlay(Reason); }
+
+bool UOGSharedAnimationReceiver::PresentAcceptedCombat(const FOGResolvedCombatAction& Action,const FOGTurnBattle& Battle,
+    bool& Handled,FString& Error)
+{
+    Handled=false; Error.Reset(); const auto* D=Cast<UOGSharedAnimationRoutes>(BoundDefinition);
+    const auto* Route=D?D->FindRoute(TEXT("combat"),FName(*Action.SkillId.ToString())):nullptr;
+    if (!IsActive() || !Route || Action.SourceUnitId!=BoundContext.EntityId) return true;
+    if (!Action.ActionId.IsValid() || !ResolveMotion(Error)) return false;
+    const auto* Unit=Battle.GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundContext.EntityId;});
+    if (!Unit || !Unit->IsAlive()) return true;
+    if (Route->Kind==EOGSharedAnimationKind::Expression)
+        return PlaySystemEvent(Route->SourceSystem,Route->Event,Action.ActionId,Error); // Body presentation retains its existing source path.
+    const auto Key=RouteKey(Route->SourceSystem,Route->Event);
+    if (const auto* Prior=Receipts.Find(Action.ActionId))
+    {
+        if (*Prior!=Key) { Error=TEXT("Combat presentation request conflicts with another system event."); return false; }
+        Handled=true; return true;
+    }
+    const bool Played=Battle.GetState().ExecutionMode==EOGCombatExecutionMode::World && Action.InterruptPriority==0?
+        Motion->StartImmediateCombatAction(Route->Action,Battle.GetState().BattleId,Action.ActionId):
+        Motion->EnqueueCombatAction(Route->Action,Battle.GetState().BattleId,Action.ActionId);
+    if (!Played) { Error=TEXT("Accepted combat route could not resolve its shared source motion."); return false; }
+    Receipts.Add(Action.ActionId,Key);
+    CombatRoutes.Add(Action.ActionId,D->Routes.IndexOfByPredicate([&](const auto& R){return &R==Route;}));
+    Handled=true; return true;
+}
+
+void UOGSharedAnimationReceiver::HandleCommittedWorldEvents(const TArray<FOGWorldEvent>& Events)
+{
+    const auto* D=Cast<UOGSharedAnimationRoutes>(BoundDefinition); if (!IsActive() || !D) return;
+    for (const auto& Event:Events)
+    {
+        if (Event.PrimaryEntity!=BoundContext.EntityId && !Event.RelatedEntities.Contains(BoundContext.EntityId)) continue;
+        const auto* Route=D->FindRoute(TEXT("world_event"),Event.EventType); if (!Route) continue;
+        const FString Key=TEXT("animation.event|")+Event.EventId.ToString()+TEXT("|")+BoundContext.EntityId.ToString()+TEXT("|")+RouteKey(Route->SourceSystem,Route->Event);
+        FGuid Guid; FGuid::ParseExact(FMD5::HashAnsiString(*Key),EGuidFormats::Digits,Guid); const FOGEntityId Request(Guid);
+        if (Receipts.Contains(Request) || PendingSystemEvents.ContainsByPredicate([&](const auto& P){return P.Request==Request;})) continue;
+        FPendingEvent Pending; Pending.System=Route->SourceSystem; Pending.Event=Route->Event; Pending.Request=Request;
+        PendingSystemEvents.Add(Pending);
+    }
+}

@@ -3,9 +3,12 @@
 #include "Animation/OGSharedMotionLibrary.h"
 #include "Content/OGSystemBindingComponent.h"
 #include "Core/OGEntityId.h"
+#include "Persistence/OGWorldStore.h"
 #include "OGSharedAnimationRoutes.generated.h"
 
 class UOGSharedMotionControllerComponent;
+struct FOGResolvedCombatAction;
+class FOGTurnBattle;
 UENUM(BlueprintType)
 enum class EOGSharedAnimationKind : uint8 { Body, Expression };
 UENUM(BlueprintType)
@@ -79,19 +82,27 @@ public:
     bool PlaySystemEvent(FName SourceSystem,FName Event,const FOGEntityId& RequestId,FString& Error);
     UFUNCTION(BlueprintCallable,Category="Animation|Systems") void StopSystemEvent(const FOGEntityId& RequestId);
     static bool DrivesAutomaticMotion(const AActor* Actor);
+    /** Called only by the existing post-commit combat presentation adapters. */
+    bool PresentAcceptedCombat(const FOGResolvedCombatAction& Action,const FOGTurnBattle& Battle,bool& Handled,FString& Error);
 protected:
     virtual void TickComponent(float,ELevelTick,FActorComponentTickFunction*) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
     TWeakObjectPtr<UOGSharedMotionControllerComponent> Motion;
     TMap<FOGEntityId,FString> Receipts;
+    TMap<FOGEntityId,int32> CombatRoutes;
+    TSharedPtr<FOGWorldStoreCommittedEvents> EntityFeed;
+    FDelegateHandle EntityFeedHandle;
+    struct FPendingEvent { FName System,Event; FOGEntityId Request; };
+    TArray<FPendingEvent> PendingSystemEvents;
+    void HandleCommittedWorldEvents(const TArray<FOGWorldEvent>& Events);
     struct FExpression { int32 Route=INDEX_NONE; FOGEntityId Request; double Elapsed=0; bool ContactSent=false; };
     TArray<FExpression> Expressions;
     int32 BodyRoute=INDEX_NONE;
     FOGEntityId BodyRequest;
     uint64 BodyGeneration=0;
     bool bAutomaticBody=false;
-    FString LastAutomaticFailure;
+    uint64 LifecycleGeneration=0;
     bool ResolveMotion(FString& Error);
     bool BodyIsOwned() const;
     bool IsGameplayBodyBusy() const;

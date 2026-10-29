@@ -78,6 +78,12 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     const FOGCombatUnitState* Unit = Battle ? Battle->GetState().Units.FindByPredicate(
         [this](const FOGCombatUnitState& U) { return U.UnitEntityId == BoundManifestation; }) : nullptr;
     if (!Unit || !Unit->IsAlive()) return;
+    if (auto* Routes=FindComponentByClass<UOGSharedAnimationReceiver>())
+    {
+        bool Handled=false; FString Error;
+        if (!Routes->PresentAcceptedCombat(Action,*Battle,Handled,Error)) { UE_LOG(LogTemp,Warning,TEXT("%s"),*Error); return; }
+        if (Handled) { LastPresentedActionId=Action.ActionId; return; }
+    }
     TSharedPtr<FJsonObject> Resolution;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson), Resolution) || !Resolution) return;
     FString Branch,Mode;

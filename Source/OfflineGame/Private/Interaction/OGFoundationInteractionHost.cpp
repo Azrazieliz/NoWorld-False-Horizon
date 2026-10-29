@@ -51,10 +51,14 @@ bool UOGFoundationInteractionHost::Initialize()
     if (Core.Get() != Current)
     {
         Cancel(TEXT("core_rebind")); Runtime.Reset(); BoundStore = nullptr;
-        if (Core.IsValid()) Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle);
+        if (Core.IsValid())
+        { Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle); Core->OnNativeBattleStateCommitted.RemoveAll(this); }
         ReleaseHandle.Reset(); Core = Current;
-        if (Current) ReleaseHandle = Current->OnCanonicalRuntimeReleasing.AddUObject(
-            this, &UOGFoundationInteractionHost::HandleCanonicalRuntimeReleasing);
+        if (Current)
+        {
+            ReleaseHandle=Current->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::HandleCanonicalRuntimeReleasing);
+            Current->OnNativeBattleStateCommitted.AddUObject(this,&ThisClass::HandleBattleCommitted);
+        }
     }
     Combat = GetOwner()->FindComponentByClass<UOGDiagnosticCombatComponent>();
     if (!DeactivateHandle.IsValid()) DeactivateHandle = FCoreDelegates::ApplicationWillDeactivateDelegate.AddUObject(
@@ -768,10 +772,18 @@ void UOGFoundationInteractionHost::RestoreGameplay()
 void UOGFoundationInteractionHost::EndPlay(const EEndPlayReason::Type Reason)
 {
     Cancel(TEXT("host_end_play")); Runtime.Reset(); BoundStore = nullptr;
-    if (Core.IsValid()) Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle);
+    if (Core.IsValid())
+    { Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle); Core->OnNativeBattleStateCommitted.RemoveAll(this); }
     ReleaseHandle.Reset(); Core.Reset();
     FCoreDelegates::ApplicationWillDeactivateDelegate.Remove(DeactivateHandle);
     FCoreDelegates::ApplicationWillEnterBackgroundDelegate.Remove(BackgroundHandle);
     DeactivateHandle.Reset(); BackgroundHandle.Reset();
     Super::EndPlay(Reason);
+}
+
+void UOGFoundationInteractionHost::HandleBattleCommitted(const FOGTurnBattleState& State,const FOGEntityId&)
+{
+    if (!IsActive() || State.Status!=EOGTurnBattleStatus::Running) return;
+    auto Hud=InteractionHud; Cancel(TEXT("combat_started"));
+    if (Hud.IsValid()) Hud->CloseInteractionForCombat();
 }

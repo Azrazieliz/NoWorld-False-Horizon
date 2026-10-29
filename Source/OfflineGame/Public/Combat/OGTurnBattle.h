@@ -67,6 +67,7 @@ struct OFFLINEGAME_API FOGTurnBattleState
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOGEntityId BattleId;
+    UPROPERTY(BlueprintReadOnly) FOGContentId EncounterDefinitionId;
 
     UPROPERTY(EditAnywhere,BlueprintReadOnly) EOGCombatExecutionMode ExecutionMode=EOGCombatExecutionMode::Turn;
     /** Local gameplay milliseconds; menu/offline calendar time cannot silently advance an active cast. */
