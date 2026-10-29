@@ -173,6 +173,7 @@ bool FOGFoundationWorldSimulationRuntime::Checkpoint(const UOGWorldSimulationDef
         return Fail(Error, TEXT("Obsolete or unavailable World body cannot overwrite canonical presence or activity."));
     if (bArrived && FVector::Dist(Actual, Current.Destination.LocalPosition) > D.AcceptanceRadiusCm)
         return Fail(Error, TEXT("Path result did not physically reach the authored destination."));
+    if (!bArrived && Actual == Current.Presence.LocalPosition) return Transaction.Commit(Error);
     auto Presence = Current.Presence; Presence.LocalPosition = Actual; Presence.UpdatedWorldTick = Tick;
     if (!FOGSharedWorldStateService(Store).UpdatePhysicalPresence(Presence, Error)) return false;
     if (bArrived && !D.ArrivalStateField.IsNone())

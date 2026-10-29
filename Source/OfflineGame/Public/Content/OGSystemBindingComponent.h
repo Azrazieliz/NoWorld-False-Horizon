@@ -85,6 +85,9 @@ private:
     int64 BoundLibraryRevision=-1;
     bool bBinding=false;
     bool bAwaitingCanonicalRuntime=false;
+    bool bHoldingWorldBody=false;
+    bool bWorldBodyHidden=false, bWorldBodyCollision=false;
+    void RestoreWorldBodyFlags();
     void HandleCanonicalRuntimeReleasing();
     void HandleLibraryChanged(int64 Revision);
 };

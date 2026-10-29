@@ -6,6 +6,8 @@
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Interaction/OGInteractionParticipantComponent.h"
+#include "Combat/OGTurnBattle.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 
 namespace
@@ -16,6 +18,15 @@ UOGGameCoreSubsystem* CurrentCore(const UActorComponent* Component)
     const auto* World = Component ? Component->GetWorld() : nullptr;
     auto* Game = World ? World->GetGameInstance() : nullptr;
     return Game ? Game->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+}
+bool HasExistingBodyActivity(APawn* Pawn, UOGGameCoreSubsystem* Core, const FOGEntityId& Entity)
+{
+    if (const auto* Participant = Pawn->FindComponentByClass<UOGInteractionParticipantComponent>();
+        Participant && Participant->IsInInteractionPresentation()) return true;
+    const FOGTurnBattle* Battle = Core->GetOwnedLuminousTurnBattle();
+    return Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running &&
+        Battle->GetState().Units.ContainsByPredicate(
+            [&Entity](const FOGCombatUnitState& Unit) { return Unit.UnitEntityId == Entity; });
 }
 bool SamePosition(const FOGWorldPresenceRecord& A, const FOGWorldPresenceRecord& B)
 {
@@ -100,7 +111,9 @@ void UOGWorldSimulationReceiver::ActivateDefinition_Implementation()
     if (!Registry || !Registry->Claim(BoundContext.EntityId, this))
     { Status = TEXT("Canonical body claim was superseded during binding."); return; }
     bOriginalHidden = GetOwner()->IsHidden(); bOriginalCollision = GetOwner()->GetActorEnableCollision();
+    bCapturedBodyFlags = true;
     bActive = true; bHasAccepted = false;
+    SetBodySuppressed(Accepted.bAbsent);
     ReleaseHandle = BoundCore->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::HandleRuntimeReleasing);
     EntityFeed = BoundCore->GetEntityEventFeed(BoundContext.EntityId);
     if (EntityFeed) EntityHandle = EntityFeed->AddUObject(this, &ThisClass::HandleCommitted);
@@ -173,9 +186,17 @@ bool UOGWorldSimulationReceiver::SavePhysicalCheckpoint(bool Arrived, FString& E
     auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
     if (!bActive || !bHasAccepted || !Prepared || !Core || CurrentCore(this) != Core ||
         !Core->IsCoreReady() || !Store || !Store->IsOpen() || !Pawn || Pawn->IsPlayerControlled() ||
-        !Frame || !Frame->IsRegistered() || Frame->LocationId != Accepted.Presence.LocationId ||
+        MoveController.Get() != Pawn->GetController() ||
+        HasExistingBodyActivity(Pawn, Core, BoundContext.EntityId) ||
+        !Frame || !Frame->IsRegistered() || !Frame->GetComponentTransform().IsValid() ||
+        !Frame->GetComponentScale().Equals(FVector::OneVector) ||
+        Frame->LocationId != Accepted.Presence.LocationId ||
         !Registry || !Registry->Owns(BoundContext.EntityId, this))
         return FailBody(Error, TEXT("Current canonical lifetime, body claim or Location frame is unavailable."));
+    const auto* AI = MoveController.Get();
+    const auto* Path = AI ? AI->GetPathFollowingComponent() : nullptr;
+    if (!AI || !Path || (MoveRequestId && static_cast<uint32>(Path->GetCurrentRequestId()) != MoveRequestId))
+        return FailBody(Error, TEXT("A superseded native movement request cannot checkpoint this body."));
     const int64 Tick = Core->GetCanonicalWorldTick();
     bool Changed = false; FOGFoundationWorldSimulationRuntime Runtime(*Store);
     if (!Runtime.Checkpoint(*Prepared, Accepted,
@@ -191,7 +212,7 @@ void UOGWorldSimulationReceiver::Refresh()
     auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
     if (!Prepared || !Core || CurrentCore(this) != Core || !Core->IsCoreReady() ||
         !Store || !Store->IsOpen() || Store->IsWriteTransactionActive() ||
-        !Pawn || Pawn->IsPlayerControlled() || !AI || !Registry || !Registry->Owns(BoundContext.EntityId, this))
+        !Pawn || Pawn->IsPlayerControlled() || !Registry || !Registry->Owns(BoundContext.EntityId, this))
     { StopOwnedMove(); Status = TEXT("Current canonical AI body authority is unavailable."); return; }
     const int64 Tick = Core->GetCanonicalWorldTick();
     FOGFoundationWorldBodyState Current; FString Error;
@@ -205,17 +226,32 @@ void UOGWorldSimulationReceiver::Refresh()
     if (MoveController.IsValid() && MoveController.Get() != AI) StopOwnedMove();
     Accepted = MoveTemp(Current); bHasAccepted = true;
     SetBodySuppressed(Accepted.bAbsent);
+    auto* CurrentPath = AI ? AI->GetPathFollowingComponent() : nullptr;
+    const bool OwnsPath = MoveRequestId && CurrentPath &&
+        static_cast<uint32>(CurrentPath->GetCurrentRequestId()) == MoveRequestId;
+    if (HasExistingBodyActivity(Pawn, Core, BoundContext.EntityId) ||
+        (CurrentPath && CurrentPath->GetStatus() != EPathFollowingStatus::Idle && !OwnsPath))
+    {
+        StopOwnedMove(); bHasAccepted = false;
+        Status = TEXT("Existing interaction, encounter or native movement owns the real body."); return;
+    }
     if (Restore)
     {
         StopOwnedMove();
         // Rehydration only. Actual route execution below always uses native path following.
-        Pawn->SetActorLocation(LocationFrame->GetComponentTransform().TransformPosition(Accepted.Presence.LocalPosition),
-            false, nullptr, ETeleportType::TeleportPhysics);
+        if (!Pawn->SetActorLocation(LocationFrame->GetComponentTransform().TransformPosition(Accepted.Presence.LocalPosition),
+            false, nullptr, ETeleportType::TeleportPhysics))
+        {
+            SetBodySuppressed(true); bHasAccepted = false;
+            Status = TEXT("Actual body could not restore its canonical physical checkpoint."); return;
+        }
         LastCheckpointTick = Accepted.Presence.UpdatedWorldTick;
     }
     if (!Accepted.bAvailable || !Accepted.bHasSchedule || Tick < Accepted.Schedule.ScheduledStartWorldTick ||
         Accepted.Schedule.Status == TEXT("completed"))
     { StopOwnedMove(); Status.Reset(); return; }
+    if (!AI || !CurrentPath)
+    { StopOwnedMove(); Status = TEXT("Existing NPC AI controller/path follower is unavailable."); return; }
     if (Accepted.Schedule.Status == TEXT("scheduled"))
     {
         FOGFoundationWorldSimulationRuntime Runtime(*Store);

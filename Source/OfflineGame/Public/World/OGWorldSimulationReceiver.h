@@ -72,6 +72,9 @@ public:
     virtual bool PrepareDefinition_Implementation(UDataAsset*, const FOGDefinitionBindingContext&, FString&) override;
     virtual void ActivateDefinition_Implementation() override;
     virtual void ReleaseDefinition_Implementation() override;
+    /** Binding host retains only these actor flags while canonical state is unavailable. */
+    bool GetOriginalBodyFlags(bool& Hidden, bool& Collision) const
+    { Hidden = bOriginalHidden; Collision = bOriginalCollision; return bCapturedBodyFlags; }
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly) FString Status;
 protected:
     virtual void TickComponent(float, ELevelTick, FActorComponentTickFunction*) override;
@@ -91,6 +94,7 @@ private:
     bool bActive = false;
     bool bHasAccepted = false;
     bool bArrivalPending = false;
+    bool bCapturedBodyFlags = false;
     bool bOriginalHidden = false;
     bool bOriginalCollision = false;
     void Refresh();

@@ -9,6 +9,7 @@
 #include "HAL/FileManager.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonReader.h"
 #include "Serialization/JsonWriter.h"
 #include "UObject/StrongObjectPtr.h"
 
@@ -82,6 +83,9 @@ bool FOGWorldBodyArrivalReplayTest::RunTest(const FString&)
     if (!TestTrue(TEXT("Activate at canonical deadline"), Runtime.ActivateDue(*F.Definition, Before, 10, F.Error)) ||
         !TestTrue(TEXT("Read active authority"), Runtime.Read(*F.Definition, F.Entity, 10, Active, F.Error))) return false;
     bool Changed = false;
+    TestTrue(TEXT("A stationary checkpoint is accepted without a consequence"),
+        Runtime.Checkpoint(*F.Definition, Active, FVector::ZeroVector, 10, false, Changed, F.Error));
+    TestFalse(TEXT("No duplicate progress receipt for a stationary body"), Changed);
     TestFalse(TEXT("Path completion far from goal cannot arrive"),
         Runtime.Checkpoint(*F.Definition, Active, FVector::ZeroVector, 10, true, Changed, F.Error));
     if (!TestTrue(TEXT("Actual intermediate motion checkpoints"),
@@ -133,6 +137,32 @@ bool FOGWorldBodyAuthorityFenceTest::RunTest(const FString&)
     TestFalse(TEXT("Absent body cannot execute schedule"), Absent.bAvailable);
     TestEqual(TEXT("Rejected writes preserve external position"), Absent.Presence.LocalPosition, FVector(25,0,0));
     TestEqual(TEXT("Arrival was not fabricated"), Absent.Schedule.Status, FName(TEXT("active")));
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGWorldBodyProvenanceAndTransactionTest,
+    "OfflineGame.Foundation.WorldBody.ForeignSubjectAndUncommittedEffectsAreRejected",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FOGWorldBodyProvenanceAndTransactionTest::RunTest(const FString&)
+{
+    FWorldBodyFixture F; if (!F.Open()) return false;
+    FOGFoundationWorldSimulationRuntime Runtime(F.Store); FOGFoundationWorldBodyState State;
+    if (!Runtime.Read(*F.Definition, F.Entity, 10, State, F.Error) ||
+        !F.Store.BeginTransaction(F.Error)) return false;
+    TestFalse(TEXT("A body cannot accept effects inside another caller's uncommitted transaction"),
+        Runtime.ActivateDue(*F.Definition, State, 10, F.Error));
+    if (!F.Store.RollbackTransaction(F.Error)) return false;
+    auto Tampered = F.Schedule;
+    TSharedPtr<FJsonObject> Json;
+    if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Tampered.DecisionProvenanceJson), Json) || !Json) return false;
+    Json->SetStringField(TEXT("subject_id"), FOGEntityId::NewId().ToString());
+    FJsonSerializer::Serialize(Json.ToSharedRef(), TJsonWriterFactory<>::Create(&Tampered.DecisionProvenanceJson));
+    if (!F.Store.UpsertWorldDirectorSchedule(Tampered, 10, F.Error)) return false;
+    TestFalse(TEXT("A schedule for another subject cannot drive this body"),
+        Runtime.Read(*F.Definition, F.Entity, 10, State, F.Error));
+    bool Found = false; FOGWorldDirectorScheduleRecord Persisted;
+    if (!F.Store.TryReadWorldDirectorSchedule(F.Schedule.ScheduleId, Found, Persisted, F.Error)) return false;
+    TestTrue(TEXT("Original schedule still exists"), Found);
+    TestEqual(TEXT("Rejected bindings never activate a schedule"), Persisted.Status, FName(TEXT("scheduled")));
     return true;
 }
 #endif
