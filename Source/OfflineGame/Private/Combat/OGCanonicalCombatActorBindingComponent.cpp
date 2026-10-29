@@ -3,6 +3,9 @@
 #include "Animation/OGSharedAnimationRoutes.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGNativeTurnAgentComponent.h"
+#include "Characters/OGCharacterGameplayDefinition.h"
+#include "Content/OGDefinitionLibrary.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
@@ -152,6 +155,21 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     { auto* Actions=NewObject<UOGWorldActionRuntimeComponent>(Owner); Owner->AddInstanceComponent(Actions); Actions->RegisterComponent(); }
     if (!Owner->FindComponentByClass<UOGWorldAbilityExecutionComponent>())
     { auto* Execution=NewObject<UOGWorldAbilityExecutionComponent>(Owner); Owner->AddInstanceComponent(Execution); Execution->RegisterComponent(); }
+    // Shared NPC bodies use their installed policy without a character-specific adapter.
+    // No default attacks or decisions are synthesized when source policy is absent.
+    if (UnitId!=Core->GetOwnedBattleRulerId() && !Owner->FindComponentByClass<UOGNativeTurnAgentComponent>())
+    {
+        FString KitError;
+        const auto* Kit=UOGCharacterGameplayDefinition::Find(Unit->IdentityId,Unit->SkillSet.CurrentForm,KitError);
+        auto* Library=UOGDefinitionLibrary::Get();
+        const auto* Policy=Kit && Kit->TurnPolicy.Id.IsValid() && Library
+            ? Cast<UOGNativeTurnPolicy>(Library->Resolve(Kit->TurnPolicy.System,Kit->TurnPolicy.Id)) : nullptr;
+        if (Policy && Policy->MatchesSource(Unit->IdentityId,Unit->SkillSet.CurrentForm) && Policy->Validate(KitError))
+        {
+            auto* Agent=NewObject<UOGNativeTurnAgentComponent>(Owner);
+            Owner->AddInstanceComponent(Agent); Agent->RegisterComponent();
+        }
+    }
     // Encounter opening is committed before a body can bind to its live battle ID.
     // Catch up those factual source actions only while the opening is still current.
     if (Core->IsNativeOpeningPresentationCurrent())
