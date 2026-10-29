@@ -299,11 +299,24 @@ bool UOGGameCoreSubsystem::InstallVerifiedOptionalPackage(
 
 bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
 {
+    if (OwnedLuminousTurnBattle && WorldStore && WorldStore->IsOpen())
+    {
+        FString CheckpointError;
+        if (!CheckpointOwnedNativeEncounter(CheckpointError))
+        {
+            if (OutError) *OutError=CheckpointError;
+            UE_LOG(LogOfflineGame,Error,TEXT("Canonical release retained until encounter checkpoint succeeds: %s"),*CheckpointError);
+            return false;
+        }
+    }
     bReleasingCanonicalRuntime = true;
     ReleaseWorldEventFeed();
     // Clear causal entry context before consumers observe a world release.
     LastNativeBattleReceipt=LastNativeOpeningReceipt=FOGEntityId();
-    LastNativeBattleOutcome=FOGNativeBattleOutcome(); NativeWorldCastRequests.Reset(); LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0; WorldCombatClockWorld.Reset();
+    LastNativeBattleOutcome=FOGNativeBattleOutcome();
+    bActiveNativeRecovery=false; bNativeRecoveryAwaitingWorld=false; bNativeRecoveryBodiesRestored=false; bNativeEncounterRestored=false;
+    NativeWorldRecoveryPresentation=FOGWorldEncounterPresentationCheckpoint(); ActiveNativeRankRecovery.Reset(); NativeEncounterRecoveryStatus.Reset();
+    NativeWorldCastRequests.Reset(); LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0; WorldCombatClockWorld.Reset();
     CommittedNativeActionIds.Reset();
     LastNativeCombatEvent = FOGNativeCombatEventProvenance();
     OnCanonicalRuntimeReleasing.Broadcast();
@@ -433,6 +446,12 @@ void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
     {
         UE_LOG(LogOfflineGame, Error, TEXT("Canonical clock failed at lifecycle boundary %s: %s"),
             BoundaryName ? BoundaryName : TEXT("unknown"), *Error);
+        return;
+    }
+    if (!CheckpointOwnedNativeEncounter(Error))
+    {
+        UE_LOG(LogOfflineGame,Error,TEXT("Encounter checkpoint failed at lifecycle boundary %s: %s"),
+            BoundaryName ? BoundaryName : TEXT("unknown"),*Error);
         return;
     }
     if (!WorldStore->Checkpoint(Error))
@@ -1081,10 +1100,15 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         !FOGCombatVitalityService(*WorldStore).Commit(DevelopedState,Candidate->GetState(),RulerId,OpeningEvent,OutError) ||
         (Candidate->GetState().Status==EOGTurnBattleStatus::Completed &&
          !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate->GetState(),RulerId,OpeningEvent,OpeningOutcome,OutError)) ||
+        !PersistNativeEncounter(*Candidate,RulerId,OpeningEvent,nullptr,true,OutError) ||
         !WorldStore->CommitTransaction(OutError)) return RollbackOpening();
     LastNativeBattleOutcome=MoveTemp(OpeningOutcome);
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
     ActiveCombatRulerId=RulerId;
+    bActiveNativeRecovery=bPendingNativeRecovery; ActiveNativeRankRecovery=PendingNativeRankRecovery;
+    bNativeRecoveryAwaitingWorld=false; bNativeEncounterRestored=false; NativeEncounterRecoveryStatus=bActiveNativeRecovery
+        ? TEXT("Encounter recovery is saved with committed actions.")
+        : TEXT("This encounter requires its specialized native recovery provider.");
     NativeWorldCastRequests.Reset(); LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0;
     CommittedNativeActionIds.Reset();
     for (const auto& R:OwnedLuminousTurnBattle->GetLastNativeReactions())
@@ -1167,6 +1191,7 @@ bool UOGGameCoreSubsystem::ApplyOwnedLuminousTurnAction(
         !FOGCombatVitalityService(*WorldStore).Commit(Before,Candidate.GetState(),ActiveCombatRulerId,ActionEvent,OutError) ||
         (Candidate.GetState().Status==EOGTurnBattleStatus::Completed &&
          !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate.GetState(),ActiveCombatRulerId,ActionEvent,Outcome,OutError)) ||
+        !PersistNativeEncounter(Candidate,ActiveCombatRulerId,ActionEvent,&CompleteAction,false,OutError) ||
         !WorldStore->CommitTransaction(OutError)) return RollbackAction();
 
     *OwnedLuminousTurnBattle=MoveTemp(Candidate);

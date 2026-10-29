@@ -228,6 +228,23 @@ void UOGSharedMotionControllerComponent::SynchronizeToWorldTime(float SceneStart
     ElapsedSeconds = FMath::Max(0.f, GetWorld()->GetTimeSeconds() - SceneWorldStartTime) * ExternalPacing;
 }
 
+bool UOGSharedMotionControllerComponent::RestorePlaybackPhase(float ElapsedGameplaySeconds)
+{
+    if (!bPlaying || !FMath::IsFinite(ElapsedGameplaySeconds) || ElapsedGameplaySeconds<0) return false;
+    ElapsedSeconds=ElapsedGameplaySeconds; SceneAnchorElapsed=ElapsedSeconds;
+    if (bSceneTimeLocked && GetWorld()) SceneWorldStartTime=GetWorld()->GetTimeSeconds();
+    const float SourceTime=ElapsedSeconds*PlaybackRate;
+    LastContactCycle=bHasContact && SourceTime>=SourceContactSeconds
+        ? (bLooping?FMath::FloorToInt((SourceTime-SourceContactSeconds)/SequenceSeconds):0):-1;
+    const float Phase=bLooping?FMath::Fmod(SourceTime,SequenceSeconds)/SequenceSeconds:FMath::Clamp(SourceTime/SequenceSeconds,0.f,1.f);
+    if (CurrentLeader) CurrentLeader->SetPosition(Phase*SequenceSeconds,false);
+    else for (int32 I=0;I<PlayingParts.Num();++I)
+        if (PlayingParts[I] && PlayingSequenceLengths.IsValidIndex(I))
+            PlayingParts[I]->SetPosition(Phase*PlayingSequenceLengths[I],false);
+    if (ReferenceClip) UpdateReferencePose();
+    ApplyMorphOverlays(); return true;
+}
+
 bool UOGSharedMotionControllerComponent::SetExternalPacing(float Rate)
 {
     if (!FMath::IsFinite(Rate) || Rate < 0.f) return false;

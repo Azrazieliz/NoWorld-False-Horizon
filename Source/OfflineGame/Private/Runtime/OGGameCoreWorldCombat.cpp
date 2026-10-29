@@ -23,6 +23,7 @@ bool UOGGameCoreSubsystem::CommitWorldCombatCandidate(FOGTurnBattle&& Candidate,
         !FOGCombatVitalityService(*WorldStore).Commit(Before,Candidate.GetState(),ActiveCombatRulerId,Event,Error) ||
         (Candidate.GetState().Status==EOGTurnBattleStatus::Completed &&
          !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate.GetState(),ActiveCombatRulerId,Event,Outcome,Error)) ||
+        !PersistNativeEncounter(Candidate,ActiveCombatRulerId,Event,Cause,false,Error) ||
         !WorldStore->CommitTransaction(Error)) return Fail();
     *OwnedLuminousTurnBattle=MoveTemp(Candidate); LastNativeBattleOutcome=MoveTemp(Outcome); LastNativeBattleReceipt=Event.EventId;
     const auto State=OwnedLuminousTurnBattle->GetState(); const auto Reactions=OwnedLuminousTurnBattle->GetLastNativeReactions();
@@ -50,6 +51,7 @@ bool UOGGameCoreSubsystem::SetOwnedCombatExecutionMode(EOGCombatExecutionMode Mo
     Error.Reset();
     if (!IsInGameThread() || bSubmittingNativeAction || !bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle)
     { Error=TEXT("No live canonical encounter is available."); return false; }
+    if (bNativeRecoveryAwaitingWorld) { Error=TEXT("Recovered World encounter is reconnecting its native bodies."); return false; }
     if (OwnedLuminousTurnBattle->GetState().ExecutionMode==Mode) return true;
     if (!CanSetOwnedCombatExecutionMode(Mode,Error)) return false;
     TGuardValue<bool> Guard(bSubmittingNativeAction,true); FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
@@ -59,6 +61,7 @@ bool UOGGameCoreSubsystem::SetOwnedCombatExecutionMode(EOGCombatExecutionMode Mo
 }
 bool UOGGameCoreSubsystem::BeginOwnedWorldAbility(const FOGResolvedCombatAction& Root,FString& Error)
 {
+    if (bNativeRecoveryAwaitingWorld) { Error=TEXT("Recovered World encounter is reconnecting its native bodies."); return false; }
     Error.Reset(); if (!AdvanceOwnedWorldCombatTime(Error)) return false;
     if (!IsInGameThread() || bSubmittingNativeAction || !bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle ||
         !Root.ActionId.IsValid() || CommittedNativeActionIds.Contains(Root.ActionId) ||
@@ -75,6 +78,7 @@ bool UOGGameCoreSubsystem::BeginOwnedWorldAbility(const FOGResolvedCombatAction&
 bool UOGGameCoreSubsystem::ApplyOwnedWorldAbilityStep(const FOGEntityId& CastId,int32 Step,
     const TArray<FOGEntityId>& Contacts,FString& Error)
 {
+    if (bNativeRecoveryAwaitingWorld) { Error=TEXT("Recovered World encounter is reconnecting its native bodies."); return false; }
     Error.Reset(); if (!AdvanceOwnedWorldCombatTime(Error)) return false;
     const auto* Request=NativeWorldCastRequests.Find(CastId);
     if (!IsInGameThread() || bSubmittingNativeAction || !bCoreReady || bReleasingCanonicalRuntime || !OwnedLuminousTurnBattle || !Request)
@@ -106,6 +110,7 @@ bool UOGGameCoreSubsystem::ApplyOwnedWorldAbilityStep(const FOGEntityId& CastId,
 }
 bool UOGGameCoreSubsystem::CancelOwnedWorldAbility(const FOGEntityId& CastId,FString& Error)
 {
+    if (bNativeRecoveryAwaitingWorld) { Error=TEXT("Recovered World encounter is reconnecting its native bodies."); return false; }
     Error.Reset();
     const auto* Request=NativeWorldCastRequests.Find(CastId);
     if (!Request) return true;
@@ -132,6 +137,8 @@ bool UOGGameCoreSubsystem::AdvanceOwnedWorldCombatTime(FString& Error)
     { Error=TEXT("World gameplay clock delta is invalid."); return false; }
     const int64 Whole=static_cast<int64>(Delta);
     if (!Whole) return true;
+    if (bNativeRecoveryAwaitingWorld)
+    { Error=TEXT("Recovered World encounter waits for native bodies and cast runners."); return false; }
     const auto Current=OwnedLuminousTurnBattle->GetState();
     if (Whole>MAX_int64-Current.WorldElapsedMilliseconds) { Error=TEXT("World gameplay clock exhausted."); return false; }
     TGuardValue<bool> Guard(bSubmittingNativeAction,true); FOGTurnBattle Candidate=*OwnedLuminousTurnBattle;
@@ -156,6 +163,11 @@ bool UOGGameCoreSubsystem::TickWorldCombat(float)
     if (bCoreReady && !bReleasingCanonicalRuntime && !bSubmittingNativeAction)
     {
         FString Error;
+        if (bNativeRecoveryAwaitingWorld && !CompleteNativeWorldRecovery(Error))
+        {
+            if (Error!=LastWorldCombatClockError) UE_LOG(LogTemp,Warning,TEXT("Native World recovery waits: %s"),*Error);
+            LastWorldCombatClockError=Error; return true;
+        }
         if (!AdvanceOwnedWorldCombatTime(Error))
         {
             if (Error!=LastWorldCombatClockError)

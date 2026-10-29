@@ -11,6 +11,7 @@
 #include "Serialization/JsonSerializer.h"
 
 #include "Combat/OGTurnBattle.h"
+#include "Interaction/OGInteractionParticipantComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -21,6 +22,25 @@
 #include "GameFramework/Actor.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 #include "Characters/OGContentCharacterActors.h"
+
+UOGCanonicalCombatActorBindingComponent::UOGCanonicalCombatActorBindingComponent()
+{
+    PrimaryComponentTick.bCanEverTick=true; PrimaryComponentTick.TickInterval=.25f;
+}
+void UOGCanonicalCombatActorBindingComponent::TickComponent(float Delta,ELevelTick Type,FActorComponentTickFunction* Function)
+{
+    Super::TickComponent(Delta,Type,Function);
+    if (BoundBattleId.IsValid() || !GetOwner() || !GetWorld() || !GetWorld()->GetGameInstance()) return;
+    auto* Core=GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
+    if (!Core || !Core->IsRestoredNativeEncounter() || !Core->GetOwnedLuminousTurnBattle() ||
+        Core->GetOwnedLuminousTurnBattle()->GetState().Status!=EOGTurnBattleStatus::Running) return;
+    const auto* Participant=GetOwner()->FindComponentByClass<UOGInteractionParticipantComponent>();
+    FOGFoundationCharacterProjection Projection; FString Error;
+    if (!Participant || !Participant->GetCurrentProjection(Projection,Error)) return;
+    const auto* Unit=Core->GetOwnedLuminousTurnBattle()->GetState().Units.FindByPredicate(
+        [&](const auto& U){return U.UnitEntityId==Projection.Context.EntityId;});
+    if (Unit && Unit->CanAct()) BindActualNativeUnit(Unit->UnitEntityId,Unit->IdentityId,Error);
+}
 
 bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     const FOGEntityId& UnitId, const FOGContentId& ApprovedIdentity,

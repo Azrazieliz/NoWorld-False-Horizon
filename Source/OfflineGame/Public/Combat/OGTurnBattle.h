@@ -167,6 +167,11 @@ public:
     bool ResolveNativeOpeningReactions(FString& Error);
     const TArray<FOGNativeReactionRecord>& GetLastNativeReactions() const { return LastNativeReactions; }
     bool CanAdmitNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    /** Exact settled runtime image. Presentation and native callback closures are not persisted. */
+    bool ExportNativeCheckpoint(TArray<uint8>& Out,FString& Error) const;
+    bool RestoreNativeCheckpoint(const TArray<uint8>& Bytes,FOGRankSuppressionResolver Rank,FString& Error);
+    bool ReadWorldCastRecovery(const FOGEntityId& Cast,FOGResolvedCombatAction& Root,
+        FOGWorldAbilitySpecification& Specification,TSet<int32>& Completed,int64& Started) const;
     const FOGTurnBattleState& GetState() const { return State; }
     const FOGCombatLog& GetLog() const { return Log; }
 
@@ -316,6 +321,7 @@ public:
         FString& OutError);
 
 private:
+    friend class FOGNativeCombatCheckpointCodec;
     bool SetExecutionModeMutating(EOGCombatExecutionMode Mode,FString& Error);
     struct FNativePassiveRule { FOGEntityId OwnerUnitId; FOGContentId PassiveSkillId; FOGNativePassiveTrigger Rule; };
     TMap<FString,FNativePassiveRule> NativePassiveRules;

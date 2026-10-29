@@ -81,6 +81,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Action")
     void BeginAuthoredAction(const FOGWorldActionState& State);
+    bool RestoreAuthoredAction(const FOGWorldActionState& State,float ElapsedSeconds);
 
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Action")
     void EndAuthoredAction();

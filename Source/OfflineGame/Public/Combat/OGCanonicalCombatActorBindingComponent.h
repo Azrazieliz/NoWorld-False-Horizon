@@ -20,6 +20,7 @@ class OFFLINEGAME_API UOGCanonicalCombatActorBindingComponent : public UActorCom
 {
     GENERATED_BODY()
 public:
+    UOGCanonicalCombatActorBindingComponent();
     /** Calls against the actual GameCore battle; rejects fake unit IDs, cross-
      * world actors, absent real geometry, duplicates and wrong source identity.
      * Returns false without changing any previous valid binding. */
@@ -38,6 +39,7 @@ public:
         const FOGEntityId& BattleId, const FOGEntityId& UnitId);
 
 protected:
+    virtual void TickComponent(float,ELevelTick,FActorComponentTickFunction*) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:

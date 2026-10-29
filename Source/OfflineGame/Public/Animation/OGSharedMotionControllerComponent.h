@@ -134,6 +134,8 @@ public:
     /** One global time origin for every participant. Each actor remains independently animated. */
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     void SynchronizeToWorldTime(float SceneStartTime);
+    /** Resume presentation at an existing source phase without replaying old contact cues. */
+    bool RestorePlaybackPhase(float ElapsedGameplaySeconds);
 
     /** Changes presentation speed continuously without changing authored timing.
      * Zero pauses only this action; canonical World time continues. */

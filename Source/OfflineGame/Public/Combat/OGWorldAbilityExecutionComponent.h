@@ -14,6 +14,41 @@ class UProjectileMovementComponent;
 class UPrimitiveComponent;
 class USceneComponent;
 
+USTRUCT()
+struct OFFLINEGAME_API FOGNativeProjectileCheckpoint
+{
+    GENERATED_BODY()
+    UPROPERTY() int32 StepIndex=INDEX_NONE;
+    UPROPERTY() FTransform Transform;
+    UPROPERTY() FVector Velocity=FVector::ZeroVector;
+    UPROPERTY() FVector LaunchOrigin=FVector::ZeroVector;
+    UPROPERTY() float RemainingLifeSeconds=0;
+};
+USTRUCT()
+struct OFFLINEGAME_API FOGWorldCastPresentationCheckpoint
+{
+    GENERATED_BODY()
+    UPROPERTY() FOGEntityId CastId;
+    UPROPERTY() TSet<int32> SpawnedSteps;
+    UPROPERTY() TArray<FOGNativeProjectileCheckpoint> Projectiles;
+    UPROPERTY() TMap<int32,FVector> PreviousStarts;
+    UPROPERTY() TMap<int32,FVector> PreviousEnds;
+};
+USTRUCT()
+struct OFFLINEGAME_API FOGCombatBodyCheckpoint
+{
+    GENERATED_BODY()
+    UPROPERTY() FOGEntityId UnitId;
+    UPROPERTY() FTransform Transform;
+};
+USTRUCT()
+struct OFFLINEGAME_API FOGWorldEncounterPresentationCheckpoint
+{
+    GENERATED_BODY()
+    UPROPERTY() TArray<FOGCombatBodyCheckpoint> Bodies;
+    UPROPERTY() TArray<FOGWorldCastPresentationCheckpoint> Casts;
+};
+
 /** Physical projectile for an already accepted source cast. No damage numbers or ownership live here. */
 UCLASS(NotBlueprintable)
 class OFFLINEGAME_API AOGNativeWorldProjectile : public AActor
@@ -24,6 +59,8 @@ public:
     bool InitializeAcceptedStep(UOGWorldAbilityExecutionComponent* Source,const FOGEntityId& Cast,int32 Step,
         const FOGWorldAbilityStep& Specification,const FVector& Direction,FString& Error);
     virtual void Tick(float DeltaSeconds) override;
+    bool CaptureCheckpoint(FOGNativeProjectileCheckpoint& Out) const;
+    bool RestoreCheckpoint(const FOGNativeProjectileCheckpoint& State,FString& Error);
 private:
     UPROPERTY() TObjectPtr<USphereComponent> Collision;
     UPROPERTY() TObjectPtr<UStaticMeshComponent> Visual;
@@ -33,6 +70,8 @@ private:
     int32 StepIndex=INDEX_NONE;
     FVector LaunchOrigin=FVector::ZeroVector;
     float MaximumTravelCentimeters=0;
+    float RecoveryRemainingLife=0;
+    bool bRecoveryPaused=false;
     UFUNCTION() void OnPhysicalHit(UPrimitiveComponent*,AActor*,UPrimitiveComponent*,FVector,const FHitResult&);
 };
 
@@ -49,6 +88,10 @@ public:
     bool HasActiveCast() const { return ActiveCast.IsValid(); }
     FOGEntityId GetActiveCastId() const { return ActiveCast; }
     void CancelActiveCast();
+    bool IsRecoveryPaused() const;
+    void CapturePresentationCheckpoint(FOGWorldCastPresentationCheckpoint& Out) const;
+    bool CanRecoverAcceptedCast(const FOGWorldCastPresentationCheckpoint& State,FString& Error);
+    bool RecoverAcceptedCast(const FOGWorldCastPresentationCheckpoint& State,FString& Error);
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
