@@ -1,5 +1,6 @@
 #include "Combat/OGWorldActionRuntime.h"
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGCombatVitalityService.h"
 #include "Combat/OGActionCombatAdapter.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
@@ -116,7 +117,8 @@ bool UOGWorldPartyRuntimeComponent::ConfigureParty(const TArray<FOGCombatUnitSta
         ? GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
     if (Core && Core->IsCoreReady() && Core->GetWorldStore())
         for (FOGCombatUnitState& Unit : Developed)
-            if (!ProjectLiveDevelopment(GetWorld(), Unit, OutError)) return false;
+            if (!ProjectLiveDevelopment(GetWorld(), Unit, OutError) ||
+                !FOGCombatVitalityService(*Core->GetWorldStore()).Project(Unit,OutError)) return false;
     Slots.Reset(); ControlledSlot = INDEX_NONE; LastBattleReceipt=FOGEntityId();
     for (const FOGCombatUnitState& Unit : Developed)
     {
@@ -227,6 +229,10 @@ bool UOGWorldPartyRuntimeComponent::AssignResolvedCompanion(int32 SlotIndex,
     { Error = TEXT("Companion assignment requires a living resolved unit in companion slot 1 or 2."); return false; }
     FOGCombatUnitState Developed = Unit;
     if (!ProjectLiveDevelopment(GetWorld(), Developed, Error)) return false;
+    if (auto* Core=GetWorld() && GetWorld()->GetGameInstance()?GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+        Core && Core->IsCoreReady() && Core->GetWorldStore())
+        if (!FOGCombatVitalityService(*Core->GetWorldStore()).Project(Developed,Error)) return false;
+    if (!Developed.IsAlive()) { Error=TEXT("The actual stored companion is defeated."); return false; }
     TArray<FOGCombatUnitState> Candidate;
     for (const FOGWorldPartySlot& Slot : Slots) Candidate.Add(Slot.Unit);
     if (SlotIndex == Candidate.Num()) Candidate.Add(Developed); else Candidate[SlotIndex] = Developed;
@@ -267,10 +273,21 @@ bool UOGWorldPartyRuntimeComponent::RestorePresentationParty(
         { Error = TEXT("Saved HP and defeat/availability flags disagree."); return false; }
     }
     TArray<FOGWorldPartySlot> Developed = SavedSlots;
+    auto* Core=GetWorld() && GetWorld()->GetGameInstance()?GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
     for (FOGWorldPartySlot& Slot : Developed)
+    {
         if (!ProjectLiveDevelopment(GetWorld(), Slot.Unit, Error)) return false;
+        if (Core && Core->IsCoreReady() && Core->GetWorldStore() &&
+            !FOGCombatVitalityService(*Core->GetWorldStore()).Project(Slot.Unit,Error)) return false;
+        const bool WasDefeated=Slot.bDefeated;
+        Slot.bDefeated=!Slot.Unit.IsAlive();
+        if (Slot.bDefeated) { Slot.bAvailable=false; Slot.bQteReady=false; }
+        else if (WasDefeated) Slot.bAvailable=true; // Only the stored canonical health authorized this recovery.
+    }
     Slots = MoveTemp(Developed);
     ControlledSlot = SavedControl;
+    if (!Slots.IsValidIndex(ControlledSlot) || Slots[ControlledSlot].bDefeated || !Slots[ControlledSlot].bAvailable)
+        ControlledSlot=Slots.IndexOfByPredicate([](const auto& Slot){return Slot.bAvailable && !Slot.bDefeated && Slot.Unit.IsAlive();});
     for (int32 Index = 0; Index < Slots.Num(); ++Index)
         Slots[Index].Unit.Presence = Slots[Index].bDefeated ? EOGCombatPresence::Defeated :
             Index == ControlledSlot ? EOGCombatPresence::Active : EOGCombatPresence::Reserve;

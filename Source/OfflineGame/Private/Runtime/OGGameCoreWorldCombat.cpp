@@ -2,6 +2,7 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGCombatActionJournal.h"
+#include "Combat/OGCombatVitalityService.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "World/OGStartingRegionPresentation.h"
@@ -19,6 +20,7 @@ bool UOGGameCoreSubsystem::CommitWorldCombatCandidate(FOGTurnBattle&& Candidate,
     auto Fail=[&](){FString Ignored; WorldStore->RollbackTransaction(Ignored); return false;};
     FOGNativeBattleOutcome Outcome;
     if (!WorldStore->AppendWorldEvent(Event,Error) ||
+        !FOGCombatVitalityService(*WorldStore).Commit(Before,Candidate.GetState(),ActiveCombatRulerId,Event,Error) ||
         (Candidate.GetState().Status==EOGTurnBattleStatus::Completed &&
          !FOGCombatRewardService(*WorldStore).ApplyCommittedVictory(Candidate.GetState(),ActiveCombatRulerId,Event,Outcome,Error)) ||
         !WorldStore->CommitTransaction(Error)) return Fail();
