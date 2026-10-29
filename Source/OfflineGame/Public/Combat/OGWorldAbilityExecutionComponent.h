@@ -14,6 +14,8 @@ class UProjectileMovementComponent;
 class UPrimitiveComponent;
 class USceneComponent;
 class UOGSharedMotionControllerComponent;
+class USkeletalMeshComponent;
+class USkeletalMesh;
 
 USTRUCT()
 struct OFFLINEGAME_API FOGNativeProjectileCheckpoint
@@ -116,9 +118,17 @@ private:
     bool bSourceMotionFinished=false;
     bool bTracksSourceMotion=false;
     TWeakObjectPtr<UOGSharedMotionControllerComponent> SourceMotion;
+    struct FAcceptedNativePart
+    {
+        TWeakObjectPtr<USkeletalMeshComponent> Part;
+        TWeakObjectPtr<USkeletalMesh> Mesh;
+    };
+    TArray<FAcceptedNativePart> SourceParts;
     friend struct FOGNativeCombatExecutionTestAccess;
     bool IsAcceptedBodyCurrent() const;
     bool TrackAcceptedMotion(FString& Error);
+    bool CaptureSourceRig(UOGSharedMotionControllerComponent& Motion,FString& Error);
+    void ClearSourceMotionTracking();
     UFUNCTION() void HandleSourceMotionFinished(FName Action,FName MotionId);
     bool ResolveRuntime(FString& Error);
     USceneComponent* TracePart(const FOGWorldAbilityStep& Step,FName& Start,FName& End,FString& Error) const;

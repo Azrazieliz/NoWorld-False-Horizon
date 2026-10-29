@@ -10,6 +10,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
@@ -207,25 +208,57 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
 bool UOGWorldAbilityExecutionComponent::IsAcceptedBodyCurrent() const
 {
     const auto* Binding=GetOwner()?GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>():nullptr;
-    return ActiveCast.IsValid() && Binding && Binding->IsBoundTo(BattleId,Root.SourceUnitId) &&
-        (!bTracksSourceMotion || bSourceMotionFinished ||
-            (SourceMotion.IsValid() && WorldMotion(GetOwner())==SourceMotion.Get() &&
-             SourceMotion->GetActiveCombatReceipt()==ActiveCast));
+    if (!ActiveCast.IsValid() || !Binding || !Binding->IsBoundTo(BattleId,Root.SourceUnitId)) return false;
+    if (!bTracksSourceMotion) return true; // Motionless source staging remains valid.
+    if (!SourceMotion.IsValid() || WorldMotion(GetOwner())!=SourceMotion.Get()) return false;
+    const auto& Parts=SourceMotion->GetNativeParts();
+    if (Parts.Num()!=SourceParts.Num()) return false;
+    for (int32 Index=0;Index<SourceParts.Num();++Index)
+    {
+        const auto& Accepted=SourceParts[Index];
+        const auto* Part=Accepted.Part.Get();
+        if (!Part || !Part->IsRegistered() || Part->GetOwner()!=GetOwner() ||
+            Parts[Index].Get()!=Part || !Accepted.Mesh.IsValid() ||
+            Part->GetSkeletalMeshAsset()!=Accepted.Mesh.Get()) return false;
+    }
+    // Natural finish permits later cosmetic playback, never a replacement controller or physical rig.
+    return bSourceMotionFinished || SourceMotion->GetActiveCombatReceipt()==ActiveCast;
+}
+void UOGWorldAbilityExecutionComponent::ClearSourceMotionTracking()
+{
+    if (SourceMotion.IsValid())
+    {
+        SourceMotion->OnMotionFinished.RemoveAll(this);
+        RemoveTickPrerequisiteComponent(SourceMotion.Get());
+    }
+    // Registered parts may already have changed. Release the original prerequisites.
+    for (const auto& Accepted:SourceParts)
+        if (Accepted.Part.IsValid()) RemoveTickPrerequisiteComponent(Accepted.Part.Get());
+    SourceParts.Reset(); SourceMotion.Reset(); bSourceMotionFinished=false; bTracksSourceMotion=false;
+}
+bool UOGWorldAbilityExecutionComponent::CaptureSourceRig(UOGSharedMotionControllerComponent& Motion,FString& Error)
+{
+    TArray<FAcceptedNativePart> Captured;
+    for (USkeletalMeshComponent* Part:Motion.GetNativeParts())
+    {
+        if (!IsValid(Part) || !Part->IsRegistered() || Part->GetOwner()!=GetOwner() || !Part->GetSkeletalMeshAsset())
+        { Error=TEXT("Accepted World action requires its actual registered native rig."); return false; }
+        FAcceptedNativePart Entry; Entry.Part=Part; Entry.Mesh=Part->GetSkeletalMeshAsset();
+        Captured.Add(MoveTemp(Entry));
+    }
+    if (Captured.IsEmpty())
+    { Error=TEXT("Accepted World action has no connected native parts."); return false; }
+    SourceMotion=&Motion; SourceParts=MoveTemp(Captured); bTracksSourceMotion=true;
+    Motion.OnMotionFinished.AddUniqueDynamic(this,&ThisClass::HandleSourceMotionFinished);
+    AddTickPrerequisiteComponent(&Motion);
+    for (const auto& Accepted:SourceParts) AddTickPrerequisiteComponent(Accepted.Part.Get());
+    return true;
 }
 bool UOGWorldAbilityExecutionComponent::TrackAcceptedMotion(FString& Error)
 {
-    if (SourceMotion.IsValid()) SourceMotion->OnMotionFinished.RemoveAll(this);
-    SourceMotion.Reset(); bSourceMotionFinished=false; bTracksSourceMotion=false;
+    ClearSourceMotionTracking();
     auto* Motion=WorldMotion(GetOwner());
-    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast)
-    {
-        SourceMotion=Motion; bTracksSourceMotion=true;
-        Motion->OnMotionFinished.AddUniqueDynamic(this,&ThisClass::HandleSourceMotionFinished);
-        AddTickPrerequisiteComponent(Motion);
-        // Physical sweeps observe the evaluated source rig, including independently animated parts.
-        for (USkeletalMeshComponent* Part:Motion->GetNativeParts()) if (Part) AddTickPrerequisiteComponent(Part);
-        return true;
-    }
+    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast) return CaptureSourceRig(*Motion,Error);
     const auto* Battle=Core.IsValid()?Core->GetOwnedLuminousTurnBattle():nullptr;
     const auto* Unit=Battle?Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Root.SourceUnitId;}):nullptr;
     if (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone())
@@ -472,13 +505,7 @@ void UOGWorldAbilityExecutionComponent::EndLocalCast(bool CompletedNormally)
     const auto EndingCast=ActiveCast,EndingBattle=BattleId;
     TWeakObjectPtr<UOGSharedMotionControllerComponent> EndingMotion=WorldMotion(GetOwner());
     const bool CompleteLoop=CompletedNormally && EndingMotion.IsValid() && EndingMotion->IsLoopingAction();
-    if (SourceMotion.IsValid())
-    {
-        SourceMotion->OnMotionFinished.RemoveAll(this);
-        RemoveTickPrerequisiteComponent(SourceMotion.Get());
-        for (USkeletalMeshComponent* Part:SourceMotion->GetNativeParts()) if (Part) RemoveTickPrerequisiteComponent(Part);
-    }
-    SourceMotion.Reset(); bSourceMotionFinished=false; bTracksSourceMotion=false;
+    ClearSourceMotionTracking();
     ActiveCast=FOGEntityId(); Completed.Reset(); SpawnedProjectiles.Reset();
     for (auto& Projectile:Projectiles) if (Projectile.IsValid()) Projectile->Destroy();
     Projectiles.Reset(); PreviousStarts.Reset(); PreviousEnds.Reset();
