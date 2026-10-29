@@ -6,6 +6,7 @@
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Interaction/OGInteractionParticipantComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
@@ -29,10 +30,9 @@ bool AOGWorldPrototypeCharacter::HasNativeOwnedLuminousEncounter() const
     const auto* Battle=Core?Core->GetOwnedLuminousTurnBattle():nullptr;
     return Battle && Battle->GetState().Status==EOGTurnBattleStatus::Running;
 }
-bool AOGWorldPrototypeCharacter::ReadOwnedLuminousBattleCommands(
-    FOGNativeBattleCommandSet& Out,FString& Error) const
+bool AOGWorldPrototypeCharacter::ReadControlledCanonicalBattleUnit(FOGEntityId& Out,FString& Error) const
 {
-    Out=FOGNativeBattleCommandSet(); Error.Reset();
+    Out=FOGEntityId(); Error.Reset();
     const auto* Core=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
     const auto* Session=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
     const auto* Battle=Core?Core->GetOwnedLuminousTurnBattle():nullptr;
@@ -40,18 +40,40 @@ bool AOGWorldPrototypeCharacter::ReadOwnedLuminousBattleCommands(
         !Core || !Core->IsCoreReady() || !Session || !Session->IsBoundToStoredRuler() ||
         Core->GetOwnedBattleRulerId()!=Session->BoundRulerId || !Battle)
     { Error=TEXT("This character has no locally owned encounter."); return false; }
-    const auto* Unit=Battle->GetState().Units.FindByPredicate(
-        [Session](const FOGCombatUnitState& U) { return U.UnitEntityId==Session->SelectedManifestationId; });
+    const auto Id=Session->SelectedManifestationId.IsValid()?Session->SelectedManifestationId:Session->BoundRulerId;
+    const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Id;});
+    if (!Unit) { Error=TEXT("The controlled canonical participant is absent from this encounter."); return false; }
     const auto* Legacy=Cast<AOGLuminousV3PlayableCharacter>(this);
     const auto* Content=Cast<AOGContentPlayableCharacter>(this);
-    if (!Unit || !((Legacy && Legacy->IsBoundToOwnedLuminousCombatUnit(Session->BoundRulerId,Unit->UnitEntityId,Unit->SkillSet.CurrentForm)) ||
-        (Content && Content->IsBoundToOwnedCombatUnit(Session->BoundRulerId,Unit->UnitEntityId,Unit->SkillSet.CurrentForm))))
-    { Error=TEXT("Battle controls require the actual possessed owned character."); return false; }
-    FOGResolvedSkillSet Owned;
-    if (!Core->ReadOwnedCharacterSkills(Unit->UnitEntityId,Session->BoundRulerId,Owned,Error) ||
-        Owned.CurrentForm!=Unit->SkillSet.CurrentForm)
-    { if (Error.IsEmpty()) Error=TEXT("The stored character Version changed."); return false; }
-    return FOGNativeBattleCommands::BuildFor(*Unit,Out,Error);
+    if (Id==Session->BoundRulerId && !Session->SelectedManifestationId.IsValid())
+    {
+        const auto* Participant=FindComponentByClass<UOGInteractionParticipantComponent>();
+        const auto* Binding=FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+        if (!Participant || Participant->GetBoundCanonicalEntityId()!=Id ||
+            !Binding || !Binding->IsBoundTo(Battle->GetState().BattleId,Id))
+        { Error=TEXT("Ruler controls require the actual connected canonical World body."); return false; }
+        FOGFoundationCharacterProjection Projection;
+        if (!Participant->GetCurrentProjection(Projection,Error) || Projection.Context.EntityId!=Id) return false;
+    }
+    else
+    {
+        if (!((Legacy && Legacy->IsBoundToOwnedLuminousCombatUnit(Session->BoundRulerId,Id,Unit->SkillSet.CurrentForm)) ||
+            (Content && Content->IsBoundToOwnedCombatUnit(Session->BoundRulerId,Id,Unit->SkillSet.CurrentForm))))
+        { Error=TEXT("Battle controls require the actual possessed owned character."); return false; }
+        FOGResolvedSkillSet Owned;
+        if (!Core->ReadOwnedCharacterSkills(Id,Session->BoundRulerId,Owned,Error) || Owned.CurrentForm!=Unit->SkillSet.CurrentForm)
+        { if (Error.IsEmpty()) Error=TEXT("The stored character Version changed."); return false; }
+    }
+    Out=Id; return true;
+}
+bool AOGWorldPrototypeCharacter::ReadOwnedLuminousBattleCommands(
+    FOGNativeBattleCommandSet& Out,FString& Error) const
+{
+    Out=FOGNativeBattleCommandSet(); FOGEntityId Id;
+    if (!ReadControlledCanonicalBattleUnit(Id,Error)) return false;
+    const auto* Battle=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>()->GetOwnedLuminousTurnBattle();
+    const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Id;});
+    return Unit && FOGNativeBattleCommands::BuildFor(*Unit,Out,Error);
 }
 bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldAction(int32 Slot,FName Branch,FString& Error)
 {
@@ -72,10 +94,10 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
     const auto* Command=Set.Commands.FindByPredicate([CommandId](const FOGNativeBattleCommand& C) { return C.Id==CommandId; });
     if (!Command) { Error=TEXT("The selected command is not part of this approved kit."); return false; }
     auto* Core=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
-    const auto* Session=GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
     const auto* Encounter=Core->GetOwnedLuminousTurnBattle();
     const FOGEntityId BattleId=Encounter->GetState().BattleId;
-    const FOGEntityId SourceId=Session->SelectedManifestationId;
+    FOGEntityId SourceId;
+    if (!ReadControlledCanonicalBattleUnit(SourceId,Error)) return false;
     const auto* Source=Encounter->GetState().Units.FindByPredicate(
         [&SourceId](const FOGCombatUnitState& U) { return U.UnitEntityId==SourceId; });
     if (!Source) { Error=TEXT("The owned battle participant is unavailable."); return false; }

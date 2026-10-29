@@ -129,10 +129,10 @@ void UOGNativeBattleWidget::Refresh()
         }
         return;
     }
-    const auto* Source=State.Units.FindByPredicate([Session](const FOGCombatUnitState& U)
-        { return U.UnitEntityId==Session->SelectedManifestationId; });
-    if (!Source && Session->SelectedManifestationId.IsValid()==false)
-        Source=State.Units.FindByPredicate([Session](const auto& U){return U.UnitEntityId==Session->BoundRulerId;});
+    FOGEntityId Controlled; FString ControlError;
+    if (!Body->ReadControlledCanonicalBattleUnit(Controlled,ControlError))
+    { SetVisibility(ESlateVisibility::Collapsed); return; }
+    const auto* Source=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Controlled;});
     if (!Source) { SetVisibility(ESlateVisibility::Collapsed); return; }
     SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     int32 Resource=0,Charge=0,OwnerActions=0;

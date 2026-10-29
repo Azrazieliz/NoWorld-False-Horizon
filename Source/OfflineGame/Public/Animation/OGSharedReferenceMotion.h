@@ -64,6 +64,9 @@ struct OFFLINEGAME_API FOGReferenceRigAdapter
 class OFFLINEGAME_API FOGSharedReferenceLibrary
 {
 public:
+    static bool ValidateManifestJson(const FString& Json,FString& Error,bool RequireInstalledPackets=false);
+    /** Installer hook after original source packets or their mounted catalog become available. */
+    static void RefreshInstalledSources();
     static TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Load(FName Id, FString& Error);
     static TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Decode(
         const TArray<uint8>& Bytes, FString& Error);

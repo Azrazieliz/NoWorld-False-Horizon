@@ -6,6 +6,7 @@
 #include "Combat/OGLuminousCanonicalAuthorityBinding.h"
 #include "Combat/OGCombatRewardDefinition.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
+#include "Combat/OGCombatRecoveryProvider.h"
 #include "Runtime/OGPerformanceTelemetry.h"
 #include "Runtime/OGCanonicalClockRuntime.h"
 #include "Runtime/OGFoundationStrategicRuntime.h"
@@ -154,7 +155,7 @@ public:
         FOGRankSuppressionResolver RankResolver,
         const FOGEntityId& RulerId,
         FOGLuminousCanonicalSources TrustedProviders,
-        FString& OutError);
+        FString& OutError,FName RecoveryProvider=NAME_None);
     /** Admit only installed authored assets for one existing participant, atomically. No command JSON can register effects. */
     bool ConfigureOwnedNativeAbilities(const FOGEntityId& UnitId,
         const TArray<UOGNativeCombatAbility*>& Abilities,const TArray<FOGContentId>& RequiredSkills,FString& Error);
@@ -164,7 +165,10 @@ public:
         const FOGLuminousRegisteredEffectContest& Contest,
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
-    /** Restores an existing committed generic encounter; never reruns costs/opening/rewards. */
+    /** Native extensions register their actual callback factory once; assets/saves cannot install code. */
+    bool RegisterCombatRecoveryProvider(FOGCombatRecoveryProvider Provider,FString& Error);
+    bool UnregisterCombatRecoveryProvider(FName Provider,FString& Error);
+    /** Restores an existing committed encounter; never reruns costs/opening/rewards. */
     bool RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,bool& Restored,FString& Error);
     bool CheckpointOwnedNativeEncounter(FString& Error);
     bool IsNativeEncounterAwaitingWorldRebind() const { return bNativeRecoveryAwaitingWorld; }
@@ -176,7 +180,7 @@ public:
     /** Generic definition-based entry; resolved participants retain their existing canonical identities. */
     bool StartOwnedNativeEncounter(const UOGNativeEncounterDefinition& Definition,
         const TArray<FOGResolvedEncounterParticipant>& Participants,const FOGEntityId& Ruler,
-        FOGIdentityExclusivityContext IdentityContext,FString& Error);
+        FOGIdentityExclusivityContext IdentityContext,FString& Error,FName RecoveryProvider=NAME_None);
     bool SetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error);
     bool CanSetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error) const;
     bool BeginOwnedWorldAbility(const FOGResolvedCombatAction& Root,FString& Error);
@@ -227,6 +231,14 @@ public:
     }
 
 private:
+    TMap<FName,FOGCombatRecoveryProvider> CombatRecoveryProviders;
+    FName PendingNativeRecoveryProvider;
+    FName ActiveNativeRecoveryProvider;
+    FOGEntityId PendingNativeRecoveryRuler;
+    bool CaptureCombatRecoveryProvider(FName Provider,const FOGTurnBattle& Battle,const FOGEntityId& Ruler,
+        int32& Version,FString& Payload,FString& Error) const;
+    bool RestoreCombatRecoveryProvider(FName Provider,int32 Version,const FString& Payload,const FOGEntityId& Ruler,
+        FOGCombatRecoveryBindings& Bindings,FString& Error);
     bool bPendingNativeRecovery=false;
     bool bActiveNativeRecovery=false;
     bool bNativeRecoveryAwaitingWorld=false;

@@ -53,6 +53,12 @@ bool UOGGameCoreSubsystem::PersistNativeEncounter(const FOGTurnBattle& Candidate
     Record->SetStringField(TEXT("state"),Complete?TEXT("completed"):(Supported?TEXT("available"):TEXT("provider_required")));
     if (Supported && !Complete)
     {
+        const FName Provider=Opening?PendingNativeRecoveryProvider:ActiveNativeRecoveryProvider;
+        int32 ProviderVersion=0; FString ProviderPayload;
+        if (!CaptureCombatRecoveryProvider(Provider,Candidate,Ruler,ProviderVersion,ProviderPayload,Error)) return false;
+        Record->SetStringField(TEXT("recovery_provider"),Provider.ToString());
+        Record->SetNumberField(TEXT("provider_version"),ProviderVersion);
+        Record->SetStringField(TEXT("provider_payload"),ProviderPayload);
         TArray<uint8> Bytes; if (!Candidate.ExportNativeCheckpoint(Bytes,Error)) return false;
         Record->SetStringField(TEXT("runtime_base64"),FBase64::Encode(Bytes));
         Record->SetStringField(TEXT("rank_base64"),Opening?PendingNativeRankRecovery:ActiveNativeRankRecovery);
@@ -126,6 +132,7 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
         return true;
     }
     TGuardValue<bool> Guard(bSubmittingNativeAction,true);
+    PendingNativeRecoveryRuler=Ruler;
     bool Found=false; FName Kind; FString Json; int64 Revision=0;
     if (!WorldStore->TryReadEntity(Ruler,Found,Kind,Json,Revision,Error)) return false;
     if (!Found || Kind!=TEXT("ruler")) { Error=TEXT("Recovery owner is not an existing canonical Ruler."); return false; }
@@ -156,8 +163,22 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
         RankResolver=[Rules](const FOGRankSuppressionQuery& Q,int32& Bps,FString& E){return Rules.Resolve(Q,Bps,E);};
     }
     TArray<uint8> Bytes; if (!FBase64::Decode(Runtime,Bytes)) { Error=TEXT("Encounter runtime checkpoint is invalid."); return false; }
+    FString ProviderName=TEXT("core.native"),ProviderPayload; int32 ProviderVersion=1;
+    if (Record->HasField(TEXT("recovery_provider")))
+    {
+        double VersionValue=0;
+        if (!Record->TryGetStringField(TEXT("recovery_provider"),ProviderName) || ProviderName.IsEmpty() ||
+            !Record->TryGetNumberField(TEXT("provider_version"),VersionValue) || !FMath::IsFinite(VersionValue) ||
+            VersionValue<1 || VersionValue>MAX_int32 || FMath::TruncToDouble(VersionValue)!=VersionValue ||
+            !Record->TryGetStringField(TEXT("provider_payload"),ProviderPayload))
+        { Error=TEXT("Native callback recovery descriptor is invalid."); return false; }
+        ProviderVersion=static_cast<int32>(VersionValue);
+    }
+    const FName Provider(*ProviderName); FOGCombatRecoveryBindings Bindings;
+    if (!RestoreCombatRecoveryProvider(Provider,ProviderVersion,ProviderPayload,Ruler,Bindings,Error)) return false;
+    if (!Rank.IsEmpty()) Bindings.Rank=MoveTemp(RankResolver); // Keep the original typed profile when one was admitted.
     auto Candidate=MakeUnique<FOGTurnBattle>();
-    if (!Candidate->RestoreNativeCheckpoint(Bytes,MoveTemp(RankResolver),Error) || Candidate->GetState().BattleId!=BattleId)
+    if (!Candidate->RestoreNativeCheckpointWithBindings(Bytes,MoveTemp(Bindings),Error) || Candidate->GetState().BattleId!=BattleId)
     { if (Error.IsEmpty()) Error=TEXT("Encounter recovery identity differs."); return false; }
     int32 Ranked=0;
     for (const auto& Unit:Candidate->GetState().Units)
@@ -166,9 +187,14 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
         if (!WorldStore->TryReadEntity(Unit.UnitEntityId,Found,Kind,Json,Revision,Error)) return false;
         if (!Found || Json.Contains(TEXT("\"diagnosticFixture\"")))
         { Error=TEXT("Recovered encounter participant has no actual canonical entity."); return false; }
-        const auto* Kit=UOGCharacterGameplayDefinition::Find(Unit.IdentityId,Unit.SkillSet.CurrentForm,Error);
-        if (!Kit || !Kit->MatchesKit(Unit.SkillSet))
-        { if (Error.IsEmpty()) Error=TEXT("Recovered participant's installed kit changed; checkpoint preserved."); return false; }
+        const bool SpecializedUnit=Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"));
+        const UOGCharacterGameplayDefinition* Kit=nullptr;
+        if (!SpecializedUnit)
+        {
+            Kit=UOGCharacterGameplayDefinition::Find(Unit.IdentityId,Unit.SkillSet.CurrentForm,Error);
+            if (!Kit || !Kit->MatchesKit(Unit.SkillSet))
+            { if (Error.IsEmpty()) Error=TEXT("Recovered participant's installed kit changed; checkpoint preserved."); return false; }
+        } // Specialized binding above validates its original source kit and actual owned Manifestation.
         bool HasCopy=false; FOGCharacterManifestationRecord Copy;
         if (!WorldStore->TryReadCharacterManifestation(Unit.UnitEntityId,HasCopy,Copy,Error)) return false;
         if (HasCopy && (Copy.IdentityId!=Unit.IdentityId || Copy.ActiveVersionId!=Unit.SkillSet.CurrentForm ||
@@ -180,7 +206,7 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
             const auto* Plan=Library?Cast<UOGNativeEncounterDefinition>(Library->Resolve(TEXT("encounter"),Candidate->GetState().EncounterDefinitionId)):nullptr;
             if (!Plan) { Error=TEXT("Recovered NPC encounter requires its original shared plan."); return false; }
             FName IdentityField=Plan->CanonicalIdentityField,VersionField=Plan->CanonicalVersionField;
-            if (Kit->TurnPolicy.Id.IsValid())
+            if (Kit && Kit->TurnPolicy.Id.IsValid())
             {
                 const auto* Policy=Cast<UOGNativeTurnPolicy>(Library->Resolve(Kit->TurnPolicy.System,Kit->TurnPolicy.Id));
                 if (!Policy || !Policy->Validate(Error)) return false;
@@ -193,7 +219,8 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
             { Error=TEXT("Recovered NPC no longer matches its actual canonical identity/version."); return false; }
         }
     }
-    if (Ranked>1 && Rank.IsEmpty()) { Error=TEXT("Ranked encounter recovery has no original suppression profile."); return false; }
+    if (Ranked>1 && Rank.IsEmpty() && Provider==TEXT("core.native"))
+    { Error=TEXT("Ranked encounter recovery has no original suppression profile."); return false; }
     const TArray<TSharedPtr<FJsonValue>>* SavedIds=nullptr; TSet<FOGEntityId> Seen;
     if (!Record->TryGetArrayField(TEXT("committed_action_ids"),SavedIds)) { Error=TEXT("Encounter request receipts are absent."); return false; }
     for (const auto& Value:*SavedIds)
@@ -241,14 +268,14 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
     OwnedLuminousTurnBattle=MoveTemp(Candidate); ActiveCombatRulerId=Ruler;
     CommittedNativeActionIds=MoveTemp(Seen); LastNativeBattleReceipt=Receipt; LastNativeOpeningReceipt=FOGEntityId();
     LastNativeCombatEvent=FOGNativeCombatEventProvenance(); LastNativeBattleOutcome=FOGNativeBattleOutcome();
-    bActiveNativeRecovery=true; bNativeEncounterRestored=true; ActiveNativeRankRecovery=Rank;
+    bActiveNativeRecovery=true; bNativeEncounterRestored=true; ActiveNativeRecoveryProvider=Provider; ActiveNativeRankRecovery=Rank;
     NativeWorldRecoveryPresentation=MoveTemp(Physical); bNativeRecoveryBodiesRestored=false;
     bNativeRecoveryAwaitingWorld=OwnedLuminousTurnBattle->GetState().ExecutionMode==EOGCombatExecutionMode::World;
     LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0; WorldCombatClockWorld.Reset();
     NativeEncounterRecoveryStatus=bNativeRecoveryAwaitingWorld
         ? TEXT("Encounter recovered; waiting for its real World bodies and cast runners.")
         : TEXT("Turn encounter recovered at its last committed action.");
-    Restored=true;
+    PendingNativeRecoveryRuler=FOGEntityId(); Restored=true;
     if (auto* Session=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
         Session && Session->BoundRulerId==Ruler)
     {

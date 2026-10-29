@@ -111,4 +111,23 @@ bool FOGSharedReferenceRigTest::RunTest(const FString& Parameters)
     return true;
 }
 
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedSourceManifestSceneTest,
+    "OfflineGame.Animation.SharedReference.AdmitCompleteOriginalSceneRoles",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGSharedSourceManifestSceneTest::RunTest(const FString&)
+{
+    const FString Header=TEXT("{\"schema\":\"noworld.shared_reference_library.v1\",\"calibration_basis\":\"koikatsu.native_original.reference_delta.v1\",\"calibration_skeleton\":\"/Game/Tests/Original.Original\",\"clips\":[{\"id\":\"test.a\",\"path\":\"Clips/a.nwmotion\"},{\"id\":\"test.b\",\"path\":\"Clips/b.nwmotion\"}],\"routes\":[");
+    const FString A=TEXT("{\"clip\":\"test.a\",\"action\":\"Test.Scene\",\"context\":\"Interaction\",\"rig\":\"test.rig\",\"participants\":2,\"scene_id\":\"test.original_scene\",\"scene_role\":\"first\"}");
+    const FString B=TEXT("{\"clip\":\"test.b\",\"action\":\"Test.Scene\",\"context\":\"Interaction\",\"rig\":\"test.rig\",\"participants\":2,\"scene_id\":\"test.original_scene\",\"scene_role\":\"second\"}");
+    FString Error;
+    TestFalse(TEXT("Missing counterpart tracks are not silently admitted as a whole scene"),
+        FOGSharedReferenceLibrary::ValidateManifestJson(Header+A+TEXT("]}"),Error));
+    TestTrue(TEXT("Both actual original roles admit together"),
+        FOGSharedReferenceLibrary::ValidateManifestJson(Header+A+TEXT(",")+B+TEXT("]}"),Error));
+    FString Wrong=B; Wrong.ReplaceInline(TEXT("test.original_scene"),TEXT("test.unrelated_scene"));
+    TestFalse(TEXT("Unrelated originals cannot be paired by semantic name"),
+        FOGSharedReferenceLibrary::ValidateManifestJson(Header+A+TEXT(",")+Wrong+TEXT("]}"),Error));
+    return true;
+}
 #endif

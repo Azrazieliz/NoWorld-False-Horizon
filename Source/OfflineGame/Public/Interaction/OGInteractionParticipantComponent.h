@@ -68,6 +68,8 @@ public:
     /** Fresh read-only snapshots. Failure always resets output; no cached fallback. */
     bool BuildParticipant(FName Role, FOGInteractionParticipant& Out, FString& Error) const;
     bool GetCurrentProjection(FOGFoundationCharacterProjection& Out, FString& Error) const;
+    /** Lookup hint only; consumers still validate a fresh projection before binding authority. */
+    FOGEntityId GetBoundCanonicalEntityId() const { return BoundStore && !bUnbinding ? BoundEntityId : FOGEntityId(); }
     /** Refreshes the ordinary canonical/appearance adapter, then rediscovers parts. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Interaction")
     bool RefreshFromCanonical(FString& Error);

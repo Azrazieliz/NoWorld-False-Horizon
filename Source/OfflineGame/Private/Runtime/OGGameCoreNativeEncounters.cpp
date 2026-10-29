@@ -12,7 +12,7 @@
 
 bool UOGGameCoreSubsystem::StartOwnedNativeEncounter(const UOGNativeEncounterDefinition& Definition,
     const TArray<FOGResolvedEncounterParticipant>& Inputs,const FOGEntityId& Ruler,
-    FOGIdentityExclusivityContext IdentityContext,FString& Error)
+    FOGIdentityExclusivityContext IdentityContext,FString& Error,FName RecoveryProvider)
 {
     Error.Reset();
     if (!IsInGameThread() || bSubmittingNativeAction || !bCoreReady || bReleasingCanonicalRuntime ||
@@ -76,9 +76,6 @@ bool UOGGameCoreSubsystem::StartOwnedNativeEncounter(const UOGNativeEncounterDef
     }
     int32 Ranked=0; for (const auto& Unit:State.Units) if (Unit.RankProjection.RankId.IsValid()) ++Ranked;
     if (Ranked>1 && !RankResolver) { Error=TEXT("Ranked encounter participants require their original shared suppression profile."); return false; }
-    const bool NativeOnly=!IdentityContext.Override && !State.Units.ContainsByPredicate([](const auto& Unit)
-        { return Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity")); });
-    TGuardValue<bool> RecoveryScope(bPendingNativeRecovery,NativeOnly);
     TGuardValue<FString> RankScope(PendingNativeRankRecovery,RankCheckpoint);
-    return StartOwnedLuminousTurnBattle(State,{}, {},MoveTemp(IdentityContext),MoveTemp(RankResolver),Ruler,{},Error);
+    return StartOwnedLuminousTurnBattle(State,{}, {},MoveTemp(IdentityContext),MoveTemp(RankResolver),Ruler,{},Error,RecoveryProvider);
 }

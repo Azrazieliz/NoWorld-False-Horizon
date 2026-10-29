@@ -3,6 +3,9 @@
 #include "Animation/OGSharedAnimationRoutes.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGNativeTurnAgentComponent.h"
+#include "Characters/OGCharacterGameplayDefinition.h"
+#include "Content/OGDefinitionLibrary.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
@@ -30,16 +33,31 @@ UOGCanonicalCombatActorBindingComponent::UOGCanonicalCombatActorBindingComponent
 void UOGCanonicalCombatActorBindingComponent::TickComponent(float Delta,ELevelTick Type,FActorComponentTickFunction* Function)
 {
     Super::TickComponent(Delta,Type,Function);
-    if (BoundBattleId.IsValid() || !GetOwner() || !GetWorld() || !GetWorld()->GetGameInstance()) return;
+    if (bAutoConnectCanonicalEncounters) { FString Error; RefreshCanonicalEncounter(Error); }
+}
+bool UOGCanonicalCombatActorBindingComponent::RefreshCanonicalEncounter(FString& Error)
+{
+    Error.Reset();
+    if (!GetOwner() || !GetWorld() || !GetWorld()->GetGameInstance()) return false;
     auto* Core=GetWorld()->GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
-    if (!Core || !Core->IsRestoredNativeEncounter() || !Core->GetOwnedLuminousTurnBattle() ||
-        Core->GetOwnedLuminousTurnBattle()->GetState().Status!=EOGTurnBattleStatus::Running) return;
+    if (!Core || !Core->IsCoreReady() || !Core->GetOwnedLuminousTurnBattle() ||
+        Core->GetOwnedLuminousTurnBattle()->GetState().Status!=EOGTurnBattleStatus::Running) return false;
+    const auto& State=Core->GetOwnedLuminousTurnBattle()->GetState();
+    // Existing owned-character adapters can bind without an interaction component.
+    // Preserve their explicit, independently validated native binding.
+    if (!bAutomaticBinding && BoundBattleId==State.BattleId && BoundUnitId.IsValid()) return true;
     const auto* Participant=GetOwner()->FindComponentByClass<UOGInteractionParticipantComponent>();
-    FOGFoundationCharacterProjection Projection; FString Error;
-    if (!Participant || !Participant->GetCurrentProjection(Projection,Error)) return;
-    const auto* Unit=Core->GetOwnedLuminousTurnBattle()->GetState().Units.FindByPredicate(
-        [&](const auto& U){return U.UnitEntityId==Projection.Context.EntityId;});
-    if (Unit && Unit->CanAct()) BindActualNativeUnit(Unit->UnitEntityId,Unit->IdentityId,Error);
+    const auto Entity=Participant?Participant->GetBoundCanonicalEntityId():FOGEntityId();
+    if (BoundBattleId.IsValid() && (BoundBattleId!=State.BattleId || BoundUnitId!=Entity)) UnbindVisual();
+    if (!Entity.IsValid()) return false;
+    if (IsBoundTo(State.BattleId,Entity)) return true;
+    const auto* Unit=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Entity;});
+    if (!Unit || !Unit->CanAct()) return false;
+    FOGFoundationCharacterProjection Projection;
+    if (!Participant->GetCurrentProjection(Projection,Error) || Projection.Context.EntityId!=Entity) return false;
+    const bool Bound=BindActualNativeUnit(Unit->UnitEntityId,Unit->IdentityId,Error);
+    if (Bound) bAutomaticBinding=true;
+    return Bound;
 }
 
 bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
@@ -131,12 +149,27 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     Core->OnNativeCombatActionResolved.AddUObject(this,&ThisClass::HandleNativeAction);
     Core->OnNativeBattleStateCommitted.AddUObject(this,&ThisClass::HandleCommittedState);
     Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::UnbindVisual);
-    BoundBattleId=State.BattleId;
+    BoundBattleId=State.BattleId; bAutomaticBinding=false;
     BoundUnitId=UnitId; LastVisualHp=Unit->CurrentHp; bHasVisualHp=true;
     if (!Owner->FindComponentByClass<UOGWorldActionRuntimeComponent>())
     { auto* Actions=NewObject<UOGWorldActionRuntimeComponent>(Owner); Owner->AddInstanceComponent(Actions); Actions->RegisterComponent(); }
     if (!Owner->FindComponentByClass<UOGWorldAbilityExecutionComponent>())
     { auto* Execution=NewObject<UOGWorldAbilityExecutionComponent>(Owner); Owner->AddInstanceComponent(Execution); Execution->RegisterComponent(); }
+    // Shared NPC bodies use their installed policy without a character-specific adapter.
+    // No default attacks or decisions are synthesized when source policy is absent.
+    if (UnitId!=Core->GetOwnedBattleRulerId() && !Owner->FindComponentByClass<UOGNativeTurnAgentComponent>())
+    {
+        FString KitError;
+        const auto* Kit=UOGCharacterGameplayDefinition::Find(Unit->IdentityId,Unit->SkillSet.CurrentForm,KitError);
+        auto* Library=UOGDefinitionLibrary::Get();
+        const auto* Policy=Kit && Kit->TurnPolicy.Id.IsValid() && Library
+            ? Cast<UOGNativeTurnPolicy>(Library->Resolve(Kit->TurnPolicy.System,Kit->TurnPolicy.Id)) : nullptr;
+        if (Policy && Policy->MatchesSource(Unit->IdentityId,Unit->SkillSet.CurrentForm) && Policy->Validate(KitError))
+        {
+            auto* Agent=NewObject<UOGNativeTurnAgentComponent>(Owner);
+            Owner->AddInstanceComponent(Agent); Agent->RegisterComponent();
+        }
+    }
     // Encounter opening is committed before a body can bind to its live battle ID.
     // Catch up those factual source actions only while the opening is still current.
     if (Core->IsNativeOpeningPresentationCurrent())
@@ -154,7 +187,7 @@ void UOGCanonicalCombatActorBindingComponent::UnbindVisual()
     auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
     if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
     if (Motion) Motion->CancelCombatActions(BoundBattleId);
-    LastPresentedAction=FOGEntityId(); bHasVisualHp=false;
+    LastPresentedAction=FOGEntityId(); bHasVisualHp=false; bAutomaticBinding=false;
     BoundBattleId=FOGEntityId();
     BoundUnitId=FOGEntityId();
 }

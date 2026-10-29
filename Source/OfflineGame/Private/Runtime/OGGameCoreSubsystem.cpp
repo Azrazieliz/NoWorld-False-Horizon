@@ -315,6 +315,7 @@ bool UOGGameCoreSubsystem::ReleaseCanonicalRuntime(FString* OutError)
     LastNativeBattleReceipt=LastNativeOpeningReceipt=FOGEntityId();
     LastNativeBattleOutcome=FOGNativeBattleOutcome();
     bActiveNativeRecovery=false; bNativeRecoveryAwaitingWorld=false; bNativeRecoveryBodiesRestored=false; bNativeEncounterRestored=false;
+    ActiveNativeRecoveryProvider=NAME_None; PendingNativeRecoveryRuler=FOGEntityId();
     NativeWorldRecoveryPresentation=FOGWorldEncounterPresentationCheckpoint(); ActiveNativeRankRecovery.Reset(); NativeEncounterRecoveryStatus.Reset();
     NativeWorldCastRequests.Reset(); LastWorldCombatSeconds=-1; WorldCombatFractionalMilliseconds=0; WorldCombatClockWorld.Reset();
     CommittedNativeActionIds.Reset();
@@ -981,7 +982,7 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
     FOGRankSuppressionResolver RankResolver,
     const FOGEntityId& RulerId,
     FOGLuminousCanonicalSources TrustedProviders,
-    FString& OutError)
+    FString& OutError,FName RecoveryProvider)
 {
     if (!IsInGameThread() || bSubmittingNativeAction) { OutError=TEXT("Native encounter replacement cannot reenter an action transaction."); return false; }
     TGuardValue<bool> Submitting(bSubmittingNativeAction,true);
@@ -997,6 +998,23 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         OutError=TEXT("Canonical WorldStore is unavailable; no encounter created.");
         return false;
     }
+    const bool ExternalCallbacks=NativeConditions || IdentityContext.Override ||
+        (RankResolver && PendingNativeRankRecovery.IsEmpty()) ||
+        TrustedProviders.ReadInstalledIdentity || TrustedProviders.ReadNativeBloodEligibility ||
+        TrustedProviders.ReadNativeSoulContinuity || TrustedProviders.ValidateRegisteredEffectContest ||
+        TrustedProviders.CheckRegisteredWorldFieldOwnership || !TrustedProviders.FantasmByRegisteredVersion.IsEmpty() ||
+        TrustedProviders.WorldNegationGradeId.IsValid() || TrustedProviders.RegisteredBleedFamilyId.IsValid();
+    const bool Specialized=InitialState.Units.ContainsByPredicate([](const auto& Unit)
+        {return Unit.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"));});
+    if (RecoveryProvider.IsNone() && !ExternalCallbacks)
+        RecoveryProvider=Specialized?FName(TEXT("core.luminous")):FName(TEXT("core.native"));
+    if ((!RecoveryProvider.IsNone() && RecoveryProvider!=TEXT("core.native") && RecoveryProvider!=TEXT("core.luminous") &&
+         !CombatRecoveryProviders.Contains(RecoveryProvider)) ||
+        (ExternalCallbacks && (RecoveryProvider==TEXT("core.native") || RecoveryProvider==TEXT("core.luminous"))) ||
+        (RecoveryProvider==TEXT("core.native") && Specialized) || (RecoveryProvider==TEXT("core.luminous") && !Specialized))
+    { OutError=TEXT("Encounter recovery provider does not match its installed native callback source."); return false; }
+    TGuardValue<bool> RecoveryEnabled(bPendingNativeRecovery,!RecoveryProvider.IsNone());
+    TGuardValue<FName> RecoveryFactory(PendingNativeRecoveryProvider,RecoveryProvider);
     TUniquePtr<FOGTurnBattle> Candidate=MakeUnique<FOGTurnBattle>();
     FOGTurnBattleState DevelopedState = InitialState;
     const EOGCombatExecutionMode RequestedMode=InitialState.ExecutionMode;
@@ -1104,8 +1122,9 @@ bool UOGGameCoreSubsystem::StartOwnedLuminousTurnBattle(
         !WorldStore->CommitTransaction(OutError)) return RollbackOpening();
     LastNativeBattleOutcome=MoveTemp(OpeningOutcome);
     OwnedLuminousTurnBattle=MoveTemp(Candidate);
-    ActiveCombatRulerId=RulerId;
-    bActiveNativeRecovery=bPendingNativeRecovery; ActiveNativeRankRecovery=PendingNativeRankRecovery;
+    ActiveCombatRulerId=RulerId; PendingNativeRecoveryRuler=FOGEntityId();
+    bActiveNativeRecovery=bPendingNativeRecovery; ActiveNativeRecoveryProvider=PendingNativeRecoveryProvider;
+    ActiveNativeRankRecovery=PendingNativeRankRecovery;
     bNativeRecoveryAwaitingWorld=false; bNativeEncounterRestored=false; NativeEncounterRecoveryStatus=bActiveNativeRecovery
         ? TEXT("Encounter recovery is saved with committed actions.")
         : TEXT("This encounter requires its specialized native recovery provider.");
