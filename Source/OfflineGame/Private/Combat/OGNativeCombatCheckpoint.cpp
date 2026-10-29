@@ -7,7 +7,9 @@
 
 namespace
 {
-constexpr int32 CheckpointVersion=1;
+constexpr int32 CheckpointVersion=2;
+enum ECallbackRequirement : uint32 { IdentityCallback=1,ConditionCallback=2,RankCallback=4,BloodCallback=8,
+    RevivalCallback=16,FieldCallback=32,ContestCallback=64 };
 constexpr int32 MaximumCheckpointBytes=16*1024*1024;
 constexpr int32 MaximumRows=100000;
 class FCheckpointFields
@@ -20,6 +22,8 @@ public:
     void Field(FString& V) { Ar<<V; }
     void Field(FName& V) { Ar<<V; }
     void Field(int32& V) { Ar<<V; }
+    void Field(uint32& V) { Ar<<V; }
+    void Field(uint8& V) { Ar<<V; }
     void Field(int64& V) { Ar<<V; }
     void Field(uint64& V) { Ar<<V; }
     void Field(bool& V) { Ar<<V; }
@@ -28,6 +32,12 @@ public:
         int32 N=Saving; Ar<<N;
         if (N<0 || N>MaximumRows) { Ar.SetError(); return 0; }
         return N;
+    }
+    template<class T,class F> void ArrayWith(TArray<T>& Values,F SerializeValue)
+    {
+        const int32 N=Count(Values.Num());
+        if (Ar.IsLoading()) Values.SetNum(N);
+        for (auto& Value:Values) { if (Ar.IsError()) break; SerializeValue(Value); }
     }
     template<class T> void Array(TArray<T>& Values)
     {
@@ -74,20 +84,27 @@ public:
     {
         if (B.Log.Events.Num()>2048) B.Log.Events.RemoveAt(0,B.Log.Events.Num()-2048,EAllowShrinking::No);
     }
+    static uint32 Requirements(const FOGTurnBattle& B)
+    {
+        uint32 Mask=0;
+        if (B.IdentityContext.Override) Mask|=IdentityCallback;
+        if (B.NativeFallbackConditions || B.TriggerRuntime.ConditionEvaluator) Mask|=ConditionCallback;
+        if (B.RankSuppressionResolver) Mask|=RankCallback;
+        if (B.LuminousBloodEligibility) Mask|=BloodCallback;
+        if (B.LuminousRevivalEligibility) Mask|=RevivalCallback;
+        if (B.LuminousFieldEligibility) Mask|=FieldCallback;
+        if (B.LuminousRegisteredContestEvidence) Mask|=ContestCallback;
+        return Mask;
+    }
     static bool Supported(const FOGTurnBattle& B,FString& Error)
     {
-        if (B.IdentityContext.Override || B.NativeFallbackConditions || B.TriggerRuntime.ConditionEvaluator ||
-            B.LuminousFieldEligibility || B.LuminousRegisteredContestEvidence || B.LuminousBloodEligibility ||
-            B.LuminousRevivalEligibility || !B.LuminousBaseStates.IsEmpty() || !B.LuminousAlterStates.IsEmpty() ||
-            !B.LuminousFields.IsEmpty() || !B.LuminousDawnBarriers.IsEmpty())
-        { Error=TEXT("Encounter uses native callback authority requiring its specialized recovery provider."); return false; }
-        if (B.NativeReactionProof.IsSet() || B.WorldExecutionProof.IsSet() ||
+        if (B.NativeReactionProof.IsSet() || B.WorldExecutionProof.IsSet() || B.bApprovedRevivalHealInProgress ||
             !B.PendingTriggeredActions.IsEmpty() || !B.OutstandingTriggeredActionSequences.IsEmpty() ||
             !B.PendingDefeatedUnitIds.IsEmpty() || !B.TriggerRuntime.QueuedActions.IsEmpty())
         { Error=TEXT("Encounter checkpoint requires a fully settled action boundary."); return false; }
         return true;
     }
-    static void Serialize(FOGTurnBattle& B,FArchive& Archive)
+    static void Serialize(FOGTurnBattle& B,FArchive& Archive,int32 Version,uint32& Required)
     {
         FCheckpointFields F(Archive);
         F.Field(B.State); F.Field(B.bRequireNativeExecutors); F.Field(B.NativeAbilityRevision);
@@ -107,6 +124,40 @@ public:
         F.Map(B.LastEffectiveHpDamage);
         F.Array(B.Log.Events); F.Field(B.Log.NextSequence);
         F.Array(B.TriggerRuntime.Bindings); F.Field(B.TriggerRuntime.NextQueueSequence);
+        if (Version<2) return; // Original generic images retain their exact prefix.
+        F.Field(Required); F.Field(B.AcceptedBleedFamilyId);
+        F.MapWith(B.LuminousFields,[&](auto& V)
+        {
+            F.Field(V.OwnerFantasmId); F.Field(V.ActivatedOwnerAction); F.Field(V.ExpiresBeforeOwnerAction);
+            F.Field(V.BaseNocturneSuccessfulTargetCount); F.Set(V.NocturneConsumedTargets); F.Set(V.RekindledAllies);
+            F.Field(V.bLastRoseUsed); F.Field(V.AlterBloodReversalSuccessCount); F.Set(V.AlterThornConsumedTargets);
+            F.Field(V.bAlterMirrorDebtUsed); F.Set(V.AlterNegationRefundedCategories);
+        });
+        F.MapWith(B.LuminousBaseStates,[&](auto& V)
+        {
+            F.Field(V.ScarletReserve); F.Field(V.UltimateChargePercent); F.Field(V.bRevivalUsed);
+            F.Field(V.RevivalAfterglowExpiresOwnerAction); F.Field(V.MercifulEdgeExpiresOwnerAction);
+            F.Field(V.LastNightExecutionChargeOwnerAction); F.Field(V.bDayAttunement); F.Field(V.bAttunementActive);
+            F.Field(V.AttunementExpiryAction); F.Field(V.NextA2ReadyOwnerAction); F.Field(V.NextA3ReadyOwnerAction);
+            F.Field(V.DiscountNextA2Reserve); F.Field(V.bNextScarletCadenceDelayReduction); F.Field(V.LastBleedReserveOwnerAction);
+            F.Set(V.PendingFourMarkTargetBonus); F.Set(V.EclipseClaimTargets); F.Map(V.EclipseClaimExpiryOwnerAction);
+            F.Field(V.bAllyRevivalSpent); F.Field(V.PreparedCovenantTarget); F.Field(V.CovenantExpiryOwnerAction);
+            F.Field(V.PreparedDayUltimateRevivalTarget); F.Field(V.DayUltimateRevivalExpiryOwnerAction); F.Field(V.OwnerActions);
+            F.Map(V.HemalMarks); F.Map(V.HemalMarkExpiryOwnerAction); F.Map(V.HemorrhageStacks); F.Map(V.HemorrhageEndOwnerAction);
+            F.Map(V.BlessingExpiry); F.Map(V.BlessingCategory); F.Field(V.DawnOathExpiry); F.Map(V.DawnOathByBeneficiary);
+            F.Field(V.NextFantasmReadyOwnerAction); F.Array(V.ObservedEnemyContentIds);
+        });
+        F.MapWith(B.LuminousAlterStates,[&](auto& V)
+        {
+            F.Field(V.RedTithe); F.Field(V.UltimateChargePercent); F.Field(V.OwnerActions); F.Field(V.MartyrMomentum);
+            F.Field(V.MomentumExpiresOwnerAction); F.Field(V.MartyrStanceExpires); F.Field(V.bMartyrNextFinisherPending);
+            F.Field(V.DeathPriceExpiresOwnerAction); F.Field(V.EucharistNextAvailableAction); F.Field(V.CommunionNextAvailableAction);
+            F.Field(V.bSelfRevived); F.Field(V.LastPursuitOwnerAction); F.Field(V.bPursuitDelayPending);
+            F.Array(V.ObservedEnemyContentIds); F.Map(V.RuptureSeals); F.Map(V.SealExpiryOwnerAction);
+            F.Map(V.SeveringWounds); F.Map(V.WoundExpiryOwnerAction);
+        });
+        F.ArrayWith(B.LuminousDawnBarriers,[&](auto& V)
+        { F.Field(V.GrantingManifestation); F.Field(V.Beneficiary); F.Field(V.Remaining); F.Field(V.ExpiresAfterOwnerAction); });
     }
     static bool Validate(const FOGTurnBattle& B,FString& Error)
     {
@@ -193,7 +244,8 @@ bool FOGTurnBattle::ExportNativeCheckpoint(TArray<uint8>& Out,FString& Error) co
     FOGNativeCombatCheckpointCodec::TrimDiagnostics(Snapshot);
     TArray<uint8> Payload;
     FMemoryWriter Memory(Payload,true); FObjectAndNameAsStringProxyArchive Archive(Memory,false);
-    FOGNativeCombatCheckpointCodec::Serialize(Snapshot,Archive);
+    uint32 Required=FOGNativeCombatCheckpointCodec::Requirements(Snapshot);
+    FOGNativeCombatCheckpointCodec::Serialize(Snapshot,Archive,CheckpointVersion,Required);
     if (Archive.IsError() || Payload.IsEmpty() || Payload.Num()>MaximumCheckpointBytes)
     { Error=TEXT("Cannot serialize the native encounter checkpoint."); return false; }
     FMemoryWriter Envelope(Out,true);
@@ -203,20 +255,44 @@ bool FOGTurnBattle::ExportNativeCheckpoint(TArray<uint8>& Out,FString& Error) co
 }
 bool FOGTurnBattle::RestoreNativeCheckpoint(const TArray<uint8>& Bytes,FOGRankSuppressionResolver Rank,FString& Error)
 {
+    FOGCombatRecoveryBindings Bindings; Bindings.Rank=MoveTemp(Rank);
+    return RestoreNativeCheckpointWithBindings(Bytes,MoveTemp(Bindings),Error);
+}
+bool FOGTurnBattle::RestoreNativeCheckpointWithBindings(const TArray<uint8>& Bytes,FOGCombatRecoveryBindings Bindings,FString& Error)
+{
     Error.Reset();
     if (Bytes.Num()<9 || Bytes.Num()>MaximumCheckpointBytes+8)
     { Error=TEXT("Native encounter checkpoint size is invalid."); return false; }
     FMemoryReader Envelope(Bytes,true); int32 Version=0; uint32 Crc=0;
     Envelope<<Version; Envelope<<Crc;
-    if (Version!=CheckpointVersion || Crc!=FCrc::MemCrc32(Bytes.GetData()+8,Bytes.Num()-8))
+    if ((Version!=1 && Version!=CheckpointVersion) || Crc!=FCrc::MemCrc32(Bytes.GetData()+8,Bytes.Num()-8))
     { Error=TEXT("Native encounter checkpoint version or integrity differs; saved bytes preserved."); return false; }
     TArray<uint8> Payload; Payload.Append(Bytes.GetData()+8,Bytes.Num()-8);
     FMemoryReader Memory(Payload,true); FObjectAndNameAsStringProxyArchive Archive(Memory,false);
-    FOGTurnBattle Candidate; FOGNativeCombatCheckpointCodec::Serialize(Candidate,Archive);
-    if (Archive.IsError() || Memory.Tell()!=Memory.TotalSize() ||
-        !FOGNativeCombatCheckpointCodec::Validate(Candidate,Error))
-    { if (Error.IsEmpty()) Error=TEXT("Native encounter checkpoint could not be restored atomically."); return false; }
-    Candidate.RankSuppressionResolver=MoveTemp(Rank);
+    FOGTurnBattle Candidate; uint32 Required=0;
+    FOGNativeCombatCheckpointCodec::Serialize(Candidate,Archive,Version,Required);
+    if (Archive.IsError() || Memory.Tell()!=Memory.TotalSize() || (Required&~uint32(127))!=0)
+    { Error=TEXT("Native encounter checkpoint could not be decoded atomically."); return false; }
+    const bool SpecializedState=!Candidate.LuminousBaseStates.IsEmpty() || !Candidate.LuminousAlterStates.IsEmpty() ||
+        !Candidate.LuminousFields.IsEmpty() || !Candidate.LuminousDawnBarriers.IsEmpty() ||
+        Candidate.State.Units.ContainsByPredicate([](const auto& U){return U.IdentityId==FOGContentId(TEXT("character:luminous_valentine.identity"));});
+    if ((SpecializedState && !Bindings.RebindSpecialized) ||
+        ((Required&IdentityCallback) && !Bindings.Identity.Override) ||
+        ((Required&ConditionCallback) && !Bindings.Conditions) ||
+        ((Required&RankCallback) && !Bindings.Rank) ||
+        ((Required&(BloodCallback|RevivalCallback|FieldCallback|ContestCallback)) && !Bindings.RebindSpecialized))
+    { Error=TEXT("Installed native recovery provider has not rebuilt all required callback authority."); return false; }
+    Candidate.IdentityContext=MoveTemp(Bindings.Identity);
+    Candidate.NativeFallbackConditions=Bindings.Conditions;
+    Candidate.TriggerRuntime.ConditionEvaluator=MoveTemp(Bindings.Conditions);
+    Candidate.RankSuppressionResolver=MoveTemp(Bindings.Rank);
+    const auto ExpectedBleed=Candidate.AcceptedBleedFamilyId;
+    if (Bindings.RebindSpecialized && !Bindings.RebindSpecialized(Candidate,Error)) return false;
+    if ((FOGNativeCombatCheckpointCodec::Requirements(Candidate)&Required)!=Required ||
+        (ExpectedBleed.IsValid() && Candidate.AcceptedBleedFamilyId!=ExpectedBleed))
+    { Error=TEXT("Restored callback authority differs from the captured native contract."); return false; }
+    if (!FOGNativeCombatCheckpointCodec::Validate(Candidate,Error))
+    { if (Error.IsEmpty()) Error=TEXT("Native encounter checkpoint validation failed."); return false; }
     // No Initialize(), opening triggers, costs, resource grants or rewards run on restore.
     *this=MoveTemp(Candidate); return true;
 }

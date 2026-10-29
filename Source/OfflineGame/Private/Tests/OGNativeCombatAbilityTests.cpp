@@ -270,4 +270,43 @@ bool FOGNativeTurnCheckpointTest::RunTest(const FString&)
         Restored.ValidateResolvedAction(NativeAction(Source,Enemy.UnitEntityId),Expanded,Error));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeCallbackRecoveryTest,
+    "OfflineGame.Combat.Recovery.CallbacksRebindWithoutSerializedPermission",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGNativeCallbackRecoveryTest::RunTest(const FString&)
+{
+    auto Source=NativeTestUnit(0,TEXT("test:callback.identity"));
+    Source.SkillSet.ActiveSkills={FOGContentId(TEXT("test:callback.strike"))};
+    auto Enemy=NativeTestUnit(1,TEXT("test:callback.identity"));
+    FOGIdentityExclusivityContext OriginalIdentity;
+    OriginalIdentity.Override=[](const auto&,const auto&){return EOGIdentityExclusivityOverrideDecision::AllowDuplicate;};
+    FOGCombatConditionEvaluator OriginalConditions=[](const auto&,const auto&,const auto&){return true;};
+    FOGTurnBattle Battle; FString Error;
+    if (!Battle.Initialize(NativeInitial(Source,{Enemy}),{},OriginalConditions,OriginalIdentity,{},Error) ||
+        !Battle.RegisterNativeAbility(NativeStrike(Source),Error) ||
+        !Battle.ApplyResolvedAction(NativeAction(Source,Enemy.UnitEntityId),Error)) return false;
+    TArray<uint8> Bytes; if (!Battle.ExportNativeCheckpoint(Bytes,Error)) {AddError(Error);return false;}
+    FOGTurnBattle Restored;
+    TestFalse(TEXT("A saved callback requirement cannot grant its own authority"),Restored.RestoreNativeCheckpoint(Bytes,{},Error));
+    TestFalse(TEXT("Rejected callback restore publishes no partial battle"),Restored.GetState().BattleId.IsValid());
+    int32 FreshCalls=0; bool Allow=false;
+    auto Fresh=[&]()
+    {
+        FOGCombatRecoveryBindings B;
+        B.Identity.Override=[&](const auto&,const auto&)
+        {++FreshCalls;return Allow?EOGIdentityExclusivityOverrideDecision::AllowDuplicate:EOGIdentityExclusivityOverrideDecision::RejectDuplicate;};
+        B.Conditions=[](const auto&,const auto&,const auto&){return true;}; return B;
+    };
+    TestFalse(TEXT("Fresh native authority can reject what the old session allowed"),
+        Restored.RestoreNativeCheckpointWithBindings(Bytes,Fresh(),Error));
+    TestTrue(TEXT("Restore evaluated the new native callback"),FreshCalls>0);
+    Allow=true;
+    if (!TestTrue(TEXT("Complete installed callback bindings restore atomically"),
+        Restored.RestoreNativeCheckpointWithBindings(Bytes,Fresh(),Error))) {AddError(Error);return false;}
+    TestTrue(TEXT("Restoration keeps actual already-resolved damage"),
+        Restored.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(800));
+    TestEqual(TEXT("Restoration does not replay the action log"),Restored.GetLog().GetNextSequence(),Battle.GetLog().GetNextSequence());
+    return true;
+}
 #endif

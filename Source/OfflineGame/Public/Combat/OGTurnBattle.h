@@ -139,6 +139,16 @@ using FOGLuminousRegisteredEffectRemoval = TFunction<
 using FOGLuminousRegisteredContestEvidence = TFunction<
     bool(const FOGLuminousRegisteredEffectContest&,FString&)>;
 
+class FOGTurnBattle;
+/** Fresh native authority supplied by installed code, never deserialized executable callbacks. */
+struct OFFLINEGAME_API FOGCombatRecoveryBindings
+{
+    FOGIdentityExclusivityContext Identity;
+    FOGCombatConditionEvaluator Conditions;
+    FOGRankSuppressionResolver Rank;
+    TFunction<bool(FOGTurnBattle&,FString&)> RebindSpecialized;
+};
+
 class OFFLINEGAME_API FOGTurnBattle
 {
 public:
@@ -170,6 +180,7 @@ public:
     /** Exact settled runtime image. Presentation and native callback closures are not persisted. */
     bool ExportNativeCheckpoint(TArray<uint8>& Out,FString& Error) const;
     bool RestoreNativeCheckpoint(const TArray<uint8>& Bytes,FOGRankSuppressionResolver Rank,FString& Error);
+    bool RestoreNativeCheckpointWithBindings(const TArray<uint8>& Bytes,FOGCombatRecoveryBindings Bindings,FString& Error);
     bool ReadWorldCastRecovery(const FOGEntityId& Cast,FOGResolvedCombatAction& Root,
         FOGWorldAbilitySpecification& Specification,TSet<int32>& Completed,int64& Started) const;
     const FOGTurnBattleState& GetState() const { return State; }
