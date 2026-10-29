@@ -91,15 +91,16 @@ public:
     FOGDefinitionLibraryChanged OnDefinitionsChanged;
     /** New subsystem schemas register one adapter; new entries require no code changes. */
     bool RegisterCatalogSystem(FName System,const FString& RelativeBasePath,const FString& EmptyJson,
-        const TArray<FString>& ArrayFields,FOGDefinitionCatalogValidator Validator,FString& Error);
+        const TArray<FString>& ArrayFields,FOGDefinitionCatalogValidator Validator,FString& Error,
+        const TArray<FString>& MetadataFields={});
     static bool LoadCatalog(FName System,const FString& BaseJson,FString& Out,FString& Error);
     static bool MergeCatalogDocuments(const FString& Base,const TArray<FString>& Fragments,
-        const TArray<FString>& ArrayFields,FString& Out,FString& Error);
+        const TArray<FString>& ArrayFields,FString& Out,FString& Error,const TArray<FString>& MetadataFields={});
 private:
     struct FCatalogAdapter
     {
         FString BasePath,EmptyJson;
-        TArray<FString> Arrays;
+        TArray<FString> Arrays,Metadata;
         FOGDefinitionCatalogValidator Validate;
     };
     struct FInstalledBundle

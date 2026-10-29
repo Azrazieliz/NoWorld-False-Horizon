@@ -1,4 +1,5 @@
 #include "Animation/OGSharedReferenceMotion.h"
+#include "Content/OGDefinitionLibrary.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
@@ -25,6 +26,9 @@ struct FCachedReference
 struct FReferenceRegistry
 {
     bool bLoaded = false;
+    bool bAttempted = false;
+    int64 DefinitionRevision = -1;
+    TWeakObjectPtr<UOGDefinitionLibrary> DefinitionOwner;
     uint64 Clock = 0;
     TMap<FName, FString> Paths;
     TArray<FOGSharedMotionEntry> Routes;
@@ -33,40 +37,40 @@ struct FReferenceRegistry
     FString CalibrationPath;
     TStrongObjectPtr<USkeleton> CalibrationSkeleton;
     TSharedPtr<const FOGReferenceCalibrationBasis, ESPMode::ThreadSafe> Calibration;
-    void Ensure()
+    bool Read(const FString& Text,FString& Error)
     {
-        if (bLoaded) return;
-        bLoaded = true;
-        FString Text;
         TSharedPtr<FJsonObject> Root;
-        if (!FFileHelper::LoadFileToString(Text, *(LibraryRoot() / TEXT("SharedReferenceLibrary.json"))) ||
-            !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root.IsValid()) return;
+        if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root.IsValid())
+            return Fail(Error,TEXT("Original source manifest is not a complete JSON object."));
         FString Schema;
-        if (!Root->TryGetStringField(TEXT("schema"), Schema) || Schema != TEXT("noworld.shared_reference_library.v1")) return;
+        if (!Root->TryGetStringField(TEXT("schema"), Schema) || Schema != TEXT("noworld.shared_reference_library.v1"))
+            return Fail(Error,TEXT("Original source manifest schema differs."));
         FString Basis;
         if (!Root->TryGetStringField(TEXT("calibration_basis"), Basis) ||
             Basis != TEXT("koikatsu.native_original.reference_delta.v1") ||
             !Root->TryGetStringField(TEXT("calibration_skeleton"), CalibrationPath) ||
-            !CalibrationPath.StartsWith(TEXT("/Game/")) || CalibrationPath.Contains(TEXT(".."))) return;
+            !CalibrationPath.StartsWith(TEXT("/Game/")) || CalibrationPath.Contains(TEXT("..")))
+            return Fail(Error,TEXT("Original source calibration contract is absent or invalid."));
         const TArray<TSharedPtr<FJsonValue>>* Clips = nullptr;
-        if (!Root->TryGetArrayField(TEXT("clips"), Clips)) return;
+        if (!Root->TryGetArrayField(TEXT("clips"), Clips)) return Fail(Error,TEXT("Original source manifest has no clip array."));
         for (const auto& Value : *Clips)
         {
             const auto Object = Value.IsValid() ? Value->AsObject() : nullptr;
             FString Id, Path;
             if (!Object || !Object->TryGetStringField(TEXT("id"), Id) || !Object->TryGetStringField(TEXT("path"), Path) ||
                 Id.IsEmpty() || !Path.StartsWith(TEXT("Clips/")) || Path.Contains(TEXT("..")) ||
-                Path.Contains(TEXT(":")) || Path.Contains(TEXT("\\")) || !Path.EndsWith(TEXT(".nwmotion"))) continue;
+                Path.Contains(TEXT(":")) || Path.Contains(TEXT("\\")) || !Path.EndsWith(TEXT(".nwmotion")))
+                return Fail(Error,TEXT("Original source clip identity/path is invalid."));
             const FName Key(*Id);
-            if (Paths.Contains(Key)) { Paths.Reset(); Routes.Reset(); return; }
+            if (Paths.Contains(Key)) return Fail(Error,TEXT("Original source clip identity is duplicated across installed catalogs."));
             Paths.Add(Key, Path);
         }
         const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
-        if (!Root->TryGetArrayField(TEXT("routes"), Values)) return;
+        if (!Root->TryGetArrayField(TEXT("routes"), Values)) return Fail(Error,TEXT("Original source manifest has no route array."));
         for (const auto& Value : *Values)
         {
             const auto O = Value.IsValid() ? Value->AsObject() : nullptr;
-            if (!O) continue;
+            if (!O) return Fail(Error,TEXT("Original source route is not an object."));
             auto Name = [&O](const TCHAR* Key) { FString V; O->TryGetStringField(Key, V); return FName(*V); };
             FOGSharedMotionEntry E;
             E.SourceClipId = Name(TEXT("clip")); E.MotionId = E.SourceClipId;
@@ -88,9 +92,13 @@ struct FReferenceRegistry
             if (!Paths.Contains(E.SourceClipId) || E.GameplayAction.IsNone() || E.GameplayContext.IsNone() ||
                 !FMath::IsFinite(Count) || Count < 1 || Count > MAX_int32 || FMath::FloorToDouble(Count) != Count ||
                 !FMath::IsFinite(Rate) || Rate <= 0 || Rate > MAX_flt ||
-                !FMath::IsFinite(Priority) || Priority < MIN_int32 || Priority > MAX_int32) continue;
+                !FMath::IsFinite(Priority) || Priority < MIN_int32 || Priority > MAX_int32 || FMath::FloorToDouble(Priority)!=Priority)
+                return Fail(Error,TEXT("Original source route has a missing clip/action/context or invalid source timing."));
             E.RequiredParticipants = static_cast<int32>(Count); E.PlayRate = static_cast<float>(Rate);
             E.Priority = static_cast<int32>(Priority);
+            if ((E.RequiredParticipants>1 && (E.AuthoredSceneId.IsNone() || E.SceneRole.IsNone())) ||
+                (E.RequiredParticipants==1 && !E.SceneRole.IsNone()))
+                return Fail(Error,TEXT("Original scene routes require their actual grouped source identity and roles."));
             const TArray<TSharedPtr<FJsonValue>>* Caps = nullptr;
             if (O->TryGetArrayField(TEXT("capabilities"), Caps)) for (const auto& Cap : *Caps)
                 if (Cap.IsValid() && Cap->Type == EJson::String) E.RequiredCapabilities.Add(FName(*Cap->AsString()));
@@ -124,7 +132,47 @@ struct FReferenceRegistry
             if (!LegacyId.IsNone()) Aliases.FindOrAdd(LegacyId).Add(E.SourceClipId);
             Routes.Add(MoveTemp(E));
         }
+        struct FSceneRoles { int32 Count=0; TSet<FName> Roles; };
+        TMap<FString,FSceneRoles> Scenes;
+        for (const auto& Route:Routes) if (Route.RequiredParticipants>1)
+        {
+            FString Key;
+            for (FName Part:{Route.AuthoredSceneId,Route.GameplayAction,Route.GameplayContext})
+            { const auto Text=Part.ToString(); Key+=LexToString(Text.Len())+TEXT(":")+Text; }
+            auto& Group=Scenes.FindOrAdd(Key);
+            if (Group.Count && Group.Count!=Route.RequiredParticipants)
+                return Fail(Error,TEXT("Original scene participant counts disagree across source roles."));
+            Group.Count=Route.RequiredParticipants; Group.Roles.Add(Route.SceneRole);
+        }
+        for (const auto& Scene:Scenes) if (Scene.Value.Roles.Num()!=Scene.Value.Count)
+            return Fail(Error,TEXT("Original synchronized scene is missing one or more genuine participant tracks."));
+        return true;
     }
+    void Ensure()
+    {
+        auto* Definitions=UOGDefinitionLibrary::Get();
+        if (Definitions) Definitions->EnsureDiscovered();
+        const int64 Revision=Definitions?Definitions->GetRevision():-1;
+        if (bAttempted && DefinitionOwner.Get()==Definitions && DefinitionRevision==Revision) return;
+        bAttempted=true; DefinitionOwner=Definitions; DefinitionRevision=Revision;
+        FString Base,Text,Error;
+        if (!FFileHelper::LoadFileToString(Base,*(LibraryRoot()/TEXT("SharedReferenceLibrary.json")))) return;
+        if (!UOGDefinitionLibrary::LoadCatalog(TEXT("source_motion"),Base,Text,Error))
+        { UE_LOG(LogTemp,Error,TEXT("Original source catalog could not compose: %s"),*Error); return; }
+        FReferenceRegistry Candidate;
+        if (!Candidate.Read(Text,Error))
+        { UE_LOG(LogTemp,Error,TEXT("Original source catalog admission failed; current library retained: %s"),*Error); return; }
+        if (bLoaded && CalibrationPath!=Candidate.CalibrationPath)
+        { UE_LOG(LogTemp,Error,TEXT("An active source library cannot replace its original calibration Skeleton.")); return; }
+        for (auto It=Cache.CreateIterator();It;++It)
+        {
+            const auto* Before=Paths.Find(It.Key()); const auto* After=Candidate.Paths.Find(It.Key());
+            if (!Before || !After || *Before!=*After) It.RemoveCurrent();
+        }
+        Paths=MoveTemp(Candidate.Paths); Routes=MoveTemp(Candidate.Routes); Aliases=MoveTemp(Candidate.Aliases);
+        CalibrationPath=MoveTemp(Candidate.CalibrationPath); bLoaded=true;
+    }
+
 };
 FReferenceRegistry& Registry() { static FReferenceRegistry Value; return Value; }
 bool BuildBasis(const FReferenceSkeleton& Ref, FOGReferenceCalibrationBasis& Out, FString& Error)
@@ -374,6 +422,19 @@ bool FOGReferenceRigAdapter::Evaluate(const FOGReferenceMotionClip& Clip,
     return true;
 }
 
+bool FOGSharedReferenceLibrary::ValidateManifestJson(const FString& Json,FString& Error,bool RequireInstalledPackets)
+{
+    Error.Reset(); FReferenceRegistry Candidate;
+    if (!Candidate.Read(Json,Error)) return false;
+    if (RequireInstalledPackets) for (const auto& Pair:Candidate.Paths)
+        if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*(LibraryRoot()/Pair.Value)))
+        { Error=TEXT("Original source packet is not installed: ")+Pair.Key.ToString(); return false; }
+    return true;
+}
+void FOGSharedReferenceLibrary::RefreshInstalledSources()
+{
+    check(IsInGameThread()); auto& R=Registry(); R.bAttempted=false; R.Ensure();
+}
 TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> FOGSharedReferenceLibrary::Load(FName Id, FString& Error)
 {
     if (!IsInGameThread()) { Fail(Error,TEXT("Shared asset loading requires the game thread.")); return nullptr; }

@@ -6,6 +6,7 @@
 #include "Effects/OGNativeCombatEffect.h"
 #include "Interaction/OGInteractionDefinition.h"
 #include "Animation/OGSharedMotionLibrary.h"
+#include "Animation/OGSharedReferenceMotion.h"
 #include "Runtime/OGAdaptiveScoreComponent.h"
 #include "Progression/OGCharacterDevelopmentService.h"
 #include "World/OGOwnedEquipmentService.h"
@@ -58,14 +59,16 @@ bool SkipValue(const FString& S,int32& I)
     }
     return !String && Depth==0;
 }
-bool RawArrays(const FString& Json,const TArray<FString>& Fields,FString& Schema,TMap<FString,FString>& Arrays,FString& Error)
+bool RawArrays(const FString& Json,const TArray<FString>& Fields,const TArray<FString>& MetadataFields,
+    FString& Schema,TMap<FString,FString>& Arrays,TMap<FString,FString>& Metadata,FString& Error)
 {
     if (!CheckJson(Json,Error)) return false;
     TSharedPtr<FJsonObject> Root;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json),Root) || !Root ||
         !Root->TryGetStringField(TEXT("schema"),Schema)) return Fail(Error,TEXT("Definition catalog requires a schema."));
     for (const auto& Pair:Root->Values)
-        if (Pair.Key!=TEXT("schema") && !Fields.Contains(Pair.Key)) return Fail(Error,TEXT("Unknown catalog root field: ")+Pair.Key);
+        if (Pair.Key!=TEXT("schema") && !Fields.Contains(Pair.Key) && !MetadataFields.Contains(Pair.Key))
+            return Fail(Error,TEXT("Unknown catalog root field: ")+Pair.Key);
     int32 I=0; Space(Json,I); if (I>=Json.Len() || Json[I++]!='{') return false;
     while (I<Json.Len())
     {
@@ -80,6 +83,7 @@ bool RawArrays(const FString& Json,const TArray<FString>& Fields,FString& Schema
             if (Json[Begin]!='[' || I<=Begin+1 || Json[I-1]!=']') return Fail(Error,TEXT("Catalog field must be an array: ")+Name);
             Arrays.Add(Name,Json.Mid(Begin+1,I-Begin-2).TrimStartAndEnd());
         }
+        else if (MetadataFields.Contains(Name)) Metadata.Add(Name,Json.Mid(Begin,I-Begin).TrimStartAndEnd());
         Space(Json,I); if (I<Json.Len() && Json[I]==',') ++I; else break;
     }
     for (const auto& Field:Fields) if (!Arrays.Contains(Field)) return Fail(Error,TEXT("Missing catalog array: ")+Field);
@@ -136,6 +140,28 @@ void UOGDefinitionLibrary::Initialize(FSubsystemCollectionBase& Collection)
     RegisterCatalogSystem(TEXT("narrative"),TEXT("NoWorld/Narrative/NarrativeCatalog.json"),
         TEXT("{\"schema\":\"noworld.narrative.v1\",\"quests\":[],\"dialogues\":[]}"),{TEXT("quests"),TEXT("dialogues")},
         [](const FString& J,FString& E){FOGNarrativeCatalog D;return FOGNarrativeCatalog::Parse(J,D,E);},Error);
+    // Reuse the actual original calibration contract; no invented Skeleton fallback.
+    FString SourceText; TSharedPtr<FJsonObject> SourceRoot;
+    const FString SourcePath=TEXT("NoWorld/Animation/SharedSource/SharedReferenceLibrary.json");
+    if (FFileHelper::LoadFileToString(SourceText,*(FPaths::ProjectContentDir()/SourcePath)) &&
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(SourceText),SourceRoot) && SourceRoot)
+    {
+        FString Schema,Basis,Skeleton;
+        if (SourceRoot->TryGetStringField(TEXT("schema"),Schema) &&
+            SourceRoot->TryGetStringField(TEXT("calibration_basis"),Basis) &&
+            SourceRoot->TryGetStringField(TEXT("calibration_skeleton"),Skeleton))
+        {
+            auto Empty=MakeShared<FJsonObject>(); Empty->SetStringField(TEXT("schema"),Schema);
+            Empty->SetStringField(TEXT("calibration_basis"),Basis); Empty->SetStringField(TEXT("calibration_skeleton"),Skeleton);
+            Empty->SetArrayField(TEXT("clips"),{}); Empty->SetArrayField(TEXT("routes"),{});
+            FString EmptyJson; FJsonSerializer::Serialize(Empty.ToSharedRef(),TJsonWriterFactory<>::Create(&EmptyJson));
+            if (!RegisterCatalogSystem(TEXT("source_motion"),SourcePath,EmptyJson,{TEXT("clips"),TEXT("routes")},
+                [](const FString& Json,FString& Failure){return FOGSharedReferenceLibrary::ValidateManifestJson(Json,Failure,true);},
+                Error,{TEXT("calibration_basis"),TEXT("calibration_skeleton"),TEXT("coverage")}))
+                UE_LOG(LogTemp,Error,TEXT("Original shared source catalog admission failed: %s"),*Error);
+        }
+    }
+
 }
 void UOGDefinitionLibrary::Deinitialize()
 {
@@ -143,12 +169,13 @@ void UOGDefinitionLibrary::Deinitialize()
     CatalogAdapters.Reset(); Installed.Reset(); Super::Deinitialize();
 }
 bool UOGDefinitionLibrary::RegisterCatalogSystem(FName System,const FString& Path,const FString& Empty,
-    const TArray<FString>& Arrays,FOGDefinitionCatalogValidator Validator,FString& Error)
+    const TArray<FString>& Arrays,FOGDefinitionCatalogValidator Validator,FString& Error,const TArray<FString>& Metadata)
 {
     if (System.IsNone() || Path.Contains(TEXT("..")) || Path.Contains(TEXT(":")) || FPaths::IsRelative(Path)==false ||
         Arrays.IsEmpty() || !Validator || CatalogAdapters.Contains(System)) return Fail(Error,TEXT("Invalid or duplicate catalog adapter."));
     TSet<FString> SeenFields;
-    for (const auto& Field:Arrays)
+    TArray<FString> Fields=Arrays; Fields.Append(Metadata);
+    for (const auto& Field:Fields)
     {
         if (Field.IsEmpty() || Field==TEXT("schema") || SeenFields.Contains(Field))
             return Fail(Error,TEXT("Catalog array fields must be distinct literal schema names."));
@@ -157,18 +184,21 @@ bool UOGDefinitionLibrary::RegisterCatalogSystem(FName System,const FString& Pat
         SeenFields.Add(Field);
     }
     if (!Validator(Empty,Error)) return false;
-    FCatalogAdapter A; A.BasePath=Path; A.EmptyJson=Empty; A.Arrays=Arrays; A.Validate=MoveTemp(Validator);
+    FCatalogAdapter A; A.BasePath=Path; A.EmptyJson=Empty; A.Arrays=Arrays; A.Metadata=Metadata; A.Validate=MoveTemp(Validator);
     CatalogAdapters.Add(System,MoveTemp(A)); return true;
 }
 bool UOGDefinitionLibrary::MergeCatalogDocuments(const FString& Base,const TArray<FString>& Fragments,
-    const TArray<FString>& Fields,FString& Out,FString& Error)
+    const TArray<FString>& Fields,FString& Out,FString& Error,const TArray<FString>& MetadataFields)
 {
-    Out.Reset(); Error.Reset(); TMap<FString,FString> Combined; FString Schema;
-    if (!RawArrays(Base,Fields,Schema,Combined,Error)) return false;
+    Out.Reset(); Error.Reset(); TMap<FString,FString> Combined,Metadata; FString Schema;
+    if (!RawArrays(Base,Fields,MetadataFields,Schema,Combined,Metadata,Error)) return false;
     for (const auto& Fragment:Fragments)
     {
-        TMap<FString,FString> More; FString Other;
-        if (!RawArrays(Fragment,Fields,Other,More,Error)) return false;
+        TMap<FString,FString> More,OtherMetadata; FString Other;
+        if (!RawArrays(Fragment,Fields,MetadataFields,Other,More,OtherMetadata,Error)) return false;
+        for (const auto& Pair:OtherMetadata)
+            if (!Metadata.Contains(Pair.Key) || Metadata[Pair.Key]!=Pair.Value)
+                return Fail(Error,TEXT("A source catalog fragment cannot replace its calibration/provenance metadata."));
         if (Other!=Schema) return Fail(Error,TEXT("Catalog schema mismatch."));
         for (const auto& Field:Fields) if (!More[Field].IsEmpty())
         { if (!Combined[Field].IsEmpty()) Combined[Field]+=TEXT(","); Combined[Field]+=More[Field]; }
@@ -178,6 +208,7 @@ bool UOGDefinitionLibrary::MergeCatalogDocuments(const FString& Base,const TArra
     Writer->WriteObjectStart(); Writer->WriteValue(TEXT("schema"),Schema); Writer->WriteObjectEnd(); Writer->Close();
     Prefix.TrimEndInline(); Prefix.RemoveAt(Prefix.Len()-1);
     Out=MoveTemp(Prefix);
+    for (const auto& Field:MetadataFields) if (const auto* Raw=Metadata.Find(Field)) Out+=TEXT(",\"")+Field+TEXT("\":")+*Raw;
     for (const auto& Field:Fields) Out+=TEXT(",\"")+Field+TEXT("\":[")+Combined[Field]+TEXT("]");
     Out+=TEXT("}"); return true;
 }
@@ -269,7 +300,7 @@ bool UOGDefinitionLibrary::BuildCandidate(const TArray<FInstalledBundle>& Bundle
     {
         const auto& A=CatalogAdapters[Pair.Key]; FString Base,Merged;
         if (!FFileHelper::LoadFileToString(Base,*(FPaths::ProjectContentDir()/A.BasePath))) Base=A.EmptyJson;
-        if (!MergeCatalogDocuments(Base,Pair.Value,A.Arrays,Merged,Error) || !A.Validate(Merged,Error)) return false;
+        if (!MergeCatalogDocuments(Base,Pair.Value,A.Arrays,Merged,Error,A.Metadata) || !A.Validate(Merged,Error)) return false;
     }
     return true;
 }
@@ -379,5 +410,5 @@ bool UOGDefinitionLibrary::LoadCatalog(FName System,const FString& Base,FString&
     Library->EnsureDiscovered(); const auto* Adapter=Library->CatalogAdapters.Find(System);
     if (!Adapter) return Fail(Error,TEXT("No catalog adapter registered."));
     const auto* More=Library->CatalogFragments.Find(System);
-    return MergeCatalogDocuments(Base.IsEmpty()?Adapter->EmptyJson:Base,More?*More:TArray<FString>(),Adapter->Arrays,Out,Error);
+    return MergeCatalogDocuments(Base.IsEmpty()?Adapter->EmptyJson:Base,More?*More:TArray<FString>(),Adapter->Arrays,Out,Error,Adapter->Metadata);
 }

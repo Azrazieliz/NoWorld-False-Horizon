@@ -690,16 +690,21 @@ bool UOGSharedMotionControllerComponent::FindReference(FName Action,FName Contex
         {
             const auto* Explicit=SharedLibrary.LoadSynchronous();
             if (!Explicit) continue;
-            bool Declared=false;
+            bool Declared=false,DeclaresAction=false;
             for (const auto& Choice:Explicit->Motions)
                 if (Choice.bApprovedForGameplay && Choice.GameplayAction==Action &&
                     Choice.CompatibleRigProfile==RigProfile &&
                     (Choice.GameplayContext.IsNone() || Choice.GameplayContext==Context) &&
                     Choice.RequiredParticipants==Count &&
-                    (Count==1 ? Choice.SceneRole.IsNone() : Choice.SceneRole==Role) &&
-                    FOGSharedReferenceLibrary::CanonicalId(Choice.SourceClipId)==Entry.SourceClipId)
-                { Declared=true; break; }
-            if (!Declared) continue;
+                    (Count==1 ? Choice.SceneRole.IsNone() : Choice.SceneRole==Role))
+                {
+                    DeclaresAction=true;
+                    if (FOGSharedReferenceLibrary::CanonicalId(Choice.SourceClipId)==Entry.SourceClipId)
+                    { Declared=true; break; }
+                }
+            // Preserve an existing local semantic override. New globally installed
+            // source semantics require no per-character copy or whitelist entry.
+            if (DeclaresAction && !Declared) continue;
         }
         auto Clip=FOGSharedReferenceLibrary::Load(Entry.SourceClipId,Error);
         if (Clip && PrepareReference(*Clip,OutMapping,Error))
