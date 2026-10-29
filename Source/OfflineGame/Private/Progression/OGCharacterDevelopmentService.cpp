@@ -1,5 +1,7 @@
 #include "Progression/OGCharacterDevelopmentService.h"
 
+#include "Content/OGDefinitionLibrary.h"
+#include "Objects/OGObjectActionDefinition.h"
 #include "Dom/JsonObject.h"
 #include "Misc/LexFromString.h"
 #include "Misc/SecureHash.h"
@@ -130,6 +132,14 @@ FString DefinitionFingerprint(const FOGCharacterDevelopmentDefinition& D)
         FingerprintPart(Text, Cost.DisplayName);
         FingerprintPart(Text, LexToString(Cost.Amount));
     }
+    for (const auto& Cost : D.ItemCosts)
+    {
+        FingerprintPart(Text, TEXT("item_cost"));
+        FingerprintPart(Text, Cost.ObjectId.ToString());
+        FingerprintPart(Text, Cost.RankId.ToString());
+        FingerprintPart(Text, Cost.QualityId.ToString());
+        FingerprintPart(Text, LexToString(Cost.InstanceCount));
+    }
     FingerprintPart(Text, WriteState(WriteGrants(D.StatGrants)));
     for (const auto& Form : D.GrantedForms) FingerprintPart(Text, Form.ToString());
     return Text;
@@ -143,6 +153,98 @@ FString Digest(const FString& Text)
     uint8 Bytes[16];
     Md5.Final(Bytes);
     return BytesToHex(Bytes, 16);
+}
+
+// Follow the inventory/object-action ownership model: the Ruler and its
+// genuine Manifestations share available inputs; equipped instances stay put.
+bool PreviewItemCosts(IOGWorldStore& Store, const FOGEntityId& RulerId,
+    const TArray<FOGDevelopmentItemCost>& Costs, FOGCharacterDevelopmentPreview& Out,
+    FString& Token, FString& Error)
+{
+    if (Costs.IsEmpty()) return true;
+    TArray<FOGEntityId> Owners = {RulerId};
+    TArray<FOGCharacterManifestationRecord> Copies;
+    if (!Store.ListCharacterManifestationsByOwner(RulerId, Copies, Error)) return false;
+    for (const auto& Copy : Copies)
+        if (Copy.OwningRulerId == RulerId) Owners.AddUnique(Copy.ManifestationId);
+    TArray<FOGItemInstanceRecord> Items;
+    TSet<FOGEntityId> Seen, Equipped;
+    for (const auto& Owner : Owners)
+    {
+        TArray<FOGItemInstanceRecord> Owned;
+        TArray<FOGEquipmentBindingRecord> Bindings;
+        if (!Store.ListItemInstancesByOwner(Owner, Owned, Error) ||
+            !Store.ListEquipmentBindings(Owner, Bindings, Error)) return false;
+        for (const auto& Item : Owned)
+        {
+            if (!Item.ItemId.IsValid() || Item.OwnerEntityId != Owner || Seen.Contains(Item.ItemId))
+            { Error = TEXT("Development inventory has inconsistent ownership."); return false; }
+            Seen.Add(Item.ItemId);
+            Items.Add(Item);
+        }
+        for (const auto& Binding : Bindings) Equipped.Add(Binding.ItemId);
+    }
+    Items.Sort([](const auto& A, const auto& B)
+        { return A.ItemId.ToString() < B.ItemId.ToString(); });
+    auto* Library = UOGDefinitionLibrary::Get();
+    for (const auto& Cost : Costs)
+    {
+        FOGDevelopmentItemCostPreview P;
+        P.Cost = Cost;
+        P.DisplayName = Cost.ObjectId.ToString();
+        const auto* Definition = Library
+            ? Cast<UOGObjectDefinition>(Library->Resolve(TEXT("object"), Cost.ObjectId)) : nullptr;
+        FString DefinitionError;
+        if (!Definition || !Definition->ValidateDefinition(DefinitionError))
+        {
+            Out.MissingRequirements.Add(TEXT("Required item definition unavailable: ") +
+                Cost.ObjectId.ToString() + (DefinitionError.IsEmpty() ? FString() : TEXT(" / ") + DefinitionError));
+            Out.ItemCosts.Add(MoveTemp(P));
+            continue;
+        }
+        P.DisplayName = Definition->DisplayName.ToString();
+        FingerprintPart(Token, P.DisplayName);
+        // Exact selectors and catalog uniqueness keep one instance from paying
+        // two input rows. Never substitute a rank, quality, or resource balance.
+        for (const auto& Item : Items)
+        {
+            if (Item.DefinitionId != Cost.ObjectId || Item.CurrentRankId != Cost.RankId ||
+                Item.QualityId != Cost.QualityId || Equipped.Contains(Item.ItemId)) continue;
+            ++P.AvailableInstances;
+            if (P.SelectedInstances.Num() < Cost.InstanceCount) P.SelectedInstances.Add(Item);
+        }
+        FingerprintPart(Token, LexToString(P.AvailableInstances));
+        if (P.AvailableInstances < Cost.InstanceCount)
+            Out.MissingRequirements.Add(FString::Printf(TEXT("%s: need %d unequipped instances, have %d (exact rank/quality)."),
+                *P.DisplayName, Cost.InstanceCount, P.AvailableInstances));
+        for (const auto& Item : P.SelectedInstances)
+        {
+            TSharedPtr<FJsonObject> History;
+            if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Item.HistoryStateJson), History) || !History.IsValid())
+            { Error = TEXT("An input item's provenance is unreadable; no assets were consumed."); return false; }
+            bool Found = false;
+            FName Kind;
+            FString State;
+            int64 Revision = 0;
+            if (!Store.TryReadEntity(Item.ItemId, Found, Kind, State, Revision, Error)) return false;
+            if (!Found || Kind != FName(TEXT("item")))
+            { Error = TEXT("An input is no longer a canonical item instance."); return false; }
+            for (const auto& Part : {Item.ItemId.ToString(), Item.OwnerEntityId.ToString(),
+                Item.DefinitionId.ToString(), Item.CurrentRankId.ToString(), Item.QualityId.ToString(),
+                Item.DurabilityStateJson, Item.EvolutionStateJson, Item.HistoryStateJson, State, LexToString(Revision)})
+                FingerprintPart(Token, Part);
+            TArray<FOGItemModifierRecord> Modifiers;
+            if (!Store.ListItemModifiers(Item.ItemId, Modifiers, Error)) return false;
+            for (const auto& Modifier : Modifiers)
+            {
+                FingerprintPart(Token, Modifier.ModifierId.ToString());
+                FingerprintPart(Token, LexToString(Modifier.Ordinal));
+                FingerprintPart(Token, Modifier.StateJson);
+            }
+        }
+        Out.ItemCosts.Add(MoveTemp(P));
+    }
+    return true;
 }
 
 bool AddStatGrants(FOGCombatStats& Stats, const TMap<FName, FOGLargeNumber>& Grants, FString& Error)
@@ -204,6 +306,14 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
     if (!Store.IsOpen() || !RulerId.IsValid() || !ManifestationId.IsValid() ||
         !D.DevelopmentId.IsValid() || !D.IdentityId.IsValid() || !D.VersionId.IsValid())
     { Error = TEXT("A valid owned character and installed development choice are required."); return false; }
+    bool OwnerFound = false;
+    FName OwnerKind;
+    FString OwnerState;
+    int64 OwnerRevision = 0;
+    if (!Store.TryReadEntity(RulerId, OwnerFound, OwnerKind, OwnerState, OwnerRevision, Error)) return false;
+    if (!OwnerFound || OwnerKind != FName(TEXT("ruler")) ||
+        OwnerState.Contains(TEXT("\"diagnosticFixture\"")))
+    { Error = TEXT("Development requires a real stored Ruler."); return false; }
     bool Found = false;
     FOGCharacterManifestationRecord M;
     if (!Store.TryReadCharacterManifestation(ManifestationId, Found, M, Error)) return false;
@@ -228,6 +338,8 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
     Out.bCurrentlyMaxReinforced = R.bMaxReinforced;
     Out.bResultMaxReinforced = R.bMaxReinforced || D.bCompletesReinforcement;
     Out.StatGrants = D.StatGrants;
+    Out.GrantedRoutes = D.GrantedRoutes;
+    Out.GrantedForms = D.GrantedForms;
     Out.bAlreadyCompleted = Completed.Contains(D.DevelopmentId.ToString());
     if (Out.bAlreadyCompleted) Out.MissingRequirements.Add(TEXT("This development is already completed by this copy."));
     if (M.Level < D.MinimumLevel)
@@ -270,6 +382,9 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
             ? Required.FactKey.ToString() : Required.DisplayName);
     }
     FString TokenInput = DefinitionFingerprint(D);
+    FingerprintPart(TokenInput, OwnerState);
+    FingerprintPart(TokenInput, LexToString(OwnerRevision));
+    if (!PreviewItemCosts(Store, RulerId, D.ItemCosts, Out, TokenInput, Error)) return false;
     for (const auto& Cost : D.Costs)
     {
         FOGDevelopmentCostPreview P;
@@ -282,6 +397,39 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
             Cost.DisplayName.IsEmpty() ? *Cost.ResourceId.ToString() : *Cost.DisplayName, Cost.Amount, P.Balance));
         FingerprintPart(TokenInput, LexToString(P.Balance));
         Out.Costs.Add(P);
+    }
+    // Grants overwrite route/form state. Capture those destination records too,
+    // so confirmation cannot silently overwrite progression earned after review.
+    if (!D.GrantedRoutes.IsEmpty() && D.RequiredRoutes.IsEmpty() &&
+        !Store.ListManifestationRouteNodes(ManifestationId, Routes, Error)) return false;
+    for (const auto& Grant : D.GrantedRoutes)
+    {
+        const auto* Previous = Routes.FindByPredicate([&](const auto& Node)
+            { return Node.RouteId == Grant.RouteId && Node.NodeId == Grant.NodeId; });
+        FingerprintPart(TokenInput, Previous ? TEXT("route_present") : TEXT("route_absent"));
+        if (Previous)
+        {
+            FingerprintPart(TokenInput, Previous->State.ToString());
+            FingerprintPart(TokenInput, Previous->StateJson);
+            FingerprintPart(TokenInput, Previous->bHasEnteredWorldTick ? LexToString(Previous->EnteredWorldTick) : TEXT("unset"));
+            FingerprintPart(TokenInput, Previous->bHasCompletedWorldTick ? LexToString(Previous->CompletedWorldTick) : TEXT("unset"));
+        }
+    }
+    if (!D.GrantedForms.IsEmpty())
+    {
+        TArray<FOGManifestationFormRecord> Forms;
+        if (!Store.ListManifestationForms(ManifestationId, Forms, Error)) return false;
+        for (const auto& Id : D.GrantedForms)
+        {
+            const auto* Previous = Forms.FindByPredicate([&](const auto& Form) { return Form.FormId == Id; });
+            FingerprintPart(TokenInput, Previous ? TEXT("form_present") : TEXT("form_absent"));
+            if (Previous)
+            {
+                FingerprintPart(TokenInput, Previous->State.ToString());
+                FingerprintPart(TokenInput, Previous->StateJson);
+                FingerprintPart(TokenInput, LexToString(Previous->UnlockedWorldTick));
+            }
+        }
     }
     TMap<FName, FOGLargeNumber> Grants;
     if (!ReadGrants(State, Grants, Error)) return false;
@@ -324,7 +472,7 @@ bool FOGCharacterDevelopmentService::Apply(const FOGEntityId& RulerId,
 {
     bOutAlreadyApplied = false;
     Error.Reset();
-    if (!RequestId.IsValid() || Token.IsEmpty() || Tick < 0)
+    if (!IsInGameThread() || !RequestId.IsValid() || Token.IsEmpty() || Tick < 0)
     { Error = TEXT("An explicit reviewed development request is required."); return false; }
     if (!Store.BeginTransaction(Error)) return false;
     auto Fail = [&]() { FString RollbackError; Store.RollbackTransaction(RollbackError); return false; };
@@ -351,6 +499,27 @@ bool FOGCharacterDevelopmentService::Apply(const FOGEntityId& RulerId,
     { Error = Quote.bCanApply ? TEXT("Character, costs or content changed. Review the upgrade again.") : FString::Join(Quote.MissingRequirements, TEXT("\n")); return Fail(); }
     for (const auto& Cost : Quote.Costs)
         if (!Store.SetResourceBalance(RulerId, Cost.Cost.ResourceId, Cost.Balance - Cost.Cost.Amount, Error)) return Fail();
+    TArray<TSharedPtr<FJsonValue>> ConsumedItems;
+    for (const auto& Cost : Quote.ItemCosts)
+        for (const auto& Selected : Cost.SelectedInstances)
+        {
+            auto Item = Selected;
+            TSharedPtr<FJsonObject> History;
+            if (!ReadState(Item.HistoryStateJson, History, Error)) return Fail();
+            History->SetStringField(TEXT("consumed_by_development_event"), RequestId.ToString());
+            Item.HistoryStateJson = WriteState(History.ToSharedRef());
+            Item.OwnerEntityId = FOGEntityId();
+            if (!Store.DeleteContainerContentsForItem(Item.ItemId, Error) ||
+                !Store.DeleteEquipmentBindingsForItem(Item.ItemId, Error) ||
+                !Store.UpsertItemInstance(Item, Tick, Error)) return Fail();
+            auto Change = MakeShared<FJsonObject>();
+            Change->SetStringField(TEXT("item_id"), Item.ItemId.ToString());
+            Change->SetStringField(TEXT("object_id"), Item.DefinitionId.ToString());
+            Change->SetStringField(TEXT("rank_id"), Item.CurrentRankId.ToString());
+            Change->SetStringField(TEXT("quality_id"), Item.QualityId.ToString());
+            Change->SetStringField(TEXT("owner_before"), Selected.OwnerEntityId.ToString());
+            ConsumedItems.Add(MakeShared<FJsonValueObject>(Change));
+        }
     FOGManifestationReinforcementRecord R;
     if (!Store.TryReadManifestationReinforcement(ManifestationId, Found, R, Error)) return Fail();
     if (Found && Tick < R.UpdatedWorldTick)
@@ -435,11 +604,14 @@ bool FOGCharacterDevelopmentService::Apply(const FOGEntityId& RulerId,
         Costs.Add(MakeShared<FJsonValueObject>(Cost));
     }
     Payload->SetArrayField(TEXT("costs"), Costs);
+    Payload->SetArrayField(TEXT("consumed_items"), ConsumedItems);
     FOGWorldEvent Event;
     Event.EventId = RequestId;
     Event.EventType = DevelopmentEvent;
     Event.PrimaryEntity = ManifestationId;
     Event.RelatedEntities.Add(RulerId);
+    for (const auto& Cost : Quote.ItemCosts)
+        for (const auto& Item : Cost.SelectedInstances) Event.RelatedEntities.AddUnique(Item.ItemId);
     Event.WorldTick = Tick;
     Event.bChronicleEligible = true;
     Event.PayloadJson = WriteState(Payload);

@@ -176,6 +176,7 @@ private:
     FString DevelopmentFeedback;
     FString DevelopmentRefreshWarning;
     bool bDevelopmentFeedbackError = false;
+    bool bDevelopmentCommandInFlight = false;
 
     // Inventory utility page and review are transient presentation only.
     bool bInventoryOpen = false;

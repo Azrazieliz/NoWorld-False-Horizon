@@ -1,6 +1,7 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGDiagnosticCombatComponent.h"
 #include "Combat/OGWorldActionRuntime.h"
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
@@ -9,10 +10,24 @@
 
 namespace
 {
-bool IsDevelopmentBattleRunning(const UOGGameCoreSubsystem& Core)
+bool IsDevelopmentBattleRunning(const UOGGameCoreSubsystem& Core, UWorld* World)
 {
     const FOGTurnBattle* Battle = Core.GetOwnedLuminousTurnBattle();
-    return Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running;
+    if (Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running) return true;
+    if (!World) return false;
+    for (TActorIterator<AActor> It(World); It; ++It)
+    {
+        TArray<UOGDiagnosticCombatComponent*> Combats;
+        It->GetComponents<UOGDiagnosticCombatComponent>(Combats);
+        for (const auto* Combat : Combats)
+            if (IsValid(Combat) && Combat->GetWorld() == World &&
+                (Combat->IsInTurn() || Combat->GetTurnState().Status == EOGTurnBattleStatus::Running)) return true;
+        TArray<UOGWorldActionRuntimeComponent*> Actions;
+        It->GetComponents<UOGWorldActionRuntimeComponent>(Actions);
+        for (const auto* Action : Actions)
+            if (IsValid(Action) && Action->GetWorld() == World && Action->HasActiveAction()) return true;
+    }
+    return false;
 }
 }
 
@@ -121,7 +136,7 @@ bool UOGGate12RulerSessionSubsystem::ReadOwnedDevelopmentOptions(
 
     FOGCharacterDevelopmentService Development(*Store);
     TArray<FOGCharacterDevelopmentPreview> Options;
-    const bool bBattleRunning = IsDevelopmentBattleRunning(*Core);
+    const bool bBattleRunning = IsDevelopmentBattleRunning(*Core, GetWorld());
     for (const FOGCharacterDevelopmentDefinition& Definition : Definitions)
     {
         if (Definition.IdentityId != IdentityId ||
@@ -136,7 +151,7 @@ bool UOGGate12RulerSessionSubsystem::ReadOwnedDevelopmentOptions(
         {
             Preview.bCanApply = false;
             Preview.MissingRequirements.Add(
-                TEXT("Finish the running battle before developing this character."));
+                TEXT("Finish the active battle or action before developing this character."));
         }
         Options.Add(MoveTemp(Preview));
     }
@@ -169,9 +184,9 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedDevelopment(
         OutError = TEXT("Review a valid authored development choice before confirming it.");
         return false;
     }
-    if (IsDevelopmentBattleRunning(*Core))
+    if (IsDevelopmentBattleRunning(*Core, GetWorld()))
     {
-        OutError = TEXT("Finish the running battle before developing a character; its combat snapshot is already active.");
+        OutError = TEXT("Finish the active battle or action before developing a character; its combat snapshot is already active.");
         return false;
     }
 
@@ -227,6 +242,19 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedDevelopment(
             }
         }
     }
+    if (UWorld* World = GetWorld())
+        for (TActorIterator<AActor> It(World); It; ++It)
+        {
+            TArray<UOGDiagnosticCombatComponent*> Combats;
+            It->GetComponents<UOGDiagnosticCombatComponent>(Combats);
+            for (auto* Combat : Combats)
+            {
+                FString Error;
+                if (IsValid(Combat) && Combat->GetWorld() == World &&
+                    !Combat->RefreshCanonicalPartyProjection(Error))
+                    RefreshWarnings.Add(TEXT("Combat party display: ") + Error);
+            }
+        }
     FString RefreshError;
     if (!RefreshCanonicalProjections(RefreshError))
         RefreshWarnings.Add(TEXT("Ruler display: ") +

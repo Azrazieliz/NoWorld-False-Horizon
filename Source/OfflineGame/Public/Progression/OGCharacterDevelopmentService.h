@@ -13,6 +13,24 @@ struct OFFLINEGAME_API FOGDevelopmentCost
     int64 Amount = 0;
 };
 
+/** Explicit physical inputs. Counts are item instances, never wallet units or
+ * container amounts. Empty rank/quality matches an unranked/ungraded instance. */
+struct OFFLINEGAME_API FOGDevelopmentItemCost
+{
+    FOGContentId ObjectId;
+    FOGContentId RankId;
+    FOGContentId QualityId;
+    int32 InstanceCount = 1;
+};
+
+struct OFFLINEGAME_API FOGDevelopmentItemCostPreview
+{
+    FOGDevelopmentItemCost Cost;
+    FString DisplayName;
+    int32 AvailableInstances = 0;
+    TArray<FOGItemInstanceRecord> SelectedInstances;
+};
+
 struct OFFLINEGAME_API FOGDevelopmentRouteRequirement
 {
     FOGContentId RouteId;
@@ -44,6 +62,7 @@ struct OFFLINEGAME_API FOGCharacterDevelopmentDefinition
     TArray<FOGDevelopmentRouteRequirement> RequiredRoutes;
     TArray<FOGDevelopmentFactRequirement> RequiredFacts;
     TArray<FOGDevelopmentCost> Costs;
+    TArray<FOGDevelopmentItemCost> ItemCosts;
     int32 ResultLevel = 0; // zero preserves current level
     FName ResultRarity; // None preserves current rarity
     FName ResultReinforcementState;
@@ -74,6 +93,9 @@ struct OFFLINEGAME_API FOGCharacterDevelopmentPreview
     bool bAlreadyCompleted = false;
     bool bCanApply = false;
     TArray<FOGDevelopmentCostPreview> Costs;
+    TArray<FOGDevelopmentItemCostPreview> ItemCosts;
+    TArray<FOGDevelopmentRouteRequirement> GrantedRoutes;
+    TArray<FOGContentId> GrantedForms;
     TMap<FName, FOGLargeNumber> StatGrants;
     TMap<FName, FOGLargeNumber> CurrentEarnedStats;
     TMap<FName, FOGLargeNumber> ResultEarnedStats;

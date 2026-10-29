@@ -121,10 +121,28 @@ void UOGGate12NativeRulerWidget::AddDevelopmentPreview(
             ? Cost.Cost.ResourceId.ToString() : Cost.Cost.DisplayName;
         const int64 Shortage = Cost.Cost.Amount > Cost.Balance
             ? Cost.Cost.Amount - FMath::Max<int64>(0, Cost.Balance) : 0;
-        AddMessage(Parent, FString::Printf(TEXT("%s: cost %s  /  balance %s  /  short %s"),
+        AddMessage(Parent, FString::Printf(TEXT("%s: cost %s  /  balance %s  /  short %s  /  remaining %s"),
             *ResourceName, *DevelopmentNumber(Cost.Cost.Amount),
-            *DevelopmentNumber(Cost.Balance), *DevelopmentNumber(Shortage)),
+            *DevelopmentNumber(Cost.Balance), *DevelopmentNumber(Shortage),
+            *DevelopmentNumber(Shortage > 0 ? 0 : Cost.Balance - Cost.Cost.Amount)),
             16, Shortage > 0 ? DevelopmentWarning : DevelopmentText);
+    }
+
+    AddMessage(Parent, TEXT("INVENTORY COSTS"), 18, DevelopmentGold);
+    if (Preview.ItemCosts.IsEmpty())
+        AddMessage(Parent, TEXT("No inventory instances are required."), 15, DevelopmentMuted);
+    for (const auto& Input : Preview.ItemCosts)
+    {
+        AddMessage(Parent, FString::Printf(TEXT("%s: use %d / available %d / remaining %d"),
+            *Input.DisplayName, Input.Cost.InstanceCount, Input.AvailableInstances,
+            FMath::Max(0, Input.AvailableInstances - Input.Cost.InstanceCount)), 16,
+            Input.AvailableInstances < Input.Cost.InstanceCount ? DevelopmentWarning : DevelopmentText);
+        AddMessage(Parent, TEXT("Exact rank: ") +
+            (Input.Cost.RankId.IsEmpty() ? TEXT("Unranked") : Input.Cost.RankId.ToString()) +
+            TEXT(" / quality: ") + (Input.Cost.QualityId.IsEmpty() ? TEXT("Ungraded") : Input.Cost.QualityId.ToString()),
+            15, DevelopmentMuted);
+        for (const auto& Item : Input.SelectedInstances)
+            AddMessage(Parent, TEXT("Consume copy: ") + Item.ItemId.ToString(), 14, DevelopmentMuted);
     }
 
     AddMessage(Parent, TEXT("EARNED STAT INCREASES"), 18, DevelopmentGold);
@@ -151,6 +169,13 @@ void UOGGate12NativeRulerWidget::AddDevelopmentPreview(
         AddMessage(Parent, TEXT("These are increases from this choice, not total combat stats."),
             15, DevelopmentMuted);
     }
+
+    for (const auto& Route : Preview.GrantedRoutes)
+        AddMessage(Parent, TEXT("Route ") + Route.RouteId.ToString() + TEXT(" / ") +
+            Route.NodeId.ToString() + TEXT(" -> ") + DevelopmentStateName(Route.State),
+            16, DevelopmentSuccess);
+    for (const auto& Form : Preview.GrantedForms)
+        AddMessage(Parent, TEXT("Unlock form: ") + Form.ToString(), 16, DevelopmentSuccess);
 
     AddMessage(Parent, TEXT("REQUIREMENTS"), 18, DevelopmentGold);
     if (Preview.bAlreadyCompleted)
@@ -274,7 +299,7 @@ void UOGGate12NativeRulerWidget::BuildCharacterDevelopment(
             AddMessage(Section, TEXT("REVIEW DEVELOPMENT"), 23, DevelopmentGold);
             AddDevelopmentPreview(Section, PendingDevelopmentReview);
             AddMessage(Section,
-                TEXT("Confirm applies this choice to the copy shown above and spends the listed resources."),
+                TEXT("Confirm applies this choice to the copy shown above and spends the listed resources and inventory instances."),
                 17, DevelopmentText);
             AddAction(Section, TEXT("CONFIRM DEVELOPMENT"), TEXT("development/confirm"));
             AddAction(Section, TEXT("CANCEL"), TEXT("development/cancel"));
@@ -301,6 +326,11 @@ void UOGGate12NativeRulerWidget::BuildCharacterDevelopment(
 void UOGGate12NativeRulerWidget::HandleDevelopmentAction(
     const FString& Action, UOGGate12RulerSessionSubsystem& Session)
 {
+    if (bDevelopmentCommandInFlight) return;
+    TGuardValue<bool> CommandGuard(bDevelopmentCommandInFlight, true);
+    // A second queued tap must not replace a saved result with a purchase error.
+    if (Action == TEXT("development/confirm") &&
+        PendingDevelopmentReview.ConfirmationToken.IsEmpty() && !DevelopmentFeedback.IsEmpty()) return;
     SynchronizeDevelopmentContext(&Session);
     LastUiError.Reset();
     DevelopmentFeedback.Reset();
@@ -361,7 +391,12 @@ void UOGGate12NativeRulerWidget::HandleDevelopmentAction(
             // remain separate, and must never offer to repeat the transaction.
             DevelopmentRefreshWarning = Error;
             Error.Reset();
-            DevelopmentFeedback = TEXT("Development saved for this Manifestation.");
+            DevelopmentFeedback = Review.DisplayName + TEXT(" saved for this Manifestation.");
+            for (const auto& Cost : Review.Costs)
+                DevelopmentFeedback += TEXT(" Spent ") + DevelopmentNumber(Cost.Cost.Amount) + TEXT(" ") +
+                    (Cost.Cost.DisplayName.IsEmpty() ? Cost.Cost.ResourceId.ToString() : Cost.Cost.DisplayName) + TEXT(".");
+            for (const auto& Cost : Review.ItemCosts)
+                DevelopmentFeedback += FString::Printf(TEXT(" Consumed %d %s."), Cost.Cost.InstanceCount, *Cost.DisplayName);
             FOGCharacterManifestationRecord Current;
             FName Reinforcement;
             bool bComplete = false;
