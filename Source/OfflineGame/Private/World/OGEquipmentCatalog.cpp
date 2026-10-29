@@ -119,11 +119,91 @@ bool FOGEquipmentCatalog::LoadInstalled(FOGEquipmentCatalog& Out, FString& Error
     FFileHelper::LoadFileToString(Json, *Path);
     FString Merged;
     if (!UOGDefinitionLibrary::LoadCatalog(TEXT("equipment"),Json,Merged,Error)) return false;
-    Json=MoveTemp(Merged);
+    return Parse(Merged,Out,Error);
+}
+
+bool FOGEquipmentCatalog::Parse(const FString& Json, FOGEquipmentCatalog& Out, FString& Error)
+{
+    Out = FOGEquipmentCatalog();
+    Error.Reset();
+    if (!EquipmentJsonShape(Json, Error)) return false;
+    TSharedPtr<FJsonObject> Root;
+    FString Schema;
+    if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Root) ||
+        !EquipmentFields(Root, {TEXT("schema"), TEXT("slots"), TEXT("items"), TEXT("rules")}, Error) ||
+        !EquipmentString(Root, TEXT("schema"), Schema, Error) ||
+        !Schema.Equals(TEXT("noworld.equipment.v1"), ESearchCase::CaseSensitive))
+        return EquipmentCatalogError(Error, TEXT("expected schema noworld.equipment.v1."));
+    FOGEquipmentCatalog Parsed;
+    for (const TCHAR* Key : {TEXT("slots"), TEXT("items"), TEXT("rules")})
+    {
+        const TArray<TSharedPtr<FJsonValue>>* Rows = nullptr;
+        if (!Root->TryGetArrayField(Key, Rows))
+            return EquipmentCatalogError(Error, FString(TEXT("required array ")) + Key);
+        for (const auto& Value : *Rows)
+        {
+            const TSharedPtr<FJsonObject>* RowPtr = nullptr;
+            if (!Value.IsValid() || !Value->TryGetObject(RowPtr) || !RowPtr)
+                return EquipmentCatalogError(Error, TEXT("array entry must be an object."));
+            const TSharedPtr<FJsonObject>& Row = *RowPtr;
+            if (FString(Key) == TEXT("slots"))
+            {
+                FOGAuthoredEquipmentSlot S;
+                if (!EquipmentFields(Row, {TEXT("identity_id"), TEXT("version_id"), TEXT("slot_id"), TEXT("display_name")}, Error) ||
+                    !EquipmentId(Row, TEXT("identity_id"), S.IdentityId, Error) ||
+                    !EquipmentId(Row, TEXT("version_id"), S.VersionId, Error) ||
+                    !EquipmentId(Row, TEXT("slot_id"), S.SlotId, Error) ||
+                    !EquipmentString(Row, TEXT("display_name"), S.DisplayName, Error)) return false;
+                Parsed.Slots.Add(MoveTemp(S));
+            }
+            else if (FString(Key) == TEXT("items"))
+            {
+                FOGAuthoredEquipmentItem I;
+                if (!EquipmentFields(Row, {TEXT("definition_id"), TEXT("display_name")}, Error) ||
+                    !EquipmentId(Row, TEXT("definition_id"), I.DefinitionId, Error) ||
+                    !EquipmentString(Row, TEXT("display_name"), I.DisplayName, Error)) return false;
+                Parsed.Items.Add(MoveTemp(I));
+            }
+            else
+            {
+                FOGAuthoredEquipmentRule R;
+                if (!EquipmentFields(Row, {TEXT("identity_id"), TEXT("version_id"), TEXT("slot_id"),
+                        TEXT("definition_id"), TEXT("rank_id"), TEXT("quality_id"), TEXT("stat_bonuses")}, Error) ||
+                    !EquipmentId(Row, TEXT("identity_id"), R.IdentityId, Error) ||
+                    !EquipmentId(Row, TEXT("version_id"), R.VersionId, Error) ||
+                    !EquipmentId(Row, TEXT("slot_id"), R.SlotId, Error) ||
+                    !EquipmentId(Row, TEXT("definition_id"), R.DefinitionId, Error) ||
+                    !EquipmentId(Row, TEXT("rank_id"), R.RankId, Error, true) ||
+                    !EquipmentId(Row, TEXT("quality_id"), R.QualityId, Error, true)) return false;
+                const TSharedPtr<FJsonObject>* Bonuses = nullptr;
+                if (!Row->TryGetObjectField(TEXT("stat_bonuses"), Bonuses))
+                    return EquipmentCatalogError(Error, TEXT("stat_bonuses must be an explicit object."));
+                for (const auto& Pair : (*Bonuses)->Values)
+                {
+                    const TSharedPtr<FJsonObject>* Number = nullptr;
+                    FString Digits;
+                    int64 Significand = 0;
+                    int32 Exponent = 0;
+                    if (!Pair.Value.IsValid() || !Pair.Value->TryGetObject(Number) || !Number ||
+                        !EquipmentFields(*Number, {TEXT("significand"), TEXT("exponent10")}, Error) ||
+                        !EquipmentString(*Number, TEXT("significand"), Digits, Error) ||
+                        !LexTryParseString(Significand, *Digits) || LexToString(Significand) != Digits ||
+                        !(*Number)->TryGetNumberField(TEXT("exponent10"), Exponent) ||
+                        Significand < 0 || Significand > FOGLargeNumber::MaxSignificand ||
+                        Exponent < -100000 || Exponent > 100000 ||
+                        Pair.Key != Pair.Key.ToLower())
+                        return EquipmentCatalogError(Error, TEXT("invalid stat contribution."));
+                    R.StatBonuses.Add(FName(*Pair.Key), FOGLargeNumber(Significand, Exponent));
+                }
+                Parsed.Rules.Add(MoveTemp(R));
+            }
+        }
+    }
     if (!Parsed.Validate(Error)) return false;
     Out = MoveTemp(Parsed);
     return true;
 }
+
 
 bool FOGEquipmentCatalog::Validate(FString& Error) const
 {
