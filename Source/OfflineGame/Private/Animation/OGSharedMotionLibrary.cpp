@@ -1,6 +1,8 @@
 #include "Animation/OGSharedMotionLibrary.h"
 
 #include "Animation/AnimSequence.h"
+#include "Content/OGDefinitionLibrary.h"
+#include "UObject/Class.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Dom/JsonObject.h"
@@ -229,7 +231,7 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
 }
 }
 
-const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetInstalledLibrary()
+const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetBuiltInLibrary()
 {
     // Non-destructive packaged fallback. A verified authored shared DataAsset
     // can override it; never depend on an Editor-only registry at runtime.
@@ -244,6 +246,81 @@ const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetInstalledLibrary()
     return Installed;
 }
 
+bool UOGSharedMotionLibrary::ValidateLibrary(FString& Error) const
+{
+    Error.Reset(); TSet<FName> Ids;
+    for (const auto& M:Motions)
+    {
+        const FString Path=M.NativeSequence.ToSoftObjectPath().GetAssetPathString();
+        if (M.MotionId.IsNone() || Ids.Contains(M.MotionId) || M.SourceClipId.IsNone() ||
+            M.GameplayAction.IsNone() || M.GameplayContext.IsNone() || M.CompatibleRigProfile.IsNone() ||
+            M.RequiredParticipants<1 || !FMath::IsFinite(M.PlayRate) || M.PlayRate<=0 ||
+            !FMath::IsFinite(M.ContactSeconds) || !FMath::IsFinite(M.MovementSpeedCmPerSecond) ||
+            M.MovementSpeedCmPerSecond<0 || (!M.NativeSequence.IsNull() &&
+                (!Path.StartsWith(TEXT("/Game/")) || Path.Contains(TEXT("..")))) ||
+            (M.bApprovedForGameplay && M.NativeSequence.IsNull()) ||
+            (M.RequiredParticipants>1 && (M.SceneRole.IsNone() || M.AuthoredSceneId.IsNone())) ||
+            (M.RequiredParticipants==1 && !M.SceneRole.IsNone()))
+        { Error=TEXT("Motion libraries require distinct sourced motions, valid native paths, clocks and scene roles."); return false; }
+        Ids.Add(M.MotionId);
+        for (const auto& Track:M.MorphTracks)
+        {
+            if (Track.Layer.IsNone() || Track.Morph.IsNone() || Track.Keys.IsEmpty())
+            { Error=TEXT("A shared morph track requires its original layer, morph and keys."); return false; }
+            float Previous=-1;
+            for (const auto& Key:Track.Keys)
+            {
+                if (!FMath::IsFinite(Key.TimeSeconds) || !FMath::IsFinite(Key.Weight) || Key.TimeSeconds<0 || Key.TimeSeconds<=Previous)
+                { Error=TEXT("Shared morph keys must have finite, strictly increasing source times."); return false; }
+                Previous=Key.TimeSeconds;
+            }
+        }
+    }
+    return true;
+}
+bool FOGSharedMotionResolver::ComposeLibraries(const UOGSharedMotionLibrary& Base,
+    const TArray<UOGSharedMotionLibrary*>& Extensions,TArray<FOGSharedMotionEntry>& Out,FString& Error)
+{
+    Out.Reset(); Error.Reset(); TArray<FOGSharedMotionEntry> Candidate=Base.Motions;
+    for (const auto* Library:Extensions)
+    {
+        if (!Library || !Library->ValidateLibrary(Error)) return false;
+        for (const auto& M:Library->Motions)
+        {
+            const auto* Existing=Candidate.FindByPredicate([&](const auto& E){return E.MotionId==M.MotionId;});
+            if (Existing)
+            {
+                if (FOGSharedMotionEntry::StaticStruct()->CompareScriptStruct(Existing,&M,0)) continue;
+                Error=TEXT("Conflicting shared source motion ID: ")+M.MotionId.ToString(); return false;
+            }
+            Candidate.Add(M);
+        }
+    }
+    Candidate.Sort([](const auto& A,const auto& B){return A.MotionId.LexicalLess(B.MotionId);});
+    Out=MoveTemp(Candidate); return true;
+}
+const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetInstalledLibrary()
+{
+    auto* Definitions=UOGDefinitionLibrary::Get();
+    if (!Definitions) return GetBuiltInLibrary();
+    TArray<UDataAsset*> Assets; Definitions->List(TEXT("motion"),UOGSharedMotionLibrary::StaticClass(),Assets);
+    static UOGSharedMotionLibrary* Installed=nullptr;
+    static TWeakObjectPtr<UOGDefinitionLibrary> LibraryOwner;
+    static int64 Revision=-1;
+    if (!Installed)
+    { Installed=NewObject<UOGSharedMotionLibrary>(GetTransientPackage()); Installed->AddToRoot(); }
+    if (LibraryOwner.Get()!=Definitions || Revision!=Definitions->GetRevision())
+    {
+        TArray<UOGSharedMotionLibrary*> Extensions;
+        for (auto* Asset:Assets) Extensions.Add(CastChecked<UOGSharedMotionLibrary>(Asset));
+        TArray<FOGSharedMotionEntry> Merged; FString Error;
+        if (!ComposeLibraries(*GetBuiltInLibrary(),Extensions,Merged,Error))
+        { UE_LOG(LogTemp,Error,TEXT("Shared motion publication rejected: %s"),*Error); return GetBuiltInLibrary(); }
+        Installed->Motions=MoveTemp(Merged); LibraryOwner=Definitions; Revision=Definitions->GetRevision();
+    }
+    return Installed;
+}
+
 UAnimSequence* FOGSharedMotionResolver::Resolve(
     const UOGSharedMotionLibrary* Library,
     FName Action, FName RigProfile, FName AnatomyProfile,
@@ -251,7 +328,7 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
     const TArray<FName>& Capabilities,
     const TArray<TObjectPtr<USkeletalMeshComponent>>& ActiveParts,
     bool bAdultContextAuthorized, int32 ParticipantCount,
-    const FOGSharedMotionEntry** OutEntry, FName SceneRole)
+    const FOGSharedMotionEntry** OutEntry, FName SceneRole, FName RequiredSourceClip)
 {
     if (OutEntry) *OutEntry = nullptr;
     if (!Library || Action.IsNone() || RigProfile.IsNone() ||
@@ -270,6 +347,7 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
         if (!Entry.bApprovedForGameplay || Entry.MotionId.IsNone() ||
             Entry.SourceClipId.IsNone() || Entry.NativeSequence.IsNull() ||
             Entry.GameplayAction != Action ||
+            (!RequiredSourceClip.IsNone() && Entry.SourceClipId != RequiredSourceClip) ||
             Entry.CompatibleRigProfile != RigProfile ||
             (!Entry.AnatomyProfile.IsNone() && Entry.AnatomyProfile != AnatomyProfile) ||
             // Wardrobe is a preference, not a separate authored motion library.

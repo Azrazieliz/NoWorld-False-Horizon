@@ -15,6 +15,8 @@
 #include "World/OGTerritoryStateRecords.h"
 #include "World/OGWorldStateRecords.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOGWorldStoreCommittedEvents,const TArray<FOGWorldEvent>&);
+
 class OFFLINEGAME_API IOGWorldStore
 {
 public:
@@ -26,6 +28,8 @@ public:
 
     /** Backends explicitly expose transaction ownership for cross-system atomic commands. */
     virtual bool IsWriteTransactionActive() const { return false; }
+    /** Actual successful outer commits/autocommit only. Feed lifetime is independent of the Store pointer. */
+    virtual TSharedPtr<FOGWorldStoreCommittedEvents> GetCommittedEventFeed() { return nullptr; }
     virtual bool BeginTransaction(FString& OutError) = 0;
     virtual bool CommitTransaction(FString& OutError) = 0;
     virtual bool RollbackTransaction(FString& OutError) = 0;

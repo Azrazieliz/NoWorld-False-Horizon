@@ -636,6 +636,7 @@ bool FOGSQLiteWorldStore::Open(const FString& AbsoluteDatabasePath, FString& Out
 
 void FOGSQLiteWorldStore::Close()
 {
+    PendingCommittedEvents.Reset(); EventSavepoints.Reset();
     if (Database == nullptr)
     {
         DatabasePath.Reset();
@@ -1010,10 +1011,11 @@ bool FOGSQLiteWorldStore::BeginTransaction(FString& OutError)
         }
         const FString Sql = FString::Printf(TEXT("SAVEPOINT og_world_tx_%d;"), TransactionDepth + 1);
         if (!ExecuteSql(Sql, OutError)) return false;
-        ++TransactionDepth;
+        ++TransactionDepth; EventSavepoints.Add(PendingCommittedEvents.Num());
         return true;
     }
     if (!ExecuteSql(TEXT("BEGIN IMMEDIATE;"), OutError)) return false;
+    PendingCommittedEvents.Reset(); EventSavepoints.Reset(); EventSavepoints.Add(0);
     bTransactionActive = true;
     TransactionDepth = 1;
     return true;
@@ -1030,12 +1032,14 @@ bool FOGSQLiteWorldStore::CommitTransaction(FString& OutError)
     {
         const FString Sql = FString::Printf(TEXT("RELEASE SAVEPOINT og_world_tx_%d;"), TransactionDepth);
         if (!ExecuteSql(Sql, OutError)) return false;
-        --TransactionDepth;
+        --TransactionDepth; if (!EventSavepoints.IsEmpty()) EventSavepoints.Pop();
         return true;
     }
     if (!ExecuteSql(TEXT("COMMIT;"), OutError)) return false;
     bTransactionActive = false;
-    TransactionDepth = 0;
+    TransactionDepth = 0; EventSavepoints.Reset();
+    auto Events=MoveTemp(PendingCommittedEvents); PendingCommittedEvents.Reset();
+    if (CommittedFeed && !Events.IsEmpty()) CommittedFeed->Broadcast(Events);
     return true;
 }
 
@@ -1044,7 +1048,7 @@ bool FOGSQLiteWorldStore::RollbackTransaction(FString& OutError)
     if (!bTransactionActive)
     {
         OutError.Reset();
-        TransactionDepth = 0;
+        TransactionDepth = 0; PendingCommittedEvents.Reset(); EventSavepoints.Reset();
         return true;
     }
     if (TransactionDepth > 1)
@@ -1054,12 +1058,13 @@ bool FOGSQLiteWorldStore::RollbackTransaction(FString& OutError)
             TEXT("ROLLBACK TO SAVEPOINT og_world_tx_%d; RELEASE SAVEPOINT og_world_tx_%d;"),
             TransactionDepth, TransactionDepth);
         if (!ExecuteSql(Sql, OutError)) return false;
+        if (!EventSavepoints.IsEmpty()) PendingCommittedEvents.SetNum(EventSavepoints.Pop());
         --TransactionDepth;
         return true;
     }
     if (!ExecuteSql(TEXT("ROLLBACK;"), OutError)) return false;
     bTransactionActive = false;
-    TransactionDepth = 0;
+    TransactionDepth = 0; PendingCommittedEvents.Reset(); EventSavepoints.Reset();
     return true;
 }
 
@@ -1199,6 +1204,11 @@ bool FOGSQLiteWorldStore::AppendWorldEvent(const FOGWorldEvent& Event, FString& 
     }
 
     sqlite3_finalize(Statement);
+    if (bSucceeded && CommittedFeed)
+    {
+        if (bTransactionActive) PendingCommittedEvents.Add(Event);
+        else { const TArray<FOGWorldEvent> Batch{Event}; CommittedFeed->Broadcast(Batch); }
+    }
     return bSucceeded;
 }
 

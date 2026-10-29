@@ -96,6 +96,8 @@ public:
     /** Accepted real-time casts begin now; their physical contact clock must not wait behind queued cues. */
     bool StartImmediateCombatAction(FName GameplayAction,const FOGEntityId& BattleId,const FOGEntityId& ActionId);
     void CancelCombatAction(const FOGEntityId& BattleId,const FOGEntityId& ActionId);
+    void CompleteCombatAction(const FOGEntityId& BattleId,const FOGEntityId& ActionId);
+    bool IsLoopingAction() const { return bLooping; }
     /** A visual HP-result cue. Its deduplication ID never enters canonical gameplay state. */
     bool EnqueueCombatCue(FName Cue,const FOGEntityId& BattleId,const FOGEntityId& ActionId,const FOGEntityId& SubjectId);
 
@@ -144,6 +146,10 @@ public:
     /** An authored facial/secondary morph layer that does not replace body animation. */
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
     bool SetMorphLayer(FName Layer, FName Morph, float Weight);
+    /** Source expression channels connect once to real morph names on a rig. */
+    UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Motion|Rig") TMap<FName,FName> SharedSourceMorphAliases;
+    FName ResolveSourceMorph(FName SourceMorph) const;
+    bool SetSourceMorphLayer(FName Layer,FName SourceMorph,float Weight);
 
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
     void ClearMorphLayer(FName Layer);
@@ -153,6 +159,11 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Motion|Shared")
     bool IsPlayingAction() const { return bPlaying; }
+    uint64 GetPlaybackGeneration() const { return PlaybackGeneration; }
+    bool IsSceneTimeLocked() const { return bSceneTimeLocked; }
+    FOGEntityId GetActiveCombatReceipt() const { return ActiveCombatReceipt; }
+    FOGEntityId GetFinishingCombatReceipt() const { return FinishingCombatReceipt; }
+    bool IsCombatMotionPending(const FOGEntityId& Receipt) const;
 
     UFUNCTION(BlueprintPure, Category="Motion|Shared")
     int32 GetNativePartCount() const { return RegisteredParts.Num(); }
@@ -186,6 +197,7 @@ private:
     TSet<FOGEntityId> CombatReceipts;
     FOGEntityId CombatScope;
     FOGEntityId ActiveCombatReceipt;
+    FOGEntityId FinishingCombatReceipt;
     bool bPreserveCombatQueue=false;
     bool bPlayingQueuedCombat=false;
     bool StartNextCombatMotion();
@@ -233,18 +245,24 @@ private:
     bool PrepareReference(const FOGReferenceMotionClip&, TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
     bool FindReference(FName Action, FName Context, int32 Count, FName Role,
         FOGSharedMotionEntry&, TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>&,
-        TArray<TArray<FOGReferenceBoneConnection>>&, FString&) const;
+        TArray<TArray<FOGReferenceBoneConnection>>&, FString&,
+        FName RequiredSourceClip = NAME_None) const;
     bool StartReference(const FOGSharedMotionEntry&,
         TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>,
         TArray<TArray<FOGReferenceBoneConnection>>&&);
     void UpdateReferencePose();
     void RestoreReferencePose();
 
+    bool CanPlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
+        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip) const;
+    bool PlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
+        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip);
     void ApplyMorphOverlays();
     bool ResolveForPart(const UOGSharedMotionLibrary* Library,
         USkeletalMeshComponent* Part, FName Action, FName Context,
         bool bAuthorizedAdult, int32 ParticipantCount, FName ParticipantRole,
-        UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry) const;
+        UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry,
+        FName RequiredSourceClip = NAME_None) const;
     void ApplyAuthoredRootMotion(float PreviousSourceTime, float SourceTime);
 
     static bool HaveIdenticalReferencePose(const USkeletalMeshComponent* A,

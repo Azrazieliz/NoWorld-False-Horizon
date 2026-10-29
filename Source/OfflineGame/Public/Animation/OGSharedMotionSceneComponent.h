@@ -37,6 +37,9 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Motion|Scene")
     FName ActiveSceneAction = NAME_None;
 
+    UPROPERTY(BlueprintReadOnly,Category="Motion|Scene") FString Status;
+    /** Pure preparation; preserves all current playback when a source role cannot bind. */
+    bool CanStartSynchronizedScene(FName Action,FName Context,bool bAuthorizedAdultContext,FString& Error) const;
     /** No partially animated scene: each role/rig and original source is checked first. */
     UFUNCTION(BlueprintCallable, Category="Motion|Scene")
     bool StartSynchronizedScene(FName Action, FName Context,
@@ -56,4 +59,7 @@ protected:
 private:
     bool bScenePlaying = false;
     TArray<TWeakObjectPtr<UOGSharedMotionControllerComponent>> ActiveControllers;
+    TMap<TWeakObjectPtr<UOGSharedMotionControllerComponent>,uint64> ActiveGenerations;
+    bool PrepareScene(FName Action,FName Context,bool Authorized,
+        TArray<UOGSharedMotionControllerComponent*>& Ready,FString& Error) const;
 };

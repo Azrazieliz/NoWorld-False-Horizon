@@ -14,6 +14,8 @@
 #include "OGGameCoreSubsystem.generated.h"
 
 class FOGLocallyInstalledPackageProvider;
+class UOGNativeEncounterDefinition;
+struct FOGResolvedEncounterParticipant;
 struct FOGTrustedOptionalPackageInstall;
 
 DECLARE_MULTICAST_DELEGATE(FOGCanonicalRuntimeReleasing);
@@ -58,6 +60,9 @@ class OFFLINEGAME_API UOGGameCoreSubsystem : public UGameInstanceSubsystem
 
 public:
     FOGCanonicalRuntimeReleasing OnCanonicalRuntimeReleasing;
+    FOGWorldStoreCommittedEvents OnCanonicalWorldEventsCommitted;
+    /** Entity-scoped delivery avoids broadcasting every World event to every actor. */
+    TSharedPtr<FOGWorldStoreCommittedEvents> GetEntityEventFeed(const FOGEntityId& Entity);
     FOGLuminousCombatActionResolvedEvent OnLuminousCombatActionResolved;
     // Full accepted branch/target context for generic native character presentation.
     FOGNativeCombatActionResolvedEvent OnNativeCombatActionResolved;
@@ -159,6 +164,10 @@ public:
         const FOGLuminousRegisteredEffectRemoval& RemoveExactRegisteredInstance,
         bool& bOutWon, FString& OutError);
     const FOGTurnBattle* GetOwnedLuminousTurnBattle() const { return OwnedLuminousTurnBattle.Get(); }
+    /** Generic definition-based entry; resolved participants retain their existing canonical identities. */
+    bool StartOwnedNativeEncounter(const UOGNativeEncounterDefinition& Definition,
+        const TArray<FOGResolvedEncounterParticipant>& Participants,const FOGEntityId& Ruler,
+        FOGIdentityExclusivityContext IdentityContext,FString& Error);
     bool SetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error);
     bool CanSetOwnedCombatExecutionMode(EOGCombatExecutionMode Mode,FString& Error) const;
     bool BeginOwnedWorldAbility(const FOGResolvedCombatAction& Root,FString& Error);
@@ -245,6 +254,16 @@ private:
     bool ValidateOwnedWorldParticipants(const FOGTurnBattleState& State,const FOGEntityId& Ruler,FString& Error) const;
     bool TickWorldCombat(float DeltaSeconds);
     FString LastWorldCombatClockError;
+    TSharedPtr<FOGWorldStoreCommittedEvents> ObservedWorldEventFeed;
+    TMap<FOGEntityId,TSharedPtr<FOGWorldStoreCommittedEvents>> EntityEventFeeds;
+    FDelegateHandle WorldEventFeedHandle;
+    uint64 WorldEventFeedGeneration=0;
+    TArray<FOGWorldEvent> QueuedCommittedWorldEvents;
+    bool bFlushingCommittedWorldEvents=false;
+    void BindWorldEventFeed();
+    void ReleaseWorldEventFeed();
+    void QueueCommittedWorldEvents(const TArray<FOGWorldEvent>& Events,uint64 Generation);
+    void FlushCommittedWorldEvents();
     FTSTicker::FDelegateHandle WorldCombatTickerHandle;
     TWeakObjectPtr<UWorld> WorldCombatClockWorld;
     double LastWorldCombatSeconds=-1;

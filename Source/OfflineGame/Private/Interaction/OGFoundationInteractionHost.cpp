@@ -51,10 +51,14 @@ bool UOGFoundationInteractionHost::Initialize()
     if (Core.Get() != Current)
     {
         Cancel(TEXT("core_rebind")); Runtime.Reset(); BoundStore = nullptr;
-        if (Core.IsValid()) Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle);
+        if (Core.IsValid())
+        { Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle); Core->OnNativeBattleStateCommitted.RemoveAll(this); }
         ReleaseHandle.Reset(); Core = Current;
-        if (Current) ReleaseHandle = Current->OnCanonicalRuntimeReleasing.AddUObject(
-            this, &UOGFoundationInteractionHost::HandleCanonicalRuntimeReleasing);
+        if (Current)
+        {
+            ReleaseHandle=Current->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::HandleCanonicalRuntimeReleasing);
+            Current->OnNativeBattleStateCommitted.AddUObject(this,&ThisClass::HandleBattleCommitted);
+        }
     }
     Combat = GetOwner()->FindComponentByClass<UOGDiagnosticCombatComponent>();
     if (!DeactivateHandle.IsValid()) DeactivateHandle = FCoreDelegates::ApplicationWillDeactivateDelegate.AddUObject(
@@ -629,34 +633,9 @@ bool UOGFoundationInteractionHost::PlaySharedScene(
     {
         // Observers retain canonical state and ordinary LOD; only active original tracks animate.
         if (!Node.RequiredRoles.Contains(Participant.Binding.Role)) continue;
-        const FOGInteractionAnimationBinding* Authored = nullptr;
-        int32 BestSpecificity = -1; bool bAmbiguous = false;
-        for (const FOGInteractionAnimationBinding& Binding : Node.AnimationBindings)
-        {
-            // Shared scene assets declare a real source role. The global
-            // controller tests actual native Skeletons, so no synthetic
-            // per-Version RigFamilyId is required to discover this role.
-            if (Binding.Role != Participant.Binding.Role ||
-                (Binding.RigFamilyId.IsValid() &&
-                 Binding.RigFamilyId != Participant.Binding.RigFamilyId))
-                continue;
-            const FOGEntityId RealManifestation =
-                Participant.Character.bHasManifestation
-                ? Participant.Character.Manifestation.ManifestationId
-                : Participant.Binding.Character.ManifestationId;
-            if (Binding.ManifestationId.IsValid() &&
-                Binding.ManifestationId != RealManifestation) continue;
-            if (!Binding.VersionId.IsEmpty() &&
-                (!Participant.Character.bHasManifestation ||
-                 Binding.VersionId !=
-                    Participant.Character.Manifestation.ActiveVersionId))
-                continue;
-            const int32 Specificity = (Binding.ManifestationId.IsValid() ? 4 : 0) +
-                (!Binding.VersionId.IsEmpty() ? 2 : 0) + (Binding.RigFamilyId.IsValid() ? 1 : 0);
-            if (Specificity == BestSpecificity) bAmbiguous = true;
-            if (Specificity > BestSpecificity) { Authored = &Binding; BestSpecificity = Specificity; bAmbiguous = false; }
-        }
-        if (bAmbiguous || !Authored || Authored->SharedSceneRole.IsNone()) return false;
+        const FOGInteractionAnimationBinding* Authored=nullptr; FString BindingError;
+        if (!Node.ResolveAnimationBinding(Participant,Authored,BindingError) ||
+            !Authored || Authored->SharedSceneRole.IsNone()) return false;
         AActor* Actor = FindBoundActor(Participant.Binding.Character.EntityId);
         if (!Actor || Actor->GetWorld() != GetWorld()) return false;
         UOGSharedMotionControllerComponent* Controller = FindMotionController(Actor);
@@ -793,10 +772,18 @@ void UOGFoundationInteractionHost::RestoreGameplay()
 void UOGFoundationInteractionHost::EndPlay(const EEndPlayReason::Type Reason)
 {
     Cancel(TEXT("host_end_play")); Runtime.Reset(); BoundStore = nullptr;
-    if (Core.IsValid()) Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle);
+    if (Core.IsValid())
+    { Core->OnCanonicalRuntimeReleasing.Remove(ReleaseHandle); Core->OnNativeBattleStateCommitted.RemoveAll(this); }
     ReleaseHandle.Reset(); Core.Reset();
     FCoreDelegates::ApplicationWillDeactivateDelegate.Remove(DeactivateHandle);
     FCoreDelegates::ApplicationWillEnterBackgroundDelegate.Remove(BackgroundHandle);
     DeactivateHandle.Reset(); BackgroundHandle.Reset();
     Super::EndPlay(Reason);
+}
+
+void UOGFoundationInteractionHost::HandleBattleCommitted(const FOGTurnBattleState& State,const FOGEntityId&)
+{
+    if (!IsActive() || State.Status!=EOGTurnBattleStatus::Running) return;
+    auto Hud=InteractionHud; Cancel(TEXT("combat_started"));
+    if (Hud.IsValid()) Hud->CloseInteractionForCombat();
 }

@@ -128,22 +128,36 @@ bool UOGInteractionDefinition::BindRoles(const TArray<FOGInteractionParticipant>
             return InvalidInteraction(Error, TEXT("Each selected participant needs a distinct real canonical body."));
         Entities.Add(P.Character.EntityId); Bodies.Add(P.Actor);
     }
-    TArray<FOGInteractionParticipant> Candidate; Candidate.Add(*Ruler);
-    Candidate[0].Role = TEXT("player"); int32 Next = 0;
-    TSet<FName> UsedRoles; for (FName Role : Roles) UsedRoles.Add(Role);
-    for (const auto& Participant : Selection)
-    {
-        if (&Participant == Ruler) continue;
-        while (Next < Roles.Num() && Roles[Next] == TEXT("player")) ++Next;
-        auto Copy = Participant;
-        if (Next < Roles.Num()) Copy.Role = Roles[Next++];
-        else
+    const auto IsExplicit=[&](const FOGInteractionParticipant& P)
+    { return Roles.Contains(P.Role) && (P.Role!=TEXT("participant") || P.bExplicitSourceRole); };
+    TSet<FName> ExplicitRoles;
+    for (const auto& Participant:Selection)
+        if (IsExplicit(Participant))
         {
-            int32 Suffix = Candidate.Num();
-            do { Copy.Role = FName(*FString::Printf(TEXT("observer_%d"), Suffix++)); } while (UsedRoles.Contains(Copy.Role));
-            UsedRoles.Add(Copy.Role);
+            if (ExplicitRoles.Contains(Participant.Role))
+                return InvalidInteraction(Error,TEXT("An original source role was explicitly assigned more than once."));
+            ExplicitRoles.Add(Participant.Role);
         }
-        Candidate.Add(MoveTemp(Copy));
+    TArray<FOGInteractionParticipant> Candidate; Candidate.Add(*Ruler);
+    Candidate[0].Role=TEXT("player");
+    TSet<FName> UsedRoles=ExplicitRoles;
+    for (const auto& Participant:Selection)
+    {
+        if (&Participant==Ruler) continue;
+        auto Copy=Participant;
+        if (!IsExplicit(Copy))
+        {
+            FName Available;
+            for (FName Role:Roles) if (!UsedRoles.Contains(Role)) { Available=Role; break; }
+            if (!Available.IsNone()) Copy.Role=Available;
+            else
+            {
+                int32 Suffix=Candidate.Num();
+                do { Copy.Role=FName(*FString::Printf(TEXT("observer_%d"),Suffix++)); }
+                while (UsedRoles.Contains(Copy.Role) || Roles.Contains(Copy.Role));
+            }
+        }
+        UsedRoles.Add(Copy.Role); Candidate.Add(MoveTemp(Copy));
     }
     Out = MoveTemp(Candidate); return true;
 }

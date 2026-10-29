@@ -3,6 +3,7 @@
 #include "Content/OGSystemBindingComponent.h"
 
 #include "Animation/OGSharedMotionControllerComponent.h"
+#include "Animation/OGSharedAnimationRoutes.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
@@ -77,6 +78,12 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     const FOGCombatUnitState* Unit = Battle ? Battle->GetState().Units.FindByPredicate(
         [this](const FOGCombatUnitState& U) { return U.UnitEntityId == BoundManifestation; }) : nullptr;
     if (!Unit || !Unit->IsAlive()) return;
+    if (auto* Routes=FindComponentByClass<UOGSharedAnimationReceiver>())
+    {
+        bool Handled=false; FString Error;
+        if (!Routes->PresentAcceptedCombat(Action,*Battle,Handled,Error)) { UE_LOG(LogTemp,Warning,TEXT("%s"),*Error); return; }
+        if (Handled) { LastPresentedActionId=Action.ActionId; return; }
+    }
     TSharedPtr<FJsonObject> Resolution;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson), Resolution) || !Resolution) return;
     FString Branch,Mode;
@@ -118,10 +125,14 @@ void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
         // Turn animation is driven by accepted combat events rather than
         // ground locomotion overwriting a visible attack or defeat.
         UOGSharedMotionControllerComponent* Motion = Appearance->GetMotionController();
-        if (Motion && Motion->IsPlayingAction() && Motion->CurrentAction.ToString().StartsWith(TEXT("Traversal.")))
-            Motion->StopAction();
-        return;
+        if (Battle->GetState().ExecutionMode==EOGCombatExecutionMode::Turn)
+        {
+            if (Motion && Motion->IsPlayingAction() && Motion->CurrentAction.ToString().StartsWith(TEXT("Traversal.")))
+                Motion->StopAction();
+            return;
+        }
     }
+    if (UOGSharedAnimationReceiver::DrivesAutomaticMotion(this)) return;
     UOGSharedMotionControllerComponent* Controller = Appearance->GetMotionController();
     if (!Controller) return;
     if (LastMotionController.Get() != Controller)

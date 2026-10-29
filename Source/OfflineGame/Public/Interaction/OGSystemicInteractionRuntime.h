@@ -16,6 +16,8 @@ struct OFFLINEGAME_API FOGInteractionParticipant
 {
     FOGFoundationCharacterContext Character;
     FName Role = NAME_None;
+    /** Distinguishes an explicit source role from the legacy generic participant selector. */
+    bool bExplicitSourceRole=false;
     FOGContentId RigFamilyId;
     TWeakObjectPtr<AActor> Actor;
 };
@@ -76,6 +78,7 @@ struct OFFLINEGAME_API FOGInteractionAuthoredConsequences
     TArray<FOGInteractionPresentationPatch> PresentationPatches;
     TArray<FOGInteractionAdultContextPatch> AdultContextPatches;
 };
+struct FOGInteractionParticipantState;
 struct OFFLINEGAME_API FOGInteractionActionNode
 {
     FName NodeId;
@@ -94,6 +97,9 @@ struct OFFLINEGAME_API FOGInteractionActionNode
     FName EnvironmentAnchorTag = NAME_None;
     FString DisplayName;
     TArray<FOGInteractionRolePlacement> RolePlacements;
+    /** One source selector shared by solo playback, synchronized playback and compatibility reporting. */
+    bool ResolveAnimationBinding(const FOGInteractionParticipantState& Participant,
+        const FOGInteractionAnimationBinding*& Out,FString& Error) const;
 };
 struct OFFLINEGAME_API FOGInteractionActionGraph
 {
