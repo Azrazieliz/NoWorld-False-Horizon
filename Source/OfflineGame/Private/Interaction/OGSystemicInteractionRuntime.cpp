@@ -20,7 +20,7 @@
 namespace
 {
     const FName PlayerRole(TEXT("player"));
-    bool Fail(FString& Error, const TCHAR* Message) { Error = Message; return false; }
+    bool FailSystemicInteraction(FString& Error, const TCHAR* Message) { Error = Message; return false; }
 
     // A grammar pass rejects permissive-reader extensions (comments, trailing
     // commas, non-JSON numbers and trailing documents) before deserialization.
@@ -101,23 +101,23 @@ namespace
     bool ReadStateJson(const FString& Json, TSharedPtr<FJsonObject>& Out, FString& Error, bool bPatch = false)
     {
         Out.Reset();
-        if (Json.Len() > 8 * 1024 * 1024) return Fail(Error, TEXT("Interaction JSON exceeds 8 Mi characters."));
+        if (Json.Len() > 8 * 1024 * 1024) return FailSystemicInteraction(Error, TEXT("Interaction JSON exceeds 8 Mi characters."));
         FStrictInteractionJson Grammar{Json};
-        if (!Grammar.Value()) return Fail(Error, TEXT("Interaction state requires strict JSON."));
+        if (!Grammar.Value()) return FailSystemicInteraction(Error, TEXT("Interaction state requires strict JSON."));
         Grammar.Space();
-        if (Grammar.At != Json.Len()) return Fail(Error, TEXT("Interaction JSON has trailing data."));
+        if (Grammar.At != Json.Len()) return FailSystemicInteraction(Error, TEXT("Interaction JSON has trailing data."));
         struct FScope { bool bObject = false; TSet<FString> Keys; };
         TArray<FScope> Stack;
         const auto Reader = TJsonReaderFactory<>::Create(Json);
         EJsonNotation N;
         while (Reader->ReadNext(N))
         {
-            if (N == EJsonNotation::Error) return Fail(Error, TEXT("Malformed interaction JSON."));
+            if (N == EJsonNotation::Error) return FailSystemicInteraction(Error, TEXT("Malformed interaction JSON."));
             const bool bEnd = N == EJsonNotation::ObjectEnd || N == EJsonNotation::ArrayEnd;
             if (!bEnd && !Stack.IsEmpty() && Stack.Last().bObject)
             {
                 const FString Key = Reader->GetIdentifier();
-                if (Stack.Last().Keys.Contains(Key)) return Fail(Error, TEXT("Duplicate interaction JSON member."));
+                if (Stack.Last().Keys.Contains(Key)) return FailSystemicInteraction(Error, TEXT("Duplicate interaction JSON member."));
                 Stack.Last().Keys.Add(Key);
                 if (bPatch)
                 {
@@ -132,7 +132,7 @@ namespace
                         TEXT("manifestationid"), TEXT("identityid"), TEXT("owningrulerid"), TEXT("ownerentityid"),
                         TEXT("versionid"), TEXT("activeversionid"), TEXT("grand"), TEXT("grandstate"),
                         TEXT("isgrand"), TEXT("bgrand"), TEXT("convergence"), TEXT("progressionstate") })
-                        if (Reserved == Name) return Fail(Error, TEXT("Interaction patch contains a reserved authority/access/reward field."));
+                        if (Reserved == Name) return FailSystemicInteraction(Error, TEXT("Interaction patch contains a reserved authority/access/reward field."));
                 }
             }
             if (N == EJsonNotation::ObjectStart || N == EJsonNotation::ArrayStart)
@@ -141,7 +141,7 @@ namespace
         }
         if (!Stack.IsEmpty() || !Reader->GetErrorMessage().IsEmpty() ||
             !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Out, FJsonSerializer::EFlags::StoreNumbersAsStrings) || !Out.IsValid())
-            return Fail(Error, TEXT("Interaction state must be a complete JSON object."));
+            return FailSystemicInteraction(Error, TEXT("Interaction state must be a complete JSON object."));
         return true;
     }
 
@@ -183,19 +183,19 @@ namespace
         for (const auto& Patch : Consequences.PresentationPatches)
         {
             const auto* Binding = UniqueRole(Bindings, Patch.Role);
-            if (!Binding) return Fail(Error, TEXT("Presentation patch role must bind exactly one canonical participant."));
+            if (!Binding) return FailSystemicInteraction(Error, TEXT("Presentation patch role must bind exactly one canonical participant."));
             if (Patch.SelectedSkinId.IsSet() && !Patch.SelectedSkinId.GetValue().IsEmpty() && !Patch.SelectedSkinId.GetValue().IsValid())
-                return Fail(Error, TEXT("Presentation patch skin must be an authored content ID or an explicit empty selection."));
+                return FailSystemicInteraction(Error, TEXT("Presentation patch skin must be an authored content ID or an explicit empty selection."));
             if (!ReadStateJson(Patch.OutfitMergeJson, Object, Error, true) || !ReadStateJson(Patch.VariantMergeJson, Object, Error, true)) return false;
             for (const auto& Record : Consequences.Presentation)
                 if (Record.ManifestationId == Binding->Character.EntityId)
-                    return Fail(Error, TEXT("Do not mix full presentation replacement and a sparse patch for the same participant."));
+                    return FailSystemicInteraction(Error, TEXT("Do not mix full presentation replacement and a sparse patch for the same participant."));
         }
         for (const auto& Patch : Consequences.AdultContextPatches)
         {
-            if (!UniqueRole(Bindings, Patch.Role)) return Fail(Error, TEXT("Context patch role must bind exactly one canonical participant."));
+            if (!UniqueRole(Bindings, Patch.Role)) return FailSystemicInteraction(Error, TEXT("Context patch role must bind exactly one canonical participant."));
             if (Patch.CurrentProfileVariantId.IsSet() && !Patch.CurrentProfileVariantId.GetValue().IsEmpty() && !Patch.CurrentProfileVariantId.GetValue().IsValid())
-                return Fail(Error, TEXT("Context profile must be an authored content ID or an explicit empty selection."));
+                return FailSystemicInteraction(Error, TEXT("Context profile must be an authored content ID or an explicit empty selection."));
             if (!ReadStateJson(Patch.MutableContextMergeJson, Object, Error, true)) return false;
         }
         // Full record consequences remain source compatible and deliberately
@@ -252,9 +252,9 @@ TArray<FName> FOGSystemicInteractionRuntime::GetAvailableActions() const
 bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
     const FOGInteractionActionGraph& Definition, int64 Tick, FString& Error)
 {
-    if (bActive) return Fail(Error, TEXT("An interaction is already active."));
+    if (bActive) return FailSystemicInteraction(Error, TEXT("An interaction is already active."));
     if (!RulerId.IsValid() || Tick < 0 || !Definition.GraphId.IsValid() || Request.Participants.IsEmpty())
-        return Fail(Error, TEXT("A canonical Ruler, clock, graph and participants are required."));
+        return FailSystemicInteraction(Error, TEXT("A canonical Ruler, clock, graph and participants are required."));
     TSet<FOGEntityId> Entities;
     TSet<AActor*> Actors;
     int32 PlayerCount = 0;
@@ -262,30 +262,30 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
     for (const auto& Participant : Request.Participants)
     {
         if (!Participant.Character.EntityId.IsValid() || Participant.Role.IsNone() || Entities.Contains(Participant.Character.EntityId))
-            return Fail(Error, TEXT("Each participant requires a unique persistent entity and bound role."));
+            return FailSystemicInteraction(Error, TEXT("Each participant requires a unique persistent entity and bound role."));
         Entities.Add(Participant.Character.EntityId); Roles.Add(Participant.Role);
         if (Participant.Role == PlayerRole)
         {
             ++PlayerCount;
             if (Participant.Character.EntityId != RulerId)
-                return Fail(Error, TEXT("The physical player role belongs to the canonical Ruler."));
+                return FailSystemicInteraction(Error, TEXT("The physical player role belongs to the canonical Ruler."));
         }
         else if (Participant.Character.EntityId == RulerId)
-            return Fail(Error, TEXT("The canonical Ruler must occupy the player role."));
+            return FailSystemicInteraction(Error, TEXT("The canonical Ruler must occupy the player role."));
         if (auto* Actor = Participant.Actor.Get())
         {
             if (!Request.World.IsValid() || Actors.Contains(Actor) || Actor->GetWorld() != Request.World.Get())
-                return Fail(Error, TEXT("Embodied participant bindings must be distinct actors in the staging world."));
+                return FailSystemicInteraction(Error, TEXT("Embodied participant bindings must be distinct actors in the staging world."));
             Actors.Add(Actor);
         }
     }
-    if (PlayerCount != 1) return Fail(Error, TEXT("Exactly one canonical Ruler player-side participant is required."));
+    if (PlayerCount != 1) return FailSystemicInteraction(Error, TEXT("Exactly one canonical Ruler player-side participant is required."));
     TSet<FName> NodeIds;
     for (const auto& Node : Definition.Nodes)
     {
         if (Node.NodeId.IsNone() || NodeIds.Contains(Node.NodeId) || !Node.ActionId.IsValid() ||
             !FMath::IsFinite(Node.DurationSeconds) || Node.DurationSeconds <= 0)
-            return Fail(Error, TEXT("Graph nodes require unique IDs, action IDs and finite positive durations."));
+            return FailSystemicInteraction(Error, TEXT("Graph nodes require unique IDs, action IDs and finite positive durations."));
         NodeIds.Add(Node.NodeId);
         if (!ValidatePatches(Node.Consequences, Request.Participants, Error)) return false;
         TSet<FName> PlacedRoles;
@@ -293,27 +293,27 @@ bool FOGSystemicInteractionRuntime::Enter(const FOGInteractionEntry& Request,
         {
             if (!UniqueRole(Request.Participants, Placement.Role) || PlacedRoles.Contains(Placement.Role) ||
                 Placement.RelativeToAnchor.ContainsNaN() || !Placement.RelativeToAnchor.GetRotation().IsNormalized())
-                return Fail(Error, TEXT("Authored placements require unique individual roles and finite normalized transforms."));
+                return FailSystemicInteraction(Error, TEXT("Authored placements require unique individual roles and finite normalized transforms."));
             PlacedRoles.Add(Placement.Role);
         }
         for (FName Role : Node.RequiredRoles) if (!Roles.Contains(Role))
-            return Fail(Error, TEXT("A graph role has no bound participant."));
+            return FailSystemicInteraction(Error, TEXT("A graph role has no bound participant."));
         for (const auto& Constraint : Node.Constraints)
             if (!Roles.Contains(Constraint.ParticipantRole) || !Roles.Contains(Constraint.TargetRole) ||
                 Constraint.TargetOffset.ContainsNaN())
-                return Fail(Error, TEXT("Constraints require bound roles and finite target offsets."));
+                return FailSystemicInteraction(Error, TEXT("Constraints require bound roles and finite target offsets."));
         if (Node.SharedSceneAction.IsNone() != Node.SharedSceneContext.IsNone())
-            return Fail(Error, TEXT("A shared scene requires both authored semantic action and context."));
+            return FailSystemicInteraction(Error, TEXT("A shared scene requires both authored semantic action and context."));
         for (const auto& Binding : Node.AnimationBindings)
         {
             if (!Roles.Contains(Binding.Role))
-                return Fail(Error, TEXT("Animation bindings must reference an existing participant role."));
+                return FailSystemicInteraction(Error, TEXT("Animation bindings must reference an existing participant role."));
             if (!Binding.ValidateExpressionTracks(Node.DurationSeconds,Error)) return false;
         }
     }
-    if (!NodeIds.Contains(Definition.StartNode)) return Fail(Error, TEXT("Graph start node is missing."));
+    if (!NodeIds.Contains(Definition.StartNode)) return FailSystemicInteraction(Error, TEXT("Graph start node is missing."));
     for (const auto& Node : Definition.Nodes) for (FName Next : Node.NextNodes)
-        if (!NodeIds.Contains(Next)) return Fail(Error, TEXT("Graph transition references a missing node."));
+        if (!NodeIds.Contains(Next)) return FailSystemicInteraction(Error, TEXT("Graph transition references a missing node."));
     LastWorldTick = Tick;
     Entry = Request; Graph = Definition; SessionId = FOGEntityId::NewId();
     CurrentNode = NAME_None; LastCompletedNode = NAME_None;
@@ -383,7 +383,7 @@ bool FOGSystemicInteractionRuntime::RefreshCharacters(FString& Error)
 
 bool FOGSystemicInteractionRuntime::SolveStaging(const FVector& Preferred, const FOGInteractionActionNode* Node, FString& Error)
 {
-    if (Preferred.ContainsNaN()) return Fail(Error, TEXT("Staging position is not finite."));
+    if (Preferred.ContainsNaN()) return FailSystemicInteraction(Error, TEXT("Staging position is not finite."));
     UWorld* World = Entry.World.Get();
     const FName AnchorTag = Node ? Node->EnvironmentAnchorTag : NAME_None;
     TArray<FTransform> Anchors; Anchors.Add(FTransform(FQuat::Identity, Preferred));
@@ -481,12 +481,12 @@ bool FOGSystemicInteractionRuntime::SolveStaging(const FVector& Preferred, const
             return true;
         }
     }
-    return Fail(Error, TEXT("No collision-safe nearby staging solution found; ordinary gameplay is preserved."));
+    return FailSystemicInteraction(Error, TEXT("No collision-safe nearby staging solution found; ordinary gameplay is preserved."));
 }
 
 bool FOGSystemicInteractionRuntime::Restage(const FVector& Location, FString& Error)
 {
-    if (!bActive) return Fail(Error, TEXT("No active interaction."));
+    if (!bActive) return FailSystemicInteraction(Error, TEXT("No active interaction."));
     const auto* Node = FindNode(CurrentNode);
     if (!SolveStaging(Location, Node, Error)) return false;
     Entry.PreferredLocation = Location;
@@ -498,17 +498,17 @@ bool FOGSystemicInteractionRuntime::Restage(const FVector& Location, FString& Er
 
 bool FOGSystemicInteractionRuntime::SetSequence(const TArray<FName>& Requested, FString& Error)
 {
-    if (!bActive) return Fail(Error, TEXT("No active interaction."));
+    if (!bActive) return FailSystemicInteraction(Error, TEXT("No active interaction."));
     FName Previous = CurrentNode.IsNone() ? LastCompletedNode : CurrentNode;
     for (FName Id : Requested)
     {
-        if (!FindNode(Id)) return Fail(Error, TEXT("Requested action is not in the current authored graph."));
+        if (!FindNode(Id)) return FailSystemicInteraction(Error, TEXT("Requested action is not in the current authored graph."));
         if (Previous.IsNone())
         {
-            if (Id != Graph.StartNode) return Fail(Error, TEXT("Sequence must begin at the graph start."));
+            if (Id != Graph.StartNode) return FailSystemicInteraction(Error, TEXT("Sequence must begin at the graph start."));
         }
         else if (!FindNode(Previous)->NextNodes.Contains(Id))
-            return Fail(Error, TEXT("Requested contextual transition is absent from the graph."));
+            return FailSystemicInteraction(Error, TEXT("Requested contextual transition is absent from the graph."));
         Previous = Id;
     }
     if (CurrentNode.IsNone() && !Requested.IsEmpty())
@@ -523,7 +523,7 @@ bool FOGSystemicInteractionRuntime::SetSequence(const TArray<FName>& Requested, 
 
 bool FOGSystemicInteractionRuntime::SelectAction(FName Id, FString& Error)
 {
-    if (!bActive || !CurrentNode.IsNone()) return Fail(Error, TEXT("Finish or interrupt the current action before selecting another."));
+    if (!bActive || !CurrentNode.IsNone()) return FailSystemicInteraction(Error, TEXT("Finish or interrupt the current action before selecting another."));
     TArray<FName> Requested; Requested.Add(Id); return SetSequence(Requested, Error);
 }
 
@@ -556,7 +556,7 @@ bool FOGSystemicInteractionRuntime::StartNode(FName Id, FString& Error)
 
 bool FOGSystemicInteractionRuntime::SetPacing(double Rate, FString& Error)
 {
-    if (!bActive || !FMath::IsFinite(Rate) || Rate < 0) return Fail(Error, TEXT("Pacing must be finite and nonnegative for an active interaction."));
+    if (!bActive || !FMath::IsFinite(Rate) || Rate < 0) return FailSystemicInteraction(Error, TEXT("Pacing must be finite and nonnegative for an active interaction."));
     Pacing = Rate;
     for (const auto& Pair : PlayedMontages)
         if (auto* Character = Cast<ACharacter>(Pair.Key.Get()))
@@ -570,7 +570,7 @@ bool FOGSystemicInteractionRuntime::SetPacing(double Rate, FString& Error)
 bool FOGSystemicInteractionRuntime::Advance(double Delta, int64 Tick, FString& Error)
 {
     if (!bActive) return true;
-    if (!FMath::IsFinite(Delta) || Delta < 0 || Tick < 0 || Tick < LastWorldTick) return Fail(Error, TEXT("Invalid frame duration or backward canonical tick."));
+    if (!FMath::IsFinite(Delta) || Delta < 0 || Tick < 0 || Tick < LastWorldTick) return FailSystemicInteraction(Error, TEXT("Invalid frame duration or backward canonical tick."));
     LastWorldTick = Tick;
     if (!LastPresentationError.IsEmpty()) { Error=LastPresentationError; return false; }
     for (const auto& Saved : Restore)
@@ -591,9 +591,9 @@ bool FOGSystemicInteractionRuntime::Advance(double Delta, int64 Tick, FString& E
     if (const auto* ActiveNode = FindNode(CurrentNode)) UpdateSignificance(*ActiveNode);
     if (CurrentNode.IsNone()) return true;
     const auto* Node = FindNode(CurrentNode);
-    if (!Node) return Fail(Error, TEXT("Current action no longer exists."));
+    if (!Node) return FailSystemicInteraction(Error, TEXT("Current action no longer exists."));
     const double Progress = Delta * Pacing;
-    if (!FMath::IsFinite(Progress)) return Fail(Error, TEXT("Pacing duration overflow."));
+    if (!FMath::IsFinite(Progress)) return FailSystemicInteraction(Error, TEXT("Pacing duration overflow."));
     // At most one completion per call. Surplus duration is discarded; the host
     // continues advancing world time independently of action pacing/progress.
     const double NextElapsed=FMath::Min(Node->DurationSeconds,Elapsed+Progress);
@@ -737,11 +737,11 @@ void FOGSystemicInteractionRuntime::UpdateSignificance(const FOGInteractionActio
 bool FOGSystemicInteractionRuntime::SetCamera(const FTransform& Transform, FString& Error)
 {
     if (!bActive || !Entry.World.IsValid() || !Entry.ReturnController.IsValid() || Transform.ContainsNaN())
-        return Fail(Error, TEXT("Camera requires an active embodied interaction and finite transform."));
+        return FailSystemicInteraction(Error, TEXT("Camera requires an active embodied interaction and finite transform."));
     if (!CameraActor.IsValid())
     {
         auto* Camera = Entry.World->SpawnActor<ACameraActor>(Transform.GetLocation(), Transform.Rotator());
-        if (!Camera) return Fail(Error, TEXT("Unable to create interaction camera."));
+        if (!Camera) return FailSystemicInteraction(Error, TEXT("Unable to create interaction camera."));
         CameraActor = Camera;
     }
     CameraActor->SetActorTransform(Transform);
@@ -768,19 +768,19 @@ bool FOGSystemicInteractionRuntime::ApplyStatePatches(const FOGInteractionAuthor
     auto Resolve = [&](FName Role, FOGEntityId& Entity, FName& Kind, FString& Json, bool& bManifestation)
     {
         const auto* Binding = UniqueRole(Entry.Participants, Role);
-        if (!Binding) return Fail(Error, TEXT("State patch role is missing or ambiguous."));
+        if (!Binding) return FailSystemicInteraction(Error, TEXT("State patch role is missing or ambiguous."));
         Entity = Binding->Character.EntityId;
         bool Found = false; int64 Revision = 0;
         if (!Store.TryReadEntity(Entity, Found, Kind, Json, Revision, Error)) return false;
-        if (!Found) return Fail(Error, TEXT("State patch participant no longer exists canonically."));
+        if (!Found) return FailSystemicInteraction(Error, TEXT("State patch participant no longer exists canonically."));
         FOGCharacterManifestationRecord Current;
         if (!Store.TryReadCharacterManifestation(Entity, bManifestation, Current, Error)) return false;
         const auto& Context = Binding->Character;
         if (Context.ManifestationId.IsValid() && (Context.ManifestationId != Entity || !bManifestation))
-            return Fail(Error, TEXT("State patch canonical Manifestation binding changed."));
+            return FailSystemicInteraction(Error, TEXT("State patch canonical Manifestation binding changed."));
         if (Context.OwnerEntityId.IsValid() && Context.OwnerEntityId !=
             (bManifestation ? Current.OwningRulerId : Entity))
-            return Fail(Error, TEXT("State patch canonical ownership changed; rebind the participant."));
+            return FailSystemicInteraction(Error, TEXT("State patch canonical ownership changed; rebind the participant."));
         return true;
     };
     for (const auto& Patch : Consequences.PresentationPatches)
@@ -802,7 +802,7 @@ bool FOGSystemicInteractionRuntime::ApplyStatePatches(const FOGInteractionAuthor
             const auto* Value = EntityState->Values.Find(TEXT("foundation_presentation"));
             if (Value)
             {
-                if ((*Value)->Type != EJson::Object) return Fail(Error, TEXT("NPC foundation presentation must be an object."));
+                if ((*Value)->Type != EJson::Object) return FailSystemicInteraction(Error, TEXT("NPC foundation presentation must be an object."));
                 PresentationState = (*Value)->AsObject();
             }
             else PresentationState = MakeShared<FJsonObject>();
@@ -811,7 +811,7 @@ bool FOGSystemicInteractionRuntime::ApplyStatePatches(const FOGInteractionAuthor
                 if (!PresentationState->HasField(Key)) return true;
                 const auto* Field = PresentationState->Values.Find(Key);
                 return ((*Field)->Type == EJson::String && PresentationState->TryGetStringField(Key, Out)) ||
-                    Fail(Error, TEXT("NPC foundation presentation fields must retain their canonical string types."));
+                    FailSystemicInteraction(Error, TEXT("NPC foundation presentation fields must retain their canonical string types."));
             };
             FString Skin, WorldTick;
             if (!ReadString(TEXT("skin_id"), Skin) || !ReadString(TEXT("outfit_state_json"), Record.OutfitStateJson) ||
@@ -820,11 +820,11 @@ bool FOGSystemicInteractionRuntime::ApplyStatePatches(const FOGInteractionAuthor
             Record.SelectedSkinId = FOGContentId(Skin);
             if (!WorldTick.IsEmpty() && (!LexTryParseString(Record.UpdatedWorldTick, *WorldTick) ||
                 Record.UpdatedWorldTick < 0 || LexToString(Record.UpdatedWorldTick) != WorldTick))
-                return Fail(Error, TEXT("NPC presentation has an invalid canonical tick."));
+                return FailSystemicInteraction(Error, TEXT("NPC presentation has an invalid canonical tick."));
         }
-        if (Record.UpdatedWorldTick > Tick) return Fail(Error, TEXT("Presentation patch cannot backdate newer canonical state."));
+        if (Record.UpdatedWorldTick > Tick) return FailSystemicInteraction(Error, TEXT("Presentation patch cannot backdate newer canonical state."));
         if (!Record.SelectedSkinId.IsEmpty() && !Record.SelectedSkinId.IsValid())
-            return Fail(Error, TEXT("Canonical presentation skin is invalid; preserving state."));
+            return FailSystemicInteraction(Error, TEXT("Canonical presentation skin is invalid; preserving state."));
         if (!MergeStateJson(Record.OutfitStateJson, Patch.OutfitMergeJson, Error) ||
             !MergeStateJson(Record.PresentationVariantStateJson, Patch.VariantMergeJson, Error)) return false;
         if (Patch.SelectedSkinId.IsSet()) Record.SelectedSkinId = Patch.SelectedSkinId.GetValue();
@@ -850,9 +850,9 @@ bool FOGSystemicInteractionRuntime::ApplyStatePatches(const FOGInteractionAuthor
         if (!Resolve(Patch.Role, Entity, Kind, Json, bManifestation)) return false;
         bool Found = false; FOGCharacterAdultRuntimeStateRecord Record;
         if (!Store.TryReadCharacterAdultRuntimeState(Entity, Found, Record, Error)) return false;
-        if (Record.UpdatedWorldTick > Tick) return Fail(Error, TEXT("Context patch cannot backdate newer canonical state."));
+        if (Record.UpdatedWorldTick > Tick) return FailSystemicInteraction(Error, TEXT("Context patch cannot backdate newer canonical state."));
         if (!Record.CurrentProfileVariantId.IsEmpty() && !Record.CurrentProfileVariantId.IsValid())
-            return Fail(Error, TEXT("Canonical context profile is invalid; preserving state."));
+            return FailSystemicInteraction(Error, TEXT("Canonical context profile is invalid; preserving state."));
         if (!MergeStateJson(Record.MutableContextStateJson, Patch.MutableContextMergeJson, Error)) return false;
         Record.CharacterEntityId = Entity; Record.UpdatedWorldTick = Tick;
         if (Patch.CurrentProfileVariantId.IsSet()) Record.CurrentProfileVariantId = Patch.CurrentProfileVariantId.GetValue();
@@ -1015,14 +1015,14 @@ bool FOGInteractionAnimationBinding::ValidateExpressionTracks(double Duration,FS
     {
         const FString Key=Track.Layer.ToString()+TEXT("|")+Track.Morph.ToString();
         if (Track.Layer.IsNone() || Track.Morph.IsNone() || Track.Keys.IsEmpty() || Channels.Contains(Key))
-            return Fail(Error,TEXT("Original expression channels require distinct layers/morphs and actual source keys."));
+            return FailSystemicInteraction(Error,TEXT("Original expression channels require distinct layers/morphs and actual source keys."));
         Channels.Add(Key); double Previous=-1;
         for (const auto& Frame:Track.Keys)
         {
             if (!FMath::IsFinite(Frame.TimeSeconds) || !FMath::IsFinite(Frame.Weight) ||
                 Frame.TimeSeconds<0 || Frame.TimeSeconds<=Previous || Frame.TimeSeconds>Duration ||
                 Frame.Weight < -1.f || Frame.Weight>1.f)
-                return Fail(Error,TEXT("Original expression keys must be ordered, finite and within the action's source clock."));
+                return FailSystemicInteraction(Error,TEXT("Original expression keys must be ordered, finite and within the action's source clock."));
             Previous=Frame.TimeSeconds;
         }
     }
