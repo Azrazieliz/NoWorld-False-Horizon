@@ -7,7 +7,7 @@
 namespace
 {
 const FName ActionEvent(TEXT("object_action_applied")),OfferEvent(TEXT("object_action_offer_published"));
-void Part(FString& S,const FString& V) { S+=LexToString(V.Len())+TEXT(":")+V; }
+void AppendObjectServicePart(FString& S,const FString& V) { S+=LexToString(V.Len())+TEXT(":")+V; }
 FString Digest(const FString& Text)
 {
     FTCHARToUTF8 Bytes(*Text); FMD5 Hash; Hash.Update(reinterpret_cast<const uint8*>(Bytes.Get()),Bytes.Length());
@@ -28,7 +28,7 @@ FOGEntityId Party(const FOGObjectActionContext& C,EOGObjectActionParty Which)
 void ItemQuote(FString& S,const FOGItemInstanceRecord& I)
 {
     for (const auto& V:{I.ItemId.ToString(),I.OwnerEntityId.ToString(),I.DefinitionId.ToString(),I.CurrentRankId.ToString(),
-        I.QualityId.ToString(),I.DurabilityStateJson,I.EvolutionStateJson,I.HistoryStateJson}) Part(S,V);
+        I.QualityId.ToString(),I.DurabilityStateJson,I.EvolutionStateJson,I.HistoryStateJson}) AppendObjectServicePart(S,V);
 }
 bool ReadParty(IOGWorldStore& Store,const FOGEntityId& Owner,FName Expected,FString& State,int64& Revision,FString& Error)
 {
@@ -61,8 +61,8 @@ bool OwnedItems(IOGWorldStore& Store,const FOGEntityId& Owner,bool IncludeManife
         }
         for (const auto& B:Bindings)
         {
-            Equipped.Add(B.ItemId); Part(Quote,B.ItemId.ToString()); Part(Quote,B.WearerEntityId.ToString());
-            Part(Quote,B.SlotId.ToString()); Part(Quote,B.StateJson);
+            Equipped.Add(B.ItemId); AppendObjectServicePart(Quote,B.ItemId.ToString()); AppendObjectServicePart(Quote,B.WearerEntityId.ToString());
+            AppendObjectServicePart(Quote,B.SlotId.ToString()); AppendObjectServicePart(Quote,B.StateJson);
         }
     }
     Out.Sort([](const auto& A,const auto& B){return A.ItemId.ToString()<B.ItemId.ToString();});
@@ -85,7 +85,7 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
     Out.ActionId=D.DefinitionId; Out.DisplayName=D.DisplayName; Out.Description=D.Description; Out.Context=C; Out.Outputs=D.Outputs;
     FString Quote=D.Fingerprint(),State; int64 Revision=0;
     if (!ReadParty(Store,C.RulerId,TEXT("ruler"),State,Revision,Error)) return false;
-    Part(Quote,C.RulerId.ToString()); Part(Quote,C.CounterpartyId.ToString()); Part(Quote,C.SelectedItemId.ToString());
+    AppendObjectServicePart(Quote,C.RulerId.ToString()); AppendObjectServicePart(Quote,C.CounterpartyId.ToString()); AppendObjectServicePart(Quote,C.SelectedItemId.ToString());
     if (D.UsesCounterparty())
     {
         if (C.CounterpartyId==C.RulerId || !ReadParty(Store,C.CounterpartyId,D.CounterpartyEntityKind,State,Revision,Error)) return false;
@@ -106,7 +106,7 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             if ((!Allowed.IsEmpty() && Allowed!=C.RulerId.ToString()) || Remaining==0 || Tick<Opens || (Closes>=0 && Tick>=Closes))
                 Out.MissingRequirements.Add(TEXT("This stored offer is unavailable, exhausted or outside its availability window."));
             Out.OfferStateJson=OfferState; Out.OfferRemaining=Remaining;
-            Part(Quote,OfferState); Part(Quote,LexToString(OfferRevision));
+            AppendObjectServicePart(Quote,OfferState); AppendObjectServicePart(Quote,LexToString(OfferRevision));
         }
     }
     else if (C.CounterpartyId.IsValid())
@@ -161,7 +161,7 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             TArray<FOGItemModifierRecord> Modifiers;
             if (!Store.ListItemModifiers(Item.ItemId,Modifiers,Error)) return false;
             for (const auto& M:Modifiers)
-            { Part(Quote,M.ModifierId.ToString()); Part(Quote,FString::FromInt(M.Ordinal)); Part(Quote,M.StateJson); }
+            { AppendObjectServicePart(Quote,M.ModifierId.ToString()); AppendObjectServicePart(Quote,FString::FromInt(M.Ordinal)); AppendObjectServicePart(Quote,M.StateJson); }
             Out.Inputs.Add(MoveTemp(Selection));
         }
     }
@@ -178,14 +178,14 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
         else if (Change.Amount>0 && Change.Amount>MAX_int64-Wallet.Before)
         { Out.MissingRequirements.Add(Change.DisplayName.ToString()+TEXT(" would exceed its balance limit.")); Wallet.After=Wallet.Before; }
         else Wallet.After=Wallet.Before+Change.Amount;
-        Part(Quote,Wallet.OwnerId.ToString()); Part(Quote,Wallet.ResourceId.ToString()); Part(Quote,LexToString(Wallet.Before));
+        AppendObjectServicePart(Quote,Wallet.OwnerId.ToString()); AppendObjectServicePart(Quote,Wallet.ResourceId.ToString()); AppendObjectServicePart(Quote,LexToString(Wallet.Before));
         Out.Wallets.Add(Wallet);
     }
     for (const auto& Output:D.Outputs)
     {
         const auto* ObjectDefinition=ResolveObject(Output.ObjectId,Error); if (!ObjectDefinition) return false;
         for (const auto& Value:{Output.ObjectId.ToString(),ObjectDefinition->InitialRankId.ToString(),ObjectDefinition->InitialQualityId.ToString(),
-            ObjectDefinition->InitialDurabilityJson,ObjectDefinition->InitialEvolutionJson}) Part(Quote,Value);
+            ObjectDefinition->InitialDurabilityJson,ObjectDefinition->InitialEvolutionJson}) AppendObjectServicePart(Quote,Value);
     }
     Out.bCanApply=Out.MissingRequirements.IsEmpty(); Out.ConfirmationToken=Digest(Quote); return true;
 }
