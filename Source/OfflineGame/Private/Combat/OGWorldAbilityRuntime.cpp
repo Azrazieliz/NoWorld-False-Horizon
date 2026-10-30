@@ -53,25 +53,28 @@ bool FOGTurnBattle::ReadWorldCast(const FOGEntityId& Id,FOGWorldAbilityCastView&
 bool FOGTurnBattle::FilterWorldContacts(const FOGResolvedCombatAction& Root,const TArray<FOGEntityId>& Raw,
     TArray<FOGEntityId>& Out,FString& Error) const
 {
-    Out.Reset(); const auto* Source=FindUnit(Root.SourceUnitId);
+    Out.Reset(); Error.Reset(); const auto* Source=FindUnit(Root.SourceUnitId);
     const auto* D=Source?FindNativeAbility(*Source,Root.SkillId):nullptr;
-    if (!D || !IsNativeAbilityAuthorized(*Source,Root.SkillId))
-    { Error=TEXT("World contact source has no admitted owned ability."); return false; }
-    const bool Self=D->Targets==EOGNativeAbilityTargets::Self;
-    const bool Allies=Self || D->Targets==EOGNativeAbilityTargets::SingleAlly || D->Targets==EOGNativeAbilityTargets::AllAllies;
-    const bool Single=D->Targets==EOGNativeAbilityTargets::SingleEnemy || D->Targets==EOGNativeAbilityTargets::SingleAlly;
+    if (!D || !Source->CanAct() || !IsNativeAbilityAuthorized(*Source,Root.SkillId))
+    { Error=TEXT("World contact source has no active admitted owned ability."); return false; }
+    const bool Single=D->Targets==EOGNativeAbilityTargets::Self ||
+        D->Targets==EOGNativeAbilityTargets::SingleEnemy || D->Targets==EOGNativeAbilityTargets::SingleAlly;
+    if (Single && Root.TargetUnitIds.Num()>1)
+    { Error=TEXT("World single-target cast has an invalid declared target set."); return false; }
     for (const auto& Id:Raw)
     {
         const auto* Target=FindUnit(Id);
-        if (!Target || !Target->CanAct() || (Self && Id!=Source->UnitEntityId) ||
-            (!Self && ((Target->TeamIndex==Source->TeamIndex)!=Allies)) ||
-            (!Self && Id==Source->UnitEntityId && !D->bIncludeSelf) ||
+        if (!Target || !IsNativeAbilityTarget(Root,*Source,*Target,*D) ||
             (Single && !Root.TargetUnitIds.IsEmpty() && Id!=Root.TargetUnitIds[0])) continue;
-        Out.AddUnique(Id); if (Single) break;
+        Out.AddUnique(Id);
     }
+    // Canonicalize before choosing a free-aim single contact. Overlap/hit
+    // enumeration order cannot select a different target or packet RNG order.
     Out.Sort([](const auto& A,const auto& B){return A.ToString()<B.ToString();});
+    if (Single && Out.Num()>1) Out.SetNum(1);
     return true;
 }
+
 bool FOGTurnBattle::SetExecutionMode(EOGCombatExecutionMode Mode,FString& Error)
 {
     FOGTurnBattle Candidate=*this;
@@ -182,6 +185,13 @@ bool FOGTurnBattle::ApplyWorldAbilityStep(const FOGEntityId& Id,int32 StepIndex,
     }
     if (!Contacts.IsEmpty())
     {
+        // Enforce the accepted cast's target lock here as well as in physical
+        // contact collection; direct callers cannot retarget a single cast.
+        TArray<FOGEntityId> ValidatedContacts;
+        if (!Candidate.FilterWorldContacts(Cast.Root,Contacts,ValidatedContacts,Error)) return false;
+        if (ValidatedContacts.Num()!=Contacts.Num())
+        { Error=TEXT("World impact contains an ineligible or undeclared physical target."); return false; }
+        Action.TargetUnitIds=MoveTemp(ValidatedContacts);
         Candidate.WorldExecutionProof=Action;
         if (!Candidate.ValidateNativeAbility(Action,*Source,Error)) return false;
         FOGDeterministicRng Rng(Cast.Seed^(static_cast<uint64>(StepIndex+1)*0x9e3779b97f4a7c15ull));
@@ -192,7 +202,7 @@ bool FOGTurnBattle::ApplyWorldAbilityStep(const FOGEntityId& Id,int32 StepIndex,
             Cast.bCostsPaid=true;
         }
         auto BeforeTargets=Action; BeforeTargets.TargetUnitIds.Reset();
-        for (const auto& Target:Contacts)
+        for (const auto& Target:Action.TargetUnitIds)
         {
             Cast.ContactTargets.AddUnique(Target);
             if (!Cast.BeforeEffectTargets.Contains(Target)) { Cast.BeforeEffectTargets.Add(Target); BeforeTargets.TargetUnitIds.Add(Target); }

@@ -155,10 +155,10 @@ bool FOGTurnBattle::PrevalidateLuminousActionWithoutSideEffects(
     for(const FOGEntityId& TargetId:Action.TargetUnitIds)
     {
         const FOGCombatUnitState* Target=FindUnit(TargetId);
-        if(!Target || !Target->IsAlive() ||
-           Target->Presence==EOGCombatPresence::Removed ||
-           Unique.Contains(TargetId))
-            return FailPreflight(OutError,TEXT("Luminous target absent, defeated or duplicated."));
+        // Covenant/Day revival preparation selects a living field ally before
+        // defeat. Actual resurrection retains its separate Soul/Authority scope.
+        if(!Target || !Target->IsLivingFieldTarget() || Unique.Contains(TargetId))
+            return FailPreflight(OutError,TEXT("Luminous target absent, off-field, defeated or duplicated."));
         Unique.Add(TargetId);
         const bool bAllied=Target->TeamIndex==Source.TeamIndex;
         const bool bNeedsAlly=bBase &&

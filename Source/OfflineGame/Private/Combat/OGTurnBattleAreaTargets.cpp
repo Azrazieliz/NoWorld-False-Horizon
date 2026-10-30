@@ -70,7 +70,7 @@ bool FOGTurnBattle::ExpandApprovedFieldTargets(
     All.Reserve(State.Units.Num());
     for (const FOGCombatUnitState& Target:State.Units)
     {
-        if (!Target.CanAct()) continue; // Reserve/off-field excluded.
+        if (!Target.IsLivingFieldTarget()) continue; // Reserve/off-field excluded; inability to act is not immunity.
         if (bAllies != (Target.TeamIndex==Source->TeamIndex)) continue;
         All.Add(Target.UnitEntityId);
     }
