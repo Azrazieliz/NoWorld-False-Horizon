@@ -7,6 +7,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "World/OGInventoryEquipmentService.h"
+#include "Progression/OGCharacterDevelopmentService.h"
 
 namespace
 {
@@ -175,7 +176,7 @@ bool FOGOwnedEquipmentService::ReadInventory(const FOGEntityId& Ruler,
                 {
                     FOGOwnedEquipmentSlot Stored;
                     Stored.SlotId = Binding.SlotId;
-                    Stored.DisplayName = Binding.SlotId.ToString();
+                    Stored.DisplayName = TEXT("Stored equipment slot");
                     Snapshot.Slots.Add(MoveTemp(Stored));
                     Slot = &Snapshot.Slots.Last();
                 }
@@ -205,7 +206,7 @@ bool FOGOwnedEquipmentService::Preview(const FOGEntityId& Ruler,
     Out.RulerId = Ruler;
     Out.SlotId = SlotId;
     Out.bUnequip = bUnequip;
-    Out.SlotName = SlotId.ToString();
+    Out.SlotName = TEXT("Stored equipment slot");
     const auto* Slot = Catalog.Slots.FindByPredicate([&](const auto& S)
     { return S.IdentityId == Identity && S.VersionId == Out.Target.ActiveVersionId && S.SlotId == SlotId; });
     if (Slot) Out.SlotName = Slot->DisplayName;
@@ -277,6 +278,28 @@ bool FOGOwnedEquipmentService::Preview(const FOGEntityId& Ruler,
     for (const auto& Modifier : Modifiers)
         for (const auto& Part : {Modifier.ModifierId.Value, LexToString(Modifier.Ordinal), Modifier.StateJson})
             EquipmentQuotePart(Quote, Part);
+    // A review describes the whole equipment result, including other slots and
+    // earned grants. Changes there must invalidate it as well as the edited slot.
+    TArray<FOGEquipmentBindingRecord> Bindings;
+    if (!Store.ListEquipmentBindings(Manifestation, Bindings, Error)) return false;
+    Bindings.Sort([](const auto& A, const auto& B) { return A.SlotId.Value < B.SlotId.Value; });
+    for (const auto& Binding : Bindings)
+    {
+        EquipmentQuotePart(Quote, Binding.SlotId.Value);
+        EquipmentQuotePart(Quote, Binding.StateJson);
+        FOGItemInstanceRecord BoundItem;
+        if (!Store.TryReadItemInstance(Binding.ItemId, bFound, BoundItem, Error)) return false;
+        if (!bFound) { Error = TEXT("A bound item is no longer stored."); return false; }
+        EquipmentItemQuote(Quote, BoundItem);
+        TArray<FOGItemModifierRecord> BoundModifiers;
+        if (!Store.ListItemModifiers(Binding.ItemId, BoundModifiers, Error)) return false;
+        for (const auto& Modifier : BoundModifiers)
+            for (const auto& Part : {Modifier.ModifierId.Value, LexToString(Modifier.Ordinal), Modifier.StateJson})
+                EquipmentQuotePart(Quote, Part);
+    }
+    FOGManifestationReinforcementRecord Earned;
+    if (!Store.TryReadManifestationReinforcement(Manifestation, bFound, Earned, Error)) return false;
+    EquipmentQuotePart(Quote, bFound ? Earned.StateJson : FString());
     Out.ConfirmationToken = FMD5::HashAnsiString(*Quote);
     Out.bCanApply = Out.MissingRequirements.IsEmpty();
     return true;
@@ -361,6 +384,13 @@ bool FOGOwnedEquipmentService::Apply(const FOGOwnedEquipmentPreview& Reviewed,
 bool FOGOwnedEquipmentService::ProjectCombatUnit(FOGCombatUnitState& Unit,
     const FOGEquipmentCatalog& Catalog, FString& Error) const
 {
+    return ProjectCombatUnitImpl(Unit, Catalog, nullptr, Error);
+}
+
+bool FOGOwnedEquipmentService::ProjectCombatUnitImpl(FOGCombatUnitState& Unit,
+    const FOGEquipmentCatalog& Catalog, const FOGOwnedEquipmentPreview* Change,
+    FString& Error) const
+{
     Error.Reset();
     bool bFound = false;
     FOGCharacterManifestationRecord M;
@@ -395,8 +425,35 @@ bool FOGOwnedEquipmentService::ProjectCombatUnit(FOGCombatUnitState& Unit,
         if (!Broken && ConditionBps>0) Out.StatContributions=Rule->StatBonuses;
         return true;
     };
-    if (!FOGFoundationCharacterRuntime(Store).ProjectEquipmentFunctions(
-            EquipmentContext(M), Resolver, Contributions, Error)) return false;
+    FOGFoundationCharacterProjection Projection;
+    if (!FOGFoundationCharacterRuntime(Store).Project(EquipmentContext(M), Projection, Error)) return false;
+    if (Change)
+    {
+        // Read-only effective bindings; runtime and preview resolve and sum in
+        // the same slot order, including large-number rounding at each addition.
+        Projection.Equipment.RemoveAll([&](const auto& Item) { return Item.Binding.SlotId == Change->SlotId; });
+        if (!Change->bUnequip)
+        {
+            FOGFoundationEquippedItemProjection Incoming;
+            Incoming.Binding.WearerEntityId = M.ManifestationId;
+            Incoming.Binding.SlotId = Change->SlotId;
+            Incoming.Binding.ItemId = Change->Item.ItemId;
+            Incoming.Item = Change->Item;
+            Projection.Equipment.Add(MoveTemp(Incoming));
+        }
+    }
+    Projection.Equipment.Sort([](const auto& A, const auto& B) { return A.Binding.SlotId.Value < B.Binding.SlotId.Value; });
+    for (const auto& Item : Projection.Equipment)
+    {
+        if (Item.bBroken) continue;
+        FOGFoundationEquipmentFunctions Contribution;
+        if (!Resolver(Projection, Item, Contribution, Error)) return false;
+        for (const auto& Bonus : Contribution.StatContributions)
+        {
+            auto& Total = Contributions.StatContributions.FindOrAdd(Bonus.Key);
+            Total = FOGLargeNumber::Add(Total, Bonus.Value);
+        }
+    }
     const FOGCombatStats Base = Unit.bHasEquipmentStatProjection ? Unit.EquipmentBaseStats :
         (Unit.bHasDevelopmentStatProjection ? Unit.DevelopmentBaseStats : Unit.Stats);
     FOGCombatStats Equipped = Base;
@@ -416,4 +473,53 @@ bool FOGOwnedEquipmentService::ProjectCombatUnit(FOGCombatUnitState& Unit, FStri
     if (!bFound) return true;
     FOGEquipmentCatalog Catalog;
     return FOGEquipmentCatalog::LoadInstalled(Catalog, Error) && ProjectCombatUnit(Unit, Catalog, Error);
+}
+
+bool FOGOwnedEquipmentService::PreviewStats(const FOGOwnedEquipmentPreview& Reviewed,
+    const FOGCombatUnitState& ResolvedUnit, const FOGEquipmentCatalog& Catalog,
+    FOGOwnedEquipmentPreview& Out, FString& Error) const
+{
+    Out = Reviewed;
+    Out.bStatsKnown = false;
+    Out.StatPreviewToken.Reset();
+    Error.Reset();
+    FOGOwnedEquipmentPreview Fresh;
+    if (!Preview(Reviewed.RulerId, Reviewed.Target.IdentityId, Reviewed.Target.ManifestationId,
+            Reviewed.SlotId, Reviewed.Item.ItemId, Reviewed.bUnequip, Catalog, Fresh, Error)) return false;
+    if (!Fresh.bCanApply || Fresh.ConfirmationToken != Reviewed.ConfirmationToken ||
+        ResolvedUnit.UnitEntityId != Fresh.Target.ManifestationId ||
+        ResolvedUnit.IdentityId != Fresh.Target.IdentityId ||
+        ResolvedUnit.SkillSet.CurrentForm != Fresh.Target.ActiveVersionId)
+    { Error = TEXT("Equipment totals require a current review and the exact resolved owned copy."); return false; }
+    // External equipment resolvers retain authority. A catalog-only simulation
+    // cannot truthfully remove their contributions from a cached base.
+    TArray<FOGEquipmentBindingRecord> Bindings;
+    if (!Store.ListEquipmentBindings(Fresh.Target.ManifestationId, Bindings, Error)) return false;
+    for (const auto& Binding : Bindings)
+    {
+        bool Found = false; FOGItemInstanceRecord Item;
+        if (!Store.TryReadItemInstance(Binding.ItemId, Found, Item, Error)) return false;
+        if (!Found || !Catalog.Items.ContainsByPredicate([&](const auto& I) { return I.DefinitionId == Item.DefinitionId; }))
+        { Error = TEXT("Total stats require the installed resolver for all currently equipped items."); return false; }
+    }
+    auto Before = ResolvedUnit;
+    auto After = ResolvedUnit;
+    FOGCharacterDevelopmentService Development(Store);
+    if (!ProjectCombatUnitImpl(Before, Catalog, nullptr, Error) ||
+        !Development.ProjectCombatUnit(Before, Error) ||
+        !ProjectCombatUnitImpl(After, Catalog, &Fresh, Error) ||
+        !Development.ProjectCombatUnit(After, Error)) return false;
+    Out.BeforeStats = Before.Stats;
+    Out.AfterStats = After.Stats;
+    Out.bStatsKnown = true;
+    Out.StatsAvailability.Reset();
+    FString Quote = Fresh.ConfirmationToken;
+    for (const auto* Stats : {&Before.Stats, &After.Stats})
+        for (const auto& Value : {Stats->MaxHp, Stats->Attack, Stats->Defense, FOGLargeNumber::FromInt64(Stats->Speed)})
+        {
+            EquipmentQuotePart(Quote, LexToString(Value.Significand));
+            EquipmentQuotePart(Quote, LexToString(Value.Exponent10));
+        }
+    Out.StatPreviewToken = FMD5::HashAnsiString(*Quote);
+    return true;
 }

@@ -193,6 +193,10 @@ private:
     FString InventoryFeedback;
     FString InventoryRefreshWarning;
     bool bInventoryFeedbackError = false;
+    bool bInventoryCommandInFlight = false;
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FOGInventoryQueuedConfirmationTest;
+#endif
 
     bool bNarrativeJournalOpen = false;
     FOGContentId OpenNarrativeQuestId;
