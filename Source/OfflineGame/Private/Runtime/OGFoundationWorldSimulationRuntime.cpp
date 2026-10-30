@@ -1,5 +1,6 @@
 #include "Runtime/OGFoundationWorldSimulationRuntime.h"
 #include "World/OGWorldSimulationReceiver.h"
+#include "Runtime/OGGate12LocalRulerBootstrap.h"
 #include "World/OGSharedWorldStateService.h"
 #include "World/OGWorldDirectorService.h"
 #include "Dom/JsonObject.h"
@@ -60,12 +61,20 @@ private:
 
 FName FOGFoundationWorldSimulationRuntime::ResolverKey() { return TEXT("foundation.world_body.navigation"); }
 FName FOGFoundationWorldSimulationRuntime::ArrivalEventType() { return TEXT("world.simulation.arrived"); }
+FName FOGFoundationWorldSimulationRuntime::ControlledCheckpointEventType() { return TEXT("world.presence.controlled_checkpointed"); }
 
 bool FOGFoundationWorldSimulationRuntime::SameAuthority(
     const FOGFoundationWorldBodyState& A, const FOGFoundationWorldBodyState& B)
 {
     return A.EntityId == B.EntityId && A.EntityKind == B.EntityKind &&
         A.EntityRevision == B.EntityRevision && A.EntityJson == B.EntityJson &&
+        A.LocalRulerId == B.LocalRulerId && A.bHasControlledManifestation == B.bHasControlledManifestation &&
+        (!A.bHasControlledManifestation ||
+        (A.ControlledManifestation.ManifestationId == B.ControlledManifestation.ManifestationId &&
+        A.ControlledManifestation.OwningRulerId == B.ControlledManifestation.OwningRulerId &&
+        A.ControlledManifestation.IdentityId == B.ControlledManifestation.IdentityId &&
+        A.ControlledManifestation.ActiveVersionId == B.ControlledManifestation.ActiveVersionId &&
+        A.ControlledManifestation.LifecycleState == B.ControlledManifestation.LifecycleState)) &&
         SamePresence(A.Presence, B.Presence) && A.bAvailable == B.bAvailable &&
         A.bAbsent == B.bAbsent && A.bHasSchedule == B.bHasSchedule &&
         (!A.bHasSchedule || (A.Schedule.ScheduleId == B.Schedule.ScheduleId &&
@@ -99,6 +108,25 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
     State.bAbsent = !D.AbsentStateValues.IsEmpty() && Matches(*Json, D.AbsentStateValues);
     State.bAvailable = !State.bAbsent && Matches(*Json, D.RequiredStateValues) &&
         Location.bPhysicallyAccessible && State.Presence.MovementContext == D.MovementContext;
+    if (D.bControlledPresence)
+    {
+        bool HasLocalRuler = false;
+        if (!FOGGate12LocalRulerBootstrap::TryLoad(Store, HasLocalRuler, State.LocalRulerId, Error)) return false;
+        if (!HasLocalRuler)
+            return Fail(Error, TEXT("Controlled presence requires the existing world-embedded local Ruler binding."));
+        if (Entity != State.LocalRulerId)
+        {
+            if (!Store.TryReadCharacterManifestation(Entity, State.bHasControlledManifestation,
+                State.ControlledManifestation, Error)) return false;
+            const auto& M = State.ControlledManifestation;
+            if (!State.bHasControlledManifestation || M.ManifestationId != Entity ||
+                M.OwningRulerId != State.LocalRulerId || M.LifecycleState != TEXT("active") ||
+                !M.IdentityId.IsValid() || !M.ActiveVersionId.IsValid())
+                return Fail(Error, TEXT("Controlled presence needs an exact active Manifestation owned by the stored local Ruler."));
+        }
+        // No Director read or route inference for genuine player-controlled presence.
+        Out = MoveTemp(State); return true;
+    }
     const FString Field = D.ScheduleIdField.ToString();
     if (!Json->HasField(Field)) { Out = MoveTemp(State); return true; }
     FString ScheduleText;
@@ -142,7 +170,9 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
 bool FOGFoundationWorldSimulationRuntime::ActivateDue(const UOGWorldSimulationDefinition& D,
     const FOGFoundationWorldBodyState& Expected, int64 Tick, FString& Error)
 {
-    Error.Reset(); FBodyTransaction Transaction(Store);
+    Error.Reset();
+    if (D.bControlledPresence) return Fail(Error, TEXT("Controlled presence cannot activate AI schedules."));
+    FBodyTransaction Transaction(Store);
     if (!Transaction.Begin(Error)) return false;
     FOGFoundationWorldBodyState Current;
     if (!Read(D, Expected.EntityId, Tick, Current, Error)) return false;
@@ -159,6 +189,7 @@ bool FOGFoundationWorldSimulationRuntime::Checkpoint(const UOGWorldSimulationDef
     bool bArrived, bool& bChanged, FString& Error)
 {
     bChanged = false; Error.Reset();
+    if (D.bControlledPresence) return Fail(Error, TEXT("Controlled presence cannot checkpoint AI movement or arrival."));
     if (Actual.ContainsNaN()) return Fail(Error, TEXT("Actual body position must be finite."));
     FBodyTransaction Transaction(Store);
     if (!Transaction.Begin(Error)) return false;
@@ -196,6 +227,36 @@ bool FOGFoundationWorldSimulationRuntime::Checkpoint(const UOGWorldSimulationDef
     Event.EventType = bArrived ? ArrivalEventType() : FName(TEXT("world.simulation.presence_checkpointed"));
     Event.PrimaryEntity = Current.EntityId; Event.RelatedEntities.Add(Current.Schedule.ScheduleId);
     Event.PayloadJson = Text; Event.bChronicleEligible = bArrived;
+    if (!Store.AppendWorldEvent(Event, Error) || !Transaction.Commit(Error)) return false;
+    bChanged = true; return true;
+}
+
+bool FOGFoundationWorldSimulationRuntime::CheckpointControlled(const UOGWorldSimulationDefinition& D,
+    const FOGFoundationWorldBodyState& Expected, const FVector& Actual, int64 Tick,
+    bool& bChanged, FString& Error)
+{
+    bChanged = false; Error.Reset();
+    if (!D.bControlledPresence || Actual.ContainsNaN())
+        return Fail(Error, TEXT("Controlled checkpoint requires its explicit source policy and finite measured position."));
+    FBodyTransaction Transaction(Store);
+    if (!Transaction.Begin(Error)) return false;
+    FOGFoundationWorldBodyState Current;
+    if (!Read(D, Expected.EntityId, Tick, Current, Error)) return false;
+    if (!SameAuthority(Current, Expected) || !Current.bAvailable || Current.bHasSchedule ||
+        !Current.LocalRulerId.IsValid())
+        return Fail(Error, TEXT("Changed canonical position, availability, local owner or active version invalidates this physical writer."));
+    if (Actual == Current.Presence.LocalPosition) return Transaction.Commit(Error);
+    auto Presence = Current.Presence; Presence.LocalPosition = Actual; Presence.UpdatedWorldTick = Tick;
+    if (!FOGSharedWorldStateService(Store).UpdatePhysicalPresence(Presence, Error)) return false;
+    auto Payload = MakeShared<FJsonObject>();
+    Payload->SetStringField(TEXT("definition_id"), D.DefinitionId.ToString());
+    Payload->SetStringField(TEXT("location_id"), Presence.LocationId.ToString());
+    Payload->SetNumberField(TEXT("local_x"), Actual.X); Payload->SetNumberField(TEXT("local_y"), Actual.Y);
+    Payload->SetNumberField(TEXT("local_z"), Actual.Z);
+    FString Text; FJsonSerializer::Serialize(Payload, TJsonWriterFactory<>::Create(&Text));
+    FOGWorldEvent Event; Event.EventId = FOGEntityId::NewId(); Event.WorldTick = Tick;
+    Event.EventType = ControlledCheckpointEventType(); Event.PrimaryEntity = Current.EntityId;
+    Event.PayloadJson = Text; Event.bChronicleEligible = false;
     if (!Store.AppendWorldEvent(Event, Error) || !Transaction.Commit(Error)) return false;
     bChanged = true; return true;
 }

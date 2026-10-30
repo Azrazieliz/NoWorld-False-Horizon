@@ -9,6 +9,13 @@
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Combat/OGTurnBattle.h"
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Runtime/OGCanonicalCharacterPresentation.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Combat/OGWorldActionRuntime.h"
+#include "GameFramework/PlayerController.h"
+#include "Misc/CoreDelegates.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
@@ -39,18 +46,25 @@ UOGWorldSimulationDefinition::UOGWorldSimulationDefinition() { System = TEXT("wo
 bool UOGWorldSimulationDefinition::ValidateDefinition_Implementation(FString& Error) const
 {
     if (!Super::ValidateDefinition_Implementation(Error)) return false;
-    if (System != TEXT("world_simulation") || EntityKind.IsNone() || ScheduleIdField.IsNone() ||
+    if (System != TEXT("world_simulation") || EntityKind.IsNone() ||
         MovementContext.IsNone() || RequiredStateValues.IsEmpty() ||
-        !FMath::IsFinite(AcceptanceRadiusCm) || AcceptanceRadiusCm <= 0.f ||
         !FMath::IsFinite(RefreshIntervalSeconds) || RefreshIntervalSeconds <= 0.f ||
         CheckpointIntervalWorldTicks <= 0)
-        return FailBody(Error, TEXT("World simulation requires source-authored kind, schedule/state selectors, context and positive physical/refresh/checkpoint tolerances."));
+        return FailBody(Error, TEXT("World bodies require source-authored kind/state selectors, context and positive refresh/checkpoint cadence."));
+    if (bControlledPresence)
+    {
+        if (!ScheduleIdField.IsNone() || !ArrivalStateField.IsNone() || !ArrivalStateValue.IsEmpty() ||
+            AcceptanceRadiusCm != 0.f)
+            return FailBody(Error, TEXT("Controlled presence must omit AI schedule, arrival and acceptance-radius policy."));
+    }
+    else if (ScheduleIdField.IsNone() || !FMath::IsFinite(AcceptanceRadiusCm) || AcceptanceRadiusCm <= 0.f)
+        return FailBody(Error, TEXT("AI schedules require source-authored schedule identity and positive physical acceptance radius."));
     for (const auto& Entry : RequiredStateValues)
         if (Entry.Key.IsNone()) return FailBody(Error, TEXT("Availability selectors need exact canonical field names."));
     for (const auto& Entry : AbsentStateValues)
         if (Entry.Key.IsNone()) return FailBody(Error, TEXT("Absence selectors need exact canonical field names."));
     if ((ArrivalStateField.IsNone() && !ArrivalStateValue.IsEmpty()) ||
-        ArrivalStateField == ScheduleIdField || ArrivalStateField == TEXT("system_binding_id") ||
+        (!ArrivalStateField.IsNone() && ArrivalStateField == ScheduleIdField) || ArrivalStateField == TEXT("system_binding_id") ||
         ArrivalStateField == TEXT("diagnosticFixture"))
         return FailBody(Error, TEXT("Arrival state cannot rewrite schedule identity, binding composition or diagnostic provenance."));
     return true;
@@ -79,6 +93,69 @@ void UOGWorldSimulationBodyRegistry::Release(const FOGEntityId& Entity, const UO
     if (Owns(Entity, Receiver)) Bodies.Remove(Entity);
 }
 
+void UOGWorldSimulationBodyRegistry::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+    DeactivateHandle = FCoreDelegates::ApplicationWillDeactivateDelegate.AddUObject(this, &ThisClass::HandleSaveBoundary);
+    BackgroundHandle = FCoreDelegates::ApplicationWillEnterBackgroundDelegate.AddUObject(this, &ThisClass::HandleSaveBoundary);
+    TearDownHandle = FWorldDelegates::OnWorldBeginTearDown.AddUObject(this, &ThisClass::HandleWorldTearDown);
+}
+void UOGWorldSimulationBodyRegistry::Deinitialize()
+{
+    HandleSaveBoundary();
+    FCoreDelegates::ApplicationWillDeactivateDelegate.Remove(DeactivateHandle);
+    FCoreDelegates::ApplicationWillEnterBackgroundDelegate.Remove(BackgroundHandle);
+    FWorldDelegates::OnWorldBeginTearDown.Remove(TearDownHandle);
+    Bodies.Reset(); Super::Deinitialize();
+}
+void UOGWorldSimulationBodyRegistry::HandleSaveBoundary()
+{
+    FString Error;
+    if (!CheckpointControlledBodies(Error))
+        UE_LOG(LogTemp, Warning, TEXT("Controlled World boundary retained earlier canonical checkpoints: %s"), *Error);
+}
+void UOGWorldSimulationBodyRegistry::HandleWorldTearDown(UWorld* World)
+{
+    if (World == GetWorld()) HandleSaveBoundary();
+}
+bool UOGWorldSimulationBodyRegistry::CheckpointControlledBodies(FString& Error)
+{
+    Error.Reset(); bool Success = true;
+    // Snapshot: committed notifications may synchronously release/rebind a body.
+    TArray<TWeakObjectPtr<UOGWorldSimulationReceiver>> Snapshot;
+    Bodies.GenerateValueArray(Snapshot);
+    for (const auto& Weak : Snapshot)
+        if (auto* Body = Weak.Get(); Body && Body->IsBodyActive() && Body->IsControlledPresence() &&
+            Body->bHasAccepted && !Body->bRestoreRequired && !Body->bControlledSuspended)
+        {
+            FString Failure;
+            if (!Body->CheckpointControlledPresence(Failure))
+            {
+                Success = false;
+                Error += FString::Printf(TEXT("%s: %s\n"), *Body->BoundContext.EntityId.ToString(), *Failure);
+            }
+        }
+    return Success;
+}
+void UOGWorldSimulationBodyRegistry::HandleLocationUnregistering(UOGWorldSimulationLocationComponent* Frame)
+{
+    TArray<TWeakObjectPtr<UOGWorldSimulationReceiver>> Snapshot;
+    Bodies.GenerateValueArray(Snapshot);
+    for (const auto& Weak : Snapshot)
+        if (auto* Body = Weak.Get(); Body && Body->IsControlledPresence() && Body->LocationFrame.Get() == Frame)
+        {
+            // Called before Super::OnUnregister removes the old frame.
+            Body->HandleControlledBoundary();
+            Body->InvalidateControlledPresence(); Body->LocationFrame.Reset();
+        }
+}
+void UOGWorldSimulationLocationComponent::OnUnregister()
+{
+    if (auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr)
+        Registry->HandleLocationUnregistering(this);
+    Super::OnUnregister();
+}
+
 UOGWorldSimulationReceiver::UOGWorldSimulationReceiver()
 {
     AcceptedSystem = TEXT("world_simulation");
@@ -94,7 +171,11 @@ bool UOGWorldSimulationReceiver::PrepareDefinition_Implementation(UDataAsset* As
     auto* Core = CurrentCore(this); auto* Store = Core ? Core->GetWorldStore() : nullptr;
     auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
     if (Prepared || bActive || !D || !D->ValidateDefinition(Error)) return false;
-    if (!Pawn || Pawn->IsPlayerControlled() || !Pawn->GetMovementComponent() || !AI || !AI->GetPathFollowingComponent())
+    if (!Pawn || !Pawn->GetMovementComponent())
+        return FailBody(Error, TEXT("World presence needs its existing physical pawn and movement component."));
+    // A controlled body may prepare before possession, without any physical write.
+    if (!D->bControlledPresence &&
+        (Pawn->IsPlayerControlled() || !AI || !AI->GetPathFollowingComponent()))
         return FailBody(Error, TEXT("World schedule needs its existing non-player pawn, movement component and AIController."));
     if (!Registry || !Registry->CanClaim(Context.EntityId, this))
         return FailBody(Error, TEXT("Another streamed body already owns this canonical entity."));
@@ -114,10 +195,19 @@ void UOGWorldSimulationReceiver::ActivateDefinition_Implementation()
     { bOriginalHidden = GetOwner()->IsHidden(); bOriginalCollision = GetOwner()->GetActorEnableCollision(); }
     bCapturedBodyFlags = true; bRestoreRequired = true; bSuppressOnRelease = false;
     bActive = true; bHasAccepted = false;
-    SetBodySuppressed(true);
+    if (!Prepared->bControlledPresence || !HasControlledPreemption()) SetBodySuppressed(true);
     ReleaseHandle = BoundCore->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::HandleRuntimeReleasing);
     EntityFeed = BoundCore->GetEntityEventFeed(BoundContext.EntityId);
     if (EntityFeed) EntityHandle = EntityFeed->AddUObject(this, &ThisClass::HandleCommitted);
+    if (Prepared->bControlledPresence)
+    {
+        if (auto* Pawn = Cast<APawn>(GetOwner()))
+            Pawn->ReceiveControllerChangedDelegate.AddDynamic(this, &ThisClass::HandleControllerChanged);
+        ControlledParticipant = GetOwner()->FindComponentByClass<UOGInteractionParticipantComponent>();
+        if (ControlledParticipant.IsValid())
+            InteractionHandle = ControlledParticipant->OnSignificanceChanged.AddUObject(this, &ThisClass::HandleInteractionSignificance);
+        BattleHandle = BoundCore->OnNativeBattleStateCommitted.AddUObject(this, &ThisClass::HandleBattleCommitted);
+    }
     SetComponentTickInterval(Prepared->RefreshIntervalSeconds); SetComponentTickEnabled(true);
     // Staged activation has no canonical writes or movement. First tick re-reads authority.
 }
@@ -198,7 +288,7 @@ bool UOGWorldSimulationReceiver::SavePhysicalCheckpoint(bool Arrived, FString& E
     auto* Core = BoundCore.Get(); auto* Store = Core ? Core->GetWorldStore() : nullptr;
     auto* Pawn = Cast<APawn>(GetOwner()); auto* Frame = LocationFrame.Get();
     auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
-    if (!bActive || !bHasAccepted || !Prepared || !Core || CurrentCore(this) != Core ||
+    if (!bActive || !bHasAccepted || bRestoreRequired || !Prepared || Prepared->bControlledPresence || !Core || CurrentCore(this) != Core ||
         Core->GetCanonicalWorldTick()<0 || !Store || !Store->IsOpen() || !Pawn || Pawn->IsPlayerControlled() ||
         MoveController.Get() != Pawn->GetController() ||
         HasExistingBodyActivity(Pawn, Core, BoundContext.EntityId) ||
@@ -223,6 +313,7 @@ bool UOGWorldSimulationReceiver::SavePhysicalCheckpoint(bool Arrived, FString& E
 }
 void UOGWorldSimulationReceiver::Refresh()
 {
+    if (IsControlledPresence()) { RefreshControlled(); return; }
     auto* Core = BoundCore.Get(); auto* Store = Core ? Core->GetWorldStore() : nullptr;
     auto* Pawn = Cast<APawn>(GetOwner()); auto* AI = Pawn ? Cast<AAIController>(Pawn->GetController()) : nullptr;
     auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
@@ -317,6 +408,8 @@ void UOGWorldSimulationReceiver::TickComponent(float Delta, ELevelTick Type, FAc
 }
 void UOGWorldSimulationReceiver::ReleaseDefinition_Implementation()
 {
+    if (bActive && IsControlledPresence()) HandleControlledBoundary();
+    const bool RestoreFlags = !IsControlledPresence() || bSuppressOnRelease || !HasControlledPreemption();
     if (bActive && bHasAccepted && (MoveRequestId || bArrivalPending))
     {
         FString Error;
@@ -324,6 +417,12 @@ void UOGWorldSimulationReceiver::ReleaseDefinition_Implementation()
             UE_LOG(LogTemp, Warning, TEXT("World body boundary retained last canonical checkpoint: %s"), *Error);
     }
     StopOwnedMove(); SetComponentTickEnabled(false);
+    if (auto* Pawn = Cast<APawn>(GetOwner()))
+        Pawn->ReceiveControllerChangedDelegate.RemoveDynamic(this, &ThisClass::HandleControllerChanged);
+    if (ControlledParticipant.IsValid()) ControlledParticipant->OnSignificanceChanged.Remove(InteractionHandle);
+    ControlledParticipant.Reset(); InteractionHandle.Reset();
+    if (BoundCore.IsValid()) BoundCore->OnNativeBattleStateCommitted.Remove(BattleHandle);
+    BattleHandle.Reset(); ControlledController.Reset(); bControlledSuspended = false;
     if (EntityFeed) EntityFeed->Remove(EntityHandle);
     if (ScheduleFeed) ScheduleFeed->Remove(ScheduleHandle);
     EntityFeed.Reset(); ScheduleFeed.Reset(); EntityHandle.Reset(); ScheduleHandle.Reset(); ObservedSchedule = FOGEntityId();
@@ -331,11 +430,218 @@ void UOGWorldSimulationReceiver::ReleaseDefinition_Implementation()
     ReleaseHandle.Reset(); BoundCore.Reset();
     if (auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr)
         Registry->Release(BoundContext.EntityId, this);
-    SetBodySuppressed(bSuppressOnRelease); bActive = false; bHasAccepted = false; bRestoreRequired=true;
+    if (RestoreFlags) SetBodySuppressed(bSuppressOnRelease);
+    bActive = false; bHasAccepted = false; bRestoreRequired=true;
     LocationFrame.Reset(); Prepared = nullptr; Accepted = FOGFoundationWorldBodyState(); LastCheckpointTick = -1;
 }
 void UOGWorldSimulationReceiver::HandleRuntimeReleasing() { bSuppressOnRelease=true; ReleaseDefinition(); }
 void UOGWorldSimulationReceiver::EndPlay(const EEndPlayReason::Type Reason)
 {
     ReleaseDefinition(); Super::EndPlay(Reason);
+}
+
+bool UOGWorldSimulationReceiver::ValidateControlledPawn(FString& Error, AController* DepartingController) const
+{
+    auto* Pawn = Cast<APawn>(GetOwner());
+    auto* Player = Cast<APlayerController>(DepartingController ? DepartingController : Pawn ? Pawn->GetController() : nullptr);
+    if (!Pawn || !Pawn->GetMovementComponent() || !Player || !Player->IsLocalController() ||
+        (DepartingController ? Pawn->GetController() == DepartingController :
+        (!Pawn->IsLocallyControlled() || !Pawn->IsPlayerControlled() || Player->GetPawn() != Pawn)))
+        return FailBody(Error, TEXT("Controlled presence requires this pawn's genuine local player possession or exact departing-controller boundary."));
+    const auto* Binding = Pawn->FindComponentByClass<UOGSystemBindingComponent>();
+    if (!Binding || Binding->CanonicalEntityId != BoundContext.EntityId)
+        return FailBody(Error, TEXT("Physical pawn is not bound to this exact canonical system entity."));
+    if (!Accepted.bHasControlledManifestation)
+    {
+        if (Accepted.LocalRulerId == BoundContext.EntityId) return true;
+        return FailBody(Error, TEXT("Controlled non-Manifestation body must be the actual locally bound Ruler."));
+    }
+    // Canonical-release callbacks may already have torn down presentation.
+    // Only a previously restored body can use this path; the transaction still
+    // rechecks exact live owner, copy, version, availability and presence.
+    if (bSuppressOnRelease && bHasAccepted && !bRestoreRequired) return true;
+    if (const auto* Appearance = Pawn->FindComponentByClass<UOGCharacterAppearanceComponent>();
+        Appearance && Appearance->MatchesOwnedManifestation(Accepted.LocalRulerId, BoundContext.EntityId)) return true;
+    if (const auto* Presentation = Pawn->FindComponentByClass<UOGCanonicalCharacterPresentation>();
+        Presentation && Presentation->HasProjection())
+    {
+        const auto& P = Presentation->GetProjection(); const auto& M = Accepted.ControlledManifestation;
+        if (P.Context.EntityId == BoundContext.EntityId && P.bHasManifestation &&
+            P.Manifestation.ManifestationId == M.ManifestationId &&
+            P.Manifestation.OwningRulerId == M.OwningRulerId &&
+            P.Manifestation.IdentityId == M.IdentityId &&
+            P.Manifestation.ActiveVersionId == M.ActiveVersionId &&
+            P.Manifestation.LifecycleState == M.LifecycleState) return true;
+    }
+    return FailBody(Error, TEXT("Owned presence needs the existing character adapter's exact live owner/Identity/Version binding."));
+}
+bool UOGWorldSimulationReceiver::HasControlledPreemption() const
+{
+    auto* Pawn = Cast<APawn>(GetOwner()); auto* Core = BoundCore.Get();
+    if (!Pawn || !Core) return true;
+    if (HasExistingBodyActivity(Pawn, Core, BoundContext.EntityId) ||
+        Core->IsNativeEncounterAwaitingWorldRebind()) return true;
+    if (const auto* Body = Pawn->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+        Body && Body->GetBoundUnitId() == BoundContext.EntityId && Body->GetBoundBattleId().IsValid()) return true;
+    if (const auto* Action = Pawn->FindComponentByClass<UOGWorldActionRuntimeComponent>();
+        Action && Action->HasActiveAction()) return true;
+    const auto* Controller = Pawn->GetController();
+    const auto* Path = Controller ? Controller->FindComponentByClass<UPathFollowingComponent>() : nullptr;
+    return Path && Path->GetStatus() != EPathFollowingStatus::Idle;
+}
+void UOGWorldSimulationReceiver::InvalidateControlledPresence()
+{
+    StopOwnedMove(); bRestoreRequired = true; bHasAccepted = false; ControlledController.Reset();
+}
+void UOGWorldSimulationReceiver::HandleInteractionSignificance(bool, bool)
+{
+    if (IsControlledPresence()) InvalidateControlledPresence();
+}
+void UOGWorldSimulationReceiver::HandleBattleCommitted(const FOGTurnBattleState& State, const FOGEntityId&)
+{
+    if (IsControlledPresence() && State.Units.ContainsByPredicate(
+        [this](const FOGCombatUnitState& Unit) { return Unit.UnitEntityId == BoundContext.EntityId; }))
+        InvalidateControlledPresence();
+}
+void UOGWorldSimulationReceiver::HandleControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)
+{
+    if (!bActive || !IsControlledPresence() || Pawn != GetOwner() || OldController == NewController ||
+        Pawn->GetController() != NewController) return;
+    // Unreal emits this synchronous notification at the controller change.
+    // The old accepted local controller is a narrowly scoped transfer fence;
+    // a newly possessed or already invalidated/staged body cannot donate a pose.
+    if (OldController && ControlledController.Get() == OldController && bHasAccepted && !bRestoreRequired)
+    {
+        FString Error;
+        if (!SaveControlledCheckpoint(OldController, Error))
+            UE_LOG(LogTemp, Warning, TEXT("Controlled handoff retained last canonical checkpoint: %s"), *Error);
+    }
+    InvalidateControlledPresence();
+    if (bActive) SetComponentTickInterval(0.f);
+}
+bool UOGWorldSimulationReceiver::CheckpointControlledPresence(FString& Error)
+{
+    return SaveControlledCheckpoint(nullptr, Error);
+}
+bool UOGWorldSimulationReceiver::SaveControlledCheckpoint(AController* DepartingController, FString& Error)
+{
+    Error.Reset();
+    auto* Core = BoundCore.Get(); auto* Store = Core ? Core->GetWorldStore() : nullptr;
+    auto* Pawn = Cast<APawn>(GetOwner()); auto* Frame = LocationFrame.Get();
+    auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
+    if (!bActive || !IsControlledPresence() || bControlledSuspended || bControlledCheckpointing ||
+        !bHasAccepted || bRestoreRequired || !Core || CurrentCore(this) != Core ||
+        Core->GetCanonicalWorldTick() < 0 || !Store || !Store->IsOpen() || Store->IsWriteTransactionActive() ||
+        !Registry || !Registry->Owns(BoundContext.EntityId, this))
+        return FailBody(Error, TEXT("Controlled body has no restored, exclusive canonical checkpoint authority."));
+    TGuardValue<bool> Checkpointing(bControlledCheckpointing, true);
+    auto* ExpectedController = DepartingController ? DepartingController : Pawn ? Pawn->GetController() : nullptr;
+    const auto* DepartingPath = DepartingController ? DepartingController->FindComponentByClass<UPathFollowingComponent>() : nullptr;
+    if (!ValidateControlledPawn(Error, DepartingController) || ControlledController.Get() != ExpectedController ||
+        HasControlledPreemption() || (DepartingPath && DepartingPath->GetStatus() != EPathFollowingStatus::Idle))
+    {
+        InvalidateControlledPresence();
+        if (Error.IsEmpty()) Error = TEXT("Possession, foreign movement, interaction or encounter staging invalidated this physical sample.");
+        return false;
+    }
+    // Re-resolve uniqueness, identity and transform at every save boundary.
+    if (!Frame || !Frame->IsRegistered() || Frame->LocationId != Accepted.Presence.LocationId ||
+        !FindLocationFrame(Accepted.Presence.LocationId, Error) || LocationFrame.Get() != Frame ||
+        !Frame->GetComponentTransform().Equals(AcceptedFrameTransform))
+    {
+        InvalidateControlledPresence();
+        if (Error.IsEmpty()) Error = TEXT("Location frame changed before the measured boundary; last canonical position retained.");
+        return false;
+    }
+    TStrongObjectPtr<UOGWorldSimulationDefinition> Definition(Prepared.Get());
+    const auto Entity = BoundContext.EntityId;
+    FOGFoundationWorldSimulationRuntime Runtime(*Store); bool Changed = false;
+    const int64 Tick = Core->GetCanonicalWorldTick();
+    if (!Runtime.CheckpointControlled(*Definition, Accepted,
+        Frame->GetComponentTransform().InverseTransformPosition(Pawn->GetActorLocation()), Tick, Changed, Error))
+    { InvalidateControlledPresence(); return false; }
+    // Committed callbacks may have released/replaced this binding. Never
+    // dereference a released definition or resurrect an old writer afterwards.
+    if (!bActive || Prepared.Get() != Definition.Get() || BoundCore.Get() != Core ||
+        !Registry->Owns(Entity, this) || bControlledSuspended || bRestoreRequired) return true;
+    FOGFoundationWorldBodyState Current;
+    if (!Runtime.Read(*Definition, Entity, Tick, Current, Error))
+    { InvalidateControlledPresence(); return false; }
+    Accepted = MoveTemp(Current); LastCheckpointTick = Tick; return true;
+}
+bool UOGWorldSimulationReceiver::SuspendControlledPresence(FString& Error)
+{
+    const bool Saved = CheckpointControlledPresence(Error);
+    bControlledSuspended = true; InvalidateControlledPresence(); return Saved;
+}
+void UOGWorldSimulationReceiver::ResumeControlledPresence()
+{
+    bControlledSuspended = false; InvalidateControlledPresence();
+    if (bActive) SetComponentTickInterval(0.f);
+}
+void UOGWorldSimulationReceiver::HandleControlledBoundary()
+{
+    if (!bActive || !IsControlledPresence() || bControlledSuspended || !bHasAccepted || bRestoreRequired) return;
+    FString Error;
+    if (!CheckpointControlledPresence(Error))
+        UE_LOG(LogTemp, Warning, TEXT("Controlled World boundary retained last canonical checkpoint: %s"), *Error);
+}
+void UOGWorldSimulationReceiver::RefreshControlled()
+{
+    StopOwnedMove(); // This policy never borrows the AI path writer.
+    auto* Core = BoundCore.Get(); auto* Store = Core ? Core->GetWorldStore() : nullptr;
+    auto* Pawn = Cast<APawn>(GetOwner());
+    auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
+    if (bControlledSuspended || !Core || CurrentCore(this) != Core || !Core->IsCoreReady() ||
+        !Store || !Store->IsOpen() || Store->IsWriteTransactionActive() ||
+        !Pawn || !Registry || !Registry->Owns(BoundContext.EntityId, this))
+    { InvalidateControlledPresence(); Status = TEXT("Controlled body is suspended or canonical lifetime is unavailable."); return; }
+    auto* Participant = Pawn->FindComponentByClass<UOGInteractionParticipantComponent>();
+    if (ControlledParticipant.Get() != Participant)
+    {
+        if (ControlledParticipant.IsValid()) ControlledParticipant->OnSignificanceChanged.Remove(InteractionHandle);
+        ControlledParticipant = Participant; InteractionHandle.Reset();
+        if (Participant) InteractionHandle = Participant->OnSignificanceChanged.AddUObject(this, &ThisClass::HandleInteractionSignificance);
+        InvalidateControlledPresence();
+    }
+    // Check before hiding or restoring: never teleport a staged encounter pose.
+    if (HasControlledPreemption())
+    { InvalidateControlledPresence(); Status = TEXT("Existing movement, interaction or encounter owns the physical pose."); return; }
+    const int64 Tick = Core->GetCanonicalWorldTick(); FString Error;
+    FOGFoundationWorldBodyState Current;
+    if (!FOGFoundationWorldSimulationRuntime(*Store).Read(*Prepared, BoundContext.EntityId, Tick, Current, Error))
+    { InvalidateControlledPresence(); Status = Error; return; }
+    const bool PresenceChanged = !bHasAccepted || !SamePosition(Accepted.Presence, Current.Presence) ||
+        Accepted.LocalRulerId != Current.LocalRulerId ||
+        Accepted.bHasControlledManifestation != Current.bHasControlledManifestation ||
+        (Current.bHasControlledManifestation &&
+        (Accepted.ControlledManifestation.IdentityId != Current.ControlledManifestation.IdentityId ||
+        Accepted.ControlledManifestation.ActiveVersionId != Current.ControlledManifestation.ActiveVersionId));
+    const auto* PreviousFrame = LocationFrame.Get();
+    Accepted = MoveTemp(Current);
+    if (!ValidateControlledPawn(Error))
+    { InvalidateControlledPresence(); Status = Error; return; }
+    if (!FindLocationFrame(Accepted.Presence.LocationId, Error))
+    { InvalidateControlledPresence(); SetBodySuppressed(true); Status = Error; return; }
+    const FTransform FrameTransform = LocationFrame->GetComponentTransform();
+    const bool Restore = bRestoreRequired || PresenceChanged ||
+        ControlledController.Get() != Pawn->GetController() || PreviousFrame != LocationFrame.Get() ||
+        !FrameTransform.Equals(AcceptedFrameTransform);
+    if (Accepted.bAbsent || !Accepted.bAvailable)
+    {
+        InvalidateControlledPresence(); SetBodySuppressed(Accepted.bAbsent);
+        Status = TEXT("Canonical controlled presence is absent or unavailable."); return;
+    }
+    if (Restore)
+    {
+        SetBodySuppressed(true);
+        if (!Pawn->SetActorLocation(FrameTransform.TransformPosition(Accepted.Presence.LocalPosition),
+            false, nullptr, ETeleportType::TeleportPhysics))
+        { InvalidateControlledPresence(); Status = TEXT("Controlled body could not restore its canonical Location-local position."); return; }
+        AcceptedFrameTransform = FrameTransform; ControlledController = Pawn->GetController();
+        bRestoreRequired = false; bHasAccepted = true; LastCheckpointTick = Tick;
+    }
+    SetBodySuppressed(false); Status.Reset();
+    if (!Restore && Tick - LastCheckpointTick >= Prepared->CheckpointIntervalWorldTicks &&
+        !CheckpointControlledPresence(Error)) Status = Error;
 }
