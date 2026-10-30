@@ -22,5 +22,7 @@ jobs:
           python-version: "3.12"
       - name: Reject unsupported DONE claims
         run: python Scripts/production/verify_completion_contract.py
+      - name: Match progression to canonical advancement master
+        run: python Scripts/production/verify_advancement_progress.py
       - name: Exercise fail-closed completion regressions
         run: python -m unittest discover -s Scripts/production -p "test_completion_contract.py" -v
