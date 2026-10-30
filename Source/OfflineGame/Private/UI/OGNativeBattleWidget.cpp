@@ -1,3 +1,5 @@
+#include "UI/OGReactiveUiSubsystem.h"
+#include "Misc/ScopeExit.h"
 #include "UI/OGNativeBattleWidget.h"
 #include "World/OGStartingRegionPresentation.h"
 #include "Combat/OGNativeBattleCommands.h"
@@ -42,6 +44,8 @@ void UOGNativeBattleWidget::BindCharacter(AOGWorldPrototypeCharacter* InCharacte
 }
 void UOGNativeBattleWidget::NativeConstruct()
 {
+    ON_SCOPE_EXIT { if (auto* Theme=UOGReactiveUiSubsystem::Find(this)) Theme->TrackTree(this); };
+
     Super::NativeConstruct();
     if (!WidgetTree || WidgetTree->RootWidget) return;
     auto* Safe=WidgetTree->ConstructWidget<USafeZone>();
@@ -95,6 +99,9 @@ void UOGNativeBattleWidget::AddButton(UPanelWidget* Parent,const FString& Label,
 }
 void UOGNativeBattleWidget::Refresh()
 {
+    const FString ThemeSignatureBefore=Signature;
+    ON_SCOPE_EXIT { if (Signature!=ThemeSignatureBefore) if (auto* Theme=UOGReactiveUiSubsystem::Find(this)) Theme->TrackTree(this); };
+
     if (!Heading || !Character.IsValid()) return;
     auto* Body=Character.Get();
     const auto* GI=Body->GetGameInstance();

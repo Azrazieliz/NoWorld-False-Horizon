@@ -1,3 +1,5 @@
+#include "UI/OGReactiveUiSubsystem.h"
+#include "Misc/ScopeExit.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
 #include "UI/OGGate12GothicChromeWidget.h"
 #include "Components/Overlay.h"
@@ -51,6 +53,8 @@ void UOGGate12NativeOpeningWidget::NativeOnInitialized()
 
 void UOGGate12NativeOpeningWidget::BuildRoot()
 {
+    ON_SCOPE_EXIT { if (auto* Theme=UOGReactiveUiSubsystem::Find(this)) Theme->TrackTree(this); };
+
     if (!WidgetTree || WidgetTree->RootWidget) return;
     USafeZone* Safe = WidgetTree->ConstructWidget<USafeZone>(
         USafeZone::StaticClass(), TEXT("OpeningSafeArea"));
@@ -331,6 +335,8 @@ void UOGGate12NativeOpeningWidget::AddAction(
 
 void UOGGate12NativeOpeningWidget::RebuildMenu()
 {
+    ON_SCOPE_EXIT { if (auto* Theme=UOGReactiveUiSubsystem::Find(this)) Theme->TrackTree(this); };
+
     if (!Menu || !WidgetTree) return;
     Menu->ClearChildren();
 

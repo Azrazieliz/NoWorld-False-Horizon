@@ -15,6 +15,7 @@ public:
                    bool bInSelected);
 protected:
     virtual void NativeOnInitialized() override;
+    virtual void NativeTick(const FGeometry&,float) override;
     virtual int32 NativePaint(
         const FPaintArgs& Args, const FGeometry& AllottedGeometry,
         const FSlateRect& MyCullingRect,

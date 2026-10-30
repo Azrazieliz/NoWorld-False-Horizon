@@ -1,3 +1,5 @@
+#include "UI/OGReactiveUiSubsystem.h"
+#include "Misc/ScopeExit.h"
 #include "UI/OGNativeInteractionWidget.h"
 
 #include "Blueprint/WidgetTree.h"
@@ -36,6 +38,8 @@ void UOGNativeInteractionWidget::BindHost(UOGFoundationInteractionHost* InHost)
 
 void UOGNativeInteractionWidget::NativeConstruct()
 {
+    ON_SCOPE_EXIT { if (auto* Theme=UOGReactiveUiSubsystem::Find(this)) Theme->TrackTree(this); };
+
     Super::NativeConstruct();
     if (!WidgetTree || WidgetTree->RootWidget) return;
     auto* Safe = WidgetTree->ConstructWidget<USafeZone>();
@@ -77,6 +81,9 @@ void UOGNativeInteractionWidget::AddButton(FName Action, const FString& Label, b
 
 void UOGNativeInteractionWidget::Refresh()
 {
+    const FString ThemeSignatureBefore=RowsSignature;
+    ON_SCOPE_EXIT { if (RowsSignature!=ThemeSignatureBefore) if (auto* Theme=UOGReactiveUiSubsystem::Find(this)) Theme->TrackTree(this); };
+
     if (!Actions || !Status) return;
     if (!Host.IsValid()) { Status->SetText(FText::FromString(TEXT("World character unavailable."))); return; }
     Status->SetText(FText::FromString(Host->GetStatus()));

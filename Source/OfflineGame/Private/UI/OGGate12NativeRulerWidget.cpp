@@ -1,3 +1,5 @@
+#include "UI/OGReactiveUiSubsystem.h"
+#include "Misc/ScopeExit.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "Gacha/OGSharedGachaBannerDefinition.h"
 #include "Narrative/OGNarrativeSessionSubsystem.h"
@@ -635,6 +637,8 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
 
 void UOGGate12NativeRulerWidget::BuildCurrentPage()
 {
+    ON_SCOPE_EXIT { if (auto* Theme=UOGReactiveUiSubsystem::Find(this)) Theme->TrackTree(this); };
+
     if (!Content) return;
     RosterGrid = nullptr;
     TerritoryMapWidget = nullptr;
