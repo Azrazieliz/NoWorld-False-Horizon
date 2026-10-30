@@ -12,6 +12,18 @@
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/OGSharedReferenceAnimInstance.h"
 
+bool UOGSharedMotionControllerComponent::BindCanonicalCharacter(const FOGContentId& IdentityId)
+{
+    // A live actor/controller belongs to one canonical character, not to each
+    // Version or wardrobe. Reject cross-identity reuse without touching its
+    // active playback, native meshes or owned gameplay state.
+    if (!IdentityId.IsValid() ||
+        (BoundCharacterIdentity.IsValid() && BoundCharacterIdentity != IdentityId))
+        return false;
+    BoundCharacterIdentity = IdentityId;
+    return true;
+}
+
 UOGSharedMotionControllerComponent::UOGSharedMotionControllerComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
