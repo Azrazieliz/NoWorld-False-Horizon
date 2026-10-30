@@ -14,17 +14,24 @@ struct FOGAcceptedLuminousArt
 {
     const TCHAR* VersionId;
     const TCHAR* Filename;
+    // Existing installed native actor only; nullptr until the genuine model
+    // has actually been imported. This does NOT create a motion library.
+    const TCHAR* InstalledNativePreviewClass;
 };
 
-// These are the existing content-registry Version IDs, not a second animation
-// definition. Motions still bind once to the canonical character identity.
+// One identity, one shared semantic motion bank, five separate source forms.
+// Only Base/Alter/Berserker have native Blueprint packages in this checkout;
+// preserve their exact packages and never manufacture the missing ones.
 constexpr FOGAcceptedLuminousArt LuminousAcceptedArt[] =
 {
-    { TEXT("character:luminous_valentine.version_ln_base"), TEXT("01_BASE.png") },
-    { TEXT("character:luminous_valentine.version_alter_v1"), TEXT("02_ALTER.png") },
-    { TEXT("character:luminous_valentine.version_awakened_v4"), TEXT("03_AWAKENED.png") },
-    { TEXT("character:luminous_valentine.version_berserker_v4"), TEXT("04_BERSERKER.png") },
-    { TEXT("character:luminous_valentine.version_grand_v4"), TEXT("05_GRAND_CONVERGENCE.png") }
+    { TEXT("character:luminous_valentine.version_ln_base"), TEXT("01_BASE.png"),
+      TEXT("/Game/NoWorld/Characters/Luminous/Base/BP_Luminous_Base_Production.BP_Luminous_Base_Production_C") },
+    { TEXT("character:luminous_valentine.version_alter_v1"), TEXT("02_ALTER.png"),
+      TEXT("/Game/NoWorld/Characters/Luminous/Alter/BP_Luminous_Alter_Production.BP_Luminous_Alter_Production_C") },
+    { TEXT("character:luminous_valentine.version_awakened_v4"), TEXT("03_AWAKENED.png"), nullptr },
+    { TEXT("character:luminous_valentine.version_berserker_v4"), TEXT("04_BERSERKER.png"),
+      TEXT("/Game/NoWorld/Characters/Luminous/Berserker/BP_Luminous_Berserker_OriginalSourceNative.BP_Luminous_Berserker_OriginalSourceNative_C") },
+    { TEXT("character:luminous_valentine.version_grand_v4"), TEXT("05_GRAND_CONVERGENCE.png"), nullptr }
 };
 }
 
@@ -49,11 +56,13 @@ const FOGGate12CharacterVisualEntry* UOGGate12CharacterVisualCatalog::FindExact(
         return Declared;
 
     const TCHAR* AcceptedFile = nullptr;
+    const TCHAR* InstalledNativePreview = nullptr;
     const FString RequestedVersion = VersionId.ToString();
     for (const FOGAcceptedLuminousArt& Form : LuminousAcceptedArt)
         if (RequestedVersion == Form.VersionId)
         {
             AcceptedFile = Form.Filename;
+            InstalledNativePreview = Form.InstalledNativePreviewClass;
             break;
         }
     if (!AcceptedFile) return Declared;
@@ -71,6 +80,12 @@ const FOGGate12CharacterVisualEntry* UOGGate12CharacterVisualCatalog::FindExact(
     Exact.VersionId = VersionId;
     Exact.OriginalArtwork2D.Reset();
     Exact.ApprovedSfwArtwork2D.Reset();
+    // Bind only genuinely installed preview Blueprints. Original Registry
+    // entries take precedence, and World possession still requires a separately
+    // verified playable pawn. No substitute mesh and no per-Version animation.
+    if (InstalledNativePreview && Exact.GenuineCharacterPreviewClass.IsNull())
+        Exact.GenuineCharacterPreviewClass =
+            TSoftClassPtr<AActor>(FSoftObjectPath(InstalledNativePreview));
 
     const FString File = FPaths::Combine(
         FPaths::ProjectContentDir(),
