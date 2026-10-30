@@ -256,7 +256,7 @@ bool ReadOffer(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
         TEXT("display_name"), TEXT("description"), TEXT("minimum_level"),
         TEXT("required_rarity"), TEXT("required_reinforcement_state"),
         TEXT("prerequisite_development_ids"), TEXT("excluded_development_ids"),
-        TEXT("required_routes"), TEXT("required_facts"), TEXT("costs"),
+        TEXT("required_routes"), TEXT("required_facts"), TEXT("costs"), TEXT("item_costs"),
         TEXT("result_level"), TEXT("result_rarity"), TEXT("result_reinforcement_state"),
         TEXT("completes_reinforcement"), TEXT("stat_grants"), TEXT("granted_routes"),
         TEXT("granted_forms")}, Path, Error) ||
@@ -281,8 +281,10 @@ bool ReadOffer(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
 
     const FArray* Costs = nullptr;
     const FArray* Facts = nullptr;
+    const FArray* ItemCosts = nullptr;
     if (!Array(Row, TEXT("costs"), Costs, Path, Error) ||
-        !Array(Row, TEXT("required_facts"), Facts, Path, Error))
+        !Array(Row, TEXT("required_facts"), Facts, Path, Error) ||
+        !Array(Row, TEXT("item_costs"), ItemCosts, Path, Error))
         return false;
     for (int32 Index = 0; Index < Costs->Num(); ++Index)
     {
@@ -299,6 +301,22 @@ bool ReadOffer(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
         if (!Decimal(Amount, Result.Amount, true))
             return Fail(Error, At + TEXT(".amount"), TEXT("expected a positive int64 decimal string"));
         Out.Costs.Add(MoveTemp(Result));
+    }
+    for (int32 Index = 0; Index < ItemCosts->Num(); ++Index)
+    {
+        const FString At = Path + FString::Printf(TEXT(".item_costs[%d]"), Index);
+        FObject Cost;
+        FOGDevelopmentItemCost Result;
+        if (!ObjectValue((*ItemCosts)[Index], Cost, At, Error) ||
+            !Fields(Cost, {TEXT("object_id"), TEXT("rank_id"), TEXT("quality_id"), TEXT("instance_count")}, At, Error) ||
+            !Id(Cost, TEXT("object_id"), Result.ObjectId, At, Error) ||
+            !Integer(Cost, TEXT("instance_count"), Result.InstanceCount, At, Error, 1, MAX_int32, true))
+            return false;
+        if (Cost->HasField(TEXT("rank_id")) && !Id(Cost, TEXT("rank_id"), Result.RankId, At, Error))
+            return false;
+        if (Cost->HasField(TEXT("quality_id")) && !Id(Cost, TEXT("quality_id"), Result.QualityId, At, Error))
+            return false;
+        Out.ItemCosts.Add(MoveTemp(Result));
     }
     for (int32 Index = 0; Index < Facts->Num(); ++Index)
     {
@@ -537,6 +555,19 @@ bool FOGCharacterDevelopmentCatalog::ValidateDefinition(
             return Fail(Error, Path + TEXT(".costs"),
                 TEXT("costs need a unique canonical resource_id, display_name and positive int64 amount"));
         Resources.Add(Cost.ResourceId);
+    }
+    TSet<FString> ItemKeys;
+    for (const auto& Cost : D.ItemCosts)
+    {
+        const FString Key = Cost.ObjectId.ToString() + TEXT("|") +
+            Cost.RankId.ToString() + TEXT("|") + Cost.QualityId.ToString();
+        if (!Cost.ObjectId.IsValid() ||
+            (!Cost.RankId.IsEmpty() && !Cost.RankId.IsValid()) ||
+            (!Cost.QualityId.IsEmpty() && !Cost.QualityId.IsValid()) ||
+            Cost.InstanceCount <= 0 || ItemKeys.Contains(Key))
+            return Fail(Error, Path + TEXT(".item_costs"),
+                TEXT("requires unique object/rank/quality inputs and positive instance_count"));
+        ItemKeys.Add(Key);
     }
     TSet<FString> Facts;
     for (const auto& Fact : D.RequiredFacts)
