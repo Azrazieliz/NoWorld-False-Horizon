@@ -13,6 +13,10 @@ struct OFFLINEGAME_API FOGFoundationWorldBodyState
     FString EntityJson;
     int64 EntityRevision = 0;
     FOGWorldPresenceRecord Presence;
+    /** Controlled mode fences the existing local owner and exact active copy/version. */
+    FOGEntityId LocalRulerId;
+    bool bHasControlledManifestation = false;
+    FOGCharacterManifestationRecord ControlledManifestation;
     bool bAvailable = false;
     bool bAbsent = false;
     bool bHasSchedule = false;
@@ -30,6 +34,7 @@ public:
     explicit FOGFoundationWorldSimulationRuntime(IOGWorldStore& InStore) : Store(InStore) {}
     static FName ResolverKey();
     static FName ArrivalEventType();
+    static FName ControlledCheckpointEventType();
     static bool SameAuthority(const FOGFoundationWorldBodyState& A,
         const FOGFoundationWorldBodyState& B);
     bool Read(const UOGWorldSimulationDefinition& Definition, const FOGEntityId& Entity,
@@ -41,6 +46,12 @@ public:
     bool Checkpoint(const UOGWorldSimulationDefinition& Definition,
         const FOGFoundationWorldBodyState& Expected, const FVector& ActualLocalPosition,
         int64 Tick, bool bArrived, bool& bChanged, FString& Error);
+    /** Measured locally controlled motion only; never activates/completes a schedule.
+     * The receiver owns physical/controller/preemption validation. This command
+     * revalidates canonical presence, local ownership and version inside its root transaction. */
+    bool CheckpointControlled(const UOGWorldSimulationDefinition& Definition,
+        const FOGFoundationWorldBodyState& Expected, const FVector& ActualLocalPosition,
+        int64 Tick, bool& bChanged, FString& Error);
 private:
     IOGWorldStore& Store;
 };

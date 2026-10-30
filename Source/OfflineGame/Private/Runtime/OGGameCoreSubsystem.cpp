@@ -1,3 +1,4 @@
+#include "World/OGWorldSimulationReceiver.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Combat/OGNativeCombatPassive.h"
 #include "Combat/OGCombatVitalityService.h"
@@ -568,6 +569,9 @@ bool UOGGameCoreSubsystem::CreateManualRecoverySnapshot(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
+    if (auto* World=GetWorld())
+        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
+            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
@@ -607,6 +611,9 @@ bool UOGGameCoreSubsystem::ExportCanonicalWorldBackup(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
+    if (auto* World=GetWorld())
+        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
+            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
 
     FString CheckpointError;
     if (!WorldStore->Checkpoint(CheckpointError))
@@ -649,6 +656,9 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
+    if (auto* World=GetWorld())
+        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
+            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
