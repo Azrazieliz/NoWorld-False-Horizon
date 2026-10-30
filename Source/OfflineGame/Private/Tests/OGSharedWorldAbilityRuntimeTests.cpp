@@ -30,7 +30,7 @@ struct FSharedWorldFixture
         {
             auto* Team=State.Teams.FindByPredicate([&](const auto& T){return T.TeamIndex==U.TeamIndex;});
             if (!Team) { FOGTurnTeamState Added; Added.TeamIndex=U.TeamIndex; Team=&State.Teams.Add_GetRef(Added); }
-            FOGTurnSuccessionLane Lane; Lane.OrderedUnitIds={U.UnitEntityId}; Team->Lanes.Add(Lane);
+            FOGTurnSuccessionLane Lane; Lane.LaneIndex=Team->Lanes.Num(); Lane.OrderedUnitIds={U.UnitEntityId}; Team->Lanes.Add(Lane);
         }
         if (!Battle.Initialize(State,Error)) return false;
         Battle.RequireNativeActionExecutors(true);
