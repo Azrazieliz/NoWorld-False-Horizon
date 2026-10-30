@@ -1,7 +1,8 @@
+#include "UI/OGNativeBattleWidget.h"
 #include "UI/OGReactiveUiSubsystem.h"
 #include "UI/OGNativeUiStyle.h"
 #include "Misc/ScopeExit.h"
-#include "UI/OGNativeBattleWidget.h"
+
 #include "World/OGStartingRegionPresentation.h"
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGTurnBattle.h"
