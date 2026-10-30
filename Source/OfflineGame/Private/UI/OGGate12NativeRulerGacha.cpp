@@ -111,7 +111,7 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
     }
     if (!Hud||!Hud->HasActiveGachaPresentation()||Hud->GetActiveGachaBanner().BannerId!=GachaContextBannerId)
     {
-        for (auto* Button:GachaDrawButtons) if (Button) Button->SetIsEnabled(false);
+        for (const auto& Button:GachaDrawButtons) if (Button) Button->SetIsEnabled(false);
         if (GachaConfirmButton) GachaConfirmButton->SetIsEnabled(false);
         if (GachaReviewStatus) GachaReviewStatus->SetText(FText::FromString(TEXT("This banner changed. Close this review and select an available banner.")));
         return;
@@ -269,7 +269,7 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         // A real input shield consumes taps outside the modal. It has no purchase handler.
         auto* Shield=WidgetTree->ConstructWidget<UButton>();FOGNativeUiStyle::SkinButton(*Shield);
         auto* Veil=WidgetTree->ConstructWidget<UBorder>();Veil->SetBrushColor(FLinearColor(0,0,0,.8f));
-        Shield->AddChild(Veil);Shield->SetIsFocusable(false);Place(Shield,0,0,864,1536,20);
+        Shield->AddChild(Veil);Shield->InitIsFocusable(false);Place(Shield,0,0,864,1536,20);
         auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>();Scroll->SetScrollBarVisibility(ESlateVisibility::Collapsed);
         auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>();Scroll->AddChild(Rows);
         auto* Padding=WidgetTree->ConstructWidget<UBorder>();Padding->SetBrushColor(FLinearColor::Transparent);
