@@ -13,6 +13,8 @@ class UAnimSequence;
 class UAnimationAsset;
 class UOGSharedReferenceAnimInstance;
 class USkinnedMeshComponent;
+class UOGSharedMotionControllerComponent;
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOGSharedNativeMotionFinished,UOGSharedMotionControllerComponent*,FName,FName);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOGSharedMotionSignal, FName, GameplayAction, FName, MotionId);
 
@@ -65,6 +67,8 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="Motion|Events")
     FOGSharedMotionSignal OnMotionFinished;
+    /** Native owners receive the actual controller, including after natural completion. */
+    FOGSharedNativeMotionFinished OnNativeMotionFinished;
 
     UPROPERTY(BlueprintReadOnly, Category="Motion|State")
     FName CurrentAction = NAME_None;
@@ -118,6 +122,10 @@ public:
         bool bAdultContextAuthorized = false, int32 ParticipantCount = 1,
         FName ParticipantRole = NAME_None) const;
 
+    /** Pure source query under the no-root policy used by staged interactions. */
+    bool PreviewStagedSource(FName Action,FName Context,bool Authorized,int32 Count,
+        FName Role,FName& OutSource,FName& OutScene) const;
+
     /** Scene preflight: exposes original source identity, never a guessed role match. */
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     bool PreviewSourceClipId(FName GameplayAction, FName Context,
@@ -151,6 +159,7 @@ public:
     /** Source expression channels connect once to real morph names on a rig. */
     UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Motion|Rig") TMap<FName,FName> SharedSourceMorphAliases;
     FName ResolveSourceMorph(FName SourceMorph) const;
+    bool HasSourceMorph(FName SourceMorph) const;
     bool SetSourceMorphLayer(FName Layer,FName SourceMorph,float Weight);
 
     UFUNCTION(BlueprintCallable, Category="Motion|Layers")
@@ -177,6 +186,7 @@ protected:
         FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
+    friend struct FOGSharedSceneLifecycleTestAccess;
     UPROPERTY(Transient)
     TArray<TObjectPtr<USkeletalMeshComponent>> RegisteredParts;
 
@@ -226,6 +236,15 @@ private:
     };
     TArray<FMorphOverlay> MorphOverlays;
     TSet<FName> AppliedMorphs;
+    struct FMorphBaseline
+    {
+        TWeakObjectPtr<USkeletalMeshComponent> Part;
+        TWeakObjectPtr<USkeletalMesh> Mesh;
+        FName Morph;
+        float Weight=0;
+    };
+    TArray<FMorphBaseline> MorphBaselines;
+    void RestoreMorphBaselines();
     TArray<FOGSharedMorphTrack> AuthoredMorphTracks;
 
     struct FReferencePartRestore
@@ -256,7 +275,8 @@ private:
     void RestoreReferencePose();
 
     bool CanPlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
-        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip) const;
+        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip,
+        TOptional<bool> RootPolicy = {}) const;
     bool PlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
         int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip);
     void ApplyMorphOverlays();
@@ -264,7 +284,7 @@ private:
         USkeletalMeshComponent* Part, FName Action, FName Context,
         bool bAuthorizedAdult, int32 ParticipantCount, FName ParticipantRole,
         UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry,
-        FName RequiredSourceClip = NAME_None) const;
+        FName RequiredSourceClip = NAME_None, TOptional<bool> RootPolicy = {}) const;
     void ApplyAuthoredRootMotion(float PreviousSourceTime, float SourceTime);
 
     static bool HaveIdenticalReferencePose(const USkeletalMeshComponent* A,

@@ -607,7 +607,10 @@ void UOGFoundationInteractionHost::OwnMotion(UOGSharedMotionControllerComponent*
     if (!Motion || OwnedMotions.ContainsByPredicate([Motion](const auto& M) { return M.Motion.Get() == Motion; })) return;
     FMotionRestore Saved; Saved.Motion = Motion;
     Saved.bRootMotion = Motion->bPermitAuthoritativeRootMotion; Saved.Pacing = Motion->GetExternalPacing();
-    OwnedMotions.Add(Saved); Motion->bPermitAuthoritativeRootMotion = false;
+    Saved.Generation=Motion->GetPlaybackGeneration();
+    OwnedMotions.Add(Saved); Motion->bPermitAuthoritativeRootMotion=false;
+    Motion->OnNativeMotionFinished.AddUObject(this,&ThisClass::HandleOwnedMotionFinished);
+    Motion->AddTickPrerequisiteComponent(this);
 }
 
 bool UOGFoundationInteractionHost::PlaySharedAction(const FOGEntityId& Entity, FName Action, FName Context)
@@ -616,7 +619,7 @@ bool UOGFoundationInteractionHost::PlaySharedAction(const FOGEntityId& Entity, F
     if (!Motion || !Motion->CanPlayAction(Action, Context, false, 1)) return false;
     OwnMotion(Motion);
     const bool Played = Motion->PlayAction(Action, Context, false, 1);
-    if (Played && Runtime) Motion->SetExternalPacing(static_cast<float>(Runtime->GetPacing()));
+    if (Played) { MarkOwnedPlayback(Motion); if (Runtime) Motion->SetExternalPacing(static_cast<float>(Runtime->GetPacing())); }
     return Played;
 }
 
@@ -658,20 +661,23 @@ bool UOGFoundationInteractionHost::PlaySharedScene(
     // clip is not silently substituted, including for mature interactions.
     for (const auto& Role : ActiveSharedScene->Participants) OwnMotion(Role.Controller);
     const bool Played = ActiveSharedScene->StartSynchronizedScene(Node.SharedSceneAction, Node.SharedSceneContext, false);
-    if (Played) UpdateAnimationPacing();
+    if (Played) { for (const auto& Role:ActiveSharedScene->Participants) MarkOwnedPlayback(Role.Controller); UpdateAnimationPacing(); }
     return Played;
 }
 
 void UOGFoundationInteractionHost::StopSharedScene()
 {
-    if (IsValid(ActiveSharedScene))
-        ActiveSharedScene->StopSynchronizedScene();
-    for (const auto& Saved : OwnedMotions) if (auto* Motion = Saved.Motion.Get())
+    ClearActionExpressions();
+    for (const auto& Saved:OwnedMotions) if (auto* Motion=Saved.Motion.Get())
     {
-        Motion->StopAction(); Motion->bPermitAuthoritativeRootMotion = Saved.bRootMotion;
-        Motion->SetExternalPacing(Saved.Pacing);
+        Motion->OnNativeMotionFinished.RemoveAll(this); Motion->RemoveTickPrerequisiteComponent(this);
+        // A later combat/interaction owner must never be stopped by an old session.
+        if (Motion->GetPlaybackGeneration()!=Saved.Generation) continue;
+        if (Saved.bOwnsPlayback && Motion->IsPlayingAction()) Motion->StopAction();
+        Motion->bPermitAuthoritativeRootMotion=Saved.bRootMotion; Motion->SetExternalPacing(Saved.Pacing);
     }
     OwnedMotions.Reset();
+    if (IsValid(ActiveSharedScene)) ActiveSharedScene->StopSynchronizedScene();
 }
 
 void UOGFoundationInteractionHost::ApplyAnimation(const FOGEntityId& Entity, UObject* Asset)
@@ -703,6 +709,7 @@ void UOGFoundationInteractionHost::ApplyAnimation(const FOGEntityId& Entity, UOb
 
 void UOGFoundationInteractionHost::EndAction()
 {
+    ClearActionExpressions();
     for (auto& Pair : MeshRestores)
         if (Pair.Value.bOwnsClip && Pair.Value.Animation.IsValid())
         { Pair.Value.Animation->SetPresentedState(NAME_None); Pair.Value.bOwnsClip = false; }
@@ -786,4 +793,134 @@ void UOGFoundationInteractionHost::HandleBattleCommitted(const FOGTurnBattleStat
     if (!IsActive() || State.Status!=EOGTurnBattleStatus::Running) return;
     auto Hud=InteractionHud; Cancel(TEXT("combat_started"));
     if (Hud.IsValid()) Hud->CloseInteractionForCombat();
+}
+
+void UOGFoundationInteractionHost::MarkOwnedPlayback(UOGSharedMotionControllerComponent* Motion)
+{
+    if (auto* Saved=OwnedMotions.FindByPredicate([&](const auto& V){return V.Motion.Get()==Motion;}))
+    {
+        Saved->Generation=Motion->GetPlaybackGeneration(); Saved->Action=Motion->CurrentAction;
+        Saved->Source=Motion->CurrentMotionId; Saved->bOwnsPlayback=true; Saved->bFinished=false; Saved->bPhaseRestored=false;
+    }
+}
+void UOGFoundationInteractionHost::HandleOwnedMotionFinished(UOGSharedMotionControllerComponent* Motion,FName Action,FName Source)
+{
+    if (auto* Saved=OwnedMotions.FindByPredicate([&](const auto& V){return V.Motion.Get()==Motion;}))
+        if (Saved->bOwnsPlayback && Saved->Action==Action && Saved->Source==Source &&
+            Motion->GetPlaybackGeneration()==Saved->Generation+1)
+        { Saved->bFinished=true; Saved->Generation=Motion->GetPlaybackGeneration(); }
+}
+void UOGFoundationInteractionHost::ClearActionExpressions()
+{
+    for (const auto& Saved:ActionExpressionLayers) if (auto* Motion=Saved.Motion.Get()) Motion->ClearMorphLayer(Saved.Layer);
+    ActionExpressionLayers.Reset();
+}
+bool UOGFoundationInteractionHost::PrepareActionPresentation(const FOGInteractionActionNode& Node,
+    const TArray<FOGInteractionParticipantState>& SourceParticipants,bool Privacy,FString& Error)
+{
+    Error.Reset();
+    if (Privacy) return true;
+    if (!Node.Constraints.IsEmpty() && !OnConstraintPresentation.IsBound())
+    { Error=TEXT("This source action requires its installed native effector/constraint adapter."); return false; }
+    TArray<FOGSharedMotionParticipant> SceneRoles;
+    for (const auto& Participant:SourceParticipants)
+    {
+        const FOGInteractionAnimationBinding* Binding=nullptr;
+        if (!Node.ResolveAnimationBinding(Participant,Binding,Error)) return false;
+        const bool ActiveScene=!Node.SharedSceneAction.IsNone() && Node.RequiredRoles.Contains(Participant.Binding.Role);
+        if (!Binding)
+        {
+            if (ActiveScene) { Error=TEXT("An active source scene role has no compatible original track."); return false; }
+            continue;
+        }
+        auto* Motion=FindMotionController(FindBoundActor(Participant.Binding.Character.EntityId));
+        if ((!Binding->ExpressionTracks.IsEmpty() || !Binding->SharedGameplayAction.IsNone() || ActiveScene) && !Motion)
+        { Error=TEXT("The declared source animation requires the actual character's shared rig adapter."); return false; }
+        for (const auto& Track:Binding->ExpressionTracks)
+            if (!Motion->HasSourceMorph(Track.Morph))
+            { Error=TEXT("An original expression channel is not mapped to this actual native rig."); return false; }
+        if (ActiveScene)
+        {
+            if (Binding->SharedSceneRole.IsNone() || !Node.RolePlacements.ContainsByPredicate([&](const auto& P)
+                {return P.Role==Participant.Binding.Role;}))
+            { Error=TEXT("An original synchronized role is missing its source track or placement."); return false; }
+            FOGSharedMotionParticipant Role; Role.Controller=Motion; Role.SourceRole=Binding->SharedSceneRole; SceneRoles.Add(Role);
+        }
+        else if (Node.SharedSceneAction.IsNone() && !Binding->SharedGameplayAction.IsNone())
+        {
+            FName Source,Scene;
+            if (!Motion->PreviewStagedSource(Binding->SharedGameplayAction,Binding->SharedGameplayContext,false,1,NAME_None,Source,Scene))
+            { Error=TEXT("The declared original body motion is unavailable for the staged rig policy."); return false; }
+        }
+    }
+    if (!Node.SharedSceneAction.IsNone())
+    {
+        if (SceneRoles.Num()!=Node.RequiredRoles.Num())
+        { Error=TEXT("The source scene lacks one or more actual participant roles."); return false; }
+        TStrongObjectPtr<UOGSharedMotionSceneComponent> Candidate(NewObject<UOGSharedMotionSceneComponent>(GetOwner()));
+        Candidate->Participants=MoveTemp(SceneRoles);
+        if (!Candidate->CanStartSynchronizedScene(Node.SharedSceneAction,Node.SharedSceneContext,false,Error,true)) return false;
+    }
+    return true;
+}
+bool UOGFoundationInteractionHost::AdvanceActionPresentation(const FOGInteractionActionNode& Node,
+    const TArray<FOGInteractionParticipantState>& SourceParticipants,double Time,bool Privacy,FString& Error)
+{
+    Error.Reset();
+    if (Privacy) { ClearActionExpressions(); return true; }
+    if (!FMath::IsFinite(Time) || Time<0 || Time>MAX_flt)
+    { Error=TEXT("The original expression source clock is invalid."); return false; }
+    if (!Node.Constraints.IsEmpty() && !OnConstraintPresentation.IsBound())
+    { Error=TEXT("The source action's native constraint adapter was released."); return false; }
+    for (auto& Saved:OwnedMotions)
+    {
+        auto* Motion=Saved.Motion.Get();
+        if (!Motion) { Error=TEXT("An action's native rig was released."); return false; }
+        if (Saved.bOwnsPlayback)
+        {
+            if (Motion->GetPlaybackGeneration()!=Saved.Generation || (!Saved.bFinished && !Motion->IsPlayingAction()))
+            { Error=TEXT("A different native action interrupted this source track."); return false; }
+            if (!Saved.bPhaseRestored)
+            {
+                // A new action still emits a genuine time-zero contact. Unmasking resumes
+                // its existing phase and cannot replay contacts already passed.
+                if (Time>0 && !Saved.bFinished && !Motion->RestorePlaybackPhase(static_cast<float>(Time)))
+                { Error=TEXT("The source action's native phase could not be restored."); return false; }
+                Saved.bPhaseRestored=true;
+            }
+        }
+    }
+    for (const auto& Participant:SourceParticipants)
+    {
+        const FOGInteractionAnimationBinding* Binding=nullptr;
+        if (!Node.ResolveAnimationBinding(Participant,Binding,Error)) return false;
+        if (!Binding) continue;
+        auto* Motion=FindMotionController(FindBoundActor(Participant.Binding.Character.EntityId));
+        const bool NeedsBody=(!Node.SharedSceneAction.IsNone() && Node.RequiredRoles.Contains(Participant.Binding.Role)) ||
+            (Node.SharedSceneAction.IsNone() && !Binding->SharedGameplayAction.IsNone());
+        if (NeedsBody && !OwnedMotions.ContainsByPredicate([&](const auto& V){return V.Motion.Get()==Motion && V.bOwnsPlayback;}))
+        { Error=TEXT("A prepared original body track did not start; action completion is withheld."); return false; }
+        if (!Binding->ExpressionTracks.IsEmpty())
+        {
+            if (!Motion) { Error=TEXT("The source expression lost its actual rig adapter."); return false; }
+        }
+        for (const auto& Track:Binding->ExpressionTracks)
+        {
+            float Weight=Track.Keys[0].Weight;
+            if (Time>=Track.Keys.Last().TimeSeconds) Weight=Track.Keys.Last().Weight;
+            else for (int32 I=1;I<Track.Keys.Num();++I)
+                if (Time<=Track.Keys[I].TimeSeconds)
+                {
+                    const double Span=Track.Keys[I].TimeSeconds-Track.Keys[I-1].TimeSeconds;
+                    const double Alpha=FMath::Clamp((Time-Track.Keys[I-1].TimeSeconds)/Span,0.0,1.0);
+                    Weight=FMath::Lerp(Track.Keys[I-1].Weight,Track.Keys[I].Weight,static_cast<float>(Alpha)); break;
+                }
+            const FName Layer(*(GetName()+TEXT("|interaction|")+Track.Layer.ToString()));
+            if (!Motion->SetSourceMorphLayer(Layer,Track.Morph,Weight))
+            { Error=TEXT("The original expression channel became unavailable; no substitute face is generated."); return false; }
+            if (!ActionExpressionLayers.ContainsByPredicate([&](const auto& V){return V.Motion.Get()==Motion && V.Layer==Layer;}))
+            { FExpressionRestore Saved; Saved.Motion=Motion; Saved.Layer=Layer; ActionExpressionLayers.Add(Saved); }
+        }
+    }
+    return true;
 }

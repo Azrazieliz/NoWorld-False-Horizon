@@ -39,7 +39,8 @@ public:
 
     UPROPERTY(BlueprintReadOnly,Category="Motion|Scene") FString Status;
     /** Pure preparation; preserves all current playback when a source role cannot bind. */
-    bool CanStartSynchronizedScene(FName Action,FName Context,bool bAuthorizedAdultContext,FString& Error) const;
+    bool CanStartSynchronizedScene(FName Action,FName Context,bool bAuthorizedAdultContext,FString& Error,
+        bool bStagedRootPolicy=false) const;
     /** No partially animated scene: each role/rig and original source is checked first. */
     UFUNCTION(BlueprintCallable, Category="Motion|Scene")
     bool StartSynchronizedScene(FName Action, FName Context,
@@ -57,9 +58,13 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+    friend struct FOGSharedSceneLifecycleTestAccess;
     bool bScenePlaying = false;
     TArray<TWeakObjectPtr<UOGSharedMotionControllerComponent>> ActiveControllers;
     TMap<TWeakObjectPtr<UOGSharedMotionControllerComponent>,uint64> ActiveGenerations;
+    TSet<TWeakObjectPtr<UOGSharedMotionControllerComponent>> FinishedControllers;
+    TMap<TWeakObjectPtr<UOGSharedMotionControllerComponent>,FName> ActiveSources;
+    void HandleSourceFinished(UOGSharedMotionControllerComponent* Controller,FName Action,FName Source);
     bool PrepareScene(FName Action,FName Context,bool Authorized,
-        TArray<UOGSharedMotionControllerComponent*>& Ready,FString& Error) const;
+        TArray<UOGSharedMotionControllerComponent*>& Ready,FString& Error,bool bStagedRootPolicy=false) const;
 };

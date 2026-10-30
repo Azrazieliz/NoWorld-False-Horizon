@@ -17,6 +17,7 @@ struct OFFLINEGAME_API FOGInteractionNativeTrack
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName Action;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName Context;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName SourceSceneRole;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) TArray<FOGSharedMorphTrack> ExpressionTracks;
 };
 
 USTRUCT(BlueprintType)

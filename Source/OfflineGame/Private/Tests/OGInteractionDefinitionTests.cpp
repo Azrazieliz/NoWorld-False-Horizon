@@ -25,6 +25,8 @@ bool FOGInteractionDefinitionContractTest::RunTest(const FString& Parameters)
     {
         FOGInteractionNativeTrack Track; Track.Role = Role; Track.SourceSceneRole = Role;
         Second.Tracks.Add(Track);
+        FOGInteractionNativePlacement Placement; Placement.Role=Role; Placement.RelativeToAnchor=FTransform::Identity;
+        Second.Placements.Add(Placement);
     }
     Definition->Nodes = {First, Second};
     FOGInteractionActionGraph Graph; FString Error;
@@ -64,4 +66,26 @@ bool FOGInteractionDefinitionArityTest::RunTest(const FString& Parameters)
     return true;
 }
 
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGInteractionExpressionContractTest,
+    "OfflineGame.Interaction.NativeDefinition.OriginalExpressionClock",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FOGInteractionExpressionContractTest::RunTest(const FString&)
+{
+    FOGInteractionAnimationBinding Binding; FOGSharedMorphTrack Track;
+    Track.Layer=TEXT("test_original_face"); Track.Morph=TEXT("test_source_morph");
+    FOGSharedMorphKey A; A.TimeSeconds=0; A.Weight=.2f;
+    FOGSharedMorphKey B; B.TimeSeconds=1; B.Weight=.8f;
+    Track.Keys={A,B}; Binding.ExpressionTracks={Track}; FString Error;
+    TestTrue(TEXT("Actual ordered source keys fit the action clock"),Binding.ValidateExpressionTracks(1,Error));
+    Binding.ExpressionTracks[0].Keys[1].TimeSeconds=2;
+    TestFalse(TEXT("Source expression cannot outlive its declared action"),Binding.ValidateExpressionTracks(1,Error));
+    Binding.ExpressionTracks[0]=Track; Binding.ExpressionTracks.Add(Track);
+    TestFalse(TEXT("Duplicate source channels are rejected"),Binding.ValidateExpressionTracks(1,Error));
+    Binding.ExpressionTracks={Track}; Binding.ExpressionTracks[0].Keys[1].Weight=1.1f;
+    TestFalse(TEXT("Invalid original channel weights are not silently clamped"),Binding.ValidateExpressionTracks(1,Error));
+    Binding.ExpressionTracks[0]=Track; Binding.ExpressionTracks[0].Keys[1].TimeSeconds=0;
+    TestFalse(TEXT("Duplicate original key times are rejected"),Binding.ValidateExpressionTracks(1,Error));
+    return true;
+}
 #endif

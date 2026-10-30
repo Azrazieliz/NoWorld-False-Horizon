@@ -60,11 +60,13 @@ bool UOGSharedMotionControllerComponent::RegisterNativeParts(
         Adapters.Add(MoveTemp(Adapter));
     }
     StopAction();
+    RestoreMorphBaselines();
     for (USkeletalMeshComponent* Previous : RegisteredParts)
         if (Previous) Previous->RemoveTickPrerequisiteComponent(this);
     RegisteredParts = MoveTemp(Verified);
     ReferenceRigs = MoveTemp(Adapters);
     for (USkeletalMeshComponent* Part : RegisteredParts) Part->AddTickPrerequisiteComponent(this);
+    ApplyMorphOverlays();
     return true;
 }
 
@@ -82,7 +84,7 @@ bool UOGSharedMotionControllerComponent::ResolveForPart(
     FName Action, FName Context, bool bAuthorizedAdult,
     int32 ParticipantCount, FName ParticipantRole,
     UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry,
-    FName RequiredSourceClip) const
+    FName RequiredSourceClip, TOptional<bool> RootPolicy) const
 {
     OutSequence = nullptr;
     OutEntry = nullptr;
@@ -103,7 +105,7 @@ bool UOGSharedMotionControllerComponent::ResolveForPart(
     }
     return OutSequence && OutEntry && OutSequence->GetSkeleton() &&
         (!OutEntry->bUsesRootMotion ||
-            (bPermitAuthoritativeRootMotion && GetOwner() &&
+            (RootPolicy.Get(bPermitAuthoritativeRootMotion) && GetOwner() &&
              GetOwner()->HasAuthority() && Cast<ACharacter>(GetOwner())));
 }
 
@@ -117,7 +119,7 @@ bool UOGSharedMotionControllerComponent::CanPlayAction(
 
 bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
-    int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip) const
+    int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy) const
 {
     if (RigProfile.IsNone() || GameplayAction.IsNone() || Context.IsNone() ||
         RegisteredParts.IsEmpty() || ParticipantCount < 1)
@@ -139,7 +141,7 @@ bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
         UAnimSequence* Clip = nullptr;
         const FOGSharedMotionEntry* Entry = nullptr;
         if (!ResolveForPart(Library, Part, GameplayAction, Context,
-            bAdultContextAuthorized, ParticipantCount, ParticipantRole, Clip, Entry, RequiredSourceClip))
+            bAdultContextAuthorized, ParticipantCount, ParticipantRole, Clip, Entry, RequiredSourceClip, RootPolicy))
             return false;
         if (!SourceId.IsNone() &&
             (SourceId != Entry->SourceClipId || bInitialLoop != Entry->bLoop))
@@ -160,6 +162,24 @@ bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
         ++ValidCount;
     }
     return ValidCount == RegisteredParts.Num();
+}
+
+bool UOGSharedMotionControllerComponent::PreviewStagedSource(FName Action,FName Context,
+    bool Authorized,int32 Count,FName Role,FName& OutSource,FName& OutScene) const
+{
+    OutSource=NAME_None; OutScene=NAME_None;
+    if (!CanPlayResolvedAction(Action,Context,Authorized,Count,Role,NAME_None,TOptional<bool>(false))) return false;
+    FOGSharedMotionEntry Shared;
+    TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Source;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString Error;
+    if (FindReference(Action,Context,Count,Role,Shared,Source,Mapping,Error))
+    { OutSource=Shared.SourceClipId; OutScene=Shared.AuthoredSceneId; return !OutSource.IsNone(); }
+    const UOGSharedMotionLibrary* Library=SharedLibrary.IsNull()?nullptr:SharedLibrary.LoadSynchronous();
+    if (!Library) Library=FOGSharedMotionResolver::GetInstalledLibrary();
+    UAnimSequence* Sequence=nullptr; const FOGSharedMotionEntry* Entry=nullptr;
+    if (!ResolveForPart(Library,RegisteredParts[0],Action,Context,Authorized,Count,Role,
+        Sequence,Entry,NAME_None,TOptional<bool>(false))) return false;
+    OutSource=Entry->SourceClipId; OutScene=Entry->AuthoredSceneId; return !OutSource.IsNone();
 }
 
 bool UOGSharedMotionControllerComponent::PreviewSourceClipId(
@@ -272,7 +292,7 @@ bool UOGSharedMotionControllerComponent::SetExternalPacing(float Rate)
 bool UOGSharedMotionControllerComponent::SetMorphLayer(
     FName Layer, FName Morph, float Weight)
 {
-    if (Layer.IsNone() || Morph.IsNone() || RegisteredParts.IsEmpty()) return false;
+    if (Layer.IsNone() || Morph.IsNone() || !FMath::IsFinite(Weight) || RegisteredParts.IsEmpty()) return false;
     bool bHasNativeMorph = false;
     for (USkeletalMeshComponent* Part : RegisteredParts)
         if (Part && Part->GetSkeletalMeshAsset() &&
@@ -338,16 +358,30 @@ void UOGSharedMotionControllerComponent::ApplyMorphOverlays()
         }
         Combined.FindOrAdd(ResolveSourceMorph(Track.Morph)) += Weight;
     }
+    // Save each actual part's prior value only while this controller owns that channel.
+    // Removing an expression restores its real wardrobe/face value, rather than zero.
+    for (int32 I=MorphBaselines.Num()-1;I>=0;--I)
+    {
+        auto& Saved=MorphBaselines[I]; auto* Part=Saved.Part.Get();
+        if (!Part || Part->GetSkeletalMeshAsset()!=Saved.Mesh.Get())
+        { MorphBaselines.RemoveAtSwap(I); continue; }
+        if (!Combined.Contains(Saved.Morph))
+        { Part->SetMorphTarget(Saved.Morph,Saved.Weight); MorphBaselines.RemoveAtSwap(I); }
+    }
     for (USkeletalMeshComponent* Part : RegisteredParts)
     {
         if (!Part || !Part->GetSkeletalMeshAsset()) continue;
-        for (FName PreviouslyApplied : AppliedMorphs)
-            if (!Combined.Contains(PreviouslyApplied) &&
-                Part->GetSkeletalMeshAsset()->FindMorphTarget(PreviouslyApplied))
-                Part->SetMorphTarget(PreviouslyApplied, 0.f);
         for (const auto& Pair : Combined)
             if (Part->GetSkeletalMeshAsset()->FindMorphTarget(Pair.Key))
-                Part->SetMorphTarget(Pair.Key, FMath::Clamp(Pair.Value, -1.f, 1.f));
+            {
+                if (!MorphBaselines.ContainsByPredicate([&](const auto& V)
+                    { return V.Part.Get()==Part && V.Mesh.Get()==Part->GetSkeletalMeshAsset() && V.Morph==Pair.Key; }))
+                {
+                    FMorphBaseline Saved; Saved.Part=Part; Saved.Mesh=Part->GetSkeletalMeshAsset();
+                    Saved.Morph=Pair.Key; Saved.Weight=Part->GetMorphTarget(Pair.Key); MorphBaselines.Add(Saved);
+                }
+                Part->SetMorphTarget(Pair.Key,FMath::Clamp(Pair.Value,-1.f,1.f));
+            }
     }
     AppliedMorphs.Reset();
     for (const auto& Pair : Combined) AppliedMorphs.Add(Pair.Key);
@@ -642,6 +676,7 @@ void UOGSharedMotionControllerComponent::TickComponent(
         }
         const uint64 FinishedGeneration=PlaybackGeneration;
         { TGuardValue<FOGEntityId> FinishedScope(FinishingCombatReceipt,FinishedReceipt);
+          OnNativeMotionFinished.Broadcast(this,FinishedAction,FinishedMotion);
           OnMotionFinished.Broadcast(FinishedAction, FinishedMotion); }
         if (!bPlaying && PlaybackGeneration==FinishedGeneration) StartNextCombatMotion();
     }
@@ -653,6 +688,8 @@ void UOGSharedMotionControllerComponent::EndPlay(
     StopAction();
     MorphOverlays.Reset();
     ApplyMorphOverlays();
+    RestoreMorphBaselines();
+    OnNativeMotionFinished.Clear();
     for (USkeletalMeshComponent* Part : RegisteredParts)
         if (Part) Part->RemoveTickPrerequisiteComponent(this);
     ReferenceRigs.Reset(); RegisteredParts.Reset();
@@ -936,6 +973,23 @@ void UOGSharedMotionControllerComponent::CompleteCombatAction(const FOGEntityId&
     const FName Action=CurrentAction,Motion=CurrentMotionId;
     { TGuardValue<bool> Preserve(bPreserveCombatQueue,true); StopAction(); }
     const uint64 Generation=PlaybackGeneration;
-    { TGuardValue<FOGEntityId> Finished(FinishingCombatReceipt,Receipt); OnMotionFinished.Broadcast(Action,Motion); }
+    { TGuardValue<FOGEntityId> Finished(FinishingCombatReceipt,Receipt);
+      OnNativeMotionFinished.Broadcast(this,Action,Motion); OnMotionFinished.Broadcast(Action,Motion); }
     if (!bPlaying && PlaybackGeneration==Generation) StartNextCombatMotion();
+}
+
+void UOGSharedMotionControllerComponent::RestoreMorphBaselines()
+{
+    for (const auto& Saved:MorphBaselines)
+        if (auto* Part=Saved.Part.Get(); Part && Part->GetSkeletalMeshAsset()==Saved.Mesh.Get())
+            Part->SetMorphTarget(Saved.Morph,Saved.Weight);
+    MorphBaselines.Reset(); AppliedMorphs.Reset();
+}
+bool UOGSharedMotionControllerComponent::HasSourceMorph(FName Source) const
+{
+    const FName Native=ResolveSourceMorph(Source);
+    if (Source.IsNone() || Native.IsNone()) return false;
+    for (const USkeletalMeshComponent* Part:RegisteredParts)
+        if (Part && Part->GetSkeletalMeshAsset() && Part->GetSkeletalMeshAsset()->FindMorphTarget(Native)) return true;
+    return false;
 }
