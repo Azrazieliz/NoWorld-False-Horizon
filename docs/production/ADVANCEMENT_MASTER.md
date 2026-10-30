@@ -5,6 +5,10 @@
 
 **Target:** The actual offline, fully playable, visibly finished game running in Unreal Engine 5.8.3 and on authorized target hardware, not a technical showcase.
 
+**Canonical Luminous character:** five forms — **Base, Alter, Awakened, Berserker, Grand Convergence**. The character is attached to **one** shared semantic animation bank; each form uses its actual native meshes and exact-compatible skeleton derivatives. Never create five independent motion libraries or duplicate common animations to route a form.
+
+**Mirrored execution progression:** [`docs/production/ADVANCEMENT_PROGRESS.json`](ADVANCEMENT_PROGRESS.json). Every `G12-XXXX` entry below has exactly one matching progression record. A source change is not a native build or device acceptance.
+
 **Authoritative production repository:** `D:/UnrealProjects/OfflineGame_Gate12_Koikatsu_20261010`
 **Work branch at register creation:** `production/gate12-full-continuation-20261023`; audited HEAD `7165a21`. The tracked user modification to `Config/DefaultEditor.ini` and all original/untracked assets must remain untouched.
 
@@ -44,7 +48,7 @@ Execute the numbered phases **in this order**, making the quickest executable co
 - [x] **G12-0201 / verified scoped** — Preserve game-wide shared source clip IDs, semantic action resolver, native controller, rig-based exact-Skeleton checks, multi-actor scene component and cross-wardrobe compatible selection from `7165a21`.
 - [ ] **G12-0202 / INTEGRATION** — Make `/Game/NoWorld/Animation` + the shared catalog the discoverable **logical owner** of native motions, with named category/action/clip/rig/retarget/participant/quality mappings; retain legacy asset object paths and all references with redirects/aliases rather than destructive mass moves.
 - [ ] **G12-0203 / FAST** — Ensure the JSON catalog is actually staged in development/shipping package, loaded without editor dependencies and resolves the correct pre-existing native clip by source ID (packaging rule is authored but not package-verified).
-- [ ] **G12-0204 / INTEGRATION** — Create common rig/retarget/anatomy/capability adapters for already available player/creature models. New Identity/Version/wardrobe attaches through rig profile and compatible native derivatives, **not** a per-character or per-Version library.
+- [ ] **G12-0204 / INTEGRATION** — Attach **one canonical character identity** to the shared animation controller and global source catalog. All its Versions and wardrobes resolve the same semantic actions through the active mesh rig/anatomy/capabilities and compatible native derivatives; do not branch or author libraries separately per Version. Complete cross-character adapters and native verification before checking this item.
 - [ ] **G12-0205 / INTEGRATION** — Bind semantic movement/combat/emote/interactions from the **real** action/ability/traversal state machines, with correct cancel, contact notify, duration, hit event, blend, montage/AnimBP, interruption, root motion, rotation, additive face/morph and post-action recovery.
 - [ ] **G12-0206 / INTEGRATION** — Synchronize true multi-participant roles and tracks on one scene clock, with correct skeleton for every role (including other body types), relative positioning, contact windows, facing, time changes, abort/recovery and scene consequence dispatch.
 - [ ] **G12-0207 / CONTENT** — Retarget/author compatible technical derivatives only when required for the actual native Skeleton; keep original SHA, source, artistic approval, rejected versions and deduplication provenance. No artificial asset-count inflation.
@@ -52,6 +56,8 @@ Execute the numbered phases **in this order**, making the quickest executable co
 - [ ] **G12-0209 / DEVICE** — Qualify reused semantic animation in actual game visuals on real display/device with correct whole-body deformation, no pose tearing, foot slide, transform mismatch, freezes or clipping.
 
 **Exit:** An approved common motion can be requested by multiple compatible real characters/Versions; a game state triggers it naturally; ineligible clips stay QA-only for genuine quality/rig reasons.
+
+**30 October source checkpoint (not device proof):** `UOGSharedMotionControllerComponent::BindCanonicalCharacter` binds one character identity; Luminous's validated owned Manifestation attaches once, and legacy traversal fallback no longer selects a separate Base/Alter animation namespace. Shared resolver continues to enforce exact skeleton. Existing approved source catalog remains intact. Remaining: expanded rigs/retargeting, source validation, native compilation and Android gameplay qualification. See `ADVANCEMENT_PROGRESS.json` for task-by-task state.
 
 ### 03 — Complete actual animation coverage, not more registrations (P0)
 
@@ -96,7 +102,7 @@ Execute the numbered phases **in this order**, making the quickest executable co
 - [ ] **G12-0504 / INTEGRATION** — Make owned Luminous controllable for exploration, navigation, encounter, action/turn combat, interactions, cinematic and Ruler 2D/3D full-size detail.
 - [ ] **G12-0505 / INTEGRATION** — Wire each Version's **own** accepted skills/Ultimate/Fantasm and stat/progression state to real owned duplicates, respecting mutually exclusive party identity rules and source provenance.
 - [ ] **G12-0506 / CONTENT** — Integrate other already approved, source-ready character and wardrobe families without re-opening closed approvals; each binds existing shared animation rigs.
-- [ ] **G12-0507 / CONTENT — APPROVAL DEPENDENT** — Add Awakened, Berserker and Grand Convergence **only when actual approved source and exact rules exist**; preserve intended progression and separately owned source copies, never invent the fifth lineage or canon.
+- [ ] **G12-0507 / CONTENT — APPROVAL DEPENDENT** — Integrate Awakened, Berserker and Grand Convergence using their actual approved form content and exact rules, preserving owned source copies and progression. Reuse the single character-level shared motion controller with the correct native skeletons.
 - [ ] **G12-0508 / INTEGRATION** — Prove two legitimately obtained copies of one Identity persist separately as independent Manifestations, with independent development/wardrobe/equipment. No character chips or fabricated duplicate conversion.
 - [ ] **G12-0509 / VISUAL** — Compare live three-wardrobe full-body geometry, facial/morph expression, combat and traversal across valid hardware/viewers. Save, cold-reload and confirm original appearance, ownership and physical state retained.
 
@@ -194,3 +200,11 @@ Execute the numbered phases **in this order**, making the quickest executable co
 - Current 18-system assessment: `docs/production/gate12/GATE12_USER_REQUIREMENTS_CURRENT_STATE_20261018.md`.
 - Binding Gate00 Oct20 directives, with exact original approved sources: `origin/coordination/gate00-live-ops-20261016:docs/production/gate00/GATE00_20261020_ALTER_G07_WORLD_MOTION_APPROVALS.md` and `GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md`.
 - Gate00 Issue #25 is the coordination board. This tracker does **not** overwrite Gate00's canonical Registry, frozen approvals or approval overlay.
+
+## Gate01 accepted five-form 2D artwork integration — 2026-10-30
+
+The exact five original 20 October user-accepted artwork PNGs have been recovered from the original uploaded archive on the connected Android phone and copied byte-for-byte into `Content/NoWorld/Characters/Luminous/Art/Accepted2D/`. The unchanged Gate01 `APPROVED_FIVE_FORMS_MANIFEST.json` carries each exact accepted form, original SHA-256, pixel dimensions, and artwork approval. The five original art identities are Base, Alter, Awakened, Berserker, and Grand Convergence. This is one canonical Luminous character, not five unrelated characters. The extra qualifier previously applied to Grand is not part of the game design.
+
+The existing `UOGGate12CharacterVisualCatalog::FindExact` preserves actual 3D/world-playable/wardrobe entries, chooses the exact approved original 2D image for each existing Version ID and caches imported runtime textures. Original PNG files are staged as offline UFS, rather than requiring an editor-only texture import. `Scripts/production/verify_gate01_luminous_art.py` validates all five original SHA-256 values and version/path mappings.
+
+This **completes accepted-source recovery and source-level 2D binding**, not the full Characters/Detail requirement G12-0803. Verify native Android build, packaged PNG lookup and physical device appearance, and complete the real 3D, kits, combat and World integration before changing any related master checkbox. The existing shared animation bank remains bound once to character identity; never branch animations by Version.

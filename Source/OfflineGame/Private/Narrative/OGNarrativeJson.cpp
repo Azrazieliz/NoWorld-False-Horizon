@@ -53,8 +53,8 @@ bool Fields(const FObject& O, std::initializer_list<const TCHAR*> Allowed, const
     for (const auto& Pair : O->Values)
     {
         bool Found = false;
-        for (const TCHAR* Key : Allowed) Found |= Pair.Key.Equals(Key, ESearchCase::CaseSensitive);
-        if (!Found) return Fail(Error, At + TEXT(".") + Pair.Key, TEXT("unknown field"));
+        for (const TCHAR* Key : Allowed) Found |= FString(*Pair.Key).Equals(Key, ESearchCase::CaseSensitive);
+        if (!Found) return Fail(Error, At + TEXT(".") + FString(*Pair.Key), TEXT("unknown field"));
     }
     return true;
 }
@@ -132,9 +132,9 @@ bool StringMap(const FObject& O, TMap<FString,FString>& Out, const FString& At, 
     for (const auto& Pair : O->Values)
     {
         FString Value;
-        if (!Token(Pair.Key) || !Pair.Value.IsValid() || Pair.Value->Type != EJson::String ||
+        if (!Token(FString(*Pair.Key)) || !Pair.Value.IsValid() || Pair.Value->Type != EJson::String ||
             !Pair.Value->TryGetString(Value) || Value.IsEmpty()) return Fail(Error, At, TEXT("expected stable keys and nonempty string values"));
-        Out.Add(Pair.Key, Value);
+        Out.Add(FString(*Pair.Key), Value);
     }
     return true;
 }

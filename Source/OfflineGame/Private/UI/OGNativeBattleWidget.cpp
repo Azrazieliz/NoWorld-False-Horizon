@@ -1,6 +1,8 @@
-#include "UI/OGReactiveUiSubsystem.h"
-#include "Misc/ScopeExit.h"
 #include "UI/OGNativeBattleWidget.h"
+#include "UI/OGReactiveUiSubsystem.h"
+#include "UI/OGNativeUiStyle.h"
+#include "Misc/ScopeExit.h"
+
 #include "World/OGStartingRegionPresentation.h"
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGTurnBattle.h"
@@ -10,6 +12,7 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
+#include "Components/ProgressBar.h"
 #include "Components/ButtonSlot.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -31,6 +34,16 @@ FSlateFontInfo BattleFont(int32 Size,bool Title=false)
 {
     return FSlateFontInfo(Title?FPaths::ProjectContentDir()/TEXT("Slate/Fonts/Cinzel-Bold.ttf"):
         FPaths::EngineContentDir()/TEXT("Slate/Fonts/Roboto-Medium.ttf"),static_cast<float>(Size));
+}
+float HealthFraction(const FOGLargeNumber& Current,const FOGLargeNumber& Maximum)
+{
+    if (Current.GetSign()<=0||Maximum.GetSign()<=0) return 0.f;
+    if (FOGLargeNumber::Compare(Current,Maximum)>=0) return 1.f;
+    const int64 Difference=static_cast<int64>(Current.Exponent10)-Maximum.Exponent10;
+    if (Difference < -38) return 0.f; // Below display precision, without overflowing combat-scale numbers.
+    if (Difference > 38) return 1.f;
+    const double Ratio=(static_cast<double>(Current.Significand)/Maximum.Significand)*FMath::Pow(10.0,static_cast<double>(Difference));
+    return FMath::IsFinite(Ratio)?static_cast<float>(FMath::Clamp(Ratio,0.0,1.0)):0.f;
 }
 const FLinearColor Gold(.82f,.73f,.57f,1);
 const FLinearColor Pale(.93f,.91f,.95f,1);
@@ -57,7 +70,7 @@ void UOGNativeBattleWidget::NativeConstruct()
         auto* Frame=WidgetTree->ConstructWidget<UBorder>();
         Frame->SetBrushColor(FLinearColor(.011f,.008f,.024f,.94f));
         Frame->SetPadding(FMargin(16,12)); Frame->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-        Out=Canvas->AddChildToCanvas(Frame); Out->SetAnchors(FAnchors(.02f,Top,.98f,Bottom));
+        Out=Canvas->AddChildToCanvas(FOGNativeUiStyle::Surface(*WidgetTree,Frame)); Out->SetAnchors(FAnchors(.02f,Top,.98f,Bottom));
         Out->SetOffsets(FMargin(0)); return Frame;
     };
     UCanvasPanelSlot* HeaderSlot=nullptr; auto* Header=Panel(.02f,.25f,HeaderSlot);
@@ -67,6 +80,15 @@ void UOGNativeBattleWidget::NativeConstruct()
     Resources=WidgetTree->ConstructWidget<UTextBlock>(); Resources->SetFont(BattleFont(16));
     Resources->SetColorAndOpacity(Pale); Resources->SetAutoWrapText(true);
     Column->AddChildToVerticalBox(Resources)->SetPadding(FMargin(0,4,0,8));
+    auto AddMeter=[&](UProgressBar*& Meter,float Height)
+    {
+        Meter=WidgetTree->ConstructWidget<UProgressBar>();
+        Meter->SetVisibility(ESlateVisibility::HitTestInvisible);
+        auto* Bounds=WidgetTree->ConstructWidget<USizeBox>();Bounds->SetHeightOverride(Height);Bounds->AddChild(Meter);
+        Column->AddChildToVerticalBox(Bounds)->SetPadding(FMargin(0,0,0,5));
+    };
+    UProgressBar* Health=nullptr;UProgressBar* Ultimate=nullptr;
+    AddMeter(Health,5);AddMeter(Ultimate,3);HealthBar=Health;UltimateBar=Ultimate;
     Targets=WidgetTree->ConstructWidget<UScrollBox>(); Targets->SetOrientation(Orient_Horizontal);
     Column->AddChildToVerticalBox(Targets)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     UCanvasPanelSlot* LowerSlot=nullptr; auto* Lower=Panel(.61f,.98f,LowerSlot); ActionPanelSlot=LowerSlot;
@@ -90,7 +112,9 @@ void UOGNativeBattleWidget::AddButton(UPanelWidget* Parent,const FString& Label,
     Button->Screen=this; Button->Command=Command; Button->TargetIndex=TargetIndex;
     Button->SetIsFocusable(false); Button->SetIsEnabled(Enabled); Button->SetToolTipText(FText::FromString(Hint));
     Button->SetBackgroundColor(Selected?FLinearColor(.26f,.17f,.31f,1):FLinearColor(.07f,.045f,.105f,1));
-    Button->OnClicked.AddDynamic(Button,&UOGNativeBattleButton::Invoke); Bounds->AddChild(Button);
+    Button->OnClicked.AddDynamic(Button,&UOGNativeBattleButton::Invoke);
+    FOGNativeUiStyle::SkinButton(*Button);
+    Bounds->AddChild(FOGNativeUiStyle::Surface(*WidgetTree,Button,Selected?EOGNativeSurface::PrimaryAction:EOGNativeSurface::Action,Selected));
     auto* Text=WidgetTree->ConstructWidget<UTextBlock>(); Text->SetFont(BattleFont(17));
     Text->SetAutoWrapText(true); Text->SetText(FText::FromString(Label));
     Text->SetColorAndOpacity(Selected?Gold:Enabled?Pale:FLinearColor(.49f,.47f,.53f,1));
@@ -124,6 +148,8 @@ void UOGNativeBattleWidget::Refresh()
         Signature=ResultKey; Targets->ClearChildren(); Commands->ClearChildren();
         Heading->SetText(FText::FromString(!Outcome.bHasPlayerTeam?TEXT("ENCOUNTER COMPLETE"):Outcome.bVictory?TEXT("VICTORY"):TEXT("DEFEAT")));
         Resources->SetText(FText::GetEmpty());
+        if (HealthBar) HealthBar->SetVisibility(ESlateVisibility::Collapsed);
+        if (UltimateBar) UltimateBar->SetVisibility(ESlateVisibility::Collapsed);
         Feedback->SetText(FText::FromString(Outcome.RewardEventIds.IsEmpty()?TEXT("Encounter complete."):TEXT("Rewards saved.")));
         const float Width=FMath::Max(200.f,ViewWidth*.90f-32.f); Commands->SetWrapSize(Width);
         AddButton(Commands,TEXT("CONTINUE"),TEXT("Return to the World."),TEXT("screen_results_close"),INDEX_NONE,true,false,Width);
@@ -180,6 +206,18 @@ void UOGNativeBattleWidget::Refresh()
     const FString Status=Battle->DescribeNativeEffects(Source->UnitEntityId);
     if (!Status.IsEmpty()) ResourceText+=TEXT("\n")+Status;
     Resources->SetText(FText::FromString(ResourceText));
+    if (HealthBar)
+    {
+        const float Fraction=HealthFraction(Source->CurrentHp,Source->Stats.MaxHp);
+        HealthBar->SetVisibility(ESlateVisibility::HitTestInvisible);HealthBar->SetPercent(Fraction);
+        HealthBar->SetFillColorAndOpacity(Fraction<=.25f?FLinearColor(.82f,.25f,.30f,1):FLinearColor(.28f,.72f,.60f,1));
+    }
+    if (UltimateBar)
+    {
+        UltimateBar->SetVisibility(Set.ChargeCap>0?ESlateVisibility::HitTestInvisible:ESlateVisibility::Collapsed);
+        UltimateBar->SetPercent(Set.ChargeCap>0?FMath::Clamp(static_cast<float>(Charge)/Set.ChargeCap,0.f,1.f):0.f);
+        UltimateBar->SetFillColorAndOpacity(UOGReactiveUiSubsystem::Find(this)?UOGReactiveUiSubsystem::Find(this)->GetPalette().Accent:Gold);
+    }
     Feedback->SetText(FText::FromString(LastActionMessage.IsEmpty()?
         TEXT("Choose a primary target. Area effects include every eligible field participant."):LastActionMessage));
     if (!Own && State.Units.IsValidIndex(Acting))
@@ -216,7 +254,7 @@ void UOGNativeBattleWidget::Refresh()
         const FString Side=Unit.UnitEntityId==Source->UnitEntityId?TEXT("SELF"):Unit.TeamIndex==Source->TeamIndex?TEXT("ALLY"):TEXT("OPPONENT");
         const bool Embodied=Bodies.Contains(Unit.UnitEntityId) && !AmbiguousBodies.Contains(Unit.UnitEntityId);
         const FString Suffix=!Embodied?TEXT(" / CHARACTER UNAVAILABLE"):Selected?TEXT(" / SELECTED"):TEXT("");
-        AddButton(Targets,FString::Printf(TEXT("%s %d%s"),*Side,I+1,*Suffix),
+        AddButton(Targets,FString::Printf(TEXT("%s %d%s\nHP %s / %s"),*Side,I+1,*Suffix,*Unit.CurrentHp.ToDebugString(),*Unit.Stats.MaxHp.ToDebugString()),
             TEXT("Select this actual battle participant."),NAME_None,I,Own && Unit.CanAct() && Embodied,Selected,176);
     }
     const bool Portrait=ViewWidth<ViewHeight;

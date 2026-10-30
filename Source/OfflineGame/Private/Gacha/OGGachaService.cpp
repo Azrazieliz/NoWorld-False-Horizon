@@ -198,6 +198,11 @@ bool FOGGachaService::ValidateBanner(
 bool FOGGachaService::PullBatch(const FOGGachaBannerDefinition& Banner,
     const FOGEntityId& RulerId, int64 WorldTick, int64 Seed, int32 Count,
     TArray<FOGGachaPullResult>& OutResults, FString& OutError)
+{ return PullBatchInternal(Banner,RulerId,WorldTick,Seed,Count,OutResults,OutError,true); }
+
+bool FOGGachaService::PullBatchInternal(const FOGGachaBannerDefinition& Banner,
+    const FOGEntityId& RulerId,int64 WorldTick,int64 Seed,int32 Count,
+    TArray<FOGGachaPullResult>& OutResults,FString& OutError,bool bOwnTransaction)
 {
     OutResults.Reset();
     OutError.Reset();
@@ -223,12 +228,12 @@ bool FOGGachaService::PullBatch(const FOGGachaBannerDefinition& Banner,
         OutError = TEXT("Ten-pull requires an eligible authored SR pool entry.");
         return false;
     }
-    if (!Store.BeginTransaction(OutError)) return false;
-    auto Fail = [this, &OutResults, &OutError]()
+    if (bOwnTransaction && !Store.BeginTransaction(OutError)) return false;
+    auto Fail = [this, &OutResults, &OutError,bOwnTransaction]()
     {
         OutResults.Reset();
         FString RollbackError;
-        Store.RollbackTransaction(RollbackError);
+        if (bOwnTransaction) Store.RollbackTransaction(RollbackError);
         if (!RollbackError.IsEmpty()) OutError += TEXT(" | Rollback error: ") + RollbackError;
         return false;
     };
@@ -249,7 +254,7 @@ bool FOGGachaService::PullBatch(const FOGGachaBannerDefinition& Banner,
             static_cast<uint64>(FMath::Max<int64>(1, Result.RngDrawCount + 1)));
         OutResults.Add(MoveTemp(Result));
     }
-    if (!Store.CommitTransaction(OutError)) return Fail();
+    if (bOwnTransaction && !Store.CommitTransaction(OutError)) return Fail();
     return true;
 }
 

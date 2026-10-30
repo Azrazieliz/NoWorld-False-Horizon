@@ -26,7 +26,7 @@ FOGCombatUnitState MakeJournalUnit(
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FOGCombatActionJournalRecordsCanonicalDelta,
     "OfflineGame.Combat.Persistence.ActionJournalRecordsCanonicalDelta",
-    EAutomationTestFlags::ApplicationContextMask |
+    EAutomationTestFlags_ApplicationContextMask |
         EAutomationTestFlags::EngineFilter)
 
 bool FOGCombatActionJournalRecordsCanonicalDelta::RunTest(

@@ -42,7 +42,7 @@ FOGTurnTeamState ProvenanceTeam(int32 Team, const FOGEntityId& Unit)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeCombatEventProvenanceTest,
     "OfflineGame.Combat.Persistence.NativeEventProvenanceCommitFailureAndLifetime",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeCombatEventProvenanceTest::RunTest(const FString& Parameters)
 {
     // No subsystem initialization: never open or alter the player's real save.

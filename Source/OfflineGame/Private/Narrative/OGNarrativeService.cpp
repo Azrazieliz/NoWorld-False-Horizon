@@ -72,7 +72,7 @@ bool LoadQuest(IOGWorldStore& Store, const FOGEntityId& Ruler, const FOGContentI
           return Fail(Error,TEXT("quest state"),TEXT("invalid saved objectives/baseline"));
       for (const auto& Pair : Objectives->Values)
       {
-        FOGContentId Objective(Pair.Key); const FArray* Events = nullptr;
+        FOGContentId Objective(FString(*Pair.Key)); const FArray* Events = nullptr;
         if (!Objective.IsValid() || !Pair.Value.IsValid() || !Pair.Value->TryGetArray(Events) || !Events || Events->Num() > 1000)
             return Fail(Error,TEXT("quest state"),TEXT("invalid objective evidence array"));
         auto& Credits = (MapIndex == 0 ? Out.CreditedEvents : Out.AcceptanceBaseline).FindOrAdd(Objective); TSet<FOGEntityId> Seen;
@@ -119,9 +119,9 @@ bool LoadLocks(IOGWorldStore& Store, const FOGEntityId& Ruler, FLocks& Out,
     for (const auto& Pair : Locks->Values)
     {
         FString Value;
-        if (!FOGContentId(Pair.Key).IsValid() || !Pair.Value.IsValid() || Pair.Value->Type != EJson::String ||
+        if (!FOGContentId(FString(*Pair.Key)).IsValid() || !Pair.Value.IsValid() || Pair.Value->Type != EJson::String ||
             !Pair.Value->TryGetString(Value) || !FOGContentId(Value).IsValid()) return Fail(Error,TEXT("branch state"),TEXT("invalid canonical branch/value ID"));
-        Out.Add(FOGContentId(Pair.Key),FOGContentId(Value));
+        Out.Add(FOGContentId(FString(*Pair.Key)),FOGContentId(Value));
     }
     return true;
 }
@@ -207,7 +207,7 @@ bool SubjectCheck(IOGWorldStore& Store, const FOGNarrativeSubjectRule& Rule, con
     }
     for (const auto& Predicate : Rule.StateEquals)
     {
-        FString Actual; const auto* V = State->Values.Find(Predicate.Key);
+        FString Actual; const auto* V = State->Values.Find(*Predicate.Key);
         if (!V || !V->IsValid() || (*V)->Type != EJson::String || !(*V)->TryGetString(Actual) ||
             !Actual.Equals(Predicate.Value,ESearchCase::CaseSensitive))
             Missing.Add(TEXT("Subject's current canonical state does not meet the authored scene conditions."));

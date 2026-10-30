@@ -1,7 +1,8 @@
+#include "Interaction/OGFoundationInteractionHost.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
-#include "Interaction/OGFoundationInteractionHost.h"
+
 #include "Content/OGDefinitionLibrary.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"

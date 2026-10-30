@@ -1,4 +1,5 @@
 #include "UI/OGGate12CharacterVisualCatalog.h"
+#include "UObject/UObjectGlobals.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"

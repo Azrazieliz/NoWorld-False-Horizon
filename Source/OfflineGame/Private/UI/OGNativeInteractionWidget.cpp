@@ -1,6 +1,8 @@
-#include "UI/OGReactiveUiSubsystem.h"
-#include "Misc/ScopeExit.h"
 #include "UI/OGNativeInteractionWidget.h"
+#include "UI/OGReactiveUiSubsystem.h"
+#include "UI/OGNativeUiStyle.h"
+#include "Misc/ScopeExit.h"
+
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -48,7 +50,7 @@ void UOGNativeInteractionWidget::NativeConstruct()
     auto* Panel = WidgetTree->ConstructWidget<UBorder>();
     Panel->SetBrushColor(FLinearColor(.009f, .007f, .019f, .95f));
     Panel->SetPadding(FMargin(20));
-    auto* Slot = Canvas->AddChildToCanvas(Panel);
+    auto* Slot = Canvas->AddChildToCanvas(FOGNativeUiStyle::Surface(*WidgetTree,Panel));
     Slot->SetAnchors(FAnchors(.04f, .08f, .60f, .92f)); Slot->SetOffsets(FMargin(0));
     auto* Column = WidgetTree->ConstructWidget<UVerticalBox>(); Panel->AddChild(Column);
     auto* Title = WidgetTree->ConstructWidget<UTextBlock>();
@@ -71,7 +73,8 @@ void UOGNativeInteractionWidget::AddButton(FName Action, const FString& Label, b
     auto* Button = WidgetTree->ConstructWidget<UOGInteractionActionButton>();
     Button->Screen = this; Button->Action = Action; Button->SetIsEnabled(Enabled);
     Button->SetBackgroundColor(FLinearColor(.075f, .047f, .10f, 1));
-    Button->OnClicked.AddDynamic(Button, &UOGInteractionActionButton::Invoke); Bounds->AddChild(Button);
+    Button->OnClicked.AddDynamic(Button, &UOGInteractionActionButton::Invoke);
+    FOGNativeUiStyle::SkinButton(*Button); Bounds->AddChild(FOGNativeUiStyle::Surface(*WidgetTree,Button,EOGNativeSurface::Action));
     auto* Text = WidgetTree->ConstructWidget<UTextBlock>();
     Text->SetText(FText::FromString(Label)); Text->SetFont(InteractionFont(20)); Text->SetAutoWrapText(true);
     Text->SetColorAndOpacity(FSlateColor(Enabled ? FLinearColor(.9f, .88f, .93f, 1) : FLinearColor(.39f, .38f, .43f, 1)));

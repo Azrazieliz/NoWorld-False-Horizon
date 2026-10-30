@@ -79,7 +79,7 @@ private:
     float MaximumTravelCentimeters=0;
     float RecoveryRemainingLife=0;
     bool bRecoveryPaused=false;
-    UFUNCTION() void OnPhysicalHit(UPrimitiveComponent*,AActor*,UPrimitiveComponent*,FVector,const FHitResult&);
+    UFUNCTION() void OnPhysicalHit(UPrimitiveComponent* HitComponent,AActor* Other,UPrimitiveComponent* OtherComponent,FVector NormalImpulse,const FHitResult& Hit);
 };
 
 /** One reusable actor receiver for every admitted character/NPC. Mechanics remain in the shared executor. */

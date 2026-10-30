@@ -65,10 +65,14 @@ void AOGWorldPresentationHud::DrawGamePanel(FLinearColor Fill, float X,float Y,f
     if (Theme&&FMath::Max3(Fill.R,Fill.G,Fill.B)<.16f&&FMath::Max3(Fill.R,Fill.G,Fill.B)-FMath::Min3(Fill.R,Fill.G,Fill.B)<.06f)
     { const float Alpha=Fill.A; Fill=FMath::Lerp(Fill,Theme->GetPalette().Surface,.55f); Fill.A=Alpha; }
 
-    const float C=FMath::Min(12.f, H*.18f);
+    const float C=FMath::Min(9.f,H*.12f);
     DrawGamePolygon({{X+C,Y},{X+W,Y},{X+W,Y+H-C},{X+W-C,Y+H},{X,Y+H},{X,Y+C}},Fill);
     DrawLine(X+C,Y,X+W,Y,Theme?Theme->AccentFor(FLinearColor(.52f,.64f,.72f,.24f),.45f):FLinearColor(.52f,.64f,.72f,.24f),1.f);
     DrawLine(X,Y+H,X+W-C,Y+H,FLinearColor(0,0,0,.5f),2.f);
+    const auto Rim=Theme?Theme->GetPalette().Rim:FLinearColor(.36f,.35f,.4f,1);
+    DrawLine(X+W,Y+1,X+W,Y+H-C,FLinearColor(Rim.R,Rim.G,Rim.B,.33f),1.f);
+    DrawLine(X+1,Y+C,X+1,Y+H-1,FLinearColor(Rim.R,Rim.G,Rim.B,.33f),1.f);
+    DrawRect(FLinearColor(1,1,1,.025f),X+C+2,Y+2,FMath::Max(0.f,W-C-4),FMath::Min(2.f,H*.04f));
 }
 
 void AOGWorldPresentationHud::DrawGameText(const FString& Text,float X,float Y,float Height,
@@ -155,11 +159,14 @@ void AOGWorldPresentationHud::DrawGameIcon(FName Id,float X,float Y,float Size,F
 void AOGWorldPresentationHud::DrawGameButton(const FString& Label,FName Id,
     float X,float Y,float W,float H,bool bPrimary,bool bEnabled,int32 Priority)
 {
-    const FLinearColor Accent=bPrimary?Gold:FLinearColor(.42f,.72f,.76f,1);
-    DrawGamePanel(bPrimary?FLinearColor(.22f,.19f,.12f,.98f):FLinearColor(.055f,.095f,.15f,.96f),X,Y,W,H);
+    const auto* Theme=UOGReactiveUiSubsystem::Find(this);
+    const auto Palette=Theme?Theme->GetPalette():FOGReactiveUiPalette();
+    const FLinearColor Accent=Palette.Accent;
+    auto Face=FMath::Lerp(Palette.Surface,Accent,bPrimary?.09f:.025f);Face.A=.97f;
+    DrawGamePanel(Face,X,Y,W,H);
     DrawRect(FLinearColor(Accent.R,Accent.G,Accent.B,bEnabled?.95f:.2f),X,Y+H-3,W,3);
     DrawGameText(Label,X+H*.23f,Y+H*.24f,FMath::Min(H*.43f,FMath::Min(Canvas->ClipX,Canvas->ClipY)/30.f),
-        bEnabled?Paper:FLinearColor(.4f,.46f,.53f,1),W-H*.4f);
+        bEnabled?Palette.Text:Palette.Muted,W-H*.4f);
     if(bEnabled) AddFoundationHitBox({X,Y},{W,H},Id,true,Priority);
 }
 

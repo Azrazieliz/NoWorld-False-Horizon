@@ -10,11 +10,11 @@
 
 namespace
 {
-bool Fail(FString& Error, const TCHAR* Message) { Error = Message; return false; }
-bool Parse(const FString& Text, TSharedPtr<FJsonObject>& Out, FString& Error)
+bool FailFoundationWorldSimulation(FString& Error, const TCHAR* Message) { Error = Message; return false; }
+bool ParseFoundationWorldSimulation(const FString& Text, TSharedPtr<FJsonObject>& Out, FString& Error)
 {
     if (FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Out) && Out) return true;
-    return Fail(Error, TEXT("World simulation requires canonical JSON objects."));
+    return FailFoundationWorldSimulation(Error, TEXT("World simulation requires canonical JSON objects."));
 }
 bool Matches(const FJsonObject& Json, const TMap<FName, FString>& Selector)
 {
@@ -28,7 +28,7 @@ bool Matches(const FJsonObject& Json, const TMap<FName, FString>& Selector)
 bool ReadId(const FJsonObject& Json, const TCHAR* Field, FOGEntityId& Out)
 {
     FString Text; FGuid Guid;
-    if (!Json.TryGetStringField(Field, Text) || !FGuid::Parse(Text, Guid) || !Guid.IsValid()) return false;
+    if (!Json.TryGetStringField(Field, Text) || !FGuid::ParseFoundationWorldSimulation(Text, Guid) || !Guid.IsValid()) return false;
     Out = FOGEntityId(Guid); return true;
 }
 bool SamePresence(const FOGWorldPresenceRecord& A, const FOGWorldPresenceRecord& B)
@@ -45,7 +45,7 @@ public:
     bool Begin(FString& Error)
     {
         // Body effects must be durable before accepting a new physical read fence.
-        if (Store.IsWriteTransactionActive()) return Fail(Error, TEXT("World body checkpoint requires its own root transaction."));
+        if (Store.IsWriteTransactionActive()) return FailFoundationWorldSimulation(Error, TEXT("World body checkpoint requires its own root transaction."));
         bOpen = Store.BeginTransaction(Error); return bOpen;
     }
     bool Commit(FString& Error)
@@ -90,21 +90,21 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
 {
     Out = FOGFoundationWorldBodyState(); Error.Reset();
     if (!Store.IsOpen() || !Entity.IsValid() || Tick < 0 || !D.ValidateDefinition(Error))
-        return Fail(Error, TEXT("World body needs a ready canonical Store, entity, tick and authored definition."));
+        return FailFoundationWorldSimulation(Error, TEXT("World body needs a ready canonical Store, entity, tick and authored definition."));
     FOGFoundationWorldBodyState State; State.EntityId = Entity;
     bool Found = false;
     if (!Store.TryReadEntity(Entity, Found, State.EntityKind, State.EntityJson, State.EntityRevision, Error)) return false;
     TSharedPtr<FJsonObject> Json;
-    if (!Found || State.EntityKind != D.EntityKind || !Parse(State.EntityJson, Json, Error) ||
+    if (!Found || State.EntityKind != D.EntityKind || !ParseFoundationWorldSimulation(State.EntityJson, Json, Error) ||
         Json->HasField(TEXT("diagnosticFixture")))
-        return Fail(Error, TEXT("World body must bind an existing entity of the definition's exact kind."));
+        return FailFoundationWorldSimulation(Error, TEXT("World body must bind an existing entity of the definition's exact kind."));
     if (!FOGSharedWorldStateService(Store).TryReadPhysicalPresence(Entity, Found, State.Presence, Error)) return false;
     if (!Found || State.Presence.LocalPosition.ContainsNaN() ||
         State.Presence.UpdatedWorldTick < 0 || State.Presence.UpdatedWorldTick > Tick)
-        return Fail(Error, TEXT("World body is missing a valid canonical physical presence."));
+        return FailFoundationWorldSimulation(Error, TEXT("World body is missing a valid canonical physical presence."));
     FOGLocationRecord Location;
     if (!Store.TryReadLocation(State.Presence.LocationId, Found, Location, Error)) return false;
-    if (!Found) return Fail(Error, TEXT("Canonical presence refers to a missing Location."));
+    if (!Found) return FailFoundationWorldSimulation(Error, TEXT("Canonical presence refers to a missing Location."));
     State.bAbsent = !D.AbsentStateValues.IsEmpty() && Matches(*Json, D.AbsentStateValues);
     State.bAvailable = !State.bAbsent && Matches(*Json, D.RequiredStateValues) &&
         Location.bPhysicallyAccessible && State.Presence.MovementContext == D.MovementContext;
@@ -113,7 +113,7 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
         bool HasLocalRuler = false;
         if (!FOGGate12LocalRulerBootstrap::TryLoad(Store, HasLocalRuler, State.LocalRulerId, Error)) return false;
         if (!HasLocalRuler)
-            return Fail(Error, TEXT("Controlled presence requires the existing world-embedded local Ruler binding."));
+            return FailFoundationWorldSimulation(Error, TEXT("Controlled presence requires the existing world-embedded local Ruler binding."));
         if (Entity != State.LocalRulerId)
         {
             if (!Store.TryReadCharacterManifestation(Entity, State.bHasControlledManifestation,
@@ -122,7 +122,7 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
             if (!State.bHasControlledManifestation || M.ManifestationId != Entity ||
                 M.OwningRulerId != State.LocalRulerId || M.LifecycleState != TEXT("active") ||
                 !M.IdentityId.IsValid() || !M.ActiveVersionId.IsValid())
-                return Fail(Error, TEXT("Controlled presence needs an exact active Manifestation owned by the stored local Ruler."));
+                return FailFoundationWorldSimulation(Error, TEXT("Controlled presence needs an exact active Manifestation owned by the stored local Ruler."));
         }
         // No Director read or route inference for genuine player-controlled presence.
         Out = MoveTemp(State); return true;
@@ -131,39 +131,39 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
     if (!Json->HasField(Field)) { Out = MoveTemp(State); return true; }
     FString ScheduleText;
     if (!Json->TryGetStringField(Field, ScheduleText))
-        return Fail(Error, TEXT("Canonical schedule selector must be an exact persisted schedule ID string."));
+        return FailFoundationWorldSimulation(Error, TEXT("Canonical schedule selector must be an exact persisted schedule ID string."));
     if (ScheduleText.IsEmpty()) { Out = MoveTemp(State); return true; }
     FGuid Guid;
-    if (!FGuid::Parse(ScheduleText, Guid) || !Guid.IsValid())
-        return Fail(Error, TEXT("Canonical schedule selector contains an invalid ID."));
+    if (!FGuid::ParseFoundationWorldSimulation(ScheduleText, Guid) || !Guid.IsValid())
+        return FailFoundationWorldSimulation(Error, TEXT("Canonical schedule selector contains an invalid ID."));
     if (!Store.TryReadWorldDirectorSchedule(FOGEntityId(Guid), Found, State.Schedule, Error)) return false;
-    if (!Found) return Fail(Error, TEXT("Canonical NPC schedule is not installed in the shared Director."));
+    if (!Found) return FailFoundationWorldSimulation(Error, TEXT("Canonical NPC schedule is not installed in the shared Director."));
     State.bHasSchedule = true;
     TSharedPtr<FJsonObject> Provenance;
-    if (!Parse(State.Schedule.DecisionProvenanceJson, Provenance, Error)) return false;
+    if (!ParseFoundationWorldSimulation(State.Schedule.DecisionProvenanceJson, Provenance, Error)) return false;
     FString Resolver, Definition, Context; FOGEntityId Subject;
     if (!Provenance->TryGetStringField(TEXT("resolver_key"), Resolver) || Resolver != ResolverKey().ToString() ||
         !Provenance->TryGetStringField(TEXT("definition_id"), Definition) || Definition != D.DefinitionId.ToString() ||
         !ReadId(*Provenance, TEXT("subject_id"), Subject) || Subject != Entity ||
         !ReadId(*Provenance, TEXT("location_id"), State.Destination.LocationId) ||
         !Provenance->TryGetStringField(TEXT("movement_context"), Context) || Context != D.MovementContext.ToString())
-        return Fail(Error, TEXT("Director movement provenance must bind this exact subject, definition, location and movement context."));
+        return FailFoundationWorldSimulation(Error, TEXT("Director movement provenance must bind this exact subject, definition, location and movement context."));
     const TArray<TSharedPtr<FJsonValue>>* Position = nullptr;
     double XYZ[3] = {};
     if (!Provenance->TryGetArrayField(TEXT("local_position"), Position) || Position->Num() != 3)
-        return Fail(Error, TEXT("Director destination needs three finite location-local coordinates."));
+        return FailFoundationWorldSimulation(Error, TEXT("Director destination needs three finite location-local coordinates."));
     for (int32 I = 0; I < 3; ++I)
         if (!(*Position)[I].IsValid() || !(*Position)[I]->TryGetNumber(XYZ[I]) || !FMath::IsFinite(XYZ[I]))
-            return Fail(Error, TEXT("Director destination coordinates must be finite numbers."));
+            return FailFoundationWorldSimulation(Error, TEXT("Director destination coordinates must be finite numbers."));
     State.Destination.EntityId = Entity;
     State.Destination.LocalPosition = FVector(XYZ[0], XYZ[1], XYZ[2]);
     State.Destination.MovementContext = D.MovementContext;
     if (State.Destination.LocationId != State.Presence.LocationId)
-        return Fail(Error, TEXT("Cross-Location travel requires an authored transition; this receiver never teleports a route."));
+        return FailFoundationWorldSimulation(Error, TEXT("Cross-Location travel requires an authored transition; this receiver never teleports a route."));
     if (!State.Schedule.bHasScheduledStartWorldTick || State.Schedule.ScheduledStartWorldTick < 0 ||
         (State.Schedule.Status != TEXT("scheduled") && State.Schedule.Status != TEXT("active") &&
         State.Schedule.Status != TEXT("completed")))
-        return Fail(Error, TEXT("World body requires a bounded scheduled, active or completed Director record."));
+        return FailFoundationWorldSimulation(Error, TEXT("World body requires a bounded scheduled, active or completed Director record."));
     Out = MoveTemp(State); return true;
 }
 
@@ -171,14 +171,14 @@ bool FOGFoundationWorldSimulationRuntime::ActivateDue(const UOGWorldSimulationDe
     const FOGFoundationWorldBodyState& Expected, int64 Tick, FString& Error)
 {
     Error.Reset();
-    if (D.bControlledPresence) return Fail(Error, TEXT("Controlled presence cannot activate AI schedules."));
+    if (D.bControlledPresence) return FailFoundationWorldSimulation(Error, TEXT("Controlled presence cannot activate AI schedules."));
     FBodyTransaction Transaction(Store);
     if (!Transaction.Begin(Error)) return false;
     FOGFoundationWorldBodyState Current;
     if (!Read(D, Expected.EntityId, Tick, Current, Error)) return false;
     if (!SameAuthority(Current, Expected) || !Current.bAvailable || !Current.bHasSchedule ||
         Tick < Current.Schedule.ScheduledStartWorldTick)
-        return Fail(Error, TEXT("Canonical state changed, is unavailable, or the NPC schedule is not due."));
+        return FailFoundationWorldSimulation(Error, TEXT("Canonical state changed, is unavailable, or the NPC schedule is not due."));
     if (Current.Schedule.Status == TEXT("scheduled") &&
         !FOGWorldDirectorService(Store).ActivateDueContent(Current.Schedule.ScheduleId, Tick, Error)) return false;
     return Transaction.Commit(Error);
@@ -189,8 +189,8 @@ bool FOGFoundationWorldSimulationRuntime::Checkpoint(const UOGWorldSimulationDef
     bool bArrived, bool& bChanged, FString& Error)
 {
     bChanged = false; Error.Reset();
-    if (D.bControlledPresence) return Fail(Error, TEXT("Controlled presence cannot checkpoint AI movement or arrival."));
-    if (Actual.ContainsNaN()) return Fail(Error, TEXT("Actual body position must be finite."));
+    if (D.bControlledPresence) return FailFoundationWorldSimulation(Error, TEXT("Controlled presence cannot checkpoint AI movement or arrival."));
+    if (Actual.ContainsNaN()) return FailFoundationWorldSimulation(Error, TEXT("Actual body position must be finite."));
     FBodyTransaction Transaction(Store);
     if (!Transaction.Begin(Error)) return false;
     FOGFoundationWorldBodyState Current;
@@ -201,16 +201,16 @@ bool FOGFoundationWorldSimulationRuntime::Checkpoint(const UOGWorldSimulationDef
         return Transaction.Commit(Error);
     if (!SameAuthority(Current, Expected) || !Current.bAvailable || !Current.bHasSchedule ||
         Current.Schedule.Status != TEXT("active") || Tick < Current.Schedule.ScheduledStartWorldTick)
-        return Fail(Error, TEXT("Obsolete or unavailable World body cannot overwrite canonical presence or activity."));
+        return FailFoundationWorldSimulation(Error, TEXT("Obsolete or unavailable World body cannot overwrite canonical presence or activity."));
     if (bArrived && FVector::Dist(Actual, Current.Destination.LocalPosition) > D.AcceptanceRadiusCm)
-        return Fail(Error, TEXT("Path result did not physically reach the authored destination."));
+        return FailFoundationWorldSimulation(Error, TEXT("Path result did not physically reach the authored destination."));
     if (!bArrived && Actual == Current.Presence.LocalPosition) return Transaction.Commit(Error);
     auto Presence = Current.Presence; Presence.LocalPosition = Actual; Presence.UpdatedWorldTick = Tick;
     if (!FOGSharedWorldStateService(Store).UpdatePhysicalPresence(Presence, Error)) return false;
     if (bArrived && !D.ArrivalStateField.IsNone())
     {
         TSharedPtr<FJsonObject> State;
-        if (!Parse(Current.EntityJson, State, Error)) return false;
+        if (!ParseFoundationWorldSimulation(Current.EntityJson, State, Error)) return false;
         State->SetStringField(D.ArrivalStateField.ToString(), D.ArrivalStateValue);
         FString Text; FJsonSerializer::Serialize(State.ToSharedRef(), TJsonWriterFactory<>::Create(&Text));
         if (!Store.UpsertEntity(Current.EntityId, Current.EntityKind, Tick, Text, Error)) return false;
@@ -237,14 +237,14 @@ bool FOGFoundationWorldSimulationRuntime::CheckpointControlled(const UOGWorldSim
 {
     bChanged = false; Error.Reset();
     if (!D.bControlledPresence || Actual.ContainsNaN())
-        return Fail(Error, TEXT("Controlled checkpoint requires its explicit source policy and finite measured position."));
+        return FailFoundationWorldSimulation(Error, TEXT("Controlled checkpoint requires its explicit source policy and finite measured position."));
     FBodyTransaction Transaction(Store);
     if (!Transaction.Begin(Error)) return false;
     FOGFoundationWorldBodyState Current;
     if (!Read(D, Expected.EntityId, Tick, Current, Error)) return false;
     if (!SameAuthority(Current, Expected) || !Current.bAvailable || Current.bHasSchedule ||
         !Current.LocalRulerId.IsValid())
-        return Fail(Error, TEXT("Changed canonical position, availability, local owner or active version invalidates this physical writer."));
+        return FailFoundationWorldSimulation(Error, TEXT("Changed canonical position, availability, local owner or active version invalidates this physical writer."));
     if (Actual == Current.Presence.LocalPosition) return Transaction.Commit(Error);
     auto Presence = Current.Presence; Presence.LocalPosition = Actual; Presence.UpdatedWorldTick = Tick;
     if (!FOGSharedWorldStateService(Store).UpdatePhysicalPresence(Presence, Error)) return false;

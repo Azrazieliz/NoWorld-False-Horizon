@@ -17,3 +17,5 @@ jobs:
         run: python Scripts/validate_repo.py
       - name: Verify pre-Unreal completeness
         run: python Scripts/verify_pre_unreal_completeness.py
+      - name: Verify exact approved Luminous 2D sources
+        run: python Scripts/production/verify_gate01_luminous_art.py

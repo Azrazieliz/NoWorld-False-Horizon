@@ -101,7 +101,7 @@ bool UOGGameCoreSubsystem::PersistNativeEncounter(const FOGTurnBattle& Candidate
         Record->SetStringField(TEXT("presentation_base64"),FBase64::Encode(Geometry));
     }
     FString Json;
-    if (!FJsonSerializer::Serialize(Record.ToSharedRef(),TJsonWriterFactory<>::Create(&Json)))
+    if (!FJsonSerializer::Serialize(Record,TJsonWriterFactory<>::Create(&Json)))
     { Error=TEXT("Cannot encode native encounter recovery record."); return false; }
     return WorldStore->UpsertEntity(RecoveryId(Ruler),TEXT("native_encounter_recovery"),Receipt.WorldTick,Json,Error);
 }

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Core/OGEntityId.h"
+#include "Content/OGContentId.h"
 #include "Components/ActorComponent.h"
 #include "Animation/OGSharedMotionLibrary.h"
 #include "Animation/OGSharedReferenceMotion.h"
@@ -34,6 +35,14 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Shared")
     TSoftObjectPtr<UOGSharedMotionLibrary> SharedLibrary;
+
+    /** The canonical character is attached ONCE. Versions and wardrobes reuse
+     * the same shared source bank; only actual mesh/skeleton compatibility
+     * chooses the native derivative. No per-Version animation graph. */
+    UPROPERTY(BlueprintReadOnly, Category="Motion|Character")
+    FOGContentId BoundCharacterIdentity;
+
+    bool BindCanonicalCharacter(const FOGContentId& IdentityId);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
     FName RigProfile = NAME_None;

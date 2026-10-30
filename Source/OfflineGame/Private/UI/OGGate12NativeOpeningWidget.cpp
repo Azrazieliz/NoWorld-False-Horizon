@@ -1,6 +1,7 @@
+#include "UI/OGGate12NativeOpeningWidget.h"
 #include "UI/OGReactiveUiSubsystem.h"
 #include "Misc/ScopeExit.h"
-#include "UI/OGGate12NativeOpeningWidget.h"
+
 #include "UI/OGGate12GothicChromeWidget.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
@@ -312,6 +313,7 @@ void UOGGate12NativeOpeningWidget::AddAction(
     UOGGate12GothicChromeWidget* LiveFrame =
         WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
             UOGGate12GothicChromeWidget::StaticClass());
+    LiveFrame->SetSurface(bPrimary?EOGNativeSurface::PrimaryAction:EOGNativeSurface::Action,false);
     LiveFrame->Configure(!bEnabled
         ? FLinearColor(.24f,.23f,.27f,1.f)
         : bPrimary

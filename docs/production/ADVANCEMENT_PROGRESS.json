@@ -1,0 +1,856 @@
+{
+  "schema": "noworld.advancement_progress.v1",
+  "master": "docs/production/ADVANCEMENT_MASTER.md",
+  "source_catalog": "Content/NoWorld/Animation/SharedMotionCatalog.json",
+  "source_branch": "fix/gate12-pr85-ue58-uht-20261030",
+  "last_synchronized": "2026-10-30",
+  "status_convention": {
+    "MASTER_CHECKED_SCOPED": "Historical scoped checkbox in the existing master; not a new Android/device acceptance claim.",
+    "OPEN": "Unfinished; no new verification claimed.",
+    "SOURCE_PARTIAL": "Specific source changed and committed, full master requirement remains unchecked."
+  },
+  "summary": {
+    "master_task_count": 111,
+    "master_checked": 6,
+    "master_open": 105,
+    "source_partial": 5,
+    "build_verified": false,
+    "device_verified": false,
+    "user_accepted": false
+  },
+  "tasks": [
+    {
+      "id": "G12-0001",
+      "master_checked": true,
+      "master_descriptor": "verified",
+      "master_requirement": "Confirm active Windows project, production branch, historical HEAD and protected editor modification; continuation branch established.",
+      "state": "MASTER_CHECKED_SCOPED"
+    },
+    {
+      "id": "G12-0002",
+      "master_checked": true,
+      "master_descriptor": "verified",
+      "master_requirement": "Preserve old successful and failed animation QA receipts and source assets; isolate new changes in recoverable commit `7165a21`.",
+      "state": "MASTER_CHECKED_SCOPED"
+    },
+    {
+      "id": "G12-0003",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Resolve Windows interactive display access for genuine editor/game screenshots. Latest display capture shows PIN lock screen; do not describe it as gameplay. Retest actual unlocked display once available, while continuing other tasks.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0004",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Eliminate Zen DDC `507 Insufficient Storage` (C: last observed ~2 GB available vs D: ~163 GB); relocate disposable derived cache non-destructively or recover safe space without touching original assets, saves, source, packages or user files.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0005",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Run one bounded source/asset/approval diff against **current** Gate00 frozen contracts and full worktree. Classify pending untracked imports without resetting, cleaning, mass reimporting or altering protected assets; distinguish existing functional runtime from missing actual content.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0006",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Confirm actual Android ADB/device/package state and available RAM/SDK. Use a separate dev package and preserve installed unrelated applications, existing APKs, user world data and device backups.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0007",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Preserve a stable real editor/game startup, selected owned player, persistence, World↔Ruler transition, optional World interaction and no mandatory first encounter; only fix observed regressions, not rebuild the existing 23/23 route.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0101",
+      "master_checked": true,
+      "master_descriptor": "verified",
+      "master_requirement": "Remove the **separate** `adult_restricted` reject in the central animation resolver; preserve strict per-source technical/visual approval.",
+      "state": "MASTER_CHECKED_SCOPED"
+    },
+    {
+      "id": "G12-0102",
+      "master_checked": true,
+      "master_descriptor": "verified",
+      "master_requirement": "Expose mature-tagged source animations in isolated editor QA without silently approving gameplay; repair transient native QA initialization, six-part source motion played.",
+      "state": "MASTER_CHECKED_SCOPED"
+    },
+    {
+      "id": "G12-0103",
+      "master_checked": true,
+      "master_descriptor": "verified",
+      "master_requirement": "Stop SFW visual wardrobe preference from independently rejecting an otherwise valid native gameplay motion; actual vs effective wardrobe policy remains distinct.",
+      "state": "MASTER_CHECKED_SCOPED"
+    },
+    {
+      "id": "G12-0104",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Inspect remaining adult/mature authorization and preview/action filters in production World interactions, UMG, combat and scene dispatch. Remove **only** gates not present in approved game rules; no newly invented access/consent/unlock mechanism or removal of approved player settings.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0105",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Keep actual clothing, physical state, inventory, ownership, consequences and completed actions identical across SFW/privacy render changes; verify all full-body/face/interaction/roster/world views mask only presentation as configured.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0106",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Implement all available technically sound mature interactions, anatomy layers, injury/gore/execution/death visuals and appropriate linked consequences **as approved**. A content tag alone is never proof of working animation or encounter.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0201",
+      "master_checked": true,
+      "master_descriptor": "verified scoped",
+      "master_requirement": "Preserve game-wide shared source clip IDs, semantic action resolver, native controller, rig-based exact-Skeleton checks, multi-actor scene component and cross-wardrobe compatible selection from `7165a21`.",
+      "state": "MASTER_CHECKED_SCOPED"
+    },
+    {
+      "id": "G12-0202",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Make `/Game/NoWorld/Animation` + the shared catalog the discoverable **logical owner** of native motions, with named category/action/clip/rig/retarget/participant/quality mappings; retain legacy asset object paths and all references with redirects/aliases rather than destructive mass moves.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0203",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Ensure the JSON catalog is actually staged in development/shipping package, loaded without editor dependencies and resolves the correct pre-existing native clip by source ID (packaging rule is authored but not package-verified).",
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "1e402c50d8e71afa9be9422a8216825628241ee4",
+      "source_paths": [
+        "Source/OfflineGame/OfflineGame.Build.cs",
+        "Content/NoWorld/Animation/SharedMotionCatalog.json"
+      ],
+      "proof": "Source catalog is read by installed shared resolver and referenced as UFS runtime dependency. Full device package verification pending.",
+      "remaining": [
+        "Native Android package and real sequence playback"
+      ]
+    },
+    {
+      "id": "G12-0204",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Attach **one canonical character identity** to the shared animation controller and global source catalog. All its Versions and wardrobes resolve the same semantic actions through the active mesh rig/anatomy/capabilities and compatible native derivatives; do not branch or author libraries separately per Version. Complete cross-character adapters and native verification before checking this item.",
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "50026b651323b9531197af235dd6193d5a21002b",
+      "source_paths": [
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
+        "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp"
+      ],
+      "proof": "Canonical character identity bound once to shared animation controller in source; no per-Version legacy gait namespace. No native runtime proof.",
+      "remaining": [
+        "Native Android compile and playback",
+        "Other actual character rig adapters",
+        "All approved source motions bound to live state"
+      ]
+    },
+    {
+      "id": "G12-0205",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Bind semantic movement/combat/emote/interactions from the **real** action/ability/traversal state machines, with correct cancel, contact notify, duration, hit event, blend, montage/AnimBP, interruption, root motion, rotation, additive face/morph and post-action recovery.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0206",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Synchronize true multi-participant roles and tracks on one scene clock, with correct skeleton for every role (including other body types), relative positioning, contact windows, facing, time changes, abort/recovery and scene consequence dispatch.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0207",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Retarget/author compatible technical derivatives only when required for the actual native Skeleton; keep original SHA, source, artistic approval, rejected versions and deduplication provenance. No artificial asset-count inflation.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0208",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Verify wardrobe swap, character form change, equipment and SFW setting can continue/restart the proper shared motion without reauthoring a new library.",
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "50026b651323b9531197af235dd6193d5a21002b",
+      "source_paths": [
+        "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp"
+      ],
+      "proof": "Removed version-dependent legacy traversal namespace; exact skeleton remains enforced for wardrobe fallback.",
+      "remaining": [
+        "Form change, wardrobe, equipment and privacy-state playback on device"
+      ]
+    },
+    {
+      "id": "G12-0209",
+      "master_checked": false,
+      "master_descriptor": "DEVICE",
+      "master_requirement": "Qualify reused semantic animation in actual game visuals on real display/device with correct whole-body deformation, no pose tearing, foot slide, transform mismatch, freezes or clipping.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0301",
+      "master_checked": false,
+      "master_descriptor": "DEVICE — FIRST CHECKPOINT",
+      "master_requirement": "Demonstrate **the four existing genuine Gate09 Koikatsu native clips in actual Android gameplay** on an intended character, including animation, blend, correct rig and measured loading; Gate00's 20 Oct approval requires this before more *bulk* transfer. Do not discard the 3,217 already imported registrations.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0302",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Audit 3,217 catalog entries against source hashes, actual exported curves, real native Skeletons, compatibility, distinct clips, accepted/rejected QA; record source→native→rig→semantic→gameplay→visual/device progression independently.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0303",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Connect idle, directional walk/run/sprint, acceleration/deceleration, stop/turn, jumping, falling, landing, climbing, crawling and swimming through live traversal, camera and physics, including shared meaningful variations.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0304",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Connect hover, takeoff, landing, flying travel, aerial combat and aquatic transitions; respect anatomy, abilities, velocity and collisions, not a one-pose hovering approximation.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0305",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate true attack, defense, dodge, parry, hit, stagger, counterattack, weapon grip and weapon-class motions (unarmed, sling/bow/projectile, blades, guns, futuristic, innate/magic, nonhuman).",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0306",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate dialogue, speech-like face, eyes, brows, gaze, emotions, idle reactions, facial morphs and secondary hair/clothing/appendage movement.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0307",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate sit, stand, sleep, eat, drink, interact, carry, pick up, use item and contextual environmental interactions.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0308",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Deliver accepted full-length **8–20 second** dance/choreography, transitions, beats, foot-planting, body/face/garments and playable start/interrupt/stop; do not reuse rejected sway output as final dance.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0309",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Author/retarget **authentic synchronized interpersonal/adult scene role tracks** (current catalog role count = zero), with correct compatible participant skeletons, scene staging, timing and actual world interaction entry.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0310",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate mature combat injury, blood/gore, execution, death/revival and aftermath motion where specified, with camera and actual state progression.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0311",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate creature-specific, unusual body structure, aquatic/aerial and nonhuman movements without forcing humanoid assets.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0312",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Implement source-grade acceptance for every missing action category: authentic data + target compatible rigs + actual gameplay dispatch + synchronized timing + native playback + visual review (and device review for mobile).",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0313",
+      "master_checked": false,
+      "master_descriptor": "FAST",
+      "master_requirement": "Defer genuinely missing original Gate09/source assets by **exact motion, anatomical rig, participant role and acceptance blocker**; finish independent existing assets immediately instead of stopping at the animation inventory.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0401",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Replace the black/text-only or diagnostic combat view **without rebuilding either frozen executor**; render actual owned combatants and enemies in the active World/encounter.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0402",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Set team formation/lanes, true actor position, facing, reach, distance, movement, range/elevation/line of sight and camera framing from real battle state.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0403",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Display legal current turn/actor, actions, skill set, Ultimate branches, targets, target previews, energy/resources and effects through actual Gate10 controls; keyboard/touch input and turn advancement must reach the canonical battle.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0404",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Couple authoritative action commit to synced semantic animation, actual weapon/ability release, contact frames, projectile/hit trace, defense reaction, sound, VFX and visual consequence; no invented invisible hit or independent fake HP ledger.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0405",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate the exact **approved Luminous Base v6** (three actives, six passives, Day/Night Ultimate, World Fantasm) in the existing combat executors. Preserve resource/status/target/buff/heal rules; no diluted Fantasm.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0406",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate independently approved **Alter v1** (three actives, six passives, Red Tithe, Bleed/Severing Wound, Rupture Seals, Black Mass branches, Cathedral Fantasm four effects, exact revival) from **original full approved numerical payload**; do not reconstruct missing multipliers/conditions from summary and never copy Base effects into Alter.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0407",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Support all other exact approved kits, weapons, natural anatomy, learned abilities, Ranks, statuses, special effects and non-human skills with matching source-specific visuals. Never default to a firearm or sword for unrelated equipment/ability.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0408",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Implement hit reactions, shields, healing, injuries, bleed, death, revive, gore, post-action state and real World consequences, respecting camera/Privacy and legitimate gameplay rules.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0409",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Integrate distinct enemies and encounters whose actual authored power is coherent with approved Gate04; no universal global level-scaling or forced enemy match to player.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0410",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Preserve deterministic turn order, action-value timing, interruptions, counters, cooldowns, triggers, World Manifestations/Negations, camera and transitions between turn/action modes.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0411",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Persist/restore encounter identities, state and aftermath; correctly handle victory/defeat, retreat, intervention, replaced participants, death and rewards without an arbitrary reset.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0412",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Film/inspect real end-to-end *player-selects-target → actor animates → actual hit/defense → HP/status changes → enemy takes next visible turn → fight resolves* using true authoritative gameplay systems, not a demonstration simulation.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0501",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Resolve authentic source→Identity→Version→owned independent Manifestation binding using canonical Registry v2 provenance; Gate00 is Registry acceptance owner, **Gate11 not an operational queue**. Never assign fake owned/test IDs.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0502",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Finalize true user-approved Luminous Base and Alter native meshes from existing authentic Koikatsu/Blender/UE work, comparing face, morphology, eyes/alpha, materials, scale, rig, costumes, anatomical components and whole-body appearance with reference (no redesign/re-export of already accepted parts unless corrective).",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0503",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Integrate actual CLOTHED/UNDERWEAR/NUDE appearance components, clothing vs Privacy effective rendering, equipment changes, damage/injury and animation for the **same** Identity/Version, not separate characters.",
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "50026b651323b9531197af235dd6193d5a21002b",
+      "source_paths": [
+        "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp"
+      ],
+      "proof": "Canonical character motion controller associated with owned Manifestation identity; wardrobe parts re-register on same controller.",
+      "remaining": [
+        "Native runtime verification and full appearance/wardrobe gameplay pipeline"
+      ]
+    },
+    {
+      "id": "G12-0504",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Make owned Luminous controllable for exploration, navigation, encounter, action/turn combat, interactions, cinematic and Ruler 2D/3D full-size detail.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0505",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Wire each Version's **own** accepted skills/Ultimate/Fantasm and stat/progression state to real owned duplicates, respecting mutually exclusive party identity rules and source provenance.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0506",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Integrate other already approved, source-ready character and wardrobe families without re-opening closed approvals; each binds existing shared animation rigs.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0507",
+      "master_checked": false,
+      "master_descriptor": "CONTENT — APPROVAL DEPENDENT",
+      "master_requirement": "Integrate Awakened, Berserker and Grand Convergence using their actual approved form content and exact rules, preserving owned source copies and progression. Reuse the single character-level shared motion controller with the correct native skeletons.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0508",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Prove two legitimately obtained copies of one Identity persist separately as independent Manifestations, with independent development/wardrobe/equipment. No character chips or fabricated duplicate conversion.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0509",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Compare live three-wardrobe full-body geometry, facial/morph expression, combat and traversal across valid hardware/viewers. Save, cold-reload and confirm original appearance, ownership and physical state retained.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0601",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Continue **existing** Gate02 R1 sourced assets and streaming/source assembly maps; retain native original kingdom anchors, citadel, Eastern Market, farms, Watchwood, lookout, roads and authentic source hashes. No reset to grey terrain.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0602",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Build real full First World terrain in Unreal with approved art-directed PCG/Landscape/World Partition or equivalent, seeded persistence; use Gate02 as the authored anchor supplier, not as the owner of procedurally building the entire World.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0603",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Expand coherent Three-Valley Confluence geography toward approved **100 × 100 km** first kingdom target, largely plains where specified, with appropriate landscape scale, hydrology, river/banks, bridge systems, cliffs, forests and farms.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0604",
+      "master_checked": false,
+      "master_descriptor": "CONTENT",
+      "master_requirement": "Build inhabitable settlements, village/town scale, markets, castle/citadel proportion, roads, agricultural plots, ecology, landmarks, caves and traversable interiors using accepted existing anchor/module materials.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0605",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Configure correct UE world-space scale, source basis/pivots, material/texture and shaders, terrain seams, collision, navmesh, swimming/flying/climbing anchors, crowd and creature navigation.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0606",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Implement stable seed/tile/region/entity IDs, deterministic placement and streaming, LOD/HLOD/PCG population that does not overwrite dynamically changed player state.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0607",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Connect same canonical world tick, NPC/faction/trading/quests/loot/persistent changes and optional encounters to visited/unvisited regions, including elapsed events when player is elsewhere.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0608",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Preserve no mandatory first fight, no boss corridor, no predetermined route, no universally scaled foes, causal intervention/death/retreat and freedom of destination.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0609",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Actually traverse citadel/settlement/field/road/water/cave/transition routes with an authentic owned character and verify camera, interaction, source-authentic art, density and nonrepetition against Gate02 reference.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0610",
+      "master_checked": false,
+      "master_descriptor": "DEVICE",
+      "master_requirement": "Profile streaming, lighting, shader compilation, frame rate, memory, collision and world persistence on real PC and target Android before switching player-facing map from preserved `StartingWorld.umap`.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0701",
+      "master_checked": false,
+      "master_descriptor": "Gate03 / CONTENT",
+      "master_requirement": "Import actually authored original World/character/scene score, Japanese-direction songs, stems/masters, dynamic layers and transition cues; connect combat/faction/world state, avoid silent framework-only audio.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0702",
+      "master_checked": false,
+      "master_descriptor": "Gate04 / INTEGRATION",
+      "master_requirement": "Finish both existing combat executors and shared rules for damage, Rank/scale, skill trigger timings, progression, speed/action-value, World Manifestation, character power and learned effects without new unusable passive conditions.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0703",
+      "master_checked": false,
+      "master_descriptor": "Gate04 / CONTENT",
+      "master_requirement": "Add accepted higher-order progression, World Fantasm visuals, ability-specific animations and context-sensitive counterplay; no weakening of approved epithets or synthesized numerical kits.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0704",
+      "master_checked": false,
+      "master_descriptor": "Gate05 / CONTENT",
+      "master_requirement": "Install accepted branching opening/world quests, dialogue, Codex, Chronicle, lore knowledge and protagonist ontology; preserve protected spoilers and all alternative player routes.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0705",
+      "master_checked": false,
+      "master_descriptor": "Gate05 / INTEGRATION",
+      "master_requirement": "Implement persistent quest/event conditions and state graphs linked to time, discovery, NPC survival, relationships, missed events and changed sovereignty.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0706",
+      "master_checked": false,
+      "master_descriptor": "Gate06 / CONTENT",
+      "master_requirement": "Populate the accepted actual first-region faction/civilization ecosystem with native NPCs, distinct material culture, leaders, careers, relations, motives and location-specific inhabitants. The opening ecosystem deck remains **proposed** until director approval.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0707",
+      "master_checked": false,
+      "master_descriptor": "Gate06 / INTEGRATION",
+      "master_requirement": "Give NPCs stable saved identities, memory/knowledge, behavior/schedules/relationships, promotions, deaths, resource/faction consequences and settlements not reduced to background décor.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0708",
+      "master_checked": false,
+      "master_descriptor": "Gate07 / INTEGRATION",
+      "master_requirement": "Fully integrate **all 18 approved** gacha/economy design decisions into EXISTING wallet/inventory/gacha/WorldStore architecture; retain prior actual pity, featured guarantees, true physical item uniqueness and source provenance.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0709",
+      "master_checked": false,
+      "master_descriptor": "Gate07 / CONTENT",
+      "master_requirement": "Install authorized R/SR/SSR/UR/LR/MR/Absolute rarity, eligible source-accepted pools/banners, source-authored schedules/prices/currency/tickets and correctly settled x1/x10 (last R upgraded to genuine SR when the accepted ten-pull rule applies). No fake rewards, fake banner or fabricated currency IDs.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0710",
+      "master_checked": false,
+      "master_descriptor": "Gate07 / INTEGRATION",
+      "master_requirement": "Implement one legitimate offline-earned pull currency, ticket-first/request-id idempotent atomic debit/grant/receipt, real pity/featured state and earned farming through approved gameplay.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0711",
+      "master_checked": false,
+      "master_descriptor": "Gate07 / INTEGRATION",
+      "master_requirement": "Finish original items/materials, anatomy-specific real equipment slots, gear damage/durability/repairs, crafting/invention, consumable/effect definitions, rarity and provenance; inventory has real mass/volume/container/shape limits and unique items stay unique.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0712",
+      "master_checked": false,
+      "master_descriptor": "Gate07 / INTEGRATION",
+      "master_requirement": "Connect faction-specific production/trade/vendors, logistics, supply-demand, provenance-based loot/drop tables and causal economy consequences without generic universal sellers/prices.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0713",
+      "master_checked": false,
+      "master_descriptor": "Gate08 / CONTENT",
+      "master_requirement": "Implement approved seed-compatible encounter ecology, authored bosses and persistent dungeons, hazards, random/conditional events and regional enemy deployment. Opening encounter alternatives remain proposals until approved.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0714",
+      "master_checked": false,
+      "master_descriptor": "Gate08 / INTEGRATION",
+      "master_requirement": "Run encounters against real World state and current party, including optional entry, retreat, diplomacy, stealth, loss/loot, time passage, intervention, cleared/reclaimed dungeon state and dynamic enemy/faction changes.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0715",
+      "master_checked": false,
+      "master_descriptor": "Gate09 / CONTENT",
+      "master_requirement": "Integrate authored effects, weapons/impacts, injury and mature gore, actual voice/expressions, responsive music/SFX, environmental audio, choreography, multi-character and cinematic time-cued effects as real game events.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0716",
+      "master_checked": false,
+      "master_descriptor": "Gate10 / INTEGRATION",
+      "master_requirement": "Preserve the approved native visual grammar and genuine gameplay bindings for World HUD, Opening, Home, Characters/details, Gacha, Territory, Records, rarity and application icon; finish the remaining approved screen work without redesign.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0717",
+      "master_checked": false,
+      "master_descriptor": "Registry / INTEGRATION",
+      "master_requirement": "Connect all eligible accepted source packages, hashes and unique identity/Version/motion/wardrobe records through Gate00's additive Registry v2 intake. Retain original 31 historical Registry records and true ownership; no Gate11 manual queue.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0718",
+      "master_checked": false,
+      "master_descriptor": "Gate12 / INTEGRATION",
+      "master_requirement": "Complete save/resume, time/World persistence, sovereignty/strategy, domains, quests, encounters, equipment, character state, recovery, offline package hosting and source hash integrity in actual use, leveraging existing code.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0719",
+      "master_checked": false,
+      "master_descriptor": "Director ownership",
+      "master_requirement": "Treat approved proposals as frozen only when actually approved. Future unapproved NPC ecosystems, encounter decks, new characters, Versions and exact missing kit payloads are **content dependencies**, not invitations for Gate12 to invent canon.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0801",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Compare native **Opening** against selected Concept04 direction, proper portrait composition, native buttons and existing safe-load/recovery flow; approved cinematic instead of static placeholder.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0802",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Make **Ruler Home** full-height visually premium, character/world-led and context-true, with working World entry and actual meaningful state; no duplicated navigation.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0803",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Make **Characters/Detail** real full-height, exactly three tall owned cards per roster row where applicable, accurate full-body approved 2D or live 3D, wardrobe and Version truth. No chips, fake cards or rejected source image.",
+      "state": "SOURCE_PARTIAL",
+      "source_paths": [
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/01_BASE.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/02_ALTER.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/03_AWAKENED.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/04_BERSERKER.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/05_GRAND_CONVERGENCE.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/APPROVED_FIVE_FORMS_MANIFEST.json",
+        "Source/OfflineGame/Private/UI/OGGate12CharacterVisualCatalog.cpp",
+        "Source/OfflineGame/OfflineGame.Build.cs",
+        "Config/DefaultGame.ini",
+        "Scripts/production/verify_gate01_luminous_art.py"
+      ],
+      "proof": "Five original accepted 2026-10-20 PNGs recovered intact (SHA-256 checked), source-bound to their five canonical Version IDs, offline packaging configured. Android native/render not verified.",
+      "remaining": [
+        "Finish native compilation and execute Android packaging and source file lookup",
+        "Verify all five accepted 2D artworks in actual owned roster and character details on device",
+        "Complete genuine approved live 3D meshes, full playable interactions and UI acceptance"
+      ],
+      "source_commit": "4a6c0e6b24d31e52e6370f8fb6f9e2183cf05f02"
+    },
+    {
+      "id": "G12-0804",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Preserve **already approved Gacha appearance**; wire true pool display, costs, pity, x1/x10, receipts, owned independent Manifestations and animated results when approved assets exist.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0805",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Make **Territory** an actual geographic atlas of discovered and governed lands, not a coordinate-only panel; real zoom/pan, claims, structures and reports.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0806",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Make **Records** genuinely useful Chronicle/knowledge/intelligence/reports with conditional hidden information and persistent progression.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0807",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Finish **World HUD** targeting, commands, camera, traversals, combat, interaction and contextual state in true landscape with approved visual grammar, not orange diagnostic pawn.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0808",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Render accepted tier insignia, distinctive fine angular rarity metals R→Absolute, original application icon, typography, 2D artwork/cinematic/animations and all correct symbols/scale.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0809",
+      "master_checked": false,
+      "master_descriptor": "DEVICE",
+      "master_requirement": "Verify **Ruler and Opening portrait / World landscape**, safe areas, legible text, touch/gesture/camera, orientation change and state recovery on the real target Android device.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0901",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "New and existing Ruler safely open legitimate saved/empty World, choose a real character only when owned, move and explore freely, interact with actual entities and return to Ruler/World with state intact.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0902",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Discover/acquire actual items/skills/characters from authorized systems, equip/upgrade, perform quests/encounters and see persistent narrative/faction/market/world consequences.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0903",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Enter a real rendered optional combat, select target/actions, experience correct character-specific animations/Ultimate/Fantasm, exit win/lose/retreat and preserve consequences across save/reload.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0904",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Start/stop real multi-character and mature World interactions with correctly rendered participants and persistent physical/world changes; Privacy only changes visible representation.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0905",
+      "master_checked": false,
+      "master_descriptor": "INTEGRATION",
+      "master_requirement": "Move between zones, settlements, water/air, inside/outside and quest/encounter/dungeon sessions without losing world time, entity IDs, equipment, ongoing faction changes or player agency.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0906",
+      "master_checked": false,
+      "master_descriptor": "VISUAL",
+      "master_requirement": "Perform actual PC demonstration of normal play (not a debug fixture): Opening→Ruler→World→authentic traversal→NPC/item/quest→visible optional battle→reward/aftermath→save/cold resume→World continuity. Repeat representative mature and content-specific routes.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-0907",
+      "master_checked": false,
+      "master_descriptor": "DEVICE",
+      "master_requirement": "Repeat core journey on actual Android hardware, including real touch, native animation, audio, rendering, UI, slow hardware response and persistence.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1001",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Perform actual final artistic comparison for every character/Version/wardrobe, First World anchor/region, combat VFX/animation, UI, choreography and cinematic, correcting failures rather than changing specifications.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1002",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Verify Android/Windows builds package ALL runtime-referenced accepted clips, meshes, JSON source authority, fonts, maps, encounters, music, audio, UI and world-source metadata. QA-only assets must not become production entitlement.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1003",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Produce identifiable native Win64 game and correctly signed isolated/current Android APK/AAB as required, with reproducible commit/source hash, build output and proper app icon/orientation; preserve existing installed packages and saves.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1004",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Test install/update/migrate/recover/rollback, WAL snapshot and SQLite schema version, duplicate identities, save integrity, corrupt/missing record recovery, privacy changes and interrupted game launch.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1005",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Test simultaneous actor memory/animation/scene counts (including specified **13 visibly animated participants**), Android thermal/FPS/loading/streaming, collision, heavy World population and combat VFX performance with measured evidence.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1006",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Validate native input, gestures, touch capture/release, device safe areas, landscape/portrait transitions, alternative controls, gameplay camera obstruction, volume and full physical interaction.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1007",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Validate offline operation without server assumptions, content integrity and package inclusion, persistent time/NPC/faction/dungeon behavior, actual encounter causality, repeatability and no forced route or blanket scaling.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1008",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Protect/save user files, frozen Foundation, Registry, approved UI, original Koikatsu/Blender sources, protected Git history and separate production branches; no force-push, accidental replacement, unauthorized migration or destructive workspace cleanup.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1009",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Capture exact native gameplay screenshots/video, reproducible full-journey receipts, build/hash/version metadata, real-art comparisons and outstanding objective limitations; QA reports are evidence only, not product substitution.",
+      "state": "OPEN"
+    },
+    {
+      "id": "G12-1010",
+      "master_checked": false,
+      "master_descriptor": "",
+      "master_requirement": "Mark the game finished **only after every commissioned feature, approved source and quality/visual/device gate is actually closed**. No category may be marked DONE from a folder, imported registration, test scaffold or successful code compilation.",
+      "state": "OPEN"
+    }
+  ]
+}

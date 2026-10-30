@@ -1,5 +1,6 @@
-#include "World/OGWorldSimulationReceiver.h"
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "World/OGWorldSimulationReceiver.h"
+
 #include "Combat/OGNativeCombatPassive.h"
 #include "Combat/OGCombatVitalityService.h"
 #include "Combat/OGCombatResourceDefinition.h"
