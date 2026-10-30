@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Core/OGEntityId.h"
+#include "Persistence/OGWorldStore.h"
 #include "Components/ActorComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "OGSystemBindingComponent.generated.h"
@@ -80,13 +81,26 @@ protected:
 private:
     UPROPERTY(Transient) TArray<TObjectPtr<UOGDefinitionReceiverComponent>> ActiveReceivers;
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
-    FDelegateHandle LibraryHandle;
+    friend struct FOGSystemBindingEventTestAccess;
+    FDelegateHandle LibraryHandle,EntityFeedHandle;
+    TSharedPtr<FOGWorldStoreCommittedEvents> CanonicalEntityFeed;
+    FOGEntityId ObservedEntity;
+    FName BoundEntityKind;
+    bool bAutoRefreshEnabled=false;
+    bool bRefreshRequested=false;
+    uint64 BindingGeneration=0;
     FOGContentId BoundProfile;
     int64 BoundLibraryRevision=-1;
     bool bBinding=false;
     bool bAwaitingCanonicalRuntime=false;
     bool bHoldingWorldBody=false;
     bool bWorldBodyHidden=false, bWorldBodyCollision=false;
+    void QueueRefresh();
+    void ObserveCanonicalEntity(UOGGameCoreSubsystem& Core,const FOGEntityId& Entity);
+    void StopCanonicalObservation();
+    void HandleEntityCommitted(const TArray<FOGWorldEvent>& Events);
+    void ReleaseActiveReceivers();
+    void RetainWorldBodyFlags();
     void RestoreWorldBodyFlags();
     void HandleCanonicalRuntimeReleasing();
     void HandleLibraryChanged(int64 Revision);
