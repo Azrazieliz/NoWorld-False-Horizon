@@ -156,7 +156,7 @@ private:
     bool ValidateControlledPawn(FString&, AController* DepartingController = nullptr) const;
     bool SaveControlledCheckpoint(AController* DepartingController, FString&);
     UFUNCTION()
-    void HandleControllerChanged(APawn*, AController* OldController, AController* NewController);
+    void HandleControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
     bool HasControlledPreemption() const;
     void InvalidateControlledPresence();
     void HandleControlledBoundary();
