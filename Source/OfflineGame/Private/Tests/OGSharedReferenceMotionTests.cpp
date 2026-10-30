@@ -7,7 +7,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedReferenceSamplingTest,
     "OfflineGame.Animation.SharedReference.IndependentRigSampling",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGSharedReferenceSamplingTest::RunTest(const FString& Parameters)
 {
     FOGReferenceMotionClip Clip; Clip.Rate=2; Clip.Duration=1; Clip.Frames=3;
@@ -34,7 +34,7 @@ bool FOGSharedReferenceSamplingTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedReferenceCodecTest,
     "OfflineGame.Animation.SharedReference.IntegrityAndSourceIdentity",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGSharedReferenceCodecTest::RunTest(const FString& Parameters)
 {
     const FString Json=TEXT("{\"schema\":\"noworld.shared_reference_motion.v1\",\"id\":\"test.source\",\"calibration_basis\":\"koikatsu.native_original.reference_delta.v1\",\"rate\":30,\"duration\":0,\"frames\":1,\"tracks\":[{\"bone\":\"source_root\",\"calibration_bone\":\"native_root\",\"aliases\":[\"native_root\"],\"rotations\":[[0,0,0,1]]}]}");
@@ -60,7 +60,7 @@ bool FOGSharedReferenceCodecTest::RunTest(const FString& Parameters)
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGSharedReferenceRigTest,
     "OfflineGame.Animation.SharedReference.CalibratedReferenceBasis",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGSharedReferenceRigTest::RunTest(const FString& Parameters)
 {
     USkeletalMesh* Mesh=NewObject<USkeletalMesh>();
