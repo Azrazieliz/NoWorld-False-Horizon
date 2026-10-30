@@ -84,15 +84,64 @@ UOGSystemBindingComponent::UOGSystemBindingComponent()
     PrimaryComponentTick.bStartWithTickEnabled=false;
     PrimaryComponentTick.TickInterval=1.f;
 }
+void UOGSystemBindingComponent::QueueRefresh()
+{
+    if (!bAutoRefreshEnabled || !CanonicalEntityId.IsValid()) return;
+    bRefreshRequested=true; SetComponentTickInterval(0.f); SetComponentTickEnabled(true);
+}
+void UOGSystemBindingComponent::ObserveCanonicalEntity(UOGGameCoreSubsystem& Core,const FOGEntityId& Entity)
+{
+    if (BoundCore.Get()==&Core && ObservedEntity==Entity && CanonicalEntityFeed) return;
+    StopCanonicalObservation(); BoundCore=&Core; ObservedEntity=Entity;
+    CanonicalEntityFeed=Core.GetEntityEventFeed(Entity);
+    if (CanonicalEntityFeed)
+        EntityFeedHandle=CanonicalEntityFeed->AddUObject(this,&ThisClass::HandleEntityCommitted);
+    Core.OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::HandleCanonicalRuntimeReleasing);
+}
+void UOGSystemBindingComponent::StopCanonicalObservation()
+{
+    if (CanonicalEntityFeed) CanonicalEntityFeed->Remove(EntityFeedHandle);
+    CanonicalEntityFeed.Reset(); EntityFeedHandle.Reset(); ObservedEntity=FOGEntityId();
+    if (BoundCore.IsValid()) BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    BoundCore.Reset();
+}
+void UOGSystemBindingComponent::HandleEntityCommitted(const TArray<FOGWorldEvent>& Events)
+{
+    if (Events.IsEmpty()) return;
+    // Do not replace components during commit/delegate dispatch. Coalesce and re-read next frame.
+    if (bBinding) ++BindingGeneration;
+    QueueRefresh();
+}
+void UOGSystemBindingComponent::ReleaseActiveReceivers()
+{
+    auto Released=MoveTemp(ActiveReceivers); ActiveReceivers.Reset();
+    BoundProfile=FOGContentId(); BoundLibraryRevision=-1; BoundEntityKind=NAME_None;
+    for (int32 I=Released.Num()-1;I>=0;--I) DestroyReceiver(Released[I]);
+}
+void UOGSystemBindingComponent::RetainWorldBodyFlags()
+{
+    for (auto* Receiver:ActiveReceivers)
+        if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver))
+        {
+            if (Body->GetOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision)) bHoldingWorldBody=true;
+            Body->HoldSuppressedOnRelease();
+        }
+}
 void UOGSystemBindingComponent::TickComponent(float Delta,ELevelTick Type,FActorComponentTickFunction* Function)
 {
     Super::TickComponent(Delta,Type,Function);
-    if (!bAwaitingCanonicalRuntime || !CanonicalEntityId.IsValid()) { SetComponentTickEnabled(false); return; }
+    if (!bAutoRefreshEnabled || !CanonicalEntityId.IsValid() || (!bAwaitingCanonicalRuntime && !bRefreshRequested))
+    { SetComponentTickEnabled(false); return; }
     auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
     auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
     auto* Store=Core?Core->GetWorldStore():nullptr;
-    if (!Core || !Core->IsCoreReady() || Core->GetCanonicalWorldTick()<0 || !Store || !Store->IsOpen()) return;
+    if (!Core || !Core->IsCoreReady() || Core->GetCanonicalWorldTick()<0 || !Store || !Store->IsOpen())
+    { bAwaitingCanonicalRuntime=true; SetComponentTickInterval(1.f); return; }
+    if (Store->IsWriteTransactionActive()) return;
+    bRefreshRequested=false; bAwaitingCanonicalRuntime=false;
     FString Error; if (!RefreshBinding(Error)) Status=Error;
+    SetComponentTickInterval(bRefreshRequested?0.f:1.f);
+    SetComponentTickEnabled(bAwaitingCanonicalRuntime || bRefreshRequested);
 }
 void UOGSystemBindingComponent::RestoreWorldBodyFlags()
 {
@@ -103,17 +152,12 @@ void UOGSystemBindingComponent::RestoreWorldBodyFlags()
 }
 void UOGSystemBindingComponent::HandleCanonicalRuntimeReleasing()
 {
-    for (auto* Receiver:ActiveReceivers)
-        if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver))
-        {
-            if (Body->GetOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision)) bHoldingWorldBody=true;
-            Body->HoldSuppressedOnRelease();
-        }
-    ReleaseBinding();
+    if (!bAutoRefreshEnabled) return;
+    ++BindingGeneration; RetainWorldBodyFlags(); ReleaseActiveReceivers(); StopCanonicalObservation();
     if (bHoldingWorldBody && GetOwner())
     { GetOwner()->SetActorHiddenInGame(true); GetOwner()->SetActorEnableCollision(false); }
-    bAwaitingCanonicalRuntime=CanonicalEntityId.IsValid();
-    SetComponentTickEnabled(bAwaitingCanonicalRuntime);
+    bAwaitingCanonicalRuntime=CanonicalEntityId.IsValid(); bRefreshRequested=false;
+    SetComponentTickInterval(1.f); SetComponentTickEnabled(bAwaitingCanonicalRuntime);
 }
 void UOGSystemBindingComponent::BeginPlay()
 {
@@ -122,13 +166,14 @@ void UOGSystemBindingComponent::BeginPlay()
         LibraryHandle=Library->OnDefinitionsChanged.AddUObject(this,&ThisClass::HandleLibraryChanged);
     if (CanonicalEntityId.IsValid())
     {
+        bAutoRefreshEnabled=true;
         FString Error;
         if (!RefreshBinding(Error))
-        { Status=Error; bAwaitingCanonicalRuntime=true; SetComponentTickEnabled(true); }
+        { Status=Error; bAwaitingCanonicalRuntime=bAwaitingCanonicalRuntime || !BoundCore.IsValid(); SetComponentTickEnabled(bAwaitingCanonicalRuntime || bRefreshRequested); }
     }
 }
 void UOGSystemBindingComponent::HandleLibraryChanged(int64)
-{ if (CanonicalEntityId.IsValid() && !bBinding) { FString Error; if (!RefreshBinding(Error)) Status=Error; } }
+{ if (bBinding) ++BindingGeneration; QueueRefresh(); }
 bool UOGSystemBindingComponent::RefreshBinding(FString& Error)
 { return BindCanonicalEntity(CanonicalEntityId,Error); }
 bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FString& Error)
@@ -137,34 +182,50 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
     if (!IsInGameThread() || bBinding || !GetOwner() || !GetOwner()->GetRootComponent() || !Entity.IsValid())
         return FailBinding(Error,TEXT("Bind an existing canonical entity on a rooted actor without reentry."));
     TGuardValue<bool> Binding(bBinding,true);
+    bAutoRefreshEnabled=true; const uint64 Attempt=++BindingGeneration;
     auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
     auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
     auto* Store=Core?Core->GetWorldStore():nullptr;
     if (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen())
         return FailBinding(Error,TEXT("Canonical World state is unavailable."));
+    if (Store->IsWriteTransactionActive())
+        return FailBinding(Error,TEXT("Bind only committed canonical state, outside a write transaction."));
+    if (CanonicalEntityId==Entity) ObserveCanonicalEntity(*Core,Entity);
     bool Found=false; FString State; FOGDefinitionBindingContext Context; Context.EntityId=Entity;
     if (!Store->TryReadEntity(Entity,Found,Context.EntityKind,State,Context.EntityRevision,Error)) return false;
     TSharedPtr<FJsonObject> Json;
     if (!Found || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(State),Json) ||
         !Json || Json->HasField(TEXT("diagnosticFixture")))
     {
-        if (CanonicalEntityId==Entity) ReleaseBinding();
+        if (CanonicalEntityId==Entity) { RetainWorldBodyFlags(); ReleaseActiveReceivers(); }
+        if (bHoldingWorldBody) { GetOwner()->SetActorHiddenInGame(true); GetOwner()->SetActorEnableCollision(false); }
         return FailBinding(Error,TEXT("Definition bindings require an actual non-diagnostic canonical entity."));
     }
+    if (!CanonicalEntityId.IsValid() || CanonicalEntityId==Entity)
+    { CanonicalEntityId=Entity; ObserveCanonicalEntity(*Core,Entity); }
     FString ProfileText;
     if (Json->HasField(TEXT("system_binding_id")) && !Json->TryGetStringField(TEXT("system_binding_id"),ProfileText))
+    {
+        if (CanonicalEntityId==Entity) { RetainWorldBodyFlags(); ReleaseActiveReceivers(); }
         return FailBinding(Error,TEXT("Canonical system_binding_id must be an exact content ID string."));
+    }
     // An existing entity may legitimately have no optional subsystem composition.
     if (ProfileText.IsEmpty())
     {
-        ReleaseBinding(); RestoreWorldBodyFlags(); CanonicalEntityId=Entity; Status.Reset(); return true;
+        ReleaseActiveReceivers(); RestoreWorldBodyFlags(); CanonicalEntityId=Entity;
+        ObserveCanonicalEntity(*Core,Entity); bAwaitingCanonicalRuntime=false; Status.Reset(); return true;
     }
     const FOGContentId ProfileId(ProfileText);
     auto* Library=UOGDefinitionLibrary::Get();
     TStrongObjectPtr<UOGSystemBindingDefinition> Profile(Library?Cast<UOGSystemBindingDefinition>(Library->Resolve(TEXT("binding"),ProfileId)):nullptr);
     if (!ProfileId.IsValid() || !Profile.IsValid() || !Profile->ValidateDefinition(Error))
-    { if (Error.IsEmpty()) Error=TEXT("Canonical binding profile is not installed."); return false; }
-    if (CanonicalEntityId==Entity && BoundProfile==ProfileId && BoundLibraryRevision==Library->GetRevision()) return true;
+    {
+        if (CanonicalEntityId==Entity && (BoundProfile!=ProfileId || BoundEntityKind!=Context.EntityKind))
+        { RetainWorldBodyFlags(); ReleaseActiveReceivers(); }
+        if (Error.IsEmpty()) Error=TEXT("Canonical binding profile is not installed."); return false;
+    }
+    if (CanonicalEntityId==Entity && BoundCore.Get()==Core && BoundEntityKind==Context.EntityKind &&
+        BoundProfile==ProfileId && BoundLibraryRevision==Library->GetRevision()) return true;
     TArray<TStrongObjectPtr<UOGDefinitionReceiverComponent>> Staged;
     for (const auto& B:Profile->Bindings)
     {
@@ -173,43 +234,71 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
         if (Receiver.IsValid()) { Receiver->BoundDefinition=Definition; Receiver->BoundContext=Context; }
         if (!Receiver.IsValid() || !Definition || !Receiver->PrepareDefinition(Definition,Context,Error))
         {
+            const bool WaitNative=Receiver.IsValid() && Receiver->IsWaitingForNativePrerequisites();
             if (Receiver.IsValid()) Receiver->ReleaseDefinition();
             for (auto& Pending:Staged) Pending->ReleaseDefinition();
+            if (CanonicalEntityId==Entity && (BoundProfile!=ProfileId || BoundEntityKind!=Context.EntityKind))
+            { RetainWorldBodyFlags(); ReleaseActiveReceivers(); }
+            if (WaitNative && bAutoRefreshEnabled)
+            { bAwaitingCanonicalRuntime=true; SetComponentTickInterval(1.f); SetComponentTickEnabled(true); }
             return false;
         }
         Staged.Add(MoveTemp(Receiver));
     }
+    // Committed changes or explicit release during preparation invalidate this whole staged attempt.
+    if (Attempt!=BindingGeneration || !bAutoRefreshEnabled || Core->GetWorldStore()!=Store || !Core->IsCoreReady())
+    {
+        for (auto& Pending:Staged) Pending->ReleaseDefinition();
+        return FailBinding(Error,TEXT("Canonical binding changed during preparation; staged receivers were released."));
+    }
+    bool CurrentFound=false; FName CurrentKind; FString CurrentState; int64 CurrentRevision=0;
+    if (!Store->TryReadEntity(Entity,CurrentFound,CurrentKind,CurrentState,CurrentRevision,Error) ||
+        !CurrentFound || CurrentKind!=Context.EntityKind || CurrentState!=State || CurrentRevision!=Context.EntityRevision)
+    {
+        for (auto& Pending:Staged) Pending->ReleaseDefinition(); QueueRefresh();
+        if (Error.IsEmpty()) Error=TEXT("Canonical entity changed during preparation; review the current profile.");
+        return false;
+    }
     // No active receiver is touched until every replacement can be installed.
-    ReleaseBinding();
+    RetainWorldBodyFlags(); ReleaseActiveReceivers();
+    if (Attempt!=BindingGeneration || !bAutoRefreshEnabled || Core->GetWorldStore()!=Store || !Core->IsCoreReady())
+    {
+        for (auto& Pending:Staged) Pending->ReleaseDefinition();
+        return FailBinding(Error,TEXT("Canonical binding changed during release; installation was deferred."));
+    }
     UOGWorldSimulationReceiver* NextBody=nullptr;
     for (const auto& Receiver:Staged)
         if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver.Get())) NextBody=Body;
     if (bHoldingWorldBody && NextBody)
         NextBody->AdoptOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision);
     else RestoreWorldBodyFlags();
-    CanonicalEntityId=Entity; BoundProfile=ProfileId; BoundLibraryRevision=Library->GetRevision();
-    for (auto& Receiver:Staged)
+    CanonicalEntityId=Entity; BoundProfile=ProfileId; BoundEntityKind=Context.EntityKind; BoundLibraryRevision=Library->GetRevision();
+    for (int32 I=0;I<Staged.Num();++I)
     {
-        auto* Component=Receiver.Get(); ActiveReceivers.Add(Component);
+        auto* Component=Staged[I].Get(); ActiveReceivers.Add(Component);
         GetOwner()->AddInstanceComponent(Component); Component->RegisterComponent(); Component->ActivateDefinition();
+        if (Attempt!=BindingGeneration || !bAutoRefreshEnabled || Core->GetWorldStore()!=Store || !Core->IsCoreReady())
+        {
+            RetainWorldBodyFlags(); ReleaseActiveReceivers();
+            for (int32 Pending=I+1;Pending<Staged.Num();++Pending) Staged[Pending]->ReleaseDefinition();
+            return FailBinding(Error,TEXT("Canonical binding changed during activation; no obsolete receiver remains active."));
+        }
     }
     if (NextBody && !NextBody->IsBodyActive())
     {
-        ReleaseBinding(); bAwaitingCanonicalRuntime=true; SetComponentTickEnabled(true);
+        RetainWorldBodyFlags(); ReleaseActiveReceivers(); ObserveCanonicalEntity(*Core,Entity);
+        bAwaitingCanonicalRuntime=true; SetComponentTickEnabled(true);
         return FailBinding(Error,TEXT("Canonical World body activation did not acquire its physical claim."));
     }
     if (NextBody) bHoldingWorldBody=false; // The receiver retains flags until canonical rehydration succeeds.
-    BoundCore=Core;
-    Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::HandleCanonicalRuntimeReleasing);
-    Status.Reset(); return true;
+    ObserveCanonicalEntity(*Core,Entity); bAwaitingCanonicalRuntime=false;
+    SetComponentTickEnabled(bRefreshRequested); Status.Reset(); return true;
 }
 void UOGSystemBindingComponent::ReleaseBinding()
 {
+    ++BindingGeneration; bAutoRefreshEnabled=false; bRefreshRequested=false;
     bAwaitingCanonicalRuntime=false; SetComponentTickEnabled(false);
-    if (BoundCore.IsValid()) BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
-    BoundCore.Reset();
-    for (int32 I=ActiveReceivers.Num()-1;I>=0;--I) DestroyReceiver(ActiveReceivers[I]);
-    ActiveReceivers.Reset(); BoundProfile=FOGContentId(); BoundLibraryRevision=-1;
+    StopCanonicalObservation(); ReleaseActiveReceivers();
 }
 void UOGSystemBindingComponent::EndPlay(const EEndPlayReason::Type Reason)
 {

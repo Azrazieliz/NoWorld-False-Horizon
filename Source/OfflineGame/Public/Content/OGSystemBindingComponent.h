@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Core/OGEntityId.h"
+#include "Persistence/OGWorldStore.h"
 #include "Components/ActorComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "OGSystemBindingComponent.generated.h"
@@ -33,6 +34,8 @@ public:
     UFUNCTION(BlueprintNativeEvent,Category="Definitions")
     bool PrepareDefinition(UDataAsset* Definition,const FOGDefinitionBindingContext& Context,FString& Error);
     virtual bool PrepareDefinition_Implementation(UDataAsset*,const FOGDefinitionBindingContext&,FString& Error);
+    /** Physical streaming/possession may become ready without a canonical or definition event. */
+    virtual bool IsWaitingForNativePrerequisites() const { return false; }
     /** Called only after every receiver has prepared. No failure or canonical writes in this phase. */
     UFUNCTION(BlueprintNativeEvent,Category="Definitions") void ActivateDefinition();
     virtual void ActivateDefinition_Implementation() {}
@@ -80,13 +83,26 @@ protected:
 private:
     UPROPERTY(Transient) TArray<TObjectPtr<UOGDefinitionReceiverComponent>> ActiveReceivers;
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
-    FDelegateHandle LibraryHandle;
+    friend struct FOGSystemBindingEventTestAccess;
+    FDelegateHandle LibraryHandle,EntityFeedHandle;
+    TSharedPtr<FOGWorldStoreCommittedEvents> CanonicalEntityFeed;
+    FOGEntityId ObservedEntity;
+    FName BoundEntityKind;
+    bool bAutoRefreshEnabled=false;
+    bool bRefreshRequested=false;
+    uint64 BindingGeneration=0;
     FOGContentId BoundProfile;
     int64 BoundLibraryRevision=-1;
     bool bBinding=false;
     bool bAwaitingCanonicalRuntime=false;
     bool bHoldingWorldBody=false;
     bool bWorldBodyHidden=false, bWorldBodyCollision=false;
+    void QueueRefresh();
+    void ObserveCanonicalEntity(UOGGameCoreSubsystem& Core,const FOGEntityId& Entity);
+    void StopCanonicalObservation();
+    void HandleEntityCommitted(const TArray<FOGWorldEvent>& Events);
+    void ReleaseActiveReceivers();
+    void RetainWorldBodyFlags();
     void RestoreWorldBodyFlags();
     void HandleCanonicalRuntimeReleasing();
     void HandleLibraryChanged(int64 Revision);
