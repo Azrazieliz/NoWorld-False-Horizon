@@ -104,8 +104,11 @@ void UOGSystemBindingComponent::RestoreWorldBodyFlags()
 void UOGSystemBindingComponent::HandleCanonicalRuntimeReleasing()
 {
     for (auto* Receiver:ActiveReceivers)
-        if (const auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver))
+        if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver))
+        {
             if (Body->GetOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision)) bHoldingWorldBody=true;
+            Body->HoldSuppressedOnRelease();
+        }
     ReleaseBinding();
     if (bHoldingWorldBody && GetOwner())
     { GetOwner()->SetActorHiddenInGame(true); GetOwner()->SetActorEnableCollision(false); }
@@ -178,13 +181,24 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
     }
     // No active receiver is touched until every replacement can be installed.
     ReleaseBinding();
-    RestoreWorldBodyFlags();
+    UOGWorldSimulationReceiver* NextBody=nullptr;
+    for (const auto& Receiver:Staged)
+        if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver.Get())) NextBody=Body;
+    if (bHoldingWorldBody && NextBody)
+        NextBody->AdoptOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision);
+    else RestoreWorldBodyFlags();
     CanonicalEntityId=Entity; BoundProfile=ProfileId; BoundLibraryRevision=Library->GetRevision();
     for (auto& Receiver:Staged)
     {
         auto* Component=Receiver.Get(); ActiveReceivers.Add(Component);
         GetOwner()->AddInstanceComponent(Component); Component->RegisterComponent(); Component->ActivateDefinition();
     }
+    if (NextBody && !NextBody->IsBodyActive())
+    {
+        ReleaseBinding(); bAwaitingCanonicalRuntime=true; SetComponentTickEnabled(true);
+        return FailBinding(Error,TEXT("Canonical World body activation did not acquire its physical claim."));
+    }
+    if (NextBody) bHoldingWorldBody=false; // The receiver retains flags until canonical rehydration succeeds.
     BoundCore=Core;
     Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::HandleCanonicalRuntimeReleasing);
     Status.Reset(); return true;

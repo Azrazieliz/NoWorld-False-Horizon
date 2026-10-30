@@ -75,6 +75,11 @@ public:
     /** Binding host retains only these actor flags while canonical state is unavailable. */
     bool GetOriginalBodyFlags(bool& Hidden, bool& Collision) const
     { Hidden = bOriginalHidden; Collision = bOriginalCollision; return bCapturedBodyFlags; }
+    /** Transfer retained flags without revealing an unrehydrated body. */
+    void AdoptOriginalBodyFlags(bool Hidden,bool Collision)
+    { if (!bActive) { bOriginalHidden=Hidden; bOriginalCollision=Collision; bCapturedBodyFlags=true; } }
+    void HoldSuppressedOnRelease() { bSuppressOnRelease=true; }
+    bool IsBodyActive() const { return bActive; }
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly) FString Status;
 protected:
     virtual void TickComponent(float, ELevelTick, FActorComponentTickFunction*) override;
@@ -90,7 +95,12 @@ private:
     FOGEntityId ObservedSchedule;
     FOGFoundationWorldBodyState Accepted;
     uint32 MoveRequestId = 0;
+    uint32 CompletedMoveRequestId = 0;
     int64 LastCheckpointTick = -1;
+    friend struct FOGWorldSimulationBodyTestAccess;
+    bool bRestoreRequired = true;
+    bool bSuppressOnRelease = false;
+    static bool OwnsCheckpointRequest(uint32 Request,bool Arrival,uint32 Completed,uint32 Current,bool CurrentValid,bool Idle);
     bool bActive = false;
     bool bHasAccepted = false;
     bool bArrivalPending = false;

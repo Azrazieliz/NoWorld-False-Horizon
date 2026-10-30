@@ -110,10 +110,11 @@ void UOGWorldSimulationReceiver::ActivateDefinition_Implementation()
     auto* Registry = GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>();
     if (!Registry || !Registry->Claim(BoundContext.EntityId, this))
     { Status = TEXT("Canonical body claim was superseded during binding."); return; }
-    bOriginalHidden = GetOwner()->IsHidden(); bOriginalCollision = GetOwner()->GetActorEnableCollision();
-    bCapturedBodyFlags = true;
+    if (!bCapturedBodyFlags)
+    { bOriginalHidden = GetOwner()->IsHidden(); bOriginalCollision = GetOwner()->GetActorEnableCollision(); }
+    bCapturedBodyFlags = true; bRestoreRequired = true; bSuppressOnRelease = false;
     bActive = true; bHasAccepted = false;
-    SetBodySuppressed(Accepted.bAbsent);
+    SetBodySuppressed(true);
     ReleaseHandle = BoundCore->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::HandleRuntimeReleasing);
     EntityFeed = BoundCore->GetEntityEventFeed(BoundContext.EntityId);
     if (EntityFeed) EntityHandle = EntityFeed->AddUObject(this, &ThisClass::HandleCommitted);
@@ -163,14 +164,21 @@ void UOGWorldSimulationReceiver::HandleCommitted(const TArray<FOGWorldEvent>&)
 }
 void UOGWorldSimulationReceiver::HandleMoveCompleted(FAIRequestID RequestId, const FPathFollowingResult& Result)
 {
-    if (!bActive || !MoveRequestId || static_cast<uint32>(RequestId) != MoveRequestId) return;
+    if (!bActive) return;
+    if (!MoveRequestId || static_cast<uint32>(RequestId) != MoveRequestId)
+    {
+        // A later owner may finish before our refresh/release callback runs.
+        if (bArrivalPending) { bArrivalPending=false; CompletedMoveRequestId=0; bRestoreRequired=true; }
+        return;
+    }
+    CompletedMoveRequestId = static_cast<uint32>(RequestId);
     MoveRequestId = 0; bArrivalPending = Result.IsSuccess();
     if (!bArrivalPending) Status = TEXT("Native path failed or was interrupted; canonical schedule remains active.");
     SetComponentTickInterval(0.f);
 }
 void UOGWorldSimulationReceiver::StopOwnedMove()
 {
-    const uint32 Request = MoveRequestId; MoveRequestId = 0; bArrivalPending = false;
+    const uint32 Request = MoveRequestId; MoveRequestId = 0; CompletedMoveRequestId = 0; bArrivalPending = false;
     if (auto* AI = MoveController.Get())
     {
         auto* Path = AI->GetPathFollowingComponent();
@@ -179,13 +187,19 @@ void UOGWorldSimulationReceiver::StopOwnedMove()
     }
     MoveController.Reset();
 }
+bool UOGWorldSimulationReceiver::OwnsCheckpointRequest(uint32 Request,bool Arrival,uint32 Completed,
+    uint32 Current,bool CurrentValid,bool Idle)
+{
+    if (Request) return CurrentValid && Current==Request;
+    return Arrival && Idle && (!CurrentValid || (Completed && Current==Completed));
+}
 bool UOGWorldSimulationReceiver::SavePhysicalCheckpoint(bool Arrived, FString& Error)
 {
     auto* Core = BoundCore.Get(); auto* Store = Core ? Core->GetWorldStore() : nullptr;
     auto* Pawn = Cast<APawn>(GetOwner()); auto* Frame = LocationFrame.Get();
     auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
     if (!bActive || !bHasAccepted || !Prepared || !Core || CurrentCore(this) != Core ||
-        !Core->IsCoreReady() || !Store || !Store->IsOpen() || !Pawn || Pawn->IsPlayerControlled() ||
+        Core->GetCanonicalWorldTick()<0 || !Store || !Store->IsOpen() || !Pawn || Pawn->IsPlayerControlled() ||
         MoveController.Get() != Pawn->GetController() ||
         HasExistingBodyActivity(Pawn, Core, BoundContext.EntityId) ||
         !Frame || !Frame->IsRegistered() || !Frame->GetComponentTransform().IsValid() ||
@@ -195,8 +209,10 @@ bool UOGWorldSimulationReceiver::SavePhysicalCheckpoint(bool Arrived, FString& E
         return FailBody(Error, TEXT("Current canonical lifetime, body claim or Location frame is unavailable."));
     const auto* AI = MoveController.Get();
     const auto* Path = AI ? AI->GetPathFollowingComponent() : nullptr;
-    if (!AI || !Path || (MoveRequestId && static_cast<uint32>(Path->GetCurrentRequestId()) != MoveRequestId))
-        return FailBody(Error, TEXT("A superseded native movement request cannot checkpoint this body."));
+    if (!AI || !Path || !OwnsCheckpointRequest(MoveRequestId,bArrivalPending,CompletedMoveRequestId,
+        static_cast<uint32>(Path->GetCurrentRequestId()),Path->GetCurrentRequestId().IsValid(),
+        Path->GetStatus()==EPathFollowingStatus::Idle))
+    { bRestoreRequired=true; return FailBody(Error, TEXT("A superseded native movement request cannot checkpoint this body.")); }
     const int64 Tick = Core->GetCanonicalWorldTick();
     bool Changed = false; FOGFoundationWorldSimulationRuntime Runtime(*Store);
     if (!Runtime.Checkpoint(*Prepared, Accepted,
@@ -220,12 +236,13 @@ void UOGWorldSimulationReceiver::Refresh()
         !FindLocationFrame(Current.Presence.LocationId, Error))
     { StopOwnedMove(); SetBodySuppressed(true); bHasAccepted = false; Status = Error; return; }
     WatchSchedule(Current.bHasSchedule ? Current.Schedule.ScheduleId : FOGEntityId());
-    const bool Restore = !bHasAccepted || !SamePosition(Accepted.Presence, Current.Presence) ||
+    const bool Restore = bRestoreRequired || !bHasAccepted || !SamePosition(Accepted.Presence, Current.Presence) ||
         (!Accepted.bAvailable && Current.bAvailable);
     if (bHasAccepted && !FOGFoundationWorldSimulationRuntime::SameAuthority(Accepted, Current)) StopOwnedMove();
     if (MoveController.IsValid() && MoveController.Get() != AI) StopOwnedMove();
     Accepted = MoveTemp(Current); bHasAccepted = true;
-    SetBodySuppressed(Accepted.bAbsent);
+    if (Restore) { bRestoreRequired=true; SetBodySuppressed(true); }
+    else if (Accepted.bAbsent) SetBodySuppressed(true);
     auto* CurrentPath = AI ? AI->GetPathFollowingComponent() : nullptr;
     const bool OwnsPath = MoveRequestId && CurrentPath &&
         static_cast<uint32>(CurrentPath->GetCurrentRequestId()) == MoveRequestId;
@@ -245,8 +262,9 @@ void UOGWorldSimulationReceiver::Refresh()
             SetBodySuppressed(true); bHasAccepted = false;
             Status = TEXT("Actual body could not restore its canonical physical checkpoint."); return;
         }
-        LastCheckpointTick = Accepted.Presence.UpdatedWorldTick;
+        bRestoreRequired=false; LastCheckpointTick = Accepted.Presence.UpdatedWorldTick;
     }
+    SetBodySuppressed(Accepted.bAbsent);
     if (!Accepted.bAvailable || !Accepted.bHasSchedule || Tick < Accepted.Schedule.ScheduledStartWorldTick ||
         Accepted.Schedule.Status == TEXT("completed"))
     { StopOwnedMove(); Status.Reset(); return; }
@@ -261,7 +279,6 @@ void UOGWorldSimulationReceiver::Refresh()
     }
     if (bArrivalPending)
     {
-        bArrivalPending = false;
         if (!SavePhysicalCheckpoint(true, Error)) { StopOwnedMove(); Status = Error; return; }
         StopOwnedMove(); Status.Reset(); return;
     }
@@ -288,7 +305,8 @@ void UOGWorldSimulationReceiver::Refresh()
     const auto Result = AI->MoveTo(Request);
     if (Result.Code == EPathFollowingRequestResult::RequestSuccessful)
     { MoveRequestId = static_cast<uint32>(Result.MoveId); Status.Reset(); }
-    else if (Result.Code == EPathFollowingRequestResult::AlreadyAtGoal) bArrivalPending = true;
+    else if (Result.Code == EPathFollowingRequestResult::AlreadyAtGoal)
+    { CompletedMoveRequestId=static_cast<uint32>(Result.MoveId); bArrivalPending=true; }
     else { StopOwnedMove(); Status = TEXT("No complete native navigation path; schedule remains pending."); }
 }
 void UOGWorldSimulationReceiver::TickComponent(float Delta, ELevelTick Type, FActorComponentTickFunction* Function)
@@ -313,10 +331,10 @@ void UOGWorldSimulationReceiver::ReleaseDefinition_Implementation()
     ReleaseHandle.Reset(); BoundCore.Reset();
     if (auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr)
         Registry->Release(BoundContext.EntityId, this);
-    SetBodySuppressed(false); bActive = false; bHasAccepted = false;
+    SetBodySuppressed(bSuppressOnRelease); bActive = false; bHasAccepted = false; bRestoreRequired=true;
     LocationFrame.Reset(); Prepared = nullptr; Accepted = FOGFoundationWorldBodyState(); LastCheckpointTick = -1;
 }
-void UOGWorldSimulationReceiver::HandleRuntimeReleasing() { ReleaseDefinition(); }
+void UOGWorldSimulationReceiver::HandleRuntimeReleasing() { bSuppressOnRelease=true; ReleaseDefinition(); }
 void UOGWorldSimulationReceiver::EndPlay(const EEndPlayReason::Type Reason)
 {
     ReleaseDefinition(); Super::EndPlay(Reason);
