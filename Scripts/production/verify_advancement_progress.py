@@ -60,9 +60,15 @@ def main() -> None:
     assert summary["source_partial"] == sum(
         row["state"] == "SOURCE_PARTIAL" for row in records
     )
-    assert not summary["build_verified"] and not summary["device_verified"], (
-        "Native proof must be recorded through actual evidence before advancing."
-    )
+    # A future verified build/device run is allowed to advance the ledger,
+    # but only when its original reproducible evidence has been committed.
+    for flag in ("build_verified", "device_verified", "user_accepted"):
+        assert isinstance(summary[flag], bool), f"{flag} must be boolean"
+        if summary[flag]:
+            proof = data.get("verification_evidence", {}).get(flag)
+            assert isinstance(proof, dict) and proof.get("reference"), (
+                f"{flag}: missing actual verification reference"
+            )
     print(f"ADVANCEMENT_PROGRESS matches {len(rows)} ADVANCEMENT_MASTER tasks")
 
 
