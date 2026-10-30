@@ -1,6 +1,7 @@
+#include "Koikatsu/OGLuminousV3PlayableCharacter.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
-#include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+
 #include "Koikatsu/OGLuminousV3WardrobeQAWidget.h"
 #include "Animation/OGSharedMotionLibrary.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
