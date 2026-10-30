@@ -19,7 +19,7 @@ FOGTurnTeamState CommandTeam(int32 Index,const FOGEntityId& Unit)
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeBattleCommandModesTest,
     "OfflineGame.Combat.NativeCommands.AuthoredBranchesAndPreparation",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeBattleCommandModesTest::RunTest(const FString& Parameters)
 {
     FOGApprovedLuminousSourceKitView Base; FString Error;
@@ -57,7 +57,7 @@ bool FOGNativeBattleCommandModesTest::RunTest(const FString& Parameters)
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeBattleAlterSelfTargetTest,
     "OfflineGame.Combat.NativeCommands.AlterSelfTargetAndBranch",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeBattleAlterSelfTargetTest::RunTest(const FString& Parameters)
 {
     FOGLuminousAlterV1Projection Kit; FString Error;
@@ -76,7 +76,7 @@ bool FOGNativeBattleAlterSelfTargetTest::RunTest(const FString& Parameters)
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeBattleReadinessTest,
     "OfflineGame.Combat.NativeCommands.ReadinessDoesNotConsumeTurnOrResources",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeBattleReadinessTest::RunTest(const FString& Parameters)
 {
     FOGApprovedLuminousSourceKitView Kit; FString Error;
