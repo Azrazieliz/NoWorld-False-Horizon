@@ -112,7 +112,13 @@ bool FOGControlledPresenceOwnershipTest::RunTest(const FString&)
     FOGFoundationWorldSimulationRuntime Runtime(F.Store); FOGFoundationWorldBodyState Before;
     if (!TestTrue(TEXT("Exact active locally owned Manifestation reads"), Runtime.Read(*F.Definition, M.ManifestationId, 0, Before, F.Error))) return false;
     M.ActiveVersionId = FOGContentId(TEXT("test:presence_other_version"));
-    if (!F.Store.UpsertCharacterManifestation(M, 1, F.Error)) return false;
+    if (!F.Store.UpsertCharacterManifestation(M, 1, F.Error) ||
+        !F.Store.UpsertEntity(M.ManifestationId, F.Definition->EntityKind, 1, TEXT("{\"state\":\"ready\"}"), F.Error)) return false;
+    FOGFoundationWorldBodyState Replaced;
+    if (!Runtime.Read(*F.Definition, M.ManifestationId, 1, Replaced, F.Error)) return false;
+    TestTrue(TEXT("Version-fence regression keeps physical availability"), Replaced.bAvailable);
+    TestFalse(TEXT("Version replacement changes authority independently of presence"),
+        FOGFoundationWorldSimulationRuntime::SameAuthority(Before, Replaced));
     bool Changed = false;
     TestFalse(TEXT("Version replacement invalidates an old physical writer"), Runtime.CheckpointControlled(*F.Definition, Before, FVector(1,0,0), 1, Changed, F.Error));
     M.OwningRulerId = FOGEntityId::NewId();

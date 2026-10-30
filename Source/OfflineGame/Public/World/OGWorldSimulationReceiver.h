@@ -89,6 +89,7 @@ class OFFLINEGAME_API UOGWorldSimulationReceiver : public UOGDefinitionReceiverC
 public:
     UOGWorldSimulationReceiver();
     virtual bool PrepareDefinition_Implementation(UDataAsset*, const FOGDefinitionBindingContext&, FString&) override;
+    virtual bool IsWaitingForNativePrerequisites() const override { return bWaitingForNativePrerequisites; }
     virtual void ActivateDefinition_Implementation() override;
     virtual void ReleaseDefinition_Implementation() override;
     /** Binding host retains only these actor flags while canonical state is unavailable. */
@@ -115,6 +116,8 @@ protected:
     virtual void TickComponent(float, ELevelTick, FActorComponentTickFunction*) override;
     virtual void EndPlay(const EEndPlayReason::Type) override;
 private:
+    /** Native residency only; never persisted as canonical state. */
+    UPROPERTY(Transient) bool bWaitingForNativePrerequisites = false;
     UPROPERTY(Transient) TObjectPtr<UOGWorldSimulationDefinition> Prepared;
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
     TWeakObjectPtr<AAIController> MoveController;

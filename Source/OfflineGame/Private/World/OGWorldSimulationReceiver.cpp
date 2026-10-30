@@ -11,7 +11,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
-#include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGWorldActionRuntime.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/CoreDelegates.h"
@@ -165,24 +164,29 @@ UOGWorldSimulationReceiver::UOGWorldSimulationReceiver()
 bool UOGWorldSimulationReceiver::PrepareDefinition_Implementation(UDataAsset* Asset,
     const FOGDefinitionBindingContext& Context, FString& Error)
 {
+    bWaitingForNativePrerequisites = false;
     auto* D = Cast<UOGWorldSimulationDefinition>(Asset);
     auto* Pawn = Cast<APawn>(GetOwner());
     auto* AI = Pawn ? Cast<AAIController>(Pawn->GetController()) : nullptr;
     auto* Core = CurrentCore(this); auto* Store = Core ? Core->GetWorldStore() : nullptr;
     auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
     if (Prepared || bActive || !D || !D->ValidateDefinition(Error)) return false;
-    if (!Pawn || !Pawn->GetMovementComponent())
-        return FailBody(Error, TEXT("World presence needs its existing physical pawn and movement component."));
-    // A controlled body may prepare before possession, without any physical write.
-    if (!D->bControlledPresence &&
-        (Pawn->IsPlayerControlled() || !AI || !AI->GetPathFollowingComponent()))
-        return FailBody(Error, TEXT("World schedule needs its existing non-player pawn, movement component and AIController."));
-    if (!Registry || !Registry->CanClaim(Context.EntityId, this))
-        return FailBody(Error, TEXT("Another streamed body already owns this canonical entity."));
+    // Establish valid canonical/source authority first. Missing native parts
+    // must not turn malformed ownership/schema into an automatic retry.
     if (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen() || Store->IsWriteTransactionActive())
         return FailBody(Error, TEXT("Canonical World is not ready for body binding."));
     if (!FOGFoundationWorldSimulationRuntime(*Store).Read(*D, Context.EntityId,
-        Core->GetCanonicalWorldTick(), Accepted, Error) || !FindLocationFrame(Accepted.Presence.LocationId, Error)) return false;
+        Core->GetCanonicalWorldTick(), Accepted, Error)) return false;
+    if (!Pawn || !Pawn->GetMovementComponent())
+    { bWaitingForNativePrerequisites = true; return FailBody(Error, TEXT("World presence needs its existing physical pawn and movement component.")); }
+    // A controlled body may prepare before possession, without any physical write.
+    if (!D->bControlledPresence &&
+        (Pawn->IsPlayerControlled() || !AI || !AI->GetPathFollowingComponent()))
+    { bWaitingForNativePrerequisites = true; return FailBody(Error, TEXT("World schedule needs its existing non-player pawn, movement component and AIController.")); }
+    if (!Registry || !Registry->CanClaim(Context.EntityId, this))
+    { bWaitingForNativePrerequisites = true; return FailBody(Error, TEXT("Another streamed body already owns this canonical entity.")); }
+    if (!FindLocationFrame(Accepted.Presence.LocationId, Error))
+    { bWaitingForNativePrerequisites = true; return false; }
     Prepared = D; BoundContext = Context; BoundCore = Core; return true;
 }
 void UOGWorldSimulationReceiver::ActivateDefinition_Implementation()
@@ -190,7 +194,7 @@ void UOGWorldSimulationReceiver::ActivateDefinition_Implementation()
     if (bActive || !Prepared || !BoundCore.IsValid() || !GetWorld()) return;
     auto* Registry = GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>();
     if (!Registry || !Registry->Claim(BoundContext.EntityId, this))
-    { Status = TEXT("Canonical body claim was superseded during binding."); return; }
+    { bWaitingForNativePrerequisites = true; Status = TEXT("Canonical body claim was superseded during binding."); return; }
     if (!bCapturedBodyFlags)
     { bOriginalHidden = GetOwner()->IsHidden(); bOriginalCollision = GetOwner()->GetActorEnableCollision(); }
     bCapturedBodyFlags = true; bRestoreRequired = true; bSuppressOnRelease = false;
@@ -433,6 +437,7 @@ void UOGWorldSimulationReceiver::ReleaseDefinition_Implementation()
     if (RestoreFlags) SetBodySuppressed(bSuppressOnRelease);
     bActive = false; bHasAccepted = false; bRestoreRequired=true;
     LocationFrame.Reset(); Prepared = nullptr; Accepted = FOGFoundationWorldBodyState(); LastCheckpointTick = -1;
+    bWaitingForNativePrerequisites = false;
 }
 void UOGWorldSimulationReceiver::HandleRuntimeReleasing() { bSuppressOnRelease=true; ReleaseDefinition(); }
 void UOGWorldSimulationReceiver::EndPlay(const EEndPlayReason::Type Reason)
@@ -481,8 +486,6 @@ bool UOGWorldSimulationReceiver::HasControlledPreemption() const
     if (!Pawn || !Core) return true;
     if (HasExistingBodyActivity(Pawn, Core, BoundContext.EntityId) ||
         Core->IsNativeEncounterAwaitingWorldRebind()) return true;
-    if (const auto* Body = Pawn->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
-        Body && Body->GetBoundUnitId() == BoundContext.EntityId && Body->GetBoundBattleId().IsValid()) return true;
     if (const auto* Action = Pawn->FindComponentByClass<UOGWorldActionRuntimeComponent>();
         Action && Action->HasActiveAction()) return true;
     const auto* Controller = Pawn->GetController();
