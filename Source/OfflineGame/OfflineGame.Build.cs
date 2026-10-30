@@ -12,7 +12,10 @@ public class OfflineGame : ModuleRules
         PCHUsage = LowMemoryBuild ? PCHUsageMode.NoPCHs : PCHUsageMode.UseExplicitOrSharedPCHs;
         if (LowMemoryBuild)
         {
-            bUseUnity = false;
+            // Small incremental unity batches amortize header parsing without
+            // a monolithic shared PCH or large all-module unity translation unit.
+            bUseUnity = true;
+            NumIncludedBytesPerUnityCPPOverride = 128 * 1024;
         }
 
         PublicDependencyModuleNames.AddRange(new string[]
