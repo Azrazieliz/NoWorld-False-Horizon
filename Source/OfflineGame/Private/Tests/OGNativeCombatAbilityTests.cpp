@@ -44,7 +44,7 @@ FOGResolvedCombatAction NativeAction(const FOGCombatUnitState& Source,const FOGE
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeAbilityExecutionTest,
     "OfflineGame.Combat.NativeAbility.RealDamageAndMissingExecutor",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeAbilityExecutionTest::RunTest(const FString& Parameters)
 {
     auto Source=NativeTestUnit(0,TEXT("test:native.actor"));
@@ -72,7 +72,7 @@ bool FOGNativeAbilityExecutionTest::RunTest(const FString& Parameters)
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeAbilityAreaRollbackTest,
     "OfflineGame.Combat.NativeAbility.AllTargetsAndAtomicRollback",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeAbilityAreaRollbackTest::RunTest(const FString& Parameters)
 {
     auto Source=NativeTestUnit(0,TEXT("test:native.actor")); Source.SkillSet.ActiveSkills.Add(FOGContentId(TEXT("test:native.area")));
@@ -102,7 +102,7 @@ bool FOGNativeAbilityAreaRollbackTest::RunTest(const FString& Parameters)
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeAbilityHealingTest,
     "OfflineGame.Combat.NativeAbility.HealingAndDefinitionBoundaries",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeAbilityHealingTest::RunTest(const FString& Parameters)
 {
     auto Source=NativeTestUnit(0,TEXT("test:native.healer"),100);
@@ -133,7 +133,7 @@ bool FOGNativeAbilityHealingTest::RunTest(const FString& Parameters)
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGNativeAbilityCooldownTest,
     "OfflineGame.Combat.NativeAbility.PerSourceCooldown",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
 bool FOGNativeAbilityCooldownTest::RunTest(const FString& Parameters)
 {
     auto Source=NativeTestUnit(0,TEXT("test:native.actor"));
