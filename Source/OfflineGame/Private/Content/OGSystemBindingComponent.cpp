@@ -1,4 +1,5 @@
 #include "Content/OGSystemBindingComponent.h"
+#include "World/OGWorldSimulationReceiver.h"
 #include "Runtime/OGAdaptiveScoreComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/GameInstance.h"
@@ -68,6 +69,8 @@ bool UOGSystemBindingDefinition::ValidateResolvedReferences(const FOGDefinitionR
                 ReplacedParts.Add(Part);
             }
         }
+        if (B.ReceiverClass->IsChildOf(UOGWorldSimulationReceiver::StaticClass()) && !Cast<UOGWorldSimulationDefinition>(Asset))
+            return FailBinding(Error,TEXT("Native World simulation receivers require a shared World simulation definition."));
         if (B.ReceiverClass->IsChildOf(UOGScoreDefinitionReceiver::StaticClass()) && !Cast<UOGAdaptiveScoreDefinition>(Asset))
             return FailBinding(Error,TEXT("Native score receivers require an adaptive score definition."));
     }
@@ -75,12 +78,54 @@ bool UOGSystemBindingDefinition::ValidateResolvedReferences(const FOGDefinitionR
 }
 void UOGSystemBindingDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const
 { Super::CollectRequiredDefinitions(Out); for (const auto& B:Bindings) Out.Add(B.Definition); }
+UOGSystemBindingComponent::UOGSystemBindingComponent()
+{
+    PrimaryComponentTick.bCanEverTick=true;
+    PrimaryComponentTick.bStartWithTickEnabled=false;
+    PrimaryComponentTick.TickInterval=1.f;
+}
+void UOGSystemBindingComponent::TickComponent(float Delta,ELevelTick Type,FActorComponentTickFunction* Function)
+{
+    Super::TickComponent(Delta,Type,Function);
+    if (!bAwaitingCanonicalRuntime || !CanonicalEntityId.IsValid()) { SetComponentTickEnabled(false); return; }
+    auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
+    auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    auto* Store=Core?Core->GetWorldStore():nullptr;
+    if (!Core || !Core->IsCoreReady() || Core->GetCanonicalWorldTick()<0 || !Store || !Store->IsOpen()) return;
+    FString Error; if (!RefreshBinding(Error)) Status=Error;
+}
+void UOGSystemBindingComponent::RestoreWorldBodyFlags()
+{
+    if (!bHoldingWorldBody || !GetOwner()) return;
+    GetOwner()->SetActorHiddenInGame(bWorldBodyHidden);
+    GetOwner()->SetActorEnableCollision(bWorldBodyCollision);
+    bHoldingWorldBody=false;
+}
+void UOGSystemBindingComponent::HandleCanonicalRuntimeReleasing()
+{
+    for (auto* Receiver:ActiveReceivers)
+        if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver))
+        {
+            if (Body->GetOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision)) bHoldingWorldBody=true;
+            Body->HoldSuppressedOnRelease();
+        }
+    ReleaseBinding();
+    if (bHoldingWorldBody && GetOwner())
+    { GetOwner()->SetActorHiddenInGame(true); GetOwner()->SetActorEnableCollision(false); }
+    bAwaitingCanonicalRuntime=CanonicalEntityId.IsValid();
+    SetComponentTickEnabled(bAwaitingCanonicalRuntime);
+}
 void UOGSystemBindingComponent::BeginPlay()
 {
     Super::BeginPlay();
     if (auto* Library=UOGDefinitionLibrary::Get())
         LibraryHandle=Library->OnDefinitionsChanged.AddUObject(this,&ThisClass::HandleLibraryChanged);
-    if (CanonicalEntityId.IsValid()) { FString Error; if (!RefreshBinding(Error)) Status=Error; }
+    if (CanonicalEntityId.IsValid())
+    {
+        FString Error;
+        if (!RefreshBinding(Error))
+        { Status=Error; bAwaitingCanonicalRuntime=true; SetComponentTickEnabled(true); }
+    }
 }
 void UOGSystemBindingComponent::HandleLibraryChanged(int64)
 { if (CanonicalEntityId.IsValid() && !bBinding) { FString Error; if (!RefreshBinding(Error)) Status=Error; } }
@@ -112,7 +157,7 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
     // An existing entity may legitimately have no optional subsystem composition.
     if (ProfileText.IsEmpty())
     {
-        ReleaseBinding(); CanonicalEntityId=Entity; Status.Reset(); return true;
+        ReleaseBinding(); RestoreWorldBodyFlags(); CanonicalEntityId=Entity; Status.Reset(); return true;
     }
     const FOGContentId ProfileId(ProfileText);
     auto* Library=UOGDefinitionLibrary::Get();
@@ -136,18 +181,31 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
     }
     // No active receiver is touched until every replacement can be installed.
     ReleaseBinding();
+    UOGWorldSimulationReceiver* NextBody=nullptr;
+    for (const auto& Receiver:Staged)
+        if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver.Get())) NextBody=Body;
+    if (bHoldingWorldBody && NextBody)
+        NextBody->AdoptOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision);
+    else RestoreWorldBodyFlags();
     CanonicalEntityId=Entity; BoundProfile=ProfileId; BoundLibraryRevision=Library->GetRevision();
     for (auto& Receiver:Staged)
     {
         auto* Component=Receiver.Get(); ActiveReceivers.Add(Component);
         GetOwner()->AddInstanceComponent(Component); Component->RegisterComponent(); Component->ActivateDefinition();
     }
+    if (NextBody && !NextBody->IsBodyActive())
+    {
+        ReleaseBinding(); bAwaitingCanonicalRuntime=true; SetComponentTickEnabled(true);
+        return FailBinding(Error,TEXT("Canonical World body activation did not acquire its physical claim."));
+    }
+    if (NextBody) bHoldingWorldBody=false; // The receiver retains flags until canonical rehydration succeeds.
     BoundCore=Core;
-    Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::ReleaseBinding);
+    Core->OnCanonicalRuntimeReleasing.AddUObject(this,&ThisClass::HandleCanonicalRuntimeReleasing);
     Status.Reset(); return true;
 }
 void UOGSystemBindingComponent::ReleaseBinding()
 {
+    bAwaitingCanonicalRuntime=false; SetComponentTickEnabled(false);
     if (BoundCore.IsValid()) BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
     BoundCore.Reset();
     for (int32 I=ActiveReceivers.Num()-1;I>=0;--I) DestroyReceiver(ActiveReceivers[I]);
@@ -156,7 +214,7 @@ void UOGSystemBindingComponent::ReleaseBinding()
 void UOGSystemBindingComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
     if (auto* Library=UOGDefinitionLibrary::Get()) Library->OnDefinitionsChanged.Remove(LibraryHandle);
-    ReleaseBinding(); Super::EndPlay(Reason);
+    ReleaseBinding(); RestoreWorldBodyFlags(); Super::EndPlay(Reason);
 }
 UOGStaticMeshSystemDefinition::UOGStaticMeshSystemDefinition() { System=TEXT("mesh"); }
 bool UOGStaticMeshSystemDefinition::ValidateDefinition_Implementation(FString& Error) const

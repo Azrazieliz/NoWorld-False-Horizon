@@ -65,6 +65,7 @@ class OFFLINEGAME_API UOGSystemBindingComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
+    UOGSystemBindingComponent();
     /** Optional placed-actor identity. Bind only after the real canonical entity exists. */
     UPROPERTY(EditInstanceOnly,BlueprintReadOnly) FOGEntityId CanonicalEntityId;
     UPROPERTY(VisibleInstanceOnly,BlueprintReadOnly) FString Status;
@@ -74,6 +75,7 @@ public:
     UFUNCTION(BlueprintCallable,Category="Definitions") void ReleaseBinding();
 protected:
     virtual void BeginPlay() override;
+    virtual void TickComponent(float, ELevelTick, FActorComponentTickFunction*) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
     UPROPERTY(Transient) TArray<TObjectPtr<UOGDefinitionReceiverComponent>> ActiveReceivers;
@@ -82,6 +84,11 @@ private:
     FOGContentId BoundProfile;
     int64 BoundLibraryRevision=-1;
     bool bBinding=false;
+    bool bAwaitingCanonicalRuntime=false;
+    bool bHoldingWorldBody=false;
+    bool bWorldBodyHidden=false, bWorldBodyCollision=false;
+    void RestoreWorldBodyFlags();
+    void HandleCanonicalRuntimeReleasing();
     void HandleLibraryChanged(int64 Revision);
 };
 
