@@ -96,6 +96,10 @@ Execute the numbered phases **in this order**, making the quickest executable co
 
 ### 05 — Actual approved playable characters, Versions and Registry identity (P0)
 
+**Recovered immutable Koikatsu 3D source cards — 2026-10-30:** Five Luminous forms (Base, Alter, Awakened, Berserker, Grand Convergence) each have three distinct original Koikatsu character-card files (CLOTHED, UNDERWEAR, NUDE), all preserved byte-for-byte in `Assets/NoWorld/Luminous/KoikatsuOriginalCards/` using Git LFS. Per-source hashes, original filenames and verified card-to-form/wardrobe mappings are in `SOURCE_CARDS_MANIFEST.json`. This is ORIGINAL SOURCE RECOVERY, **not** UE skeletal import, visual acceptance of 3D, animation-device verification or completed combat kit. The single canonical character connects to one shared semantic animation controller; source cards are not independent character identities or motion libraries.
+
+
+
 - [ ] **G12-0501 / INTEGRATION** — Resolve authentic source→Identity→Version→owned independent Manifestation binding using canonical Registry v2 provenance; Gate00 is Registry acceptance owner, **Gate11 not an operational queue**. Never assign fake owned/test IDs.
 - [ ] **G12-0502 / CONTENT** — Finalize true user-approved Luminous Base and Alter native meshes from existing authentic Koikatsu/Blender/UE work, comparing face, morphology, eyes/alpha, materials, scale, rig, costumes, anatomical components and whole-body appearance with reference (no redesign/re-export of already accepted parts unless corrective).
 - [ ] **G12-0503 / INTEGRATION** — Integrate actual CLOTHED/UNDERWEAR/NUDE appearance components, clothing vs Privacy effective rendering, equipment changes, damage/injury and animation for the **same** Identity/Version, not separate characters.
