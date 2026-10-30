@@ -1,6 +1,7 @@
+#include "UI/OGGate12NativeOpeningWidget.h"
 #include "UI/OGReactiveUiSubsystem.h"
 #include "Misc/ScopeExit.h"
-#include "UI/OGGate12NativeOpeningWidget.h"
+
 #include "UI/OGGate12GothicChromeWidget.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
