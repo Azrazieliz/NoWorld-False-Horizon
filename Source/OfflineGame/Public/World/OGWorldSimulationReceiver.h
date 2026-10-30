@@ -11,6 +11,7 @@ class AAIController;
 class AController;
 class APawn;
 class UOGInteractionParticipantComponent;
+class UPathFollowingComponent;
 struct FOGTurnBattleState;
 class UOGWorldSimulationReceiver;
 struct FAIRequestID;
@@ -122,6 +123,8 @@ private:
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
     TWeakObjectPtr<AAIController> MoveController;
     TWeakObjectPtr<AController> ControlledController;
+    TWeakObjectPtr<UPathFollowingComponent> ControlledPath;
+    bool bObservedControlledPath = false;
     TWeakObjectPtr<UOGInteractionParticipantComponent> ControlledParticipant;
     FDelegateHandle InteractionHandle, BattleHandle;
     FTransform AcceptedFrameTransform = FTransform::Identity;
@@ -159,6 +162,8 @@ private:
     void HandleControlledBoundary();
     void HandleInteractionSignificance(bool, bool);
     void HandleBattleCommitted(const FOGTurnBattleState&, const FOGEntityId&);
+    void WatchControlledPath();
+    void HandleControlledMoveCompleted(FAIRequestID, const FPathFollowingResult&);
     bool FindLocationFrame(const FOGEntityId&, FString&);
     void WatchSchedule(const FOGEntityId&);
     void HandleCommitted(const TArray<FOGWorldEvent>&);

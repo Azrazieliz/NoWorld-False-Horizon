@@ -207,6 +207,7 @@ void UOGWorldSimulationReceiver::ActivateDefinition_Implementation()
     {
         if (auto* Pawn = Cast<APawn>(GetOwner()))
             Pawn->ReceiveControllerChangedDelegate.AddDynamic(this, &ThisClass::HandleControllerChanged);
+        WatchControlledPath();
         ControlledParticipant = GetOwner()->FindComponentByClass<UOGInteractionParticipantComponent>();
         if (ControlledParticipant.IsValid())
             InteractionHandle = ControlledParticipant->OnSignificanceChanged.AddUObject(this, &ThisClass::HandleInteractionSignificance);
@@ -427,6 +428,8 @@ void UOGWorldSimulationReceiver::ReleaseDefinition_Implementation()
     ControlledParticipant.Reset(); InteractionHandle.Reset();
     if (BoundCore.IsValid()) BoundCore->OnNativeBattleStateCommitted.Remove(BattleHandle);
     BattleHandle.Reset(); ControlledController.Reset(); bControlledSuspended = false;
+    if (ControlledPath.IsValid()) ControlledPath->OnRequestFinished.RemoveAll(this);
+    ControlledPath.Reset(); bObservedControlledPath = false;
     if (EntityFeed) EntityFeed->Remove(EntityHandle);
     if (ScheduleFeed) ScheduleFeed->Remove(ScheduleHandle);
     EntityFeed.Reset(); ScheduleFeed.Reset(); EntityHandle.Reset(); ScheduleHandle.Reset(); ObservedSchedule = FOGEntityId();
@@ -496,6 +499,23 @@ void UOGWorldSimulationReceiver::InvalidateControlledPresence()
 {
     StopOwnedMove(); bRestoreRequired = true; bHasAccepted = false; ControlledController.Reset();
 }
+void UOGWorldSimulationReceiver::WatchControlledPath()
+{
+    const auto* Pawn = Cast<APawn>(GetOwner());
+    auto* Controller = Pawn ? Pawn->GetController() : nullptr;
+    auto* Path = Controller ? Controller->FindComponentByClass<UPathFollowingComponent>() : nullptr;
+    if (ControlledPath.Get() == Path && bObservedControlledPath == (Path != nullptr)) return;
+    if (ControlledPath.IsValid()) ControlledPath->OnRequestFinished.RemoveAll(this);
+    ControlledPath = Path; bObservedControlledPath = Path != nullptr;
+    if (Path) Path->OnRequestFinished.AddUObject(this, &ThisClass::HandleControlledMoveCompleted);
+    InvalidateControlledPresence();
+}
+void UOGWorldSimulationReceiver::HandleControlledMoveCompleted(FAIRequestID, const FPathFollowingResult&)
+{
+    // Even a foreign request that starts and finishes between source refreshes
+    // cannot donate its final pose to the local player's physical checkpoint.
+    if (bActive && IsControlledPresence()) InvalidateControlledPresence();
+}
 void UOGWorldSimulationReceiver::HandleInteractionSignificance(bool, bool)
 {
     if (IsControlledPresence()) InvalidateControlledPresence();
@@ -540,7 +560,9 @@ bool UOGWorldSimulationReceiver::SaveControlledCheckpoint(AController* Departing
     TGuardValue<bool> Checkpointing(bControlledCheckpointing, true);
     auto* ExpectedController = DepartingController ? DepartingController : Pawn ? Pawn->GetController() : nullptr;
     const auto* DepartingPath = DepartingController ? DepartingController->FindComponentByClass<UPathFollowingComponent>() : nullptr;
+    const auto* CurrentPath = ExpectedController ? ExpectedController->FindComponentByClass<UPathFollowingComponent>() : nullptr;
     if (!ValidateControlledPawn(Error, DepartingController) || ControlledController.Get() != ExpectedController ||
+        ControlledPath.Get() != CurrentPath || bObservedControlledPath != (CurrentPath != nullptr) ||
         HasControlledPreemption() || (DepartingPath && DepartingPath->GetStatus() != EPathFollowingStatus::Idle))
     {
         InvalidateControlledPresence();
@@ -607,6 +629,7 @@ void UOGWorldSimulationReceiver::RefreshControlled()
         if (Participant) InteractionHandle = Participant->OnSignificanceChanged.AddUObject(this, &ThisClass::HandleInteractionSignificance);
         InvalidateControlledPresence();
     }
+    WatchControlledPath();
     // Check before hiding or restoring: never teleport a staged encounter pose.
     if (HasControlledPreemption())
     { InvalidateControlledPresence(); Status = TEXT("Existing movement, interaction or encounter owns the physical pose."); return; }

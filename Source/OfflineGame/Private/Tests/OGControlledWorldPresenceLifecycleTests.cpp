@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "World/OGWorldSimulationReceiver.h"
 #include "Components/SceneComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -19,6 +20,8 @@ struct FOGControlledPresenceTestAccess
     }
     static void ControllerChanged(UOGWorldSimulationReceiver& Body, APawn* Pawn, AController* Previous)
     { Body.HandleControllerChanged(Pawn, Previous, Pawn->GetController()); }
+    static void ForeignMoveCompleted(UOGWorldSimulationReceiver& Body)
+    { Body.HandleControlledMoveCompleted(FAIRequestID(9), FPathFollowingResult(EPathFollowingResult::Success)); }
     static bool HasAccepted(const UOGWorldSimulationReceiver& Body) { return Body.bHasAccepted; }
     static bool NeedsRestore(const UOGWorldSimulationReceiver& Body) { return Body.bRestoreRequired; }
     static bool HasController(const UOGWorldSimulationReceiver& Body) { return Body.ControlledController.IsValid(); }
@@ -104,6 +107,11 @@ bool FOGControlledPresenceBoundaryInvalidationTest::RunTest(const FString&)
     TestTrue(TEXT("Streaming requires canonical rehydration"), FOGControlledPresenceTestAccess::NeedsRestore(*Body));
     FOGControlledPresenceTestAccess::Refresh(*Body);
     TestEqual(TEXT("Unavailable canonical runtime cannot teleport staged pose"), Pawn->GetActorLocation(), StagedPose);
+    FOGControlledPresenceTestAccess::AcceptForBoundary(*Body, Definition.Get(), Entity, Previous, Frame);
+    FOGControlledPresenceTestAccess::ForeignMoveCompleted(*Body);
+    TestFalse(TEXT("A completed foreign path cannot donate its final pose between refreshes"),
+        FOGControlledPresenceTestAccess::HasAccepted(*Body));
+    TestEqual(TEXT("Foreign completion does not teleport the physical pose"), Pawn->GetActorLocation(), StagedPose);
     Registry->Release(Entity, Body);
     Body->ReleaseDefinition();
     return true;
