@@ -419,6 +419,7 @@ void UOGGate12NativeRulerWidget::HandleInventoryAction(
 
 bool UOGGate12NativeRulerWidget::OpenObjectActionsForCounterparty(const FOGEntityId& Counterparty,FString& Error)
 {
+    if (bInventoryCommandInFlight) { Error=TEXT("An inventory confirmation is already in progress."); return false; }
     auto* GI=GetGameInstance(); auto* Session=GI?GI->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
     if (!Session || !Counterparty.IsValid()) { Error=TEXT("This counterparty is unavailable."); return false; }
     TArray<FOGObjectActionPreview> Actions;

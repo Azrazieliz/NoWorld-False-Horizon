@@ -22,6 +22,19 @@ bool InventoryUnit(const FOGCombatUnitState& Unit, const FOGEntityId& Ruler,
     { return Unit.UnitEntityId == M.ManifestationId && Unit.IdentityId == M.IdentityId &&
         Unit.SkillSet.CurrentForm == M.ActiveVersionId; });
 }
+bool InventoryProjectionBody(const FOGFoundationCharacterProjection& P, const FOGEntityId& Ruler,
+    const TArray<FOGCharacterManifestationRecord>& Targets)
+{
+    if (!P.bHasManifestation) return P.EntityKind == FName(TEXT("ruler")) &&
+        P.Context.EntityId == Ruler && P.Context.OwnerEntityId == Ruler;
+    return P.Context.EntityId == P.Context.ManifestationId &&
+        P.Manifestation.ManifestationId == P.Context.ManifestationId &&
+        P.Context.OwnerEntityId == Ruler && P.Manifestation.OwningRulerId == Ruler &&
+        P.Manifestation.LifecycleState == TEXT("active") &&
+        Targets.ContainsByPredicate([&](const auto& M)
+        { return M.ManifestationId == P.Context.ManifestationId && M.IdentityId == P.Manifestation.IdentityId &&
+            M.ActiveVersionId == P.Manifestation.ActiveVersionId; });
+}
 bool InventoryBody(const AActor& Actor, const FOGEntityId& Ruler,
     const TArray<FOGCharacterManifestationRecord>& Targets)
 {
@@ -31,13 +44,7 @@ bool InventoryBody(const AActor& Actor, const FOGEntityId& Ruler,
     {
         if (!IsValid(Presentation) || !Presentation->HasProjection()) continue;
         const auto& P = Presentation->GetProjection();
-        if (!P.bHasManifestation && P.EntityKind == FName(TEXT("ruler")) &&
-            P.Context.EntityId == Ruler && P.Context.OwnerEntityId == Ruler) return true;
-        if (P.bHasManifestation && P.Context.EntityId == P.Context.ManifestationId &&
-            P.Context.OwnerEntityId == Ruler && P.Manifestation.OwningRulerId == Ruler &&
-            Targets.ContainsByPredicate([&](const auto& M)
-            { return M.ManifestationId == P.Context.ManifestationId &&
-                M.IdentityId == P.Manifestation.IdentityId && M.ActiveVersionId == P.Manifestation.ActiveVersionId; })) return true;
+        if (InventoryProjectionBody(P, Ruler, Targets)) return true;
     }
     TArray<UOGCharacterAppearanceComponent*> Appearances;
     Actor.GetComponents<UOGCharacterAppearanceComponent>(Appearances);
@@ -122,7 +129,8 @@ void RefreshInventoryBodies(UWorld* World, const FOGEntityId& Ruler,
         for (auto* Presentation : Presentations)
         {
             FString Warning;
-            if (IsValid(Presentation) && Presentation->HasProjection() && !Presentation->Refresh(Warning)) Warnings.Add(Warning);
+            if (IsValid(Presentation) && Presentation->HasProjection() &&
+                InventoryProjectionBody(Presentation->GetProjection(), Ruler, Targets) && !Presentation->Refresh(Warning)) Warnings.Add(Warning);
         }
     }
 }
@@ -325,13 +333,24 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedObjectAction(const FOGObjectAct
     UOGGameCoreSubsystem* Core=nullptr; IOGWorldStore* Store=nullptr;
     if (!ResolveStore(Core,Store,Error) || !bRulerValidated || Reviewed.Context.RulerId!=BoundRulerId)
     { if (Error.IsEmpty()) Error=TEXT("The active Ruler changed. Review this action again."); return false; }
-    TArray<FOGCharacterManifestationRecord> Targets;
-    if (!ObjectActionTargets(*Store,Reviewed,SelectedManifestationId,Targets,Error)) return false;
-    if (OwnedInventoryBattleLocked(*Core,GetWorld(),BoundRulerId,Targets))
-    { Error=TEXT("Finish the active battle or action first."); return false; }
     auto* Library=UOGDefinitionLibrary::Get();
     const auto* Definition=Library?Cast<UOGObjectActionDefinition>(Library->Resolve(TEXT("object_action"),Reviewed.ActionId)):nullptr;
     if (!Definition) { Error=TEXT("This object action is unavailable."); return false; }
+    // Derive affected bodies from canonical inputs, not caller-supplied preview rows.
+    // A receipt retry still goes through Apply's exact receipt validation.
+    bool HasReceipt=false; FOGWorldEvent Receipt;
+    if (!Store->TryReadWorldEvent(RequestId,HasReceipt,Receipt,Error)) return false;
+    FOGObjectActionPreview Actual=Reviewed;
+    if (!HasReceipt)
+    {
+        if (!FOGObjectActionService(*Store).Preview(*Definition,Reviewed.Context,Core->GetCanonicalWorldTick(),Actual,Error)) return false;
+        if (!Actual.bCanApply || Actual.ConfirmationToken!=Reviewed.ConfirmationToken)
+        { Error=TEXT("The action changed. Review the current objects and balances again."); return false; }
+    }
+    TArray<FOGCharacterManifestationRecord> Targets;
+    if (!ObjectActionTargets(*Store,Actual,SelectedManifestationId,Targets,Error)) return false;
+    if (OwnedInventoryBattleLocked(*Core,GetWorld(),BoundRulerId,Targets))
+    { Error=TEXT("Finish the active battle or action first."); return false; }
     bool Already=false; TArray<FOGEntityId> Created;
     if (!FOGObjectActionService(*Store).Apply(*Definition,Reviewed,RequestId,Core->GetCanonicalWorldTick(),Already,Created,Error)) return false;
     TArray<FString> Warnings;
@@ -340,3 +359,50 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedObjectAction(const FOGObjectAct
     Error=Warnings.IsEmpty()?FString():TEXT("Action saved. Some views could not refresh: ")+FString::Join(Warnings,TEXT(" "));
     return true;
 }
+
+#if WITH_DEV_AUTOMATION_TESTS
+#include "Misc/AutomationTest.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGOwnedInventoryBodyGuardTest,
+    "OfflineGame.Inventory.ActionGuardsRequireExactRulerOrTargetProjection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FOGOwnedInventoryBodyGuardTest::RunTest(const FString&)
+{
+    const auto Ruler = FOGEntityId::NewId();
+    FOGCharacterManifestationRecord Target;
+    Target.ManifestationId = FOGEntityId::NewId();
+    Target.OwningRulerId = Ruler;
+    Target.IdentityId = FOGContentId(TEXT("test:inventory.identity"));
+    Target.ActiveVersionId = FOGContentId(TEXT("test:inventory.version"));
+    Target.LifecycleState = TEXT("active");
+    const TArray<FOGCharacterManifestationRecord> Targets = {Target};
+    FOGFoundationCharacterProjection P;
+    P.EntityKind = TEXT("npc");
+    P.Context.EntityId = FOGEntityId::NewId();
+    P.Context.OwnerEntityId = Ruler;
+    TestFalse(TEXT("An unrelated NPC does not become the Ruler body through ownership"), InventoryProjectionBody(P, Ruler, Targets));
+    P.EntityKind = TEXT("ruler");
+    P.Context.EntityId = Ruler;
+    TestTrue(TEXT("Exact canonical Ruler body is guarded"), InventoryProjectionBody(P, Ruler, Targets));
+    P.bHasManifestation = true;
+    P.Manifestation = Target;
+    P.Context.EntityId = Target.ManifestationId;
+    P.Context.ManifestationId = Target.ManifestationId;
+    TestTrue(TEXT("Exact owned target body is guarded"), InventoryProjectionBody(P, Ruler, Targets));
+    P.Manifestation.ActiveVersionId = FOGContentId(TEXT("test:inventory.other_version"));
+    TestFalse(TEXT("A stale version is not the selected actual body"), InventoryProjectionBody(P, Ruler, Targets));
+    P.Manifestation = Target;
+    P.Context.OwnerEntityId = FOGEntityId::NewId();
+    TestFalse(TEXT("A foreign body is not guarded as this Ruler"), InventoryProjectionBody(P, Ruler, Targets));
+    FOGCombatUnitState Unit;
+    Unit.UnitEntityId = FOGEntityId::NewId();
+    Unit.IdentityId = Target.IdentityId;
+    Unit.SkillSet.CurrentForm = Target.ActiveVersionId;
+    TestFalse(TEXT("Another copy of the same identity cannot lock this target"), InventoryUnit(Unit, Ruler, Targets));
+    Unit.UnitEntityId = Target.ManifestationId;
+    TestTrue(TEXT("Actual target battle participant is guarded"), InventoryUnit(Unit, Ruler, Targets));
+    Unit.UnitEntityId = Ruler;
+    TestTrue(TEXT("Actual Ruler battle participant is guarded"), InventoryUnit(Unit, Ruler, Targets));
+    return true;
+}
+#endif

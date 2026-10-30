@@ -176,7 +176,7 @@ bool FOGOwnedEquipmentService::ReadInventory(const FOGEntityId& Ruler,
                 {
                     FOGOwnedEquipmentSlot Stored;
                     Stored.SlotId = Binding.SlotId;
-                    Stored.DisplayName = Binding.SlotId.ToString();
+                    Stored.DisplayName = TEXT("Stored equipment slot");
                     Snapshot.Slots.Add(MoveTemp(Stored));
                     Slot = &Snapshot.Slots.Last();
                 }
@@ -206,7 +206,7 @@ bool FOGOwnedEquipmentService::Preview(const FOGEntityId& Ruler,
     Out.RulerId = Ruler;
     Out.SlotId = SlotId;
     Out.bUnequip = bUnequip;
-    Out.SlotName = SlotId.ToString();
+    Out.SlotName = TEXT("Stored equipment slot");
     const auto* Slot = Catalog.Slots.FindByPredicate([&](const auto& S)
     { return S.IdentityId == Identity && S.VersionId == Out.Target.ActiveVersionId && S.SlotId == SlotId; });
     if (Slot) Out.SlotName = Slot->DisplayName;
@@ -403,8 +403,6 @@ bool FOGOwnedEquipmentService::ProjectCombatUnitImpl(FOGCombatUnitState& Unit,
     FOGFoundationEquipmentResolver Resolver = [&](const FOGFoundationCharacterProjection&,
         const FOGFoundationEquippedItemProjection& Item, FOGFoundationEquipmentFunctions& Out, FString& E)
     {
-        // Simulate only the reviewed binding; every other slot uses the same resolver.
-        if (Change && Item.Binding.SlotId == Change->SlotId) return true;
         const auto* Rule = Catalog.FindRule(M, Item.Binding.SlotId, Item.Item);
         if (Item.Item.OwnerEntityId != M.OwningRulerId && Item.Item.OwnerEntityId != M.ManifestationId)
         { E = TEXT("Stored equipment is not owned by this character or Ruler."); return false; }
@@ -427,16 +425,37 @@ bool FOGOwnedEquipmentService::ProjectCombatUnitImpl(FOGCombatUnitState& Unit,
         if (!Broken && ConditionBps>0) Out.StatContributions=Rule->StatBonuses;
         return true;
     };
-    if (!FOGFoundationCharacterRuntime(Store).ProjectEquipmentFunctions(
-            EquipmentContext(M), Resolver, Contributions, Error)) return false;
-    const FOGCombatStats Base = Unit.bHasEquipmentStatProjection ? Unit.EquipmentBaseStats :
-        (Unit.bHasDevelopmentStatProjection ? Unit.DevelopmentBaseStats : Unit.Stats);
-    if (Change && !Change->bUnequip)
-        for (const auto& Bonus : Change->StatBonuses)
+    FOGFoundationCharacterProjection Projection;
+    if (!FOGFoundationCharacterRuntime(Store).Project(EquipmentContext(M), Projection, Error)) return false;
+    if (Change)
+    {
+        // Read-only effective bindings; runtime and preview resolve and sum in
+        // the same slot order, including large-number rounding at each addition.
+        Projection.Equipment.RemoveAll([&](const auto& Item) { return Item.Binding.SlotId == Change->SlotId; });
+        if (!Change->bUnequip)
+        {
+            FOGFoundationEquippedItemProjection Incoming;
+            Incoming.Binding.WearerEntityId = M.ManifestationId;
+            Incoming.Binding.SlotId = Change->SlotId;
+            Incoming.Binding.ItemId = Change->Item.ItemId;
+            Incoming.Item = Change->Item;
+            Projection.Equipment.Add(MoveTemp(Incoming));
+        }
+    }
+    Projection.Equipment.Sort([](const auto& A, const auto& B) { return A.Binding.SlotId.Value < B.Binding.SlotId.Value; });
+    for (const auto& Item : Projection.Equipment)
+    {
+        if (Item.bBroken) continue;
+        FOGFoundationEquipmentFunctions Contribution;
+        if (!Resolver(Projection, Item, Contribution, Error)) return false;
+        for (const auto& Bonus : Contribution.StatContributions)
         {
             auto& Total = Contributions.StatContributions.FindOrAdd(Bonus.Key);
             Total = FOGLargeNumber::Add(Total, Bonus.Value);
         }
+    }
+    const FOGCombatStats Base = Unit.bHasEquipmentStatProjection ? Unit.EquipmentBaseStats :
+        (Unit.bHasDevelopmentStatProjection ? Unit.DevelopmentBaseStats : Unit.Stats);
     FOGCombatStats Equipped = Base;
     if (!AddEquipmentBonuses(Equipped, Contributions.StatContributions, Error)) return false;
     Unit.EquipmentBaseStats = Base;
@@ -460,6 +479,7 @@ bool FOGOwnedEquipmentService::PreviewStats(const FOGOwnedEquipmentPreview& Revi
     const FOGCombatUnitState& ResolvedUnit, const FOGEquipmentCatalog& Catalog,
     FOGOwnedEquipmentPreview& Out, FString& Error) const
 {
+    Out = Reviewed;
     Out.bStatsKnown = false;
     Out.StatPreviewToken.Reset();
     Error.Reset();
