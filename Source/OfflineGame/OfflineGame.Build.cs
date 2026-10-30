@@ -88,6 +88,26 @@ public class OfflineGame : ModuleRules
                 RuntimeDependencies.Add(OriginalInput, StagedFileType.UFS);
         }
 
+        // The exact five Gate01 accepted original 2D PNG files are loaded at
+        // runtime as transient Texture2D resources. Cooked UAssets cannot
+        // replace their original immutable source hashes.
+        string AcceptedArtRoot = Path.GetFullPath(Path.Combine(ModuleDirectory,
+            "../../Content/NoWorld/Characters/Luminous/Art/Accepted2D"));
+        string[] AcceptedArtFiles = {
+            "01_BASE.png",
+            "02_ALTER.png",
+            "03_AWAKENED.png",
+            "04_BERSERKER.png",
+            "05_GRAND_CONVERGENCE.png",
+            "APPROVED_FIVE_FORMS_MANIFEST.json"
+        };
+        foreach (string ArtFile in AcceptedArtFiles)
+        {
+            string AbsolutePath = Path.Combine(AcceptedArtRoot, ArtFile);
+            if (!File.Exists(AbsolutePath))
+                throw new BuildException("Missing accepted Gate01 original: " + AbsolutePath);
+            RuntimeDependencies.Add(AbsolutePath, StagedFileType.UFS);
+        }
         if (Target.Platform == UnrealTargetPlatform.Android)
         {
             AdditionalPropertiesForReceipt.Add(

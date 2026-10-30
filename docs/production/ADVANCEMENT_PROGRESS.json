@@ -13,7 +13,7 @@
     "master_task_count": 111,
     "master_checked": 6,
     "master_open": 105,
-    "source_partial": 4,
+    "source_partial": 5,
     "build_verified": false,
     "device_verified": false,
     "user_accepted": false
@@ -670,7 +670,25 @@
       "master_checked": false,
       "master_descriptor": "VISUAL",
       "master_requirement": "Make **Characters/Detail** real full-height, exactly three tall owned cards per roster row where applicable, accurate full-body approved 2D or live 3D, wardrobe and Version truth. No chips, fake cards or rejected source image.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_paths": [
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/01_BASE.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/02_ALTER.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/03_AWAKENED.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/04_BERSERKER.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/05_GRAND_CONVERGENCE.png",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/APPROVED_FIVE_FORMS_MANIFEST.json",
+        "Source/OfflineGame/Private/UI/OGGate12CharacterVisualCatalog.cpp",
+        "Source/OfflineGame/OfflineGame.Build.cs",
+        "Config/DefaultGame.ini",
+        "Scripts/production/verify_gate01_luminous_art.py"
+      ],
+      "proof": "Five original accepted 2026-10-20 PNGs recovered intact (SHA-256 checked), source-bound to their five canonical Version IDs, offline packaging configured. Android native/render not verified.",
+      "remaining": [
+        "Finish native compilation and execute Android packaging and source file lookup",
+        "Verify all five accepted 2D artworks in actual owned roster and character details on device",
+        "Complete genuine approved live 3D meshes, full playable interactions and UI acceptance"
+      ]
     },
     {
       "id": "G12-0804",

@@ -200,3 +200,11 @@ Execute the numbered phases **in this order**, making the quickest executable co
 - Current 18-system assessment: `docs/production/gate12/GATE12_USER_REQUIREMENTS_CURRENT_STATE_20261018.md`.
 - Binding Gate00 Oct20 directives, with exact original approved sources: `origin/coordination/gate00-live-ops-20261016:docs/production/gate00/GATE00_20261020_ALTER_G07_WORLD_MOTION_APPROVALS.md` and `GATE00_AUTHORITY_HANDOVER_AND_P0_ORDERS_20261020.md`.
 - Gate00 Issue #25 is the coordination board. This tracker does **not** overwrite Gate00's canonical Registry, frozen approvals or approval overlay.
+
+## Gate01 accepted five-form 2D artwork integration — 2026-10-30
+
+The exact five original 20 October user-accepted artwork PNGs have been recovered from the original uploaded archive on the connected Android phone and copied byte-for-byte into `Content/NoWorld/Characters/Luminous/Art/Accepted2D/`. The unchanged Gate01 `APPROVED_FIVE_FORMS_MANIFEST.json` carries each exact accepted form, original SHA-256, pixel dimensions, and artwork approval. The five original art identities are Base, Alter, Awakened, Berserker, and Grand Convergence. This is one canonical Luminous character, not five unrelated characters. The extra qualifier previously applied to Grand is not part of the game design.
+
+The existing `UOGGate12CharacterVisualCatalog::FindExact` preserves actual 3D/world-playable/wardrobe entries, chooses the exact approved original 2D image for each existing Version ID and caches imported runtime textures. Original PNG files are staged as offline UFS, rather than requiring an editor-only texture import. `Scripts/production/verify_gate01_luminous_art.py` validates all five original SHA-256 values and version/path mappings.
+
+This **completes accepted-source recovery and source-level 2D binding**, not the full Characters/Detail requirement G12-0803. Verify native Android build, packaged PNG lookup and physical device appearance, and complete the real 3D, kits, combat and World integration before changing any related master checkbox. The existing shared animation bank remains bound once to character identity; never branch animations by Version.

@@ -1,0 +1,79 @@
+{
+  "schema": "G01_2D_ACCEPTED_LUMINOUS_FIVE_FORMS_1",
+  "project": "NoWorld: False Horizon",
+  "reference_style": "Version 1 (three original style reference images preserved)",
+  "approval_scope": "Five final 2D raster illustrations visually accepted, not independent model/source acceptance",
+  "approved_at": "2026-10-20",
+  "forms": [
+    {
+      "form": "Base",
+      "approved_art_file": "ACCEPTED_CHARACTER_ARTWORK/LUMINOUS_VALENTINE/FIVE_FORMS/01_BASE.png",
+      "source_file_in_current_conversation": "luminous_valentine_in_gothic_elegance.png",
+      "resolution": [
+        941,
+        1672
+      ],
+      "format": "PNG",
+      "sha256": "a1c52d137e24512528adc60556092727f0e37d38db35a470343eb3a429307272",
+      "identity_constraint": "Silver-white hair, black headband, red-and-blue heterochromia, short layered black gothic corseted dress, dark stockings and tall dark boots. No invented ceremonial jewellery.",
+      "approval": "USER_VISUALLY_ACCEPTED_2026-10-20",
+      "editable_layers": "NOT_PROVIDED"
+    },
+    {
+      "form": "Alter",
+      "approved_art_file": "ACCEPTED_CHARACTER_ARTWORK/LUMINOUS_VALENTINE/FIVE_FORMS/02_ALTER.png",
+      "source_file_in_current_conversation": "ethereal_heterochromic_rose_maiden.png",
+      "resolution": [
+        941,
+        1672
+      ],
+      "format": "PNG",
+      "sha256": "90a8d6f93b97cdd035fdbcf316975ca08efffd4615357c8b3abffcf05a28d759",
+      "identity_constraint": "Long dark brown/black hair, cobalt-blue rose, violet teardrop marking, red-and-blue heterochromia, white fitted high-collar tunic/dress against dark lower garments, dark forearm wraps; retain distinctive silhouette, not a black gown.",
+      "approval": "USER_VISUALLY_ACCEPTED_2026-10-20",
+      "editable_layers": "NOT_PROVIDED"
+    },
+    {
+      "form": "Awakened",
+      "approved_art_file": "ACCEPTED_CHARACTER_ARTWORK/LUMINOUS_VALENTINE/FIVE_FORMS/03_AWAKENED.png",
+      "source_file_in_current_conversation": "gothic_silver_haired_enchantress.png",
+      "resolution": [
+        941,
+        1672
+      ],
+      "format": "PNG",
+      "sha256": "65184e18f3809dc85dd40e3f4af6fdda6d7b8266cfe59f46fdc60a8a4eede27b",
+      "identity_constraint": "Long white-silver with strong bright-blue streaks and asymmetry, red-and-blue heterochromia, black embellished gothic bodice and skirt, vivid red upper-stocking accents and dark stockings; do not add Grand wings.",
+      "approval": "USER_VISUALLY_ACCEPTED_2026-10-20",
+      "editable_layers": "NOT_PROVIDED"
+    },
+    {
+      "form": "Berserker",
+      "approved_art_file": "ACCEPTED_CHARACTER_ARTWORK/LUMINOUS_VALENTINE/FIVE_FORMS/04_BERSERKER.png",
+      "source_file_in_current_conversation": "luminous_valentine_gothic_rose_berserker.png",
+      "resolution": [
+        941,
+        1672
+      ],
+      "format": "PNG",
+      "sha256": "84b394e8c433ade6fae0dbacd3d58ac2785b40784969220b2b46a5b7f75542e8",
+      "identity_constraint": "Muted lavender-violet long hair, deep-red rose crown, red-and-blue heterochromia, black short gothic dress with center lacing/chain, one leg noticeably bandage-wrapped, other exposed; preserve asymmetry and bare feet where represented.",
+      "approval": "USER_VISUALLY_ACCEPTED_2026-10-20",
+      "editable_layers": "NOT_PROVIDED"
+    },
+    {
+      "form": "Grand Convergence",
+      "approved_art_file": "ACCEPTED_CHARACTER_ARTWORK/LUMINOUS_VALENTINE/FIVE_FORMS/05_GRAND_CONVERGENCE.png",
+      "source_file_in_current_conversation": "luminous_valentine_celestial_dark_angel.png",
+      "resolution": [
+        941,
+        1672
+      ],
+      "format": "PNG",
+      "sha256": "3f2d4aea44a2977ac675bbc2b036ebff8a15463d64b5eb7c3211e52e0e6d22e3",
+      "identity_constraint": "Muted violet-grey hair with red/blue highlights, dark facial marking, red-and-blue heterochromia, layered black-and-white dress, purple rose at waist, one wrapped leg, major dark-feathered and light inner wing structures; preserve wing topology, no invented crystal wing replacements.",
+      "approval": "USER_VISUALLY_ACCEPTED_2026-10-20",
+      "editable_layers": "NOT_PROVIDED"
+    }
+  ]
+}
