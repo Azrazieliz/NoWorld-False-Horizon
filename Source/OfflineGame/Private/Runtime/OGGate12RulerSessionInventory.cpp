@@ -11,7 +11,7 @@
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
-#include "Misc/GuardValue.h"
+#include "Templates/UnrealTemplate.h"
 
 namespace
 {
