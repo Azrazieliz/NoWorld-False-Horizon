@@ -103,6 +103,7 @@ $env:TEMP = $HostScratch
 $env:TMP = $HostScratch
 $env:UE_LocalDataCachePath = Join-Path $Root "Saved\DerivedData\Local"
 $env:UE_SharedDataCachePath = Join-Path $Root "Saved\DerivedData\Shared"
+$env:OG_LOW_MEMORY_BUILD = "1"
 New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 Remove-Item -Path $GateStamp -Force -ErrorAction SilentlyContinue
 
@@ -116,7 +117,6 @@ $buildArgs = @(
     "-WaitMutex",
     "-NoHotReloadFromIDE",
     "-MaxParallelActions=1",
-    "-DisableUnity",
     "-NoUBA"
 )
 
