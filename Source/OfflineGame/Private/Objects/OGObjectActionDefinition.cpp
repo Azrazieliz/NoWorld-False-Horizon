@@ -8,7 +8,7 @@ namespace
 {
 bool JsonObject(const FString& Text)
 { TSharedPtr<FJsonObject> J; return FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),J) && J.IsValid(); }
-void Part(FString& S,const FString& V) { S+=LexToString(V.Len())+TEXT(":")+V; }
+void AppendObjectDefinitionPart(FString& S,const FString& V) { S+=LexToString(V.Len())+TEXT(":")+V; }
 bool OptionalId(const FOGContentId& Id) { return Id.IsEmpty() || Id.IsValid(); }
 }
 bool UOGObjectDefinition::ValidateDefinition_Implementation(FString& Error) const
@@ -85,14 +85,14 @@ FString UOGObjectActionDefinition::Fingerprint() const
 {
     FString S; for (const auto& V:{DefinitionId.ToString(),OriginalSourceReference,DisplayName.ToString(),Description.ToString(),
         FString::FromInt(static_cast<int32>(Kind)),bExplicitNoCost?FString(TEXT("free")):FString(TEXT("cost")),
-        SubjectObjectId.ToString(),FString::FromInt(RepairToConditionBps),CounterpartyEntityKind.ToString()}) Part(S,V);
+        SubjectObjectId.ToString(),FString::FromInt(RepairToConditionBps),CounterpartyEntityKind.ToString()}) AppendObjectDefinitionPart(S,V);
     for (const auto& I:Inputs)
         for (const auto& V:{I.ObjectId.ToString(),I.RankId.ToString(),I.QualityId.ToString(),FString::FromInt(I.InstanceCount),
-            FString::FromInt(static_cast<int32>(I.From)),FString::FromInt(static_cast<int32>(I.Disposition))}) Part(S,V);
-    Part(S,TEXT("outputs"));
-    for (const auto& O:Outputs) for (const auto& V:{O.ObjectId.ToString(),FString::FromInt(O.InstanceCount),FString::FromInt(static_cast<int32>(O.To))}) Part(S,V);
-    Part(S,TEXT("resources"));
-    for (const auto& R:Resources) for (const auto& V:{R.ResourceId.ToString(),FString::FromInt(static_cast<int32>(R.Account)),LexToString(R.Amount),R.DisplayName.ToString()}) Part(S,V);
+            FString::FromInt(static_cast<int32>(I.From)),FString::FromInt(static_cast<int32>(I.Disposition))}) AppendObjectDefinitionPart(S,V);
+    AppendObjectDefinitionPart(S,TEXT("outputs"));
+    for (const auto& O:Outputs) for (const auto& V:{O.ObjectId.ToString(),FString::FromInt(O.InstanceCount),FString::FromInt(static_cast<int32>(O.To))}) AppendObjectDefinitionPart(S,V);
+    AppendObjectDefinitionPart(S,TEXT("resources"));
+    for (const auto& R:Resources) for (const auto& V:{R.ResourceId.ToString(),FString::FromInt(static_cast<int32>(R.Account)),LexToString(R.Amount),R.DisplayName.ToString()}) AppendObjectDefinitionPart(S,V);
     return FMD5::HashAnsiString(*S);
 }
 void UOGObjectActionDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const
