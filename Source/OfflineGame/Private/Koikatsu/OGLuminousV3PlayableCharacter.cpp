@@ -992,18 +992,19 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     // can differ from the real clothing state under Privacy/SFW masking.
     const int32 State = static_cast<int32>(EffectiveAppearance.EffectiveRenderedWardrobe);
     if (!Clips || Clips->Num() != 3 || !Clips->IsValidIndex(State)) return nullptr;
-    const bool bAlter = CanonicalLuminousVersionId ==
-        TEXT("character:luminous_valentine.version_alter_v1");
-    const TCHAR* ExpectedNamespace = bAlter
-        ? TEXT("/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/")
-        : TEXT("/Game/Experimental/LuminousValentineV3/NativeMocapV3/");
-    if (!(*Clips)[State].ToString().StartsWith(ExpectedNamespace))
-        return nullptr;
+    // Legacy per-actor Blueprint paths are a compatibility fallback only.
+    // Do not branch the animation library on a particular Version; the same
+    // character controller resolves the action for any actual native skeleton.
+    // Preserve exact-skeleton matching even for the legacy fallback.
     UAnimSequence* Sequence = Cast<UAnimSequence>((*Clips)[State].TryLoad());
     if (!Sequence || !Sequence->GetSkeleton()) return nullptr;
-    // Every source-authored form state owns its matching native skeleton;
-    // runtime will only animate when that original Skeleton is present.
-    return Sequence;
+    for (const USkeletalMeshComponent* Part : RuntimeParts)
+    {
+        const USkeletalMesh* Mesh = Part ? Part->GetSkeletalMeshAsset() : nullptr;
+        if (Mesh && Mesh->GetSkeleton() == Sequence->GetSkeleton())
+            return Sequence;
+    }
+    return nullptr;
 }
 
 void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
@@ -1172,6 +1173,15 @@ bool AOGLuminousV3PlayableCharacter::BindOwnedWorldCharacter_Implementation(
     {
         if (LastLuminousError.IsEmpty())
             LastLuminousError=TEXT("Luminous is not an active Manifestation of this Ruler.");
+        return false;
+    }
+    // Attach this canonical CHARACTER once to its single shared controller.
+    // All of its Versions reuse the same semantic motion bank; registered
+    // native parts choose the compatible skeleton derivative automatically.
+    if (!SharedMotionController ||
+        !SharedMotionController->BindCanonicalCharacter(IdentityId))
+    {
+        LastLuminousError=TEXT("Canonical character motion identity is incompatible with the live native actor.");
         return false;
     }
     BoundOwnedRuler=RulerId;
