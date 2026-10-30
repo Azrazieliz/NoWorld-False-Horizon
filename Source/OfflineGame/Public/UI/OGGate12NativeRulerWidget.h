@@ -49,11 +49,11 @@ public:
 };
 
 /**
- * Gate12 native Ruler presentation foundation.
+ * Gate12 native Ruler screens, shared live surfaces and canonical transactions.
  *
  * Built from real UMG widgets, reads the canonical Gate12 session, and keeps
- * UI transient. Gate10 artwork/material integration can replace this class
- * without altering gameplay data or persistence.
+ * UI transient. Installed original artwork and native material consumers use
+ * the shared presentation driver without altering gameplay or persistence.
  *
  * Three exactly uniform tall roster columns (width/height 0.445), one tile
  * per real owned Identity; repeat Manifestations remain inside the detail.
@@ -164,7 +164,7 @@ private:
     FOGEntityId GachaContextRulerId;
     FOGContentId GachaContextBannerId;
     TSharedPtr<FOGWorldStoreCommittedEvents> GachaEventFeed;
-    FDelegateHandle GachaEventHandle;
+    FDelegateHandle GachaEventHandle,GachaLibraryHandle;
     FOGGachaBatchPreview PendingGachaReview;
     FOGEntityId PendingGachaRequestId;
     TArray<FOGGachaBatchPreview> GachaQuotes;
@@ -178,7 +178,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UOGGate12RulerActionButton> GachaConfirmButton;
     FString GachaFeedback;
     int32 GachaRevealedResults=1;
-    bool bGachaDirty=true,bGachaCommandInFlight=false;
+    bool bGachaDirty=true,bGachaCommandInFlight=false,bGachaDefinitionsDirty=false;
     bool bGachaHistoryExpanded = false;
     bool bGachaRatesExpanded = false;
     bool bGachaResultsExpanded = false;

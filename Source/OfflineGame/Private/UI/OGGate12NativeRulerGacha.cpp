@@ -67,6 +67,8 @@ void UOGGate12NativeRulerWidget::ResetGachaUi()
 {
     if (GachaEventFeed) GachaEventFeed->Remove(GachaEventHandle);
     GachaEventFeed.Reset();GachaEventHandle.Reset();
+    if (auto* Library=UOGDefinitionLibrary::Get()) Library->OnDefinitionsChanged.Remove(GachaLibraryHandle);
+    GachaLibraryHandle.Reset();bGachaDefinitionsDirty=false;
     GachaContextRulerId=FOGEntityId();GachaContextBannerId=FOGContentId();
     ClearGachaReview();GachaQuotes.Reset();GachaSavedResults.Reset();GachaDrawButtons.Reset();GachaCostLabels.Reset();
     GachaWalletLabel=nullptr;GachaPityLabel=nullptr;GachaPityBar=nullptr;
@@ -81,6 +83,8 @@ void UOGGate12NativeRulerWidget::ObserveGacha(UOGGate12RulerSessionSubsystem& Se
     const FOGContentId Banner=Hud&&Hud->HasActiveGachaPresentation()?Hud->GetActiveGachaBanner().BannerId:FOGContentId();
     if (GachaContextRulerId==Session.BoundRulerId&&GachaContextBannerId==Banner) return;
     ResetGachaUi();GachaContextRulerId=Session.BoundRulerId;GachaContextBannerId=Banner;
+    if (auto* Library=UOGDefinitionLibrary::Get())
+        GachaLibraryHandle=Library->OnDefinitionsChanged.AddWeakLambda(this,[this](int64){bGachaDefinitionsDirty=true;});
     if (auto* Core=GetGameInstance()?GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>():nullptr)
     {
         GachaEventFeed=Core->GetEntityEventFeed(GachaContextRulerId);
@@ -95,6 +99,16 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
         Session->CurrentDestination!=EOGRulerPrimaryDestination::Gacha)
     { ResetGachaUi(); return; }
     auto* Hud=AcquisitionHud(*this);
+    if (bGachaDefinitionsDirty&&Hud)
+    {
+        bGachaDefinitionsDirty=false;
+        FString Before,After,Error;
+        FOGGachaBannerDefinition::StaticStruct()->ExportText(Before,&Hud->GetActiveGachaBanner(),nullptr,nullptr,PPF_None,nullptr);
+        Hud->LoadInstalledGachaBannerForRuler(Error);
+        FOGGachaBannerDefinition::StaticStruct()->ExportText(After,&Hud->GetActiveGachaBanner(),nullptr,nullptr,PPF_None,nullptr);
+        if (Before!=After) {bGachaDirty=true;BuildCurrentPage();return;}
+        // A theme-only definition change never reconstructs the acquisition page.
+    }
     if (!Hud||!Hud->HasActiveGachaPresentation()||Hud->GetActiveGachaBanner().BannerId!=GachaContextBannerId)
     {
         for (auto* Button:GachaDrawButtons) if (Button) Button->SetIsEnabled(false);
