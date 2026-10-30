@@ -34,6 +34,8 @@ public:
     UFUNCTION(BlueprintNativeEvent,Category="Definitions")
     bool PrepareDefinition(UDataAsset* Definition,const FOGDefinitionBindingContext& Context,FString& Error);
     virtual bool PrepareDefinition_Implementation(UDataAsset*,const FOGDefinitionBindingContext&,FString& Error);
+    /** Physical streaming/possession may become ready without a canonical or definition event. */
+    virtual bool IsWaitingForNativePrerequisites() const { return false; }
     /** Called only after every receiver has prepared. No failure or canonical writes in this phase. */
     UFUNCTION(BlueprintNativeEvent,Category="Definitions") void ActivateDefinition();
     virtual void ActivateDefinition_Implementation() {}

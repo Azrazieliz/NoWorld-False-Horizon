@@ -169,7 +169,7 @@ void UOGSystemBindingComponent::BeginPlay()
         bAutoRefreshEnabled=true;
         FString Error;
         if (!RefreshBinding(Error))
-        { Status=Error; bAwaitingCanonicalRuntime=!BoundCore.IsValid(); SetComponentTickEnabled(bAwaitingCanonicalRuntime || bRefreshRequested); }
+        { Status=Error; bAwaitingCanonicalRuntime=bAwaitingCanonicalRuntime || !BoundCore.IsValid(); SetComponentTickEnabled(bAwaitingCanonicalRuntime || bRefreshRequested); }
     }
 }
 void UOGSystemBindingComponent::HandleLibraryChanged(int64)
@@ -234,8 +234,13 @@ bool UOGSystemBindingComponent::BindCanonicalEntity(const FOGEntityId& Entity,FS
         if (Receiver.IsValid()) { Receiver->BoundDefinition=Definition; Receiver->BoundContext=Context; }
         if (!Receiver.IsValid() || !Definition || !Receiver->PrepareDefinition(Definition,Context,Error))
         {
+            const bool WaitNative=Receiver.IsValid() && Receiver->IsWaitingForNativePrerequisites();
             if (Receiver.IsValid()) Receiver->ReleaseDefinition();
             for (auto& Pending:Staged) Pending->ReleaseDefinition();
+            if (CanonicalEntityId==Entity && (BoundProfile!=ProfileId || BoundEntityKind!=Context.EntityKind))
+            { RetainWorldBodyFlags(); ReleaseActiveReceivers(); }
+            if (WaitNative && bAutoRefreshEnabled)
+            { bAwaitingCanonicalRuntime=true; SetComponentTickInterval(1.f); SetComponentTickEnabled(true); }
             return false;
         }
         Staged.Add(MoveTemp(Receiver));
