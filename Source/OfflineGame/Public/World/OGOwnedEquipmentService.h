@@ -88,6 +88,12 @@ struct OFFLINEGAME_API FOGOwnedEquipmentPreview
     FString PreviousItemName;
     TMap<FName, FOGLargeNumber> StatBonuses;
     bool bEffectsKnown = false;
+    // Read-only totals from a genuine resolved unit, never a synthetic base.
+    bool bStatsKnown = false;
+    FOGCombatStats BeforeStats;
+    FOGCombatStats AfterStats;
+    FString StatsAvailability;
+    FString StatPreviewToken;
     bool bCanApply = false;
     TArray<FString> MissingRequirements;
     FString ConfirmationToken;
@@ -110,6 +116,12 @@ public:
         const FOGEquipmentCatalog& Catalog, const FOGEntityId& RequestId,
         int64 WorldTick, bool& bAlreadyApplied, FString& Error);
 
+    /** Read-only replacement/removal simulation through the runtime calculation.
+     * ResolvedUnit must come from the target's existing content-resolved projection. */
+    bool PreviewStats(const FOGOwnedEquipmentPreview& Reviewed,
+        const FOGCombatUnitState& ResolvedUnit, const FOGEquipmentCatalog& Catalog,
+        FOGOwnedEquipmentPreview& Out, FString& Error) const;
+
     /** Fresh content stats in, canonical equipment contributions out. The base
      * cache is projection-only; HP and skill truth remain with their executors. */
     bool ProjectCombatUnit(FOGCombatUnitState& Unit,
@@ -117,6 +129,9 @@ public:
     bool ProjectCombatUnit(FOGCombatUnitState& Unit, FString& Error) const;
 
 private:
+    bool ProjectCombatUnitImpl(FOGCombatUnitState& Unit,
+        const FOGEquipmentCatalog& Catalog, const FOGOwnedEquipmentPreview* Change,
+        FString& Error) const;
     bool ValidateRuler(const FOGEntityId&, FString&) const;
     bool ReadTarget(const FOGEntityId&, const FOGContentId&, const FOGEntityId&,
         FOGCharacterManifestationRecord&, FString&) const;

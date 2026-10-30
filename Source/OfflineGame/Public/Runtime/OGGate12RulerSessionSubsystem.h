@@ -216,4 +216,8 @@ private:
     void ClearProjectionAndSelection();
     void HandleCanonicalRuntimeReleasing();
     bool bRulerValidated = false;
+    bool bInventoryCommandInFlight = false;
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FOGInventoryQueuedConfirmationTest;
+#endif
 };
