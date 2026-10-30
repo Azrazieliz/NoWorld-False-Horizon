@@ -8,10 +8,10 @@ FOGContentId WorldTestId(const TCHAR* Name) { return FOGContentId(FString(TEXT("
 struct FSharedWorldFixture
 {
     FOGTurnBattle Battle; FString Error;
-    FOGEntityId A=FOGEntityId::NewId(),B=FOGEntityId::NewId();
+    FOGEntityId A=FOGEntityId::NewId(),B=FOGEntityId::NewId(),C=FOGEntityId::NewId();
     FOGNativeAbilityDefinition Ability;
     FOGWorldAbilitySpecification World;
-    bool Open(EOGWorldAbilityCostTiming Cost=EOGWorldAbilityCostTiming::AcceptedStart,bool Refund=false,bool WithEffect=false)
+    bool Open(EOGWorldAbilityCostTiming Cost=EOGWorldAbilityCostTiming::AcceptedStart,bool Refund=false,bool WithEffect=false,bool WithExtraTarget=false)
     {
         FOGCombatUnitState Source,Target; Source.UnitEntityId=A; Target.UnitEntityId=B;
         Source.IdentityId=WorldTestId(TEXT("source")); Target.IdentityId=WorldTestId(TEXT("target"));
@@ -24,8 +24,14 @@ struct FSharedWorldFixture
         Source.Stats.HitBps=Target.Stats.HitBps=10000;
         Source.DefaultActionDelay=Target.DefaultActionDelay=100; Source.NextActionValue=10000;
         FOGTurnBattleState State; State.BattleId=FOGEntityId::NewId(); State.Units={Source,Target};
+        if (WithExtraTarget)
+        { auto Other=Target; Other.UnitEntityId=C; Other.IdentityId=WorldTestId(TEXT("other_target")); State.Units.Add(Other); }
         for (const auto& U:State.Units)
-        { FOGTurnTeamState Team; Team.TeamIndex=U.TeamIndex; FOGTurnSuccessionLane Lane; Lane.OrderedUnitIds={U.UnitEntityId}; Team.Lanes={Lane}; State.Teams.Add(Team); }
+        {
+            auto* Team=State.Teams.FindByPredicate([&](const auto& T){return T.TeamIndex==U.TeamIndex;});
+            if (!Team) { FOGTurnTeamState Added; Added.TeamIndex=U.TeamIndex; Team=&State.Teams.Add_GetRef(Added); }
+            FOGTurnSuccessionLane Lane; Lane.OrderedUnitIds={U.UnitEntityId}; Team->Lanes.Add(Lane);
+        }
         if (!Battle.Initialize(State,Error)) return false;
         Battle.RequireNativeActionExecutors(true);
         FOGCombatResourceSpecification Resource; Resource.ResourceId=WorldTestId(TEXT("resource"));
@@ -197,4 +203,53 @@ bool FOGSharedWorldCheckpointIntegrityTest::RunTest(const FString&)
     TestEqual(TEXT("Failed restore does not publish log events"),F.Battle.GetLog().GetNextSequence(),Sequence);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGWorldAcceptedTargetLockTest,
+    "OfflineGame.Combat.World.AcceptedTargetLockRejectsRetargetAndDuplicateContacts",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGWorldAcceptedTargetLockTest::RunTest(const FString&)
+{
+    FSharedWorldFixture F;
+    if (!F.Open(EOGWorldAbilityCostTiming::FirstContact,false,false,true)) { AddError(F.Error); return false; }
+    const auto Root=F.Root();
+    if (!F.Battle.BeginWorldAbility(Root,F.Error) || !F.Battle.AdvanceWorldCombatClock(100,F.Error)) return false;
+    const int64 Before=F.Battle.GetLog().GetNextSequence();
+    TestFalse(TEXT("Direct impact cannot replace the accepted selected target"),
+        F.Battle.ApplyWorldAbilityStep(Root.ActionId,0,{F.C},F.Error));
+    TestFalse(TEXT("Duplicate physical contacts cannot resolve the same repeat twice"),
+        F.Battle.ApplyWorldAbilityStep(Root.ActionId,0,{F.B,F.B},F.Error));
+    TestEqual(TEXT("Rejected impacts do not spend first-contact costs"),F.Energy(),int64(20));
+    TestEqual(TEXT("Rejected impacts append no canonical combat events"),F.Battle.GetLog().GetNextSequence(),Before);
+    FOGWorldAbilityCastView View;
+    TestTrue(TEXT("Rejected impacts leave the accepted step open"),
+        F.Battle.ReadWorldCast(Root.ActionId,View) && View.CompletedSteps==0);
+    if (!TestTrue(TEXT("The genuine selected contact still resolves"),
+        F.Battle.ApplyWorldAbilityStep(Root.ActionId,0,{F.B},F.Error))) return false;
+    TestEqual(TEXT("First accepted contact spends the source cost once"),F.Energy(),int64(0));
+    TestTrue(TEXT("Only the declared target receives the original packet"),
+        F.Battle.GetState().Units[1].CurrentHp==FOGLargeNumber::FromInt64(90) &&
+        F.Battle.GetState().Units[2].CurrentHp==FOGLargeNumber::FromInt64(100));
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGWorldFreeAimStableContactTest,
+    "OfflineGame.Combat.World.FreeAimContactSelectionIsStable",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGWorldFreeAimStableContactTest::RunTest(const FString&)
+{
+    FSharedWorldFixture F;
+    if (!F.Open(EOGWorldAbilityCostTiming::FirstContact,false,false,true)) { AddError(F.Error); return false; }
+    auto Root=F.Root(); Root.TargetUnitIds.Reset();
+    TArray<FOGEntityId> Forward,Reverse;
+    if (!F.Battle.FilterWorldContacts(Root,{F.B,F.C,F.B},Forward,F.Error) ||
+        !F.Battle.FilterWorldContacts(Root,{F.C,F.B},Reverse,F.Error)) return false;
+    TestTrue(TEXT("Physics enumeration and repeated overlaps cannot change the chosen target"),
+        Forward.Num()==1 && Forward==Reverse);
+    const FOGEntityId Expected=F.B.ToString()<F.C.ToString()?F.B:F.C;
+    TestTrue(TEXT("Free aim uses stable canonical contact order"),Forward.Num()==1 && Forward[0]==Expected);
+    if (!F.Battle.BeginWorldAbility(Root,F.Error) || !F.Battle.AdvanceWorldCombatClock(100,F.Error)) return false;
+    TestFalse(TEXT("A direct single-target impact cannot smuggle two targets"),
+        F.Battle.ApplyWorldAbilityStep(Root.ActionId,0,{F.B,F.C},F.Error));
+    TestTrue(TEXT("The filtered genuine contact resolves"),F.Battle.ApplyWorldAbilityStep(Root.ActionId,0,Forward,F.Error));
+    return true;
+}
+
 #endif
