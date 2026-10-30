@@ -389,4 +389,87 @@ bool FOGGachaD02NativeAdditiveProbabilityTest::RunTest(const FString&)
     return true;
 }
 
+namespace
+{
+struct FNativeGachaQuoteFixture
+{
+    FString Directory=MakeGachaTestDirectory(),Path=FPaths::Combine(Directory,TEXT("quote.db"));
+    FOGSQLiteWorldStore Store;
+    FOGEntityId Ruler=FOGEntityId::NewId();
+    FOGGachaBannerDefinition Banner=MakeSingleFeaturedTopBanner();
+    FString Error;
+    bool Open()
+    {
+        Banner.CompatibleTicketIds={FOGContentId(TEXT("test:ticket.first")),FOGContentId(TEXT("test:ticket.second"))};
+        FOGRulerGachaAccessRecord Access; Access.RulerId=Ruler; Access.bPermanentlyUnlocked=true;
+        Access.bHasUnlockedWorldTick=true;
+        return Store.Open(Path,Error) && Store.UpsertEntity(Ruler,TEXT("ruler"),0,TEXT("{}"),Error) &&
+            Store.UpsertRulerGachaAccess(Access,Error) && Store.SetResourceBalance(Ruler,Banner.CurrencyId,1000,Error) &&
+            Store.SetResourceBalance(Ruler,Banner.CompatibleTicketIds[0],3,Error) &&
+            Store.SetResourceBalance(Ruler,Banner.CompatibleTicketIds[1],2,Error);
+    }
+    int64 Balance(const FOGContentId& Resource)
+    { bool Found=false; int64 Amount=-1; Store.TryReadResourceBalance(Ruler,Resource,Found,Amount,Error); return Amount; }
+    ~FNativeGachaQuoteFixture() { Store.Close(); IFileManager::Get().DeleteDirectory(*Directory,false,true); }
+};
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGGachaReviewedPaymentTest,
+    "OfflineGame.Gacha.NativeReview.ExactPaymentReadOnlyAndReplay",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGGachaReviewedPaymentTest::RunTest(const FString&)
+{
+    FNativeGachaQuoteFixture F; if (!F.Open()) { AddError(F.Error); return false; }
+    FOGGachaService Service(F.Store); FOGGachaBatchPreview Quote,Later;
+    if (!Service.PreviewBatch(F.Banner,F.Ruler,10,6,Quote,F.Error)) { AddError(F.Error); return false; }
+    TestTrue(TEXT("Exact quote is confirmable"),Quote.bCanPull && !Quote.ConfirmationToken.IsEmpty());
+    TestTrue(TEXT("Original ticket order precedes currency"),
+        Quote.Payments.Num()==3 && Quote.Payments[0].Spend==3 && Quote.Payments[1].Spend==2 && Quote.Payments[2].Spend==100);
+    bool Found=false; FOGGachaStateRecord Pity;
+    TestTrue(TEXT("Review never writes an initial pity record"),
+        F.Store.TryReadGachaState(F.Ruler,F.Banner.PityCategory,Found,Pity,F.Error) && !Found);
+    TestEqual(TEXT("Review never charges"),F.Balance(F.Banner.CurrencyId),int64(1000));
+    TestTrue(TEXT("World clock progress alone does not invalidate payment confirmation"),
+        Service.PreviewBatch(F.Banner,F.Ruler,11,6,Later,F.Error) && Later.ConfirmationToken==Quote.ConfirmationToken);
+    TArray<FOGGachaPullResult> Results;
+    if (!TestTrue(TEXT("Reviewed payment commits real acquisition"),
+        Service.PullBatchReviewed(F.Banner,F.Ruler,11,123,6,Quote.ConfirmationToken,Results,F.Error))) return false;
+    TestEqual(TEXT("All actual results are retained"),Results.Num(),6);
+    TestEqual(TEXT("Currency pays only the remaining pull"),F.Balance(F.Banner.CurrencyId),int64(900));
+    TestEqual(TEXT("First tickets consumed"),F.Balance(F.Banner.CompatibleTicketIds[0]),int64(0));
+    TestEqual(TEXT("Second tickets consumed"),F.Balance(F.Banner.CompatibleTicketIds[1]),int64(0));
+    TestFalse(TEXT("Same reviewed command cannot purchase again after pity/account changes"),
+        Service.PullBatchReviewed(F.Banner,F.Ruler,12,123,6,Quote.ConfirmationToken,Results,F.Error));
+    TestEqual(TEXT("Replay never charges again"),F.Balance(F.Banner.CurrencyId),int64(900));
+    TArray<FOGCharacterManifestationRecord> Owned;
+    TestTrue(TEXT("Only the committed genuine copies remain owned"),
+        F.Store.ListCharacterManifestationsByOwnerAndIdentity(F.Ruler,F.Banner.Entries[0].IdentityId,Owned,F.Error) && Owned.Num()==6);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOGGachaReviewedStaleAndOuterTransactionTest,
+    "OfflineGame.Gacha.NativeReview.StaleDefinitionWalletAndTransactionOwnership",
+    EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FOGGachaReviewedStaleAndOuterTransactionTest::RunTest(const FString&)
+{
+    FNativeGachaQuoteFixture F; if (!F.Open()) { AddError(F.Error); return false; }
+    FOGGachaService Service(F.Store); FOGGachaBatchPreview Quote;
+    if (!Service.PreviewBatch(F.Banner,F.Ruler,1,1,Quote,F.Error)) return false;
+    TArray<FOGGachaPullResult> Results; auto Changed=F.Banner; ++Changed.Entries[0].Weight;
+    TestFalse(TEXT("Changed original pool weights invalidate confirmation"),
+        Service.PullBatchReviewed(Changed,F.Ruler,1,42,1,Quote.ConfirmationToken,Results,F.Error));
+    if (!F.Store.SetResourceBalance(F.Ruler,F.Banner.CompatibleTicketIds[0],4,F.Error)) return false;
+    TestFalse(TEXT("Changed displayed ticket balance invalidates confirmation"),
+        Service.PullBatchReviewed(F.Banner,F.Ruler,1,42,1,Quote.ConfirmationToken,Results,F.Error));
+    if (!Service.PreviewBatch(F.Banner,F.Ruler,1,1,Quote,F.Error) || !F.Store.BeginTransaction(F.Error)) return false;
+    FOGGachaBatchPreview Nested;
+    TestFalse(TEXT("A review cannot expose uncommitted outer writes"),
+        Service.PreviewBatch(F.Banner,F.Ruler,1,1,Nested,F.Error));
+    TestFalse(TEXT("A confirmed purchase cannot borrow another root transaction"),
+        Service.PullBatchReviewed(F.Banner,F.Ruler,1,42,1,Quote.ConfirmationToken,Results,F.Error));
+    TestTrue(TEXT("Rejection leaves the caller's outer transaction intact"),F.Store.IsWriteTransactionActive());
+    F.Store.RollbackTransaction(F.Error);
+    if (!Service.PreviewBatch(F.Banner,F.Ruler,1,10,Quote,F.Error)) return false;
+    TestFalse(TEXT("Missing authored SR floor disables ten-draw confirmation"),Quote.bCanPull);
+    return true;
+}
+
 #endif
