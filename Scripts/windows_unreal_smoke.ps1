@@ -7,10 +7,12 @@ $ErrorActionPreference = "Stop"
 
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $Project = Join-Path $Root "OfflineGame.uproject"
-$ReportDir = Join-Path $Root "Saved\Automation\Reports"
 $BuildConfigDir = Join-Path $Root "Saved\UnrealBuildTool"
 $BuildConfig = Join-Path $BuildConfigDir "BuildConfiguration.xml"
 $GateStamp = Join-Path $Root "Saved\Automation\last_unreal_gate.json"
+$RunLabel = [DateTime]::UtcNow.ToString("yyyyMMdd-HHmmss-fff")
+$ReportDir = Join-Path $Root ("Saved\Automation\Reports\" + $RunLabel)
+$HostScratch = Join-Path $Root "Saved\HostBuildScratch"
 
 function Invoke-Checked {
     param(
@@ -82,25 +84,26 @@ $EditorCmd = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 
 Write-Host "Using Unreal Engine: $EngineRoot" -ForegroundColor Green
 
-New-Item -ItemType Directory -Force -Path $BuildConfigDir | Out-Null
-
-$xml = @'
-<?xml version="1.0" encoding="utf-8"?>
-<Configuration xmlns="https://www.unrealengine.com/BuildConfiguration">
-  <BuildConfiguration>
-    <MaxParallelActions>1</MaxParallelActions>
-    <bUseUnityBuild>true</bUseUnityBuild>
-    <bAllowUBAExecutor>false</bAllowUBAExecutor>
-    <bAllowUBALocalExecutor>false</bAllowUBALocalExecutor>
-    <bCompactOutput>true</bCompactOutput>
-  </BuildConfiguration>
-</Configuration>
-'@
-
-$xml | Set-Content -Path $BuildConfig -Encoding UTF8
-
+# The former generated BuildConfiguration.xml contained invalid UE5.8 properties
+# and crashed UnrealBuildTool before game code compiled. Keep user-authored
+# config untouched; archive only the exact legacy script-generated variant.
+if (Test-Path $BuildConfig) {
+    $OldConfig = Get-Content -LiteralPath $BuildConfig -Raw
+    if ($OldConfig.Contains("<bUseUnityBuild>true</bUseUnityBuild>") -and
+        $OldConfig.Contains("<bAllowUBALocalExecutor>false</bAllowUBALocalExecutor>")) {
+        $Backup = Join-Path $Root ("Saved\Automation\LegacyBuildConfiguration-" + $RunLabel + ".xml")
+        New-Item -ItemType Directory -Force (Split-Path $Backup) | Out-Null
+        Move-Item -LiteralPath $BuildConfig -Destination $Backup
+    }
+}
+# All temporary files and newly generated DDC live alongside the worktree.
+# Place the worktree on D: for machines with a full C: system drive.
+New-Item -ItemType Directory -Force -Path $HostScratch | Out-Null
+$env:TEMP = $HostScratch
+$env:TMP = $HostScratch
+$env:UE_LocalDataCachePath = Join-Path $Root "Saved\DerivedData\Local"
+$env:UE_SharedDataCachePath = Join-Path $Root "Saved\DerivedData\Shared"
 New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
-Get-ChildItem -Path $ReportDir -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
 Remove-Item -Path $GateStamp -Force -ErrorAction SilentlyContinue
 
 Write-Host "=== Unreal project compile (Win64 Development Editor) ===" -ForegroundColor Cyan
@@ -111,7 +114,10 @@ $buildArgs = @(
     "Development",
     $Project,
     "-WaitMutex",
-    "-NoHotReloadFromIDE"
+    "-NoHotReloadFromIDE",
+    "-MaxParallelActions=1",
+    "-DisableUnity",
+    "-NoUBA"
 )
 
 Invoke-Checked -FilePath $BuildBat -Arguments $buildArgs
