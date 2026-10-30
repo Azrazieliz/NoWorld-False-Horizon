@@ -11,7 +11,7 @@
 namespace
 {
 bool FailFoundationWorldSimulation(FString& Error, const TCHAR* Message) { Error = Message; return false; }
-bool Parse(const FString& Text, TSharedPtr<FJsonObject>& Out, FString& Error)
+bool ParseFoundationWorldSimulation(const FString& Text, TSharedPtr<FJsonObject>& Out, FString& Error)
 {
     if (FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Out) && Out) return true;
     return FailFoundationWorldSimulation(Error, TEXT("World simulation requires canonical JSON objects."));
@@ -28,7 +28,7 @@ bool Matches(const FJsonObject& Json, const TMap<FName, FString>& Selector)
 bool ReadId(const FJsonObject& Json, const TCHAR* Field, FOGEntityId& Out)
 {
     FString Text; FGuid Guid;
-    if (!Json.TryGetStringField(Field, Text) || !FGuid::Parse(Text, Guid) || !Guid.IsValid()) return false;
+    if (!Json.TryGetStringField(Field, Text) || !FGuid::ParseFoundationWorldSimulation(Text, Guid) || !Guid.IsValid()) return false;
     Out = FOGEntityId(Guid); return true;
 }
 bool SamePresence(const FOGWorldPresenceRecord& A, const FOGWorldPresenceRecord& B)
@@ -95,7 +95,7 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
     bool Found = false;
     if (!Store.TryReadEntity(Entity, Found, State.EntityKind, State.EntityJson, State.EntityRevision, Error)) return false;
     TSharedPtr<FJsonObject> Json;
-    if (!Found || State.EntityKind != D.EntityKind || !Parse(State.EntityJson, Json, Error) ||
+    if (!Found || State.EntityKind != D.EntityKind || !ParseFoundationWorldSimulation(State.EntityJson, Json, Error) ||
         Json->HasField(TEXT("diagnosticFixture")))
         return FailFoundationWorldSimulation(Error, TEXT("World body must bind an existing entity of the definition's exact kind."));
     if (!FOGSharedWorldStateService(Store).TryReadPhysicalPresence(Entity, Found, State.Presence, Error)) return false;
@@ -134,13 +134,13 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
         return FailFoundationWorldSimulation(Error, TEXT("Canonical schedule selector must be an exact persisted schedule ID string."));
     if (ScheduleText.IsEmpty()) { Out = MoveTemp(State); return true; }
     FGuid Guid;
-    if (!FGuid::Parse(ScheduleText, Guid) || !Guid.IsValid())
+    if (!FGuid::ParseFoundationWorldSimulation(ScheduleText, Guid) || !Guid.IsValid())
         return FailFoundationWorldSimulation(Error, TEXT("Canonical schedule selector contains an invalid ID."));
     if (!Store.TryReadWorldDirectorSchedule(FOGEntityId(Guid), Found, State.Schedule, Error)) return false;
     if (!Found) return FailFoundationWorldSimulation(Error, TEXT("Canonical NPC schedule is not installed in the shared Director."));
     State.bHasSchedule = true;
     TSharedPtr<FJsonObject> Provenance;
-    if (!Parse(State.Schedule.DecisionProvenanceJson, Provenance, Error)) return false;
+    if (!ParseFoundationWorldSimulation(State.Schedule.DecisionProvenanceJson, Provenance, Error)) return false;
     FString Resolver, Definition, Context; FOGEntityId Subject;
     if (!Provenance->TryGetStringField(TEXT("resolver_key"), Resolver) || Resolver != ResolverKey().ToString() ||
         !Provenance->TryGetStringField(TEXT("definition_id"), Definition) || Definition != D.DefinitionId.ToString() ||
@@ -210,7 +210,7 @@ bool FOGFoundationWorldSimulationRuntime::Checkpoint(const UOGWorldSimulationDef
     if (bArrived && !D.ArrivalStateField.IsNone())
     {
         TSharedPtr<FJsonObject> State;
-        if (!Parse(Current.EntityJson, State, Error)) return false;
+        if (!ParseFoundationWorldSimulation(Current.EntityJson, State, Error)) return false;
         State->SetStringField(D.ArrivalStateField.ToString(), D.ArrivalStateValue);
         FString Text; FJsonSerializer::Serialize(State.ToSharedRef(), TJsonWriterFactory<>::Create(&Text));
         if (!Store.UpsertEntity(Current.EntityId, Current.EntityKind, Tick, Text, Error)) return false;
