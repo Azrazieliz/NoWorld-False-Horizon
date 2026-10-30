@@ -1,7 +1,8 @@
+#include "UI/OGGate12NativeRulerWidget.h"
 #include "UI/OGReactiveUiSubsystem.h"
 #include "UI/OGNativeUiStyle.h"
 #include "Misc/ScopeExit.h"
-#include "UI/OGGate12NativeRulerWidget.h"
+
 #include "Gacha/OGSharedGachaBannerDefinition.h"
 #include "Narrative/OGNarrativeSessionSubsystem.h"
 
