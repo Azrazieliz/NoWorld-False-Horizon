@@ -1183,12 +1183,17 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
         UBorder* AngularFrameBase = WidgetTree->ConstructWidget<UBorder>(
             UBorder::StaticClass());
         AngularFrameBase->SetBrushColor(RarityColors.Frame);
+        if (auto* Style=UOGReactiveUiSubsystem::Find(this)) Style->PreserveOriginal(AngularFrameBase);
         AngularFrameBase->SetPadding(FMargin(1.5f));
 
         UVerticalBox* CardBody = WidgetTree->ConstructWidget<UVerticalBox>(
             UVerticalBox::StaticClass());
         if (RarityColors.bKnown)
-            AddMessage(CardBody, Rarity.ToString(), 16, RarityColors.Badge);
+        {
+            AddMessage(CardBody,Rarity.ToString(),16,RarityColors.Badge);
+            if (auto* Style=UOGReactiveUiSubsystem::Find(this))
+                Style->PreserveOriginal(CardBody->GetChildAt(CardBody->GetChildrenCount()-1));
+        }
         const FOGGate12CharacterVisualEntry* Entry = Selected && VisualCatalog
             ? VisualCatalog->FindExact(Identity.IdentityId,
                 Selected->ActiveVersionId) : nullptr;

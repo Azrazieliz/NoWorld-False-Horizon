@@ -255,6 +255,7 @@ void UOGGate12NativeOpeningWidget::RefreshOpening(
     bHasRecovery = bRecoverable;
     bHasImport = bImportAvailable;
     bReducedMotion = bInReducedMotion;
+    if (auto* Style=UOGReactiveUiSubsystem::Find(this)) Style->SetReducedMotion(bReducedMotion);
     Page = CurrentPage;
     // Recovery remains available to inspect/import external backups even
     // before an account has created its first local world.

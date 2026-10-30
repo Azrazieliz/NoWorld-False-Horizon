@@ -3,6 +3,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "Components/Border.h"
 #include "Components/VerticalBox.h"
 #include "Misc/AutomationTest.h"
 #include "Engine/World.h"
@@ -76,11 +77,24 @@ bool FOGReactiveUiPreservesWidgetsAndSemanticColours::RunTest(const FString&)
     auto* Slot=Layout->AddChildToVerticalBox(Title);
     auto* Art=NewObject<UImage>(); const FLinearColor ArtColour(.91f,.85f,.82f,1); Art->SetColorAndOpacity(ArtColour);
     FOGReactiveUiTestAccess::Track(*Driver,Owner,Title); FOGReactiveUiTestAccess::Track(*Driver,Owner,Art);
+    auto* Imported=NewObject<UImage>(Owner,TEXT("Gate10GachaOrnamentNotControls")); Imported->SetColorAndOpacity(ArtColour);
+    FOGReactiveUiTestAccess::Track(*Driver,Owner,Imported);
+    auto* MRFrame=NewObject<UBorder>(); const FLinearColor MRBlack(.035f,.035f,.040f,1);
+    MRFrame->SetBrushColor(MRBlack); Driver->PreserveOriginal(MRFrame);
+    FOGReactiveUiTestAccess::Track(*Driver,Owner,MRFrame);
+    auto* MRBadge=NewObject<UTextBlock>(); const FLinearColor MRSilver(.77f,.80f,.86f,1);
+    MRBadge->SetColorAndOpacity(FSlateColor(MRSilver)); Driver->PreserveOriginal(MRBadge);
+    FOGReactiveUiTestAccess::Track(*Driver,Owner,MRBadge);
+    Driver->SetReducedMotion(true);
+    TestTrue(TEXT("Existing reduced-motion preference suppresses chrome movement"),Driver->IsMotionReduced()&&Driver->GetEffectPhase()==0);
     FOGReactiveUiPalette Palette; Palette.Accent=FLinearColor(.3f,.7f,.8f,1);
     FOGReactiveUiTestAccess::Apply(*Driver,Palette);
     TestTrue(TEXT("Accent changes in place"),Title->GetColorAndOpacity().GetSpecifiedColor().Equals(Palette.Accent));
     TestTrue(TEXT("Layout, child identity and slot stay intact"),Layout->GetChildAt(0)==Title && Title->Slot==Slot);
     TestTrue(TEXT("Original artwork pixels receive no automatic tint"),Art->GetColorAndOpacity().Equals(ArtColour));
+    TestTrue(TEXT("An imported image with ornament in its name retains source colours"),Imported->GetColorAndOpacity().Equals(ArtColour));
+    TestTrue(TEXT("Explicit MR semantic frame is preserved"),MRFrame->GetBrushColor().Equals(MRBlack));
+    TestTrue(TEXT("Explicit MR silver rarity badge is preserved"),MRBadge->GetColorAndOpacity().GetSpecifiedColor().Equals(MRSilver));
     const FLinearColor Warning(.88f,.57f,.43f,1); Title->SetColorAndOpacity(FSlateColor(Warning));
     Palette.Accent=FLinearColor(.8f,.6f,.4f,1); FOGReactiveUiTestAccess::Apply(*Driver,Palette);
     TestTrue(TEXT("A gameplay-owned warning colour wins over theme styling"),

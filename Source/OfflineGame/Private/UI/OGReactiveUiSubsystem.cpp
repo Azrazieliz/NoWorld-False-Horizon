@@ -14,6 +14,8 @@
 #include "Content/OGSystemBindingComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Runtime/OGPlayerProfileSettings.h"
+#include "Progression/OGRankService.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "Combat/OGTurnBattle.h"
@@ -141,6 +143,11 @@ bool UOGReactiveUiSubsystem::IsTickable() const
 void UOGReactiveUiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    FOGPlayerProfileSettings Profile; FString Error;
+    if (FOGPlayerProfileSettingsService::Load(FOGPlayerProfileSettingsService::DefaultProfilePath(),Profile,Error))
+        SetReducedMotion(Profile.bReducedMotion);
+    ProfileHandle=FOGPlayerProfileSettingsService::OnSettingsChanged().AddWeakLambda(this,
+        [this](const FOGPlayerProfileSettings& Changed){SetReducedMotion(Changed.bReducedMotion);});
     if (auto* Library=UOGDefinitionLibrary::Get())
         LibraryHandle=Library->OnDefinitionsChanged.AddUObject(this,&ThisClass::HandleDefinitions);
     SpawnHandle=GetWorld()->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this,&ThisClass::HandleActorSpawned));
@@ -161,6 +168,7 @@ void UOGReactiveUiSubsystem::Disconnect()
 void UOGReactiveUiSubsystem::Deinitialize()
 {
     Disconnect();
+    FOGPlayerProfileSettingsService::OnSettingsChanged().Remove(ProfileHandle);
     if (auto* Library=UOGDefinitionLibrary::Get()) Library->OnDefinitionsChanged.Remove(LibraryHandle);
     GetWorld()->RemoveOnActorSpawnedHandler(SpawnHandle);
     for (const auto& Pair:Bindings)
@@ -171,7 +179,7 @@ void UOGReactiveUiSubsystem::Deinitialize()
         if (M->K2_GetVectorParameterValue(B.Accent).Equals(B.LastAccent,.001f)) M->SetVectorParameterValue(B.Accent,B.OriginalAccent);
         if (FMath::IsNearlyEqual(M->K2_GetScalarParameterValue(B.Glow),B.LastGlow,.001f)) M->SetScalarParameterValue(B.Glow,B.OriginalGlow);
     }
-    Bindings.Reset(); Materials.Reset(); PendingTrees.Reset(); OnPaletteChanged.Clear();
+    Bindings.Reset(); Materials.Reset(); OriginalWidgets.Reset(); PendingTrees.Reset(); OnPaletteChanged.Clear();
     Super::Deinitialize();
 }
 void UOGReactiveUiSubsystem::Observe(UOGGameCoreSubsystem* NewCore,const FOGReactiveUiContext& Keys)
@@ -223,7 +231,13 @@ void UOGReactiveUiSubsystem::ReadProjection()
     TArray<FOGEntityClassRecord> Classes;
     if (!Store->ListEntityClasses(C.RulerId,Classes,Error)) { Fail(); return; }
     for (const auto& Entry:Classes) if (Entry.ClassId.IsValid()) C.RulerClasses.AddUnique(Entry.ClassId);
-    if (C.SubjectId.IsValid()&&C.SubjectId!=C.RulerId)
+    if (C.SubjectId==C.RulerId)
+    {
+        FOGResolvedRankProjection Rank;
+        if (!FOGRankService(*Store).ResolveEffectiveRank(C.RulerId,Found,Rank,Error)) { Fail(); return; }
+        if (Found) C.OwnedLevel=FMath::Max(0,Rank.Level);
+    }
+    else if (C.SubjectId.IsValid())
     {
         FOGCharacterManifestationRecord M;
         if (!Store->TryReadCharacterManifestation(C.SubjectId,Found,M,Error)) { Fail(); return; }
@@ -282,11 +296,11 @@ bool UOGReactiveUiSubsystem::BindMaterial(UMaterialInstanceDynamic* M,FName Acce
     B.LastAccent=Current.Accent; B.LastGlow=Current.Glow;
     Materials.Add(B); M->SetVectorParameterValue(Accent,Current.Accent); M->SetScalarParameterValue(Glow,Current.Glow); return true;
 }
-UOGReactiveUiSubsystem::ERole UOGReactiveUiSubsystem::Classify(UWidget* W,const FLinearColor& C)
+UOGReactiveUiSubsystem::ERole UOGReactiveUiSubsystem::Classify(UWidget* W,const FLinearColor& C) const
 {
     const FString Name=W->GetName();
-    if (C.A<.15f||Name.Contains(TEXT("Rarity"))||Name.Contains(TEXT("Badge"))) return ERole::Original;
-    if (Cast<UImage>(W)) return Name.Contains(TEXT("Chrome"))||Name.Contains(TEXT("Ornament"))?ERole::Ornament:ERole::Original;
+    if (OriginalWidgets.Contains(W)||C.A<.15f||Name.Contains(TEXT("Rarity"))||Name.Contains(TEXT("Badge"))) return ERole::Original;
+    if (Cast<UImage>(W)) return ERole::Original; // Imported artwork never opts in through a filename.
     if (Cast<UBorder>(W)||Cast<UButton>(W))
         return FMath::Max3(C.R,C.G,C.B)<.16f && FMath::Max3(C.R,C.G,C.B)-FMath::Min3(C.R,C.G,C.B)<.06f
             ? ERole::Surface:ERole::Original;
@@ -300,9 +314,16 @@ UOGReactiveUiSubsystem::ERole UOGReactiveUiSubsystem::Classify(UWidget* W,const 
     }
     return ERole::Original; // Semantic rarity, warning, HP and faction colours remain authored.
 }
+void UOGReactiveUiSubsystem::PreserveOriginal(UWidget* W)
+{
+    if (!W) return;
+    OriginalWidgets.Add(W);
+    if (auto* B=Bindings.Find(W))
+    { FLinearColor Now; if (ReadWidgetColor(W,Now)&&Now.Equals(B->Last,.001f)) WriteWidgetColor(W,B->Base); Bindings.Remove(W); }
+}
 void UOGReactiveUiSubsystem::Track(UUserWidget* Owner,UWidget* W)
 {
-    if (!W||!Owner) return;
+    if (!W||!Owner||OriginalWidgets.Contains(W)) return;
     if (Bindings.Contains(W)) return;
     FLinearColor Base; if (!ReadWidgetColor(W,Base)) return;
     FBinding B; B.Owner=Owner; B.Widget=W; B.Base=Base; B.Last=Base; B.Role=Classify(W,Base);
@@ -313,6 +334,7 @@ void UOGReactiveUiSubsystem::TrackTree(UUserWidget* Owner)
 {
     if (!Owner||Owner->GetWorld()!=GetWorld()||!Owner->GetRootWidget()) return;
     if (bApplying) { PendingTrees.Add(Owner); return; }
+    for (auto It=OriginalWidgets.CreateIterator();It;++It) if (!It->IsValid()) It.RemoveCurrent();
     TSet<UWidget*> Seen;
     TArray<UWidget*> Pending; Pending.Add(Owner->GetRootWidget());
     while (!Pending.IsEmpty())

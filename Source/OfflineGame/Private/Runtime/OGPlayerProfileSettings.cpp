@@ -571,7 +571,14 @@ bool FOGPlayerProfileSettingsService::Save(
         return false;
     }
 
+    if (FPaths::IsSamePath(ProfilePath,DefaultProfilePath())) OnSettingsChanged().Broadcast(Settings);
     return true;
+}
+
+FOGPlayerProfileSettingsChanged& FOGPlayerProfileSettingsService::OnSettingsChanged()
+{
+    static FOGPlayerProfileSettingsChanged Changed;
+    return Changed;
 }
 
 FString FOGPlayerProfileSettingsService::DefaultProfilePath()
