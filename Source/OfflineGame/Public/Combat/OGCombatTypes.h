@@ -155,9 +155,17 @@ struct OFFLINEGAME_API FOGCombatUnitState
         return FOGLargeNumber::Compare(CurrentHp, FOGLargeNumber()) > 0;
     }
 
-    bool CanAct() const
+    /** Ordinary target eligibility is independent of the source's permission
+     * to act. Action restrictions must never grant a living field unit immunity.
+     * Specialized dead-target/revival rules retain their own native gates. */
+    bool IsLivingFieldTarget() const
     {
         return Presence == EOGCombatPresence::Active && IsAlive();
+    }
+
+    bool CanAct() const
+    {
+        return IsLivingFieldTarget();
     }
 };
 

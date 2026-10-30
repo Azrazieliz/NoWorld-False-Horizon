@@ -398,6 +398,9 @@ private:
     TMap<FOGEntityId,int64> NativeOwnerActions;
     TMap<FString,int64> NativeAbilityReadyActions;
     const FOGNativeAbilityDefinition* FindNativeAbility(const FOGCombatUnitState& Source,const FOGContentId& Skill) const;
+    /** Shared living-target/allegiance rule; only a proven reserve reaction may target its own source. */
+    bool IsNativeAbilityTarget(const FOGResolvedCombatAction& Action,const FOGCombatUnitState& Source,
+        const FOGCombatUnitState& Target,const FOGNativeAbilityDefinition& Definition) const;
     bool ValidateNativeAbility(const FOGResolvedCombatAction& Action,const FOGCombatUnitState& Source,FString& Error) const;
     bool ExecuteNativeAbility(const FOGResolvedCombatAction& Action,FOGCombatUnitState& Source,FString& Error);
     bool ExpandNativeAbilityTargets(const FOGResolvedCombatAction& Original,FOGResolvedCombatAction& Expanded,

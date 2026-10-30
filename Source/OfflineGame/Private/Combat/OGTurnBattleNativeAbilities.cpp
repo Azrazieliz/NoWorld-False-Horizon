@@ -112,6 +112,19 @@ bool FOGTurnBattle::HasNativeActionExecutor(const FOGCombatUnitState& Source,con
     else if (IsNativeAbilityAuthorized(Source,Skill) && FindNativeAbility(Source,Skill)) return true;
     Error=TEXT("No real native executor is registered for this exact source Version and ability."); return false;
 }
+bool FOGTurnBattle::IsNativeAbilityTarget(const FOGResolvedCombatAction& Action,const FOGCombatUnitState& Source,
+    const FOGCombatUnitState& Target,const FOGNativeAbilityDefinition& Definition) const
+{
+    const bool SameUnit=Target.UnitEntityId==Source.UnitEntityId;
+    const bool ReserveSelf=SameUnit && Target.Presence==EOGCombatPresence::Reserve &&
+        Target.IsAlive() && AllowsNativeReactionSource(Source,Action);
+    if (!Target.IsLivingFieldTarget() && !ReserveSelf) return false;
+    if (Definition.Targets==EOGNativeAbilityTargets::Self) return SameUnit;
+    if (SameUnit && !Definition.bIncludeSelf) return false;
+    const bool Allies=Definition.Targets==EOGNativeAbilityTargets::SingleAlly ||
+        Definition.Targets==EOGNativeAbilityTargets::AllAllies;
+    return (Target.TeamIndex==Source.TeamIndex)==Allies;
+}
 bool FOGTurnBattle::ExpandNativeAbilityTargets(const FOGResolvedCombatAction& Original,FOGResolvedCombatAction& Expanded,
     bool& Handled,bool& Area,FString& Error) const
 {
@@ -123,11 +136,9 @@ bool FOGTurnBattle::ExpandNativeAbilityTargets(const FOGResolvedCombatAction& Or
     if (Definition->Targets==EOGNativeAbilityTargets::Self) { Expanded.TargetUnitIds={Source->UnitEntityId}; return true; }
     Area=Definition->Targets==EOGNativeAbilityTargets::AllEnemies || Definition->Targets==EOGNativeAbilityTargets::AllAllies;
     if (!Area) return true;
-    const bool Allies=Definition->Targets==EOGNativeAbilityTargets::AllAllies;
     Expanded.TargetUnitIds.Reset();
     for (const auto& Unit:State.Units)
-        if (Unit.CanAct() && ((Unit.TeamIndex==Source->TeamIndex)==Allies) &&
-            (Unit.UnitEntityId!=Source->UnitEntityId || Definition->bIncludeSelf))
+        if (Unit.IsLivingFieldTarget() && IsNativeAbilityTarget(Original,*Source,Unit,*Definition))
             Expanded.TargetUnitIds.Add(Unit.UnitEntityId);
     if (Expanded.TargetUnitIds.IsEmpty()) { Error=TEXT("No eligible active targets for this authored field ability."); return false; }
     if (!Original.TargetUnitIds.IsEmpty() && Expanded.TargetUnitIds.Contains(Original.TargetUnitIds[0]))
@@ -166,7 +177,6 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
         (Action.InterruptPriority!=0 && !HasNativeReactionProof(Source,Action.SkillId)))
     { Error=TEXT("Ordinary registered ability is not owned or cannot resolve an interrupt."); return false; }
     const bool Self=Definition->Targets==EOGNativeAbilityTargets::Self;
-    const bool Allies=Self || Definition->Targets==EOGNativeAbilityTargets::SingleAlly || Definition->Targets==EOGNativeAbilityTargets::AllAllies;
     const bool Single=Self || Definition->Targets==EOGNativeAbilityTargets::SingleAlly || Definition->Targets==EOGNativeAbilityTargets::SingleEnemy;
     const bool FreeAimStart=State.ExecutionMode==EOGCombatExecutionMode::World && WorldExecutionProof.IsSet() &&
         WorldExecutionProof.GetValue().ActionId==Action.ActionId && WorldExecutionProof.GetValue().SourceUnitId==Source.UnitEntityId &&
@@ -177,11 +187,7 @@ bool FOGTurnBattle::ValidateNativeAbility(const FOGResolvedCombatAction& Action,
     for (const auto& Id:Action.TargetUnitIds)
     {
         const auto* Target=FindUnit(Id);
-        const bool ReserveSelf=Target && Id==Source.UnitEntityId &&
-            AllowsNativeReactionSource(Source,Action) && Target->Presence==EOGCombatPresence::Reserve && Target->IsAlive();
-        if (!Target || (!Target->CanAct() && !ReserveSelf) || Seen.Contains(Id) || (Self && Id!=Source.UnitEntityId) ||
-            (!Self && ((Target->TeamIndex==Source.TeamIndex)!=Allies)) ||
-            (!Self && Id==Source.UnitEntityId && !Definition->bIncludeSelf))
+        if (!Target || Seen.Contains(Id) || !IsNativeAbilityTarget(Action,Source,*Target,*Definition))
         { Error=TEXT("Registered ability target is absent, off-field, duplicate or has the wrong allegiance."); return false; }
         Seen.Add(Id);
     }
@@ -236,7 +242,10 @@ bool FOGTurnBattle::ExecuteNativePacketSlices(const FOGResolvedCombatAction& Act
         for (int32 Hit=Slice.FirstRepeat;Hit<Slice.FirstRepeat+Slice.RepeatCount;++Hit)
         for (const auto& Id:Action.TargetUnitIds)
         {
-        auto* Target=FindMutableUnit(Id); if (!Target || (!Target->CanAct() && !(Id==Source.UnitEntityId && AllowsNativeReactionSource(Source,Action)))) continue;
+        // Revalidate each repeat after before-effects/earlier hits; a defeated
+        // or departed target cannot receive later ordinary damage/healing.
+        auto* Target=FindMutableUnit(Id);
+        if (!Target || !IsNativeAbilityTarget(Action,Source,*Target,*Definition)) continue;
         FOGCombatStats Attacker=GetNativeEffectiveStats(Source.UnitEntityId);
         int32 Attack=0,Speed=0,Healing=0,Reduction=0;
         GetApprovedDawnBlessingBps(Source.UnitEntityId,Attack,Speed,Healing,Reduction);

@@ -95,7 +95,7 @@ bool FOGTurnBattle::SelectNativeReactionTarget(const FOGQueuedTriggeredAction& Q
         const bool Allies=Selection==EOGNativeReactionTarget::LowestHealthAlly;
         TArray<const FOGCombatUnitState*> Targets;
         for (const auto& U:State.Units)
-            if (U.CanAct() && ((U.TeamIndex==Owner->TeamIndex)==Allies) &&
+            if (U.IsLivingFieldTarget() && ((U.TeamIndex==Owner->TeamIndex)==Allies) &&
                 (U.UnitEntityId!=Owner->UnitEntityId || Ability->bIncludeSelf)) Targets.Add(&U);
         Targets.Sort([Selection](const FOGCombatUnitState& A,const FOGCombatUnitState& B)
         {

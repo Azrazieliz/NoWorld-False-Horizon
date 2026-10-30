@@ -27,7 +27,7 @@ bool PickTargets(const FOGNativeTurnRule& Rule, const FOGCombatUnitState& Source
             (Unit.UnitEntityId == Source.UnitEntityId && !Rule.bIncludeSelf)) continue;
         if (Rule.Targets == EOGNativeTurnTarget::DefeatedAlly)
         { if (Unit.Presence != EOGCombatPresence::Defeated || Unit.IsAlive()) continue; }
-        else if (!Unit.CanAct()) continue;
+        else if (!Unit.IsLivingFieldTarget()) continue;
         if (!Unit.UnitEntityId.IsValid() || Unit.Stats.MaxHp.GetSign() <= 0) continue;
         Eligible.Add(&Unit);
     }
