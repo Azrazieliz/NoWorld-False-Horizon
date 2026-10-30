@@ -47,6 +47,7 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:
+    friend struct FOGNativeCombatExecutionTestAccess;
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
     FOGEntityId LastPresentedAction;
     FOGLargeNumber LastVisualHp;

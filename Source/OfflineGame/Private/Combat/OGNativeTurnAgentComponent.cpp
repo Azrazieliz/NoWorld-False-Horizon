@@ -2,8 +2,6 @@
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
 
-#include "Animation/OGSharedMotionControllerComponent.h"
-#include "Characters/OGCharacterAppearanceComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGNativeCombatAbility.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
@@ -13,13 +11,11 @@
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
-#include "World/OGStartingRegionPresentation.h"
 
 namespace
 {
@@ -55,14 +51,6 @@ bool ReadActualNpc(IOGWorldStore& Store, const UOGNativeTurnPolicy& Policy,
         Phase = FName(*SavedPhase);
     }
     return true;
-}
-
-UOGSharedMotionControllerComponent* ActualMotion(AActor* Actor)
-{
-    if (!Actor) return nullptr;
-    if (UOGCharacterAppearanceComponent* Appearance = Actor->FindComponentByClass<UOGCharacterAppearanceComponent>())
-        if (UOGSharedMotionControllerComponent* Motion = Appearance->GetMotionController()) return Motion;
-    return Actor->FindComponentByClass<UOGSharedMotionControllerComponent>();
 }
 }
 
@@ -151,6 +139,7 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
 
 void UOGNativeTurnAgentComponent::RetryDecision()
 {
+    StopAbilityApproach();
     bAutoBindingEnabled = true;
     FailedSequence = ObservedSequence = -1; FailedAbilityRevision=-1;
     ReadyAtSeconds = -1.0;
@@ -186,8 +175,7 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
     { Error = TEXT("No live authored opponent turn is bound."); return false; }
     const UOGPresentationModeSubsystem* Mode = GetWorld()->GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>();
     if (Mode && Mode->GetMode()!=EOGPresentationMode::World && Battle->GetState().ExecutionMode!=EOGCombatExecutionMode::World) return false;
-    const APawn* OwnerPawn = Cast<APawn>(GetOwner());
-    if (OwnerPawn && Cast<APlayerController>(OwnerPawn->GetController()))
+    if (ObserveHumanControl())
     { Error = TEXT("Human control replaced this opponent's AI control."); Status = Error; ReadyAtSeconds = -1.0; return false; }
     const bool WorldMode=Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World;
     const int32 Acting=WorldMode?Battle->GetState().Units.IndexOfByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;}):Battle->SelectNextActingUnitIndex();
@@ -199,6 +187,8 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
     FName Phase;
     if (!ReadCanonicalPhase(Battle->GetState().Units[Acting], Phase, Error))
     { FailedSequence = Sequence; FailedAbilityRevision=Battle->GetNativeAbilityRevision(); Status = Error; return false; }
+    if (Core->IsNativeEncounterAwaitingWorldRebind())
+    { Error=TEXT("Native encounter is reconnecting its actual bodies."); return false; }
     TSet<FName> RejectedRules;
     FString LastFailure;
     for (int32 Attempt = 0; Attempt < ActivePolicy->Rules.Num(); ++Attempt)
@@ -210,11 +200,13 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
         {
             const auto* Unit=&Battle->GetState().Units[Acting];
             const auto* Timing=Battle->FindWorldAbility(*Unit,Proposal.SkillId);
-            if (!Timing || Battle->GetState().WorldElapsedMilliseconds<Battle->GetWorldAbilityReadyAt(BoundUnitId,Proposal.SkillId)) continue;
+            if (!Timing || !Battle->CanBeginWorldAbility(Proposal,LastFailure)) continue;
             auto* Execution=GetOwner()->FindComponentByClass<UOGWorldAbilityExecutionComponent>();
             if (!Execution) { LastFailure=TEXT("Actual opponent has no World execution receiver."); continue; }
             AActor* Target=Proposal.TargetUnitIds.IsEmpty()?nullptr:UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
                 GetWorld(),BoundBattleId,Proposal.TargetUnitIds[0]);
+            if (!Proposal.TargetUnitIds.IsEmpty() && !Target)
+            { LastFailure=TEXT("Authored World target has no connected native body."); continue; }
             float Range=0;
             for (const auto& Step:Timing->Steps) if (Step.RangeCentimeters>0 && (Range==0 || Step.RangeCentimeters<Range)) Range=Step.RangeCentimeters;
             if (Target && Target!=GetOwner() && Range>0)
@@ -230,50 +222,35 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
                         if (!Pawn->GetController())
                         { Pawn->AIControllerClass=AAIController::StaticClass(); Pawn->SpawnDefaultController(); }
                         if (auto* AI=Cast<AAIController>(Pawn->GetController()))
+                        {
+                            if (ApproachController.Get()!=AI) StopAbilityApproach();
+                            ApproachController=AI;
                             AI->MoveToActor(Target,Blocked?0.f:Range,false,true,true,nullptr,true);
+                        }
                     }
                     Status=TEXT("Approaching the authored ability range."); return false;
                 }
-                if (auto* Pawn=Cast<APawn>(GetOwner())) if (auto* AI=Cast<AAIController>(Pawn->GetController())) AI->StopMovement();
+                StopAbilityApproach();
                 const auto Direction=Target->GetActorLocation()-GetOwner()->GetActorLocation();
                 if (!Direction.IsNearlyZero()) GetOwner()->SetActorRotation(FRotator(0,Direction.Rotation().Yaw,0));
             }
+            StopAbilityApproach();
             if (!Execution->BeginNativeAction(Proposal,true,LastFailure)) continue;
             Status.Reset(); ReadyAtSeconds=-1; return true;
         }
-        bool bArea = false;
-        if (!Battle->ExpandApprovedFieldTargets(Proposal, Action, bArea, LastFailure)) continue;
-        TMap<FOGEntityId, FOGLargeNumber> Before;
-        for (const FOGCombatUnitState& Unit : Battle->GetState().Units) Before.Add(Unit.UnitEntityId, Unit.CurrentHp);
-        if (!Core->ApplyOwnedLuminousTurnAction(Action, LastFailure)) continue;
-        Battle = Core->GetOwnedLuminousTurnBattle();
-        if (!Battle || Battle->GetState().BattleId != BoundBattleId) return true;
-        AActor* FirstTarget = nullptr;
-        APlayerController* Player = UGameplayStatics::GetPlayerController(this, 0);
-        AOGWorldPresentationHud* Hud = Player ? Cast<AOGWorldPresentationHud>(Player->GetHUD()) : nullptr;
-        for (const FOGCombatUnitState& Unit : Battle->GetState().Units)
-        {
-            AActor* Target = UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(), BoundBattleId, Unit.UnitEntityId);
-            if (Target && !FirstTarget && Action.TargetUnitIds.Contains(Unit.UnitEntityId)) FirstTarget = Target;
-            const FOGLargeNumber* OldHp = Before.Find(Unit.UnitEntityId);
-            if (!Target || !OldHp || FOGLargeNumber::Compare(*OldHp, Unit.CurrentHp) == 0) continue;
-            if (Hud) Hud->RegisterCanonicalCombatImpact(Target, *OldHp, Unit.CurrentHp);
-            if (UOGSharedMotionControllerComponent* Motion = ActualMotion(Target))
-            {
-                if (!Unit.IsAlive()) Motion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
-                else Motion->EnqueueCombatCue(FOGLargeNumber::Compare(Unit.CurrentHp,*OldHp)<0?
-                    FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),BoundBattleId,Action.ActionId,Unit.UnitEntityId);
-            }
-        }
-        if (FirstTarget && FirstTarget != GetOwner())
-        {
-            const FVector Delta = FirstTarget->GetActorLocation() - GetOwner()->GetActorLocation();
-            if (Delta.SizeSquared2D() > SMALL_NUMBER) GetOwner()->SetActorRotation(FRotator(0.f, Delta.Rotation().Yaw, 0.f));
-        }
+        if (!Battle->ValidateResolvedAction(Proposal,Action,LastFailure)) continue;
+        bool MissingBody=false;
+        for (const auto& Id:Action.TargetUnitIds)
+            if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id))
+            { MissingBody=true; break; }
+        if (MissingBody)
+        { LastFailure=TEXT("An authored turn target has no connected native body."); continue; }
+        if (!Core->ApplyOwnedLuminousTurnAction(Action,LastFailure)) continue;
         // The bound canonical body receives every accepted root/reaction action from GameCore.
         Status.Reset(); FailedSequence = -1; ReadyAtSeconds = -1.0;
         return true;
     }
+    StopAbilityApproach();
     FailedSequence = Battle->GetLog().GetNextSequence(); FailedAbilityRevision=Battle->GetNativeAbilityRevision();
     Error = LastFailure.IsEmpty() ? Error : LastFailure;
     const FString Failure=Error.IsEmpty()?TEXT("No approved opponent rule can execute in the current battle state."):Error;
@@ -291,10 +268,9 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     if (Mode && Mode->GetMode()!=EOGPresentationMode::World &&
         (!CurrentBattle || CurrentBattle->GetState().ExecutionMode!=EOGCombatExecutionMode::World))
     { ReadyAtSeconds=-1.0; return; }
-    const APawn* OwnerPawn = Cast<APawn>(GetOwner());
-    if (OwnerPawn && Cast<APlayerController>(OwnerPawn->GetController())) { ReadyAtSeconds = -1.0; return; }
+    if (ObserveHumanControl() || Core->IsNativeEncounterAwaitingWorldRebind()) { StopAbilityApproach(); ReadyAtSeconds=-1.0; return; }
     const FOGTurnBattle* Battle = Core->GetOwnedLuminousTurnBattle();
-    if (!Battle || Battle->GetState().Status != EOGTurnBattleStatus::Running) { ReadyAtSeconds = -1.0; return; }
+    if (!Battle || Battle->GetState().Status != EOGTurnBattleStatus::Running) { StopAbilityApproach(); ReadyAtSeconds = -1.0; return; }
     if (BoundBattleId != Battle->GetState().BattleId || !Body.IsValid() || !Body->IsBoundTo(BoundBattleId, BoundUnitId))
     {
         UOGCanonicalCombatActorBindingComponent* Existing = GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
@@ -311,12 +287,13 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     if (Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World)
     {
         const auto* Unit=Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==BoundUnitId;});
-        if (!Unit || !Unit->CanAct() || Battle->GetUnitWorldCast(BoundUnitId).IsValid()) { ReadyAtSeconds=-1; return; }
+        if (!Unit || !Unit->CanAct() || Battle->GetUnitWorldCast(BoundUnitId).IsValid()) { StopAbilityApproach(); ReadyAtSeconds=-1; return; }
         const double Now=GetWorld()->GetTimeSeconds();
         if (ReadyAtSeconds<0) ReadyAtSeconds=Now+ActivePolicy->DecisionDelaySeconds;
         if (Now<ReadyAtSeconds) return;
         FString Error; StepOwnTurn(Error); ReadyAtSeconds=Now+ActivePolicy->DecisionDelaySeconds; return;
     }
+    StopAbilityApproach();
     const int32 Acting = Battle->SelectNextActingUnitIndex();
     if (!Battle->GetState().Units.IsValidIndex(Acting) || Battle->GetState().Units[Acting].UnitEntityId != BoundUnitId)
     { ReadyAtSeconds = -1.0; return; }
@@ -330,9 +307,28 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     StepOwnTurn(Error);
 }
 
+void UOGNativeTurnAgentComponent::StopAbilityApproach()
+{
+    if (ApproachController.IsValid()) ApproachController->StopMovement();
+    ApproachController.Reset();
+}
+bool UOGNativeTurnAgentComponent::ObserveHumanControl()
+{
+    const auto* Pawn=Cast<APawn>(GetOwner());
+    AController* Controller=Pawn?Pawn->GetController():nullptr;
+    if (ObservedController.Get()!=Controller)
+    {
+        StopAbilityApproach();
+        ObservedController=Controller;
+        FailedSequence=ObservedSequence=-1; FailedAbilityRevision=-1; ReadyAtSeconds=-1.0;
+    }
+    return Cast<APlayerController>(Controller)!=nullptr;
+}
 void UOGNativeTurnAgentComponent::HandleRuntimeReleasing()
 {
+    const bool AutoReconnect=bAutoBindingEnabled;
     ReleaseBattleUnit();
+    bAutoBindingEnabled=AutoReconnect; // Persistent bodies reconnect after canonical runtime replacement.
 }
 
 void UOGNativeTurnAgentComponent::EndPlay(const EEndPlayReason::Type Reason)

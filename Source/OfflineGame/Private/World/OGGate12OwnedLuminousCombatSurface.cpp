@@ -175,6 +175,34 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         [&Controlled](const FOGCombatUnitState& Unit)
         { return Unit.UnitEntityId==Controlled; });
     if(!ActualOwned)return false;
+    // Completed-before-first-draw encounters still get the native touch results surface.
+    if (State.Status==EOGTurnBattleStatus::Running || State.Status==EOGTurnBattleStatus::Completed)
+    {
+        if (PlayerOwner)
+        {
+            bool Created=false;
+            if (!NativeBattleWidget)
+            {
+                NativeBattleWidget=CreateWidget<UOGNativeBattleWidget>(PlayerOwner,UOGNativeBattleWidget::StaticClass());
+                if (NativeBattleWidget) { NativeBattleWidget->AddToViewport(180); Created=true; }
+            }
+            if (NativeBattleWidget)
+            {
+                const bool WasHidden=!NativeBattleWidget->IsVisible();
+                NativeBattleWidget->BindCharacter(Character);
+                if (WasHidden && !Created) NativeBattleWidget->RefreshBattle();
+                if (NativeBattleWidget->IsVisible() && (Created || WasHidden))
+                {
+                    FInputModeGameAndUI Input;
+                    Input.SetHideCursorDuringCapture(false);
+                    Input.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+                    PlayerOwner->SetInputMode(Input);
+                }
+                DrawNativeCombatImpacts(Scale);
+                return State.Status==EOGTurnBattleStatus::Running || NativeBattleWidget->IsVisible();
+            }
+        }
+    }
     if (State.Status == EOGTurnBattleStatus::Completed)
     {
         const double Now=GetWorld()?GetWorld()->GetTimeSeconds():0.;
@@ -206,31 +234,6 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     }
     if (State.Status != EOGTurnBattleStatus::Running)
         return false;
-    if (PlayerOwner)
-    {
-        bool Created=false;
-        if (!NativeBattleWidget)
-        {
-            NativeBattleWidget=CreateWidget<UOGNativeBattleWidget>(PlayerOwner,UOGNativeBattleWidget::StaticClass());
-            if (NativeBattleWidget) { NativeBattleWidget->AddToViewport(180); Created=true; }
-        }
-        if (NativeBattleWidget)
-        {
-            const bool WasHidden=!NativeBattleWidget->IsVisible();
-            if (Created || WasHidden)
-            {
-                FInputModeGameAndUI Input;
-                Input.SetHideCursorDuringCapture(false);
-                Input.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-                PlayerOwner->SetInputMode(Input);
-            }
-            NativeBattleWidget->BindCharacter(Character);
-            if (WasHidden && !Created) NativeBattleWidget->RefreshBattle();
-            NativeBattleWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-            DrawNativeCombatImpacts(Scale);
-            return true;
-        }
-    }
     const int32 ActingIndex = Battle->SelectNextActingUnitIndex();
     if (!State.Units.IsValidIndex(ActingIndex))
         return false;
