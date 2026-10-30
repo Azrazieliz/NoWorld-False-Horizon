@@ -1,3 +1,4 @@
+#include "UI/OGReactiveUiSubsystem.h"
 #include "World/OGStartingRegionPresentation.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -60,15 +61,22 @@ void AOGWorldPresentationHud::DrawGamePolygon(const TArray<FVector2D>& Points, F
 
 void AOGWorldPresentationHud::DrawGamePanel(FLinearColor Fill, float X,float Y,float W,float H)
 {
+    const auto* Theme=UOGReactiveUiSubsystem::Find(this);
+    if (Theme&&FMath::Max3(Fill.R,Fill.G,Fill.B)<.16f&&FMath::Max3(Fill.R,Fill.G,Fill.B)-FMath::Min3(Fill.R,Fill.G,Fill.B)<.06f)
+    { const float Alpha=Fill.A; Fill=FMath::Lerp(Fill,Theme->GetPalette().Surface,.55f); Fill.A=Alpha; }
+
     const float C=FMath::Min(12.f, H*.18f);
     DrawGamePolygon({{X+C,Y},{X+W,Y},{X+W,Y+H-C},{X+W-C,Y+H},{X,Y+H},{X,Y+C}},Fill);
-    DrawLine(X+C,Y,X+W,Y,FLinearColor(.52f,.64f,.72f,.24f),1.f);
+    DrawLine(X+C,Y,X+W,Y,Theme?Theme->AccentFor(FLinearColor(.52f,.64f,.72f,.24f),.45f):FLinearColor(.52f,.64f,.72f,.24f),1.f);
     DrawLine(X,Y+H,X+W-C,Y+H,FLinearColor(0,0,0,.5f),2.f);
 }
 
 void AOGWorldPresentationHud::DrawGameText(const FString& Text,float X,float Y,float Height,
     FLinearColor Color,float MaxWidth)
 {
+    if (const auto* Theme=UOGReactiveUiSubsystem::Find(this))
+        if (Color.Equals(Gold,.008f)) Color=Theme->AccentFor(Color,.8f);
+
     UFont* Font=GEngine?GEngine->GetLargeFont():nullptr;
     if (!Font) return;
     const float S=Height/FMath::Max(1.f,Font->GetMaxCharHeight());
@@ -94,6 +102,9 @@ void AOGWorldPresentationHud::DrawGameText(const FString& Text,float X,float Y,f
 
 void AOGWorldPresentationHud::DrawGameIcon(FName Id,float X,float Y,float Size,FLinearColor Color)
 {
+    if (const auto* Theme=UOGReactiveUiSubsystem::Find(this))
+        if (Color.Equals(Gold,.008f)) Color=Theme->AccentFor(Color,.8f);
+
     const FString Name=Id.ToString().ToLower();
     const float R=Size*.43f,CX=X+Size*.5f,CY=Y+Size*.5f;
     const float T=FMath::Max(2.f,Size*.045f);
