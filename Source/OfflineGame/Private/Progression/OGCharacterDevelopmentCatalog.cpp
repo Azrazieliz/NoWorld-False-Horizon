@@ -35,9 +35,9 @@ bool Fields(const FObject& Object, std::initializer_list<const TCHAR*> Allowed,
     {
         bool bAllowed = false;
         for (const TCHAR* Key : Allowed)
-            bAllowed |= Pair.Key.Equals(Key, ESearchCase::CaseSensitive);
+            bAllowed |= FString(*Pair.Key).Equals(Key, ESearchCase::CaseSensitive);
         if (!bAllowed)
-            return Fail(Error, Path + TEXT(".") + Pair.Key, TEXT("unknown field"));
+            return Fail(Error, Path + TEXT(".") + FString(*Pair.Key), TEXT("unknown field"));
     }
     return true;
 }
@@ -343,8 +343,8 @@ bool ReadOffer(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
             return false;
         for (const auto& Pair : Stats->Values)
         {
-            const FString At = Path + TEXT(".stat_grants.") + Pair.Key;
-            if (!StatKey(Pair.Key))
+            const FString At = Path + TEXT(".stat_grants.") + FString(*Pair.Key);
+            if (!StatKey(FString(*Pair.Key)))
                 return Fail(Error, At, TEXT("unknown or incorrectly cased stat key"));
             FObject Number;
             FString Significand;
