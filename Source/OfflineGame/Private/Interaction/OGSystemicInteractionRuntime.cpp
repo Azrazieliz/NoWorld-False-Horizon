@@ -994,7 +994,7 @@ bool FOGInteractionActionNode::ResolveAnimationBinding(const FOGInteractionParti
         Participant.Binding.Character.ManifestationId;
     for (const auto& Binding:AnimationBindings)
     {
-        const bool Shared=!Binding.SharedGameplayAction.IsNone() || !Binding.SharedSceneRole.IsNone();
+        const bool Shared=!Binding.SharedGameplayAction.IsNone() || !Binding.SharedSceneRole.IsNone() || !Binding.ExpressionTracks.IsEmpty();
         if (Binding.Role!=Participant.Binding.Role ||
             (Binding.RigFamilyId.IsValid()?Binding.RigFamilyId!=Participant.Binding.RigFamilyId:!Shared) ||
             (Binding.ManifestationId.IsValid() && Binding.ManifestationId!=Manifestation) ||

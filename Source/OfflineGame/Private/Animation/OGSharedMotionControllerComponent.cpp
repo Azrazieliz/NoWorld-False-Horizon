@@ -84,7 +84,7 @@ bool UOGSharedMotionControllerComponent::ResolveForPart(
     FName Action, FName Context, bool bAuthorizedAdult,
     int32 ParticipantCount, FName ParticipantRole,
     UAnimSequence*& OutSequence, const FOGSharedMotionEntry*& OutEntry,
-    FName RequiredSourceClip) const
+    FName RequiredSourceClip, TOptional<bool> RootPolicy) const
 {
     OutSequence = nullptr;
     OutEntry = nullptr;
@@ -105,7 +105,7 @@ bool UOGSharedMotionControllerComponent::ResolveForPart(
     }
     return OutSequence && OutEntry && OutSequence->GetSkeleton() &&
         (!OutEntry->bUsesRootMotion ||
-            (bPermitAuthoritativeRootMotion && GetOwner() &&
+            (RootPolicy.Get(bPermitAuthoritativeRootMotion) && GetOwner() &&
              GetOwner()->HasAuthority() && Cast<ACharacter>(GetOwner())));
 }
 
@@ -119,7 +119,7 @@ bool UOGSharedMotionControllerComponent::CanPlayAction(
 
 bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
-    int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip) const
+    int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy) const
 {
     if (RigProfile.IsNone() || GameplayAction.IsNone() || Context.IsNone() ||
         RegisteredParts.IsEmpty() || ParticipantCount < 1)
@@ -141,7 +141,7 @@ bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
         UAnimSequence* Clip = nullptr;
         const FOGSharedMotionEntry* Entry = nullptr;
         if (!ResolveForPart(Library, Part, GameplayAction, Context,
-            bAdultContextAuthorized, ParticipantCount, ParticipantRole, Clip, Entry, RequiredSourceClip))
+            bAdultContextAuthorized, ParticipantCount, ParticipantRole, Clip, Entry, RequiredSourceClip, RootPolicy))
             return false;
         if (!SourceId.IsNone() &&
             (SourceId != Entry->SourceClipId || bInitialLoop != Entry->bLoop))
@@ -162,6 +162,24 @@ bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
         ++ValidCount;
     }
     return ValidCount == RegisteredParts.Num();
+}
+
+bool UOGSharedMotionControllerComponent::PreviewStagedSource(FName Action,FName Context,
+    bool Authorized,int32 Count,FName Role,FName& OutSource,FName& OutScene) const
+{
+    OutSource=NAME_None; OutScene=NAME_None;
+    if (!CanPlayResolvedAction(Action,Context,Authorized,Count,Role,NAME_None,TOptional<bool>(false))) return false;
+    FOGSharedMotionEntry Shared;
+    TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Source;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString Error;
+    if (FindReference(Action,Context,Count,Role,Shared,Source,Mapping,Error))
+    { OutSource=Shared.SourceClipId; OutScene=Shared.AuthoredSceneId; return !OutSource.IsNone(); }
+    const UOGSharedMotionLibrary* Library=SharedLibrary.IsNull()?nullptr:SharedLibrary.LoadSynchronous();
+    if (!Library) Library=FOGSharedMotionResolver::GetInstalledLibrary();
+    UAnimSequence* Sequence=nullptr; const FOGSharedMotionEntry* Entry=nullptr;
+    if (!ResolveForPart(Library,RegisteredParts[0],Action,Context,Authorized,Count,Role,
+        Sequence,Entry,NAME_None,TOptional<bool>(false))) return false;
+    OutSource=Entry->SourceClipId; OutScene=Entry->AuthoredSceneId; return !OutSource.IsNone();
 }
 
 bool UOGSharedMotionControllerComponent::PreviewSourceClipId(

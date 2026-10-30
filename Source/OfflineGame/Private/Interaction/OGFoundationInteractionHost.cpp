@@ -846,9 +846,12 @@ bool UOGFoundationInteractionHost::PrepareActionPresentation(const FOGInteractio
             { Error=TEXT("An original synchronized role is missing its source track or placement."); return false; }
             FOGSharedMotionParticipant Role; Role.Controller=Motion; Role.SourceRole=Binding->SharedSceneRole; SceneRoles.Add(Role);
         }
-        else if (Node.SharedSceneAction.IsNone() && !Binding->SharedGameplayAction.IsNone() &&
-            !Motion->CanPlayAction(Binding->SharedGameplayAction,Binding->SharedGameplayContext,false,1))
-        { Error=TEXT("The declared original body motion is unavailable for the actual rig."); return false; }
+        else if (Node.SharedSceneAction.IsNone() && !Binding->SharedGameplayAction.IsNone())
+        {
+            FName Source,Scene;
+            if (!Motion->PreviewStagedSource(Binding->SharedGameplayAction,Binding->SharedGameplayContext,false,1,NAME_None,Source,Scene))
+            { Error=TEXT("The declared original body motion is unavailable for the staged rig policy."); return false; }
+        }
     }
     if (!Node.SharedSceneAction.IsNone())
     {
@@ -856,7 +859,7 @@ bool UOGFoundationInteractionHost::PrepareActionPresentation(const FOGInteractio
         { Error=TEXT("The source scene lacks one or more actual participant roles."); return false; }
         TStrongObjectPtr<UOGSharedMotionSceneComponent> Candidate(NewObject<UOGSharedMotionSceneComponent>(GetOwner()));
         Candidate->Participants=MoveTemp(SceneRoles);
-        if (!Candidate->CanStartSynchronizedScene(Node.SharedSceneAction,Node.SharedSceneContext,false,Error)) return false;
+        if (!Candidate->CanStartSynchronizedScene(Node.SharedSceneAction,Node.SharedSceneContext,false,Error,true)) return false;
     }
     return true;
 }

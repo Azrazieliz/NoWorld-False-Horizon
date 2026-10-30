@@ -7,7 +7,7 @@ UOGSharedMotionSceneComponent::UOGSharedMotionSceneComponent()
     PrimaryComponentTick.bCanEverTick=true; PrimaryComponentTick.bStartWithTickEnabled=false;
 }
 bool UOGSharedMotionSceneComponent::PrepareScene(FName Action,FName Context,bool Authorized,
-    TArray<UOGSharedMotionControllerComponent*>& Ready,FString& Error) const
+    TArray<UOGSharedMotionControllerComponent*>& Ready,FString& Error,bool Staged) const
 {
     Ready.Reset(); Error.Reset(); const int32 Count=Participants.Num();
     if (!GetWorld() || Action.IsNone() || Context.IsNone() || Count<2)
@@ -20,17 +20,19 @@ bool UOGSharedMotionSceneComponent::PrepareScene(FName Action,FName Context,bool
             Controllers.Contains(Controller) || Roles.Contains(Role))
         { Error=TEXT("Shared scene roles require distinct actual controllers and source roles in this World."); return false; }
         Controllers.Add(Controller); Roles.Add(Role); FName Source,Scene;
-        if (!Controller->CanPlayAction(Action,Context,Authorized,Count,Role) ||
-            !Controller->PreviewSourceClipId(Action,Context,Authorized,Count,Role,Source) || Source.IsNone() ||
-            !Controller->PreviewAuthoredSceneId(Action,Context,Authorized,Count,Role,Scene) || Scene.IsNone() ||
-            (!SceneId.IsNone() && SceneId!=Scene))
+        const bool Compatible=Staged
+            ? Controller->PreviewStagedSource(Action,Context,Authorized,Count,Role,Source,Scene)
+            : (Controller->CanPlayAction(Action,Context,Authorized,Count,Role) &&
+                Controller->PreviewSourceClipId(Action,Context,Authorized,Count,Role,Source) &&
+                Controller->PreviewAuthoredSceneId(Action,Context,Authorized,Count,Role,Scene));
+        if (!Compatible || Source.IsNone() || Scene.IsNone() || (!SceneId.IsNone() && SceneId!=Scene))
         { Error=TEXT("An original scene track is missing or incompatible with the actual role/rig."); return false; }
         SceneId=Scene; Ready.Add(Controller);
     }
     return true;
 }
-bool UOGSharedMotionSceneComponent::CanStartSynchronizedScene(FName Action,FName Context,bool Authorized,FString& Error) const
-{ TArray<UOGSharedMotionControllerComponent*> Ready; return PrepareScene(Action,Context,Authorized,Ready,Error); }
+bool UOGSharedMotionSceneComponent::CanStartSynchronizedScene(FName Action,FName Context,bool Authorized,FString& Error,bool Staged) const
+{ TArray<UOGSharedMotionControllerComponent*> Ready; return PrepareScene(Action,Context,Authorized,Ready,Error,Staged); }
 bool UOGSharedMotionSceneComponent::StartSynchronizedScene(FName Action,FName Context,bool Authorized)
 {
     TArray<UOGSharedMotionControllerComponent*> Ready;
@@ -46,6 +48,8 @@ bool UOGSharedMotionSceneComponent::StartSynchronizedScene(FName Action,FName Co
         }
         Controller->SynchronizeToWorldTime(Start);
         ActiveControllers.Add(Controller); ActiveGenerations.Add(Controller,Controller->GetPlaybackGeneration());
+        ActiveSources.Add(Controller,Controller->CurrentMotionId);
+        Controller->OnNativeMotionFinished.AddUObject(this,&ThisClass::HandleSourceFinished);
     }
     Status.Reset(); bScenePlaying=true; SetComponentTickEnabled(true); return true;
 }
@@ -53,10 +57,23 @@ void UOGSharedMotionSceneComponent::StopSynchronizedScene()
 {
     for (const auto& Ref:ActiveControllers)
         if (auto* Controller=Ref.Get())
-            if (const auto* Generation=ActiveGenerations.Find(Ref); Generation && Controller->GetPlaybackGeneration()==*Generation)
+        {
+            Controller->OnNativeMotionFinished.RemoveAll(this);
+            if (const auto* Generation=ActiveGenerations.Find(Ref); Generation &&
+                Controller->GetPlaybackGeneration()==*Generation && Controller->IsPlayingAction())
                 Controller->StopAction();
-    ActiveControllers.Reset(); ActiveGenerations.Reset(); ActiveSceneAction=NAME_None;
-    bScenePlaying=false; SetComponentTickEnabled(false);
+        }
+    ActiveControllers.Reset(); ActiveGenerations.Reset(); ActiveSources.Reset(); FinishedControllers.Reset();
+    ActiveSceneAction=NAME_None; bScenePlaying=false; SetComponentTickEnabled(false);
+}
+void UOGSharedMotionSceneComponent::HandleSourceFinished(UOGSharedMotionControllerComponent* Controller,FName Action,FName Source)
+{
+    if (!bScenePlaying || !Controller || Action!=ActiveSceneAction) return;
+    const auto* Generation=ActiveGenerations.Find(Controller); const auto* ExpectedSource=ActiveSources.Find(Controller);
+    if (!Generation || !ExpectedSource || *ExpectedSource!=Source || Controller->IsPlayingAction() ||
+        Controller->GetPlaybackGeneration()!=*Generation+1) return;
+    // Genuine shorter source tracks may finish while the other roles continue.
+    FinishedControllers.Add(Controller); ActiveGenerations.Add(Controller,Controller->GetPlaybackGeneration());
 }
 void UOGSharedMotionSceneComponent::TickComponent(float Delta,ELevelTick Tick,FActorComponentTickFunction* Function)
 {
@@ -64,9 +81,11 @@ void UOGSharedMotionSceneComponent::TickComponent(float Delta,ELevelTick Tick,FA
     for (const auto& Ref:ActiveControllers)
     {
         auto* Controller=Ref.Get(); const auto* Generation=ActiveGenerations.Find(Ref);
-        if (!Controller || !Generation || !Controller->IsPlayingAction() || Controller->GetPlaybackGeneration()!=*Generation)
+        if (!Controller || !Generation || Controller->GetPlaybackGeneration()!=*Generation ||
+            (FinishedControllers.Contains(Ref)?Controller->IsPlayingAction():!Controller->IsPlayingAction()))
         { StopSynchronizedScene(); return; }
     }
+    if (FinishedControllers.Num()==ActiveControllers.Num()) StopSynchronizedScene();
 }
 void UOGSharedMotionSceneComponent::EndPlay(const EEndPlayReason::Type Reason)
 { StopSynchronizedScene(); Super::EndPlay(Reason); }
