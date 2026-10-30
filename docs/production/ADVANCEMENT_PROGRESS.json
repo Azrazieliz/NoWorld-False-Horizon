@@ -688,7 +688,8 @@
         "Finish native compilation and execute Android packaging and source file lookup",
         "Verify all five accepted 2D artworks in actual owned roster and character details on device",
         "Complete genuine approved live 3D meshes, full playable interactions and UI acceptance"
-      ]
+      ],
+      "source_commit": "4a6c0e6b24d31e52e6370f8fb6f9e2183cf05f02"
     },
     {
       "id": "G12-0804",
