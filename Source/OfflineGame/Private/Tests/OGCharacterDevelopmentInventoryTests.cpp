@@ -1,4 +1,5 @@
 #include "Progression/OGCharacterDevelopmentService.h"
+#include "UObject/Package.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Content/OGDefinitionLibrary.h"
