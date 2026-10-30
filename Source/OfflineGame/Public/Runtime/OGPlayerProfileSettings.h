@@ -62,9 +62,13 @@ struct OFFLINEGAME_API FOGPlayerProfileSettings
     FString CharacterPresentationPreferencesJson = TEXT("{}");
 };
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOGPlayerProfileSettingsChanged,const FOGPlayerProfileSettings&);
+
 class OFFLINEGAME_API FOGPlayerProfileSettingsService
 {
 public:
+    /** Successful saves of the runtime profile notify existing presentation without a restart. */
+    static FOGPlayerProfileSettingsChanged& OnSettingsChanged();
     static bool Load(
         const FString& ProfilePath,
         FOGPlayerProfileSettings& OutSettings,

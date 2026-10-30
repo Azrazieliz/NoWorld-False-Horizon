@@ -1,4 +1,5 @@
 #include "UI/OGReactiveUiSubsystem.h"
+#include "UI/OGNativeUiStyle.h"
 #include "Misc/ScopeExit.h"
 #include "UI/OGNativeBattleWidget.h"
 #include "World/OGStartingRegionPresentation.h"
@@ -57,7 +58,7 @@ void UOGNativeBattleWidget::NativeConstruct()
         auto* Frame=WidgetTree->ConstructWidget<UBorder>();
         Frame->SetBrushColor(FLinearColor(.011f,.008f,.024f,.94f));
         Frame->SetPadding(FMargin(16,12)); Frame->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-        Out=Canvas->AddChildToCanvas(Frame); Out->SetAnchors(FAnchors(.02f,Top,.98f,Bottom));
+        Out=Canvas->AddChildToCanvas(FOGNativeUiStyle::Surface(*WidgetTree,Frame)); Out->SetAnchors(FAnchors(.02f,Top,.98f,Bottom));
         Out->SetOffsets(FMargin(0)); return Frame;
     };
     UCanvasPanelSlot* HeaderSlot=nullptr; auto* Header=Panel(.02f,.25f,HeaderSlot);
@@ -90,7 +91,9 @@ void UOGNativeBattleWidget::AddButton(UPanelWidget* Parent,const FString& Label,
     Button->Screen=this; Button->Command=Command; Button->TargetIndex=TargetIndex;
     Button->SetIsFocusable(false); Button->SetIsEnabled(Enabled); Button->SetToolTipText(FText::FromString(Hint));
     Button->SetBackgroundColor(Selected?FLinearColor(.26f,.17f,.31f,1):FLinearColor(.07f,.045f,.105f,1));
-    Button->OnClicked.AddDynamic(Button,&UOGNativeBattleButton::Invoke); Bounds->AddChild(Button);
+    Button->OnClicked.AddDynamic(Button,&UOGNativeBattleButton::Invoke);
+    FOGNativeUiStyle::SkinButton(*Button);
+    Bounds->AddChild(FOGNativeUiStyle::Surface(*WidgetTree,Button,Selected?EOGNativeSurface::PrimaryAction:EOGNativeSurface::Action,Selected));
     auto* Text=WidgetTree->ConstructWidget<UTextBlock>(); Text->SetFont(BattleFont(17));
     Text->SetAutoWrapText(true); Text->SetText(FText::FromString(Label));
     Text->SetColorAndOpacity(Selected?Gold:Enabled?Pale:FLinearColor(.49f,.47f,.53f,1));

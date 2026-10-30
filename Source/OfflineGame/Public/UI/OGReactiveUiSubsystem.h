@@ -92,6 +92,8 @@ public:
     virtual bool IsTickable() const override;
     static UOGReactiveUiSubsystem* Find(const UObject* Context);
     void TrackTree(UUserWidget* Owner);
+    /** Explicit semantic ownership: rarity, warning, team and artwork colours are never themed. */
+    void PreserveOriginal(UWidget* Widget);
     void UntrackTree(UUserWidget* Owner);
     const FOGReactiveUiPalette& GetPalette() const { return Current; }
     const FOGReactiveUiContext& GetContext() const { return Context; }
@@ -127,10 +129,11 @@ private:
     };
     TMap<TWeakObjectPtr<UWidget>,FBinding> Bindings;
     TArray<FMaterialBinding> Materials;
+    TSet<TWeakObjectPtr<UWidget>> OriginalWidgets;
     TSet<TWeakObjectPtr<UUserWidget>> PendingTrees;
     TWeakObjectPtr<UOGGameCoreSubsystem> Core;
     TSharedPtr<FOGWorldStoreCommittedEvents> RulerFeed,SubjectFeed,WorldBodyFeed,LocationFeed;
-    FDelegateHandle RulerHandle,SubjectHandle,BodyHandle,LocationHandle,ReleaseHandle,ActionHandle,BattleHandle,LibraryHandle,SpawnHandle;
+    FDelegateHandle RulerHandle,SubjectHandle,BodyHandle,LocationHandle,ReleaseHandle,ActionHandle,BattleHandle,LibraryHandle,SpawnHandle,ProfileHandle;
     TWeakObjectPtr<ULightComponent> EnvironmentLight;
     FOGReactiveUiContext Context;
     FOGReactiveUiPalette Current,Target;
@@ -153,5 +156,5 @@ private:
     void Apply();
     void Track(UUserWidget*,UWidget*);
     FLinearColor Resolve(const FBinding&) const;
-    static ERole Classify(UWidget*,const FLinearColor&);
+    ERole Classify(UWidget*,const FLinearColor&) const;
 };

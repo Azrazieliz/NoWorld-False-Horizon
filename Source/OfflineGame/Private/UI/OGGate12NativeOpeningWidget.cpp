@@ -255,6 +255,7 @@ void UOGGate12NativeOpeningWidget::RefreshOpening(
     bHasRecovery = bRecoverable;
     bHasImport = bImportAvailable;
     bReducedMotion = bInReducedMotion;
+    if (auto* Style=UOGReactiveUiSubsystem::Find(this)) Style->SetReducedMotion(bReducedMotion);
     Page = CurrentPage;
     // Recovery remains available to inspect/import external backups even
     // before an account has created its first local world.
@@ -311,6 +312,7 @@ void UOGGate12NativeOpeningWidget::AddAction(
     UOGGate12GothicChromeWidget* LiveFrame =
         WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
             UOGGate12GothicChromeWidget::StaticClass());
+    LiveFrame->SetSurface(bPrimary?EOGNativeSurface::PrimaryAction:EOGNativeSurface::Action,false);
     LiveFrame->Configure(!bEnabled
         ? FLinearColor(.24f,.23f,.27f,1.f)
         : bPrimary
