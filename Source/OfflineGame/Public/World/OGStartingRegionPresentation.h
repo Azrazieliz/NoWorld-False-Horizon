@@ -1060,6 +1060,7 @@ public:
     const FOGGachaBannerDefinition& GetActiveGachaBanner() const { return ActiveGachaBanner; }
     const TArray<FOGGachaPullResult>& GetLastGachaResults() const { return LastGachaResults; }
     bool ExecuteActiveGachaDraw(int32 Count, FString& OutError);
+    bool ExecuteReviewedGachaDraw(int32 Count,const FString& ConfirmationToken,FString& OutError);
     bool LoadInstalledGachaBannerForRuler(FString& OutError);
     bool ListInstalledGachaBanners(TArray<FOGGachaBannerDefinition>& Out,FString& Error) const;
     bool SelectInstalledGachaBanner(const FOGContentId& BannerId,FString& Error);
@@ -1193,6 +1194,7 @@ private:
     bool bPendingImportedBackupRestore = false;
     int32 ExpandedTargetStatusIndex = INDEX_NONE;
     TArray<FOGPackageStorageEntryViewModel> CachedPackageEntries;
+    bool bReviewedGachaDrawInFlight = false;
     bool bHasActiveGachaPresentation = false;
     FOGGachaBannerDefinition ActiveGachaBanner;
     TArray<FOGGachaPullResult> LastGachaResults;

@@ -1,4 +1,5 @@
 #include "UI/OGReactiveUiSubsystem.h"
+#include "UI/OGNativeUiStyle.h"
 #include "Misc/ScopeExit.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "Gacha/OGSharedGachaBannerDefinition.h"
@@ -148,6 +149,7 @@ void UOGGate12NativeRulerWidget::NativeConstruct()
             ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
     {
         Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(this,&UOGGate12NativeRulerWidget::ResetGachaUi);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
             this, &UOGGate12NativeRulerWidget::ResetCharacterDevelopment);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
@@ -160,6 +162,7 @@ void UOGGate12NativeRulerWidget::NativeConstruct()
 
 void UOGGate12NativeRulerWidget::NativeDestruct()
 {
+    ResetGachaUi();
     ResetNarrativePage();
     ResetInventoryUi();
     ResetCharacterDevelopment();
@@ -174,7 +177,7 @@ void UOGGate12NativeRulerWidget::NativeTick(
     const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
-    if (!Gate10FigmaGachaChrome) return;
+    SynchronizeGachaUi();
     const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
@@ -184,6 +187,12 @@ void UOGGate12NativeRulerWidget::NativeTick(
     if (bNarrativeContextChanged) ResetNarrativePage();
     if (SynchronizeDevelopmentContext(Session) || bInventoryContextChanged || bNarrativeContextChanged)
         BuildCurrentPage();
+    if (RosterGrid&&Content&&Session&&Session->CurrentDestination==EOGRulerPrimaryDestination::Characters&&OpenIdentityIndex==INDEX_NONE)
+    {
+        const float Width=Content->GetCachedGeometry().GetLocalSize().X;
+        if (Width>200.f&&FMath::Abs(Width-LastRosterLayoutWidth)>4.f)
+        { LastRosterLayoutWidth=Width;RebuildRosterGrid();if (auto* Style=UOGReactiveUiSubsystem::Find(this)) Style->TrackTree(this); }
+    }
     const FVector2D ViewportSize = MyGeometry.GetLocalSize();
     // Ruler has NO landscape presentation. During the device's asynchronous
     // rotation from World, hide the whole Ruler surface until portrait fits.
@@ -449,25 +458,10 @@ void UOGGate12NativeRulerWidget::AddAction(
     Label->SetText(FText::FromString(Title));
     Label->SetColorAndOpacity(FSlateColor(bEnabled ? TextMain : TextMuted));
     Label->SetJustification(ETextJustify::Center);
-    Label->SetFont(Gate10Type(25,true,true));
+    Label->SetFont(Gate10Type(23,false,true));
     CenterNativeButton(Button,Label);
-    // The accepted Gate10 ornament is drawn as native vector Slate chrome,
-    // with the actual clickable button independently layered above it.
-    UOverlay* Layers = WidgetTree->ConstructWidget<UOverlay>(
-        UOverlay::StaticClass());
-    UOGGate12GothicChromeWidget* Frame =
-        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
-            UOGGate12GothicChromeWidget::StaticClass());
-    Frame->Configure(bEnabled
-        ? FLinearColor(.61f,.58f,.64f,1.f)
-        : FLinearColor(.30f,.29f,.34f,1.f),INDEX_NONE,false);
-    UOverlaySlot* TouchButton=Layers->AddChildToOverlay(Button);
-    TouchButton->SetHorizontalAlignment(HAlign_Fill);
-    TouchButton->SetVerticalAlignment(VAlign_Fill);
-    Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
-    UOverlaySlot* TouchChrome=Layers->AddChildToOverlay(Frame);
-    TouchChrome->SetHorizontalAlignment(HAlign_Fill);
-    TouchChrome->SetVerticalAlignment(VAlign_Fill);
+    FOGNativeUiStyle::SkinButton(*Button);
+    auto* Layers=FOGNativeUiStyle::Surface(*WidgetTree,Button,EOGNativeSurface::Action);
     USizeBox* TouchHeight=WidgetTree->ConstructWidget<USizeBox>(
         USizeBox::StaticClass());
     TouchHeight->SetMinDesiredHeight(62.f);
@@ -604,6 +598,7 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
     // An explicit refresh may follow recovery of a world with the same IDs.
     // Require a fresh review rather than keeping a previous world's quote.
     ResetCharacterDevelopment();
+    ClearGachaReview();
     ClearInventoryReview();
     ClearNarrativeReview();
     if (!Screen) BuildRoot();
@@ -677,7 +672,8 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
             UOGGate12GothicChromeWidget::StaticClass());
     HeadingFrame->Configure(FLinearColor(.65f,.59f,.75f,1.f),
-        static_cast<int32>(Session->CurrentDestination),true);
+        INDEX_NONE,true);
+    HeadingFrame->SetSurface(EOGNativeSurface::Panel,false);
     HeadingLayers->AddChildToOverlay(HeadingFrame);
     UTextBlock* HeadingText=WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass(),TEXT("CanonicalDestinationChapterTitle"));
@@ -686,7 +682,7 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     HeadingText->SetJustification(ETextJustify::Center);
     HeadingText->SetColorAndOpacity(FSlateColor(
         FLinearColor(.88f,.83f,.95f,1.f)));
-    HeadingText->SetFont(Gate10Type(42,true,true));
+    HeadingText->SetFont(Gate10Type(34,true,true));
     UOverlaySlot* HeadingTextSlot=HeadingLayers->AddChildToOverlay(HeadingText);
     HeadingTextSlot->SetHorizontalAlignment(HAlign_Fill);
     HeadingTextSlot->SetVerticalAlignment(VAlign_Center);
@@ -1154,7 +1150,8 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
     // Exactly three TALL character portraits filling the full portrait
     // page. 144 Slate units previously used barely half its available
     // width; 262 x 3 plus gutters fits the 840-unit content viewport.
-    constexpr float CardWidth = 262.0f;
+    const float AvailableWidth=Content?Content->GetCachedGeometry().GetLocalSize().X:0.f;
+    const float CardWidth=AvailableWidth>200.f?FMath::Max(60.f,(AvailableWidth-32.f)/3.f):262.f;
     const float CardHeight = CardWidth / GetApprovedRosterCardRatio();
     for (int32 Position = 0; Position < VisibleIndices.Num(); ++Position)
     {
@@ -1188,11 +1185,18 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
 
         UVerticalBox* CardBody = WidgetTree->ConstructWidget<UVerticalBox>(
             UVerticalBox::StaticClass());
+        auto CardCaption=[this,CardBody](const FString& Value,int32 Size,FLinearColor Color,bool Semantic=false)
+        {
+            auto* Caption=WidgetTree->ConstructWidget<UTextBlock>();
+            Caption->SetText(FText::FromString(Value));Caption->SetFont(Gate10Type(Size,false,Size>=18));
+            Caption->SetColorAndOpacity(Color);Caption->SetAutoWrapText(true);
+            Caption->SetJustification(ETextJustify::Center);
+            CardBody->AddChildToVerticalBox(Caption)->SetPadding(FMargin(7,5));
+            if (Semantic) if (auto* Style=UOGReactiveUiSubsystem::Find(this)) Style->PreserveOriginal(Caption);
+        };
         if (RarityColors.bKnown)
         {
-            AddMessage(CardBody,Rarity.ToString(),16,RarityColors.Badge);
-            if (auto* Style=UOGReactiveUiSubsystem::Find(this))
-                Style->PreserveOriginal(CardBody->GetChildAt(CardBody->GetChildrenCount()-1));
+            CardCaption(Rarity.ToString(),19,RarityColors.Badge,true);
         }
         const FOGGate12CharacterVisualEntry* Entry = Selected && VisualCatalog
             ? VisualCatalog->FindExact(Identity.IdentityId,
@@ -1270,391 +1274,17 @@ void UOGGate12NativeRulerWidget::RebuildRosterGrid()
                                        : TEXT("ORIGINAL ART NOT INSTALLED"),
                 12, TextMuted);
         }
-        AddMessage(CardBody,
-            Identity.DisplayNameKey.IsEmpty()
-                ? Identity.IdentityId.ToString() : Identity.DisplayNameKey,
-            16, TextMain);
-        AddMessage(CardBody,
-            FString::Printf(TEXT("%d manifestations"), Identity.ManifestationCount),
-            12, Gate12RulerGold);
+        CardCaption(Identity.DisplayNameKey.IsEmpty()?Identity.IdentityId.ToString():Identity.DisplayNameKey,19,TextMain);
+        CardCaption(Selected?FString::Printf(TEXT("Lv. %d  /  %d copies"),Selected->Level,Identity.ManifestationCount):
+            FString::Printf(TEXT("%d copies"),Identity.ManifestationCount),15,TextMuted);
         Button->AddChild(CardBody);
-        AngularFrameBase->AddChild(Button);
+        AngularFrameBase->AddChild(FOGNativeUiStyle::Surface(*WidgetTree,Button,EOGNativeSurface::Hero));
         Fixed->AddChild(AngularFrameBase);
         RosterGrid->AddChildToUniformGrid(Fixed, Position / 3, Position % 3);
     }
 }
 
 
-
-void UOGGate12NativeRulerWidget::BuildGachaPortrait()
-{
-    if (!Gate10PortraitGachaCanvas || !WidgetTree) return;
-    Gate10PortraitGachaCanvas->ClearChildren();
-    UGameInstance* GI = GetGameInstance();
-    UOGGate12RulerSessionSubsystem* Session =
-        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
-    if (!Session || !Session->IsBoundToStoredRuler()) return;
-
-    AOGWorldPresentationHud* Hud = GetOwningPlayer()
-        ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
-    const bool bCanSummon = Hud && Hud->HasActiveGachaPresentation() &&
-        Session->bRealGachaAccessUnlocked;
-
-    UImage* Chrome = WidgetTree->ConstructWidget<UImage>(
-        UImage::StaticClass(), TEXT("Gate10GachaOrnamentNotControls"));
-    Gate10FigmaGachaChrome = Chrome;
-    Chrome->SetVisibility(ESlateVisibility::HitTestInvisible);
-    // Cooked UTexture2D imported directly from Figma, NOT runtime PNG
-    // downloaded from the network and NOT an entire flattened interactive UI.
-    static const TCHAR* ChromePath =
-        TEXT("/Game/UI/Gate10/Chrome/T_Gate10_Gacha_VectorChrome_V2."
-             "T_Gate10_Gacha_VectorChrome_V2");
-    UTexture2D* Art = LoadObject<UTexture2D>(nullptr, ChromePath);
-    if (Art) Chrome->SetBrushFromTexture(Art, true);
-    UCanvasPanelSlot* ChromeSlot =
-        Gate10PortraitGachaCanvas->AddChildToCanvas(Chrome);
-    ChromeSlot->SetAnchors(FAnchors(0.f,0.f,1.f,1.f));
-    ChromeSlot->SetOffsets(FMargin(0.f));
-
-    // Small independent text/button controls exactly track design coordinates.
-    // All app data comes from the stored Ruler; zero banner remains zero.
-    const FLinearColor Main(.94f,.91f,.98f,1.f);
-    const FLinearColor GachaMuted(.73f,.68f,.79f,1.f);
-    auto TextAt = [this](FString Value,FString Name,
-        float X,float Y,float W,float H,int32 Size,
-        FLinearColor Ink) -> UTextBlock*
-    {
-        UTextBlock* Label=WidgetTree->ConstructWidget<UTextBlock>(
-            UTextBlock::StaticClass(),FName(*Name));
-        Label->SetText(FText::FromString(Value));
-        Label->SetJustification(ETextJustify::Center);
-        Label->SetAutoWrapText(true);
-        Label->SetColorAndOpacity(FSlateColor(Ink));
-        // Preserve Figma's exact anchors and decorative chrome; elevate
-        // only real text legibility and the display family.
-        Label->SetFont(Gate10Type(
-            FMath::Max(17,FMath::RoundToInt(Size*.82f)),
-            Size>=24,Size>=38));
-        UCanvasPanelSlot* Slot=
-            Gate10PortraitGachaCanvas->AddChildToCanvas(Label);
-        // Explicit normalized multi-anchor rectangle in the actual viewport.
-        // No centered ScaleBox or unscaled pixel offsets can clip the page.
-        Slot->SetAnchors(FAnchors(
-            X/864.f,Y/1536.f,(X+W)/864.f,(Y+H)/1536.f));
-        Slot->SetOffsets(FMargin(0.f));
-        return Label;
-    };
-    auto ActionAt = [this](FString Name,FString Action,
-        float X,float Y,float W,float H,
-        bool Enabled,int32 Size) -> UOGGate12RulerActionButton*
-    {
-        UOGGate12RulerActionButton* Button =
-            WidgetTree->ConstructWidget<UOGGate12RulerActionButton>(
-                UOGGate12RulerActionButton::StaticClass());
-        Button->RulerWidget=this;
-        Button->ActionId=Action;
-        Button->SetIsEnabled(Enabled);
-        Button->SetBackgroundColor(FLinearColor(0.f,0.f,0.f,0.f));
-        Button->OnClicked.AddDynamic(
-            Button,&UOGGate12RulerActionButton::InvokeAction);
-        UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>(
-            UTextBlock::StaticClass());
-        Text->SetText(FText::FromString(Name));
-        Text->SetJustification(ETextJustify::Center);
-        Text->SetAutoWrapText(true);
-        Text->SetColorAndOpacity(FSlateColor(
-            Enabled ? FLinearColor(.91f,.87f,.96f,1.f)
-                    : FLinearColor(.57f,.54f,.65f,1.f)));
-        Text->SetFont(Gate10Type(
-            FMath::Max(18,FMath::RoundToInt(Size*.86f)),
-            true,Size>=30));
-        CenterNativeButton(Button,Text);
-        UCanvasPanelSlot* Slot =
-            Gate10PortraitGachaCanvas->AddChildToCanvas(Button);
-        Slot->SetAnchors(FAnchors(
-            X/864.f,Y/1536.f,(X+W)/864.f,(Y+H)/1536.f));
-        Slot->SetOffsets(FMargin(0.f));
-        return Button;
-    };
-    const FString RulerId=Session->BoundRulerId.ToString();
-    TextAt(TEXT("RULER"),TEXT("ActualRulerIdentityLabel"),
-        112.f,55.f,170.f,35.f,25,Main);
-    TextAt(FString::Printf(TEXT("ID %s"),*RulerId.Left(12)),
-        TEXT("ActualStoredRulerID"),112.f,89.f,176.f,26.f,18,GachaMuted);
-    ActionAt(TEXT("RATES"),TEXT("gacha-rates"),686.f,132.f,70.f,88.f,bCanSummon,18);
-    ActionAt(TEXT("HISTORY"),TEXT("gacha-history-toggle"),
-        761.f,132.f,94.f,88.f,true,18);
-
-    if (!Hud || !Hud->HasActiveGachaPresentation())
-        TextAt(TEXT("NO ACTIVE BANNER"),
-            TEXT("AuthoritativeNoActiveBanner"),155.f,830.f,555.f,96.f,48,Main);
-    else
-        TextAt(FOGInstalledGachaBannerLibrary::DisplayName(Hud->GetActiveGachaBanner().BannerId),
-            TEXT("AuthoritativeInstalledBannerId"),108.f,812.f,640.f,118.f,35,Main);
-
-    TArray<FOGGachaBannerDefinition> InstalledBanners; FString BannerError;
-    if (Hud) Hud->ListInstalledGachaBanners(InstalledBanners,BannerError);
-    ActionAt(TEXT("PREVIOUS"),TEXT("gacha-banner-previous"),68.f,1038.f,242.f,80.f,InstalledBanners.Num()>1,21);
-    const int32 BannerIndex=Hud?InstalledBanners.IndexOfByPredicate([&](const auto& B)
-        {return B.BannerId==Hud->GetActiveGachaBanner().BannerId;}):INDEX_NONE;
-    TextAt(BannerIndex==INDEX_NONE?TEXT("NO BANNER"):FString::Printf(TEXT("%d / %d"),BannerIndex+1,InstalledBanners.Num()),
-        TEXT("RegisteredBannerPosition"),332.f,1038.f,242.f,80.f,25,Main);
-    ActionAt(TEXT("NEXT"),TEXT("gacha-banner-next"),595.f,1038.f,243.f,80.f,InstalledBanners.Num()>1,21);
-    // A pull must NEVER fire before Gate07's actual banner/economy transaction
-    // has been bound. No invented pity/tickets/currency are displayed.
-    ActionAt(TEXT("DRAW Ã—1"),TEXT("gacha-draw-1"),
-             50.f,1170.f,309.f,100.f,bCanSummon,37);
-    ActionAt(TEXT("DRAW Ã—10"),TEXT("gacha-draw-10"),
-             511.f,1170.f,311.f,100.f,bCanSummon,37);
-    ActionAt(TEXT("DETAILS"),TEXT("gacha-rates"),
-             151.f,1289.f,223.f,50.f,bCanSummon,24);
-    ActionAt(TEXT("EXCHANGE"),TEXT("gacha-exchange"),
-             488.f,1289.f,227.f,50.f,false,24);
-
-    static const TCHAR* Destinations[] =
-    {TEXT("HOME"),TEXT("CHARACTERS"),TEXT("GACHA"),
-     TEXT("TERRITORY"),TEXT("RECORDS")};
-    for (int32 Index=0; Index<5; ++Index)
-        ActionAt(Destinations[Index],
-                 FString::Printf(TEXT("nav/%d"),Index),
-                 10.f+171.f*Index,1393.f,167.f,111.f,true,
-                 Index==1 ? 19 : 22);
-
-    if (bGachaResultsExpanded || bGachaRatesExpanded)
-    {
-        const bool bShowRates = bGachaRatesExpanded;
-        UBorder* Panel = WidgetTree->ConstructWidget<UBorder>(
-            UBorder::StaticClass(),TEXT("CanonicalGachaResultOrRatesPanel"));
-        Panel->SetBrushColor(FLinearColor(.008f,.005f,.016f,.985f));
-        Panel->SetPadding(FMargin(18.f));
-        UCanvasPanelSlot* PortraitCanvasSlot=Gate10PortraitGachaCanvas->AddChildToCanvas(Panel);
-        PortraitCanvasSlot->SetAnchors(FAnchors(100.f/864.f,250.f/1536.f,
-                                 765.f/864.f,1020.f/1536.f));
-        PortraitCanvasSlot->SetOffsets(FMargin(0.f));
-        UScrollBox* Scroll=WidgetTree->ConstructWidget<UScrollBox>(
-            UScrollBox::StaticClass());
-        Panel->AddChild(Scroll);
-        UVerticalBox* Rows=WidgetTree->ConstructWidget<UVerticalBox>(
-            UVerticalBox::StaticClass());
-        Scroll->AddChild(Rows);
-        if (bShowRates && Hud && Hud->HasActiveGachaPresentation())
-        {
-            const FOGGachaBannerDefinition& Banner=Hud->GetActiveGachaBanner();
-            AddMessage(Rows,TEXT("AUTHORITATIVE BANNER RATES"),26,Main);
-            AddMessage(Rows,Banner.BannerId.ToString(),17,GachaMuted);
-            int64 Total=0;
-            for (const FOGGachaPoolEntry& E:Banner.Entries)
-                Total+=FMath::Max(0,E.Weight);
-            for (const FOGGachaPoolEntry& E:Banner.Entries)
-            {
-                const double Rate=Total>0
-                    ? 100.0*static_cast<double>(E.Weight)/static_cast<double>(Total)
-                    : 0.0;
-                AddMessage(Rows,FString::Printf(TEXT("%s / %s / %.3f%%%s"),
-                    *E.IdentityId.ToString(),*E.Rarity.ToString(),Rate,
-                    E.bFeatured?TEXT(" / FEATURED"):TEXT("")),17,Main);
-            }
-            AddMessage(Rows,TEXT("Displayed weights are BASE rates. Persisted pity and featured guarantees apply to individual draws."),17,GachaMuted);
-        }
-        else if (Hud)
-        {
-            AddMessage(Rows,TEXT("ACTUAL SUMMON RESULTS"),26,Main);
-            for (const FOGGachaPullResult& Result:Hud->GetLastGachaResults())
-                AddMessage(Rows,FString::Printf(
-                    TEXT("%s / %s / %s%s"),
-                    *Result.IdentityId.ToString(),*Result.Rarity.ToString(),
-                    *Result.ManifestationId.ToString(),
-                    Result.bDuplicateIdentity?TEXT(" / INDEPENDENT COPY"):TEXT("")),
-                    17,Main);
-        }
-        ActionAt(TEXT("CLOSE"),TEXT("gacha-overlay-close"),
-                 629.f,256.f,125.f,53.f,true,19);
-        return;
-    }
-    if (!bGachaHistoryExpanded) return;
-    // This panel is the existing canonical acquisition history projection.
-    // It never fabricates banner records when there are none.
-    UBorder* HistorySurface=WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(),TEXT("ActualCanonicalGachaHistoryPanel"));
-    HistorySurface->SetBrushColor(FLinearColor(.015f,.012f,.022f,.98f));
-    HistorySurface->SetPadding(FMargin(15.f));
-    UCanvasPanelSlot* HistorySlot =
-        Gate10PortraitGachaCanvas->AddChildToCanvas(HistorySurface);
-    HistorySlot->SetAnchors(FAnchors(
-        118.f/864.f,300.f/1536.f,748.f/864.f,890.f/1536.f));
-    HistorySlot->SetOffsets(FMargin(0.f));
-    UScrollBox* Scroll=WidgetTree->ConstructWidget<UScrollBox>(
-        UScrollBox::StaticClass());
-    HistorySurface->AddChild(Scroll);
-    UVerticalBox* Rows=WidgetTree->ConstructWidget<UVerticalBox>(
-        UVerticalBox::StaticClass());
-    Scroll->AddChild(Rows);
-    AddMessage(Rows,TEXT("ACQUISITION HISTORY"),30,Main);
-    FString Error;
-    if (!Session->RefreshGachaHistory(Error))
-        AddMessage(Rows,Error.IsEmpty()
-            ? TEXT("Canonical history is unavailable.") : Error,19,GachaMuted);
-    else if (Session->GachaHistoryProjection.IsEmpty())
-        AddMessage(Rows,TEXT("No recorded acquisitions."),21,GachaMuted);
-    else
-        for (const FOGGachaHistoryEntryViewModel& Entry :
-             Session->GachaHistoryProjection)
-            AddMessage(Rows,FString::Printf(TEXT("%s Â· %s Â· tick %lld"),
-                *Entry.IdentityId.ToString(),*Entry.Rarity.ToString(),
-                Entry.WorldTick),17,Main);
-    ActionAt(TEXT("CLOSE"),TEXT("gacha-history-toggle"),
-        626.f,304.f,120.f,48.f,true,19);
-}
-
-void UOGGate12NativeRulerWidget::BuildGacha()
-{
-    if (auto* BannerHud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr)
-    { FString Error; BannerHud->LoadInstalledGachaBannerForRuler(Error); }
-    BuildGachaPortrait();
-    if (!Content || !WidgetTree) return;
-    UGameInstance* GI = GetGameInstance();
-    UOGGate12RulerSessionSubsystem* Session =
-        GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
-    if (!Session || !Session->IsBoundToStoredRuler()) return;
-
-    // Gate10 frozen 04 visual structure: upper right utility controls, full
-    // vertical showcase, compact banner rail, two primary draw buttons and
-    // two utility actions. All content remains canonical, NEVER borrowed
-    // from the mockup's fictional banner, currency or character.
-    UHorizontalBox* Utilities = WidgetTree->ConstructWidget<UHorizontalBox>(
-        UHorizontalBox::StaticClass(), TEXT("GachaUpperRightUtilityBar"));
-    Content->AddChildToVerticalBox(Utilities)->SetPadding(FMargin(5.f,1.f,5.f,9.f));
-    {
-        UTextBlock* Section=WidgetTree->ConstructWidget<UTextBlock>(
-            UTextBlock::StaticClass(), TEXT("GachaSectionTitle"));
-        Section->SetText(FText::FromString(TEXT("GACHA")));
-        Section->SetColorAndOpacity(FSlateColor(FLinearColor(.81f,.79f,.85f,1.f)));
-        FSlateFontInfo F=Section->GetFont();F.Size=19;Section->SetFont(F);
-        Utilities->AddChildToHorizontalBox(Section)->SetSize(
-            FSlateChildSize(ESlateSizeRule::Fill));
-    }
-    UVerticalBox* Options=WidgetTree->ConstructWidget<UVerticalBox>(
-        UVerticalBox::StaticClass(), TEXT("GachaRatesAndHistory"));
-    Utilities->AddChildToHorizontalBox(Options);
-    // Gate07 must install rate details before this control can be used.
-    AddAction(Options, TEXT("RATES"), TEXT("gacha-rates"), true);
-    AddAction(Options, bGachaHistoryExpanded ? TEXT("CLOSE HISTORY")
-        : TEXT("HISTORY"), TEXT("gacha-history-toggle"));
-
-    UBorder* BannerEdge=WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("GachaShowcaseAngularOuterRail"));
-    BannerEdge->SetBrushColor(FLinearColor(.34f,.32f,.39f,1.f));
-    BannerEdge->SetPadding(FMargin(1.f));
-    UBorder* BannerFace=WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("GachaShowcaseBlackStage"));
-    BannerFace->SetBrushColor(FLinearColor(.004f,.004f,.008f,1.f));
-    BannerFace->SetPadding(FMargin(10.f));
-    UOverlay* BannerLayers=WidgetTree->ConstructWidget<UOverlay>(
-        UOverlay::StaticClass(),TEXT("GachaOrnamentAndBannerStage"));
-    BannerLayers->AddChildToOverlay(BannerFace);
-    UOGGate12GothicChromeWidget* BannerEtch=
-        WidgetTree->ConstructWidget<UOGGate12GothicChromeWidget>(
-            UOGGate12GothicChromeWidget::StaticClass());
-    BannerEtch->Configure(FLinearColor(.56f,.53f,.63f,1.f),INDEX_NONE,false);
-    BannerLayers->AddChildToOverlay(BannerEtch);
-    BannerEdge->AddChild(BannerLayers);
-    USizeBox* BannerHeight=WidgetTree->ConstructWidget<USizeBox>(
-        USizeBox::StaticClass(), TEXT("GachaTallPortraitShowcase"));
-    BannerHeight->SetMinDesiredHeight(770.f);
-    BannerHeight->AddChild(BannerEdge);
-    Content->AddChildToVerticalBox(BannerHeight)->SetPadding(FMargin(5.f,1.f,5.f,8.f));
-    UVerticalBox* Showcase=WidgetTree->ConstructWidget<UVerticalBox>(
-        UVerticalBox::StaticClass(), TEXT("CanonicalGachaShowcase"));
-    BannerFace->AddChild(Showcase);
-    AddMessage(Showcase, Session->bRealGachaAccessUnlocked
-        ? TEXT("ACQUISITION") : TEXT("ACQUISITION LOCKED"), 21,
-        FLinearColor(.86f,.84f,.88f,1.f));
-    AddMessage(Showcase, Session->bApprovedBannerProvided
-        ? TEXT("A verified banner is available from the canonical world.")
-        : TEXT("No approved active banner is installed in this world."),
-        16, TextMuted);
-    // Banner is never invented. Until an authoritative current banner +
-    // asset source is present, this intentionally remains an empty dark
-    // art stage; it is not a mockup crop.
-    USizeBox* BlankArt=WidgetTree->ConstructWidget<USizeBox>(
-        USizeBox::StaticClass(), TEXT("CanonicalBannerArtOnly"));
-    BlankArt->SetMinDesiredHeight(180.f);
-    Showcase->AddChildToVerticalBox(BlankArt)
-        ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-
-    UBorder* SelectorEdge=WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass(), TEXT("GachaBannerSelectorThinRail"));
-    SelectorEdge->SetBrushColor(FLinearColor(.39f,.36f,.42f,1.f));
-    SelectorEdge->SetPadding(FMargin(1.f));
-    UBorder* SelectorFace=WidgetTree->ConstructWidget<UBorder>(
-        UBorder::StaticClass());
-    SelectorFace->SetBrushColor(FLinearColor(.014f,.012f,.020f,.96f));
-    SelectorFace->SetPadding(FMargin(8.f,11.f));
-    SelectorEdge->AddChild(SelectorFace);
-    UTextBlock* Selector=WidgetTree->ConstructWidget<UTextBlock>(
-        UTextBlock::StaticClass(), TEXT("LiveBannerSelectorLabel"));
-    Selector->SetText(FText::FromString(Session->bApprovedBannerProvided
-        ? TEXT("VERIFIED BANNER") : TEXT("NO APPROVED BANNERS")));
-    Selector->SetColorAndOpacity(FSlateColor(TextMain));
-    Selector->SetJustification(ETextJustify::Center);
-    FSlateFontInfo Font=Selector->GetFont();Font.Size=13;Selector->SetFont(Font);
-    UVerticalBox* BannerSelection=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-    BannerSelection->AddChildToVerticalBox(Selector);
-    auto* SelectionHud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr;
-    TArray<FOGGachaBannerDefinition> AvailableBanners; FString SelectionError;
-    if (SelectionHud) SelectionHud->ListInstalledGachaBanners(AvailableBanners,SelectionError);
-    AddAction(BannerSelection,TEXT("PREVIOUS BANNER"),TEXT("gacha-banner-previous"),AvailableBanners.Num()>1);
-    AddAction(BannerSelection,TEXT("NEXT BANNER"),TEXT("gacha-banner-next"),AvailableBanners.Num()>1);
-    SelectorFace->AddChild(BannerSelection);
-    Content->AddChildToVerticalBox(SelectorEdge)
-        ->SetPadding(FMargin(7.f,3.f,7.f,11.f));
-
-    UHorizontalBox* DrawActions=WidgetTree->ConstructWidget<UHorizontalBox>(
-        UHorizontalBox::StaticClass(), TEXT("GachaTwoNativeDrawActions"));
-    Content->AddChildToVerticalBox(DrawActions)->SetPadding(FMargin(3.f,2.f,3.f,4.f));
-    // No native pull UI until the Gate07-approved banner, payment and
-    // transactional pull binding are all present. Disabled controls make the
-    // frozen structure visible without granting fictional acquisitions.
-    const AOGWorldPresentationHud* Hud=GetOwningPlayer()
-        ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
-    const bool bCanDraw=Hud && Hud->HasActiveGachaPresentation() &&
-        Session->bRealGachaAccessUnlocked;
-    for (int32 I=0;I<2;++I)
-    {
-        UVerticalBox* Wrapper=WidgetTree->ConstructWidget<UVerticalBox>(
-            UVerticalBox::StaticClass());
-        DrawActions->AddChildToHorizontalBox(Wrapper)
-            ->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-        AddAction(Wrapper, I==0 ? TEXT("DRAW  Ã—1") : TEXT("DRAW  Ã—10"),
-            I==0 ? TEXT("gacha-draw-1") : TEXT("gacha-draw-10"), bCanDraw);
-    }
-    UHorizontalBox* BottomUtilities=WidgetTree->ConstructWidget<UHorizontalBox>(
-        UHorizontalBox::StaticClass(), TEXT("GachaDetailsAndExchange"));
-    Content->AddChildToVerticalBox(BottomUtilities);
-    UVerticalBox* Details=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-    UVerticalBox* Exchange=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-    BottomUtilities->AddChildToHorizontalBox(Details)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    BottomUtilities->AddChildToHorizontalBox(Exchange)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    AddAction(Details,TEXT("DETAILS"),TEXT("gacha-rates"),bCanDraw);
-    AddAction(Exchange,TEXT("EXCHANGE"),TEXT("gacha-exchange"),false);
-
-    if (!bGachaHistoryExpanded) return;
-    FString Error;
-    if (!Session->RefreshGachaHistory(Error))
-    {
-        AddMessage(Content, Error.IsEmpty() ? TEXT("Acquisition history unavailable.") : Error, 14, TextMuted);
-        return;
-    }
-    if (Session->GachaHistoryProjection.IsEmpty())
-    {
-        AddMessage(Content, TEXT("No recorded acquisitions."), 15, TextMuted);
-        return;
-    }
-    for (const FOGGachaHistoryEntryViewModel& Entry : Session->GachaHistoryProjection)
-        AddMessage(Content, FString::Printf(TEXT("%s  %s  tick %lld"),
-            *Entry.IdentityId.ToString(),*Entry.Rarity.ToString(),Entry.WorldTick),
-            14, TextMain);
-}
 
 void UOGGate12NativeRulerWidget::BuildTerritory()
 {
@@ -2345,6 +1975,12 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         return;
     }
 
+    if (Action.StartsWith(TEXT("gacha")))
+    {
+        ClearDevelopmentReview(); ResetInventoryUi(); ResetNarrativePage();
+        HandleGachaAction(Action,*Session); return;
+    }
+    ResetGachaUi();
     if (Action.StartsWith(TEXT("narrative/")))
     {
         ClearDevelopmentReview();
@@ -2443,47 +2079,6 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
     else if (Action == TEXT("roster/sort"))
     {
         RosterSortMode = (RosterSortMode + 1) % 3;
-    }
-    else if (Action == TEXT("gacha-banner-next") || Action == TEXT("gacha-banner-previous"))
-    {
-        auto* Hud=GetOwningPlayer()?Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()):nullptr;
-        if (!Hud) Error=TEXT("Native acquisition presentation is unavailable.");
-        else Hud->StepInstalledGachaBanner(Action==TEXT("gacha-banner-next")?1:-1,Error);
-        bGachaRatesExpanded=bGachaResultsExpanded=bGachaHistoryExpanded=false;
-    }
-    else if (Action == TEXT("gacha-history-toggle"))
-    {
-        bGachaRatesExpanded = false;
-        bGachaResultsExpanded = false;
-        bGachaHistoryExpanded = !bGachaHistoryExpanded;
-    }
-    else if (Action == TEXT("gacha-rates"))
-    {
-        bGachaHistoryExpanded = false;
-        bGachaResultsExpanded = false;
-        bGachaRatesExpanded = !bGachaRatesExpanded;
-    }
-    else if (Action == TEXT("gacha-overlay-close"))
-    {
-        bGachaRatesExpanded = false;
-        bGachaResultsExpanded = false;
-        bGachaHistoryExpanded = false;
-    }
-    else if (Action == TEXT("gacha-draw-1") ||
-             Action == TEXT("gacha-draw-10"))
-    {
-        AOGWorldPresentationHud* Hud=GetOwningPlayer()
-            ? Cast<AOGWorldPresentationHud>(GetOwningPlayer()->GetHUD()) : nullptr;
-        if (!Hud || !Session->bRealGachaAccessUnlocked ||
-            !Hud->HasActiveGachaPresentation())
-            Error=TEXT("No eligible installed banner or unlocked Ruler.");
-        else if (Hud->ExecuteActiveGachaDraw(
-                     Action == TEXT("gacha-draw-10")?10:1,Error))
-        {
-            bGachaRatesExpanded = false;
-            bGachaHistoryExpanded = false;
-            bGachaResultsExpanded = true;
-        }
     }
     else if (Action.StartsWith(TEXT("map/")))
     {

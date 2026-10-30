@@ -8,9 +8,12 @@
 #include "World/OGOwnedEquipmentService.h"
 #include "Narrative/OGNarrativeService.h"
 #include "Objects/OGObjectActionDefinition.h"
+#include "Gacha/OGGachaService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
 class UVerticalBox;
+class UTextBlock;
+class UProgressBar;
 class USizeBox;
 class UCanvasPanel;
 class UMaterialInstanceDynamic;
@@ -46,11 +49,11 @@ public:
 };
 
 /**
- * Gate12 native Ruler presentation foundation.
+ * Gate12 native Ruler screens, shared live surfaces and canonical transactions.
  *
  * Built from real UMG widgets, reads the canonical Gate12 session, and keeps
- * UI transient. Gate10 artwork/material integration can replace this class
- * without altering gameplay data or persistence.
+ * UI transient. Installed original artwork and native material consumers use
+ * the shared presentation driver without altering gameplay or persistence.
  *
  * Three exactly uniform tall roster columns (width/height 0.445), one tile
  * per real owned Identity; repeat Manifestations remain inside the detail.
@@ -149,6 +152,7 @@ private:
     TArray<TObjectPtr<AOGGate12CharacterPreviewStage>> RosterPreviewStages;
 
     FString RosterSearchQuery;
+    float LastRosterLayoutWidth=0.f;
     int32 RosterSortMode = 0; // 0 name, 1 selected level, 2 owned copies
     int32 OpenIdentityIndex = INDEX_NONE;
     // UI preference only: never changes wardrobe, ownership, or world state.
@@ -157,6 +161,24 @@ private:
     bool bDevelopmentQaViewerOpen = false;
     // -1 is the four-destination Records hub; selecting a card opens a full page.
     int32 RecordsSection = -1;
+    FOGEntityId GachaContextRulerId;
+    FOGContentId GachaContextBannerId;
+    TSharedPtr<FOGWorldStoreCommittedEvents> GachaEventFeed;
+    FDelegateHandle GachaEventHandle,GachaLibraryHandle;
+    FOGGachaBatchPreview PendingGachaReview;
+    FOGEntityId PendingGachaRequestId;
+    TArray<FOGGachaBatchPreview> GachaQuotes;
+    TArray<FOGGachaPullResult> GachaSavedResults;
+    UPROPERTY(Transient) TArray<TObjectPtr<UOGGate12RulerActionButton>> GachaDrawButtons;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> GachaCostLabels;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> GachaWalletLabel;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> GachaPityLabel;
+    UPROPERTY(Transient) TObjectPtr<UProgressBar> GachaPityBar;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> GachaReviewStatus;
+    UPROPERTY(Transient) TObjectPtr<UOGGate12RulerActionButton> GachaConfirmButton;
+    FString GachaFeedback;
+    int32 GachaRevealedResults=1;
+    bool bGachaDirty=true,bGachaCommandInFlight=false,bGachaDefinitionsDirty=false;
     bool bGachaHistoryExpanded = false;
     bool bGachaRatesExpanded = false;
     bool bGachaResultsExpanded = false;
@@ -212,6 +234,12 @@ private:
     void BuildHome();
     void BuildGacha();
     void BuildGachaPortrait();
+    void HandleGachaAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
+    void ResetGachaUi();
+    void ClearGachaReview();
+    void ObserveGacha(UOGGate12RulerSessionSubsystem& Session);
+    void SynchronizeGachaUi();
+    void HandleGachaEvents(const TArray<FOGWorldEvent>& Events);
     void BuildRoster();
     void RebuildRosterGrid();
     void BuildDevelopmentQaCharacterViewer();

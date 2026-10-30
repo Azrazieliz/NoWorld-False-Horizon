@@ -8,6 +8,7 @@
 class AOGWorldPrototypeCharacter;
 class UOGNativeBattleWidget;
 class UTextBlock;
+class UProgressBar;
 class UScrollBox;
 class UWrapBox;
 class UVerticalBox;
@@ -44,6 +45,8 @@ private:
     TWeakObjectPtr<AOGWorldPrototypeCharacter> Character;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Heading;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Resources;
+    UPROPERTY(Transient) TObjectPtr<UProgressBar> HealthBar;
+    UPROPERTY(Transient) TObjectPtr<UProgressBar> UltimateBar;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Feedback;
     UPROPERTY(Transient) TObjectPtr<UScrollBox> Targets;
     UPROPERTY(Transient) TObjectPtr<UScrollBox> ActionScroll;
