@@ -66,13 +66,18 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
         return false;
     }
     const FOGCombatUnitState& Target = State.Units[UnitIndex];
-    if (!Source->CanAct() || !Target.CanAct() ||
-        !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Target.UnitEntityId))
+    // Revival may target a genuine defeated ally with no living actor.
+    // Never reinterpret a removed unit or an enemy corpse as a player focus.
+    // The canonical skill resolver still decides whether this precise
+    // ability can actually revive the selected participant.
+    const bool bDefeatedAlly=Target.Presence==EOGCombatPresence::Defeated &&
+        !Target.IsAlive() && Target.TeamIndex==Source->TeamIndex;
+    const bool bLivingBody=Target.CanAct() &&
+        UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+            GetWorld(),State.BattleId,Target.UnitEntityId)!=nullptr;
+    if (!Source->CanAct() || (!bLivingBody && !bDefeatedAlly))
     {
-        // Ally, self and enemy targets are all meaningful in the approved
-        // Base/Alter skills. Gate04's exact skill preflight, not this UI,
-        // determines allegiance, number, revival and target eligibility.
-        OutError = TEXT("Select a live canonical battle participant on the actual possessed character's turn.");
+        OutError = TEXT("Select a living field participant or a genuine defeated ally for an approved revival.");
         return false;
     }
     // Tap selects only a PRIMARY focus for primary-specific skill bonuses;
