@@ -110,7 +110,8 @@ void UOGNativeBattleWidget::AddButton(UPanelWidget* Parent,const FString& Label,
     Parent->AddChild(Bounds);
     auto* Button=WidgetTree->ConstructWidget<UOGNativeBattleButton>();
     Button->Screen=this; Button->Command=Command; Button->TargetIndex=TargetIndex;
-    Button->SetIsFocusable(false); Button->SetIsEnabled(Enabled); Button->SetToolTipText(FText::FromString(Hint));
+    // Native touch, keyboard and gamepad share the same authoritative action.
+    Button->SetIsFocusable(true); Button->SetIsEnabled(Enabled); Button->SetToolTipText(FText::FromString(Hint));
     Button->SetBackgroundColor(Selected?FLinearColor(.26f,.17f,.31f,1):FLinearColor(.07f,.045f,.105f,1));
     Button->OnClicked.AddDynamic(Button,&UOGNativeBattleButton::Invoke);
     FOGNativeUiStyle::SkinButton(*Button);
