@@ -949,23 +949,38 @@ bool UOGGameCoreSubsystem::ReadOwnedCharacterSkills(
         if (!Definition) return false;
         OutSkills=Definition->Skills; return true;
     }
-    FOGApprovedLuminousSourceKitView BaseKit;
-    FOGLuminousAlterV1Projection AlterKit;
-    if(!FOGApprovedLuminousSourceKit::LoadBaseV6(BaseKit,OutError) ||
-       !FOGLuminousAlterV1Projection::LoadApprovedV1(AlterKit,OutError))
-        return false;
-    if(Record.ActiveVersionId==BaseKit.VersionId)
-        OutSkills=BaseKit.CoreSkills;
-    else if(Record.ActiveVersionId==AlterKit.NativeVersionId)
-        OutSkills=AlterKit.Skills;
+    // Keep the original approved Base and Alter executors intact, but do
+    // not require an unrelated form's source file to play the owned form.
+    // Other accepted Luminous versions use the existing character definition
+    // pipeline, not invented skills or a fifth animation/ability executor.
+    if (Record.ActiveVersionId == FOGContentId(TEXT("character:luminous_valentine.version_ln_base")))
+    {
+        FOGApprovedLuminousSourceKitView Kit;
+        if (!FOGApprovedLuminousSourceKit::LoadBaseV6(Kit,OutError)) return false;
+        OutSkills=Kit.CoreSkills;
+    }
+    else if (Record.ActiveVersionId == FOGContentId(TEXT("character:luminous_valentine.version_alter_v1")))
+    {
+        FOGLuminousAlterV1Projection Kit;
+        if (!FOGLuminousAlterV1Projection::LoadApprovedV1(Kit,OutError)) return false;
+        OutSkills=Kit.Skills;
+    }
     else
     {
-        OutError=TEXT("This Manifestation uses neither approved Luminous Base nor Alter Version.");
+        const UOGCharacterGameplayDefinition* Definition =
+            UOGCharacterGameplayDefinition::Find(Record.IdentityId,Record.ActiveVersionId,OutError);
+        if (!Definition) return false; // No phantom Version or invented kit.
+        OutSkills=Definition->Skills;
+    }
+    if (OutSkills.CurrentForm!=Record.ActiveVersionId ||
+        OutSkills.ActiveSkills.IsEmpty() || OutSkills.PassiveSkills.IsEmpty() ||
+        OutSkills.GetUltimateSkills().IsEmpty() || OutSkills.HasDuplicateSkills())
+    {
+        OutError=TEXT("The owned Luminous Version has an incomplete or mismatched source-authored kit.");
+        OutSkills=FOGResolvedSkillSet();
         return false;
     }
-    return OutSkills.CurrentForm==Record.ActiveVersionId &&
-           OutSkills.ActiveSkills.Num()==3 && OutSkills.PassiveSkills.Num()==6 &&
-           OutSkills.UltimateSkill.IsValid();
+    return true;
 }
 
 bool UOGGameCoreSubsystem::BindOwnedLuminousCombatAuthority(
