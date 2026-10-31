@@ -65,7 +65,16 @@ FName FOGNativeBattleCommand::MotionSemantic() const
 bool FOGNativeBattleCommands::BuildFor(const FOGCombatUnitState& Source,FOGNativeBattleCommandSet& Out,FString& Error)
 {
     Out=FOGNativeBattleCommandSet(); Error.Reset();
-    if (Source.IdentityId!=FOGContentId(TEXT("character:luminous_valentine.identity")))
+    const bool bLuminous = Source.IdentityId==
+        FOGContentId(TEXT("character:luminous_valentine.identity"));
+    const bool bLuminousBase = Source.SkillSet.CurrentForm==
+        FOGContentId(TEXT("character:luminous_valentine.version_ln_base"));
+    const bool bLuminousAlter = Source.SkillSet.CurrentForm==
+        FOGContentId(TEXT("character:luminous_valentine.version_alter_v1"));
+    // Only the existing Base/Alter legacy executors require hardcoded branches.
+    // Every other installed source-authored form uses the reusable native
+    // character definition and ability executor, never a cloned motion bank.
+    if (!bLuminous || (!bLuminousBase && !bLuminousAlter))
     {
         const auto* Definition=UOGCharacterGameplayDefinition::Find(Source.IdentityId,Source.SkillSet.CurrentForm,Error);
         if (!Definition || !Definition->MatchesKit(Source.SkillSet))
@@ -89,11 +98,8 @@ bool FOGNativeBattleCommands::BuildFor(const FOGCombatUnitState& Source,FOGNativ
         }
         return true;
     }
-    const FString Form=Source.SkillSet.CurrentForm.ToString();
-    const bool Base=Form==TEXT("character:luminous_valentine.version_ln_base");
-    const bool Alter=Form==TEXT("character:luminous_valentine.version_alter_v1");
-    if (!Base && !Alter)
-    { Error=TEXT("This form's exact native combat executor is not yet admitted."); return false; }
+    const bool Base=bLuminousBase;
+    const bool Alter=bLuminousAlter;
     static TMap<FOGContentId,FOGNativeBattleCommandSet> Cached;
     if (!Cached.Contains(Source.SkillSet.CurrentForm))
     {
