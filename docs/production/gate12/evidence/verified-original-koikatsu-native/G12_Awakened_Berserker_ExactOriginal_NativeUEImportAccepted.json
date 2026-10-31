@@ -1,0 +1,297 @@
+{
+  "schema": "noworld.gate12.correct_original_koikatsu_to_native_unreal.v1",
+  "forms": {
+    "Awakened": {
+      "source_part_count": 6,
+      "source_original_body_primitive_count": 11,
+      "source_primitive_coverage": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "installed_native_parts": [
+        {
+          "source_id": "ExactCard_Awakened_05",
+          "original_source_sha256": "2d64b308616d3b7630da7a79e5e5184c6c829e4523bbd971a26cdb3c71f0b9f4",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_05",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_05/Luminous_Awakened_TrueOriginalPart_05/SkeletalMeshes/Luminous_Awakened_rueOriginalPart_05",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_05/Luminous_Awakened_TrueOriginalPart_05/SkeletalMeshes/Luminous_Awakened_alPart_05_Skeleton",
+          "material_texture_UE_assets": 1,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_01",
+          "original_source_sha256": "8a96e5ef904e44d5460435b45f39e0d22f65206210d501e41dd17009402e473f",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_01",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_01/Luminous_Awakened_TrueOriginalPart_01/SkeletalMeshes/Luminous_Awakened_rueOriginalPart_01",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_01/Luminous_Awakened_TrueOriginalPart_01/SkeletalMeshes/Luminous_Awakened_alPart_01_Skeleton",
+          "material_texture_UE_assets": 3,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_04",
+          "original_source_sha256": "42a238d438ec8a5b9e9fa0ee8cfbb7ed018b9f2dfc585a8f8acbaaea7cf072ff",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_04",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_04/Luminous_Awakened_TrueOriginalPart_04/SkeletalMeshes/Luminous_Awakened_rueOriginalPart_04",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_04/Luminous_Awakened_TrueOriginalPart_04/SkeletalMeshes/Luminous_Awakened_alPart_04_Skeleton",
+          "material_texture_UE_assets": 1,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_03",
+          "original_source_sha256": "260ad4690a6f6c2ba1995c7e3f1a1504e918f419aabafc152fffaae8c4842775",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_03",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_03/Luminous_Awakened_TrueOriginalPart_03/SkeletalMeshes/Luminous_Awakened_rueOriginalPart_03",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_03/Luminous_Awakened_TrueOriginalPart_03/SkeletalMeshes/Luminous_Awakened_alPart_03_Skeleton",
+          "material_texture_UE_assets": 40,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_02",
+          "original_source_sha256": "bbbf02587b89dbfbf0597cb12b7801c4f74faaa70d9b4eb3a3abc2138471bd50",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_02",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_02/Luminous_Awakened_TrueOriginalPart_02/SkeletalMeshes/Luminous_Awakened_rueOriginalPart_02",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_02/Luminous_Awakened_TrueOriginalPart_02/SkeletalMeshes/Luminous_Awakened_alPart_02_Skeleton",
+          "material_texture_UE_assets": 38,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_BodyGroup_02",
+          "original_source_sha256": "9cd930bbcd478ff702c45cd0d998ffe8f4f5e065a33e4fb5f9a9635c780e64e2",
+          "original_mesh_groups": [
+            6,
+            7,
+            8
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_02",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_02/Mesh_00_PrimGroup_06-08/SkeletalMeshes/Mesh_00_PrimGroup_06-08",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_02/Mesh_00_PrimGroup_06-08/SkeletalMeshes/Mesh_00_PrimGroup_06-08_Skeleton",
+          "material_texture_UE_assets": 6,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_BodyGroup_01",
+          "original_source_sha256": "7be8ece202b1d77d7a790d4971e57c522566016d77dd2911872dccf696e44bc8",
+          "original_mesh_groups": [
+            3,
+            4,
+            5
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_01",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_01/Mesh_00_PrimGroup_03-05/SkeletalMeshes/Mesh_00_PrimGroup_03-05",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_01/Mesh_00_PrimGroup_03-05/SkeletalMeshes/Mesh_00_PrimGroup_03-05_Skeleton",
+          "material_texture_UE_assets": 6,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_BodyGroup_00",
+          "original_source_sha256": "5fd5d0a088e43e30ffeefb13a68798fd414ebdbace4110f6bcdab5ba004d001c",
+          "original_mesh_groups": [
+            0,
+            1,
+            2
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_00",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_00/Mesh_00_PrimGroup_00-02/SkeletalMeshes/Mesh_00_PrimGroup_00-02",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_00/Mesh_00_PrimGroup_00-02/SkeletalMeshes/Mesh_00_PrimGroup_00-02_Skeleton",
+          "material_texture_UE_assets": 6,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Awakened_BodyGroup_03",
+          "original_source_sha256": "6dbd3032052d625a34b6a4f7d34c22a1b55f4bafe7b4c7b48e40ac97fb521243",
+          "original_mesh_groups": [
+            9,
+            10
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_03",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_03/Mesh_00_PrimGroup_09-10/SkeletalMeshes/Mesh_00_PrimGroup_09-10",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Awakened/ExactOriginalClothed/Part_00/Group_03/Mesh_00_PrimGroup_09-10/SkeletalMeshes/Mesh_00_PrimGroup_09-10_Skeleton",
+          "material_texture_UE_assets": 4,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        }
+      ],
+      "original_card_sha256": "e6b53e82c0d87ecdbd0ff8bf510ce93a1d7e557b436382271fcfed6451897bd5",
+      "original_pmx_sha256": "81ba05fc1286302aa908068e253fa57e1d693207a76d4ec4119ee0a35e357a9f",
+      "rig_bones_source": 1073,
+      "source_vertices": 80923,
+      "source_morph_targets": 2146,
+      "source_body_morph_references": 1837,
+      "source_materials": 82,
+      "native_skeletal_mesh_count": 9,
+      "complete_source_body_coverage": true,
+      "complete_native_3d_character_source": true
+    },
+    "Berserker": {
+      "source_part_count": 6,
+      "source_original_body_primitive_count": 11,
+      "source_primitive_coverage": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "installed_native_parts": [
+        {
+          "source_id": "ExactCard_Berserker_05",
+          "original_source_sha256": "ace366fe2eb22b1480e59a67c44f0c65c175358cb174716d64b46da98a3f6357",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_05",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_05/Luminous_Berserker_TrueOriginalPart_05/SkeletalMeshes/Luminous_Berserk_ueOriginalPart_05",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_05/Luminous_Berserker_TrueOriginalPart_05/SkeletalMeshes/Luminous_Berserk_lPart_05_Skeleton",
+          "material_texture_UE_assets": 1,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_01",
+          "original_source_sha256": "572ee668f477ce2c6e4b5e6ad3615bf950a992f18bb5684d2e1cbdf3db46f55c",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_01",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_01/Luminous_Berserker_TrueOriginalPart_01/SkeletalMeshes/Luminous_Berserk_ueOriginalPart_01",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_01/Luminous_Berserker_TrueOriginalPart_01/SkeletalMeshes/Luminous_Berserk_lPart_01_Skeleton",
+          "material_texture_UE_assets": 3,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_04",
+          "original_source_sha256": "f6e36ee6008a1279215e8467d2163d27988834a3ba209a83b1ab5864da120198",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_04",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_04/Luminous_Berserker_TrueOriginalPart_04/SkeletalMeshes/Luminous_Berserk_ueOriginalPart_04",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_04/Luminous_Berserker_TrueOriginalPart_04/SkeletalMeshes/Luminous_Berserk_lPart_04_Skeleton",
+          "material_texture_UE_assets": 1,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_03",
+          "original_source_sha256": "b44485f9a96cd82a4c73499be9606ed85661e39a754106fe4d3d2bfcad19ee3b",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_03",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_03/Luminous_Berserker_TrueOriginalPart_03/SkeletalMeshes/Luminous_Berserk_ueOriginalPart_03",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_03/Luminous_Berserker_TrueOriginalPart_03/SkeletalMeshes/Luminous_Berserk_lPart_03_Skeleton",
+          "material_texture_UE_assets": 16,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_02",
+          "original_source_sha256": "4b031645cc01c32e883c3c21d0099761007bd4ab8308bd8dac6e25af27e50747",
+          "original_mesh_groups": null,
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_02",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_02/Luminous_Berserker_TrueOriginalPart_02/SkeletalMeshes/Luminous_Berserk_ueOriginalPart_02",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_02/Luminous_Berserker_TrueOriginalPart_02/SkeletalMeshes/Luminous_Berserk_lPart_02_Skeleton",
+          "material_texture_UE_assets": 16,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_BodyGroup_02",
+          "original_source_sha256": "282735ffe4e845391de7802a5165a049828b7717f21df68858e159816e8bbfbb",
+          "original_mesh_groups": [
+            6,
+            7,
+            8
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_02",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_02/Mesh_00_PrimGroup_06-08/SkeletalMeshes/Mesh_00_PrimGroup_06-08",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_02/Mesh_00_PrimGroup_06-08/SkeletalMeshes/Mesh_00_PrimGroup_06-08_Skeleton",
+          "material_texture_UE_assets": 6,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_BodyGroup_01",
+          "original_source_sha256": "7cabaab9f3b17386d5aa04d900027c10be3a887960712fce8601269d899b43c5",
+          "original_mesh_groups": [
+            3,
+            4,
+            5
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_01",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_01/Mesh_00_PrimGroup_03-05/SkeletalMeshes/Mesh_00_PrimGroup_03-05",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_01/Mesh_00_PrimGroup_03-05/SkeletalMeshes/Mesh_00_PrimGroup_03-05_Skeleton",
+          "material_texture_UE_assets": 6,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_BodyGroup_00",
+          "original_source_sha256": "bc97555bec18c244cc0a047c8fa1c51ca777279b87758506645c60c5cc5039f8",
+          "original_mesh_groups": [
+            0,
+            1,
+            2
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_00",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_00/Mesh_00_PrimGroup_00-02/SkeletalMeshes/Mesh_00_PrimGroup_00-02",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_00/Mesh_00_PrimGroup_00-02/SkeletalMeshes/Mesh_00_PrimGroup_00-02_Skeleton",
+          "material_texture_UE_assets": 6,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        },
+        {
+          "source_id": "ExactCard_Berserker_BodyGroup_03",
+          "original_source_sha256": "68e957ce72472e64b44ad1a9cb8fbb6424bb97e67991ef7b84c94e79f04e434e",
+          "original_mesh_groups": [
+            9,
+            10
+          ],
+          "package": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_03",
+          "skeletal_mesh": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_03/Mesh_00_PrimGroup_09-10/SkeletalMeshes/Mesh_00_PrimGroup_09-10",
+          "skeleton": "/Game/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/Part_00/Group_03/Mesh_00_PrimGroup_09-10/SkeletalMeshes/Mesh_00_PrimGroup_09-10_Skeleton",
+          "material_texture_UE_assets": 4,
+          "native_skeletal_mesh_saved_and_built": true,
+          "native_ue_commandlet_import_errors": true
+        }
+      ],
+      "original_card_sha256": "820307ce971382af9b620fa8610af60918ad01cc7267994ba9ac5cde96070862",
+      "original_pmx_sha256": "8bba25132f923a9d2c7ac72f01cf2f1afecd3feff3cf154d35bd9eef0f13f2e1",
+      "rig_bones_source": 882,
+      "source_vertices": 62884,
+      "source_morph_targets": 2170,
+      "source_body_morph_references": 1903,
+      "source_materials": 59,
+      "native_skeletal_mesh_count": 9,
+      "complete_source_body_coverage": true,
+      "complete_native_3d_character_source": true
+    }
+  },
+  "status": "PASS_AWAKENED_AND_BERSERKER_TRUE_ORIGINAL_COMPLETE_NATIVE_UE_SKINNED_SOURCES_NOT_DEVICE_ACCEPTED",
+  "android_visual_acceptance": false,
+  "native_unreal_game_build_acceptance": false,
+  "native_gameplay_ability_acceptance": false,
+  "compiled_ue_skeletal_mesh_assets_from_exact_original_card": true,
+  "old_unpaired_candidate_meshes_used": false
+}
