@@ -3,7 +3,7 @@
   "master": "docs/production/ADVANCEMENT_MASTER.md",
   "source_catalog": "Content/NoWorld/Animation/SharedMotionCatalog.json",
   "source_branch": "fix/gate12-pr85-ue58-uht-20261030",
-  "last_synchronized": "2026-10-30",
+  "last_synchronized": "2026-10-31",
   "status_convention": {
     "MASTER_CHECKED_SCOPED": "Historical scoped checkbox in the existing master; not a new Android/device acceptance claim.",
     "OPEN": "Unfinished; no new verification claimed.",
@@ -13,7 +13,7 @@
     "master_task_count": 111,
     "master_checked": 6,
     "master_open": 105,
-    "source_partial": 7,
+    "source_partial": 8,
     "build_verified": false,
     "device_verified": false,
     "user_accepted": false
@@ -427,7 +427,17 @@
       "master_checked": false,
       "master_descriptor": "INTEGRATION",
       "master_requirement": "Wire each Version's **own** accepted skills/Ultimate/Fantasm and stat/progression state to real owned duplicates, respecting mutually exclusive party identity rules and source provenance.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_paths": [
+        "Source/OfflineGame/Private/Runtime/OGGameCoreSubsystem.cpp",
+        "Source/OfflineGame/Private/Combat/OGNativeBattleCommands.cpp"
+      ],
+      "source_commit": "573de97281b63ff5b617f371c111a15a8dc8673e",
+      "remaining": [
+        "Install and validate genuinely approved gameplay definitions/ability executors for Awakened, Berserker and Grand Convergence; the reference v4 proposals alone are not working effects.",
+        "Wire original 3D and shared animations to real combat actor presentation and World action state.",
+        "Compile native Android and verify each owned form, non-player turn, outcome and persistence on the connected device."
+      ]
     },
     {
       "id": "G12-0506",
