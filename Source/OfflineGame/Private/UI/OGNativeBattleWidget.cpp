@@ -259,7 +259,26 @@ void UOGNativeBattleWidget::Refresh()
         const bool Embodied=Bodies.Contains(Unit.UnitEntityId) && !AmbiguousBodies.Contains(Unit.UnitEntityId);
         const FString Suffix=bDefeatedAlly?TEXT(" / DEFEATED - REVIVAL ELIGIBILITY CHECKED ON CAST"):
             !Embodied?TEXT(" / CHARACTER UNAVAILABLE"):Selected?TEXT(" / SELECTED"):TEXT("");
-        AddButton(Targets,FString::Printf(TEXT("%s %d%s\nHP %s / %s"),*Side,I+1,*Suffix,*Unit.CurrentHp.ToDebugString(),*Unit.Stats.MaxHp.ToDebugString()),
+        FString HpLine=Unit.TeamIndex==Source->TeamIndex
+            ?FString::Printf(TEXT("HP %s / %s"),
+                *Unit.CurrentHp.ToDebugString(),*Unit.Stats.MaxHp.ToDebugString())
+            :TEXT("HP Unknown");
+        // Never expose unobserved opponent HP from the privileged battle
+        // resolver. Use only the actual knowledge-scoped HUD projection.
+        if (Unit.TeamIndex!=Source->TeamIndex)
+        {
+            const FOGWorldTargetViewModel* Observed=nullptr;
+            if (Body->HasTargetHudProjectionForHud() &&
+                Body->GetTargetHudProjectionForHud().TargetEntityId==Unit.UnitEntityId)
+                Observed=&Body->GetTargetHudProjectionForHud();
+            if (!Observed)
+                for (const auto& Other:Body->GetSecondaryTargetHudProjectionsForHud())
+                    if (Other.TargetEntityId==Unit.UnitEntityId) { Observed=&Other;break; }
+            if (Observed && !Observed->HpDisplay.IsEmpty())
+                HpLine=Observed->HpDisplay;
+        }
+        AddButton(Targets,FString::Printf(TEXT("%s %d%s\n%s"),
+                *Side,I+1,*Suffix,*HpLine),
             TEXT("Select an actual participant; the canonical ability still checks target and revival eligibility."),
             NAME_None,I,Own && (bDefeatedAlly || (Unit.CanAct() && Embodied)),Selected,176);
     }
