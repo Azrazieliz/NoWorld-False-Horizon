@@ -282,9 +282,13 @@ bool UOGSharedMotionControllerComponent::RestorePlaybackPhase(float ElapsedGamep
         ? (bLooping?FMath::FloorToInt((SourceTime-SourceContactSeconds)/SequenceSeconds):0):-1;
     const float Phase=bLooping?FMath::Fmod(SourceTime,SequenceSeconds)/SequenceSeconds:FMath::Clamp(SourceTime/SequenceSeconds,0.f,1.f);
     if (CurrentLeader) CurrentLeader->SetPosition(Phase*SequenceSeconds,false);
-    else for (int32 I=0;I<PlayingParts.Num();++I)
-        if (PlayingParts[I] && PlayingSequenceLengths.IsValidIndex(I))
-            PlayingParts[I]->SetPosition(Phase*PlayingSequenceLengths[I],false);
+    else for (int32 I=0;I<PlayingDriverParts.Num();++I)
+        if (PlayingDriverParts[I] && PlayingSequenceLengths.IsValidIndex(I))
+            // One phase value is shared by all actual rig drivers, not
+            // indexed by the full wardrobe mesh list. Followers inherit
+            // the driver through SetLeaderPoseComponent.
+            PlayingDriverParts[I]->SetPosition(
+                Phase*PlayingSequenceLengths[I],false);
     if (ReferenceClip) UpdateReferencePose();
     ApplyMorphOverlays(); return true;
 }
