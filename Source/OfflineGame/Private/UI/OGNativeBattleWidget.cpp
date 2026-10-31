@@ -256,9 +256,11 @@ void UOGNativeBattleWidget::Refresh()
         const bool Selected=Body->IsOwnedBattleTargetSelected(Unit.UnitEntityId);
         const FString Side=Unit.UnitEntityId==Source->UnitEntityId?TEXT("SELF"):Unit.TeamIndex==Source->TeamIndex?TEXT("ALLY"):TEXT("OPPONENT");
         const bool Embodied=Bodies.Contains(Unit.UnitEntityId) && !AmbiguousBodies.Contains(Unit.UnitEntityId);
-        const FString Suffix=!Embodied?TEXT(" / CHARACTER UNAVAILABLE"):Selected?TEXT(" / SELECTED"):TEXT("");
+        const FString Suffix=bDefeatedAlly?TEXT(" / DEFEATED - REVIVAL ELIGIBILITY CHECKED ON CAST"):
+            !Embodied?TEXT(" / CHARACTER UNAVAILABLE"):Selected?TEXT(" / SELECTED"):TEXT("");
         AddButton(Targets,FString::Printf(TEXT("%s %d%s\nHP %s / %s"),*Side,I+1,*Suffix,*Unit.CurrentHp.ToDebugString(),*Unit.Stats.MaxHp.ToDebugString()),
-            TEXT("Select this actual battle participant."),NAME_None,I,Own && Unit.CanAct() && Embodied,Selected,176);
+            TEXT("Select an actual participant; the canonical ability still checks target and revival eligibility."),
+            NAME_None,I,Own && (bDefeatedAlly || (Unit.CanAct() && Embodied)),Selected,176);
     }
     const bool Portrait=ViewWidth<ViewHeight;
     const float Available=FMath::Max(200.f,ViewWidth*.96f-32.f);
