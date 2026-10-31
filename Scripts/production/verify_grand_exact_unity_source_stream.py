@@ -7,7 +7,7 @@ PROJECT=pathlib.Path(r"D:\UnrealProjects\Gate12_WholeCharacter_Build_20261031")
 SOURCE=pathlib.Path(r"D:\UnrealProjects\G12_LuminousNativeImport_20261031\Saved\GrandExactUnitySourceStream")
 CARD=PROJECT/"Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_GRAND_CONVERGENCE_CLOTHED_KK.png"
 CARD_SHA="26c48e1c03c154f9f39a0b06afaade53423c11dbd079604e430162eb4cae5353"
-EXPECTED_MAGIC="NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS"
+EXPECTED_MAGIC="NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V3_SPARSE_MORPHS_CURRENT_WEIGHTS"
 def digest(path):
  h=hashlib.sha256()
  with path.open("rb") as f:
@@ -73,6 +73,9 @@ def audit(path):
   for _ in range(shapes):
    shapename=rd.text()
    if not shapename:raise ValueError("Invalid source morph")
+   source_current_weight=struct.unpack("<f",rd.n(4))[0]
+   if not -100000.0<=source_current_weight<=100000.0:
+    raise ValueError("Invalid exact current character morph weight")
    frames=rd.i()
    if frames<1 or frames>100:raise ValueError("Bad original shape key frames")
    for _ in range(frames):

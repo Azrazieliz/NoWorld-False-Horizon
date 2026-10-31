@@ -60,6 +60,10 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
         }
         catch(Exception ex){Note("ERROR "+ex);completed=true;}
     }
+    // Unity's Vector3 == and != operators are approximate. These exact float
+    // comparisons preserve every arbitrarily small nonzero morph delta.
+    static bool HasSourceMorphValue(Vector3 v)
+    {return v.x!=0f || v.y!=0f || v.z!=0f;}
     static void WriteVec(BinaryWriter w,Vector2 v){w.Write(v.x);w.Write(v.y);}
     static void WriteVec(BinaryWriter w,Vector3 v){w.Write(v.x);w.Write(v.y);w.Write(v.z);}
     static void WriteQuaternion(BinaryWriter w,Quaternion q)
@@ -88,7 +92,7 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
         using (var s=new FileStream(path,FileMode.CreateNew,FileAccess.Write,FileShare.None,128*1024))
         using (var w=new BinaryWriter(s))
         {
-            w.Write("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS");
+            w.Write("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V3_SPARSE_MORPHS_CURRENT_WEIGHTS");
             w.Write(CardSha);w.Write(index);w.Write(renderer.name);
             w.Write(PathOf(renderer.transform,owner));
             w.Write(m.vertexCount);w.Write(m.subMeshCount);
@@ -145,6 +149,9 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
             for(int shape=0;shape<m.blendShapeCount;shape++)
             {
                 w.Write(m.GetBlendShapeName(shape));
+                // Current authored facial/body proportions are not necessarily
+                // the neutral Basis. Preserve original active morph weights.
+                w.Write(renderer.GetBlendShapeWeight(shape));
                 int frames=m.GetBlendShapeFrameCount(shape);
                 w.Write(frames);
                 for(int frame=0;frame<frames;frame++)
@@ -156,13 +163,13 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
                     m.GetBlendShapeFrameVertices(shape,frame,deltaV,deltaN,deltaT);
                     int changed=0;
                     for(int i=0;i<v.Length;i++)
-                        if(deltaV[i]!=Vector3.zero || deltaN[i]!=Vector3.zero ||
-                           deltaT[i]!=Vector3.zero)changed++;
+                        if(HasSourceMorphValue(deltaV[i]) || HasSourceMorphValue(deltaN[i]) ||
+                           HasSourceMorphValue(deltaT[i]))changed++;
                     w.Write(changed);
                     for(int i=0;i<v.Length;i++)
                     {
-                        if(deltaV[i]==Vector3.zero && deltaN[i]==Vector3.zero &&
-                           deltaT[i]==Vector3.zero)continue;
+                        if(!HasSourceMorphValue(deltaV[i]) && !HasSourceMorphValue(deltaN[i]) &&
+                           !HasSourceMorphValue(deltaT[i]))continue;
                         w.Write(i);
                         WriteVec(w,deltaV[i]);
                         WriteVec(w,deltaN[i]);

@@ -5,6 +5,8 @@
 #include "Components/Image.h"
 #include "Components/Border.h"
 #include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Components/PanelSlot.h"
 #include "Misc/AutomationTest.h"
 #include "Engine/World.h"
 
