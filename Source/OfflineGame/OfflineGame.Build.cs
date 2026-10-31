@@ -12,10 +12,10 @@ public class OfflineGame : ModuleRules
         PCHUsage = LowMemoryBuild ? PCHUsageMode.NoPCHs : PCHUsageMode.UseExplicitOrSharedPCHs;
         if (LowMemoryBuild)
         {
-            // Small incremental unity batches amortize header parsing without
-            // a monolithic shared PCH or large all-module unity translation unit.
-            bUseUnity = true;
-            NumIncludedBytesPerUnityCPPOverride = 128 * 1024;
+            // Even a 128 KiB unity batch exhausted Windows' commit limit on
+            // the 8 GiB build PC. Compile each source file separately and keep
+            // UnrealBuildTool at one action; normal developer builds are unchanged.
+            bUseUnity = false;
         }
 
         PublicDependencyModuleNames.AddRange(new string[]

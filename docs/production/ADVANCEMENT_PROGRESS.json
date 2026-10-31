@@ -3,7 +3,7 @@
   "master": "docs/production/ADVANCEMENT_MASTER.md",
   "source_catalog": "Content/NoWorld/Animation/SharedMotionCatalog.json",
   "source_branch": "fix/gate12-pr85-ue58-uht-20261030",
-  "last_synchronized": "2026-10-30",
+  "last_synchronized": "2026-10-31",
   "status_convention": {
     "MASTER_CHECKED_SCOPED": "Historical scoped checkbox in the existing master; not a new Android/device acceptance claim.",
     "OPEN": "Unfinished; no new verification claimed.",
@@ -13,7 +13,7 @@
     "master_task_count": 111,
     "master_checked": 6,
     "master_open": 105,
-    "source_partial": 5,
+    "source_partial": 9,
     "build_verified": false,
     "device_verified": false,
     "user_accepted": false
@@ -389,7 +389,16 @@
       "master_checked": false,
       "master_descriptor": "CONTENT",
       "master_requirement": "Finalize true user-approved Luminous Base and Alter native meshes from existing authentic Koikatsu/Blender/UE work, comparing face, morphology, eyes/alpha, materials, scale, rig, costumes, anatomical components and whole-body appearance with reference (no redesign/re-export of already accepted parts unless corrective).",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "b93777851194769fcfeb29aaac92e51159cb0714",
+      "source_paths": [
+        "Assets/NoWorld/Luminous/KoikatsuOriginalCards/SOURCE_CARDS_MANIFEST.json",
+        "Scripts/production/intake_luminous_koikatsu_source_cards.py"
+      ],
+      "remaining": [
+        "Import original Base and Alter wardrobe cards as actual faithful UE skeletal components and verify exact appearance against approved visuals",
+        "Verify source rig, anatomy, materials, skeleton compatibility and playable native motion on Android"
+      ]
     },
     {
       "id": "G12-0503",
@@ -411,14 +420,35 @@
       "master_checked": false,
       "master_descriptor": "INTEGRATION",
       "master_requirement": "Make owned Luminous controllable for exploration, navigation, encounter, action/turn combat, interactions, cinematic and Ruler 2D/3D full-size detail.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "a4daff03f58b552a6c3f824c183ed7a44c8b1975",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGGate12CharacterVisualCatalog.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionSubsystem.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "remaining": [
+        "Verify the three installed authentic Base/Alter/Berserker actor Blueprints actually inherit the approved World pawn and implement canonical binding in UE5.8.",
+        "Recover/export/install genuine Awakened and Grand native World actors from existing source cards; do not claim original cards alone are imported native geometry.",
+        "Physically verify controlled World movement, interaction, shared animation, optional combat, and stable Ruler return/persistence on Android."
+      ]
     },
     {
       "id": "G12-0505",
       "master_checked": false,
       "master_descriptor": "INTEGRATION",
       "master_requirement": "Wire each Version's **own** accepted skills/Ultimate/Fantasm and stat/progression state to real owned duplicates, respecting mutually exclusive party identity rules and source provenance.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_paths": [
+        "Source/OfflineGame/Private/Runtime/OGGameCoreSubsystem.cpp",
+        "Source/OfflineGame/Private/Combat/OGNativeBattleCommands.cpp"
+      ],
+      "source_commit": "573de97281b63ff5b617f371c111a15a8dc8673e",
+      "remaining": [
+        "Install and validate genuinely approved gameplay definitions/ability executors for Awakened, Berserker and Grand Convergence; the reference v4 proposals alone are not working effects.",
+        "Wire original 3D and shared animations to real combat actor presentation and World action state.",
+        "Compile native Android and verify each owned form, non-player turn, outcome and persistence on the connected device."
+      ]
     },
     {
       "id": "G12-0506",
@@ -432,7 +462,19 @@
       "master_checked": false,
       "master_descriptor": "CONTENT — APPROVAL DEPENDENT",
       "master_requirement": "Integrate Awakened, Berserker and Grand Convergence using their actual approved form content and exact rules, preserving owned source copies and progression. Reuse the single character-level shared motion controller with the correct native skeletons.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "b93777851194769fcfeb29aaac92e51159cb0714",
+      "source_paths": [
+        "Assets/NoWorld/Luminous/KoikatsuOriginalCards/SOURCE_CARDS_MANIFEST.json",
+        "Content/NoWorld/Characters/Luminous/Art/Accepted2D/APPROVED_FIVE_FORMS_MANIFEST.json",
+        "Scripts/production/intake_luminous_koikatsu_source_cards.py"
+      ],
+      "remaining": [
+        "Import original Awakened, Berserker and Grand Convergence 3D wardrobe cards as real UE skeletal assets with correct materials and morphology",
+        "Verify exact per-form combat and progression rules against approved canonical source, without new ordinary lineage",
+        "Connect genuine form 3D assets to the one shared character animation controller and execute native gameplay",
+        "Android compile, cook, device tests and user visual acceptance"
+      ]
     },
     {
       "id": "G12-0508",
