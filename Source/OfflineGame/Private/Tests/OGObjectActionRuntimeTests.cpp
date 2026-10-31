@@ -1,3 +1,4 @@
+#include "UObject/Package.h"
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Objects/OGObjectActionService.h"

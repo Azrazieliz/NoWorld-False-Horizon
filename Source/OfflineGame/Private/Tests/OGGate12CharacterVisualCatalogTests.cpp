@@ -1,3 +1,4 @@
+#include "UObject/Package.h"
 #include "UI/OGGate12CharacterVisualCatalog.h"
 #include "UObject/UObjectGlobals.h"
 
