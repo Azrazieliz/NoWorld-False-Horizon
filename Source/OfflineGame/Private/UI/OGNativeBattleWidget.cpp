@@ -249,7 +249,10 @@ void UOGNativeBattleWidget::Refresh()
     if (!Bodies.Contains(Source->UnitEntityId)) Bodies.Add(Source->UnitEntityId,Body);
     for (int32 I=0;I<State.Units.Num();++I)
     {
-        const auto& Unit=State.Units[I]; if (Unit.Presence!=EOGCombatPresence::Active) continue;
+        const auto& Unit=State.Units[I];
+        const bool bDefeatedAlly=Unit.Presence==EOGCombatPresence::Defeated &&
+            !Unit.IsAlive() && Unit.TeamIndex==Source->TeamIndex;
+        if (Unit.Presence!=EOGCombatPresence::Active && !bDefeatedAlly) continue;
         const bool Selected=Body->IsOwnedBattleTargetSelected(Unit.UnitEntityId);
         const FString Side=Unit.UnitEntityId==Source->UnitEntityId?TEXT("SELF"):Unit.TeamIndex==Source->TeamIndex?TEXT("ALLY"):TEXT("OPPONENT");
         const bool Embodied=Bodies.Contains(Unit.UnitEntityId) && !AmbiguousBodies.Contains(Unit.UnitEntityId);
