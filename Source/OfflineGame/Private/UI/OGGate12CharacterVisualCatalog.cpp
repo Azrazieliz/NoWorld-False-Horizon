@@ -86,6 +86,15 @@ const FOGGate12CharacterVisualEntry* UOGGate12CharacterVisualCatalog::FindExact(
     if (InstalledNativePreview && Exact.GenuineCharacterPreviewClass.IsNull())
         Exact.GenuineCharacterPreviewClass =
             TSoftClassPtr<AActor>(FSoftObjectPath(InstalledNativePreview));
+    // The same original actor can be used for World possession if it is
+    // actually a playable pawn; do not create a parallel placeholder body.
+    // ResolveSelectedOwnedWorldPawn validates AOGWorldPrototypeCharacter and
+    // the canonical owned-character binding interface before possession.
+    // Never override an explicitly authored playable class in the catalog.
+    if (InstalledNativePreview && Exact.ApprovedWorldPlayableClass.IsNull())
+        Exact.ApprovedWorldPlayableClass =
+            TSoftClassPtr<AOGWorldPrototypeCharacter>(
+                FSoftObjectPath(InstalledNativePreview));
 
     const FString File = FPaths::Combine(
         FPaths::ProjectContentDir(),
