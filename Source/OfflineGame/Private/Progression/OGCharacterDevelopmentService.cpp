@@ -259,7 +259,7 @@ bool AddStatGrants(FOGCombatStats& Stats, const TMap<FName, FOGLargeNumber>& Gra
         else
         {
             int32* Field = nullptr;
-#define OG_DEV_STAT(Key, Member) if (Pair.Key == TEXT(Key)) Field = &Candidate.Member
+#define OG_DEV_STAT(StatLiteral, Member) if (Pair.Key == TEXT(StatLiteral)) Field = &Candidate.Member
             OG_DEV_STAT("speed", Speed);
             else OG_DEV_STAT("crit_rate_bps", CritRateBps);
             else OG_DEV_STAT("crit_damage_bonus_bps", CritDamageBonusBps);

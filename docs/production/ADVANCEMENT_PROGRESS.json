@@ -13,7 +13,7 @@
     "master_task_count": 111,
     "master_checked": 6,
     "master_open": 105,
-    "source_partial": 9,
+    "source_partial": 11,
     "build_verified": false,
     "device_verified": false,
     "user_accepted": false
@@ -45,7 +45,11 @@
       "master_checked": false,
       "master_descriptor": "FAST",
       "master_requirement": "Eliminate Zen DDC `507 Insufficient Storage` (C: last observed ~2 GB available vs D: ~163 GB); relocate disposable derived cache non-destructively or recover safe space without touching original assets, saves, source, packages or user files.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_paths": [
+        "Scripts/production/relocate_unreal_zen_cache_lossless_20261031.ps1"
+      ],
+      "remaining": "Byte-preserving Zen data relocation to D: completed and junction checked; independently verify an actual full cook can write cache without HTTP 507, before checking this master task."
     },
     {
       "id": "G12-0005",
@@ -434,7 +438,15 @@
       "master_checked": false,
       "master_descriptor": "INTEGRATION",
       "master_requirement": "Make owned Luminous controllable for exploration, navigation, encounter, action/turn combat, interactions, cinematic and Ruler 2D/3D full-size detail.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_paths": [
+        "Source/OfflineGame/Private/Koikatsu/OGExactOriginalLuminousParts.cpp",
+        "Source/OfflineGame/Private/Koikatsu/OGLuminousExactOriginalPreviewActor.cpp",
+        "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12CharacterVisualCatalog.cpp",
+        "docs/production/gate12/evidence/verified-original-koikatsu-native/G12_Awakened_Berserker_ExactOriginal_NativeUEImportAccepted.json"
+      ],
+      "remaining": "Native compile, input and actual 3D viewport acceptance, gameplay, combat, source animation rig derivatives, Grand model, Android build and device test."
     },
     {
       "id": "G12-0505",
