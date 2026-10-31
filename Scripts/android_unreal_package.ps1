@@ -140,7 +140,15 @@ Write-Host "APK size (bytes): $($Artifact.Length)"
 if ($InstallOnDevice) {
     $Adb = Join-Path $PreferredSdkRoot "platform-tools\adb.exe"
     if (-not (Test-Path $Adb)) { throw "ADB missing from configured SDK." }
-    $Connected = @(& $Adb devices | Where-Object { $_ -match '^\\S+\\s+device\\s*$' })
+    $Connected = @(& $Adb devices | Where-Object { $_ -match '^\S+\s+device\s*
+    if ($Connected.Count -ne 1) {
+        throw "Expected exactly one authorized Android device; got $($Connected.Count)."
+    }
+    Invoke-Checked -FilePath $Adb -Arguments @("install", "-r", $Artifact.FullName)
+    Write-Host "Native APK installed on the connected Android device." -ForegroundColor Green
+    Write-Host "Owner gameplay acceptance remains outstanding." -ForegroundColor Yellow
+}
+ })
     if ($Connected.Count -ne 1) {
         throw "Expected exactly one authorized Android device; got $($Connected.Count)."
     }
