@@ -60,6 +60,13 @@ try:
  report["status"]="PASS_EXACT_CARD_REAL_MESH_RIG_BLEND"
  save()
  for i,m in enumerate(meshes):
+  # KKBP hides some REAL source primitives outside the active view layer.
+  # Link those original objects to the render/import scene; no proxies.
+  if m.name not in bpy.context.view_layer.objects:
+   collection=bpy.data.collections.new("ExactSourceHiddenMesh_"+str(i))
+   bpy.context.scene.collection.children.link(collection)
+   collection.objects.link(m)
+   bpy.context.view_layer.update()
   bpy.ops.object.select_all(action="DESELECT")
   arms[0].hide_set(False);m.hide_set(False)
   arms[0].select_set(True);m.select_set(True);bpy.context.view_layer.objects.active=arms[0]
