@@ -378,6 +378,11 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     {
         TArray<USkeletalMeshComponent*> Native;
         for (int32 I = 0; I < ActivePartCount; ++I) Native.Add(RuntimeParts[I]);
+        // Enforce one whole-character binding at runtime. Some preserved
+        // native Blueprints serialize old controller defaults, so constructor
+        // settings alone cannot guarantee the approved rig-cohort path.
+        SharedMotionController->bUseIdenticalTopologyLeaderPose = false;
+        SharedMotionController->bGroupPartsByReferencePose = true;
         SharedMotionController->RigProfile = MotionRigProfile;
         SharedMotionController->AnatomyProfile = MotionAnatomyProfile;
         SharedMotionController->Capabilities = MotionCapabilities;
