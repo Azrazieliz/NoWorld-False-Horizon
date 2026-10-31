@@ -341,7 +341,16 @@ void UOGNativeBattleWidget::NativeTick(const FGeometry& Geometry,float DeltaSeco
 {
     Super::NativeTick(Geometry,DeltaSeconds);
     const auto Size=Geometry.GetLocalSize(); ViewWidth=Size.X; ViewHeight=Size.Y;
-    if (ActionPanelSlot) ActionPanelSlot->SetAnchors(FAnchors(.02f,Size.X<Size.Y?.55f:.61f,.98f,.98f));
+    // Changing Canvas anchors every frame invalidates layout and can
+    // interrupt gamepad focus on Android. Re-anchor only when the screen
+    // actually changes between portrait and landscape.
+    const bool bPortrait=Size.X<Size.Y;
+    if (ActionPanelSlot && (!bActionAnchorsApplied || bActionPortraitLayout!=bPortrait))
+    {
+        ActionPanelSlot->SetAnchors(FAnchors(.02f,bPortrait?.55f:.61f,.98f,.98f));
+        bActionAnchorsApplied=true;
+        bActionPortraitLayout=bPortrait;
+    }
     RefreshElapsed+=DeltaSeconds;
     if (RefreshElapsed>=.2f) { RefreshElapsed=0; Refresh(); }
 }
