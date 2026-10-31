@@ -173,7 +173,7 @@ void UOGFoundationInteractionHost::BuildDiagnosticSelection(bool bAll)
         SelectionIndex = (SelectionIndex + 1) % Candidates.Num();
     }
     else SelectedParticipants.Reset();
-    Status = FString::Printf(TEXT("Selected / "), SelectedParticipants.Num());
+    Status = FString::Printf(TEXT("Selected %d"), SelectedParticipants.Num());
 }
 
 void UOGFoundationInteractionHost::RefreshProductionSelection()
