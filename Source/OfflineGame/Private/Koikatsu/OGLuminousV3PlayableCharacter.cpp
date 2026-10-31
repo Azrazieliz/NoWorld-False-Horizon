@@ -1,4 +1,5 @@
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Koikatsu/OGExactOriginalLuminousParts.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
 
@@ -116,6 +117,7 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
     // is admitted. Never compare them through Base/Alter's 975-bone proxy.
     if (Left.GetNum() != Right.GetNum() ||
         (Left.GetNum() != 975 && Left.GetNum() != 886 &&
+         Left.GetNum() != 1073 && Left.GetNum() != 882 &&
          Left.GetNum() != 1131 && Left.GetNum() != 1123)) return false;
     for (int32 Index = 0; Index < Left.GetNum(); ++Index)
     {
@@ -275,8 +277,15 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
         const FString VersionNamespace = Form.IsEmpty() ? FString() :
             FString::Printf(TEXT("/Game/NoWorld/Characters/Luminous/%s/NativeOriginal%s/"),
                 *Form, StateFolder);
-        const bool bNewOriginalSource = !VersionNamespace.IsEmpty() &&
-            AssetPath.StartsWith(VersionNamespace);
+        const bool bVerifiedExactClothed =
+            Desired == EOGLuminousV3Wardrobe::Clothed &&
+            !Form.IsEmpty() &&
+            (Form == TEXT("Awakened") || Form == TEXT("Berserker")) &&
+            AssetPath.StartsWith(FString::Printf(
+                TEXT("/Game/NoWorld/Characters/Luminous/%s/ExactOriginalClothed/"),
+                *Form));
+        const bool bNewOriginalSource = (!VersionNamespace.IsEmpty() &&
+            AssetPath.StartsWith(VersionNamespace)) || bVerifiedExactClothed;
         if (!bBaseSource && !bAlterSource && !bNewOriginalSource)
         {
             Error = TEXT("Luminous V3: refusing an unexpected or cross-character asset namespace");
@@ -323,16 +332,30 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     // Prepare the exact full state first; do not publish a half-loaded wardrobe.
     TArray<USkeletalMesh*> Prepared;
     Prepared.Reserve(Paths.Num());
+    int32 WholeFormBoneCount = INDEX_NONE;
+    const bool bExactSourceClothed =
+        Desired == EOGLuminousV3Wardrobe::Clothed &&
+        (CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_awakened_v4") ||
+         CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_berserker_v4"));
     for (int32 Index = 0; Index < Paths.Num(); ++Index)
     {
         USkeletalMesh* NativeMesh = Cast<USkeletalMesh>(Paths[Index].TryLoad());
-        if (!NativeMesh || !NativeMesh->GetSkeleton() ||
-            NativeMesh->GetRefSkeleton().GetNum() != ExpectedNativeBoneCount(Desired))
+        const int32 ActualBones = NativeMesh ? NativeMesh->GetRefSkeleton().GetNum() : 0;
+        const int32 Expected = ExpectedNativeBoneCount(Desired);
+        const bool bRigMatches = bExactSourceClothed
+            ? (ActualBones >= Expected && ActualBones <= Expected + 1 &&
+               (WholeFormBoneCount == INDEX_NONE || WholeFormBoneCount == ActualBones))
+            : (ActualBones == Expected);
+        if (!NativeMesh || !NativeMesh->GetSkeleton() || !bRigMatches)
         {
-            Error = FString::Printf(TEXT("Luminous V3: missing/invalid source rig %d bones at index %d state %s"),
-                ExpectedNativeBoneCount(Desired), Index, WardrobeName(Desired));
+            Error = FString::Printf(
+                TEXT("Luminous: missing or mismatched authentic native source rig expected=%d actual=%d index=%d state=%s"),
+                Expected, ActualBones, Index, WardrobeName(Desired));
             return false;
         }
+        WholeFormBoneCount = ActualBones;
         Prepared.Add(NativeMesh);
     }
     // One component pool reused for all three states. Never instantiate 121
@@ -1415,4 +1438,30 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
     bCompatibleNativeMotion = false;
     bLuminousReady = false;
     Super::EndPlay(Reason);
+}
+
+AOGLuminousAwakenedOriginalWorldCharacter::AOGLuminousAwakenedOriginalWorldCharacter()
+{
+    CanonicalLuminousVersionId =
+        TEXT("character:luminous_valentine.version_awakened_v4");
+    int32 Bones = 0;
+    if (FOGExactOriginalLuminousParts::GetClothed(
+        CanonicalLuminousVersionId, ClothedNativeParts, Bones))
+    {
+        AdditionalVersionNativePartCounts = {ClothedNativeParts.Num(), 0, 0};
+        AdditionalVersionNativeSkeletonBones = {Bones, 0, 0};
+    }
+}
+
+AOGLuminousBerserkerOriginalWorldCharacter::AOGLuminousBerserkerOriginalWorldCharacter()
+{
+    CanonicalLuminousVersionId =
+        TEXT("character:luminous_valentine.version_berserker_v4");
+    int32 Bones = 0;
+    if (FOGExactOriginalLuminousParts::GetClothed(
+        CanonicalLuminousVersionId, ClothedNativeParts, Bones))
+    {
+        AdditionalVersionNativePartCounts = {ClothedNativeParts.Num(), 0, 0};
+        AdditionalVersionNativeSkeletonBones = {Bones, 0, 0};
+    }
 }

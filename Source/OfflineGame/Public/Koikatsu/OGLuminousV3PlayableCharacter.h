@@ -82,7 +82,7 @@ enum class EOGLuminousV3AuthoredEmote : uint8
  * combat, touch controls, camera and party systems remain inherited unchanged.
  */
 UCLASS(Blueprintable)
-class OFFLINEGAME_API AOGLuminousV3PlayableCharacter final : public AOGWorldPrototypeCharacter, public IOGGate12OwnedWorldCharacterBinding
+class OFFLINEGAME_API AOGLuminousV3PlayableCharacter : public AOGWorldPrototypeCharacter, public IOGGate12OwnedWorldCharacterBinding
 {
     GENERATED_BODY()
 public:
@@ -317,4 +317,24 @@ private:
     bool ResolveCanonicalControlledContext(struct FOGFoundationCharacterContext& OutContext, FString& Error) const;
     bool RestoreCanonicalWardrobe();
     bool PersistCanonicalWardrobe(EOGLuminousV3Wardrobe Desired, FString& Error);
+};
+
+/** True Koikatsu original-card World pawn: all 9 installed native parts, one motion controller. */
+UCLASS()
+class OFFLINEGAME_API AOGLuminousAwakenedOriginalWorldCharacter final
+    : public AOGLuminousV3PlayableCharacter
+{
+    GENERATED_BODY()
+public:
+    AOGLuminousAwakenedOriginalWorldCharacter();
+};
+
+/** No unpaired historical 886-bone substitute source is admitted here. */
+UCLASS()
+class OFFLINEGAME_API AOGLuminousBerserkerOriginalWorldCharacter final
+    : public AOGLuminousV3PlayableCharacter
+{
+    GENERATED_BODY()
+public:
+    AOGLuminousBerserkerOriginalWorldCharacter();
 };
