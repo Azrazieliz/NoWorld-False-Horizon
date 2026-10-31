@@ -13,7 +13,7 @@
     "master_task_count": 111,
     "master_checked": 6,
     "master_open": 105,
-    "source_partial": 8,
+    "source_partial": 9,
     "build_verified": false,
     "device_verified": false,
     "user_accepted": false
@@ -420,7 +420,18 @@
       "master_checked": false,
       "master_descriptor": "INTEGRATION",
       "master_requirement": "Make owned Luminous controllable for exploration, navigation, encounter, action/turn combat, interactions, cinematic and Ruler 2D/3D full-size detail.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "a4daff03f58b552a6c3f824c183ed7a44c8b1975",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGGate12CharacterVisualCatalog.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionSubsystem.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "remaining": [
+        "Verify the three installed authentic Base/Alter/Berserker actor Blueprints actually inherit the approved World pawn and implement canonical binding in UE5.8.",
+        "Recover/export/install genuine Awakened and Grand native World actors from existing source cards; do not claim original cards alone are imported native geometry.",
+        "Physically verify controlled World movement, interaction, shared animation, optional combat, and stable Ruler return/persistence on Android."
+      ]
     },
     {
       "id": "G12-0505",
