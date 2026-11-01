@@ -1414,6 +1414,16 @@
         "docs/production/CONTENT_BINDING_5STAR.md"
       ],
       "change": "Full v0.40 design remains canon where non-conflicting. v0.41 later mature decisions override only on conflict; original wording unavailable. Code is evidence of deliberate post-baseline changes, not blind authority. 5-star includes both instructions and executable programs. File priority grades 1-4 added. No player-visible completed system credited."
+    },
+    {
+      "grade": 7,
+      "kind": "V041_SOURCE_RECOVERED",
+      "files": [
+        "docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md",
+        "docs/production/NOWORLD_7STAR_AUTHORITY.md"
+      ],
+      "change": "Recovered the approved mature-content v0.41 production freeze. Confirmed narrowly scoped supersession of complete v0.40 architecture and retained nonconflicting decisions. No source-code/gameplay completion credited.",
+      "counted_game_progress": false
     }
   ],
   "latest_gameplay_source_changes": [
@@ -1520,14 +1530,15 @@
     "date": "2026-11-01",
     "source": "Creative Director explicit clarification plus uploaded 175-page v0.40",
     "full_game_baseline": "v0.40 full original game design, all non-conflicting clauses maintained",
-    "mature_content_override": "v0.41's later mature-content decisions supersede conflicting v0.40 mature-content clauses only; full v0.41 text not currently recovered",
-    "later_revision_evidence": "Later deliberately implemented approved changes may be found in GitHub source. Actual code must be checked against source decisions; code bugs are not new creative canon",
+    "mature_content_override": "Recovered docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md is the v0.41 mature-content addendum. It supersedes v0.40 only in direct conflict: systemic 3D runtime, participant/staging/entry model, player control, replay/archive replacement, optional media and presentation-only privacy. Compatible v0.40 decisions remain authoritative.",
+    "later_revision_evidence": "Deliberate later accepted code changes may postdate v0.41. Git history and explicit approvals distinguish intentional decisions from bugs, stubs or assistant inventions.",
     "archive": "docs/production/authority/v040_source_text/",
     "archive_segments": 10,
     "authority_commit": "086b6f68",
     "agent_read_order_commit": "9d7595d2",
     "file_grading_commit": "974b7405",
-    "unresolved_material": "Exact v0.41 mature-content wording unavailable; do not fabricate"
+    "unresolved_material": "The v0.41 text says it does not reopen earlier eligibility policy; the user's recollection of removal of a single restriction does not specify the exact same rule. Preserve both as a documented unresolved distinction; do not invent a restriction or silently replace a later approved decision.",
+    "v041_recovered_document": "docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md"
   },
   "latest_authority_reconciliation": {
     "date": "2026-11-01",
