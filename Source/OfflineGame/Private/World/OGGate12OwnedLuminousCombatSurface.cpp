@@ -320,7 +320,10 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const FOGCombatUnitState& Unit = State.Units[I];
         // Never hide an eligible thirteenth (or later) unit from the field
         // just because an earlier prototype assumed two six-member teams.
-        if (Unit.Presence!=EOGCombatPresence::Active)
+        const bool bDefeatedAlly =
+            Unit.Presence==EOGCombatPresence::Defeated &&
+            !Unit.IsAlive() && Unit.TeamIndex==Owned->TeamIndex;
+        if (Unit.Presence!=EOGCombatPresence::Active && !bDefeatedAlly)
             continue;
         const float X = Edge+(ParticipantOrdinal%6)*(CardW+5.f*S);
         const float CardTop = Top+(ParticipantOrdinal/6)*(CardH+7.f*S);
@@ -337,7 +340,8 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const TWeakObjectPtr<AActor>* Presence=
             NativeBattleWorldActors.Find(Unit.UnitEntityId);
         AActor* ActualBody=Presence ? Presence->Get() : nullptr;
-        DrawGameText(!Unit.IsAlive() ? TEXT("DEFEATED") :
+        DrawGameText(bDefeatedAlly ? TEXT("DEFEATED / REVIVAL") :
+            !Unit.IsAlive() ? TEXT("DEFEATED") :
             !ActualBody ? TEXT("BODY NOT YET BOUND") :
             bSelected ? TEXT("TARGET SELECTED") : TEXT("SELECT TARGET"),
             X+7.f*S,CardTop+35.f*S,12.f*S,Unit.IsAlive()?Border:Dim,CardW-14.f*S);
@@ -364,7 +368,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
                         true,163);
             }
         }
-        if (bOwnTurn && Unit.CanAct())
+        if (bOwnTurn && (Unit.CanAct() || bDefeatedAlly))
         {
             AddFoundationHitBox(FVector2D(X,CardTop),FVector2D(CardW,CardH),
                 FName(*FString::Printf(TEXT("OG.Battle.Target.%d"),I)),
