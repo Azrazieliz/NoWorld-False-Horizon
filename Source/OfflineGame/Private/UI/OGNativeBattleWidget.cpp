@@ -371,6 +371,19 @@ void UOGNativeBattleWidget::Activate(FName Command,int32 TargetIndex)
     }
     if (Command==TEXT("screen_combat_mode"))
     {
+        // Keyboard, controller, delayed touch and accessibility actions can
+        // invoke Activate after the displayed button was disabled. Guard
+        // the real pending character move here as well as at paint time.
+        if (const auto* Pending = Character->
+            FindComponentByClass<UOGTurnContactActionComponent>();
+            Pending && Pending->IsAwaitingAuthoredContact())
+        {
+            LastActionMessage = TEXT(
+                "Finish the original character action before changing combat modes.");
+            Signature.Reset();
+            Refresh();
+            return;
+        }
         auto* Game=Character->GetGameInstance(); auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
         FString Error;
         if (Core && Core->GetOwnedLuminousTurnBattle())
