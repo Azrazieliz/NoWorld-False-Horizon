@@ -120,6 +120,12 @@ try:
         if result is not True or not unreal.EditorAssetLibrary.does_asset_exist(objpath):
             raise RuntimeError("Exact source appearance DataAsset was not authored/saved")
         status["appearance"]=objpath
+        if native["shared_motion_library"]=="AUTO":
+            # The editor bridge creates the only reusable global UDataAsset.
+            shared="/Game/NoWorld/ContentFactory/Shared/DA_GlobalSharedMotionLibrary.DA_GlobalSharedMotionLibrary"
+            if not unreal.EditorAssetLibrary.does_asset_exist(shared):
+                raise RuntimeError("Auto global shared source animation UAsset was not saved")
+            status["assets"].append(shared)
         status["status"]="NATIVE_ORIGINAL_CHARACTER_SOURCE_ASSET_REGISTERED"
         merge_index({"identity":job["identity"],"version":version,"appearance":objpath,
                      "source_card_sha256":source["original_card_sha256"],
