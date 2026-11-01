@@ -330,16 +330,15 @@ bool UOGCharacterAppearanceComponent::InstallAppearance(
     CandidateController = NewObject<UOGSharedMotionControllerComponent>(Owner, NAME_None, RF_Transient);
     if (!CandidateController) return AppearanceError(Error, TEXT("Could not allocate candidate shared motion controller."));
     CandidateController->SharedLibrary = Definition->SharedMotionLibrary;
-    CandidateController->RigProfile = Rendered->RigProfile;
-    CandidateController->AnatomyProfile = Rendered->AnatomyProfile;
-    CandidateController->OutfitProfile = Rendered->OutfitProfile;
-    CandidateController->Capabilities = Rendered->Capabilities;
     CandidateController->bUseIdenticalTopologyLeaderPose = Rendered->bUseIdenticalTopologyLeaderPose;
     CandidateController->bPhaseLockIndependentParts = true;
     CandidateController->bPermitAuthoritativeRootMotion = false;
     Owner->AddInstanceComponent(CandidateController);
     CandidateController->RegisterComponent();
-    if (!CandidateController->IsRegistered() || !CandidateController->RegisterNativeParts(Candidates))
+    if (!CandidateController->IsRegistered() ||
+        !CandidateController->BindNativeRigAndParts(
+            Rendered->RigProfile, Rendered->AnatomyProfile,
+            Rendered->OutfitProfile, Rendered->Capabilities, Candidates))
         return AppearanceError(Error, TEXT("Shared motion registration rejected the hidden native candidate parts."));
 
     // Loading/registering can invoke engine callbacks. Recheck canonical truth before publishing.
