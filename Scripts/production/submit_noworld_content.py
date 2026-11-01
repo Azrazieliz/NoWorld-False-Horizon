@@ -49,7 +49,7 @@ def main():
     char.add_argument("--anatomy",required=True)
     char.add_argument("--wardrobe",required=True)
     char.add_argument("--wardrobe-field",required=True)
-    char.add_argument("--shared-library",required=True)
+    char.add_argument("--shared-library",default="AUTO",help="AUTO uses the ONE existing global source bank and authors a cookable reference asset")
     char.add_argument("--capabilities",nargs="*",default=[])
     animation=sub.add_parser("motion")
     animation.add_argument("--fbx",required=True)
