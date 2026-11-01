@@ -157,7 +157,7 @@
         "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp",
         "Source/OfflineGame/Private/Characters/OGCharacterAppearanceComponent.cpp"
       ],
-      "proof": "One whole-character shared controller now groups every authentic skeletal part by exact rest pose, plays one source-action clip per compatible rig, phase-locks independent drivers and prevents per-Version library forks. GitHub source only; UE5.8 compile, all-source playback and device acceptance not yet verified. 2026-11-01: One-call BindNativeRigAndParts API now actively used by original Luminous and generic content characters; their independent real rest-pose cohorts share the existing semantic catalog. Commits b59b8757, f2a2b38a, b07fe58b, 1e55a83a, 45f13fb2. Still source-only.",
+      "proof": "One whole-character shared controller now groups every authentic skeletal part by exact rest pose, plays one source-action clip per compatible rig, phase-locks independent drivers and prevents per-Version library forks. GitHub source only; UE5.8 compile, all-source playback and device acceptance not yet verified. 2026-11-01: One-call BindNativeRigAndParts API now actively used by original Luminous and generic content characters; their independent real rest-pose cohorts share the existing semantic catalog. Commits b59b8757, f2a2b38a, b07fe58b, 1e55a83a, 45f13fb2. Still source-only. 2026-11-01: Generic exact authored Identity now bound onto every candidate shared controller before wardrobe/rig publication (b515a66a); Blueprint identity binding exposed (5b8ccbed).",
       "remaining": [
         "Native UE5.8 compilation and Android replay of complete multi-rig body",
         "Genuine Awakened and Grand converted Unreal skeletal models and authored compatible derivatives",
@@ -986,6 +986,11 @@
             "commit": "45f13fb2",
             "change": "Content actor and Luminous native skeletal parts now use one reusable semantic rig binding path, with genuine rest-pose cohort selection.",
             "type": "SOURCE_PARTIAL"
+          },
+          {
+            "commit": "b515a66a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Generic character source now binds canonical authored Identity before installing actual rig parts."
           }
         ],
         "completed_in_this_update": false
@@ -1024,6 +1029,11 @@
             "commit": "bc6b09b5",
             "change": "Turn-UI buttons reflect actual skeletal animation availability; inaccessible actions no longer masquerade as playable.",
             "type": "SOURCE_PARTIAL"
+          },
+          {
+            "commit": "01eb18fd",
+            "type": "SOURCE_PARTIAL",
+            "change": "Dismissed native battle results now restore GameOnly touch/camera input for real World traversal."
           }
         ],
         "completed_in_this_update": false
@@ -1293,6 +1303,31 @@
         "Source/OfflineGame/Private/Characters/OGCharacterAppearanceComponent.cpp"
       ],
       "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "commit": "b515a66a",
+      "area": "canonical content Identity ↔ shared native character animation controller",
+      "paths": [
+        "Source/OfflineGame/Private/Characters/OGCharacterAppearanceComponent.cpp"
+      ],
+      "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "commit": "01eb18fd",
+      "area": "native combat victory/defeat result ↔ World player touch/camera controls",
+      "paths": [
+        "Source/OfflineGame/Private/UI/OGNativeBattleWidget.cpp"
+      ],
+      "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "commit": "5b8ccbed",
+      "area": "Blueprint callable canonical identity ↔ shared native action bank",
+      "paths": [
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h"
+      ],
+      "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
     }
-  ]
+  ],
+  "continuation_entrypoint": "AGENTS.md"
 }
