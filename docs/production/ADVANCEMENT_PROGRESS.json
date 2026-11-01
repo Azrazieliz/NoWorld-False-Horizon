@@ -936,23 +936,29 @@
         "id": "M01",
         "title": "Offline mobile startup and free World entry",
         "issue": 27,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M02",
         "title": "Playable character movement, camera and touch traversal",
         "issue": 28,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M03",
         "title": "Rendered real World battle and autonomous opponent turns",
         "issue": 30,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
             "commit": "bc6b09b5",
@@ -965,13 +971,16 @@
             "change": "Native battle HUD no longer offers an unrestricted World/turn toggle; original v0.36 AH.8 reserves hybrid phase changes for authoritative boss encounter mechanics."
           }
         ],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M04",
         "title": "Five-form original Luminous rigs, wardrobes and transformations",
         "issue": 31,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
             "commit": "45f13fb2",
@@ -994,13 +1003,16 @@
             "change": "Editor C++ authors native appearance and ONE global genuine shared animation bank from original skeletons"
           }
         ],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M05",
         "title": "Shared authentic animation and expression runtime",
         "issue": 32,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
             "commit": "45f13fb2",
@@ -1028,29 +1040,38 @@
             "change": "Restored all original 3222 global animation catalog entries from protected PC without new content authoring or runtime acceptance."
           }
         ],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M06",
         "title": "Exact approved five-form v4 combat kits",
         "issue": 33,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M07",
         "title": "Weapons, projectiles, physical hits and combat VFX",
         "issue": 34,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M08",
         "title": "Character identity, Versions and individual Manifestations",
         "issue": 35,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
             "commit": "22a5b649",
@@ -1058,13 +1079,16 @@
             "change": "actual generic owned World character reads source-authored exact Identity/Version UAsset definitions from immutable content factory registry"
           }
         ],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M09",
         "title": "Premium native in-World interface and combat HUD",
         "issue": 36,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
             "commit": "bc6b09b5",
@@ -1082,109 +1106,148 @@
             "change": "Native battle HUD no longer offers an unrestricted World/turn toggle; original v0.36 AH.8 reserves hybrid phase changes for authoritative boss encounter mechanics."
           }
         ],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M10",
         "title": "Persistent offline profile and local save/load",
         "issue": 37,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M11",
         "title": "First World terrain, deterministic streaming and navigation",
         "issue": 38,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M12",
         "title": "World landmarks, geography, settlements and interiors",
         "issue": 39,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M13",
         "title": "Ecology, resources, water and environmental simulation",
         "issue": 40,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M14",
         "title": "Enemy AI, high-rank combat and encounter balancing",
         "issue": 41,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M15",
         "title": "GP, domains and high-rank progression rules",
         "issue": 42,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M16",
         "title": "Rarity banners, weighted gacha, pity and atomic pulling",
         "issue": 43,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M17",
         "title": "Inventory, anatomical storage and equipped gear",
         "issue": 44,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M18",
         "title": "Loot, rewards, consumables and earned currency",
         "issue": 45,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M19",
         "title": "Crafting, invention, enhancement, durability and repairs",
         "issue": 46,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M20",
         "title": "Settlement trade, markets and regional economics",
         "issue": 47,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M21",
         "title": "Character growth, affinity, proficiency and statistics",
         "issue": 48,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M22",
         "title": "Premium roster, character details and wardrobe UI",
         "issue": 49,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
             "commit": "fe46221d",
@@ -1192,101 +1255,137 @@
             "change": "native character visual catalog finds factory-produced genuine original images/appearances and real generic World pawn without overriding accepted existing characters"
           }
         ],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M23",
         "title": "Premium home, gacha, records and territory UI",
         "issue": 50,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M24",
         "title": "Native NPC life, relationships and faction systems",
         "issue": 51,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M25",
         "title": "Branching quests, story events and consequences",
         "issue": 52,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M26",
         "title": "Chronicle, Codex, knowledge and narrative memory",
         "issue": 53,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M27",
         "title": "Bosses, optional encounters and dungeon progression",
         "issue": 54,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M28",
         "title": "Territories, Ruler powers and changing civilization",
         "issue": 55,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M29",
         "title": "Synchronized source-authentic multi-participant interactions",
         "issue": 56,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M30",
         "title": "Adaptive music, original audio and game-event SFX",
         "issue": 57,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M31",
         "title": "Character and environmental visual polish",
         "issue": 58,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M32",
         "title": "Persistent events, migration and recovery integrity",
         "issue": 59,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M33",
         "title": "Mobile settings, touch ergonomics and accessibility",
         "issue": 60,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M34",
         "title": "Android packaging, performance and device-ready delivery",
         "issue": 61,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
             "commit": "aab76867",
@@ -1294,23 +1393,32 @@
             "change": "Unreal Android cooks dynamically linked genuine source meshes, original art and actor appearance asset directory"
           }
         ],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M35",
         "title": "Windows standalone parity and reproducible native packaging",
         "issue": 62,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       },
       {
         "id": "M36",
         "title": "Complete integrated full-game phone acceptance",
         "issue": 63,
-        "acceptance_state": "NOT_USER_ACCEPTED",
+        "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
-        "completed_in_this_update": false
+        "completed_in_this_update": false,
+        "owner_phone_review": "NO_OWNER_VERDICT",
+        "owner_explicit_rejection": false,
+        "owner_tested_on_actual_phone": false
       }
     ]
   },
@@ -1460,6 +1568,24 @@
         "docs/production/gate12/pc_recovery_scripts/"
       ],
       "change": "Restored all original 3222 indexed animation entries with all 3222 native files already present/tracked; no playable contact approval inferred. Added two reusable 5★ programs (6★ checkpoint; safe native motion recovery), modern 7/6/5 repo execution map and navigation, mandatory 6★ update after every work item and six historical PC scripts preserved as non-runnable source evidence. No native build, code testing or user acceptance.",
+      "counted_game_progress": false
+    },
+    {
+      "grade": 5,
+      "kind": "REMOVE_PREPHONE_APPROVAL_GATE_WHILE_RETAINING_NATIVE_SOURCE_INTEGRITY",
+      "commits": [
+        "3e3e728e86953f87d54cdfcc1f8c8e6181d0741b",
+        "fe96af398818f20136849550734c48cc91ad1651",
+        "d68f7094d2ea71768c24d9a7c46b3e783bf3a406",
+        "c18b43a606afd243c04de50c61a75732ce0ee172"
+      ],
+      "files": [
+        "Source/OfflineGame/Private/Animation/OGSharedMotionLibrary.cpp",
+        "Source/OfflineGame/Private/Animation/OGSharedReferenceMotion.cpp",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
+        "Content/NoWorld/Animation/SharedMotionCatalog.json"
+      ],
+      "change": "Removed legacy QA 'approved_for_gameplay' as independent source runtime gate, normalized all original 3222 catalog entries without changing original motion identity/native asset or contact metadata, and separated owner phone review from source integrity. No owner acceptance or rejection automatically assigned.",
       "counted_game_progress": false
     }
   ],
@@ -1639,7 +1765,20 @@
     "factory_work_root_exists": false,
     "native_factory_ran": false,
     "user_phone_accepted": false,
-    "unscanned_legacy_pc_staging": "Other PC working areas and original legacy source trees exist; do not assert exhaustive machine-wide provenance."
+    "unscanned_legacy_pc_staging": "Other PC working areas and original legacy source trees exist; do not assert exhaustive machine-wide provenance.",
+    "pc_role": "TEMPORARY_CODEX_EXECUTION_WORKSPACE_ONLY_UNREAL_KOIKATSU_BLENDER_NATIVE_TASKS",
+    "durable_game_work": "GITHUB_REPOSITORY_SOURCE_AND_ARTIFACTS",
+    "native_project_is_canonical_source": false,
+    "legacy_qa_flags_at_original_recovery": {
+      "Interaction": 4,
+      "Combat": 0,
+      "AdultInteraction": 902,
+      "Traversal": 12
+    },
+    "legacy_qa_metadata_removed_from_live_catalog_commit": "c18b43a606afd243c04de50c61a75732ce0ee172",
+    "live_catalog_uses_prephone_approval_flags": false,
+    "historical_combat_review_flag_was_not_owner_rejection": true,
+    "native_artifacts_and_original_contact_unchanged": true
   },
   "current_canon_vs_code_drift_inventory": [
     {
@@ -1658,11 +1797,11 @@
     },
     {
       "id": "DRIFT-002",
-      "status": "CONTENT_AUTHORING_PENDING",
+      "status": "AUTHORED_COMBAT_CONTACT_STILL_PENDING_NOT_OWNER_REJECTED",
       "type": "missing_valid_gameplay_connection",
       "source": "Content/NoWorld/Animation/SharedMotionCatalog.json",
-      "conflict": "937 source-indexed actual Combat native AnimSequences have 0 approval flags and 0 actual authored contact notifies/times. Their real 937 native asset paths already exist.",
-      "resolution": "Use 5★ original source authoring path to approve and bind legitimate contact/action semantics, NEVER invent event frames or reimport assets from scratch.",
+      "conflict": "937 existing authentic native combat sequences are present and now eligible for source resolution without legacy QA approval gating. No exact authored combat contact timestamps/notifies were in the original catalog, so real impact settlement remains technical authoring work.",
+      "resolution": "Do not invent impact frames or regenerate the 937 native assets. Complete source-authentic action/contact binding through 5★; only owner phone-test can reject or accept the results.",
       "game_milestones": [
         "M03",
         "M05",
@@ -1684,11 +1823,11 @@
     },
     {
       "id": "DRIFT-004",
-      "status": "CREATIVE_DIRECTOR_CLARIFICATION_NEEDED",
+      "status": "OWNER_DIRECTION_CLARIFIED_SAFETY_BOUNDARY_RETAINED",
       "type": "v041_policy_scope_conflict",
       "source": "docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md",
-      "conflict": "Creative Director reported removal of former 'single restriction'; recovered v0.41 addendum explicitly says it does not reopen eligibility policy, while v0.40 retains historic rule. Cannot infer precise intended change.",
-      "resolution": "Request the exact restricted condition/scope; do not invent substitute gameplay gates or silently change canonical eligibility.",
+      "conflict": "Owner explicitly directed universal access to mature gameplay with no arbitrary relationship/story/location gates. The v0.41 production text historically did not reopen eligibility. The broad instruction cannot eliminate safeguards against sexual content involving minors.",
+      "resolution": "Remove invented gameplay permission gates for lawful mature systems; retain adult-only voluntary participation for sexual interactions. Preserve exact direct source language in 7★. No content eligibility program was modified in this audit.",
       "game_milestones": [
         "M29"
       ]
@@ -1749,5 +1888,55 @@
     "Finish all unaccepted 36 whole-game systems against actual 7★ and existing native code, especially v0.41 Foundation links; remove any player-visible diagnostic stand-ins.",
     "Run actual 5★ content factory on authorized Windows native PC only when implementation integration ready; import/resolve original skeletal/animation/artwork assets, publish genuine outputs through GitHub LFS.",
     "Build final integrated Unreal Android APK, install on owner's phone, gather real owner acceptance; then continue full content production through 5★ without reopening architecture except proven contradictions."
-  ]
+  ],
+  "owner_phone_review_protocol_20261101": {
+    "source": "2026-11-01 Creative Director explicit instruction",
+    "decision_maker": "CREATIVE_DIRECTOR_ONLY",
+    "default_for_all_content_and_systems": "NO_OWNER_VERDICT",
+    "owner_rejection_requires": "Owner explicitly says rejected after actually testing a build on the owner's phone.",
+    "owner_acceptance_requires": "Owner explicitly says accepted after actually testing a build on the owner's phone.",
+    "before_owner_test": "Original assets/motions and source implementations are available for integration without artistic approval booleans. Classify source readiness and technical blocking separately; never label rejected/unapproved based on automated QA.",
+    "permissible_engineering_states": [
+      "SOURCE_PRESENT",
+      "INTEGRATED_UNTESTED",
+      "TECHNICALLY_BLOCKED",
+      "NOT_IMPLEMENTED",
+      "AWAITING_OWNER_PHONE_TEST"
+    ],
+    "possible_owner_verdicts": [
+      "NO_OWNER_VERDICT",
+      "OWNER_ACCEPTED_AFTER_PHONE_TEST",
+      "OWNER_REJECTED_AFTER_PHONE_TEST"
+    ],
+    "technical_constraints_are_not_owner_rejection": true,
+    "phone_build_available": false,
+    "prohibited_inferences": [
+      "Unapproved because animation contact was not authored",
+      "Rejected because not compiled",
+      "Accepted because original content exists",
+      "Done/accepted because a test succeeded without the owner"
+    ]
+  },
+  "owner_approval_flag_removal": {
+    "commit_chain": [
+      "3e3e728e86953f87d54cdfcc1f8c8e6181d0741b",
+      "fe96af398818f20136849550734c48cc91ad1651",
+      "d68f7094d2ea71768c24d9a7c46b3e783bf3a406",
+      "c18b43a606afd243c04de50c61a75732ce0ee172"
+    ],
+    "source_files": [
+      "Source/OfflineGame/Private/Animation/OGSharedMotionLibrary.cpp",
+      "Source/OfflineGame/Private/Animation/OGSharedReferenceMotion.cpp",
+      "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
+      "Content/NoWorld/Animation/SharedMotionCatalog.json"
+    ],
+    "verified_stage": "GITHUB_SOURCE_COMMITTED_NOT_UNREAL_COMPILED_OR_PHONE_TESTED",
+    "legacy_approval_status_in_catalog": "REMOVED_WITH_ALL_NATIVE_REFERENCES_AND_CONTACT_FIELDS_PRESERVED",
+    "original_catalog_index_count": 3222,
+    "actual_native_asset_paths": 3222,
+    "owner_rejected_motions": 0,
+    "owner_accepted_motions_since_change": 0,
+    "combat_source_entries_requiring_authored_impact": 937,
+    "technical_contact_integrity_preserved": true
+  }
 }
