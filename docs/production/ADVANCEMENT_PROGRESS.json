@@ -1397,6 +1397,23 @@
         "Scripts/production/install_noworld_factory_koikatsu.ps1"
       ],
       "change": "Original approval receipt may be sourced from GitHub checkout while imported Unreal source resides on dedicated PC; native plugin build explicitly resolves framework System.Core. Source only, no compile."
+    },
+    {
+      "grade": 7,
+      "kind": "BASELINE_SUPERSESSION_RECONCILIATION",
+      "commits": [
+        "086b6f68",
+        "9d7595d2",
+        "974b7405",
+        "b67ca9dd"
+      ],
+      "files": [
+        "docs/production/NOWORLD_7STAR_AUTHORITY.md",
+        "AGENTS.md",
+        "docs/production/FILE_PRIORITY_GRADES.md",
+        "docs/production/CONTENT_BINDING_5STAR.md"
+      ],
+      "change": "Full v0.40 design remains canon where non-conflicting. v0.41 later mature decisions override only on conflict; original wording unavailable. Code is evidence of deliberate post-baseline changes, not blind authority. 5-star includes both instructions and executable programs. File priority grades 1-4 added. No player-visible completed system credited."
     }
   ],
   "latest_gameplay_source_changes": [
@@ -1498,5 +1515,18 @@
     "android_package_created": false,
     "owner_phone_playable": false,
     "do_not_call_an_apk_ready": true
+  },
+  "latest_canon_reconciliation": {
+    "date": "2026-11-01",
+    "source": "Creative Director explicit clarification plus uploaded 175-page v0.40",
+    "full_game_baseline": "v0.40 full original game design, all non-conflicting clauses maintained",
+    "mature_content_override": "v0.41's later mature-content decisions supersede conflicting v0.40 mature-content clauses only; full v0.41 text not currently recovered",
+    "later_revision_evidence": "Later deliberately implemented approved changes may be found in GitHub source. Actual code must be checked against source decisions; code bugs are not new creative canon",
+    "archive": "docs/production/authority/v040_source_text/",
+    "archive_segments": 10,
+    "authority_commit": "086b6f68",
+    "agent_read_order_commit": "9d7595d2",
+    "file_grading_commit": "974b7405",
+    "unresolved_material": "Exact v0.41 mature-content wording unavailable; do not fabricate"
   }
 }
