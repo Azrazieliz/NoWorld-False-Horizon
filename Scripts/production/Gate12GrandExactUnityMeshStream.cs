@@ -22,8 +22,6 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
     const string Authorization = @"D:\UnrealProjects\G12_LuminousNativeImport_20261031\Saved\CorrectKoikatsuExports\Gate12_Grand_Exact_Unity_Mesh_Extraction_Authorized.flag";
     bool entered, exporting, completed;
     float poll;
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern bool ShowWindow(IntPtr handle,int command);
     static string Sha(string file)
     {
         using (FileStream fs=File.OpenRead(file))
@@ -46,8 +44,6 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
         {
             if (!File.Exists(Card) || Sha(Card)!=CardSha)
                 throw new IOException("Grand original card SHA256 invalid");
-            var handle=System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
-            if(handle!=IntPtr.Zero) ShowWindow(handle,0);
             if(MakerAPI.InsideAndLoaded && MakerAPI.GetCharacterControl()!=null)
             {
                 exporting=true; StartCoroutine(Run()); return;
@@ -82,6 +78,85 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
         }
         names.Reverse();
         return String.Join("/",names.ToArray());
+    }
+    static string TextureKey(string value)
+    {
+        using(SHA256 sha=SHA256.Create())
+        {
+            byte[] bytes=Encoding.UTF8.GetBytes(value);
+            byte[] digest=sha.ComputeHash(bytes);
+            return BitConverter.ToString(digest,0,12).Replace("-","").ToLowerInvariant();
+        }
+    }
+    static void SaveOriginalMaterialTextures(Material[] materials,int rendererIndex)
+    {
+        string folder=Path.Combine(Out,"ExactGrandOriginalTextures");
+        Directory.CreateDirectory(folder);
+        string table=Path.Combine(Out,
+            "ExactGrand_Renderer_"+rendererIndex.ToString("D3")+"_OriginalTextures.tsv");
+        using(FileStream file=new FileStream(table,FileMode.CreateNew,FileAccess.Write,FileShare.None))
+        using(StreamWriter rows=new StreamWriter(file,Encoding.UTF8))
+        {
+            rows.WriteLine(String.Join(((char)9).ToString(),new string[]{"renderer","material","property_utf8_base64","texture_utf8_base64","png_file","width","height","png_sha256"}));
+            for(int materialIndex=0;materialIndex<materials.Length;materialIndex++)
+            {
+                Material material=materials[materialIndex];
+                if(material==null)continue;
+                string[] properties=new string[]{"_MainTex","_BumpMap","_NormalMap","_DetailNormalMap","_DetailAlbedoMap","_EmissionMap","_MetallicGlossMap","_SpecGlossMap","_OcclusionMap","_ParallaxMap","_ShadowTex","_ShadowColorTex","_RampTex","_MatCap","_MaskTex","_AlphaMask","_ColorMask","_OverlayTex","_LineMask","_BlushTex","_MakeupTex","_PatternTex","_DecalTex","_MainTex2","_NormalMap2","_SkinColorMask","_ToonShadowTex","_AlphaTex","_LiquidTex","_LutTex"};
+                foreach(string property in properties)
+                {
+                    Texture original=material.HasProperty(property)?material.GetTexture(property):null;
+                    if(original==null)continue;
+                    if(!(original is Texture2D))
+                        throw new IOException("Unsupported original texture type: "+material.name+" "+property);
+                    int width=original.width,height=original.height;
+                    if(width<1 || height<1 || width>8192 || height>8192)
+                        throw new IOException("Original texture out of safe full-resolution range: "+original.name);
+                    string key=TextureKey(rendererIndex+"|"+materialIndex+"|"+property+"|"+original.name);
+                    string filename="Grand_SourceTexture_"+key+".png";
+                    string output=Path.Combine(folder,filename);
+                    if(File.Exists(output))
+                        throw new IOException("Original source texture already exists; refusing overwrite "+output);
+                    RenderTexture previous=RenderTexture.active;
+                    RenderTexture buffer=null;
+                    Texture2D copy=null;
+                    try
+                    {
+                        buffer=RenderTexture.GetTemporary(width,height,0,RenderTextureFormat.ARGB32);
+                        Graphics.Blit(original,buffer);
+                        RenderTexture.active=buffer;
+                        copy=new Texture2D(width,height,TextureFormat.RGBA32,false);
+                        copy.ReadPixels(new Rect(0,0,width,height),0,0,false);
+                        copy.Apply(false,false);
+                        byte[] png=copy.EncodeToPNG();
+                        if(png==null || png.Length<100)
+                            throw new IOException("Exact source texture pixel extraction failed "+original.name);
+                        using(FileStream image=new FileStream(output,FileMode.CreateNew,FileAccess.Write,FileShare.None))
+                            image.Write(png,0,png.Length);
+                        rows.Write(rendererIndex);
+                        rows.Write((char)9);rows.Write(materialIndex);
+                        rows.Write((char)9);rows.Write(Convert.ToBase64String(Encoding.UTF8.GetBytes(property)));
+                        rows.Write((char)9);rows.Write(Convert.ToBase64String(Encoding.UTF8.GetBytes(original.name)));
+                        rows.Write((char)9);rows.Write(filename);
+                        rows.Write((char)9);rows.Write(width);
+                        rows.Write((char)9);rows.Write(height);
+                        rows.Write((char)9);rows.WriteLine(Sha(output));
+                        rows.Flush();
+                        Note("EXACT_GRAND_MATERIAL_TEXTURE renderer="+rendererIndex+
+                             " material="+materialIndex+" property="+property+
+                             " source_name="+original.name+" width="+width+" height="+height+
+                             " png_sha256="+Sha(output));
+                    }
+                    finally
+                    {
+                        RenderTexture.active=previous;
+                        if(copy!=null)UnityEngine.Object.DestroyImmediate(copy);
+                        if(buffer!=null)RenderTexture.ReleaseTemporary(buffer);
+                    }
+                }
+            }
+        }
+        Note("EXACT_GRAND_SOURCE_MATERIAL_TEXTURE_TABLE_COMPLETED="+table);
     }
     static void DumpMesh(SkinnedMeshRenderer renderer,Transform owner,int index)
     {
@@ -180,6 +255,7 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
             }
             w.Flush();
         }
+        SaveOriginalMaterialTextures(renderer.sharedMaterials,index);
         var size=new FileInfo(path).Length;
         Note("EXPORTED_ORIGINAL_UNITY_SOURCE_RENDERER="+index+
             " file="+path+" bytes="+size+" sha256="+Sha(path)+
