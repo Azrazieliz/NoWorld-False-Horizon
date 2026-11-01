@@ -1,0 +1,58 @@
+name: NoWorld 5-star genuine source content factory
+on:
+  workflow_dispatch:
+    inputs:
+      job_file:
+        description: "Repository-relative approved JSON recipe; empty processes the prepared inbox"
+        required: false
+        type: string
+  push:
+    paths:
+      - 'ContentFactory/Jobs/*.json'
+      - '.github/workflows/noworld-content-factory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-source-import:
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 240
+    concurrency:
+      group: noworld-unreal-content-factory
+      cancel-in-progress: false
+    steps:
+      - name: Checkout original project and Git LFS source refs
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Install isolated real Koikatsu card queue plugin
+        shell: pwsh
+        run: |
+          & ./Scripts/production/install_noworld_factory_koikatsu.ps1
+      - name: Execute actual native content production
+        shell: pwsh
+        env:
+          NOWORLD_FACTORY_ONE_JOB: ${{ inputs.job_file }}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:NOWORLD_FACTORY_ONE_JOB) {
+            $job=$env:NOWORLD_FACTORY_ONE_JOB
+            if($job -notmatch '^ContentFactory/Jobs/[a-z0-9_.-]+[.]json$'){throw 'Invalid approved job path'}
+            python Scripts/production/noworld_content_factory.py --job $job --config ContentFactory/windows_worker.json
+          } else {
+            if(!(Test-Path ContentFactory/Jobs)){Write-Output 'NO_AUTHORED_JOBS_YET';exit 0}
+            $jobs=@(Get-ChildItem ContentFactory/Jobs -Filter '*.json' -File)
+            if($jobs.Count -eq 0){Write-Output 'NO_AUTHORED_JOBS_YET';exit 0}
+            python Scripts/production/noworld_content_factory.py --inbox ContentFactory/Jobs --config ContentFactory/windows_worker.json
+          }
+          if($LASTEXITCODE -ne 0){throw 'Original source factory blocked: read precise native Saved ledger'}
+      - name: Export receipts, not proprietary source cards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: noworld-content-factory-native-ledger
+          path: D:/UnrealProjects/Gate12_WholeCharacter_Build_20261031/Saved/NoWorldContentFactory/*/status.json
+          if-no-files-found: ignore
+          retention-days: 30
