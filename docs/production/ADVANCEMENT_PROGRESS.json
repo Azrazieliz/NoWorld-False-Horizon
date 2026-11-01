@@ -1021,6 +1021,11 @@
             "commit": "e7ed4abb",
             "type": "SOURCE_PARTIAL",
             "change": "original approved FBX clip imports as native Unreal AnimSequence on exact source Skeleton before binding to same shared action bank"
+          },
+          {
+            "commit": "ce190e87",
+            "type": "SOURCE_RECOVERY_NOT_NEW_GAMEPLAY",
+            "change": "Restored all original 3222 global animation catalog entries from protected PC without new content authoring or runtime acceptance."
           }
         ],
         "completed_in_this_update": false
@@ -1424,6 +1429,38 @@
       ],
       "change": "Recovered the approved mature-content v0.41 production freeze. Confirmed narrowly scoped supersession of complete v0.40 architecture and retained nonconflicting decisions. No source-code/gameplay completion credited.",
       "counted_game_progress": false
+    },
+    {
+      "grade": 5,
+      "kind": "SOURCE_RECONCILIATION_AND_NONDESTRUCTIVE_REPO_NAVIGATION",
+      "commits": [
+        "ce190e87b7c9e5d9e7291c253fc975ca95631ab5",
+        "02cb9c77",
+        "05e4b3cd",
+        "20280d62",
+        "020e6749",
+        "6446c178",
+        "619d1fb8",
+        "3c1d42c6",
+        "5766b7b2",
+        "5672f3ad",
+        "d34f9556",
+        "4a345eac",
+        "041896ce",
+        "b526df53"
+      ],
+      "files": [
+        "Content/NoWorld/Animation/SharedMotionCatalog.json",
+        "docs/production/REPO_EXECUTION_MAP.md",
+        "Scripts/production/record_noworld_progress.py",
+        "Scripts/production/reconcile_native_motion_catalog.py",
+        "docs/production/CONTENT_BINDING_5STAR.md",
+        "AGENTS.md",
+        "README.md",
+        "docs/production/gate12/pc_recovery_scripts/"
+      ],
+      "change": "Restored all original 3222 indexed animation entries with all 3222 native files already present/tracked; no playable contact approval inferred. Added two reusable 5★ programs (6★ checkpoint; safe native motion recovery), modern 7/6/5 repo execution map and navigation, mandatory 6★ update after every work item and six historical PC scripts preserved as non-runnable source evidence. No native build, code testing or user acceptance.",
+      "counted_game_progress": false
     }
   ],
   "latest_gameplay_source_changes": [
@@ -1550,5 +1587,167 @@
     "legacy_v036": "historical_only",
     "authority": "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "note": "No gameplay-system acceptance increased, no compile/APK created from clarifying source authority."
-  }
+  },
+  "mandatory_execution_contract": {
+    "version": "noworld.7star_6star_5star_operating_loop.20261101",
+    "before_every_work_item": "Read latest 7★ and 6★, inspect real current code and 5★ catalog. Skip completed work; never repeat historic audits/imports by default.",
+    "automation_first": "REUSE existing 5★ Python/C#/Unreal program. If no existing program can perform needed task, record specific reason, author a NEW GENERAL REUSABLE 5★ program, add it to 5★ index, then use it. No private one-off pipeline as primary production.",
+    "every_material_commit": "Update docs/production/ADVANCEMENT_PROGRESS.json after each actual source/gameplay GitHub commit: exact SHA, linked 7★ M01–M36 IDs, what changed in real source, actual player-visible effect, remaining implementation, and device/owner acceptance (never assume).",
+    "checkpoint_program": "Scripts/production/record_noworld_progress.py",
+    "repository_execution_map": "docs/production/REPO_EXECUTION_MAP.md",
+    "grading": "7★ creative authority, 6★ verified integrated advancement, 5★ executable source automation + instructions; do not count source quantity/docs/tests as game completion.",
+    "never_reset_native_pc": true
+  },
+  "native_pc_source_reconciliation_20261101": {
+    "status": "SOURCE_INVENTORY_DONE_NO_NATIVE_BUILD_OR_EXECUTION",
+    "device": "LAPTOP-1LI4VRCJ (connected during audit)",
+    "protected_native_project": "D:\\UnrealProjects\\Gate12_WholeCharacter_Build_20261031",
+    "native_checkout_head_at_audit": "d4e68de19ee35644b198e1da14c2bf2244dcfa03",
+    "original_motion_catalog_bytes": 4777093,
+    "original_catalog_sha256": "52be7eeb4edb59ef4525beb8a265438021870d4f31932bd2e46f2dd33d7e46ad",
+    "source_motion_recovered_commit": "ce190e87b7c9e5d9e7291c253fc975ca95631ab5",
+    "indexed_total": 3222,
+    "source_clip_ids": 1077,
+    "semantic_actions": 1075,
+    "indexed_by_context": {
+      "Interaction": 1070,
+      "Combat": 937,
+      "AdultInteraction": 902,
+      "Traversal": 313
+    },
+    "source_approved_by_context": {
+      "Interaction": 4,
+      "Combat": 0,
+      "AdultInteraction": 902,
+      "Traversal": 12
+    },
+    "authored_combat_contact_events": 0,
+    "original_native_asset_paths_on_pc": 3222,
+    "original_native_asset_paths_in_recovered_github_tree": 3222,
+    "missing_native_package_paths": 0,
+    "tracked_local_changes": 0,
+    "untracked_pc_files": 9,
+    "noncached_pc_only_script_count": 6,
+    "pycache_files": 3,
+    "pc_only_historical_script_archive": "docs/production/gate12/pc_recovery_scripts/",
+    "protected_native_pc_working_tree_changed_by_audit": false,
+    "factory_executables_present": {
+      "koikatsu": true,
+      "unreal_editor_5_8": true,
+      "actual_unreal_project": true
+    },
+    "factory_work_root_exists": false,
+    "native_factory_ran": false,
+    "user_phone_accepted": false,
+    "unscanned_legacy_pc_staging": "Other PC working areas and original legacy source trees exist; do not assert exhaustive machine-wide provenance."
+  },
+  "current_canon_vs_code_drift_inventory": [
+    {
+      "id": "DRIFT-001",
+      "status": "RECOVERED_GITHUB_SOURCE",
+      "type": "source_loss_resolved",
+      "source": "Content/NoWorld/Animation/SharedMotionCatalog.json",
+      "conflict": "GitHub had a 68-byte empty array while native protected PC and native asset tree held 3222 original animation index entries.",
+      "resolution": "Restored source intact to active GitHub branch via ce190e87; do not recreate these assets.",
+      "game_milestones": [
+        "M04",
+        "M05",
+        "M29"
+      ],
+      "completed_milestones": 0
+    },
+    {
+      "id": "DRIFT-002",
+      "status": "CONTENT_AUTHORING_PENDING",
+      "type": "missing_valid_gameplay_connection",
+      "source": "Content/NoWorld/Animation/SharedMotionCatalog.json",
+      "conflict": "937 source-indexed actual Combat native AnimSequences have 0 approval flags and 0 actual authored contact notifies/times. Their real 937 native asset paths already exist.",
+      "resolution": "Use 5★ original source authoring path to approve and bind legitimate contact/action semantics, NEVER invent event frames or reimport assets from scratch.",
+      "game_milestones": [
+        "M03",
+        "M05",
+        "M06",
+        "M07"
+      ]
+    },
+    {
+      "id": "DRIFT-003",
+      "status": "SOURCE_IMPLEMENTATION_DRIFT_OPEN",
+      "type": "real_user_facing_diagnostic_fallback",
+      "source": "Source/OfflineGame/Private/Interaction/OGFoundationInteractionHost.cpp",
+      "conflict": "BeginContext substitutes MakeNeutralDiagnosticGraph while active Combat has no approved SelectedDefinition, and its native interaction controls may still present Begin actions.",
+      "resolution": "Remove diagnostics from actual player content surface; require genuine authored source. Keep debug fixture only in explicitly development-only paths. Preserve existing v0.41 runtime and legitimate WorldStore.",
+      "game_milestones": [
+        "M09",
+        "M29"
+      ]
+    },
+    {
+      "id": "DRIFT-004",
+      "status": "CREATIVE_DIRECTOR_CLARIFICATION_NEEDED",
+      "type": "v041_policy_scope_conflict",
+      "source": "docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md",
+      "conflict": "Creative Director reported removal of former 'single restriction'; recovered v0.41 addendum explicitly says it does not reopen eligibility policy, while v0.40 retains historic rule. Cannot infer precise intended change.",
+      "resolution": "Request the exact restricted condition/scope; do not invent substitute gameplay gates or silently change canonical eligibility.",
+      "game_milestones": [
+        "M29"
+      ]
+    },
+    {
+      "id": "DRIFT-005",
+      "status": "SOURCE_MATCH_CONFIRMED_NOT_DEVICE_VERIFIED",
+      "type": "correct_rules_preserve",
+      "source": "Source/OfflineGame/Private/Gacha/OGRulerGachaAccessService.cpp",
+      "conflict": "None observed in this scoped check: actual code queries valid Territory continuity and >1 in-game calendar month qualification.",
+      "resolution": "Reuse current gacha qualification service; do not rebuild.",
+      "game_milestones": [
+        "M16",
+        "M28"
+      ]
+    },
+    {
+      "id": "DRIFT-006",
+      "status": "SOURCE_MATCH_CONFIRMED_NOT_DEVICE_VERIFIED",
+      "type": "correct_rules_preserve",
+      "source": "Source/OfflineGame/Private/Combat/OGTurnBattleAreaTargets.cpp",
+      "conflict": "None observed: authored field-wide targeting enumerates all living eligible active field units; no six-target AoE cap.",
+      "resolution": "Reuse canonical field targeting and executors, do not create new damage resolver.",
+      "game_milestones": [
+        "M03",
+        "M06"
+      ]
+    },
+    {
+      "id": "DRIFT-007",
+      "status": "SOURCE_PARTIAL_NATIVE_FOUND",
+      "type": "existing_foundation_preserve",
+      "source": "Source/OfflineGame/Private/Interaction/OGSystemicInteractionRuntime.cpp",
+      "conflict": "Existing source includes canonical Ruler participant, variable-arity roles, source action graphs, authored consequences/WorldStore, camera/staging, significance controls. Device playability and full content are not established.",
+      "resolution": "Finish entry/exit and visible original content integration, not a second interaction runtime.",
+      "game_milestones": [
+        "M24",
+        "M29"
+      ]
+    },
+    {
+      "id": "DRIFT-008",
+      "status": "NATIVE_FACTORY_WORK_NOT_STARTED",
+      "type": "production_execution_gap",
+      "source": "ContentFactory/windows_worker.json",
+      "conflict": "Koikatsu exe, UnrealEditor-Cmd and project exist at configured PC locations; Saved/NoWorldContentFactory output root absent. No native factory execution claim.",
+      "resolution": "Once native implementation is ready, use existing 5★ native pipeline and its new catalog reconciler; correct failures against actual original sources before packaging.",
+      "game_milestones": [
+        "M04",
+        "M05",
+        "M34"
+      ]
+    }
+  ],
+  "next_execution_order": [
+    "Read 7★ + complete v0.40, recovered mature-only v0.41 and latest accepted code decisions, then 6★ and 5★. Use record_noworld_progress.py --resume to avoid redos.",
+    "Finish user-visible integrated World/true player movement, opponent AI, source-authentic combat contact, interactive NPCs, rewards and the one SQLite authoritative persistence.",
+    "Finish all unaccepted 36 whole-game systems against actual 7★ and existing native code, especially v0.41 Foundation links; remove any player-visible diagnostic stand-ins.",
+    "Run actual 5★ content factory on authorized Windows native PC only when implementation integration ready; import/resolve original skeletal/animation/artwork assets, publish genuine outputs through GitHub LFS.",
+    "Build final integrated Unreal Android APK, install on owner's phone, gather real owner acceptance; then continue full content production through 5★ without reopening architecture except proven contradictions."
+  ]
 }
