@@ -366,15 +366,10 @@ void UOGNativeBattleWidget::Refresh()
         const FString Label=Command.Label+(Own && !Enabled?TEXT("\n")+Reason:FString());
         AddButton(Commands,Label,Enabled?Command.Hint:Reason,Command.Id,INDEX_NONE,Enabled,false,Width);
     }
-    FString ModeReason;
-    const bool CanChangeMode=!bPerformingAuthoredStrike &&
-        Core->CanSetOwnedCombatExecutionMode(
-        WorldMode?EOGCombatExecutionMode::Turn:EOGCombatExecutionMode::World,ModeReason);
-    if (bPerformingAuthoredStrike)
-        ModeReason=TEXT("The contact-bound action must finish before changing combat modes.");
-    AddButton(Commands,WorldMode?TEXT("TURN MODE"):TEXT("WORLD MODE"),
-        CanChangeMode?TEXT("Keep the current combatants and state."):ModeReason,
-        TEXT("screen_combat_mode"),INDEX_NONE,CanChangeMode,false,Width);
+    // v0.36 AH.8: World/Turn hybrid phases are encounter-owned mechanics,
+    // never an unrestricted player button. The boss phase controller/actual
+    // authoritative battle transition is responsible for changing modes.
+    // Current UMG reflects the canonical execution mode without changing it.
     AddButton(Commands,TEXT("Pause"),TEXT("Open the existing pause controls."),TEXT("screen_pause"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Settings"),TEXT("Open the existing game settings."),TEXT("screen_settings"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Ruler"),TEXT("Return to the existing Ruler interface."),TEXT("screen_ruler"),INDEX_NONE,true,false,Width);
@@ -397,27 +392,12 @@ void UOGNativeBattleWidget::Activate(FName Command,int32 TargetIndex)
     }
     if (Command==TEXT("screen_combat_mode"))
     {
-        // Keyboard, controller, delayed touch and accessibility actions can
-        // invoke Activate after the displayed button was disabled. Guard
-        // the real pending character move here as well as at paint time.
-        if (const auto* Pending = Character->
-            FindComponentByClass<UOGTurnContactActionComponent>();
-            Pending && Pending->IsAwaitingAuthoredContact())
-        {
-            LastActionMessage = TEXT(
-                "Finish the original character action before changing combat modes.");
-            Signature.Reset();
-            Refresh();
-            return;
-        }
-        auto* Game=Character->GetGameInstance(); auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
-        FString Error;
-        if (Core && Core->GetOwnedLuminousTurnBattle())
-        {
-            const auto Mode=Core->GetOwnedLuminousTurnBattle()->GetState().ExecutionMode;
-            Core->SetOwnedCombatExecutionMode(Mode==EOGCombatExecutionMode::World?EOGCombatExecutionMode::Turn:EOGCombatExecutionMode::World,Error);
-        }
-        LastActionMessage=Error; Signature.Reset(); Refresh(); return;
+        // Retired the former generic mode-switch interaction. Old delayed
+        // input/focus receipts must not bypass encounter-authored boss phases.
+        LastActionMessage=TEXT("Combat phases follow the current encounter mechanics.");
+        Signature.Reset();
+        Refresh();
+        return;
     }
     if (Command==TEXT("screen_pause")) { Character->SetFoundationPauseMenuOpen(true); return; }
     if (Command==TEXT("screen_settings")) { Character->SetFoundationSettingsOpen(true); return; }
