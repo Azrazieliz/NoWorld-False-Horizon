@@ -1,9 +1,9 @@
 # NoWorld: False Horizon — mandatory project continuation instructions
 
 ## Source-of-truth read order (never reset)
-1. **7★:** `docs/production/NOWORLD_7STAR_AUTHORITY.md` — the sole canonical *index* of actual user decisions and all 36 integrated game systems; follow referenced full approved originals when implementing precise content.
+1. **7★:** `docs/production/NOWORLD_7STAR_AUTHORITY.md` — sole canonical decision index. Read its seven `docs/production/authority/v036_source_text/part_*.md` archives (complete extracted 143-page v0.36 master), later supersession rules and exact approved original contract when a decision must be recovered. Do not reconstruct missing canon from an engineering summary.
 2. **6★:** `docs/production/ADVANCEMENT_PROGRESS.json` — 111-task historical scope and the live 36-system advancement/evidence ledger. Do not count tests/builds or documentation as gameplay progress. Cross-check the original `docs/roadmap/milestones.json` and linked issue acceptance.
-3. **5★:** `docs/production/CONTENT_BINDING_5STAR.md` — fixed Koikatsu/Blender/Unreal source asset bindings, global motion catalog, native C++ one-call rig API and authentic turn action contact route. Reuse; do not re-create separate character animation libraries.
+3. **5★:** `docs/production/CONTENT_BINDING_5STAR.md` — actual Python/C# automation: `submit_noworld_content.py`, `noworld_content_factory.py`, isolated Koikatsu Maker source export, Blender/UE native original importer, one global action bank, exact actor UI/World link, GitHub self-hosted Windows worker and Git LFS publication. Reuse; do not re-create separate character animation libraries. A full-content factory source commit is not device/gameplay acceptance.
 4. Read the exact touched C++ and approved original source; do not repeatedly audit the entire repository.
 
 ## Execution constraints
