@@ -82,6 +82,32 @@ bool UOGSharedMotionControllerComponent::RegisterNativeParts(
     return true;
 }
 
+bool UOGSharedMotionControllerComponent::BindNativeRigAndParts(
+    FName InRig, FName InAnatomy, FName InOutfit,
+    const TArray<FName>& InCapabilities,
+    const TArray<USkeletalMeshComponent*>& InParts)
+{
+    if (InRig.IsNone() || InAnatomy.IsNone() || InOutfit.IsNone() ||
+        InParts.IsEmpty())
+        return false;
+
+    const FName OldRig = RigProfile;
+    const FName OldAnatomy = AnatomyProfile;
+    const TArray<FName> OldCapabilities = Capabilities;
+    RigProfile = InRig;
+    AnatomyProfile = InAnatomy;
+    Capabilities = InCapabilities;
+    if (!RegisterNativeParts(InParts))
+    {
+        RigProfile = OldRig;
+        AnatomyProfile = OldAnatomy;
+        Capabilities = OldCapabilities;
+        return false;
+    }
+    SetCurrentOutfit(InOutfit);
+    return true;
+}
+
 void UOGSharedMotionControllerComponent::SetCurrentOutfit(FName InOutfitProfile)
 {
     if (InOutfitProfile != OutfitProfile)
