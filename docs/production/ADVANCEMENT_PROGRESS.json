@@ -1031,6 +1031,11 @@
             "commit": "9ba5ecc6",
             "type": "SOURCE_PARTIAL",
             "change": "Autonomous source-backed opponent turn scheduler now identifies the locally possessed canonical battle unit via the existing ReadControlledCanonicalBattleUnit authority rather than restricting the runtime to Luminous/Content Manifestation subclasses. This extends legitimate non-player actions to the actual connected Ruler World pawn without manufacturing ownership, enemy actors, skills or a new executor."
+          },
+          {
+            "commit": "c00c2c08",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic turn contact stage now records the exact selected original native motion ID, discards mismatched source callbacks, and cancels without costs/damage when a contact-marked animation reaches its natural end without emitting its authored impact. Explicit natural-completion actions still resolve only at authorized source finish. Prevents unresolved stuck turns and unsourced hit settlement without inventing generic damage."
           }
         ],
         "completed_in_this_update": false,
@@ -1115,6 +1120,11 @@
             "commit": "88924e6c",
             "type": "SOURCE_PARTIAL",
             "change": "One reusable native FOGNativeBattleCommands::MotionForResolvedAction source dispatcher now distinguishes the exact canonical skill branch/mode for executed turn actions. Native agent AI, autonomous opponent fallback, and connected original combat actors all use it rather than silently substituting the general skill motion for Day/Night/Harvest or other distinct effects. Missing variant animation remains unavailable rather than borrowing another branch. Both existing executors remain unmodified."
+          },
+          {
+            "commit": "c00c2c08",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic turn contact stage now records the exact selected original native motion ID, discards mismatched source callbacks, and cancels without costs/damage when a contact-marked animation reaches its natural end without emitting its authored impact. Explicit natural-completion actions still resolve only at authorized source finish. Prevents unresolved stuck turns and unsourced hit settlement without inventing generic damage."
           }
         ],
         "completed_in_this_update": false,
@@ -1164,6 +1174,11 @@
             "commit": "88924e6c",
             "type": "SOURCE_PARTIAL",
             "change": "One reusable native FOGNativeBattleCommands::MotionForResolvedAction source dispatcher now distinguishes the exact canonical skill branch/mode for executed turn actions. Native agent AI, autonomous opponent fallback, and connected original combat actors all use it rather than silently substituting the general skill motion for Day/Night/Harvest or other distinct effects. Missing variant animation remains unavailable rather than borrowing another branch. Both existing executors remain unmodified."
+          },
+          {
+            "commit": "c00c2c08",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic turn contact stage now records the exact selected original native motion ID, discards mismatched source callbacks, and cancels without costs/damage when a contact-marked animation reaches its natural end without emitting its authored impact. Explicit natural-completion actions still resolve only at authorized source finish. Prevents unresolved stuck turns and unsourced hit settlement without inventing generic damage."
           }
         ],
         "completed_in_this_update": false,
@@ -2338,9 +2353,30 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T16:21:00Z"
+    },
+    {
+      "source_commit": "c00c2c08c98ab9065fd5c5fe56452350caf8d779",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M07"
+      ],
+      "result": "Authentic turn contact stage now records the exact selected original native motion ID, discards mismatched source callbacks, and cancels without costs/damage when a contact-marked animation reaches its natural end without emitting its authored impact. Explicit natural-completion actions still resolve only at authorized source finish. Prevents unresolved stuck turns and unsourced hit settlement without inventing generic damage.",
+      "remaining_player_visible_work": "Connect exact authored impact data for the indexed combat clips and test synchronous contact, interrupted playback, cancellation and canonical persistence on Unreal/Android.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Combat/OGTurnContactActionComponent.h",
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Extended existing reusable native turn contact stage from 5★ original global semantic motion binding. No new executor. GitHub source only; native compile and phone verification pending.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T16:26:00Z"
     }
   ],
-  "continuation_last_source_commit": "9ba5ecc6d2f99a5165962bae4c1a697db559b1ad",
+  "continuation_last_source_commit": "c00c2c08c98ab9065fd5c5fe56452350caf8d779",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
