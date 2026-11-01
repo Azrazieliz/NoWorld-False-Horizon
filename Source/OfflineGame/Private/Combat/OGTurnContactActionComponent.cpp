@@ -15,7 +15,8 @@ UOGTurnContactActionComponent::UOGTurnContactActionComponent()
     PrimaryComponentTick.bCanEverTick = false;
 }
 
-bool UOGTurnContactActionComponent::IsSameLiveTurn(FString& Error) const
+bool UOGTurnContactActionComponent::IsSameLiveTurn(
+    FString& Error, bool bSourceFinished) const
 {
     Error.Reset();
     UWorld* World = GetWorld();
@@ -55,8 +56,10 @@ bool UOGTurnContactActionComponent::IsSameLiveTurn(FString& Error) const
     }
     UOGSharedMotionControllerComponent* Motion = BoundMotion.Get();
     if (!Motion || Motion->GetOwner() != GetOwner() ||
-        Motion->CurrentAction != SourceSemantic ||
-        Motion->GetActiveCombatReceipt() != StagedAction.ActionId)
+        (bSourceFinished
+            ? Motion->GetFinishingCombatReceipt() != StagedAction.ActionId
+            : (Motion->CurrentAction != SourceSemantic ||
+               Motion->GetActiveCombatReceipt() != StagedAction.ActionId)))
     {
         Error = TEXT("The approved character motion was replaced before its authored contact.");
         return false;
@@ -113,7 +116,7 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
     if (!Motion || !Motion->CanPlayAction(
             ApprovedMotionSemantic, TEXT("Combat"), false, 1, NAME_None))
     {
-        OutError = TEXT("The actual skeletal character has no approved contact-bearing action clip.");
+        OutError = TEXT("The actual skeletal character has no playable approved source combat clip.");
         return false;
     }
 
@@ -132,7 +135,9 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
     }
 
     // Playback is not a settlement. Charge, damage, heal, turn progression,
-    // resource costs and persistence change ONLY in HandleSourceContact.
+    // resource costs and persistence change ONLY upon an actual authored
+    // contact, or the original sequence's natural completed event when
+    // that approved sequence has no source contact marker.
     StagedAction = MoveTemp(Expanded);
     BattleId = Battle->GetState().BattleId;
     SourceSemantic = ApprovedMotionSemantic;
@@ -159,11 +164,17 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
 void UOGTurnContactActionComponent::HandleSourceContact(
     FName GameplayAction, FName MotionId)
 {
+    ResolveSourceMotionEvent(GameplayAction, MotionId, false);
+}
+
+void UOGTurnContactActionComponent::ResolveSourceMotionEvent(
+    FName GameplayAction, FName MotionId, bool bSourceFinished)
+{
     if (!bStaged || bResolving || GameplayAction != SourceSemantic ||
         MotionId.IsNone())
         return;
     FString Error;
-    if (!IsSameLiveTurn(Error))
+    if (!IsSameLiveTurn(Error, bSourceFinished))
     {
         UE_LOG(LogTemp, Warning,
             TEXT("Cancelled interrupted source action before contact: %s"),
@@ -237,21 +248,22 @@ void UOGTurnContactActionComponent::HandleSourceContact(
     // Do not generate visual-only HP damage here.
     DropStagedAction(false);
     if (Motion)
-        Motion->CompleteCombatAction(Scope, Receipt);
+        if (!bSourceFinished)
+            Motion->CompleteCombatAction(Scope, Receipt);
 }
 
 void UOGTurnContactActionComponent::HandleSourceMotionFinished(
     UOGSharedMotionControllerComponent* Source,
     FName GameplayAction, FName MotionId)
 {
-    (void)MotionId;
     if (!bResolving && bStaged && Source == BoundMotion.Get() &&
         GameplayAction == SourceSemantic)
     {
-        // An animation with no real contact may not consume a player's turn.
-        UE_LOG(LogTemp, Warning,
-            TEXT("Original combat animation finished without authored contact; action not executed."));
-        DropStagedAction(false);
+        // This is the real end of a source-verified, nonlooping native
+        // sequence. Original legacy clips often lack contact-notify data:
+        // settle once only after that real movement finishes, not when a
+        // fabricated clock or UI request says it ought to have hit.
+        ResolveSourceMotionEvent(GameplayAction, MotionId, true);
     }
 }
 
