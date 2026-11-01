@@ -86,15 +86,16 @@ const FOGGate12CharacterVisualEntry* UOGGate12CharacterVisualCatalog::FindExact(
     if (InstalledNativePreview && Exact.GenuineCharacterPreviewClass.IsNull())
         Exact.GenuineCharacterPreviewClass =
             TSoftClassPtr<AActor>(FSoftObjectPath(InstalledNativePreview));
-    // These two source-verified forms are now real native UE5.8 skeletal
-    // asset packages (9 skinned parts each). Bind the exact original
-    // non-Pawn viewer and canonical-owned World pawn, not the historical
-    // unmatched Berserker Blueprint nor a diagnostic mannequin. The other
-    // character Versions remain unmodified.
+    // Bind original Koikatsu-card-native form sources through one shared
+    // character motion system. Grand is an exceptional final manifestation,
+    // not a fifth ordinary lineage, and uses its complete source-renderer
+    // set rather than the earlier unrelated Grand candidate model.
     if (RequestedVersion ==
             TEXT("character:luminous_valentine.version_awakened_v4") ||
         RequestedVersion ==
-            TEXT("character:luminous_valentine.version_berserker_v4"))
+            TEXT("character:luminous_valentine.version_berserker_v4") ||
+        RequestedVersion ==
+            TEXT("character:luminous_valentine.version_grand_v4"))
     {
         Exact.GenuineCharacterPreviewClass =
             TSoftClassPtr<AActor>(FSoftObjectPath(
@@ -102,7 +103,9 @@ const FOGGate12CharacterVisualEntry* UOGGate12CharacterVisualCatalog::FindExact(
         const TCHAR* NativeWorld = RequestedVersion ==
             TEXT("character:luminous_valentine.version_awakened_v4")
                 ? TEXT("/Script/OfflineGame.OGLuminousAwakenedOriginalWorldCharacter")
-                : TEXT("/Script/OfflineGame.OGLuminousBerserkerOriginalWorldCharacter");
+                : RequestedVersion == TEXT("character:luminous_valentine.version_berserker_v4")
+                ? TEXT("/Script/OfflineGame.OGLuminousBerserkerOriginalWorldCharacter")
+                : TEXT("/Script/OfflineGame.OGLuminousGrandOriginalWorldCharacter");
         Exact.ApprovedWorldPlayableClass =
             TSoftClassPtr<AOGWorldPrototypeCharacter>(
                 FSoftObjectPath(NativeWorld));

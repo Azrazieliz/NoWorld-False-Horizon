@@ -338,3 +338,13 @@ class OFFLINEGAME_API AOGLuminousBerserkerOriginalWorldCharacter final
 public:
     AOGLuminousBerserkerOriginalWorldCharacter();
 };
+
+/** Original Grand Convergence final manifestation, NOT a fifth ordinary lineage. */
+UCLASS()
+class OFFLINEGAME_API AOGLuminousGrandOriginalWorldCharacter final
+    : public AOGLuminousV3PlayableCharacter
+{
+    GENERATED_BODY()
+public:
+    AOGLuminousGrandOriginalWorldCharacter();
+};

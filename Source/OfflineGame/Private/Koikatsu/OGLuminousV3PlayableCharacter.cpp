@@ -113,12 +113,14 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
     const FReferenceSkeleton& Left = A->GetRefSkeleton();
     const FReferenceSkeleton& Right = B->GetRefSkeleton();
     // The source-authentic additional forms use their own exported rigs:
-    // Awakened 1131, Berserker 886, and Grand 1123 bones after the FBX root
-    // is admitted. Never compare them through Base/Alter's 975-bone proxy.
+    // Preserve the distinct original source rigs: approved Awakened/Berserker
+    // and exact original-card Grand (561 bones, possibly one importer root).
+    // Never substitute Base/Alter's 975-bone proxy or old unpaired Grand rigs.
     if (Left.GetNum() != Right.GetNum() ||
         (Left.GetNum() != 975 && Left.GetNum() != 886 &&
          Left.GetNum() != 1073 && Left.GetNum() != 882 &&
-         Left.GetNum() != 1131 && Left.GetNum() != 1123)) return false;
+         Left.GetNum() != 1131 && Left.GetNum() != 1123 &&
+         Left.GetNum() != 561 && Left.GetNum() != 562)) return false;
     for (int32 Index = 0; Index < Left.GetNum(); ++Index)
     {
         if (Left.GetBoneName(Index) != Right.GetBoneName(Index) ||
@@ -280,7 +282,8 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
         const bool bVerifiedExactClothed =
             Desired == EOGLuminousV3Wardrobe::Clothed &&
             !Form.IsEmpty() &&
-            (Form == TEXT("Awakened") || Form == TEXT("Berserker")) &&
+            (Form == TEXT("Awakened") || Form == TEXT("Berserker") ||
+             Form == TEXT("Grand")) &&
             AssetPath.StartsWith(FString::Printf(
                 TEXT("/Game/NoWorld/Characters/Luminous/%s/ExactOriginalClothed/"),
                 *Form));
@@ -338,7 +341,9 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
         (CanonicalLuminousVersionId ==
             TEXT("character:luminous_valentine.version_awakened_v4") ||
          CanonicalLuminousVersionId ==
-            TEXT("character:luminous_valentine.version_berserker_v4"));
+            TEXT("character:luminous_valentine.version_berserker_v4") ||
+         CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_grand_v4"));
     for (int32 Index = 0; Index < Paths.Num(); ++Index)
     {
         USkeletalMesh* NativeMesh = Cast<USkeletalMesh>(Paths[Index].TryLoad());
@@ -1457,6 +1462,21 @@ AOGLuminousBerserkerOriginalWorldCharacter::AOGLuminousBerserkerOriginalWorldCha
 {
     CanonicalLuminousVersionId =
         TEXT("character:luminous_valentine.version_berserker_v4");
+    int32 Bones = 0;
+    if (FOGExactOriginalLuminousParts::GetClothed(
+        CanonicalLuminousVersionId, ClothedNativeParts, Bones))
+    {
+        AdditionalVersionNativePartCounts = {ClothedNativeParts.Num(), 0, 0};
+        AdditionalVersionNativeSkeletonBones = {Bones, 0, 0};
+    }
+}
+
+AOGLuminousGrandOriginalWorldCharacter::AOGLuminousGrandOriginalWorldCharacter()
+{
+    // Exceptional final manifestation of the SAME Luminous Identity;
+    // no extra ordinary lineage and no per-form animation library.
+    CanonicalLuminousVersionId =
+        TEXT("character:luminous_valentine.version_grand_v4");
     int32 Bones = 0;
     if (FOGExactOriginalLuminousParts::GetClothed(
         CanonicalLuminousVersionId, ClothedNativeParts, Bones))

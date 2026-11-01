@@ -57,7 +57,9 @@ bool AOGLuminousExactOriginalPreviewActor::ConfigureOwnedPreview_Implementation(
     int32 SourceBoneCount = 0;
     if (!FOGExactOriginalLuminousParts::GetClothed(
             VersionId.ToString(), Paths, SourceBoneCount) ||
-        Paths.Num() != 9 || SourceBoneCount < 1 ||
+        Paths.Num() != (VersionId.ToString() ==
+            TEXT("character:luminous_valentine.version_grand_v4") ? 57 : 9) ||
+        SourceBoneCount < 1 ||
         !Motion->BindCanonicalCharacter(IdentityId))
         return false;
 
