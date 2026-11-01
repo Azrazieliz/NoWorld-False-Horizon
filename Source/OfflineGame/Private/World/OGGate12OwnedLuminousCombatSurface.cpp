@@ -10,6 +10,7 @@
 #include "UI/OGNativeBattleWidget.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGTurnContactActionComponent.h"
 #include "EngineUtils.h"
 #include "Engine/Canvas.h"
 #include "Engine/GameInstance.h"
@@ -249,9 +250,14 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         [Session](const FOGCombatUnitState& U)
         { return U.UnitEntityId == Session->SelectedManifestationId; });
     if (!Owned || !MatchesActualOwnedLuminousBody(Character, *Session, *Owned)) return false;
+    const auto* Contact =
+        Character->FindComponentByClass<UOGTurnContactActionComponent>();
+    const bool bWaitingForRealContact =
+        Contact && Contact->IsAwaitingAuthoredContact();
     const bool bOwnTurn =
         (State.ExecutionMode == EOGCombatExecutionMode::World ||
-         Acting.UnitEntityId == Owned->UnitEntityId) && Owned->CanAct();
+         Acting.UnitEntityId == Owned->UnitEntityId) &&
+        Owned->CanAct() && !bWaitingForRealContact;
 
     // Track REAL native visual actors separately from the executor roster.
     // World streaming may replace source actor instances: cache only weak refs.
@@ -296,6 +302,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     DrawGameText(FString::Printf(
         TEXT("LIVE ENCOUNTER  |  ACTION VALUE %lld  |  %s"),
         static_cast<long long>(State.CurrentActionValue),
+        bWaitingForRealContact ? TEXT("ACTION IN PROGRESS") :
         bOwnTurn ? TEXT("YOUR TURN") : TEXT("OTHER COMBATANT'S TURN")),
         Edge+16.f*S,Edge+10.f*S,22.f*S,Pale,W*.64f);
     DrawGameText(FString::Printf(TEXT("OWN HP %s / %s"),
@@ -388,7 +395,9 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const float ButtonW=FMath::Max(1.f,
             (W-2.f*Edge-(Columns-1)*Gap)/Columns);
         const float CommandGridTop=H-Edge-Rows*(ButtonH+Gap);
-        DrawGameText(TEXT("Select a real participant. Area effects expand by source rules."),
+        DrawGameText(bWaitingForRealContact
+            ? TEXT("Original character action is in motion; contact settles actual results.")
+            : TEXT("Select a real participant. Area effects expand by source rules."),
             Edge+6.f*S,CommandGridTop-27.f*S,13.f*S,Accent,W-2.f*Edge);
         for (int32 Index=0;Index<CommandCount;++Index)
         {
