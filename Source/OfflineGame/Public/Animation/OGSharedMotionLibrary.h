@@ -112,8 +112,11 @@ struct OFFLINEGAME_API FOGSharedMotionEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Native")
     bool bLoop = false;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Eligibility")
-    bool bApprovedForGameplay = false; // Rejected/QA clips cannot resolve into gameplay.
+    /** Deprecated source-authoring field for old serialized DataAssets.
+     * Not an owner phone-review verdict and must never gate native playback.
+     * Retained so old saved packages deserialize without breaking references. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Legacy")
+    bool bApprovedForGameplay = false;
 
     /** Content classification only, never a separate gameplay-permission rule.
      * Actions and scene state are authorized by the canonical gameplay systems;
