@@ -2,6 +2,59 @@
 **Importance: 5/7 — critical reusable production interface.**
 **Date: 2026-11-01.** Required read after the [sole 7★ game authority](NOWORLD_7STAR_AUTHORITY.md) and [6★ advancement](ADVANCEMENT_PROGRESS.json). Preserve and reuse; never reimplement a new motion catalog per character or per form.
 
+## PRIMARY: executable unattended native content production, not a manual binding guide (2026-11-01)
+
+**The first version of this 5★ described only a binding tool. That was insufficient.** The repository now includes reusable Python worker programs, a real Koikatsu Maker/KKBP C# API queue plugin, a Blender KKBP source conversion script, UnrealEditor Python asset import, native C++ appearance-asset authoring, exact runtime source discovery and a Windows self-hosted GitHub Action. The workflows are BUILT IN SOURCE but **not yet native compiled/run or owner accepted**. They cannot claim lossless visual gameplay if required exporter/engine dependencies are absent.
+
+### Direct executable entry points
+- **Create a factory job from a newly created actual Koikatsu card:** `python Scripts/production/submit_noworld_content.py --publish-to-github character --card <ORIGINAL_CARD.png> --identity <CANONICAL_CHARACTER_ID> --version <CANONICAL_VERSION_ID> --rig koikatsu_original --anatomy humanoid --wardrobe CLOTHED --wardrobe-field <EXISTING_CANONICAL_OUTFIT_FIELD> --capabilities combat grounded swimming flying`. No separate library selection: `AUTO` authors/reference the ONE global shared motion UAsset. No per-Version animation catalogs. A card alone does not provide a kit or unique approved motions.
+- **Submit an original approved native FBX animation:** `python Scripts/production/submit_noworld_content.py --publish-to-github motion --fbx <ORIGINAL.fbx> --skeleton <REAL_UNREAL_SKELETON_OBJECT> --motion-id <NATIVE_DERIVATIVE_ID> --source-clip-id <ORIGINAL_SOURCE_CLIP_ID> --source-original-hash <ORIGINAL_SHA256> --action <SEMANTIC_ACTION> --context Combat --rig koikatsu_original --anatomy humanoid --outfit CLOTHED --approval-evidence <EXISTING_REPO_PROOF> --contact-notify <REAL_NOTIFY>`. Alternatively, supply explicit `--natural-completion-contact` if original clip has no authored contact marker, so the true natural sequence finish is the event. Source FBX hash is computed automatically. The factory imports an actual `AnimSequence`, generates the source binding recipe, then invokes the global catalog binder; no hand-writing separate binding JSON.
+- **Submit original approved art:** `python Scripts/production/submit_noworld_content.py --publish-to-github artwork --image <ORIGINAL.png> --identity <EXACT_ID> --version <EXACT_VERSION> --approval-evidence <EXISTING_REPO_PROOF>`. The Unreal worker imports one real Texture2D, attaches it to the same native identity/version visual registry without rewriting older art, and keeps privacy/SFW eligibility separate from file format.
+- **Execute the one command on the authorized Windows worker:** `python Scripts/production/noworld_content_factory.py --inbox ContentFactory/Jobs --config ContentFactory/windows_worker.json`. Or add an authorized job JSON under `ContentFactory/Jobs/` / GitHub `workflow_dispatch` to invoke [the dedicated Actions worker](../../.github/workflows/noworld-content-factory.yml) on a connected **self-hosted Windows Unreal PC**. Nothing runs on ChatGPT in the background between conversations merely because these sources were committed.
+- **Automatic versioned publication:** [publish_noworld_factory_results.py](../../Scripts/production/publish_noworld_factory_results.py) stages only source-produced genuine UE packages, exact original semantic catalog entries and scrubbed receipts for a Git LFS commit. It refuses overwrites and requires the job's explicit `publish_to_github=true`; raw Koikatsu cards/Blender user sources stay in the PC source archive.
+
+### True, reusable production path
+```text
+original card PNG + canonical Identity/Version
+  → SHA-256 authenticated job ID, persistent resumable state
+  → installed Koikatsu Maker KKAPI + KKBP original mesh API queue
+  → real original PMX + receipt
+  → installed Blender KKBP imports source, saves .blend and real skin/morph GLB parts
+  → UnrealEditor Python imports skeletal parts + textures/skeletons
+  → native C++ AuthorNativeAppearance creates exact-bone native appearance UAsset
+  → one global shared animation DataAsset (AUTO, never per form)
+  → ContentFactory/Characters.json maps exact Identity/Version to real assets
+  → existing UOGCharacterAppearanceComponent + AOGContentPlayableCharacter
+  → native roster / World discovery + Android cook stage
+  → when real kit/skills/source motions and owned Manifestation exist:
+     existing World camera/input, true combat, and shared motion contact path
+  → native receipt in Saved; approved source packages committed to GitHub LFS
+
+original approved FBX action + real target Skeleton + original contact/approval
+  → actual UE AnimSequence → exact rig and semantic binding
+  → Content/NoWorld/Animation/SharedMotionCatalog.json
+  → native traversal/combat/interaction dispatch from original gameplay systems
+
+approved original artwork
+  → real UE Texture2D → canonical visual registry/roster
+  → native UMG without replacing source or inventing a new character
+```
+
+**Actual boundaries:** Imported geometry alone cannot invent exact skills, player ownership, action contact, approved scene performance, a World actor's gameplay authority, or the original lore/stat rules. The factory uses the existing runtime only when original definitions exist and are valid. The current bundle compiles **after native source integration is completed**, as explicitly directed, then the user alone accepts actual phone gameplay. Any missing installed exporter/mod, unusual multi-skin GLB, incompatible source Skeleton, non-authentic contact, missing canonical definition or source-art approval produces a precise `BLOCKED` state in `Saved/NoWorldContentFactory/<job-id>/status.json`, not a phantom playable character. UE source format compatibility and true visual behavior remain unverified until authorized native execution.
+
+### Source entrypoints (5★)
+- `Scripts/production/submit_noworld_content.py`: one API submission from original assets and automatically computed source hashes.
+- `Scripts/production/noworld_content_factory.py`: idempotent stage scheduler and durable status; no destructive deletion/reset/reimport.
+- `Tools/Koikatsu/NoworldContentFactory/NoworldCardExportQueue.cs` and `Scripts/production/install_noworld_factory_koikatsu.ps1`: isolated real Maker API queue, existing mod references, safe local plugin installation.
+- `Scripts/production/noworld_kk_blender_generic.py`: authentic source Blender/KKBP skin, morph and geometry conversion.
+- `Scripts/production/noworld_unreal_content_import.py`: native Unreal import for skinned character, original FBX animation, art.
+- `Source/OfflineGame/{Public,Private}/Content/OGNativeContentFactoryEditorLibrary.{h,cpp}`: exact rig-bone/morph native DataAsset author, one persistent global shared motion UAsset.
+- `Source/OfflineGame/Private/Characters/OGCharacterAppearanceComponent.cpp`, `Source/OfflineGame/Private/UI/OGGate12CharacterVisualCatalog.cpp`, `Config/DefaultGame.ini`: exact runtime actor/roster/cook link, originals take precedence.
+- `Scripts/production/bind_native_motion.py`: real native PC source-to-semantic action catalog; extended to target authorized native project root.
+- `Scripts/production/publish_noworld_factory_results.py` and [GitHub Actions](../../.github/workflows/noworld-content-factory.yml): native-only artifact publication and future off-device execution.
+- `ContentFactory/windows_worker.json`: current documented Windows project paths; actual PC installations and executor presence are NOT verified here.
+
+---
 ## Already integrated; use, don't duplicate
 1. Canonical owned identity and native actor: `UOGCharacterAppearanceComponent` for generic characters, `AOGLuminousV3PlayableCharacter` for original Luminous, `FOGExactOriginalLuminousParts` for genuine imported source paths, `UOGCanonicalCombatActorBindingComponent` to connect actual battle World bodies. A form is a Version of an identity, not an animation library or cloned Character Identity.
 2. One controller: `UOGSharedMotionControllerComponent`. Its reusable **BlueprintCallable** `BindNativeRigAndParts(Rig, Anatomy, Outfit, Capabilities, NativeParts)` installs all actual skeletal parts in one call, with fail-safe previous rig data. `BindCanonicalCharacter(Identity)` is also BlueprintCallable. Generic content actors bind the exact authored Identity before installation; original Luminous binds its canonical identity during ownership binding. Alternate Versions/wardrobes reuse that identity. The ordinary content-appearance installer and original Luminous native pawn now both use this same method.
