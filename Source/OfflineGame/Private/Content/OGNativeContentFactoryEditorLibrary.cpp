@@ -31,15 +31,40 @@ bool UOGNativeContentFactoryEditorLibrary::AuthorNativeAppearance(
        !FPackageName::IsValidLongPackageName(LongAssetPath) ||
        RealSkeletalMeshPaths.IsEmpty() || WardrobeId.IsEmpty() ||
        RigProfile.IsEmpty() || AnatomyProfile.IsEmpty() ||
-       WardrobeStateField.IsEmpty() || !SharedMotionLibraryPath.StartsWith(TEXT("/Game/")))
+       WardrobeStateField.IsEmpty() ||
+       (SharedMotionLibraryPath!=TEXT("AUTO") &&
+        !SharedMotionLibraryPath.StartsWith(TEXT("/Game/"))))
         return Fail(TEXT("Invalid canonical IDs, native source binding or authored output."));
     if(FindObject<UObject>(nullptr,*LongAssetPath) ||
        FPackageName::DoesPackageExist(LongAssetPath))
         return Fail(TEXT("Refusing to replace an existing approved appearance definition."));
-    UOGSharedMotionLibrary* Shared=LoadObject<UOGSharedMotionLibrary>(
-        nullptr,*SharedMotionLibraryPath);
+    const FString SharedPath = SharedMotionLibraryPath==TEXT("AUTO")
+        ? TEXT("/Game/NoWorld/ContentFactory/Shared/DA_GlobalSharedMotionLibrary.DA_GlobalSharedMotionLibrary")
+        : SharedMotionLibraryPath;
+    UOGSharedMotionLibrary* Shared=LoadObject<UOGSharedMotionLibrary>(nullptr,*SharedPath);
+    if(!Shared && SharedMotionLibraryPath==TEXT("AUTO"))
+    {
+        const FString LongName=TEXT("/Game/NoWorld/ContentFactory/Shared/DA_GlobalSharedMotionLibrary");
+        UPackage* SharedPackage=CreatePackage(*LongName);
+        const UOGSharedMotionLibrary* BuiltIn=FOGSharedMotionResolver::GetBuiltInLibrary();
+        if(!SharedPackage || !BuiltIn) return Fail(TEXT("Existing global native animation bank absent."));
+        Shared=NewObject<UOGSharedMotionLibrary>(SharedPackage,
+            TEXT("DA_GlobalSharedMotionLibrary"),RF_Public|RF_Standalone);
+        if(!Shared)return Fail(TEXT("Global shared motion DataAsset creation failed."));
+        Shared->Motions=BuiltIn->Motions;
+        FString SharedError;
+        if(!Shared->ValidateLibrary(SharedError)) return Fail(SharedError);
+        FAssetRegistryModule::AssetCreated(Shared);
+        Shared->MarkPackageDirty();
+        FSavePackageArgs SharedArgs;
+        SharedArgs.TopLevelFlags=RF_Public|RF_Standalone;
+        const FString Filename=FPackageName::LongPackageNameToFilename(
+            LongName,FPackageName::GetAssetPackageExtension());
+        if(!UPackage::SavePackage(SharedPackage,Shared,*Filename,SharedArgs))
+            return Fail(TEXT("Global shared animation bank UAsset could not be saved."));
+    }
     if(!Shared || Shared->HasAnyFlags(RF_Transient))
-        return Fail(TEXT("Real cook-reachable shared motion DataAsset is missing."));
+        return Fail(TEXT("Actual cook-reachable global shared motion DataAsset is missing."));
     FOGCharacterAppearanceWardrobe Outfit;
     Outfit.WardrobeId=FName(*WardrobeId);
     Outfit.SafePrivacyFallback=Outfit.WardrobeId;
