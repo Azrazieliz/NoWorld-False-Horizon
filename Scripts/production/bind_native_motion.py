@@ -159,7 +159,15 @@ def bind(recipe_file: Path) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("recipe", type=Path, help="Approved original source + exact imported native asset bindings")
+    parser.add_argument("--project-root", type=Path,
+                        help="Existing authorized native Unreal game project; default is this source checkout")
     args = parser.parse_args()
+    global ROOT, CATALOG
+    if args.project_root:
+        ROOT = args.project_root.resolve(strict=True)
+        if not (ROOT / "OfflineGame.uproject").is_file():
+            raise ValueError("Selected native Unreal project root has no real OfflineGame.uproject")
+        CATALOG = ROOT / "Content/NoWorld/Animation/SharedMotionCatalog.json"
     print(json.dumps(bind(args.recipe.resolve()), indent=2))
 
 
