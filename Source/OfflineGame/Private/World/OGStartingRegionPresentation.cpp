@@ -60,6 +60,8 @@
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Combat/OGTurnContactActionComponent.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
 
 #include "UI/OGGate12CharacterVisualCatalog.h"
@@ -2361,6 +2363,56 @@ void AOGWorldPrototypeCharacter::CameraZoomOutPressed()
 void AOGWorldPrototypeCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 {
     Super::CalcCamera(DeltaTime, OutResult);
+    // Physically frame the real combat target only while the currently
+    // possessed original character plays an authored contact-bound skill.
+    // No generic orbit, fake target, camera teleports, opponent information
+    // leak, interaction with the canonical damage/target resolver, or
+    // permanent replacement of player camera preferences.
+    if (IsLocallyControlled() && !bReducedMotion && GetWorld() &&
+        GetWorld()->IsGameWorld())
+    {
+        const auto* Contact =
+            FindComponentByClass<UOGTurnContactActionComponent>();
+        if (Contact && Contact->IsAwaitingAuthoredContact())
+        {
+            const FOGEntityId Battle = Contact->GetPendingBattleId();
+            const FOGEntityId Focus = Contact->GetPendingPrimaryTarget();
+            if (Battle.IsValid() && Focus.IsValid())
+            {
+                AActor* ActualTarget =
+                    UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                        GetWorld(), Battle, Focus);
+                if (IsValid(ActualTarget) && ActualTarget != this)
+                {
+                    FVector Center, Extent;
+                    ActualTarget->GetActorBounds(false, Center, Extent);
+                    const FVector ActorCenter =
+                        GetActorLocation() + FVector(0.f, 0.f, 86.f);
+                    const FVector PhysicalFocus =
+                        FMath::Lerp(ActorCenter,
+                            Center + FVector(0.f, 0.f, Extent.Z * .35f),
+                            .54f);
+                    const FVector Aim = PhysicalFocus - OutResult.Location;
+                    if (Aim.SizeSquared() > FMath::Square(60.f))
+                    {
+                        FRotator Desired = Aim.Rotation();
+                        Desired.Pitch = FMath::Clamp(Desired.Pitch,
+                            WorldCameraPitchMin, WorldCameraPitchMax);
+                        OutResult.Rotation = FMath::RInterpTo(
+                            OutResult.Rotation, Desired,
+                            FMath::Max(0.f, DeltaTime), 4.5f);
+                        const float Separation =
+                            FVector::Dist(ActorCenter, Center);
+                        const float FovDelta =
+                            FMath::Clamp((Separation - 350.f) / 300.f,
+                                0.f, 6.f);
+                        OutResult.FOV = FMath::Min(
+                            110.f, OutResult.FOV + FovDelta);
+                    }
+                }
+            }
+        }
+    }
     // Keep spring-arm collision intact. Hide the owner's body only when the
     // collision-shortened view is inside its silhouette; restore on retreat.
     const FVector RelativeCamera = OutResult.Location - GetActorLocation();
