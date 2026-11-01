@@ -979,6 +979,11 @@
             "commit": "1aa664db",
             "type": "SOURCE_PARTIAL",
             "change": "Real-encounter fallback canvas now checks the possessed character's shared source-motion controller before enabling a turn ability, matching native UMG's authenticated contact prerequisite. Unplayable clips no longer expose actionable turn touch controls; original executor and motion bank remain intact."
+          },
+          {
+            "commit": "62510f92",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native rendered battle canvas now places canonical status/error feedback on the existing reserved command guide line, not across the last row of real Android skill touch targets. For absent action kits the unchanged fallback error remains visible. No executor or UI architecture replaced."
           }
         ],
         "completed_in_this_update": false,
@@ -1134,6 +1139,11 @@
             "commit": "1aa664db",
             "type": "SOURCE_PARTIAL",
             "change": "Real-encounter fallback canvas now checks the possessed character's shared source-motion controller before enabling a turn ability, matching native UMG's authenticated contact prerequisite. Unplayable clips no longer expose actionable turn touch controls; original executor and motion bank remain intact."
+          },
+          {
+            "commit": "62510f92",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native rendered battle canvas now places canonical status/error feedback on the existing reserved command guide line, not across the last row of real Android skill touch targets. For absent action kits the unchanged fallback error remains visible. No executor or UI architecture replaced."
           }
         ],
         "completed_in_this_update": false,
@@ -1422,6 +1432,11 @@
             "commit": "b320e9f4",
             "type": "SOURCE_PARTIAL",
             "change": "Native real-encounter canvas touch actions now draw inside the computed bottom CommandGridTop instead of the participant-card Top. Fixes layout anchor inconsistency that could overlap character cards and command buttons; does not replace the original battle executor or invent results."
+          },
+          {
+            "commit": "62510f92",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native rendered battle canvas now places canonical status/error feedback on the existing reserved command guide line, not across the last row of real Android skill touch targets. For absent action kits the unchanged fallback error remains visible. No executor or UI architecture replaced."
           }
         ],
         "completed_in_this_update": false,
@@ -2047,9 +2062,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T15:49:00Z"
+    },
+    {
+      "source_commit": "62510f92142f7d677d70645d3f04723ee496dc40",
+      "system_ids": [
+        "M03",
+        "M09",
+        "M33"
+      ],
+      "result": "Native rendered battle canvas now places canonical status/error feedback on the existing reserved command guide line, not across the last row of real Android skill touch targets. For absent action kits the unchanged fallback error remains visible. No executor or UI architecture replaced.",
+      "remaining_player_visible_work": "Verify compact Android layouts, especially many-row source kits/participant lists, finish authentic action/motion binding, opponent turn results and save/reward continuity before native packaging.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate12OwnedLuminousCombatSurface.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Existing native fallback canvas and 5★ World runtime retained; Github API edit and ledger update because no current executable checkout.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T15:52:00Z"
     }
   ],
-  "continuation_last_source_commit": "1aa664db96ddfba2959094b647038d57d286d9bc",
+  "continuation_last_source_commit": "62510f92142f7d677d70645d3f04723ee496dc40",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
