@@ -412,12 +412,10 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
         // settings alone cannot guarantee the approved rig-cohort path.
         SharedMotionController->bUseIdenticalTopologyLeaderPose = false;
         SharedMotionController->bGroupPartsByReferencePose = true;
-        SharedMotionController->RigProfile = MotionRigProfile;
-        SharedMotionController->AnatomyProfile = MotionAnatomyProfile;
-        SharedMotionController->Capabilities = MotionCapabilities;
         SharedMotionController->SharedLibrary = SharedMotionLibrary;
-        SharedMotionController->SetCurrentOutfit(FName(WardrobeName(Desired)));
-        if (!SharedMotionController->RegisterNativeParts(Native))
+        if (!SharedMotionController->BindNativeRigAndParts(
+                MotionRigProfile, MotionAnatomyProfile,
+                FName(WardrobeName(Desired)), MotionCapabilities, Native))
         {
             Error = TEXT("Shared motion component could not register actual wardrobe meshes");
             return false;
