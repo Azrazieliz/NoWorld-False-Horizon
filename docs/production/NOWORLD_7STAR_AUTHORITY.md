@@ -7,7 +7,7 @@ This file is the SINGLE 7★ **index**. It does not supplant or paraphrase away 
 ## Non-negotiable game purpose and decisions
 - Finish the existing offline, full-scope, real Unreal Engine 5.8 game, **NoWorld: False Horizon**, playable on the owner's Android phone. Windows release separately. No standalone mockups, prototype executors, fake stand-in game, truncated scope or arbitrary simplification.
 - Retain every original accepted visual, character, source 3D card, wardrobe, rig, audio, design source, approved nine native UI reference scopes, gameplay mechanic, Registry, Manifestation, narrative decision, economy rule, persistence contract, mature content scope, and original First World anchor.
-- **Luminous has five visual/form kits, not five ordinary derivations:** Base, Alter, Awakened, Berserker, Grand Convergence; Grand is exceptional. Preserve approved v4 kit counts: Base 3/6/2, Alter 3/6/2, Awakened 4/5/1, Berserker 2/7/1, Grand 3/6/3. The actual original numeric sources govern; older Base v6 / Alter v1 summaries in historic engineering trackers are NOT authority for replacing v4. ALL AoE hits every applicable field participant.
+- **Luminous has five visual/form kits, not five ordinary derivations:** Base, Alter, Awakened, Berserker, Grand Convergence; Grand Convergence is its proper name. Preserve approved v4 kit counts: Base 3/6/2, Alter 3/6/2, Awakened 4/5/1, Berserker 2/7/1, Grand 3/6/3. The actual original numeric sources govern; older Base v6 / Alter v1 summaries in historic engineering trackers are NOT authority for replacing v4. ALL AoE hits every applicable field participant.
 - **One shared semantic action / original animation source bank** covering characters, rigs and activities. Identity binds to the character once; Versions, wardrobes, and owned Manifestation instances do not get duplicate animation libraries. Attach authentic exact-Skeleton derivatives of the real source. Use the existing shared resolver and source catalog. Never silently approve source clips or invent contact markers; author exact content when necessary. Shared action controller must not override authoritative combat.
 - **Real World:** coherent 100 × 100 km First World, accepted Region R1, World Partition/PCG/landscape, terrain/geography/settlements/biomes and causal persistent ecology. Free first entry; no forced first fight or forced tutorial, and preserve nonhuman routes/identities.
 - **Real combat:** 2 existing authorized executors (turn and World), actual enemy actors and AI, true action/animation contact and consequences, exact five v4 kits, revive/status/resources, physical hit/projectile/VFX, World persistence and win/loss. Never grant or simulate an owned character or invent a damage packet.
@@ -119,7 +119,7 @@ This file is the SINGLE 7★ **index**. It does not supplant or paraphrase away 
 
 ### M08 — Character identity, Versions and individual Manifestations
 
-**Original acceptance:** Canonical Identity, four conventional Version kits plus exceptional Grand, distinct independently owned Manifestation instances, duplicates and roster selection work without character chips.
+**Original acceptance:** Canonical Identity, four conventional Version kits plus Grand Convergence, distinct independently owned Manifestation instances, duplicates and roster selection work without character chips.
 
 **Authority:** [Milestone issue #35](https://github.com/Azrazieliz/NoWorld-False-Horizon/issues/35); producing Gate(s): 07+12.
 
