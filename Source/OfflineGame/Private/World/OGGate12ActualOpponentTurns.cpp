@@ -7,6 +7,8 @@
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGTurnContactActionComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -142,72 +144,62 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
             if (!Battle->ExpandApprovedFieldTargets(
                 Proposal, Expanded, bArea, Error))
                 continue;
-            TMap<FOGEntityId, FOGLargeNumber> HpBefore;
-            for (const auto& Unit:State.Units) HpBefore.Add(Unit.UnitEntityId,Unit.CurrentHp);
-            Expanded.ActionId = FOGEntityId::NewId();
-            if (!Core->ApplyApprovedLuminousResolvedAction(Expanded, Error))
-                continue; // Atomic failed preflight: no turn consumed.
-
-            const auto* Committed=Core->GetOwnedLuminousTurnBattle();
-            if (!Committed || Committed->GetState().BattleId!=ActualBattleId) return;
-            AActor* SourceActor =
-                UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
-                    GetWorld(), ActualBattleId, ActingId);
-            AActor* FirstActor = nullptr;
-            if (const FOGTurnBattle* AfterBattle =
-                Core->GetOwnedLuminousTurnBattle())
+            FName Semantic = Battle->ResolveNativeAbilityMotion(
+                Acting, Expanded.SkillId);
+            if (Semantic.IsNone())
             {
-                for (const auto& ResolvedUnit:AfterBattle->GetState().Units)
+                FOGNativeBattleCommandSet AuthoredCommands;
+                FString CommandError;
+                if (FOGNativeBattleCommands::BuildFor(
+                        Acting, AuthoredCommands, CommandError))
                 {
-                    const FOGEntityId TargetId=ResolvedUnit.UnitEntityId;
-                    AActor* Body =
-                        UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
-                            GetWorld(), ActualBattleId, TargetId);
-                    if (!IsValid(Body)) continue;
-                    if (!FirstActor && Expanded.TargetUnitIds.Contains(TargetId)) FirstActor = Body;
-                    const FOGLargeNumber* Before = HpBefore.Find(TargetId);
-                    const FOGCombatUnitState* After =
-                        AfterBattle->GetState().Units.FindByPredicate(
-                        [&TargetId](const FOGCombatUnitState& U)
-                        { return U.UnitEntityId == TargetId; });
-                    if (!Before || !After ||
-                        FOGLargeNumber::Compare(*Before, After->CurrentHp) == 0)
-                        continue;
-                    if (APlayerController* PC =
-                        Cast<APlayerController>(GetController()))
-                        if (AOGWorldPresentationHud* Hud =
-                            Cast<AOGWorldPresentationHud>(PC->GetHUD()))
-                            Hud->RegisterCanonicalCombatImpact(
-                                Body, *Before, After->CurrentHp);
-                    if (UOGSharedMotionControllerComponent* Motion =
-                        OpponentMotion(Body))
+                    for (const FOGNativeBattleCommand& Command
+                        : AuthoredCommands.Commands)
                     {
-                        const FName Reaction = !After->IsAlive()
-                            ? FName(TEXT("Combat.Reaction.Death")) :
-                            FOGLargeNumber::Compare(After->CurrentHp, *Before) < 0
-                            ? FName(TEXT("Combat.Reaction.Hit")) :
-                            FName(TEXT("Combat.Reaction.Heal"));
-                        if (!After->IsAlive()) Motion->PlayAction(Reaction,TEXT("Combat"),false,1);
-                        else Motion->EnqueueCombatCue(Reaction,ActualBattleId,Expanded.ActionId,TargetId);
+                        if (Command.SkillId != Expanded.SkillId ||
+                            Command.bFantasm)
+                            continue;
+                        if (!Command.Branch.IsNone() &&
+                            !Proposal.ResolutionJson.Contains(
+                                FString::Printf(TEXT("\\"branch\\":\\"%s\\""),
+                                    *Command.Branch.ToString().ToLower())))
+                            continue;
+                        if (!Command.Mode.IsNone() &&
+                            !Proposal.ResolutionJson.Contains(
+                                FString::Printf(TEXT("\\"mode\\":\\"%s\\""),
+                                    *Command.Mode.ToString().ToLower())))
+                            continue;
+                        Semantic = Command.MotionSemantic();
+                        break;
                     }
                 }
             }
-            if (IsValid(SourceActor))
+            if (Semantic.IsNone())
+                continue; // Never resolve source damage without its actual motion.
+
+            UOGTurnContactActionComponent* Staging =
+                ExistingSourceBody->FindComponentByClass<
+                    UOGTurnContactActionComponent>();
+            if (!Staging)
             {
-                if (IsValid(FirstActor) && FirstActor != SourceActor)
-                {
-                    const FVector Delta =
-                        FirstActor->GetActorLocation()-SourceActor->GetActorLocation();
-                    if (Delta.SizeSquared2D() > FMath::Square(5.f))
-                        SourceActor->SetActorRotation(
-                            FRotator(0.f, Delta.Rotation().Yaw, 0.f));
-                }
-                // Canonical body binding queues every accepted root/reaction motion once.
+                Staging = NewObject<UOGTurnContactActionComponent>(
+                    ExistingSourceBody);
+                if (!Staging)
+                    continue;
+                ExistingSourceBody->AddInstanceComponent(Staging);
+                Staging->RegisterComponent();
             }
+            if (Staging->IsAwaitingAuthoredContact())
+                return; // The original character is already mid-strike.
+            if (!Staging->StageActualTurnAction(
+                    Expanded, Semantic, Error))
+                continue;
+
+            // Gameplay settlement and HP reactions happen at the original
+            // clip's authored contact. No immediate invisible enemy attack.
             UE_LOG(LogTemp, Display,
-                TEXT("Gate12 actual non-player turn committed: unit %s source skill %s targets %d"),
-                *ActingId.ToString(), *Skill.ToString(),
-                Expanded.TargetUnitIds.Num());
+                TEXT("Gate12 non-player original action staged: %s skill %s"),
+                *ActingId.ToString(), *Skill.ToString());
             return;
         }
     }
