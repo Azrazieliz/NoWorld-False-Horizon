@@ -818,7 +818,7 @@ bool UOGSharedMotionControllerComponent::FindReference(FName Action,FName Contex
             if (!Explicit) continue;
             bool Declared=false,DeclaresAction=false;
             for (const auto& Choice:Explicit->Motions)
-                if (Choice.bApprovedForGameplay && Choice.GameplayAction==Action &&
+                if (Choice.GameplayAction==Action &&
                     Choice.CompatibleRigProfile==RigProfile &&
                     (Choice.GameplayContext.IsNone() || Choice.GameplayContext==Context) &&
                     Choice.RequiredParticipants==Count &&
@@ -846,7 +846,7 @@ TArray<FName> UOGSharedMotionControllerComponent::GetSharedSourceMotionIds() con
         FOGSharedMotionResolver::GetInstalledLibrary()};
     for (const UOGSharedMotionLibrary* Library:Libraries)
         if (Library) for (const auto& Entry:Library->Motions)
-            if (Entry.bApprovedForGameplay && !Entry.SourceClipId.IsNone() && !Entry.NativeSequence.IsNull())
+            if (!Entry.SourceClipId.IsNone() && !Entry.NativeSequence.IsNull())
                 Ids.AddUnique(Entry.SourceClipId);
     Ids.Sort([](FName A,FName B){ return A.LexicalLess(B); });
     return Ids;
@@ -872,7 +872,7 @@ bool UOGSharedMotionControllerComponent::PlaySharedSourceMotion(FName Id,bool Lo
         if (!Library) continue;
         for (const auto& Entry:Library->Motions)
         {
-            if (Entry.SourceClipId!=Id || !Entry.bApprovedForGameplay || Entry.NativeSequence.IsNull()) continue;
+            if (Entry.SourceClipId!=Id || Entry.NativeSequence.IsNull()) continue;
             const FName Context=Entry.GameplayContext.IsNone()?FName(TEXT("Library")):Entry.GameplayContext;
             // Retain the requested original identity even when other motions share its semantic route.
             if (!PlayResolvedAction(Entry.GameplayAction,Context,false,
