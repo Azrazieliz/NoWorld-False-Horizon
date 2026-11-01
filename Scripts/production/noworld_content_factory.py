@@ -114,6 +114,10 @@ def run(jobpath,config,mode="run"):
         fn()
         if output and (not Path(output).is_file() or Path(output).stat().st_size==0):
             raise RuntimeError(name+" returned without source receipt")
+        if output:
+            result=read_json(output)
+            if result.get("status") in ("BLOCKED","PARTIAL_SOURCE_EXPORT","FAILED") or not result.get("status"):
+                raise RuntimeError(name+" created a failure/partial source receipt, not a completed real asset")
         state["completed"].append(name)
         state["results"][name]=str(output or "DONE")
         save(status,state)
@@ -142,14 +146,29 @@ def run(jobpath,config,mode="run"):
                 if target.exists() and target.read_bytes()!=request.read_bytes():
                     raise ValueError("Existing Koikatsu request changed")
                 if not target.exists(): target.write_bytes(request.read_bytes())
-                if not export.exists() and config.get("koikatsu_exe"):
-                    process([required_file(config["koikatsu_exe"])],
-                            cwd=Path(config["koikatsu_exe"]).parent,timeout=timeout)
+                launched=None
+                exit_flag=queue/"NOWORLD_FACTORY_EXIT_AFTER_BATCH.flag"
+                # In dedicated worker mode, the API plugin closes only the
+                # Koikatsu instance started by this job. Never terminate an
+                # existing user Maker process or interact with its window.
+                if not export.exists() and config.get("launch_koikatsu_worker",False):
+                    exe=required_file(config["koikatsu_exe"])
+                    exit_flag.write_text(ident+"\n",encoding="utf-8")
+                    launched=subprocess.Popen([str(exe)],cwd=str(exe.parent))
                 deadline=time.monotonic()+timeout
                 while not export.exists() and time.monotonic()<deadline:
                     time.sleep(1)
                 if not export.exists():
+                    if launched is not None and launched.poll() is None:
+                        launched.terminate()
                     raise RuntimeError("Koikatsu Maker export service unavailable or missing required mods; receipt absent")
+                # A source receipt is more important than the author's
+                # transient game window; remove our launch marker afterward.
+                if launched is not None:
+                    try: launched.wait(timeout=30)
+                    except subprocess.TimeoutExpired:
+                        if launched.poll() is None: launched.terminate()
+                    if exit_flag.is_file(): exit_flag.unlink()
                 result=read_json(export)
                 if result.get("source_card_sha256")!=card["sha256"] or result.get("status")!="EXPORTED_NATIVE_EXACT_ORIGINAL_CARD":
                     raise RuntimeError("Maker did not export this exact authenticated card")
