@@ -6,6 +6,7 @@
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Combat/OGTurnContactActionComponent.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -120,51 +121,26 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
             !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Id))
         { Error=TEXT("A required living battle character is unavailable in the World."); return false; }
     }
-    const auto BeforeSourceHp=Source->CurrentHp;
-    const FName Semantic=Command->MotionSemantic();
-    const bool UseAuthoredMap=Command->Branch.IsNone() && Command->Mode.IsNone();
-    const FOGContentId Skill=Command->SkillId;
-    Action.ActionId=FOGEntityId::NewId();
-    if (!Core->ApplyApprovedLuminousResolvedAction(Action,Error)) return false;
+    // TURN MODE: the selected original clip is not merely cosmetic.
+    // Commit the authoritative action only on its actual source-authored
+    // animation contact. In World mode UOGWorldAbilityExecutionComponent
+    // already owns physical traces and staging, so never duplicate it here.
+    UOGTurnContactActionComponent* Contact =
+        FindComponentByClass<UOGTurnContactActionComponent>();
+    if (!Contact)
+    {
+        Contact = NewObject<UOGTurnContactActionComponent>(this);
+        if (!Contact)
+        {
+            Error = TEXT("Could not attach the authentic turn-contact action.");
+            return false;
+        }
+        AddInstanceComponent(Contact);
+        Contact->RegisterComponent();
+    }
+    if (!Contact->StageActualTurnAction(
+            Action, Command->MotionSemantic(), Error))
+        return false;
     ClearSelectedCanonicalTurnTargets();
-    const auto* Updated=Core->GetOwnedLuminousTurnBattle();
-    if (!Updated || Updated->GetState().BattleId!=BattleId) return true;
-    const auto* SurvivingSource=Updated->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==SourceId;});
-    if (!SurvivingSource) return true;
-    const auto* BoundBody=FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
-    if (BoundBody && BoundBody->IsBoundTo(BattleId,SourceId)) return true;
-    // Preserve the verified owned legacy adapter when no canonical visual binding was installed.
-    auto* Appearance=FindComponentByClass<UOGCharacterAppearanceComponent>();
-    auto* SourceMotion=Appearance?Appearance->GetMotionController():nullptr;
-    if (!SourceMotion) SourceMotion=FindComponentByClass<UOGSharedMotionControllerComponent>();
-    if (BeforeSourceHp!=SurvivingSource->CurrentHp)
-    {
-        if (auto* Player=Cast<APlayerController>(GetController()))
-            if (auto* Hud=Cast<AOGWorldPresentationHud>(Player->GetHUD()))
-                Hud->RegisterCanonicalCombatImpact(this,BeforeSourceHp,SurvivingSource->CurrentHp);
-        if (SourceMotion)
-        {
-            if (!SurvivingSource->IsAlive()) SourceMotion->PlayAction(TEXT("Combat.Reaction.Death"),TEXT("Combat"),false,1);
-            else SourceMotion->EnqueueCombatCue(FOGLargeNumber::Compare(SurvivingSource->CurrentHp,BeforeSourceHp)<0?
-                FName(TEXT("Combat.Reaction.Hit")):FName(TEXT("Combat.Reaction.Heal")),BattleId,Action.ActionId,SourceId);
-        }
-    }
-    if (!SurvivingSource->IsAlive()) return true;
-    for (const auto& TargetId:Action.TargetUnitIds)
-        if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,TargetId); Target && Target!=this)
-        {
-            const FVector Direction=Target->GetActorLocation()-GetActorLocation();
-            if (!Direction.IsNearlyZero()) SetActorRotation(FRotator(0,Direction.Rotation().Yaw,0));
-            break;
-        }
-    if (auto* Legacy=Cast<AOGLuminousV3PlayableCharacter>(this)) Legacy->PlaySharedGameplayAction(Semantic);
-    if (auto* Content=Cast<AOGContentPlayableCharacter>(this); Content && Content->Appearance)
-    {
-        const FName* Authored=UseAuthoredMap?Content->CombatActionSemantics.Find(Skill):nullptr;
-        const FName Key=Authored?*Authored:Semantic;
-        auto* Motion=Content->Appearance->GetMotionController();
-        if (!Motion || !Motion->IsPlayingAction() || Motion->CurrentAction!=Key)
-        { FString MotionError; Content->Appearance->PlaySemanticAction(Key,TEXT("Combat"),false,1,NAME_None,MotionError); }
-    }
     return true;
 }
