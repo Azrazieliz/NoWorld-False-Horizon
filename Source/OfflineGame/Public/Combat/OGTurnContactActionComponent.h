@@ -12,9 +12,10 @@ class AController;
 /**
  * Real turn-mode action staging on the actual source character.
  *
- * An action has NO HP, charge, cost or turn effect until the authored source
- * clip reaches its contact notify. There is no fallback timer, fabricated
- * hit trace, visual-only HP meter or generic damage packet.
+ * An action has NO HP, charge, cost or turn effect until its original clip
+ * reaches its authored contact or completes natural playback when no contact
+ * marker exists. This is a real animation lifecycle, NEVER a guessed timer,
+ * fabricated hit trace, visual-only HP meter or generic damage packet.
  *
  * World (real-time) combat continues to use UOGWorldAbilityExecutionComponent.
  * The staged action is transient; interrupted/unloaded actions never settle.
@@ -51,7 +52,9 @@ private:
     void HandleSourceMotionFinished(
         UOGSharedMotionControllerComponent* Source, FName GameplayAction,
         FName MotionId);
-    bool IsSameLiveTurn(FString& Error) const;
+    bool IsSameLiveTurn(FString& Error, bool bSourceFinished = false) const;
+    void ResolveSourceMotionEvent(FName GameplayAction,
+        FName MotionId, bool bSourceFinished);
     void DropStagedAction(bool bStopSourcePlayback);
 
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
