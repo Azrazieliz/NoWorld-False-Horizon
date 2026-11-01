@@ -972,6 +972,21 @@
             "commit": "45f13fb2",
             "change": "Whole-character native rig-part API wired into original Luminous installation; original Grand 57 renderer parts are recorded as imported source, not finished gameplay.",
             "type": "SOURCE_PARTIAL"
+          },
+          {
+            "commit": "22a5b649",
+            "type": "SOURCE_PARTIAL",
+            "change": "actual generic owned World character reads source-authored exact Identity/Version UAsset definitions from immutable content factory registry"
+          },
+          {
+            "commit": "aab76867",
+            "type": "SOURCE_PARTIAL",
+            "change": "Unreal Android cooks dynamically linked genuine source meshes, original art and actor appearance asset directory"
+          },
+          {
+            "commit": "fb9bc62d",
+            "type": "SOURCE_PARTIAL",
+            "change": "Editor C++ authors native appearance and ONE global genuine shared animation bank from original skeletons"
           }
         ],
         "completed_in_this_update": false
@@ -991,6 +1006,16 @@
             "commit": "b515a66a",
             "type": "SOURCE_PARTIAL",
             "change": "Generic character source now binds canonical authored Identity before installing actual rig parts."
+          },
+          {
+            "commit": "fb9bc62d",
+            "type": "SOURCE_PARTIAL",
+            "change": "Editor C++ authors native appearance and ONE global genuine shared animation bank from original skeletons"
+          },
+          {
+            "commit": "e7ed4abb",
+            "type": "SOURCE_PARTIAL",
+            "change": "original approved FBX clip imports as native Unreal AnimSequence on exact source Skeleton before binding to same shared action bank"
           }
         ],
         "completed_in_this_update": false
@@ -1016,7 +1041,13 @@
         "title": "Character identity, Versions and individual Manifestations",
         "issue": 35,
         "acceptance_state": "NOT_USER_ACCEPTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "22a5b649",
+            "type": "SOURCE_PARTIAL",
+            "change": "actual generic owned World character reads source-authored exact Identity/Version UAsset definitions from immutable content factory registry"
+          }
+        ],
         "completed_in_this_update": false
       },
       {
@@ -1139,7 +1170,13 @@
         "title": "Premium roster, character details and wardrobe UI",
         "issue": 49,
         "acceptance_state": "NOT_USER_ACCEPTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "fe46221d",
+            "type": "SOURCE_PARTIAL",
+            "change": "native character visual catalog finds factory-produced genuine original images/appearances and real generic World pawn without overriding accepted existing characters"
+          }
+        ],
         "completed_in_this_update": false
       },
       {
@@ -1235,7 +1272,13 @@
         "title": "Android packaging, performance and device-ready delivery",
         "issue": 61,
         "acceptance_state": "NOT_USER_ACCEPTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "aab76867",
+            "type": "SOURCE_PARTIAL",
+            "change": "Unreal Android cooks dynamically linked genuine source meshes, original art and actor appearance asset directory"
+          }
+        ],
         "completed_in_this_update": false
       },
       {
@@ -1282,6 +1325,55 @@
         "docs/production/NOWORLD_7STAR_AUTHORITY.md"
       ],
       "change": "Single 7-star canonical authority entry maps all 36 whole-game systems and establishes 7/6/5 persistence across conversations. Documentation is not gameplay advancement."
+    },
+    {
+      "grade": 7,
+      "kind": "FULL_CANON_RECOVERY",
+      "files": [
+        "docs/production/authority/v036_source_text/part_01.md",
+        "docs/production/authority/v036_source_text/part_02.md",
+        "docs/production/authority/v036_source_text/part_03.md",
+        "docs/production/authority/v036_source_text/part_04.md",
+        "docs/production/authority/v036_source_text/part_05.md",
+        "docs/production/authority/v036_source_text/part_06.md",
+        "docs/production/authority/v036_source_text/part_07.md"
+      ],
+      "commit": "3f9e1ae90c3cc56e264a333d6319f519645633d6",
+      "change": "Archived all parsed paragraphs/checkpoints from 143-page master baseline including mature content and sovereignty. Maintains explicit source supersession. No gameplay counted."
+    },
+    {
+      "grade": 5,
+      "kind": "AUTOMATED_CONTENT_FACTORY",
+      "commits": [
+        "ac403f4a",
+        "384ce5bc",
+        "cd85d363",
+        "bfc16c8c",
+        "f05b8df0",
+        "33ea6a42",
+        "fb9bc62d",
+        "e7ed4abb",
+        "f170d875",
+        "4f4c8237",
+        "cfcb0aa9",
+        "40eef92e",
+        "ede9cc99",
+        "d0aa0e98",
+        "5bfc2cf0",
+        "14ed4956"
+      ],
+      "files": [
+        "Scripts/production/noworld_content_factory.py",
+        "Scripts/production/submit_noworld_content.py",
+        "Scripts/production/noworld_kk_blender_generic.py",
+        "Scripts/production/noworld_unreal_content_import.py",
+        "Scripts/production/publish_noworld_factory_results.py",
+        "Tools/Koikatsu/NoworldContentFactory/NoworldCardExportQueue.cs",
+        "Source/OfflineGame/Private/Content/OGNativeContentFactoryEditorLibrary.cpp",
+        ".github/workflows/noworld-content-factory.yml",
+        "docs/production/CONTENT_BINDING_5STAR.md"
+      ],
+      "change": "Python native source ingestion, real Maker API exporter, Blender source conversion, Unreal skeletal / artwork / native animation imports, C++ exact appearance DataAsset and global shared bank, persistent idempotent stage receipts and private-source-excluding Git LFS publisher. All source only, no native compile or actual APK."
     }
   ],
   "latest_gameplay_source_changes": [
@@ -1327,7 +1419,56 @@
         "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h"
       ],
       "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "commit": "22a5b649",
+      "area": "actual generic owned World character reads source-authored exact Identity/Version UAsset definitions from immutable content factory registry",
+      "status": "SOURCE_NOT_GAMEPLAY_ACCEPTED"
+    },
+    {
+      "commit": "fe46221d",
+      "area": "native character visual catalog finds factory-produced genuine original images/appearances and real generic World pawn without overriding accepted existing characters",
+      "status": "SOURCE_NOT_GAMEPLAY_ACCEPTED"
+    },
+    {
+      "commit": "aab76867",
+      "area": "Unreal Android cooks dynamically linked genuine source meshes, original art and actor appearance asset directory",
+      "status": "SOURCE_NOT_GAMEPLAY_ACCEPTED"
+    },
+    {
+      "commit": "fb9bc62d",
+      "area": "Editor C++ authors native appearance and ONE global genuine shared animation bank from original skeletons",
+      "status": "SOURCE_NOT_GAMEPLAY_ACCEPTED"
+    },
+    {
+      "commit": "e7ed4abb",
+      "area": "original approved FBX clip imports as native Unreal AnimSequence on exact source Skeleton before binding to same shared action bank",
+      "status": "SOURCE_NOT_GAMEPLAY_ACCEPTED"
     }
   ],
-  "continuation_entrypoint": "AGENTS.md"
+  "continuation_entrypoint": "AGENTS.md",
+  "canon_source_recovery_v036": {
+    "authority": "docs/production/NOWORLD_7STAR_AUTHORITY.md",
+    "source_files": [
+      "docs/production/authority/v036_source_text/part_01.md",
+      "docs/production/authority/v036_source_text/part_02.md",
+      "docs/production/authority/v036_source_text/part_03.md",
+      "docs/production/authority/v036_source_text/part_04.md",
+      "docs/production/authority/v036_source_text/part_05.md",
+      "docs/production/authority/v036_source_text/part_06.md",
+      "docs/production/authority/v036_source_text/part_07.md"
+    ],
+    "source": "User-supplied 143-page v0.36 master design uploaded 2026-11-01, full parsed text archived; original embedded figures remain in original DOCX.",
+    "supersession": "Later explicit user decisions and exact original approved post-v0.36 contracts supersede conflicts, no inferred approvals.",
+    "commit": "3f9e1ae90c3cc56e264a333d6319f519645633d6"
+  },
+  "delivery_gate": {
+    "source_stack_pushed": true,
+    "content_factory_native_compiled": false,
+    "content_factory_end_to_end_executed": false,
+    "native_gameplay_fully_integrated": false,
+    "android_package_created": false,
+    "owner_phone_playable": false,
+    "do_not_call_an_apk_ready": true
+  }
 }
