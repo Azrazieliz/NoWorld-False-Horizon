@@ -121,13 +121,12 @@ Existing imported `/Game/.../ActualSequence.ActualSequence` must have a real `Co
       "participants": 1,
       "contact_seconds": -1,
       "natural_completion_contact": true,
-      "loop": false,
       "loop": false
     }
   ]
 }
 ```
-**This is an illustrative format, not an available animation or an approval.** Substitute only real IDs, exact source hash, approved evidence, correct current native asset and actual authored contact. If an authored notify exists, use `contact_notify` instead of guessed timestamps. Explicit natural completion means the real source clip finishes normally before authoritative settlement; never use an invented hit time.
+**This is an illustrative format, not an available animation or a phone-test verdict.** Substitute real IDs, authentic source hashes, actual existing native assets and genuine authored contact data. The optional example `approval_evidence` is historical source provenance, never required owner acceptance. If an authored notify exists, use `contact_notify` instead of guessed timestamps. Explicit natural completion means the real source clip finishes normally before authoritative settlement; never use an invented hit time.
 
 Single command/API call, runnable in the existing authorized pipeline by the developer or CI, not by the phone-only user:
 ```bash
