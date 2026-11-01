@@ -95,10 +95,20 @@ def run(jobpath,config,mode="run"):
     kind=data.get("kind")
     if not isinstance(ident,str) or not IDENT.fullmatch(ident) or kind not in ("character","motion","artwork","bundle"):
         raise ValueError("Invalid job ID/type")
-    if not isinstance(data.get("sources"),list) or not data["sources"]:
-        raise ValueError("Real hashed inputs are required")
+    specs=data.get("sources",[])
+    if not isinstance(specs,list): raise ValueError("Source inventory must be an array")
+    # An animation/art job already declares its immutable inputs; authors
+    # should never have to copy their paths into two separate manual forms.
+    if not specs and data.get("animations"):
+        specs=[dict(role="animation",path=x["path"],sha256=x["sha256"])
+               for x in data["animations"]]
+    if not specs and data.get("artwork"):
+        specs=[dict(role="artwork",path=x["path"],sha256=x["sha256"])
+               for x in data["artwork"]]
+    if not specs:
+        raise ValueError("Actual source files with SHA-256 are required")
     source=[]
-    for obj in data["sources"]:
+    for obj in specs:
         p=required_file(obj["path"],obj["sha256"])
         source.append({"role":obj["role"],"path":str(p),"sha256":digest(p)})
     ledger_root=Path(config["work_root"]).resolve()
