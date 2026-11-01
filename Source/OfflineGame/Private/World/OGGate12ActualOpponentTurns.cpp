@@ -45,11 +45,6 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     if (const auto* Mode=GetGameInstance()
             ? GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>() : nullptr;
         Mode && Mode->GetMode()!=EOGPresentationMode::World) return;
-    const AOGLuminousV3PlayableCharacter* Luminous =
-        Cast<AOGLuminousV3PlayableCharacter>(this);
-    const AOGContentPlayableCharacter* ContentCharacter = Cast<AOGContentPlayableCharacter>(this);
-    if (!Luminous && !ContentCharacter) return;
-
     UGameInstance* GI = GetGameInstance();
     UOGGameCoreSubsystem* Core = GI ?
         GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
@@ -63,13 +58,16 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     // Real-time World actions belong to UOGNativeTurnAgentComponent and
     // UOGWorldAbilityExecutionComponent, never this turn-contact fallback.
     if (State.ExecutionMode!=EOGCombatExecutionMode::Turn) return;
+    // This is the same canonical source/possessed-body authority used by
+    // native player turn input. A genuine bound Ruler pawn can therefore keep
+    // opponents acting; this requires neither a selected Luminous copy nor
+    // a manufactured owned character.
+    FOGEntityId Controlled; FString ControlError;
+    if (!ReadControlledCanonicalBattleUnit(Controlled,ControlError)) return;
     const FOGCombatUnitState* Owned = State.Units.FindByPredicate(
-        [Session](const FOGCombatUnitState& U)
-        { return U.UnitEntityId == Session->SelectedManifestationId; });
-    if (!Owned || !((Luminous && Luminous->IsBoundToOwnedLuminousCombatUnit(
-        Session->BoundRulerId, Session->SelectedManifestationId, Owned->SkillSet.CurrentForm)) ||
-        (ContentCharacter && ContentCharacter->IsBoundToOwnedCombatUnit(
-            Session->BoundRulerId, Session->SelectedManifestationId, Owned->SkillSet.CurrentForm)))) return;
+        [&Controlled](const FOGCombatUnitState& U)
+        { return U.UnitEntityId==Controlled; });
+    if (!Owned) return;
 
     const double Now = GetWorld()->GetTimeSeconds();
     if (AutonomousCombatBattleId != State.BattleId)
