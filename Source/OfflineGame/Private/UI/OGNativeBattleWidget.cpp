@@ -387,7 +387,13 @@ void UOGNativeBattleWidget::Activate(FName Command,int32 TargetIndex)
     {
         const auto* Game=Character->GetGameInstance(); const auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
         if (Core) DismissedResultReceipt=Core->GetLastNativeBattleOutcome().CompletionEventId;
-        SetVisibility(ESlateVisibility::Collapsed); return;
+        // Release the real World's touch/camera input from the completed
+        // combat overlay. A dismissed native UMG result cannot keep the
+        // player stuck in GameAndUI mode during ordinary exploration.
+        SetVisibility(ESlateVisibility::Collapsed);
+        if (APlayerController* Player=Cast<APlayerController>(Character->GetController()))
+            Player->SetInputMode(FInputModeGameOnly());
+        return;
     }
     if (Command==TEXT("screen_combat_mode"))
     {
