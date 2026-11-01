@@ -13,8 +13,8 @@ class AController;
  * Real turn-mode action staging on the actual source character.
  *
  * An action has NO HP, charge, cost or turn effect until its original clip
- * reaches its authored contact or completes natural playback when no contact
- * marker exists. This is a real animation lifecycle, NEVER a guessed timer,
+ * reaches authored contact or completes naturally ONLY where the original
+ * source explicitly declares natural-completion contact, never a guessed timer,
  * fabricated hit trace, visual-only HP meter or generic damage packet.
  *
  * World (real-time) combat continues to use UOGWorldAbilityExecutionComponent.
@@ -64,5 +64,6 @@ private:
     FOGEntityId BattleId;
     FName SourceSemantic = NAME_None;
     bool bStaged = false;
+    bool bNaturalCompletionAuthorized = false;
     bool bResolving = false;
 };

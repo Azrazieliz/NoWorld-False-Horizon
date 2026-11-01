@@ -113,10 +113,9 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
         ? Appearance->GetMotionController() : nullptr;
     if (!Motion)
         Motion = GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
-    if (!Motion || !Motion->CanPlayAction(
-            ApprovedMotionSemantic, TEXT("Combat"), false, 1, NAME_None))
+    if (!Motion || !Motion->CanResolveTurnContactAction(ApprovedMotionSemantic))
     {
-        OutError = TEXT("The actual skeletal character has no playable approved source combat clip.");
+        OutError = TEXT("Original combat rig playback or authentic contact/completion evidence is missing.");
         return false;
     }
 
@@ -158,6 +157,7 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
         DropStagedAction(false);
         return false;
     }
+    bNaturalCompletionAuthorized=Motion->IsCurrentNaturalCompletionContact();
     return true;
 }
 
@@ -256,8 +256,8 @@ void UOGTurnContactActionComponent::HandleSourceMotionFinished(
     UOGSharedMotionControllerComponent* Source,
     FName GameplayAction, FName MotionId)
 {
-    if (!bResolving && bStaged && Source == BoundMotion.Get() &&
-        GameplayAction == SourceSemantic)
+    if (!bResolving && bStaged && bNaturalCompletionAuthorized &&
+        Source == BoundMotion.Get() && GameplayAction == SourceSemantic)
     {
         // This is the real end of a source-verified, nonlooping native
         // sequence. Original legacy clips often lack contact-notify data:
@@ -273,6 +273,7 @@ void UOGTurnContactActionComponent::DropStagedAction(bool bStopSourcePlayback)
     const FOGEntityId OldScope = BattleId;
     const FOGEntityId OldReceipt = StagedAction.ActionId;
     bStaged = false;
+    bNaturalCompletionAuthorized = false;
     BoundCore.Reset();
     BoundMotion.Reset();
     OriginalPawnController.Reset();

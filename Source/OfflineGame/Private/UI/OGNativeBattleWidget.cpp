@@ -352,8 +352,7 @@ void UOGNativeBattleWidget::Refresh()
                 ? Appearance->GetMotionController() : nullptr;
             if (!Motion)
                 Motion=Body->FindComponentByClass<UOGSharedMotionControllerComponent>();
-            if (!Motion || !Motion->CanPlayAction(
-                    Command.MotionSemantic(), TEXT("Combat"), false, 1, NAME_None))
+            if (!Motion || !Motion->CanResolveTurnContactAction(Command.MotionSemantic()))
             {
                 Enabled=false;
                 Reason=TEXT("The original combat motion is not bound to this character rig.");

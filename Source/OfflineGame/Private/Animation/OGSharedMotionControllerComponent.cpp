@@ -155,6 +155,41 @@ bool UOGSharedMotionControllerComponent::CanPlayAction(
         ParticipantCount, ParticipantRole, NAME_None);
 }
 
+bool UOGSharedMotionControllerComponent::CanResolveTurnContactAction(FName Action) const
+{
+    // Reuse the exact shared source/skeleton resolver; never generate damage.
+    if (!CanPlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
+    FOGSharedMotionEntry Shared;
+    TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Reference;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping;
+    FString Error;
+    if (FindReference(Action,TEXT("Combat"),1,NAME_None,Shared,Reference,Mapping,Error))
+        return Reference && !Shared.bLoop &&
+            ((Shared.ContactSeconds>=0.f && Shared.ContactSeconds<=Reference->Duration) ||
+             Shared.bNaturalCompletionContact);
+
+    const UOGSharedMotionLibrary* Library=SharedLibrary.IsNull()
+        ? nullptr : SharedLibrary.LoadSynchronous();
+    if (!Library) Library=FOGSharedMotionResolver::GetInstalledLibrary();
+    UAnimSequence* Sequence=nullptr;
+    const FOGSharedMotionEntry* Entry=nullptr;
+    if (RegisteredParts.IsEmpty() || !ResolveForPart(
+        Library,RegisteredParts[0],Action,TEXT("Combat"),false,1,
+        NAME_None,Sequence,Entry) || !Entry || !Sequence || Entry->bLoop)
+        return false;
+    if (Entry->ContactSeconds>=0.f)
+        return Entry->ContactSeconds<=Sequence->GetPlayLength();
+    if (!Entry->ContactNotify.IsNone())
+    {
+        for (const FAnimNotifyEvent& Notify:Sequence->Notifies)
+            if (Notify.NotifyName==Entry->ContactNotify &&
+                Notify.GetTriggerTime()<=Sequence->GetPlayLength())
+                return true;
+        return false;
+    }
+    return Entry->bNaturalCompletionContact;
+}
+
 bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
     int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy) const
@@ -615,6 +650,8 @@ bool UOGSharedMotionControllerComponent::PlayResolvedAction(
             }
         }
     }
+    bNaturalCompletionContact = PrimaryEntry->bNaturalCompletionContact &&
+        !bLooping && !bHasContact && PrimaryEntry->ContactNotify.IsNone();
     SequenceSeconds = FMath::Max(Sequences[0]->GetPlayLength(), 0.001f);
     PlaybackRate = FMath::Clamp(PrimaryEntry->PlayRate, 0.01f, 8.f);
     ElapsedSeconds = 0.f;
@@ -694,6 +731,7 @@ void UOGSharedMotionControllerComponent::StopAction()
     bSceneTimeLocked = false;
     bLooping = false;
     bHasContact = false;
+    bNaturalCompletionContact = false;
     SourceContactSeconds = -1.f;
     ElapsedSeconds = 0.f;
     SequenceSeconds = 0.f;
@@ -916,6 +954,7 @@ bool UOGSharedMotionControllerComponent::StartReference(const FOGSharedMotionEnt
     CurrentAction=Entry.GameplayAction; CurrentMotionId=Entry.MotionId; CurrentSourceClipId=ReferenceClip->Id;
     AuthoredMorphTracks=Entry.MorphTracks;
     bHasContact=Entry.ContactSeconds>=0; SourceContactSeconds=Entry.ContactSeconds;
+    bNaturalCompletionContact=Entry.bNaturalCompletionContact && !Entry.bLoop && !bHasContact;
     ElapsedSeconds=0; LastContactCycle=-1; bSceneTimeLocked=false;
     UpdateReferencePose(); SetComponentTickEnabled(true);
     return true;

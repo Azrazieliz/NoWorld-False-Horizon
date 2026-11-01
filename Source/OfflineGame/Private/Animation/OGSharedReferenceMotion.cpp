@@ -80,6 +80,7 @@ struct FReferenceRegistry
             E.AuthoredSceneId = Name(TEXT("scene_id")); E.SceneRole = Name(TEXT("scene_role"));
             O->TryGetBoolField(TEXT("approved_legacy"), E.bApprovedForGameplay);
             O->TryGetBoolField(TEXT("loop"), E.bLoop);
+            O->TryGetBoolField(TEXT("natural_completion_contact"), E.bNaturalCompletionContact);
             O->TryGetBoolField(TEXT("root_motion"), E.bUsesRootMotion);
             O->TryGetBoolField(TEXT("mature_content"), E.bContainsMatureContent);
             E.ContactNotify=Name(TEXT("contact_notify"));

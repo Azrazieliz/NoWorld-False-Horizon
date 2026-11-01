@@ -103,6 +103,11 @@ struct OFFLINEGAME_API FOGSharedMotionEntry
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Native")
     FName ContactNotify = NAME_None;
 
+    /** Explicit original source evidence that a nonlooping action's natural
+     * sequence finish is the authoritative contact, never inferred. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Native")
+    bool bNaturalCompletionContact = false;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Motion|Native", meta=(ClampMin="0.01", ClampMax="8.0"))
     float PlayRate = 1.f;
 

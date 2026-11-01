@@ -148,6 +148,12 @@ public:
         bool bAdultContextAuthorized = false, int32 ParticipantCount = 1,
         FName ParticipantRole = NAME_None) const;
 
+    /** Pure real-turn preflight: actual source contact or expressly declared
+     * natural completion, with compatible authentic rig playback. */
+    bool CanResolveTurnContactAction(FName GameplayAction) const;
+    bool IsCurrentNaturalCompletionContact() const
+    { return bPlaying && bNaturalCompletionContact; }
+
     /** Pure source query under the no-root policy used by staged interactions. */
     bool PreviewStagedSource(FName Action,FName Context,bool Authorized,int32 Count,
         FName Role,FName& OutSource,FName& OutScene) const;
@@ -246,6 +252,7 @@ private:
     bool bPlaying = false;
     bool bLooping = false;
     bool bHasContact = false;
+    bool bNaturalCompletionContact = false;
     float SourceContactSeconds = -1.f;
     float ElapsedSeconds = 0.f;
     float SequenceSeconds = 0.f;

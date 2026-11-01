@@ -424,8 +424,8 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
             bool bExecutable=bOwnTurn && Command.SkillId.IsValid() &&
                 Battle->HasNativeActionExecutor(*Owned,Command.SkillId,ReadyError);
             if (bExecutable && bTurnMode)
-                bExecutable=SourceMotion && SourceMotion->CanPlayAction(
-                    Command.MotionSemantic(),TEXT("Combat"),false,1,NAME_None);
+                bExecutable=SourceMotion && SourceMotion->CanResolveTurnContactAction(
+                    Command.MotionSemantic());
             DrawGameButton(Command.Label,
                 FName(*FString::Printf(TEXT("OG.Battle.Command.%s"),*Command.Id.ToString())),
                 Edge+(Index%Columns)*(ButtonW+Gap),

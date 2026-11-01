@@ -90,14 +90,20 @@ def validate_motion(m: dict) -> dict:
         raise ValueError("Explicit owner phone-test rejection requires corrective source, not automatic re-entry")
     native_package(m["native_sequence"])
     if m.get("contact_seconds") is not None and (
+        isinstance(m["contact_seconds"], bool) or
         not isinstance(m["contact_seconds"], (float, int)) or
         not (-1 <= m["contact_seconds"] <= 10000)):
         raise ValueError("contact_seconds must be an authentic nonnegative time, or -1")
-    if str(m["action"]).startswith("Combat.") and (
-        "contact_seconds" not in m and not m.get("contact_notify")):
-        # Natural sequence completion is acceptable only when deliberately declared.
-        if m.get("natural_completion_contact") is not True:
-            raise ValueError("Combat requires authored contact or explicit natural completion")
+    if "natural_completion_contact" in m and not isinstance(m["natural_completion_contact"], bool):
+        raise ValueError("natural_completion_contact requires a source boolean")
+    authored_seconds = isinstance(m.get("contact_seconds"), (float, int)) and m["contact_seconds"] >= 0
+    authored_notify = bool(m.get("contact_notify"))
+    natural_completion = m.get("natural_completion_contact") is True
+    if natural_completion and (authored_seconds or authored_notify or m.get("loop", False)):
+        raise ValueError("Natural completion cannot replace an authored marker or looping clip")
+    if str(m["action"]).startswith("Combat.") and not (
+        authored_seconds or authored_notify or natural_completion):
+        raise ValueError("Combat requires authored contact or explicit natural completion")
     if isinstance(m.get("participants", 1), bool) or not isinstance(m.get("participants", 1), int) or m.get("participants", 1) < 1:
         raise ValueError("participants must be a positive integer")
     if m.get("capabilities") is not None and (
@@ -113,7 +119,6 @@ def validate_motion(m: dict) -> dict:
     if any(k in m for k in forbidden):
         raise ValueError("Bind the canonical character on the native controller, not in this motion bank")
     result = dict(m)
-    result.pop("natural_completion_contact", None)
     result.pop("approved_for_gameplay", None)
     result.pop("approval_evidence", None)
     result.pop("owner_phone_review", None)

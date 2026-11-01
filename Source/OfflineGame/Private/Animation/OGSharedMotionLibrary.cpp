@@ -166,6 +166,7 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
         Entry.bContainsMatureContent = Entry.bAdultRestricted;
         Item->TryGetBoolField(TEXT("mature_content"), Entry.bContainsMatureContent);
         Item->TryGetBoolField(TEXT("loop"), Entry.bLoop);
+        Item->TryGetBoolField(TEXT("natural_completion_contact"), Entry.bNaturalCompletionContact);
         Item->TryGetBoolField(TEXT("root_motion"), Entry.bUsesRootMotion);
         double Number = 0.;
         if (Item->TryGetNumberField(TEXT("participants"), Number))
