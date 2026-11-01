@@ -107,8 +107,8 @@ public sealed class Gate12GrandExactUnityMeshStream : BaseUnityPlugin
                 {
                     Texture original=material.HasProperty(property)?material.GetTexture(property):null;
                     if(original==null)continue;
-                    if(!(original is Texture2D))
-                        throw new IOException("Unsupported original texture type: "+material.name+" "+property);
+                    // Any Unity Texture subtype can be captured through Graphics.Blit below.
+                    // RenderTexture/Texture2D material masks must not abort original geometry.
                     int width=original.width,height=original.height;
                     if(width<1 || height<1 || width>8192 || height>8192)
                         throw new IOException("Original texture out of safe full-resolution range: "+original.name);
