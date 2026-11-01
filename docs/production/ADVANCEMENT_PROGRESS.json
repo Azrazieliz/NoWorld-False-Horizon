@@ -958,6 +958,11 @@
             "commit": "bc6b09b5",
             "change": "Real battle HUD turn-command enabled state now requires the same authentic source motion the turn contact stage requires.",
             "type": "SOURCE_PARTIAL"
+          },
+          {
+            "commit": "5780dcb6",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native battle HUD no longer offers an unrestricted World/turn toggle; original v0.36 AH.8 reserves hybrid phase changes for authoritative boss encounter mechanics."
           }
         ],
         "completed_in_this_update": false
@@ -1065,6 +1070,11 @@
             "commit": "01eb18fd",
             "type": "SOURCE_PARTIAL",
             "change": "Dismissed native battle results now restore GameOnly touch/camera input for real World traversal."
+          },
+          {
+            "commit": "5780dcb6",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native battle HUD no longer offers an unrestricted World/turn toggle; original v0.36 AH.8 reserves hybrid phase changes for authoritative boss encounter mechanics."
           }
         ],
         "completed_in_this_update": false
@@ -1374,6 +1384,19 @@
         "docs/production/CONTENT_BINDING_5STAR.md"
       ],
       "change": "Python native source ingestion, real Maker API exporter, Blender source conversion, Unreal skeletal / artwork / native animation imports, C++ exact appearance DataAsset and global shared bank, persistent idempotent stage receipts and private-source-excluding Git LFS publisher. All source only, no native compile or actual APK."
+    },
+    {
+      "grade": 5,
+      "kind": "NATIVE_FACTORY_PATH_CORRECTIONS",
+      "commits": [
+        "358decb4",
+        "d223cad9"
+      ],
+      "files": [
+        "Scripts/production/bind_native_motion.py",
+        "Scripts/production/install_noworld_factory_koikatsu.ps1"
+      ],
+      "change": "Original approval receipt may be sourced from GitHub checkout while imported Unreal source resides on dedicated PC; native plugin build explicitly resolves framework System.Core. Source only, no compile."
     }
   ],
   "latest_gameplay_source_changes": [
@@ -1444,6 +1467,11 @@
       "commit": "e7ed4abb",
       "area": "original approved FBX clip imports as native Unreal AnimSequence on exact source Skeleton before binding to same shared action bank",
       "status": "SOURCE_NOT_GAMEPLAY_ACCEPTED"
+    },
+    {
+      "commit": "5780dcb6",
+      "area": "native combat HUD ↔ AH.8 approved encounter-driven hybrid phase mechanics",
+      "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
     }
   ],
   "continuation_entrypoint": "AGENTS.md",
