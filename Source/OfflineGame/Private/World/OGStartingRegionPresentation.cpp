@@ -11752,12 +11752,26 @@ void AOGWorldPrototypeCharacter::InitializeFoundationIntegration()
         {
             if (DiagnosticMenu) DiagnosticMenu->Initialize();
             if (InteractionHost) InteractionHost->Initialize();
+            bMissingNativeWorldSourceReported = false;
             bNativeFirstWorldRuntimeInitialized = true;
             UE_LOG(LogOfflineGame,Display,
                    TEXT("Gate02 R1 first World: genuine gameplay services initialized without diagnostic fixture"));
             return;
         }
 
+    // An absent native R1 actor is a missing production World source, not
+    // permission to replace the real offline game with a diagnostic course.
+    // The course remains available only by explicit native developer opt-in.
+    if (!AreFoundationDebugFixturesEnabled())
+    {
+        if (!bMissingNativeWorldSourceReported)
+        {
+            UE_LOG(LogOfflineGame, Error,
+                TEXT("Gate02 R1 source actor is missing; no diagnostic World will be substituted in production."));
+            bMissingNativeWorldSourceReported = true;
+        }
+        return; // Recheck after World Partition streams the genuine source.
+    }
     if (!IntegrationWorld) IntegrationWorld = GetWorld()->SpawnActor<AOGFoundationIntegrationWorld>(FVector::ZeroVector, FRotator::ZeroRotator);
     if (!IntegrationWorld) return;
     for (TActorIterator<AOGStartingRegionGenerator> It(GetWorld()); It; ++It)
