@@ -3,7 +3,7 @@
   "master": "docs/production/ADVANCEMENT_MASTER.md",
   "source_catalog": "Content/NoWorld/Animation/SharedMotionCatalog.json",
   "source_branch": "work/gate12-whole-character-shared-motion-20261031",
-  "last_synchronized": "2026-10-31",
+  "last_synchronized": "2026-11-01",
   "status_convention": {
     "MASTER_CHECKED_SCOPED": "Historical scoped checkbox in the existing master; not a new Android/device acceptance claim.",
     "OPEN": "Unfinished; no new verification claimed.",
@@ -13,7 +13,7 @@
     "master_task_count": 111,
     "master_checked": 6,
     "master_open": 105,
-    "source_partial": 11,
+    "source_partial": 12,
     "build_verified": false,
     "device_verified": false,
     "user_accepted": false
@@ -154,9 +154,10 @@
       "source_paths": [
         "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
         "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
-        "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp"
+        "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp",
+        "Source/OfflineGame/Private/Characters/OGCharacterAppearanceComponent.cpp"
       ],
-      "proof": "One whole-character shared controller now groups every authentic skeletal part by exact rest pose, plays one source-action clip per compatible rig, phase-locks independent drivers and prevents per-Version library forks. GitHub source only; UE5.8 compile, all-source playback and device acceptance not yet verified.",
+      "proof": "One whole-character shared controller now groups every authentic skeletal part by exact rest pose, plays one source-action clip per compatible rig, phase-locks independent drivers and prevents per-Version library forks. GitHub source only; UE5.8 compile, all-source playback and device acceptance not yet verified. 2026-11-01: One-call BindNativeRigAndParts API now actively used by original Luminous and generic content characters; their independent real rest-pose cohorts share the existing semantic catalog. Commits b59b8757, f2a2b38a, b07fe58b, 1e55a83a, 45f13fb2. Still source-only.",
       "remaining": [
         "Native UE5.8 compilation and Android replay of complete multi-rig body",
         "Genuine Awakened and Grand converted Unreal skeletal models and authored compatible derivatives",
@@ -318,7 +319,16 @@
       "master_checked": false,
       "master_descriptor": "INTEGRATION",
       "master_requirement": "Display legal current turn/actor, actions, skill set, Ultimate branches, targets, target previews, energy/resources and effects through actual Gate10 controls; keyboard/touch input and turn advancement must reach the canonical battle.",
-      "state": "OPEN"
+      "state": "SOURCE_PARTIAL",
+      "source_commit": "bc6b09b5a935aad34a0abb6f76b7f74dd678c2d0",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGNativeBattleWidget.cpp"
+      ],
+      "proof": "Native battle UI turn commands now use the exact same authentic shared motion preflight as staged contact-bound combat, refusing unavailable clips before the user presses an unusable action. GitHub source only, not playable/accepted combat.",
+      "remaining": [
+        "Approved original motion source for each combat action",
+        "Fully integrated, visible native combat results, UI and all authentic v4 effects on Android"
+      ]
     },
     {
       "id": "G12-0404",
@@ -913,6 +923,376 @@
       "master_descriptor": "",
       "master_requirement": "Mark the game finished **only after every commissioned feature, approved source and quality/visual/device gate is actually closed**. No category may be marked DONE from a folder, imported registration, test scaffold or successful code compilation.",
       "state": "OPEN"
+    }
+  ],
+  "authority_grade": 6,
+  "canonical_7_star": "docs/production/NOWORLD_7STAR_AUTHORITY.md",
+  "critical_binding_5_star": "docs/production/CONTENT_BINDING_5STAR.md",
+  "integrated_system_advancement": {
+    "authority": "7-star game scope and original 36 live milestone issues; nothing below is user-accepted or release-finished.",
+    "counting_rule": "Only an integrated, observable gameplay-system achievement advances a full-game system. Binding scripts, receipts, tests, compiles and documentation alone are enabling work and never complete a milestone.",
+    "milestones": [
+      {
+        "id": "M01",
+        "title": "Offline mobile startup and free World entry",
+        "issue": 27,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M02",
+        "title": "Playable character movement, camera and touch traversal",
+        "issue": 28,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M03",
+        "title": "Rendered real World battle and autonomous opponent turns",
+        "issue": 30,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [
+          {
+            "commit": "bc6b09b5",
+            "change": "Real battle HUD turn-command enabled state now requires the same authentic source motion the turn contact stage requires.",
+            "type": "SOURCE_PARTIAL"
+          }
+        ],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M04",
+        "title": "Five-form original Luminous rigs, wardrobes and transformations",
+        "issue": 31,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [
+          {
+            "commit": "45f13fb2",
+            "change": "Whole-character native rig-part API wired into original Luminous installation; original Grand 57 renderer parts are recorded as imported source, not finished gameplay.",
+            "type": "SOURCE_PARTIAL"
+          }
+        ],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M05",
+        "title": "Shared authentic animation and expression runtime",
+        "issue": 32,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [
+          {
+            "commit": "45f13fb2",
+            "change": "Content actor and Luminous native skeletal parts now use one reusable semantic rig binding path, with genuine rest-pose cohort selection.",
+            "type": "SOURCE_PARTIAL"
+          }
+        ],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M06",
+        "title": "Exact approved five-form v4 combat kits",
+        "issue": 33,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M07",
+        "title": "Weapons, projectiles, physical hits and combat VFX",
+        "issue": 34,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M08",
+        "title": "Character identity, Versions and individual Manifestations",
+        "issue": 35,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M09",
+        "title": "Premium native in-World interface and combat HUD",
+        "issue": 36,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [
+          {
+            "commit": "bc6b09b5",
+            "change": "Turn-UI buttons reflect actual skeletal animation availability; inaccessible actions no longer masquerade as playable.",
+            "type": "SOURCE_PARTIAL"
+          }
+        ],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M10",
+        "title": "Persistent offline profile and local save/load",
+        "issue": 37,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M11",
+        "title": "First World terrain, deterministic streaming and navigation",
+        "issue": 38,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M12",
+        "title": "World landmarks, geography, settlements and interiors",
+        "issue": 39,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M13",
+        "title": "Ecology, resources, water and environmental simulation",
+        "issue": 40,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M14",
+        "title": "Enemy AI, high-rank combat and encounter balancing",
+        "issue": 41,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M15",
+        "title": "GP, domains and high-rank progression rules",
+        "issue": 42,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M16",
+        "title": "Rarity banners, weighted gacha, pity and atomic pulling",
+        "issue": 43,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M17",
+        "title": "Inventory, anatomical storage and equipped gear",
+        "issue": 44,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M18",
+        "title": "Loot, rewards, consumables and earned currency",
+        "issue": 45,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M19",
+        "title": "Crafting, invention, enhancement, durability and repairs",
+        "issue": 46,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M20",
+        "title": "Settlement trade, markets and regional economics",
+        "issue": 47,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M21",
+        "title": "Character growth, affinity, proficiency and statistics",
+        "issue": 48,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M22",
+        "title": "Premium roster, character details and wardrobe UI",
+        "issue": 49,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M23",
+        "title": "Premium home, gacha, records and territory UI",
+        "issue": 50,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M24",
+        "title": "Native NPC life, relationships and faction systems",
+        "issue": 51,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M25",
+        "title": "Branching quests, story events and consequences",
+        "issue": 52,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M26",
+        "title": "Chronicle, Codex, knowledge and narrative memory",
+        "issue": 53,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M27",
+        "title": "Bosses, optional encounters and dungeon progression",
+        "issue": 54,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M28",
+        "title": "Territories, Ruler powers and changing civilization",
+        "issue": 55,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M29",
+        "title": "Synchronized source-authentic multi-participant interactions",
+        "issue": 56,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M30",
+        "title": "Adaptive music, original audio and game-event SFX",
+        "issue": 57,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M31",
+        "title": "Character and environmental visual polish",
+        "issue": 58,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M32",
+        "title": "Persistent events, migration and recovery integrity",
+        "issue": 59,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M33",
+        "title": "Mobile settings, touch ergonomics and accessibility",
+        "issue": 60,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M34",
+        "title": "Android packaging, performance and device-ready delivery",
+        "issue": 61,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M35",
+        "title": "Windows standalone parity and reproducible native packaging",
+        "issue": 62,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      },
+      {
+        "id": "M36",
+        "title": "Complete integrated full-game phone acceptance",
+        "issue": 63,
+        "acceptance_state": "NOT_USER_ACCEPTED",
+        "source_only_delta": [],
+        "completed_in_this_update": false
+      }
+    ]
+  },
+  "critical_enablers_not_game_progress": [
+    {
+      "grade": 5,
+      "kind": "CONTENT_PIPELINE",
+      "commits": [
+        "fd175299",
+        "57e21559",
+        "e6a7038b"
+      ],
+      "files": [
+        "Scripts/production/bind_native_motion.py",
+        "Content/NoWorld/Animation/SharedMotionCatalog.json",
+        "docs/production/CONTENT_BINDING_5STAR.md"
+      ],
+      "change": "Actual global packaged shared catalog repaired from blank contents and transactional exact source motion binder added. No unapproved gameplay clip promoted. Not counted as completed game content."
+    },
+    {
+      "grade": 7,
+      "kind": "AUTHORITATIVE_INDEX",
+      "commits": [
+        "c473034b"
+      ],
+      "files": [
+        "docs/production/NOWORLD_7STAR_AUTHORITY.md"
+      ],
+      "change": "Single 7-star canonical authority entry maps all 36 whole-game systems and establishes 7/6/5 persistence across conversations. Documentation is not gameplay advancement."
+    }
+  ],
+  "latest_gameplay_source_changes": [
+    {
+      "commit": "bc6b09b5",
+      "area": "native turn combat UI ↔ exact approved motion ↔ source-contact executor",
+      "paths": [
+        "Source/OfflineGame/Private/UI/OGNativeBattleWidget.cpp"
+      ],
+      "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "commit": "45f13fb2",
+      "area": "whole character real skeletal parts ↔ shared semantic animation across generic and Luminous runtime actors",
+      "paths": [
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
+        "Source/OfflineGame/Private/Koikatsu/OGLuminousV3PlayableCharacter.cpp",
+        "Source/OfflineGame/Private/Characters/OGCharacterAppearanceComponent.cpp"
+      ],
+      "status": "SOURCE_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
     }
   ]
 }
