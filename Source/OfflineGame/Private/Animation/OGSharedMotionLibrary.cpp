@@ -1,4 +1,5 @@
 #include "Animation/OGSharedMotionLibrary.h"
+#include "UObject/Package.h"
 
 #include "Animation/AnimSequence.h"
 #include "Content/OGDefinitionLibrary.h"
@@ -238,7 +239,7 @@ const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetBuiltInLibrary()
     static UOGSharedMotionLibrary* Installed = nullptr;
     if (!Installed)
     {
-        Installed = NewObject<UOGSharedMotionLibrary>(GetTransientPackage());
+        Installed = NewObject<UOGSharedMotionLibrary>(GetTransientPackageAsObject());
         Installed->AddToRoot();
         Install(Installed);
         ReadPackagedCatalog(Installed);
@@ -308,7 +309,7 @@ const UOGSharedMotionLibrary* FOGSharedMotionResolver::GetInstalledLibrary()
     static TWeakObjectPtr<UOGDefinitionLibrary> LibraryOwner;
     static int64 Revision=-1;
     if (!Installed)
-    { Installed=NewObject<UOGSharedMotionLibrary>(GetTransientPackage()); Installed->AddToRoot(); }
+    { Installed=NewObject<UOGSharedMotionLibrary>(GetTransientPackageAsObject()); Installed->AddToRoot(); }
     if (LibraryOwner.Get()!=Definitions || Revision!=Definitions->GetRevision())
     {
         TArray<UOGSharedMotionLibrary*> Extensions;

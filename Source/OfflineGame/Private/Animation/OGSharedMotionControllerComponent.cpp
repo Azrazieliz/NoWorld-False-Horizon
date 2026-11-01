@@ -852,7 +852,7 @@ bool UOGSharedMotionControllerComponent::PlaySharedSourceMotion(FName Id,bool Lo
             if (!PlayResolvedAction(Entry.GameplayAction,Context,false,
                 Entry.RequiredParticipants,Entry.SceneRole,Id)) continue;
             bLooping=Loop;
-            for (auto* Part:PlayingParts)
+            for (const auto& Part:PlayingParts)
                 if (Part) if (auto* Node=Part->GetSingleNodeInstance()) Node->SetLooping(Loop);
             return true;
         }
@@ -871,7 +871,7 @@ bool UOGSharedMotionControllerComponent::StartReference(const FOGSharedMotionEnt
         FReferencePartRestore Saved; Saved.Part=Part; Saved.Mesh=Part->GetSkeletalMeshAsset();
         Saved.Mode=static_cast<uint8>(Part->GetAnimationMode());
         Saved.PreviousClass=TStrongObjectPtr<UClass>(Part->GetAnimClass());
-        Saved.Leader=Part->GetLeaderPoseComponent();
+        Saved.Leader=Part->LeaderPoseComponent.Get();
         if (auto* Node=Part->GetSingleNodeInstance())
         {
             Saved.PreviousAsset=TStrongObjectPtr<UAnimationAsset>(Node->GetCurrentAsset());

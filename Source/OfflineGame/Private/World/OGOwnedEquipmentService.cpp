@@ -376,7 +376,7 @@ bool FOGOwnedEquipmentService::Apply(const FOGOwnedEquipmentPreview& Reviewed,
     Event.PrimaryEntity = Fresh.Target.ManifestationId;
     Event.RelatedEntities = {Fresh.RulerId, Fresh.Item.ItemId};
     Event.bChronicleEligible = true;
-    FJsonSerializer::Serialize(Receipt.ToSharedRef(), TJsonWriterFactory<>::Create(&Event.PayloadJson));
+    FJsonSerializer::Serialize(Receipt, TJsonWriterFactory<>::Create(&Event.PayloadJson));
     if (!Store.AppendWorldEvent(Event, Error) || !Store.CommitTransaction(Error)) return Fail();
     return true;
 }

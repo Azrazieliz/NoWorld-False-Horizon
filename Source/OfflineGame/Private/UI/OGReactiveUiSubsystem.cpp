@@ -37,7 +37,7 @@ bool MatchJson(const FString& Text,const TMap<FName,FString>& Required)
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),Json) || !Json) return false;
     for (const auto& Pair:Required)
     {
-        const auto* Field=Json->Values.Find(Pair.Key.ToString()); if (!Field || !Field->IsValid()) return false;
+        const auto* Field=Json->TryGetField(Pair.Key.ToString()); if (!Field || !Field->IsValid()) return false;
         FString Value;
         switch ((*Field)->Type)
         {
@@ -400,12 +400,12 @@ void UOGReactiveUiSubsystem::Tick(float Delta)
     FOGReactiveUiContext Keys; Keys.bWorldMode=Modes&&Modes->GetMode()==EOGPresentationMode::World;
     if (Session&&Session->IsBoundToStoredRuler())
     { Keys.RulerId=Session->BoundRulerId; Keys.SubjectId=Session->SelectedManifestationId.IsValid()?Session->SelectedManifestationId:Keys.RulerId; }
-    auto* Player=GetWorld()->GetFirstPlayerController(); auto* Pawn=Player?Player->GetPawn():nullptr;
+    auto* Player=GetWorld()->GetFirstPlayerController(); APawn* Pawn=Player?Player->GetPawn().Get():nullptr;
     Keys.WorldBodyId=Keys.RulerId;
     if (Pawn)
     {
-        if (auto* Binding=Pawn->FindComponentByClass<UOGSystemBindingComponent>();Binding&&Binding->CanonicalEntityId.IsValid()) Keys.WorldBodyId=Binding->CanonicalEntityId;
-        else if (auto* P=Pawn->FindComponentByClass<UOGCanonicalCharacterPresentation>();P&&P->HasProjection()) Keys.WorldBodyId=P->GetProjection().Context.EntityId;
+        if (auto Binding=Pawn->FindComponentByClass<UOGSystemBindingComponent>();Binding&&Binding->CanonicalEntityId.IsValid()) Keys.WorldBodyId=Binding->CanonicalEntityId;
+        else if (auto P=Pawn->FindComponentByClass<UOGCanonicalCharacterPresentation>();P&&P->HasProjection()) Keys.WorldBodyId=P->GetProjection().Context.EntityId;
     }
     const auto* Battle=Ready?Ready->GetOwnedLuminousTurnBattle():nullptr;
     Keys.bCombat=Keys.RulerId.IsValid()&&Battle&&Ready->GetOwnedBattleRulerId()==Keys.RulerId&&Battle->GetState().Status==EOGTurnBattleStatus::Running;

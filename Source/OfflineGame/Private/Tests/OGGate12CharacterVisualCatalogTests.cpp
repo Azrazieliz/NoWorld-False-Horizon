@@ -13,7 +13,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FOGGate12CharacterVisualExactVersionTest::RunTest(const FString&)
 {
     UOGGate12CharacterVisualCatalog* Catalog =
-        NewObject<UOGGate12CharacterVisualCatalog>(GetTransientPackage());
+        NewObject<UOGGate12CharacterVisualCatalog>(GetTransientPackageAsObject());
     if (!TestNotNull(TEXT("Transient catalog created without content installation"), Catalog))
         return false;
 

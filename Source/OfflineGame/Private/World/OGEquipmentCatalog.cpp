@@ -24,7 +24,7 @@ bool EquipmentFields(const TSharedPtr<FJsonObject>& Object,
     {
         bool bKnown = false;
         for (const TCHAR* Name : Allowed) bKnown |= Field.Key == Name;
-        if (!bKnown) return EquipmentCatalogError(Error, TEXT("unknown field ") + Field.Key);
+        if (!bKnown) return EquipmentCatalogError(Error, FString(TEXT("unknown field "))+FString(Field.Key.ToString()));
     }
     return true;
 }
@@ -191,7 +191,7 @@ bool FOGEquipmentCatalog::Parse(const FString& Json, FOGEquipmentCatalog& Out, F
                         !(*Number)->TryGetNumberField(TEXT("exponent10"), Exponent) ||
                         Significand < 0 || Significand > FOGLargeNumber::MaxSignificand ||
                         Exponent < -100000 || Exponent > 100000 ||
-                        Pair.Key != Pair.Key.ToLower())
+                        FString(Pair.Key.ToString()) != FString(Pair.Key.ToString()).ToLower())
                         return EquipmentCatalogError(Error, TEXT("invalid stat contribution."));
                     R.StatBonuses.Add(FName(*Pair.Key), FOGLargeNumber(Significand, Exponent));
                 }

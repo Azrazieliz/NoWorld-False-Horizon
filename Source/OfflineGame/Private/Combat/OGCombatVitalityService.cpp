@@ -1,7 +1,6 @@
 #include "Combat/OGCombatVitalityService.h"
 #include "Combat/OGTurnBattle.h"
 #include "Dom/JsonObject.h"
-#include "Misc/LexFromString.h"
 #include "Misc/SecureHash.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"

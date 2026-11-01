@@ -107,10 +107,10 @@ struct FReferenceRegistry
             {
                 const auto Morph=MorphValue.IsValid()?MorphValue->AsObject():nullptr;
                 if (!Morph) continue;
-                FString Layer,Name;
+                FString Layer,MorphName;
                 if (!Morph->TryGetStringField(TEXT("layer"),Layer) || Layer.IsEmpty() ||
-                    !Morph->TryGetStringField(TEXT("morph"),Name) || Name.IsEmpty()) continue;
-                FOGSharedMorphTrack Track; Track.Layer=FName(*Layer); Track.Morph=FName(*Name);
+                    !Morph->TryGetStringField(TEXT("morph"),MorphName) || MorphName.IsEmpty()) continue;
+                FOGSharedMorphTrack Track; Track.Layer=FName(*Layer); Track.Morph=FName(*MorphName);
                 const TArray<TSharedPtr<FJsonValue>>* Keys=nullptr;
                 if (!Morph->TryGetArrayField(TEXT("keys"),Keys)) continue;
                 double Previous=-1; bool Valid=true;

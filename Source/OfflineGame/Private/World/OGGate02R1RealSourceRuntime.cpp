@@ -165,7 +165,7 @@ void AOGStartingRegionGenerator::BuildR1SourceTerrain()
         Terrain->CreateMeshSection_LinearColor(CurrentSection,
             V,Indices,N,UV,C,Tan,true);
         if(TerrainMaterial)
-            Terrain->SetMaterial(CurrentSection,TerrainMaterial);
+            Terrain->SetMaterial(CurrentSection,TerrainMaterial.Get());
     }
     UE_LOG(LogTemp,Display,TEXT("GATE02_R1 source terrain: 513 grid, 64 collision sections, 3200m"));
 }

@@ -1043,8 +1043,8 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     if (!Sequence || !Sequence->GetSkeleton()) return nullptr;
     for (const USkeletalMeshComponent* Part : RuntimeParts)
     {
-        const USkeletalMesh* Mesh = Part ? Part->GetSkeletalMeshAsset() : nullptr;
-        if (Mesh && Mesh->GetSkeleton() == Sequence->GetSkeleton())
+        const USkeletalMesh* SourceRigMesh = Part ? Part->GetSkeletalMeshAsset() : nullptr;
+        if (SourceRigMesh && SourceRigMesh->GetSkeleton() == Sequence->GetSkeleton())
             return Sequence;
     }
     return nullptr;

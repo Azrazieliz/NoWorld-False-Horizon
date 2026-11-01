@@ -387,9 +387,9 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const float Gap=7.f*S,ButtonH=48.f*S;
         const float ButtonW=FMath::Max(1.f,
             (W-2.f*Edge-(Columns-1)*Gap)/Columns);
-        const float Top=H-Edge-Rows*(ButtonH+Gap);
+        const float CommandGridTop=H-Edge-Rows*(ButtonH+Gap);
         DrawGameText(TEXT("Select a real participant. Area effects expand by source rules."),
-            Edge+6.f*S,Top-27.f*S,13.f*S,Accent,W-2.f*Edge);
+            Edge+6.f*S,CommandGridTop-27.f*S,13.f*S,Accent,W-2.f*Edge);
         for (int32 Index=0;Index<CommandCount;++Index)
         {
             const FOGNativeBattleCommand& Command=NativeCommands.Commands[Index];
@@ -408,7 +408,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     // animation/gameplay consequences.
     if (!FoundationStatusMessage.IsEmpty())
         DrawGameText(FoundationStatusMessage,Edge+5.f*S,
-            Bottom-35.f*S,18.f*S,Accent,W-2.f*Edge);
+            H-Edge-35.f*S,18.f*S,Accent,W-2.f*Edge);
     return true;
 }
 

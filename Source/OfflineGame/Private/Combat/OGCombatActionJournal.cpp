@@ -294,7 +294,7 @@ bool FOGCombatActionJournal::BuildEncounterStartedEvent(const FOGTurnBattleState
     }
     Payload->SetArrayField(TEXT("opening_units"),MoveTemp(Units));
     if (!AddNativeReactions(Before,After,Reactions,Payload,Related,Error)) return false;
-    if (!FJsonSerializer::Serialize(Payload.ToSharedRef(),TJsonWriterFactory<>::Create(&Out.PayloadJson)))
+    if (!FJsonSerializer::Serialize(Payload,TJsonWriterFactory<>::Create(&Out.PayloadJson)))
     { Error=TEXT("Cannot serialize native encounter opening."); return false; }
     FGuid Receipt;
     FGuid::ParseExact(FMD5::HashAnsiString(*(TEXT("combat.encounter_started|")+Before.BattleId.ToString())),EGuidFormats::Digits,Receipt);
@@ -354,5 +354,5 @@ bool FOGCombatActionJournal::BuildWorldRuntimeEvent(const FOGTurnBattleState& Be
     if (!AddNativeReactions(Before,After,Reactions,Payload,Related,Error)) return false;
     Out.EventId=FOGEntityId::NewId(); Out.EventType=Operation; Out.PrimaryEntity=Ruler; Out.RelatedEntities=MoveTemp(Related);
     Out.WorldTick=Tick; Out.bChronicleEligible=After.Status==EOGTurnBattleStatus::Completed;
-    Out.PayloadJson.Reset(); return FJsonSerializer::Serialize(Payload.ToSharedRef(),TJsonWriterFactory<>::Create(&Out.PayloadJson));
+    Out.PayloadJson.Reset(); return FJsonSerializer::Serialize(Payload,TJsonWriterFactory<>::Create(&Out.PayloadJson));
 }
