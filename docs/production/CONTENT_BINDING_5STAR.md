@@ -2,6 +2,20 @@
 **Importance: 5/7 — critical reusable production interface.**
 **Date: 2026-11-01.** Required read after the [sole 7★ game authority](NOWORLD_7STAR_AUTHORITY.md) and [6★ advancement](ADVANCEMENT_PROGRESS.json). Preserve and reuse; never reimplement a new motion catalog per character or per form.
 
+## Mandatory workflow: reuse automation and record 6★ advancement every time
+
+The 5★ is **both instructions and executable programs**. For every work item: (1) READ the current 6★ ledger BEFORE touching any file to avoid implementing existing work twice, (2) identify and run/reuse an existing 5★ automation where possible, (3) where NO existing 5★ program does the job, record the precise missing capability and implement a **new generalized reusable program** under `Scripts/production/`, `Tools/` or `Scripts/Gate12Koikatsu/`, then add it to this 5★ index, (4) push the actual changed code/content, and (5) UPDATE 6★ with the real commit and 7★ system impact; do not inflate owner-accepted completion for source-only changes.
+
+**Reusable checkpoint CLI:** `Scripts/production/record_noworld_progress.py`.
+
+- Start/resume: `python Scripts/production/record_noworld_progress.py --resume` displays the active 36-system ledger and recent recorded commits before any reimplementation.
+- After reusing a genuine existing program: `python Scripts/production/record_noworld_progress.py --commit <REAL_SHA> --system M03 --result "<actual source gameplay change>" --next "<remaining tangible gameplay>" --reuse-5star Scripts/production/bind_native_motion.py`.
+- When reuse is genuinely impossible, **first write a new reusable program**, then: `python Scripts/production/record_noworld_progress.py --commit <REAL_SHA> --system M05 --result "<actual source gameplay change>" --next "<remaining tangible gameplay>" --new-5star-program Scripts/production/<new_program>.py --why-new "<exact limitation in the existing factory and why the new program is reusable>"`.
+
+The recorder checks the historical 36/111 source counts and real Git commit, refuses duplicate commit progress, requires exact remaining work and the 5★ reuse/new-program explanation, and writes the JSON ledger atomically. It **never marks source-only systems complete or claims owner acceptance**. The committed 6★ ledger must accompany the next PR/source revision. A document-only edit or simple Git reorganization is logged as no-gameplay-enabler without accepting new systems.
+
+**Permanent inventory / code-drift aid:** [`REPO_EXECUTION_MAP.md`](REPO_EXECUTION_MAP.md) records exact source roots, a real PC-only vs GitHub inventory, known implementation drifts and the original 3,222 source-motion recovery. Review it rather than re-running an enormous general audit. The original motion catalog is NOW RESTORED on GitHub; never reinitialize it to an empty array. The 937 combat entries are source-indexed but NOT approved; generate missing authentically authored mappings from the existing content instead of redownloading/rebuilding the same animation bank.
+
 ## PRIMARY: reusable instructions AND executable native content automation (2026-11-01)
 
 **5★ contains both the enduring agent instructions and executable, reusable Python/C#/Unreal production programs.** The original manual-only binder was insufficient alone. The repository now includes reusable Python worker programs, a real Koikatsu Maker/KKBP C# API queue plugin, a Blender KKBP source conversion script, UnrealEditor Python asset import, native C++ appearance-asset authoring, exact runtime source discovery and a Windows self-hosted GitHub Action. The workflows are BUILT IN SOURCE but **not yet native compiled/run or owner accepted**. They cannot claim lossless visual gameplay if required exporter/engine dependencies are absent.
