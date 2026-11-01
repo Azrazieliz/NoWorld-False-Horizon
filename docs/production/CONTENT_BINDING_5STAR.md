@@ -2,6 +2,19 @@
 **Importance: 5/7 — critical reusable production interface.**
 **Date: 2026-11-01.** Required read after the [sole 7★ game authority](NOWORLD_7STAR_AUTHORITY.md) and [6★ advancement](ADVANCEMENT_PROGRESS.json). Preserve and reuse; never reimplement a new motion catalog per character or per form.
 
+## Current 5★ rule: source validity ≠ owner approval (2026-11-01)
+
+The canonical 3,222-entry animation bank has been normalized in GitHub by the reusable `Scripts/production/normalize_motion_owner_status.py` program. **Do not repopulate legacy `approved_for_gameplay` metadata** or require pre-phone-review artistic approval before source import, semantic binding, native resolution or character playback. This changes an invalid approval gate only; native files, source provenance, exact Skeleton, authored contact, action legality, adult safeguards and gameplay persistence still have to function. Do not fake missing animation/contact or user acceptance.
+
+**5★ executable tools:**
+- `Scripts/production/normalize_motion_owner_status.py` — removes 3,222 legacy QA approval booleans from current GitHub source without changing any native motion identity, original path, source or contact metadata; uses a temporary Git index and never resets the PC project. Completed source migration: `c18b43a6`.
+- `Scripts/production/bind_native_motion.py` — now admits valid original source bindings without a mandatory manual approval receipt; it still validates canonical IDs, original SHA256, native Unreal UAsset, rig/role and authentic impact timing.
+- `Scripts/production/submit_noworld_content.py`, `noworld_unreal_content_import.py` — optional provenance record is supported, but not an artificial barrier to importing an existing original asset. No automatic owner acceptance/rejection is manufactured.
+
+**Phone review statuses (6★):** `SOURCE_PRESENT`, `INTEGRATED_UNTESTED`, `TECHNICALLY_BLOCKED`, `AWAITING_OWNER_PHONE_TEST`; only an explicit owner decision after a real phone game test may record `OWNER_REJECTED_AFTER_PHONE_TEST` or `OWNER_ACCEPTED_AFTER_PHONE_TEST`. Do not label any of the 937 combat source entries rejected for lacking impact metadata; the latter is unfinished authoring, not a veto.
+
+**Working environment:** the PC is an ephemeral Unreal/Koikatsu/Blender/import/packaging worker. GitHub commits and original native assets, not the current PC checkout, are durable work product. Save any genuine newly generated source back to GitHub (LFS for native binaries) and index it in 6★; do not repeat the 3,222 source imports.
+
 ## Mandatory workflow: reuse automation and record 6★ advancement every time
 
 The 5★ is **both instructions and executable programs**. For every work item: (1) READ the current 6★ ledger BEFORE touching any file to avoid implementing existing work twice, (2) identify and run/reuse an existing 5★ automation where possible, (3) where NO existing 5★ program does the job, record the precise missing capability and implement a **new generalized reusable program** under `Scripts/production/`, `Tools/` or `Scripts/Gate12Koikatsu/`, then add it to this 5★ index, (4) push the actual changed code/content, and (5) UPDATE 6★ with the real commit and 7★ system impact; do not inflate owner-accepted completion for source-only changes.
@@ -16,7 +29,7 @@ The recorder checks the historical 36/111 source counts and real Git commit, ref
 
 **Safe original native animation-catalog reconciliation (NEW reusable 5★):** `Scripts/production/reconcile_native_motion_catalog.py`, read-only by default. It compares the protected PC native catalog against a fetched GitHub tree, checks all referenced native Unreal package paths are present both places, reports exact source/approval/contact counts, and refuses any conflicting same-ID original source. In an actual catalog-loss incident `--restore --push` creates a fast-forward child commit through a **temporary Git index** without resetting the user's PC working tree. The older `bind_native_motion.py` could NOT be reused for this recovery: it deliberately requires individual approved clips and genuine authored combat contact data, while the 3,222-entry original inventory includes 937 unapproved combat motions; running that binder as a bulk restore would either reject legitimate inventory or risk fabricating approvals. The original catalog was restored via commit `ce190e87` before this reusable safe recovery interface was added.
 
-**Permanent inventory / code-drift aid:** [`REPO_EXECUTION_MAP.md`](REPO_EXECUTION_MAP.md) records exact source roots, a real PC-only vs GitHub inventory, known implementation drifts and the original 3,222 source-motion recovery. Review it rather than re-running an enormous general audit. The original motion catalog is NOW RESTORED on GitHub; never reinitialize it to an empty array. The 937 combat entries are source-indexed but NOT approved; generate missing authentically authored mappings from the existing content instead of redownloading/rebuilding the same animation bank.
+**Permanent inventory / code-drift aid:** [`REPO_EXECUTION_MAP.md`](REPO_EXECUTION_MAP.md) records exact source roots, a real PC-only vs GitHub inventory, known implementation drifts and the original 3,222 source-motion recovery. Review it rather than re-running an enormous general audit. The original motion catalog is NOW RESTORED on GitHub; never reinitialize it to an empty array. The 937 combat entries are source-indexed without authored contact data; generate missing authentic impact mappings from the existing content instead of redownloading/rebuilding the same animation bank.
 
 ## PRIMARY: reusable instructions AND executable native content automation (2026-11-01)
 
@@ -24,8 +37,8 @@ The recorder checks the historical 36/111 source counts and real Git commit, ref
 
 ### Direct executable entry points
 - **Create a factory job from a newly created actual Koikatsu card:** `python Scripts/production/submit_noworld_content.py --publish-to-github character --card <ORIGINAL_CARD.png> --identity <CANONICAL_CHARACTER_ID> --version <CANONICAL_VERSION_ID> --rig koikatsu_original --anatomy humanoid --wardrobe CLOTHED --wardrobe-field <EXISTING_CANONICAL_OUTFIT_FIELD> --capabilities combat grounded swimming flying`. No separate library selection: `AUTO` authors/reference the ONE global shared motion UAsset. No per-Version animation catalogs. A card alone does not provide a kit or unique approved motions.
-- **Submit an original approved native FBX animation:** `python Scripts/production/submit_noworld_content.py --publish-to-github motion --fbx <ORIGINAL.fbx> --skeleton <REAL_UNREAL_SKELETON_OBJECT> --motion-id <NATIVE_DERIVATIVE_ID> --source-clip-id <ORIGINAL_SOURCE_CLIP_ID> --source-original-hash <ORIGINAL_SHA256> --action <SEMANTIC_ACTION> --context Combat --rig koikatsu_original --anatomy humanoid --outfit CLOTHED --approval-evidence <EXISTING_REPO_PROOF> --contact-notify <REAL_NOTIFY>`. Alternatively, supply explicit `--natural-completion-contact` if original clip has no authored contact marker, so the true natural sequence finish is the event. Source FBX hash is computed automatically. The factory imports an actual `AnimSequence`, generates the source binding recipe, then invokes the global catalog binder; no hand-writing separate binding JSON.
-- **Submit original approved art:** `python Scripts/production/submit_noworld_content.py --publish-to-github artwork --image <ORIGINAL.png> --identity <EXACT_ID> --version <EXACT_VERSION> --approval-evidence <EXISTING_REPO_PROOF>`. The Unreal worker imports one real Texture2D, attaches it to the same native identity/version visual registry without rewriting older art, and keeps privacy/SFW eligibility separate from file format.
+- **Submit an original native FBX animation:** `python Scripts/production/submit_noworld_content.py --publish-to-github motion --fbx <ORIGINAL.fbx> --skeleton <REAL_UNREAL_SKELETON_OBJECT> --motion-id <NATIVE_DERIVATIVE_ID> --source-clip-id <ORIGINAL_SOURCE_CLIP_ID> --source-original-hash <ORIGINAL_SHA256> --action <SEMANTIC_ACTION> --context Combat --rig koikatsu_original --anatomy humanoid --outfit CLOTHED --contact-notify <REAL_NOTIFY>`. Alternatively, supply explicit `--natural-completion-contact` if original clip has no authored contact marker, so the true natural sequence finish is the event. Source FBX hash is computed automatically. The factory imports an actual `AnimSequence`, generates the source binding recipe, then invokes the global catalog binder; no hand-writing separate binding JSON.
+- **Submit original art:** `python Scripts/production/submit_noworld_content.py --publish-to-github artwork --image <ORIGINAL.png> --identity <EXACT_ID> --version <EXACT_VERSION> `. The Unreal worker imports one real Texture2D, attaches it to the same native identity/version visual registry without rewriting older art, and keeps privacy/SFW eligibility separate from file format.
 - **Execute the one command on the authorized Windows worker:** `python Scripts/production/noworld_content_factory.py --inbox ContentFactory/Jobs --config ContentFactory/windows_worker.json`. Or add an authorized job JSON under `ContentFactory/Jobs/` / GitHub `workflow_dispatch` to invoke [the dedicated Actions worker](../../.github/workflows/noworld-content-factory.yml) on a connected **self-hosted Windows Unreal PC**. Nothing runs on ChatGPT in the background between conversations merely because these sources were committed.
 - **Automatic versioned publication:** [publish_noworld_factory_results.py](../../Scripts/production/publish_noworld_factory_results.py) stages only source-produced genuine UE packages, exact original semantic catalog entries and scrubbed receipts for a Git LFS commit. It refuses overwrites and requires the job's explicit `publish_to_github=true`; raw Koikatsu cards/Blender user sources stay in the PC source archive.
 
@@ -108,7 +121,7 @@ Existing imported `/Game/.../ActualSequence.ActualSequence` must have a real `Co
       "participants": 1,
       "contact_seconds": -1,
       "natural_completion_contact": true,
-      "approved_for_gameplay": true,
+      "loop": false,
       "loop": false
     }
   ]
@@ -118,9 +131,9 @@ Existing imported `/Game/.../ActualSequence.ActualSequence` must have a real `Co
 
 Single command/API call, runnable in the existing authorized pipeline by the developer or CI, not by the phone-only user:
 ```bash
-python Scripts/production/bind_native_motion.py path/to/approved_bindings.json
+python Scripts/production/bind_native_motion.py path/to/original_bindings.json
 ```
-The binder checks schema, uniqueness, real .uasset path, authentic source hash syntax, existing provenance file, explicit approval, compatible role information, and rejects conflicting duplicates. It edits **only** the globally packaged catalog via an atomic write. It never grants ownership, adds unapproved clips, creates an actor, remaps visual art, changes stats or retargets a skeleton invisibly. Actual UE native compatibility remains checked at source playback.
+The binder checks schema, uniqueness, genuine .uasset paths, source SHA256 syntax, actual roles and impact information, and rejects conflicting duplicates; provenance is checked when supplied, without pre-phone owner approval. It edits **only** the globally packaged catalog via an atomic write. It never grants ownership, adds unapproved clips, creates an actor, remaps visual art, changes stats or retargets a skeleton invisibly. Actual UE native compatibility remains checked at source playback.
 
 ## Source-to-character fast binding
 Content creators produce **only original content and reliable source receipts**:
@@ -133,7 +146,7 @@ The established importer generates native asset receipts and source path registr
 **Do not** create 5 copies of a motion, hand-wire each attack per Version, invent extra Luminous forms, promote QA source clips, invent contact frames, introduce a disposable mini-game, or require the owner to operate a PC.
 
 ## Current unresolved content, clearly separated from binding infrastructure
-Original approved combat motions must still be supplied/linked before an authentic source-bound turn action will execute. The existing 937 UE-native combat motion entries were not automatically approved and lacked authored contacts at latest PR inventory. Grand original 57-renderer geometry is now recorded in the branch but must still reach actual complete actor, animation and gameplay integration. Remaining exact five-form executors must follow original approved v4 numeric sources. An Android APK requires real complete Unreal project cook and Android package; source changes here are not a testable release.
+The existing 937 UE-native combat motion entries are already present; they need authentic impact/contact binding or real completion behavior, not an artificial approval status. Grand original 57-renderer geometry is now recorded in the branch but must still reach actual complete actor, animation and gameplay integration. Remaining exact five-form executors must follow original approved v4 numeric sources. An Android APK requires real complete Unreal project cook and Android package; source changes here are not a testable release.
 
 ## Durable workflow for next conversation
 Read 7★ → 6★ → this 5★ file → relevant native classes. Identify the shortest unintegrated **game system**; commit actual source and update 6★ with precise commit and remaining gameplay. Do not count a new binder, compiling, a receipt, a test or documentation as a completed 7★ system.
