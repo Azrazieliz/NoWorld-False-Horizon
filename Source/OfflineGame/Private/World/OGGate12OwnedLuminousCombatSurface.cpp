@@ -11,6 +11,8 @@
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGTurnContactActionComponent.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
 #include "EngineUtils.h"
 #include "Engine/Canvas.h"
 #include "Engine/GameInstance.h"
@@ -389,6 +391,15 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
             Edge+6.f*S,H-85.f*S,17.f*S,Accent,W-2.f*Edge);
         return true;
     }
+    // The fallback canvas and native UMG must agree that an authored turn
+    // contact can actually play on this possessed character's genuine rig.
+    const UOGCharacterAppearanceComponent* Appearance =
+        Character->FindComponentByClass<UOGCharacterAppearanceComponent>();
+    const UOGSharedMotionControllerComponent* SourceMotion =
+        Appearance ? Appearance->GetMotionController() : nullptr;
+    if (!SourceMotion)
+        SourceMotion=Character->FindComponentByClass<UOGSharedMotionControllerComponent>();
+    const bool bTurnMode = State.ExecutionMode==EOGCombatExecutionMode::Turn;
     const int32 CommandCount=NativeCommands.Commands.Num();
     if (CommandCount>0)
     {
@@ -407,8 +418,11 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         {
             const FOGNativeBattleCommand& Command=NativeCommands.Commands[Index];
             FString ReadyError;
-            const bool bExecutable=bOwnTurn && Command.SkillId.IsValid() &&
+            bool bExecutable=bOwnTurn && Command.SkillId.IsValid() &&
                 Battle->HasNativeActionExecutor(*Owned,Command.SkillId,ReadyError);
+            if (bExecutable && bTurnMode)
+                bExecutable=SourceMotion && SourceMotion->CanPlayAction(
+                    Command.MotionSemantic(),TEXT("Combat"),false,1,NAME_None);
             DrawGameButton(Command.Label,
                 FName(*FString::Printf(TEXT("OG.Battle.Command.%s"),*Command.Id.ToString())),
                 Edge+(Index%Columns)*(ButtonW+Gap),
