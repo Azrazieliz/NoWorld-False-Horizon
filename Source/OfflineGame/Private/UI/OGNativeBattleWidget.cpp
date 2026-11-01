@@ -8,6 +8,8 @@
 #include "Combat/OGTurnBattle.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnContactActionComponent.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
 #include "EngineUtils.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
@@ -339,6 +341,24 @@ void UOGNativeBattleWidget::Refresh()
                     break;
                 }
             }
+        // Turn commands execute only when their exact original motion is playable.
+        // The same shared controller is used by StageActualTurnAction at commit;
+        // do not offer a touch action that cannot reach its authored contact.
+        if (!WorldMode && Own && Enabled)
+        {
+            const UOGCharacterAppearanceComponent* Appearance =
+                Body->FindComponentByClass<UOGCharacterAppearanceComponent>();
+            const UOGSharedMotionControllerComponent* Motion = Appearance
+                ? Appearance->GetMotionController() : nullptr;
+            if (!Motion)
+                Motion=Body->FindComponentByClass<UOGSharedMotionControllerComponent>();
+            if (!Motion || !Motion->CanPlayAction(
+                    Command.MotionSemantic(), TEXT("Combat"), false, 1, NAME_None))
+            {
+                Enabled=false;
+                Reason=TEXT("The original combat motion is not bound to this character rig.");
+            }
+        }
         if (!Own) Reason=bPerformingAuthoredStrike ?
             TEXT("The original attack is awaiting its physical contact.") :
             TEXT("Available on this character's next turn.");
