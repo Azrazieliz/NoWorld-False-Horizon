@@ -317,9 +317,28 @@ void UOGNativeBattleWidget::Refresh()
             if (Cooldown>0) Reason=FString::Printf(TEXT("Ready in %.1f s"),Cooldown/1000.0);
         }
         else Enabled=Own && Battle->ValidateResolvedAction(Proposal,Expanded,Reason);
-        if (Enabled) for (const auto& Id:Expanded.TargetUnitIds)
-            if (!Bodies.Contains(Id) || AmbiguousBodies.Contains(Id))
-            { Enabled=false; Reason=TEXT("Waiting for the battlefield characters."); break; }
+        // An eligible defeated ally is a real canonical participant without
+        // a living World actor. The approved revival executor validates its
+        // soul/defeat window. Do not disable actual revival simply because
+        // there is deliberately no active skeletal body to click.
+        if (Enabled)
+            for (const auto& Id:Expanded.TargetUnitIds)
+            {
+                const FOGCombatUnitState* Target =
+                    State.Units.FindByPredicate(
+                        [&Id](const FOGCombatUnitState& Unit)
+                        { return Unit.UnitEntityId==Id; });
+                const bool bDefeatedAlly =
+                    Target && Target->Presence==EOGCombatPresence::Defeated &&
+                    !Target->IsAlive() && Target->TeamIndex==Source->TeamIndex;
+                if (!bDefeatedAlly &&
+                    (!Bodies.Contains(Id) || AmbiguousBodies.Contains(Id)))
+                {
+                    Enabled=false;
+                    Reason=TEXT("Waiting for the original battlefield character.");
+                    break;
+                }
+            }
         if (!Own) Reason=bPerformingAuthoredStrike ?
             TEXT("The original attack is awaiting its physical contact.") :
             TEXT("Available on this character's next turn.");
