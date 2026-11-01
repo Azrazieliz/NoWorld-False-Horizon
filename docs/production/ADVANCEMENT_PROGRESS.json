@@ -969,6 +969,11 @@
             "commit": "361dbb0b",
             "type": "SOURCE_PARTIAL",
             "change": "First World source startup no longer silently spawns the synthetic Foundation integration obstacle course when the authoritative Gate02 R1 source actor is missing. Only explicit -FoundationFixtures non-Shipping opt-in runs the existing developer course; real World streaming is retried and absence is logged once."
+          },
+          {
+            "commit": "9ba5ecc6",
+            "type": "SOURCE_PARTIAL",
+            "change": "Autonomous source-backed opponent turn scheduler now identifies the locally possessed canonical battle unit via the existing ReadControlledCanonicalBattleUnit authority rather than restricting the runtime to Luminous/Content Manifestation subclasses. This extends legitimate non-player actions to the actual connected Ruler World pawn without manufacturing ownership, enemy actors, skills or a new executor."
           }
         ],
         "completed_in_this_update": false,
@@ -1021,6 +1026,11 @@
             "commit": "88924e6c",
             "type": "SOURCE_PARTIAL",
             "change": "One reusable native FOGNativeBattleCommands::MotionForResolvedAction source dispatcher now distinguishes the exact canonical skill branch/mode for executed turn actions. Native agent AI, autonomous opponent fallback, and connected original combat actors all use it rather than silently substituting the general skill motion for Day/Night/Harvest or other distinct effects. Missing variant animation remains unavailable rather than borrowing another branch. Both existing executors remain unmodified."
+          },
+          {
+            "commit": "9ba5ecc6",
+            "type": "SOURCE_PARTIAL",
+            "change": "Autonomous source-backed opponent turn scheduler now identifies the locally possessed canonical battle unit via the existing ReadControlledCanonicalBattleUnit authority rather than restricting the runtime to Luminous/Content Manifestation subclasses. This extends legitimate non-player actions to the actual connected Ruler World pawn without manufacturing ownership, enemy actors, skills or a new executor."
           }
         ],
         "completed_in_this_update": false,
@@ -1300,6 +1310,11 @@
             "commit": "88924e6c",
             "type": "SOURCE_PARTIAL",
             "change": "One reusable native FOGNativeBattleCommands::MotionForResolvedAction source dispatcher now distinguishes the exact canonical skill branch/mode for executed turn actions. Native agent AI, autonomous opponent fallback, and connected original combat actors all use it rather than silently substituting the general skill motion for Day/Night/Harvest or other distinct effects. Missing variant animation remains unavailable rather than borrowing another branch. Both existing executors remain unmodified."
+          },
+          {
+            "commit": "9ba5ecc6",
+            "type": "SOURCE_PARTIAL",
+            "change": "Autonomous source-backed opponent turn scheduler now identifies the locally possessed canonical battle unit via the existing ReadControlledCanonicalBattleUnit authority rather than restricting the runtime to Luminous/Content Manifestation subclasses. This extends legitimate non-player actions to the actual connected Ruler World pawn without manufacturing ownership, enemy actors, skills or a new executor."
           }
         ],
         "completed_in_this_update": false,
@@ -2303,9 +2318,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T16:14:00Z"
+    },
+    {
+      "source_commit": "9ba5ecc6d2f99a5165962bae4c1a697db559b1ad",
+      "system_ids": [
+        "M02",
+        "M03",
+        "M14"
+      ],
+      "result": "Autonomous source-backed opponent turn scheduler now identifies the locally possessed canonical battle unit via the existing ReadControlledCanonicalBattleUnit authority rather than restricting the runtime to Luminous/Content Manifestation subclasses. This extends legitimate non-player actions to the actual connected Ruler World pawn without manufacturing ownership, enemy actors, skills or a new executor.",
+      "remaining_player_visible_work": "Connect and verify actual Ruler body/encounter binding and opponent native bodies in first World, source-author missing combat impact, and confirm AI turns/real rewards/persistence on UE5.8 and Android.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate12ActualOpponentTurns.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reused the existing canonical ReadControlledCanonicalBattleUnit runtime and shared opponent action executor. GitHub code-only; native worker untouched.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T16:21:00Z"
     }
   ],
-  "continuation_last_source_commit": "88924e6c41ca6f276f5705082e4352efad12b64c",
+  "continuation_last_source_commit": "9ba5ecc6d2f99a5165962bae4c1a697db559b1ad",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
