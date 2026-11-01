@@ -974,6 +974,11 @@
             "commit": "b320e9f4",
             "type": "SOURCE_PARTIAL",
             "change": "Native real-encounter canvas touch actions now draw inside the computed bottom CommandGridTop instead of the participant-card Top. Fixes layout anchor inconsistency that could overlap character cards and command buttons; does not replace the original battle executor or invent results."
+          },
+          {
+            "commit": "1aa664db",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real-encounter fallback canvas now checks the possessed character's shared source-motion controller before enabling a turn ability, matching native UMG's authenticated contact prerequisite. Unplayable clips no longer expose actionable turn touch controls; original executor and motion bank remain intact."
           }
         ],
         "completed_in_this_update": false,
@@ -1043,6 +1048,11 @@
             "commit": "ce190e87",
             "type": "SOURCE_RECOVERY_NOT_NEW_GAMEPLAY",
             "change": "Restored all original 3222 global animation catalog entries from protected PC without new content authoring or runtime acceptance."
+          },
+          {
+            "commit": "1aa664db",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real-encounter fallback canvas now checks the possessed character's shared source-motion controller before enabling a turn ability, matching native UMG's authenticated contact prerequisite. Unplayable clips no longer expose actionable turn touch controls; original executor and motion bank remain intact."
           }
         ],
         "completed_in_this_update": false,
@@ -1119,6 +1129,11 @@
             "commit": "b320e9f4",
             "type": "SOURCE_PARTIAL",
             "change": "Native real-encounter canvas touch actions now draw inside the computed bottom CommandGridTop instead of the participant-card Top. Fixes layout anchor inconsistency that could overlap character cards and command buttons; does not replace the original battle executor or invent results."
+          },
+          {
+            "commit": "1aa664db",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real-encounter fallback canvas now checks the possessed character's shared source-motion controller before enabling a turn ability, matching native UMG's authenticated contact prerequisite. Unplayable clips no longer expose actionable turn touch controls; original executor and motion bank remain intact."
           }
         ],
         "completed_in_this_update": false,
@@ -2012,9 +2027,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T15:44:00Z"
+    },
+    {
+      "source_commit": "1aa664db96ddfba2959094b647038d57d286d9bc",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M09"
+      ],
+      "result": "Real-encounter fallback canvas now checks the possessed character's shared source-motion controller before enabling a turn ability, matching native UMG's authenticated contact prerequisite. Unplayable clips no longer expose actionable turn touch controls; original executor and motion bank remain intact.",
+      "remaining_player_visible_work": "Add original authored contact/sequence behavior for 937 combat indexed clips where unavailable, verify actual compatible rig playback, legal target preview, physical opponent responses and canonical battle settlement on UE5.8 and Android.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate12OwnedLuminousCombatSurface.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Source path reused pre-existing UOGSharedMotionControllerComponent::CanPlayAction and 5★ single bank rather than generating a new animation program. No native checkout available for 5★ recorder CLI.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T15:49:00Z"
     }
   ],
-  "continuation_last_source_commit": "b320e9f4001f98ac9089434c2d357f8c917a0428",
+  "continuation_last_source_commit": "1aa664db96ddfba2959094b647038d57d286d9bc",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
