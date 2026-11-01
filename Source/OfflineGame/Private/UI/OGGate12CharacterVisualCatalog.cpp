@@ -3,6 +3,12 @@
 #include "Engine/Texture2D.h"
 #include "ImageUtils.h"
 #include "Misc/Paths.h"
+#include "Misc/FileHelper.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Characters/OGCharacterAppearanceDefinition.h"
+#include "Characters/OGContentCharacterActors.h"
 
 // Gate01's five 2026-10-20 user-accepted PNG files are original immutable
 // 2D art, not separate characters, newly invented character models, or
@@ -53,7 +59,67 @@ const FOGGate12CharacterVisualEntry* UOGGate12CharacterVisualCatalog::FindExact(
     }
 
     if (IdentityId != FOGContentId(TEXT("character:luminous_valentine.identity")))
-        return Declared;
+    {
+        // Only new exact content-factory registrations are discovered here.
+        // Existing user-authored visual catalog entries always take priority.
+        if (Declared) return Declared;
+        static TMap<FString, FOGGate12CharacterVisualEntry> FactoryEntries;
+        const FString Key=IdentityId.ToString()+TEXT("|")+VersionId.ToString();
+        if (const FOGGate12CharacterVisualEntry* Cached=FactoryEntries.Find(Key))
+            return Cached;
+        FString Manifest;
+        const FString Source=FPaths::Combine(FPaths::ProjectContentDir(),
+            TEXT("NoWorld/ContentFactory/Characters.json"));
+        if (!FFileHelper::LoadFileToString(Manifest,*Source)) return nullptr;
+        TSharedPtr<FJsonObject> Root;
+        if (!FJsonSerializer::Deserialize(
+                TJsonReaderFactory<>::Create(Manifest),Root) || !Root) return nullptr;
+        FString Schema;
+        const TArray<TSharedPtr<FJsonValue>>* Rows=nullptr;
+        if (!Root->TryGetStringField(TEXT("schema"),Schema) ||
+            Schema!=TEXT("noworld.content_factory.index.v1") ||
+            !Root->TryGetArrayField(TEXT("characters"),Rows) || !Rows) return nullptr;
+        TSharedPtr<FJsonObject> Exact;
+        for (const auto& Value:*Rows)
+        {
+            const auto Row=Value.IsValid()?Value->AsObject():nullptr;
+            FString Id,Version;
+            if(!Row || !Row->TryGetStringField(TEXT("identity"),Id) ||
+               !Row->TryGetStringField(TEXT("version"),Version) ||
+               Id!=IdentityId.ToString() || Version!=VersionId.ToString()) continue;
+            if(Exact) return nullptr; // Reject ambiguous runtime source registry.
+            Exact=Row;
+        }
+        FString Asset;
+        if(!Exact || !Exact->TryGetStringField(TEXT("appearance"),Asset) ||
+           !Asset.StartsWith(TEXT("/Game/NoWorld/ContentFactory/Appearances/")))
+            return nullptr;
+        auto* Native=LoadObject<UOGCharacterAppearanceDefinition>(nullptr,*Asset);
+        if(!Native || Native->GetPathName()!=Asset ||
+           Native->IdentityId!=IdentityId || Native->VersionId!=VersionId)
+            return nullptr;
+        FString Error;
+        if(!Native->ValidateContract(Error)) return nullptr;
+        FOGGate12CharacterVisualEntry Entry;
+        Entry.IdentityId=IdentityId;
+        Entry.VersionId=VersionId;
+        Entry.WardrobeStateJsonField=Native->WardrobeStateJsonField;
+        for(const auto& Row:Native->Wardrobes)
+            Entry.ApprovedWardrobeChoices.Add(Row.WardrobeId);
+        FString Artwork;
+        if(Exact->TryGetStringField(TEXT("artwork"),Artwork) &&
+           Artwork.StartsWith(TEXT("/Game/NoWorld/ContentFactory/Art/")))
+            Entry.OriginalArtwork2D=
+                TSoftObjectPtr<UTexture2D>(FSoftObjectPath(Artwork));
+        // Existing real native generic pawn projects exact owned source
+        // meshes and uses the game's canonical actor/battle bindings.
+        Entry.ApprovedWorldPlayableClass=
+            TSoftClassPtr<AOGWorldPrototypeCharacter>(
+                AOGContentPlayableCharacter::StaticClass());
+        // Do not fabricate a preview actor, fake ownership, or assume the
+        // source 2D artwork is eligible for a privacy/SFW presentation.
+        return &FactoryEntries.Add(Key,MoveTemp(Entry));
+    }
 
     const TCHAR* AcceptedFile = nullptr;
     const TCHAR* InstalledNativePreview = nullptr;
