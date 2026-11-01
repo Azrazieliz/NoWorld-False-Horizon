@@ -62,6 +62,33 @@ FName FOGNativeBattleCommand::MotionSemantic() const
     if (!Mode.IsNone()) Key+=TEXT(".")+Mode.ToString().ToLower();
     return FName(*Key);
 }
+FName FOGNativeBattleCommands::MotionForResolvedAction(
+    const FOGCombatUnitState& Source,const FOGResolvedCombatAction& Action,
+    FName UnbranchedFallback)
+{
+    if (Source.UnitEntityId!=Action.SourceUnitId || !Action.SkillId.IsValid())
+        return NAME_None;
+    TSharedPtr<FJsonObject> Context;
+    if (!FJsonSerializer::Deserialize(
+        TJsonReaderFactory<>::Create(Action.ResolutionJson),Context) || !Context)
+        return NAME_None;
+    FString Branch,Mode;
+    Context->TryGetStringField(TEXT("branch"),Branch);
+    Context->TryGetStringField(TEXT("mode"),Mode);
+    const FName ExactBranch(*Branch),ExactMode(*Mode);
+    const bool bVariant=!ExactBranch.IsNone() || !ExactMode.IsNone();
+    FOGNativeBattleCommandSet Commands; FString Error;
+    if (BuildFor(Source,Commands,Error))
+        for (const FOGNativeBattleCommand& Command:Commands.Commands)
+            if (Command.SkillId==Action.SkillId &&
+                Command.Branch==ExactBranch && Command.Mode==ExactMode)
+            {
+                if (!bVariant && Command.AuthoredMotion.IsNone() &&
+                    !UnbranchedFallback.IsNone()) return UnbranchedFallback;
+                return Command.MotionSemantic();
+            }
+    return bVariant ? NAME_None : UnbranchedFallback;
+}
 bool FOGNativeBattleCommands::BuildFor(const FOGCombatUnitState& Source,FOGNativeBattleCommandSet& Out,FString& Error)
 {
     Out=FOGNativeBattleCommandSet(); Error.Reset();

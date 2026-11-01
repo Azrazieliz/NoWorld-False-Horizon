@@ -168,9 +168,11 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
             // Keep the exact skill branch and its original clip together.
             // Generic character definitions may provide a source-registered
             // native semantic; otherwise use this command's authored mapping.
-            FName Semantic = Battle->ResolveNativeAbilityMotion(
-                Acting, Expanded.SkillId);
-            if (Semantic.IsNone()) Semantic=Command.MotionSemantic();
+            // Preserve the exact authored Ultimate branch and mode for
+            // both opponent turn staging and the visible action playback.
+            const FName Semantic=FOGNativeBattleCommands::MotionForResolvedAction(
+                Acting,Expanded,Battle->ResolveNativeAbilityMotion(
+                    Acting,Expanded.SkillId));
             if (Semantic.IsNone())
                 continue; // Never resolve source damage without its actual motion.
 

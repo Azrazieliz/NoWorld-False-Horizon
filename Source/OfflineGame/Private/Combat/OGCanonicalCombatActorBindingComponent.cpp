@@ -245,17 +245,10 @@ void UOGCanonicalCombatActorBindingComponent::HandleNativeAction(const FOGResolv
         if (!Routes->PresentAcceptedCombat(Action,*Battle,Handled,Error)) { UE_LOG(LogTemp,Warning,TEXT("%s"),*Error); return; }
         if (Handled) { LastPresentedAction=Action.ActionId; return; }
     }
-    FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId);
-    if (Semantic.IsNone())
-    {
-        FOGNativeBattleCommandSet Set; FString Error; TSharedPtr<FJsonObject> Context; FString Branch,Mode;
-        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson),Context);
-        if (Context) { Context->TryGetStringField(TEXT("branch"),Branch); Context->TryGetStringField(TEXT("mode"),Mode); }
-        if (FOGNativeBattleCommands::BuildFor(*Unit,Set,Error))
-            for (const auto& Command:Set.Commands)
-                if (Command.SkillId==Action.SkillId && Command.Branch==FName(*Branch) && Command.Mode==FName(*Mode))
-                { Semantic=Command.MotionSemantic(); break; }
-    }
+    // Display the exact executed branch instead of the first generic skill
+    // motion on this canonical source actor.
+    const FName Semantic=FOGNativeBattleCommands::MotionForResolvedAction(
+        *Unit,Action,Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId));
     auto* Appearance=GetOwner()?GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>():nullptr;
     auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
     if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();

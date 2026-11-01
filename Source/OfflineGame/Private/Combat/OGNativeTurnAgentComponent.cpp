@@ -5,6 +5,7 @@
 
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGNativeCombatAbility.h"
+#include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "AIController.h"
 #include "Dom/JsonObject.h"
@@ -264,8 +265,10 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
         if (MissingBody)
         { LastFailure=TEXT("An authored living target has no native body, or its canonical target vanished."); continue; }
         const FName OriginalSemantic =
-            Battle->ResolveNativeAbilityMotion(
-                Battle->GetState().Units[Acting], Action.SkillId);
+            FOGNativeBattleCommands::MotionForResolvedAction(
+                Battle->GetState().Units[Acting],Action,
+                Battle->ResolveNativeAbilityMotion(
+                    Battle->GetState().Units[Acting],Action.SkillId));
         if (OriginalSemantic.IsNone())
         {
             LastFailure = TEXT(
