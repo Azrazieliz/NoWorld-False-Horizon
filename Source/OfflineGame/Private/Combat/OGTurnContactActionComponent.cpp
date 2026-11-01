@@ -8,6 +8,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 
 UOGTurnContactActionComponent::UOGTurnContactActionComponent()
 {
@@ -28,6 +29,12 @@ bool UOGTurnContactActionComponent::IsSameLiveTurn(FString& Error) const
         Battle->GetState().ExecutionMode != EOGCombatExecutionMode::Turn)
     {
         Error = TEXT("The source-authored turn was interrupted or its encounter ended.");
+        return false;
+    }
+    if (const APawn* ActualPawn = Cast<APawn>(GetOwner());
+        ActualPawn && ActualPawn->GetController() != OriginalPawnController.Get())
+    {
+        Error = TEXT("The character was unpossessed or reassigned before contact.");
         return false;
     }
     const int32 Acting = Battle->SelectNextActingUnitIndex();
@@ -131,6 +138,8 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
     SourceSemantic = ApprovedMotionSemantic;
     BoundCore = Core;
     BoundMotion = Motion;
+    OriginalPawnController = Cast<APawn>(GetOwner())
+        ? Cast<APawn>(GetOwner())->GetController() : nullptr;
     bStaged = true;
     Motion->OnAuthoredContact.AddUniqueDynamic(
         this, &ThisClass::HandleSourceContact);
@@ -179,6 +188,28 @@ void UOGTurnContactActionComponent::HandleSourceContact(
         return;
     }
 
+    // World streaming or defeat may remove a target after the player
+    // pressed the button. Do not inflict invisible damage on a vanished
+    // participant just because the earlier preview was legal.
+    for (const FOGEntityId& Id : Expanded.TargetUnitIds)
+    {
+        const FOGCombatUnitState* Target =
+            Battle->GetState().Units.FindByPredicate(
+                [&Id](const FOGCombatUnitState& Unit)
+                { return Unit.UnitEntityId == Id; });
+        const bool bNeedsWorldBody = Target &&
+            Target->Presence == EOGCombatPresence::Active && Target->IsAlive() &&
+            Id != Expanded.SourceUnitId;
+        if (!Target || (bNeedsWorldBody &&
+            !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                GetWorld(), BattleId, Id)))
+        {
+            UE_LOG(LogTemp, Warning,
+                TEXT("Source contact aborted: the actual target is no longer embodied."));
+            DropStagedAction(true);
+            return;
+        }
+    }
     TGuardValue<bool> Guard(bResolving, true);
     const bool bLuminous =
         Battle->GetState().Units.ContainsByPredicate(
@@ -232,6 +263,7 @@ void UOGTurnContactActionComponent::DropStagedAction(bool bStopSourcePlayback)
     bStaged = false;
     BoundCore.Reset();
     BoundMotion.Reset();
+    OriginalPawnController.Reset();
     BattleId = FOGEntityId();
     StagedAction = FOGResolvedCombatAction();
     SourceSemantic = NAME_None;
