@@ -2,9 +2,9 @@
 **Importance: 5/7 — critical reusable production interface.**
 **Date: 2026-11-01.** Required read after the [sole 7★ game authority](NOWORLD_7STAR_AUTHORITY.md) and [6★ advancement](ADVANCEMENT_PROGRESS.json). Preserve and reuse; never reimplement a new motion catalog per character or per form.
 
-## PRIMARY: executable unattended native content production, not a manual binding guide (2026-11-01)
+## PRIMARY: reusable instructions AND executable native content automation (2026-11-01)
 
-**The first version of this 5★ described only a binding tool. That was insufficient.** The repository now includes reusable Python worker programs, a real Koikatsu Maker/KKBP C# API queue plugin, a Blender KKBP source conversion script, UnrealEditor Python asset import, native C++ appearance-asset authoring, exact runtime source discovery and a Windows self-hosted GitHub Action. The workflows are BUILT IN SOURCE but **not yet native compiled/run or owner accepted**. They cannot claim lossless visual gameplay if required exporter/engine dependencies are absent.
+**5★ contains both the enduring agent instructions and executable, reusable Python/C#/Unreal production programs.** The original manual-only binder was insufficient alone. The repository now includes reusable Python worker programs, a real Koikatsu Maker/KKBP C# API queue plugin, a Blender KKBP source conversion script, UnrealEditor Python asset import, native C++ appearance-asset authoring, exact runtime source discovery and a Windows self-hosted GitHub Action. The workflows are BUILT IN SOURCE but **not yet native compiled/run or owner accepted**. They cannot claim lossless visual gameplay if required exporter/engine dependencies are absent.
 
 ### Direct executable entry points
 - **Create a factory job from a newly created actual Koikatsu card:** `python Scripts/production/submit_noworld_content.py --publish-to-github character --card <ORIGINAL_CARD.png> --identity <CANONICAL_CHARACTER_ID> --version <CANONICAL_VERSION_ID> --rig koikatsu_original --anatomy humanoid --wardrobe CLOTHED --wardrobe-field <EXISTING_CANONICAL_OUTFIT_FIELD> --capabilities combat grounded swimming flying`. No separate library selection: `AUTO` authors/reference the ONE global shared motion UAsset. No per-Version animation catalogs. A card alone does not provide a kit or unique approved motions.
@@ -55,6 +55,14 @@ approved original artwork
 - `ContentFactory/windows_worker.json`: current documented Windows project paths; actual PC installations and executor presence are NOT verified here.
 
 ---
+## Animation variation and reuse — current Creative Director clarification
+
+The game has exactly **one shared semantic motion library**. Characters link to it directly; Version-dependent retargeting is allowed only when anatomy or actual Skeleton compatibility requires it. A retargeted motion is a reusable derivative of one original source clip, not a copied per-character library or a new gameplay action. Once produced, every truly compatible character, wardrobe or Version may reuse that derivative without re-exporting.
+
+Different expressions of a semantic action are also permitted: authenticated authored alternate takes, character-specific timing and contact details, idle and transition personalities, secondary morph layers, posture and look variation, and contextual selection between compatible native derivatives. The goal is to avoid robotic repeated playback while retaining exact authored contacts, coherent multipart synchronization and real authoritative action results.
+
+**Current implementation boundary:** the existing C++ shared motion resolver selects eligible clips by authored priority and exact native Skeleton; it is not yet an authoritative weighted/context-aware variety scheduler. Do not advertise automatic per-action variety as completed merely because multiple source files can be imported. Future implementation must choose a performance once per full character/multi-participant action (not independently per mesh part), require the same original source/scene phase across all parts, use a recorded deterministic source selection where gameplay continuity requires it, and never fabricate source motion or contact timings.
+
 ## Already integrated; use, don't duplicate
 1. Canonical owned identity and native actor: `UOGCharacterAppearanceComponent` for generic characters, `AOGLuminousV3PlayableCharacter` for original Luminous, `FOGExactOriginalLuminousParts` for genuine imported source paths, `UOGCanonicalCombatActorBindingComponent` to connect actual battle World bodies. A form is a Version of an identity, not an animation library or cloned Character Identity.
 2. One controller: `UOGSharedMotionControllerComponent`. Its reusable **BlueprintCallable** `BindNativeRigAndParts(Rig, Anatomy, Outfit, Capabilities, NativeParts)` installs all actual skeletal parts in one call, with fail-safe previous rig data. `BindCanonicalCharacter(Identity)` is also BlueprintCallable. Generic content actors bind the exact authored Identity before installation; original Luminous binds its canonical identity during ownership binding. Alternate Versions/wardrobes reuse that identity. The ordinary content-appearance installer and original Luminous native pawn now both use this same method.
