@@ -1006,6 +1006,11 @@
             "commit": "62510f92",
             "type": "SOURCE_PARTIAL",
             "change": "Native rendered battle canvas now places canonical status/error feedback on the existing reserved command guide line, not across the last row of real Android skill touch targets. For absent action kits the unchanged fallback error remains visible. No executor or UI architecture replaced."
+          },
+          {
+            "commit": "bbb4ec2f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
           }
         ],
         "completed_in_this_update": false,
@@ -1080,6 +1085,11 @@
             "commit": "1aa664db",
             "type": "SOURCE_PARTIAL",
             "change": "Real-encounter fallback canvas now checks the possessed character's shared source-motion controller before enabling a turn ability, matching native UMG's authenticated contact prerequisite. Unplayable clips no longer expose actionable turn touch controls; original executor and motion bank remain intact."
+          },
+          {
+            "commit": "bbb4ec2f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
           }
         ],
         "completed_in_this_update": false,
@@ -1092,7 +1102,13 @@
         "title": "Exact approved five-form v4 combat kits",
         "issue": 33,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "bbb4ec2f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -1103,7 +1119,13 @@
         "title": "Weapons, projectiles, physical hits and combat VFX",
         "issue": 34,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "bbb4ec2f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -1166,6 +1188,11 @@
             "commit": "62510f92",
             "type": "SOURCE_PARTIAL",
             "change": "Native rendered battle canvas now places canonical status/error feedback on the existing reserved command guide line, not across the last row of real Android skill touch targets. For absent action kits the unchanged fallback error remains visible. No executor or UI architecture replaced."
+          },
+          {
+            "commit": "bbb4ec2f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
           }
         ],
         "completed_in_this_update": false,
@@ -1893,11 +1920,11 @@
     },
     {
       "id": "DRIFT-002",
-      "status": "AUTHORED_COMBAT_CONTACT_STILL_PENDING_NOT_OWNER_REJECTED",
+      "status": "SOURCE_CONTACT_INTEGRITY_CORRECTED_NATIVE_CONTENT_PENDING",
       "type": "missing_valid_gameplay_connection",
       "source": "Content/NoWorld/Animation/SharedMotionCatalog.json",
       "conflict": "937 existing authentic native combat sequences are present and now eligible for source resolution without legacy QA approval gating. No exact authored combat contact timestamps/notifies were in the original catalog, so real impact settlement remains technical authoring work.",
-      "resolution": "Do not invent impact frames or regenerate the 937 native assets. Complete source-authentic action/contact binding through 5★; only owner phone-test can reject or accept the results.",
+      "resolution": "Explicit natural-completion contact provenance now survives the existing binder; turn settlement requires source-authored contact marker or explicit nonlooping natural-completion flag (commit bbb4ec2f7650786a3cbf67d9d89a81b5ce56aa06). Existing 937 native combat clips remain without established impact authoring and cannot be mass-settled by generic animation ending. UE/Android unverified.",
       "game_milestones": [
         "M03",
         "M05",
@@ -2155,9 +2182,41 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T15:38:44Z"
+    },
+    {
+      "source_commit": "bbb4ec2f7650786a3cbf67d9d89a81b5ce56aa06",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M07",
+        "M09"
+      ],
+      "result": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained.",
+      "remaining_player_visible_work": "Obtain original authored impact notifies/real contact timing for the 937 indexed combat clips without inventing frames; validate native source selection and actual contact events on UE5.8 then Android; finish World physical impacts, autonomous opponent results, rewards and persistence.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Animation/OGSharedMotionLibrary.h",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionLibrary.cpp",
+        "Source/OfflineGame/Private/Animation/OGSharedReferenceMotion.cpp",
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
+        "Source/OfflineGame/Public/Combat/OGTurnContactActionComponent.h",
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp",
+        "Source/OfflineGame/Private/UI/OGNativeBattleWidget.cpp",
+        "Source/OfflineGame/Private/World/OGGate12OwnedLuminousCombatSurface.cpp",
+        "Scripts/production/bind_native_motion.py",
+        "docs/production/CONTENT_BINDING_5STAR.md"
+      ],
+      "5star_reused_program": "Scripts/production/bind_native_motion.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reused and corrected existing 5★ binder plus canonical shared resolver; source changes committed directly by GitHub tree because no current native checkout mounted. No CLI, UE compile or Android run claimed.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T16:00:00Z"
     }
   ],
-  "continuation_last_source_commit": "361dbb0b8e55db3199168d822cd4bc66b3569038",
+  "continuation_last_source_commit": "bbb4ec2f7650786a3cbf67d9d89a81b5ce56aa06",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
