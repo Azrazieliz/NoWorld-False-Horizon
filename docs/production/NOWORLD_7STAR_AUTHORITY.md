@@ -4,6 +4,33 @@
 
 This file is the SINGLE 7★ **index**. It does not supplant or paraphrase away detailed original approved source contracts, artwork, numeric kit payloads, Registry definitions, world anchors or the actual 36 live milestone acceptance requirements. Where a complete original contract is more detailed, read the original. A later explicit user decision takes precedence over earlier project text; do not invent missing decisions.
 
+## Newer source recovery — v0.40, missing v0.41 (November 1, 2026)
+
+The user supplied the 175-page `Offline_Adult_Gacha_RPG_Master_Architecture_Baseline_v0.40_FINAL_PRECODING_FREEZE_RELEASE.docx`. The **complete parsed original text** is preserved in ten sequential GitHub source segments:
+
+- [v0.40 segment 01](authority/v040_source_text/part_01.md)
+- [v0.40 segment 02](authority/v040_source_text/part_02.md)
+- [v0.40 segment 03](authority/v040_source_text/part_03.md)
+- [v0.40 segment 04](authority/v040_source_text/part_04.md)
+- [v0.40 segment 05](authority/v040_source_text/part_05.md)
+- [v0.40 segment 06](authority/v040_source_text/part_06.md)
+- [v0.40 segment 07](authority/v040_source_text/part_07.md)
+- [v0.40 segment 08](authority/v040_source_text/part_08.md)
+- [v0.40 segment 09](authority/v040_source_text/part_09.md)
+- [v0.40 segment 10](authority/v040_source_text/part_10.md)
+
+**v0.41 existed later, but is unavailable and v0.40 is also old.** Effective implementation order: latest explicit Creative Director decisions → current working production code and its source evidence for likely later choices (not bugs/placeholders) → newer approved specialized contracts → v0.40, especially BA–BD → v0.36 for unchanged historical details. The older v0.40 page-one claim that code cannot represent later creative decisions is superseded by the user's current instruction that the code will generally reflect the latest implementation. Ask only about meaningful unresolved contradictions, not about already-settled engineering details.
+
+**Late v0.40 checkpoints retained:** BA closes persistence/progression contracts (Transcendence records, World Fantasm, personal World Manifestation, item affinity/proficiency, presentation states, account/profile settings and committed actions). BB freezes World/civilization-specific adaptive audio, motifs, Japanese-primary authored voice and accessibility. BC freezes anime/PBR visual direction, distinctive anatomy/materials, injury/outfit physical state, personality-rich animation, responsive action cancels and state-faithful cinematics. BD distinguishes FixedRule, TuningCandidate, ContentAuthored, DeviceProfiled and Derived; numerical settings must be checked against current implementation before replacing code.
+
+**Mature-content design conflict:** the user reports that unrecovered v0.41 changed the former single restriction found in v0.40. Its exact replacement wording and scope cannot be verified. Keep this explicitly unresolved; neither assert that the old requirement remained final nor modify live eligibility implementation merely by guessing what a missing document said.
+
+**Naming correction:** use *Grand Convergence* without calling it an “exceptional form.” Preserve its exact existing kit and form relationships.
+
+**Animation correction:** ONE playable shared semantic animation library, not per-character or per-Version libraries. Anatomy/rig-compatible native derivatives remain associated with the SAME original source action and are reused across compatible characters/Versions. Varied authored takes, character personality through overlays, appropriate idles and deterministic context-sensitive selection prevent robotic repetition. Preserve actual authored contact and cancel semantics, never generate fake source approval.
+
+**Grade locks:** 7★ decisions, 6★ actual advancement and 5★ reusable production instructions AND executable programs have their fixed roles. Other project files may receive importance grades 1★–4★ as workflow metadata; such metadata never overrides approved canon.
+
 ## Non-negotiable game purpose and decisions
 - Finish the existing offline, full-scope, real Unreal Engine 5.8 game, **NoWorld: False Horizon**, playable on the owner's Android phone. Windows release separately. No standalone mockups, prototype executors, fake stand-in game, truncated scope or arbitrary simplification.
 - Retain every original accepted visual, character, source 3D card, wardrobe, rig, audio, design source, approved nine native UI reference scopes, gameplay mechanic, Registry, Manifestation, narrative decision, economy rule, persistence contract, mature content scope, and original First World anchor.
