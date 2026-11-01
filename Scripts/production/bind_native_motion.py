@@ -19,7 +19,8 @@ from pathlib import Path
 import re
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[2]
+SOURCE_ROOT = Path(__file__).resolve().parents[2]
+ROOT = SOURCE_ROOT
 CATALOG = ROOT / "Content/NoWorld/Animation/SharedMotionCatalog.json"
 SCHEMA = "noworld.shared_motion_catalog.v1"
 INPUT_SCHEMA = "noworld.native_motion_bindings.v1"
@@ -36,10 +37,14 @@ def checked_id(value: object, field: str) -> str:
 def inside_repo(path: str) -> Path:
     if not isinstance(path, str) or not path or Path(path).is_absolute():
         raise ValueError("Evidence paths must be repository relative")
-    target = (ROOT / path).resolve()
-    if not target.is_relative_to(ROOT) or not target.is_file():
-        raise ValueError(f"Evidence is not an existing repository file: {path}")
-    return target
+    # GitHub checkout and the authorized Unreal workstation can be distinct.
+    # Source-authentic proof is read from the committed checkout, or its exact
+    # path in the native project; never from unrelated user directories.
+    for parent in (SOURCE_ROOT, ROOT):
+        target = (parent / path).resolve()
+        if target.is_relative_to(parent) and target.is_file():
+            return target
+    raise ValueError(f"Evidence is not an existing approved project file: {path}")
 
 
 def native_package(name: str) -> Path:
