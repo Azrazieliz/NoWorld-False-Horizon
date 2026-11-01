@@ -60,6 +60,21 @@ def process(args, *, env=None, cwd=None, timeout=1800):
     subprocess.run(args,env=dict(os.environ,**(env or {})),cwd=cwd,
                    timeout=timeout,check=True)
 
+def blender_binary(cfg):
+    named=cfg.get("blender_exe")
+    if named and named!="auto":
+        return required_file(named)
+    import shutil
+    from glob import glob
+    candidates=[shutil.which("blender")]
+    candidates+=glob(r"C:\\Program Files\\Blender Foundation\\Blender*\\blender.exe")
+    candidates+=glob(r"D:\\Tools\\Blender*\\blender.exe")
+    candidates+=glob(r"D:\\Tools\\Blender Foundation\\Blender*\\blender.exe")
+    found=[Path(x).resolve() for x in candidates if x and Path(x).is_file()]
+    if len(set(found))!=1:
+        raise ValueError("Blender installation missing/ambiguous on native Windows worker; select exact blender_exe")
+    return found[0]
+
 def editor(cfg,mode,jobpath,stage,receipt,timeout):
     exe=required_file(cfg["unreal_editor_cmd"])
     project=required_file(cfg["unreal_project"])
@@ -176,7 +191,7 @@ def run(jobpath,config,mode="run"):
             stage("card_export",card_export,export)
             blend=work/"blender_receipt.json"
             def blender():
-                process([required_file(config["blender_exe"]),"-b","--factory-startup",
+                process([blender_binary(config),"-b","--factory-startup",
                     "--python",REPO/"Scripts/production/noworld_kk_blender_generic.py",
                     "--",str(jobpath),str(export),str(blend),str(work/"blender")],
                     timeout=timeout)
