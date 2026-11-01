@@ -1,4 +1,5 @@
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Combat/OGTurnContactActionComponent.h"
 #include "Koikatsu/OGExactOriginalLuminousParts.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
@@ -1053,6 +1054,13 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
 void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
 {
     if (!bLuminousReady) return;
+    // Actual approved source attack owns the same whole-character skeletal
+    // playback until its contact. A traversal/fall/idle state change must
+    // never stop the accepted combat strike before the canonical hit.
+    if (const auto* Pending =
+            FindComponentByClass<UOGTurnContactActionComponent>();
+        Pending && Pending->IsAwaitingAuthoredContact())
+        return;
     const UCharacterMovementComponent* Movement = GetCharacterMovement();
     EOGLuminousV3MotionPhase Desired = EOGLuminousV3MotionPhase::Idle;
     if (Movement && Movement->IsFlying())
