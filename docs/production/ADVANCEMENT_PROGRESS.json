@@ -969,6 +969,11 @@
             "commit": "5780dcb6",
             "type": "SOURCE_PARTIAL",
             "change": "Native battle HUD no longer offers an unrestricted World/turn toggle; original v0.36 AH.8 reserves hybrid phase changes for authoritative boss encounter mechanics."
+          },
+          {
+            "commit": "b320e9f4",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native real-encounter canvas touch actions now draw inside the computed bottom CommandGridTop instead of the participant-card Top. Fixes layout anchor inconsistency that could overlap character cards and command buttons; does not replace the original battle executor or invent results."
           }
         ],
         "completed_in_this_update": false,
@@ -1109,6 +1114,11 @@
             "commit": "00297618",
             "type": "SOURCE_PARTIAL",
             "change": "Gate12 authentic interaction entry now rejects neutral diagnostic action graphs in ordinary player gameplay, and hides fixture-only selection and begin controls without original source-authored definitions; explicit -FoundationFixtures development mode is retained outside Shipping. No new runtime or content invented."
+          },
+          {
+            "commit": "b320e9f4",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native real-encounter canvas touch actions now draw inside the computed bottom CommandGridTop instead of the participant-card Top. Fixes layout anchor inconsistency that could overlap character cards and command buttons; does not replace the original battle executor or invent results."
           }
         ],
         "completed_in_this_update": false,
@@ -1392,7 +1402,13 @@
         "title": "Mobile settings, touch ergonomics and accessibility",
         "issue": 60,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "b320e9f4",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native real-encounter canvas touch actions now draw inside the computed bottom CommandGridTop instead of the participant-card Top. Fixes layout anchor inconsistency that could overlap character cards and command buttons; does not replace the original battle executor or invent results."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -1976,9 +1992,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T15:41:00Z"
+    },
+    {
+      "source_commit": "b320e9f4001f98ac9089434c2d357f8c917a0428",
+      "system_ids": [
+        "M03",
+        "M09",
+        "M33"
+      ],
+      "result": "Native real-encounter canvas touch actions now draw inside the computed bottom CommandGridTop instead of the participant-card Top. Fixes layout anchor inconsistency that could overlap character cards and command buttons; does not replace the original battle executor or invent results.",
+      "remaining_player_visible_work": "Verify on UE5.8/Android across landscape sizes, account for many participant/command rows and UMG safe-area scaling, and finish rendered authentic contact, opponent AI, rewards and persisted battle outcomes.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate12OwnedLuminousCombatSurface.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Targeted GitHub API source correction; no locally mounted current checkout for recorder CLI. Source-only evidence, not native testing.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T15:44:00Z"
     }
   ],
-  "continuation_last_source_commit": "00297618348a577658e47afb634122c56338a4a3",
+  "continuation_last_source_commit": "b320e9f4001f98ac9089434c2d357f8c917a0428",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
