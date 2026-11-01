@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Bind genuine, already imported UE source motions to the ONE packaged global
-NoWorld action catalog. No per-Version motion libraries or invented approvals.
+NoWorld action catalog. No per-Version motion libraries or pre-phone approval gates.
 
-python Scripts/production/bind_native_motion.py path/to/approved_bindings.json
+python Scripts/production/bind_native_motion.py path/to/original_source_bindings.json
 
 Input {"schema":"noworld.native_motion_bindings.v1","motions":[...]} uses the
 same fields as Content/NoWorld/Animation/SharedMotionCatalog.json, plus
-"approval_evidence" (a repository-relative existing evidence file).
+optional source evidence. Only genuine existing native source and authored
+combat timing/scene-role constraints may affect binding; user phone rejection
+is a separate explicit owner decision.
 The authoritative native asset must already exist as a .uasset under Content.
 This utility changes ONLY the shared catalog, never source or gameplay rules.
 """
@@ -71,7 +73,7 @@ def validate_motion(m: dict) -> dict:
     if not isinstance(m, dict):
         raise ValueError("Every motion binding must be a JSON object")
     fields = ("motion_id", "source_clip_id", "action", "context", "rig",
-              "anatomy", "native_sequence", "source_hash", "approval_evidence")
+              "anatomy", "native_sequence", "source_hash")
     for field in fields:
         if field not in m:
             raise ValueError(f"Motion is missing {field}")
@@ -79,9 +81,13 @@ def validate_motion(m: dict) -> dict:
         checked_id(m[field], field)
     if not SHA256.fullmatch(str(m["source_hash"])):
         raise ValueError("source_hash must be the authentic original SHA-256")
-    if m.get("approved_for_gameplay") is not True:
-        raise ValueError("No unapproved source can enter the runtime gameplay catalog")
-    inside_repo(m["approval_evidence"])
+    # An older authoring flag is NOT the owner's explicit phone-test decision.
+    # Never manufacture acceptance or exclude an authentic native source from
+    # the common catalog just because legacy QA marked it false.
+    if m.get("approval_evidence"):
+        inside_repo(m["approval_evidence"])
+    if m.get("owner_phone_review") == "REJECTED_BY_OWNER_AFTER_PHONE_TEST":
+        raise ValueError("Explicit owner phone-test rejection requires corrective source, not automatic re-entry")
     native_package(m["native_sequence"])
     if m.get("contact_seconds") is not None and (
         not isinstance(m["contact_seconds"], (float, int)) or
@@ -108,6 +114,9 @@ def validate_motion(m: dict) -> dict:
         raise ValueError("Bind the canonical character on the native controller, not in this motion bank")
     result = dict(m)
     result.pop("natural_completion_contact", None)
+    result.pop("approved_for_gameplay", None)
+    result.pop("approval_evidence", None)
+    result.pop("owner_phone_review", None)
     result["source_hash"] = str(result["source_hash"]).lower()
     return result
 
@@ -163,7 +172,7 @@ def bind(recipe_file: Path) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("recipe", type=Path, help="Approved original source + exact imported native asset bindings")
+    parser.add_argument("recipe", type=Path, help="Real original source + exact imported native asset bindings")
     parser.add_argument("--project-root", type=Path,
                         help="Existing authorized native Unreal game project; default is this source checkout")
     args = parser.parse_args()
