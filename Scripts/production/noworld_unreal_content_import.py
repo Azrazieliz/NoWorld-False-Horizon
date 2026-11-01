@@ -21,7 +21,7 @@ stage=os.environ["NOWORLD_FACTORY_STAGE"]
 job=json.loads(job_path.read_text("utf-8-sig"))
 if job.get("schema")!="noworld.factory.job.v1":
     raise ValueError("Unapproved content job schema")
-if stage not in ("character","artwork"):
+if stage not in ("character","artwork","animation"):
     raise ValueError("Invalid native UE authoring stage")
 job_id=job["job_id"]
 if not re.fullmatch(r"[a-z0-9][a-z0-9_.-]{2,80}",job_id):
@@ -125,6 +125,61 @@ try:
                      "source_card_sha256":source["original_card_sha256"],
                      "world_class":"/Script/OfflineGame.OGContentPlayableCharacter",
                      "artwork":None,"needs_original_registered_gameplay":True})
+    elif stage=="animation":
+        # Real FBX action curves are imported against the ACTUAL authored
+        # native Skeleton, never the wrong character or a dummy retarget.
+        original=job.get("animations",[])
+        if not isinstance(original,list) or not original:
+            raise ValueError("Animation job must carry real authored FBX sources")
+        bindings=[]
+        for index,item in enumerate(original):
+            source=need_file(item["path"],item["sha256"])
+            if source.suffix.lower()!=".fbx":
+                raise ValueError("Native animation import accepts real FBX; BVH/Studio data requires authentic Blender conversion first")
+            if item.get("approved_for_gameplay") is not True or not item.get("approval_evidence"):
+                raise ValueError("Native source must have an explicit valid approval record")
+            need_file(repo/item["approval_evidence"])
+            skeleton=unreal.EditorAssetLibrary.load_asset(item["skeleton"])
+            if not skeleton or skeleton.get_class().get_name()!="Skeleton":
+                raise ValueError("Real compatible native target Skeleton was not installed")
+            path="/Game/NoWorld/ContentFactory/Animation/"+normalized(job_id)+"/clip_"+str(index).zfill(3)
+            if unreal.EditorAssetLibrary.does_directory_exist(path) and unreal.EditorAssetLibrary.list_assets(path,True,False):
+                raise FileExistsError("Never replace an existing source-animated imported sequence")
+            options=unreal.FbxImportUI()
+            options.set_editor_property("import_mesh",False)
+            options.set_editor_property("import_animations",True)
+            options.set_editor_property("automated_import_should_detect_type",False)
+            options.set_editor_property("mesh_type_to_import",unreal.FBXImportType.FBXIT_ANIMATION)
+            options.set_editor_property("skeleton",skeleton)
+            task=unreal.AssetImportTask()
+            task.set_editor_property("filename",str(source))
+            task.set_editor_property("destination_path",path)
+            task.set_editor_property("automated",True)
+            task.set_editor_property("replace_existing",False)
+            task.set_editor_property("save",True)
+            task.set_editor_property("options",options)
+            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+            candidates=[]
+            for objpath in unreal.EditorAssetLibrary.list_assets(path,True,False):
+                obj=unreal.EditorAssetLibrary.load_asset(objpath)
+                if obj and obj.get_class().get_name()=="AnimSequence":
+                    candidates.append(str(obj.get_path_name()))
+            if len(candidates)!=1:
+                raise RuntimeError("Expected exactly one real native AnimSequence from original source")
+            entry={k:v for k,v in item.items() if k in (
+                "motion_id","source_clip_id","source_hash","approval_evidence",
+                "action","category","context","rig","anatomy","outfit",
+                "capabilities","participants","scene_id","scene_role",
+                "contact_seconds","contact_notify","priority","loop",
+                "natural_completion_contact","approved_for_gameplay")}
+            entry["native_sequence"]=candidates[0]
+            bindings.append(entry)
+            status["assets"].append(candidates[0])
+        bindings_path=receipt.parent/"auto_motion_bindings.json"
+        write_json(bindings_path,{"schema":"noworld.native_motion_bindings.v1",
+                                  "motions":bindings})
+        status["motion_bindings"]=str(bindings_path)
+        status["status"]="NATIVE_SOURCE_ANIMATION_SEQUENCES_IMPORTED"
     elif stage=="artwork":
         art=job.get("artwork",[])
         if not art:raise ValueError("No approved original artwork supplied")
