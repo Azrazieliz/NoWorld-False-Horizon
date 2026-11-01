@@ -446,7 +446,7 @@
         "Source/OfflineGame/Private/UI/OGGate12CharacterVisualCatalog.cpp",
         "docs/production/gate12/evidence/verified-original-koikatsu-native/G12_Awakened_Berserker_ExactOriginal_NativeUEImportAccepted.json"
       ],
-      "remaining": "Native compile, input and actual 3D viewport acceptance, gameplay, combat, source animation rig derivatives, Grand model, Android build and device test."
+      "remaining": "Original Grand 57-renderer CLOTHED source is now imported and bound in source; gameplay, combat, genuine motion derivatives, remaining wardrobe states and full viewport/device acceptance remain. Compilation/testing deferred by explicit user instruction."
     },
     {
       "id": "G12-0505",
@@ -468,16 +468,20 @@
       "master_descriptor": "CONTENT — APPROVAL DEPENDENT",
       "master_requirement": "Integrate Awakened, Berserker and Grand Convergence using their actual approved form content and exact rules, preserving owned source copies and progression. Reuse the single character-level shared motion controller with the correct native skeletons.",
       "state": "SOURCE_PARTIAL",
-      "source_commit": "b93777851194769fcfeb29aaac92e51159cb0714",
+      "source_commit": "364e3934",
       "source_paths": [
         "Assets/NoWorld/Luminous/KoikatsuOriginalCards/SOURCE_CARDS_MANIFEST.json",
         "Content/NoWorld/Characters/Luminous/Art/Accepted2D/APPROVED_FIVE_FORMS_MANIFEST.json",
-        "Scripts/production/intake_luminous_koikatsu_source_cards.py"
+        "Scripts/production/intake_luminous_koikatsu_source_cards.py",
+        "Content/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed",
+        "Assets/NoWorld/Luminous/VerifiedOriginalCards3D/Grand",
+        "docs/production/gate12/evidence/G12_Grand_ExactCard_57Renderer_NativeRegistry_20261101.json",
+        "Source/OfflineGame/Private/Koikatsu/OGExactOriginalLuminousParts.cpp"
       ],
       "remaining": [
-        "Import original Awakened, Berserker and Grand Convergence 3D wardrobe cards as real UE skeletal assets with correct materials and morphology",
+        "CLOTHED original-card native meshes for Awakened, Berserker and Grand are authored (Grand: 57 original active renderers, 209 native packages); finish missing UNDERWEAR/NUDE original-card wardrobe imports and visual morphology/material acceptance",
         "Verify exact per-form combat and progression rules against approved canonical source, without new ordinary lineage",
-        "Connect genuine form 3D assets to the one shared character animation controller and execute native gameplay",
+        "Source CLOTHED native World-pawn and preview bindings now use the shared motion controller; complete exact compatible rig motion/retarget action coverage and native gameplay execution",
         "Android compile, cook, device tests and user visual acceptance"
       ]
     },
