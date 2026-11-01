@@ -12,7 +12,7 @@ on:
       - '.github/workflows/noworld-content-factory.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   native-source-import:
@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-          persist-credentials: false
+          persist-credentials: true
       - name: Install isolated real Koikatsu card queue plugin
         shell: pwsh
         run: |
@@ -48,6 +48,27 @@ jobs:
             python Scripts/production/noworld_content_factory.py --inbox ContentFactory/Jobs --config ContentFactory/windows_worker.json
           }
           if($LASTEXITCODE -ne 0){throw 'Original source factory blocked: read precise native Saved ledger'}
+      - name: Stage only explicitly repository-approved native products
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          python Scripts/production/publish_noworld_factory_results.py --inbox ContentFactory/Jobs
+          if($LASTEXITCODE -ne 0){throw 'Native asset publication refused unsafe/missing provenance'}
+      - name: Commit exact new native assets via Git LFS
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          git lfs install --local
+          git config user.name "noworld-content-factory[bot]"
+          git config user.email "noworld-content-factory[bot]@users.noreply.github.com"
+          git add -- Content/NoWorld/ContentFactory Content/NoWorld/Animation/SharedMotionCatalog.json docs/production/content_receipts
+          $dirty=(git diff --cached --name-only)
+          if($dirty) {
+            git commit -m "5-star: import approved native character, art and original action source products"
+            if($LASTEXITCODE -ne 0){throw 'Native asset Git commit failed'}
+            git push origin "HEAD:$env:GITHUB_REF_NAME"
+            if($LASTEXITCODE -ne 0){throw 'Native asset push blocked by branch permissions'}
+          } else {Write-Output 'NO_NEW_APPROVED_NATIVE_ASSETS'}
       - name: Export receipts, not proprietary source cards
         if: always()
         uses: actions/upload-artifact@v4
