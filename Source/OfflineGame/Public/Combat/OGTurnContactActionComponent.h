@@ -7,6 +7,7 @@
 
 class UOGSharedMotionControllerComponent;
 class UOGGameCoreSubsystem;
+class AController;
 
 /**
  * Real turn-mode action staging on the actual source character.
@@ -47,6 +48,7 @@ private:
     void DropStagedAction(bool bStopSourcePlayback);
 
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
+    TWeakObjectPtr<AController> OriginalPawnController;
     TWeakObjectPtr<UOGSharedMotionControllerComponent> BoundMotion;
     FOGResolvedCombatAction StagedAction;
     FOGEntityId BattleId;
