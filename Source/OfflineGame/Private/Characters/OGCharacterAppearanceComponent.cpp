@@ -330,6 +330,11 @@ bool UOGCharacterAppearanceComponent::InstallAppearance(
     CandidateController = NewObject<UOGSharedMotionControllerComponent>(Owner, NAME_None, RF_Transient);
     if (!CandidateController) return AppearanceError(Error, TEXT("Could not allocate candidate shared motion controller."));
     CandidateController->SharedLibrary = Definition->SharedMotionLibrary;
+    // The canonical character identity is attached to the reusable controller
+    // BEFORE any Version/wardrobe-specific skeletal parts are installed.
+    // A privacy wardrobe or alternate Version never becomes another identity.
+    if (!CandidateController->BindCanonicalCharacter(Definition->IdentityId))
+        return AppearanceError(Error, TEXT("Original shared motion cannot bind this canonical character identity."));
     CandidateController->bUseIdenticalTopologyLeaderPose = Rendered->bUseIdenticalTopologyLeaderPose;
     // One gameplay action drives every compatible original rest-pose cohort.
     // Mixed authentic source-part skeletons are NOT silently copied/retargeted.
