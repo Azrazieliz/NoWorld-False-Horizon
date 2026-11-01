@@ -33,3 +33,5 @@ Content/NoWorld/Characters/Luminous/Berserker/ExactOriginalClothed/**/*.uasset f
 Content/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/**/*.uasset filter=lfs diff=lfs merge=lfs -text
 Assets/NoWorld/Luminous/VerifiedOriginalCards3D/Grand/**/*.unitymesh filter=lfs diff=lfs merge=lfs -text
 Assets/NoWorld/Luminous/VerifiedOriginalCards3D/Grand/**/*.png filter=lfs diff=lfs merge=lfs -text
+# Exact factory-authored native SkeletalMesh/Skeleton/material assets. No raw user cards.
+Content/NoWorld/ContentFactory/**/*.uasset filter=lfs diff=lfs merge=lfs -text
