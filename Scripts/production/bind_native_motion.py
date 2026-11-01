@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""Bind genuine, already imported UE source motions to the ONE packaged global
+NoWorld action catalog. No per-Version motion libraries or invented approvals.
+
+python Scripts/production/bind_native_motion.py path/to/approved_bindings.json
+
+Input {"schema":"noworld.native_motion_bindings.v1","motions":[...]} uses the
+same fields as Content/NoWorld/Animation/SharedMotionCatalog.json, plus
+"approval_evidence" (a repository-relative existing evidence file).
+The authoritative native asset must already exist as a .uasset under Content.
+This utility changes ONLY the shared catalog, never source or gameplay rules.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import tempfile
+
+ROOT = Path(__file__).resolve().parents[2]
+CATALOG = ROOT / "Content/NoWorld/Animation/SharedMotionCatalog.json"
+SCHEMA = "noworld.shared_motion_catalog.v1"
+INPUT_SCHEMA = "noworld.native_motion_bindings.v1"
+SHA256 = re.compile(r"^[a-fA-F0-9]{64}$")
+ID = re.compile(r"^[A-Za-z0-9_.:\-/]+$")
+
+
+def checked_id(value: object, field: str) -> str:
+    if not isinstance(value, str) or not ID.fullmatch(value):
+        raise ValueError(f"{field}: require a nonempty canonical name")
+    return value
+
+
+def inside_repo(path: str) -> Path:
+    if not isinstance(path, str) or not path or Path(path).is_absolute():
+        raise ValueError("Evidence paths must be repository relative")
+    target = (ROOT / path).resolve()
+    if not target.is_relative_to(ROOT) or not target.is_file():
+        raise ValueError(f"Evidence is not an existing repository file: {path}")
+    return target
+
+
+def native_package(name: str) -> Path:
+    if not isinstance(name, str) or not name.startswith("/Game/"):
+        raise ValueError("native_sequence must be an Unreal /Game/ object path")
+    if name.count(".") != 1:
+        raise ValueError("native_sequence requires Package.Asset")
+    package, asset = name[6:].split(".")
+    if not package or not asset or package.rsplit("/", 1)[-1] != asset:
+        raise ValueError("native_sequence package and object names must match")
+    path = (ROOT / "Content" / (package + ".uasset")).resolve()
+    if not path.is_relative_to((ROOT / "Content").resolve()) or not path.is_file():
+        raise ValueError(f"Original imported Unreal asset is missing: {name}")
+    return path
+
+
+def key(m: dict) -> tuple:
+    return tuple(str(m.get(k, "")).casefold() for k in (
+        "action", "context", "rig", "anatomy", "outfit",
+        "participants", "scene_role", "priority"))
+
+
+def validate_motion(m: dict) -> dict:
+    if not isinstance(m, dict):
+        raise ValueError("Every motion binding must be a JSON object")
+    fields = ("motion_id", "source_clip_id", "action", "context", "rig",
+              "anatomy", "native_sequence", "source_hash", "approval_evidence")
+    for field in fields:
+        if field not in m:
+            raise ValueError(f"Motion is missing {field}")
+    for field in fields[:6]:
+        checked_id(m[field], field)
+    if not SHA256.fullmatch(str(m["source_hash"])):
+        raise ValueError("source_hash must be the authentic original SHA-256")
+    if m.get("approved_for_gameplay") is not True:
+        raise ValueError("No unapproved source can enter the runtime gameplay catalog")
+    inside_repo(m["approval_evidence"])
+    native_package(m["native_sequence"])
+    if m.get("contact_seconds") is not None and (
+        not isinstance(m["contact_seconds"], (float, int)) or
+        not (-1 <= m["contact_seconds"] <= 10000)):
+        raise ValueError("contact_seconds must be an authentic nonnegative time, or -1")
+    if str(m["action"]).startswith("Combat.") and (
+        "contact_seconds" not in m and not m.get("contact_notify")):
+        # Natural sequence completion is acceptable only when deliberately declared.
+        if m.get("natural_completion_contact") is not True:
+            raise ValueError("Combat requires authored contact or explicit natural completion")
+    if isinstance(m.get("participants", 1), bool) or not isinstance(m.get("participants", 1), int) or m.get("participants", 1) < 1:
+        raise ValueError("participants must be a positive integer")
+    if m.get("capabilities") is not None and (
+        not isinstance(m["capabilities"], list) or
+        not all(isinstance(x, str) and ID.fullmatch(x) for x in m["capabilities"])):
+        raise ValueError("capabilities must be canonical names")
+    if m.get("participants", 1) > 1 and (
+        not m.get("scene_id") or not m.get("scene_role")):
+        raise ValueError("Synchronized participants require original scene identity and role")
+    # This runtime catalog is character-independent: rig/action/role select
+    # derivatives. Character identity/Version/Manifestation never fork the bank.
+    forbidden = ("character_version", "manifestation_id", "character_id")
+    if any(k in m for k in forbidden):
+        raise ValueError("Bind the canonical character on the native controller, not in this motion bank")
+    result = dict(m)
+    result.pop("natural_completion_contact", None)
+    result["source_hash"] = str(result["source_hash"]).lower()
+    return result
+
+
+def bind(recipe_file: Path) -> dict:
+    recipe = json.loads(recipe_file.read_text(encoding="utf-8"))
+    if recipe.get("schema") != INPUT_SCHEMA or not isinstance(recipe.get("motions"), list) or not recipe["motions"]:
+        raise ValueError(f"Recipe requires {INPUT_SCHEMA} and nonempty motions")
+    if CATALOG.stat().st_size:
+        existing = json.loads(CATALOG.read_text(encoding="utf-8"))
+    else:
+        existing = {"schema": SCHEMA, "motions": []}
+    if existing.get("schema") != SCHEMA or not isinstance(existing.get("motions"), list):
+        raise ValueError("Existing shared motion catalog is invalid; refusing to overwrite")
+    motions = existing["motions"]
+    staged_ids = {}
+    for source in recipe["motions"]:
+        m = validate_motion(source)
+        ident = m["motion_id"].casefold()
+        if ident in staged_ids and staged_ids[ident] != m:
+            raise ValueError(f"Conflicting definitions for {m['motion_id']}")
+        staged_ids[ident] = m
+    merged = {m["motion_id"].casefold(): m for m in motions}
+    if len(merged) != len(motions):
+        raise ValueError("Existing catalog has duplicate IDs")
+    for ident, m in staged_ids.items():
+        prior = merged.get(ident)
+        if prior and prior.get("source_clip_id") != m["source_clip_id"]:
+            raise ValueError(f"Cannot silently change authentic source of {m['motion_id']}")
+        merged[ident] = m
+    occupied = {}
+    for m in merged.values():
+        k = key(m)
+        if k in occupied and occupied[k] != m["motion_id"]:
+            raise ValueError(f"Ambiguous shared rig/action binding: {occupied[k]} and {m['motion_id']}")
+        occupied[k] = m["motion_id"]
+    existing["motions"] = sorted(merged.values(), key=lambda m: m["motion_id"].casefold())
+    # Preserve unknown top-level fields and write atomically; no rewriting
+    # imported .uasset data, original receipts, user saves or canonical contracts.
+    fd, tmp = tempfile.mkstemp(prefix=".shared_motions_", suffix=".json", dir=CATALOG.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as out:
+            json.dump(existing, out, ensure_ascii=False, indent=2)
+            out.write("\n")
+            out.flush()
+            os.fsync(out.fileno())
+        os.replace(tmp, CATALOG)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+    return {"bound": len(staged_ids), "total": len(merged), "catalog": str(CATALOG.relative_to(ROOT))}
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("recipe", type=Path, help="Approved original source + exact imported native asset bindings")
+    args = parser.parse_args()
+    print(json.dumps(bind(args.recipe.resolve()), indent=2))
+
+
+if __name__ == "__main__":
+    main()
