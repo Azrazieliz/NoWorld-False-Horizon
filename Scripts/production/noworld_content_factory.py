@@ -198,9 +198,15 @@ def run(jobpath,config,mode="run"):
             stage("blender",blender,blend)
             receipt=work/"unreal_receipt.json"
             stage("unreal",lambda:editor(config,"unreal",jobpath,"character",receipt,timeout),receipt)
+        if data.get("animations"):
+            receipt=work/"animation_receipt.json"
+            stage("animation_import",lambda:editor(
+                config,"animation",jobpath,"animation",receipt,timeout),receipt)
+            if not motions:
+                motions=str(work/"auto_motion_bindings.json")
         if kind in ("motion","bundle") or motions:
             if not motions:
-                raise ValueError("Motion jobs need original approved motions_recipe")
+                raise ValueError("Motion jobs require an approved existing recipe or real original FBX sources")
             m=config_file(motions)
             required_file(m)
             stage("motion_bind",lambda:process([
