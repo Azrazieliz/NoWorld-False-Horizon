@@ -204,7 +204,8 @@ def run(jobpath,config,mode="run"):
             m=config_file(motions)
             required_file(m)
             stage("motion_bind",lambda:process([
-                 sys.executable,REPO/"Scripts/production/bind_native_motion.py",m],
+                 sys.executable,REPO/"Scripts/production/bind_native_motion.py",m,
+                 "--project-root",Path(config["unreal_project"]).parent],
                  timeout=timeout))
         if artwork:
             if not isinstance(artwork,list): raise ValueError("artwork must be source asset list")
