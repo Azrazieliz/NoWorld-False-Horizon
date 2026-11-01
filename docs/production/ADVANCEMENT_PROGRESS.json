@@ -1528,5 +1528,16 @@
     "agent_read_order_commit": "9d7595d2",
     "file_grading_commit": "974b7405",
     "unresolved_material": "Exact v0.41 mature-content wording unavailable; do not fabricate"
+  },
+  "latest_authority_reconciliation": {
+    "date": "2026-11-01",
+    "status": "DOCUMENTED_SOURCE_HIERARCHY_ONLY_NOT_GAMEPLAY_PROGRESS",
+    "whole_game_baseline": "Offline_Adult_Gacha_RPG_Master_Architecture_Baseline_v0.40_FINAL_PRECODING_FREEZE_RELEASE.docx",
+    "master_archive_parts": 10,
+    "mature_only_supersession": "docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md",
+    "later_approved_changes": "Explicit Creative Director decisions and subsequent verified code/contract history can supersede corresponding earlier provisions; arbitrary newer code defects cannot.",
+    "legacy_v036": "historical_only",
+    "authority": "docs/production/NOWORLD_7STAR_AUTHORITY.md",
+    "note": "No gameplay-system acceptance increased, no compile/APK created from clarifying source authority."
   }
 }
