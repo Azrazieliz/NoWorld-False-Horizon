@@ -410,9 +410,12 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const float ButtonW=FMath::Max(1.f,
             (W-2.f*Edge-(Columns-1)*Gap)/Columns);
         const float CommandGridTop=H-Edge-Rows*(ButtonH+Gap);
-        DrawGameText(bWaitingForRealContact
-            ? TEXT("Original character action is in motion; contact settles actual results.")
-            : TEXT("Select a real participant. Area effects expand by source rules."),
+        // Use the reserved guide line for canonical errors. Drawing status
+        // across the bottom row otherwise masks live Android touch buttons.
+        DrawGameText(!FoundationStatusMessage.IsEmpty() ? FoundationStatusMessage :
+            bWaitingForRealContact
+                ? TEXT("Original character action is in motion; contact settles actual results.")
+                : TEXT("Select a real participant. Area effects expand by source rules."),
             Edge+6.f*S,CommandGridTop-27.f*S,13.f*S,Accent,W-2.f*Edge);
         for (int32 Index=0;Index<CommandCount;++Index)
         {
@@ -431,9 +434,9 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         }
     }
 
-    // Error messages are actual canonical preflight errors, not invented
-    // animation/gameplay consequences.
-    if (!FoundationStatusMessage.IsEmpty())
+    // No command grid exists only when the exact source kit has no actions.
+    // Keep its truthful preflight error readable without covering live buttons.
+    if (CommandCount==0 && !FoundationStatusMessage.IsEmpty())
         DrawGameText(FoundationStatusMessage,Edge+5.f*S,
             H-Edge-35.f*S,18.f*S,Accent,W-2.f*Edge);
     return true;
