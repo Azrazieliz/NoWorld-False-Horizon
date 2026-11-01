@@ -1,3 +1,4 @@
+#include "Combat/OGTurnContactActionComponent.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
@@ -175,6 +176,12 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
     { Error = TEXT("No live authored opponent turn is bound."); return false; }
     const UOGPresentationModeSubsystem* Mode = GetWorld()->GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>();
     if (Mode && Mode->GetMode()!=EOGPresentationMode::World && Battle->GetState().ExecutionMode!=EOGCombatExecutionMode::World) return false;
+    // Do not submit a second action while the source character is
+    // physically performing one that has not reached its contact marker.
+    if (const auto* Pending =
+        GetOwner()->FindComponentByClass<UOGTurnContactActionComponent>();
+        Pending && Pending->IsAwaitingAuthoredContact())
+        return false;
     if (ObserveHumanControl())
     { Error = TEXT("Human control replaced this opponent's AI control."); Status = Error; ReadyAtSeconds = -1.0; return false; }
     const bool WorldMode=Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World;
@@ -245,8 +252,33 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
             { MissingBody=true; break; }
         if (MissingBody)
         { LastFailure=TEXT("An authored turn target has no connected native body."); continue; }
-        if (!Core->ApplyOwnedLuminousTurnAction(Action,LastFailure)) continue;
-        // The bound canonical body receives every accepted root/reaction action from GameCore.
+        const FName OriginalSemantic =
+            Battle->ResolveNativeAbilityMotion(
+                Battle->GetState().Units[Acting], Action.SkillId);
+        if (OriginalSemantic.IsNone())
+        {
+            LastFailure = TEXT(
+                "Opponent has no source-authored action animation/contact binding.");
+            continue;
+        }
+        UOGTurnContactActionComponent* Staged =
+            GetOwner()->FindComponentByClass<UOGTurnContactActionComponent>();
+        if (!Staged)
+        {
+            Staged = NewObject<UOGTurnContactActionComponent>(GetOwner());
+            if (!Staged)
+            {
+                LastFailure = TEXT("Could not attach the actual NPC contact action.");
+                continue;
+            }
+            GetOwner()->AddInstanceComponent(Staged);
+            Staged->RegisterComponent();
+        }
+        if (!Staged->StageActualTurnAction(
+                Action, OriginalSemantic, LastFailure))
+            continue;
+        // No damage has occurred yet: authored contact triggers exactly
+        // one canonical GameCore commit, after the actual character moves.
         Status.Reset(); FailedSequence = -1; ReadyAtSeconds = -1.0;
         return true;
     }

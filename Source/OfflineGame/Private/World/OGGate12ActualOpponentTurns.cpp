@@ -7,6 +7,8 @@
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGTurnBattle.h"
+#include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGTurnContactActionComponent.h"
 #include "Animation/OGSharedMotionControllerComponent.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
@@ -84,16 +86,32 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
 
     const int64 Sequence=Battle->GetLog().GetNextSequence(),Revision=Battle->GetNativeAbilityRevision();
     if (MissingExecutorUnit==ActingId && MissingExecutorSequence==Sequence && MissingExecutorRevision==Revision) return;
-    // All choices are already authored abilities on the actual participating
-    // unit. The approved resolver owns targeting, AoE expansion, costs,
-    // status effects, health, turn delay, and every world consequence.
-    TArray<FOGContentId> Authored;
-    Authored.Reserve(Acting.SkillSet.ActiveSkills.Num()+Acting.SkillSet.GetUltimateSkills().Num());
-    for (const FOGContentId& Id : Acting.SkillSet.ActiveSkills)
-        if (Id.IsValid() && !Authored.Contains(Id)) { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Id,Missing)) Authored.Add(Id); }
-    for (const auto& Ultimate:Acting.SkillSet.GetUltimateSkills())
-        if (!Authored.Contains(Ultimate))
-        { FString Missing; if (Battle->HasNativeActionExecutor(Acting,Ultimate,Missing)) Authored.Add(Ultimate); }
+    // The non-player uses the SAME executable, source-specific command list
+    // as a player-controlled character. Abilities are not identified solely
+    // by their SkillId: an Ultimate may have distinct authorized branches,
+    // target rules, costs, semantic motion and settlement behavior.
+    FOGNativeBattleCommandSet NativeCommands;
+    FString NativeCommandError;
+    if (!FOGNativeBattleCommands::BuildFor(
+            Acting, NativeCommands, NativeCommandError))
+    {
+        MissingExecutorUnit=ActingId;
+        MissingExecutorSequence=Sequence;
+        MissingExecutorRevision=Revision;
+        UE_LOG(LogTemp, Warning,
+            TEXT("Non-player %s lacks an installed source-authored command set: %s"),
+            *ActingId.ToString(), *NativeCommandError);
+        return;
+    }
+    TArray<const FOGNativeBattleCommand*> Authored;
+    Authored.Reserve(NativeCommands.Commands.Num());
+    for (const FOGNativeBattleCommand& Command : NativeCommands.Commands)
+    {
+        FString ExecutorError;
+        if (Command.SkillId.IsValid() &&
+            Battle->HasNativeActionExecutor(Acting,Command.SkillId,ExecutorError))
+            Authored.Add(&Command);
+    }
     if (Authored.IsEmpty())
     {
         MissingExecutorUnit=ActingId; MissingExecutorSequence=Sequence; MissingExecutorRevision=Revision;
@@ -109,7 +127,9 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
         if (Unit.CanAct() && Unit.TeamIndex != Acting.TeamIndex)
             Candidates.Add(&Unit);
     for (const FOGCombatUnitState& Unit : State.Units)
-        if (Unit.CanAct() && Unit.TeamIndex == Acting.TeamIndex)
+        if ((Unit.CanAct() ||
+            (Unit.Presence == EOGCombatPresence::Defeated && !Unit.IsAlive())) &&
+            Unit.TeamIndex == Acting.TeamIndex)
             Candidates.Add(&Unit);
 
     // Rotation chooses among genuine available abilities without hardcoding
@@ -119,95 +139,53 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
         static_cast<uint64>(Authored.Num()));
     for (int32 Offset = 0; Offset < Authored.Num(); ++Offset)
     {
-        const FOGContentId Skill =
-            Authored[(Start + Offset) % Authored.Num()];
+        const FOGNativeBattleCommand& Command =
+            *Authored[(Start + Offset) % Authored.Num()];
+        const FOGContentId Skill=Command.SkillId;
         for (const FOGCombatUnitState* Focus : Candidates)
         {
             FOGResolvedCombatAction Proposal;
-            Proposal.SourceUnitId = Acting.UnitEntityId;
-            Proposal.SkillId = Skill;
-            Proposal.TargetUnitIds.Add(Focus->UnitEntityId);
-            Proposal.ActionDelay = FMath::Max<int64>(1, Acting.DefaultActionDelay);
-            if (Skill == Acting.SkillSet.UltimateSkill)
-            {
-                const FString Form = Acting.SkillSet.CurrentForm.ToString();
-                if (Form == TEXT("character:luminous_valentine.version_ln_base"))
-                    Proposal.ResolutionJson = TEXT("{\"branch\":\"day\"}");
-                else if (Form == TEXT("character:luminous_valentine.version_alter_v1"))
-                    Proposal.ResolutionJson = TEXT("{\"branch\":\"ruin\"}");
-            }
+            TArray<FOGEntityId> FocusIds;
+            FocusIds.Add(Focus->UnitEntityId);
+            Command.BuildAction(Acting,FocusIds,Proposal);
             FOGResolvedCombatAction Expanded;
             bool bArea = false;
             FString Error;
             if (!Battle->ExpandApprovedFieldTargets(
                 Proposal, Expanded, bArea, Error))
                 continue;
-            TMap<FOGEntityId, FOGLargeNumber> HpBefore;
-            for (const auto& Unit:State.Units) HpBefore.Add(Unit.UnitEntityId,Unit.CurrentHp);
-            Expanded.ActionId = FOGEntityId::NewId();
-            if (!Core->ApplyApprovedLuminousResolvedAction(Expanded, Error))
-                continue; // Atomic failed preflight: no turn consumed.
+            // Keep the exact skill branch and its original clip together.
+            // Generic character definitions may provide a source-registered
+            // native semantic; otherwise use this command's authored mapping.
+            FName Semantic = Battle->ResolveNativeAbilityMotion(
+                Acting, Expanded.SkillId);
+            if (Semantic.IsNone()) Semantic=Command.MotionSemantic();
+            if (Semantic.IsNone())
+                continue; // Never resolve source damage without its actual motion.
 
-            const auto* Committed=Core->GetOwnedLuminousTurnBattle();
-            if (!Committed || Committed->GetState().BattleId!=ActualBattleId) return;
-            AActor* SourceActor =
-                UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
-                    GetWorld(), ActualBattleId, ActingId);
-            AActor* FirstActor = nullptr;
-            if (const FOGTurnBattle* AfterBattle =
-                Core->GetOwnedLuminousTurnBattle())
+            UOGTurnContactActionComponent* Staging =
+                ExistingSourceBody->FindComponentByClass<
+                    UOGTurnContactActionComponent>();
+            if (!Staging)
             {
-                for (const auto& ResolvedUnit:AfterBattle->GetState().Units)
-                {
-                    const FOGEntityId TargetId=ResolvedUnit.UnitEntityId;
-                    AActor* Body =
-                        UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
-                            GetWorld(), ActualBattleId, TargetId);
-                    if (!IsValid(Body)) continue;
-                    if (!FirstActor && Expanded.TargetUnitIds.Contains(TargetId)) FirstActor = Body;
-                    const FOGLargeNumber* Before = HpBefore.Find(TargetId);
-                    const FOGCombatUnitState* After =
-                        AfterBattle->GetState().Units.FindByPredicate(
-                        [&TargetId](const FOGCombatUnitState& U)
-                        { return U.UnitEntityId == TargetId; });
-                    if (!Before || !After ||
-                        FOGLargeNumber::Compare(*Before, After->CurrentHp) == 0)
-                        continue;
-                    if (APlayerController* PC =
-                        Cast<APlayerController>(GetController()))
-                        if (AOGWorldPresentationHud* Hud =
-                            Cast<AOGWorldPresentationHud>(PC->GetHUD()))
-                            Hud->RegisterCanonicalCombatImpact(
-                                Body, *Before, After->CurrentHp);
-                    if (UOGSharedMotionControllerComponent* Motion =
-                        OpponentMotion(Body))
-                    {
-                        const FName Reaction = !After->IsAlive()
-                            ? FName(TEXT("Combat.Reaction.Death")) :
-                            FOGLargeNumber::Compare(After->CurrentHp, *Before) < 0
-                            ? FName(TEXT("Combat.Reaction.Hit")) :
-                            FName(TEXT("Combat.Reaction.Heal"));
-                        if (!After->IsAlive()) Motion->PlayAction(Reaction,TEXT("Combat"),false,1);
-                        else Motion->EnqueueCombatCue(Reaction,ActualBattleId,Expanded.ActionId,TargetId);
-                    }
-                }
+                Staging = NewObject<UOGTurnContactActionComponent>(
+                    ExistingSourceBody);
+                if (!Staging)
+                    continue;
+                ExistingSourceBody->AddInstanceComponent(Staging);
+                Staging->RegisterComponent();
             }
-            if (IsValid(SourceActor))
-            {
-                if (IsValid(FirstActor) && FirstActor != SourceActor)
-                {
-                    const FVector Delta =
-                        FirstActor->GetActorLocation()-SourceActor->GetActorLocation();
-                    if (Delta.SizeSquared2D() > FMath::Square(5.f))
-                        SourceActor->SetActorRotation(
-                            FRotator(0.f, Delta.Rotation().Yaw, 0.f));
-                }
-                // Canonical body binding queues every accepted root/reaction motion once.
-            }
+            if (Staging->IsAwaitingAuthoredContact())
+                return; // The original character is already mid-strike.
+            if (!Staging->StageActualTurnAction(
+                    Expanded, Semantic, Error))
+                continue;
+
+            // Gameplay settlement and HP reactions happen at the original
+            // clip's authored contact. No immediate invisible enemy attack.
             UE_LOG(LogTemp, Display,
-                TEXT("Gate12 actual non-player turn committed: unit %s source skill %s targets %d"),
-                *ActingId.ToString(), *Skill.ToString(),
-                Expanded.TargetUnitIds.Num());
+                TEXT("Gate12 non-player original action staged: %s command %s skill %s"),
+                *ActingId.ToString(), *Command.Id.ToString(), *Skill.ToString());
             return;
         }
     }
