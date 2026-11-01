@@ -6,6 +6,16 @@
 3. **5★:** `docs/production/CONTENT_BINDING_5STAR.md` — **both durable production instructions and executable Python/C#/Unreal automation**. Reuse one global action/animation catalog, source-faithful reusable anatomy-compatible derivatives and character/form personality variations; no duplicate per-identity/form libraries. Automation source is not proof the native pipeline ran.
 4. Read the exact touched C++ and approved original source; do not repeatedly audit the entire repository.
 
+## Mandatory non-repetition and recorded advancement loop
+
+**Before any code/content work:** read current 7★, then CURRENT 6★ `docs/production/ADVANCEMENT_PROGRESS.json`, then existing 5★ `docs/production/CONTENT_BINDING_5STAR.md` and `docs/production/REPO_EXECUTION_MAP.md`. Inspect the actual latest production branch source, not an older PC checkout or historical notes. First determine exactly what is already implemented, incomplete and blocked. Do NOT redo completed work because a later session lacks chat context.
+
+**For each task:** find and REUSE the closest 5★ program first. If no existing 5★ program can perform the needed work, explain the specific missing capability in the 6★ record and implement a NEW REUSABLE program under the approved 5★ tools root, index it in the 5★ manual, and use that program. No ad hoc manual import pipeline is a substitute for available automation.
+
+**After EVERY material source/integration change:** push GitHub, then update 6★ with the exact commit SHA, the affected 7★ M01–M36 systems, what truly works in source, what's player-visible and still missing, and native/device/owner acceptance as appropriate. Run the 5★ `Scripts/production/record_noworld_progress.py --resume` when resuming; use its `--commit --system --result --next --reuse-5star` or `--new-5star-program --why-new` form for new work. That script never completes a whole-game milestone by itself. Do not count navigation/docs/tests/imports as game completion.
+
+**Confirmed source:** The single global shared motion catalog was **restored from original PC to GitHub on commit `ce190e87`** with 3,222 indexed source entries and matching native Unreal assets. Do not reinitialize it to `{"motions":[]}` or redownload/recreate the assets. 937 combat entries still require genuine approval/action-contact mapping. PC original protected project was not reset; it remains at older `d4e68de1` and must not be destructively pulled over its protected work.
+
 ## Execution constraints
 - Repo `Azrazieliz/NoWorld-False-Horizon`, current production baseline `production/gate12-full-continuation-20261023`; active integration in `work/gate12-whole-character-shared-motion-20261031` and the open Gate12 PR #89 stack. Recheck refs before commits. Avoid replacing the active stack with `main`.
 - Game purpose: real full-scope UE5.8 rendered Android/Windows game with visible navigable persistent World, real original playable characters and authored action/contact combat, Native UI, interactions, economy, NPCs and complete accepted systems.
