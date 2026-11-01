@@ -1011,6 +1011,11 @@
             "commit": "bbb4ec2f",
             "type": "SOURCE_PARTIAL",
             "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
+          },
+          {
+            "commit": "9a4a59e0",
+            "type": "SOURCE_PARTIAL",
+            "change": "Existing native opponent runtime now advances canonical Turn-mode AI despite player movement/camera input being suppressed by the combat HUD, while respecting real game pause and World presentation; it never stages a turn contact as a World-mode physical ability. Source-authored NPC turn agents also permit legitimate defeated allied recipients lacking living World bodies after the canonical revival executor validates the skill, preserving actual source-authored revival."
           }
         ],
         "completed_in_this_update": false,
@@ -1107,6 +1112,11 @@
             "commit": "bbb4ec2f",
             "type": "SOURCE_PARTIAL",
             "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
+          },
+          {
+            "commit": "9a4a59e0",
+            "type": "SOURCE_PARTIAL",
+            "change": "Existing native opponent runtime now advances canonical Turn-mode AI despite player movement/camera input being suppressed by the combat HUD, while respecting real game pause and World presentation; it never stages a turn contact as a World-mode physical ability. Source-authored NPC turn agents also permit legitimate defeated allied recipients lacking living World bodies after the canonical revival executor validates the skill, preserving actual source-authored revival."
           }
         ],
         "completed_in_this_update": false,
@@ -1260,7 +1270,13 @@
         "title": "Enemy AI, high-rank combat and encounter balancing",
         "issue": 41,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "9a4a59e0",
+            "type": "SOURCE_PARTIAL",
+            "change": "Existing native opponent runtime now advances canonical Turn-mode AI despite player movement/camera input being suppressed by the combat HUD, while respecting real game pause and World presentation; it never stages a turn contact as a World-mode physical ability. Source-authored NPC turn agents also permit legitimate defeated allied recipients lacking living World bodies after the canonical revival executor validates the skill, preserving actual source-authored revival."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -2214,9 +2230,30 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T16:00:00Z"
+    },
+    {
+      "source_commit": "9a4a59e0df2779d5066f2d9dd52feee6ddc54c22",
+      "system_ids": [
+        "M03",
+        "M06",
+        "M14"
+      ],
+      "result": "Existing native opponent runtime now advances canonical Turn-mode AI despite player movement/camera input being suppressed by the combat HUD, while respecting real game pause and World presentation; it never stages a turn contact as a World-mode physical ability. Source-authored NPC turn agents also permit legitimate defeated allied recipients lacking living World bodies after the canonical revival executor validates the skill, preserving actual source-authored revival.",
+      "remaining_player_visible_work": "Verify authentic opponent turn playback, AI decisions and revival outcomes with actual native actors/rigs; connect remaining source combat impact metadata, original First World enemies, persistence and rewards on Unreal/Android.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate12ActualOpponentTurns.cpp",
+        "Source/OfflineGame/Private/Combat/OGNativeTurnAgentComponent.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reused current canonical UOGNativeTurnAgentComponent and UOGTurnContactActionComponent as the established native executable production runtime, not a new AI/damage system. No native checkout/recorder CLI or Unreal verification available.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T16:04:00Z"
     }
   ],
-  "continuation_last_source_commit": "bbb4ec2f7650786a3cbf67d9d89a81b5ce56aa06",
+  "continuation_last_source_commit": "9a4a59e0df2779d5066f2d9dd52feee6ddc54c22",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
