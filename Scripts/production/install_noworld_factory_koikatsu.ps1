@@ -7,6 +7,9 @@ $compiler='C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
 if(!(Test-Path $compiler) -or !(Test-Path $source)){throw 'Real .NET C# compiler or factory plugin source missing'}
 $names=@('BepInEx.dll','Assembly-CSharp.dll','UnityEngine.dll','KKAPI.dll')
 $refs=@()
+$core=Join-Path (Split-Path $compiler) 'System.Core.dll'
+if(!(Test-Path $core)){throw 'Framework LINQ runtime missing'}
+$refs+=$core
 foreach($name in $names){
  $matches=@(Get-ChildItem -LiteralPath $Game -File -Filter $name -Recurse -ErrorAction SilentlyContinue)
  if($matches.Count -eq 0){throw ('Required original Koikatsu DLL absent: '+$name)}
