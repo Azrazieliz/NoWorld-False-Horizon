@@ -31,7 +31,7 @@ void RegisterInstalled(FOGSharedMotionEntry& Entry, UOGSharedMotionLibrary* Libr
         Entry.RequiredCapabilities.Add(FName(Capability));
     Entry.NativeSequence = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(NativePath));
     Entry.bLoop = bLoop;
-    Entry.bApprovedForGameplay = true; // Existing gameplay bindings; not a new artistic approval.
+    // Original source-installed clips need no pre-phone-test approval flag.
     Library->Motions.Add(MoveTemp(Entry));
 }
 
@@ -95,10 +95,9 @@ void Install(UOGSharedMotionLibrary* Library)
             TEXT("Interaction"), TEXT("CLOTHED"), Path, false, TEXT("emote"));
     }
 
-    // Rejected choreography and QA-only source clips remain unapproved for
-    // GAMEPLAY solely for technical/artistic reasons. Mature content is a
-    // production category, not a separate invented action-eligibility gate;
-    // existing SFW/privacy handling belongs to presentation, not this library.
+    // Source compatibility and authentic native assets determine whether a clip
+    // can render. Only the owner may reject a presented game result after a
+    // real phone test; legacy QA booleans do not constitute that decision.
 }
 
 // Packaged, editable shared catalog. New converted source derivatives can be
@@ -157,6 +156,8 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
             for (const TSharedPtr<FJsonValue>& V : *Caps)
                 if (V.IsValid() && V->Type == EJson::String)
                     Entry.RequiredCapabilities.Add(FName(*V->AsString()));
+        // Deprecated source-authored approval flag is read for old assets only;
+        // it is NOT gameplay eligibility or an owner's phone-test verdict.
         Item->TryGetBoolField(TEXT("approved_for_gameplay"), Entry.bApprovedForGameplay);
         // Legacy `adult_restricted` describes source content; it is NOT an
         // independently invented gameplay authorization rule. Honor optional
@@ -223,11 +224,11 @@ void ReadPackagedCatalog(UOGSharedMotionLibrary* Library)
                 Entry.MorphTracks.Add(MoveTemp(Track));
         }
 
-        // Manifest approvals replace precisely the matching installed entry.
-        // De-approved definitions suppress the fallback instead of reviving it.
+        // Source catalog owns all indexed originals. Retain the original clip
+        // even if legacy tooling marked it unapproved without a phone test.
         Library->Motions.RemoveAll([Id = Entry.MotionId](const FOGSharedMotionEntry& Existing)
             { return Existing.MotionId == Id; });
-        if (Entry.bApprovedForGameplay) Library->Motions.Add(MoveTemp(Entry));
+        Library->Motions.Add(MoveTemp(Entry));
     }
 }
 }
@@ -259,7 +260,7 @@ bool UOGSharedMotionLibrary::ValidateLibrary(FString& Error) const
             !FMath::IsFinite(M.ContactSeconds) || !FMath::IsFinite(M.MovementSpeedCmPerSecond) ||
             M.MovementSpeedCmPerSecond<0 || (!M.NativeSequence.IsNull() &&
                 (!Path.StartsWith(TEXT("/Game/")) || Path.Contains(TEXT("..")))) ||
-            (M.bApprovedForGameplay && M.NativeSequence.IsNull()) ||
+            M.NativeSequence.IsNull() ||
             (M.RequiredParticipants>1 && (M.SceneRole.IsNone() || M.AuthoredSceneId.IsNone())) ||
             (M.RequiredParticipants==1 && !M.SceneRole.IsNone()))
         { Error=TEXT("Motion libraries require distinct sourced motions, valid native paths, clocks and scene roles."); return false; }
@@ -340,12 +341,13 @@ UAnimSequence* FOGSharedMotionResolver::Resolve(
     // Keep this legacy parameter for Blueprint/native call-site compatibility;
     // do NOT make an additional blanket adult-content permission decision here.
     (void)bAdultContextAuthorized;
-    // Rank only source-approved, contextual, exact-rig candidates. Never
-    // assign a clip from another character based on display name or form.
+    // Rank real sourced, contextual, exact-rig candidates irrespective of
+    // legacy pre-phone-test approval metadata. Skeleton compatibility still
+    // prevents assigning a clip to the wrong character/rig.
     TArray<const FOGSharedMotionEntry*> Candidates;
     for (const FOGSharedMotionEntry& Entry : Library->Motions)
     {
-        if (!Entry.bApprovedForGameplay || Entry.MotionId.IsNone() ||
+        if (Entry.MotionId.IsNone() ||
             Entry.SourceClipId.IsNone() || Entry.NativeSequence.IsNull() ||
             Entry.GameplayAction != Action ||
             (!RequiredSourceClip.IsNone() && Entry.SourceClipId != RequiredSourceClip) ||
