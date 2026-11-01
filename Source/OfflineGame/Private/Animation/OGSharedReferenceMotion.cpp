@@ -488,7 +488,7 @@ TArray<FOGSharedMotionEntry> FOGSharedReferenceLibrary::Find(FName Action,FName 
     auto& R=Registry(); R.Ensure();
     for (const auto& E:R.Routes)
     {
-        if (!E.bApprovedForGameplay || E.GameplayAction!=Action || E.GameplayContext!=Context ||
+        if (E.GameplayAction!=Action || E.GameplayContext!=Context ||
             E.CompatibleRigProfile!=Rig || (!E.AnatomyProfile.IsNone() && E.AnatomyProfile!=Anatomy) ||
             E.RequiredParticipants!=Count ||
             (Count>1 ? (Role.IsNone() || E.SceneRole!=Role || E.AuthoredSceneId.IsNone()) : !E.SceneRole.IsNone())) continue;
