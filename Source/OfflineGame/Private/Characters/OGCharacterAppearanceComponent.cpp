@@ -331,6 +331,9 @@ bool UOGCharacterAppearanceComponent::InstallAppearance(
     if (!CandidateController) return AppearanceError(Error, TEXT("Could not allocate candidate shared motion controller."));
     CandidateController->SharedLibrary = Definition->SharedMotionLibrary;
     CandidateController->bUseIdenticalTopologyLeaderPose = Rendered->bUseIdenticalTopologyLeaderPose;
+    // One gameplay action drives every compatible original rest-pose cohort.
+    // Mixed authentic source-part skeletons are NOT silently copied/retargeted.
+    CandidateController->bGroupPartsByReferencePose = !Rendered->bUseIdenticalTopologyLeaderPose;
     CandidateController->bPhaseLockIndependentParts = true;
     CandidateController->bPermitAuthoritativeRootMotion = false;
     Owner->AddInstanceComponent(CandidateController);
