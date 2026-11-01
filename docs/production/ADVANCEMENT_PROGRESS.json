@@ -49,7 +49,7 @@
       "source_paths": [
         "Scripts/production/relocate_unreal_zen_cache_lossless_20261031.ps1"
       ],
-      "remaining": "Byte-preserving Zen data relocation to D: completed and junction checked; independently verify an actual full cook can write cache without HTTP 507, before checking this master task."
+      "remaining": "Rechecked 2026-11-01: C: reports ZERO free bytes despite earlier lossless Zen relocation; D: reports 69,825,703,936 bytes free. Native engine and Koikatsu executables are present, but factory output root absent. Non-destructively recover safe C: space and verify cook/cache writes; do not touch original sources, saves or keys."
     },
     {
       "id": "G12-0005",
@@ -1881,7 +1881,9 @@
     "native_gameplay_fully_integrated": false,
     "android_package_created": false,
     "owner_phone_playable": false,
-    "do_not_call_an_apk_ready": true
+    "do_not_call_an_apk_ready": true,
+    "native_storage_blocked": true,
+    "native_storage_observation": "C drive free bytes 0; UE5.8 executable and Koikatsu installed; no native factory output root. Protected PC HEAD d4e68de; GitHub ahead."
   },
   "latest_canon_reconciliation": {
     "date": "2026-11-01",
@@ -2064,11 +2066,11 @@
     },
     {
       "id": "DRIFT-008",
-      "status": "NATIVE_FACTORY_WORK_NOT_STARTED",
+      "status": "NATIVE_PC_VERIFIED_EXECUTION_STILL_BLOCKED",
       "type": "production_execution_gap",
       "source": "ContentFactory/windows_worker.json",
       "conflict": "Koikatsu exe, UnrealEditor-Cmd and project exist at configured PC locations; Saved/NoWorldContentFactory output root absent. No native factory execution claim.",
-      "resolution": "Once native implementation is ready, use existing 5★ native pipeline and its new catalog reconciler; correct failures against actual original sources before packaging.",
+      "resolution": "Read-only 2026-11-01 PC check: UnrealEditor-Cmd and Koikatsu executables exist; Saved/NoWorldContentFactory absent, C: free bytes 0, D: free bytes 69,825,703,936. Do not reset native protected checkout. Reclaim verified disposable C data safely before native factory execution.",
       "game_milestones": [
         "M04",
         "M05",
@@ -2381,5 +2383,25 @@
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
     "docs/production/CONTENT_BINDING_5STAR.md"
-  ]
+  ],
+  "native_worker_readonly_status_20261101": {
+    "device": "LAPTOP-1LI4VRCJ",
+    "device_online": true,
+    "observed_date": "2026-11-01",
+    "protected_checkout": "D:\\UnrealProjects\\Gate12_WholeCharacter_Build_20261031",
+    "protected_checkout_head": "d4e68de19ee35644b198e1da14c2bf2244dcfa03",
+    "protected_checkout_changed": false,
+    "canonical_source": "GitHub work/gate12-whole-character-shared-motion-20261031",
+    "unreal_editor_cmd_present": true,
+    "koikatsu_executable_present": true,
+    "unreal_project_present": true,
+    "native_factory_saved_output_root_present": false,
+    "c_drive_free_bytes": 0,
+    "d_drive_free_bytes": 69825703936,
+    "native_execution_status": "BLOCKED_BY_ZERO_C_DRIVE_SPACE_AND_STALE_PROTECTED_CHECKOUT",
+    "next_native_action": "Recover safe disposable C: space without deleting protected source, then use an isolated current source checkout and execute the existing 5-star native worker. Do not reset/pull the protected original checkout.",
+    "native_compile_performed": false,
+    "native_factory_executed": false,
+    "android_package_created": false
+  }
 }
