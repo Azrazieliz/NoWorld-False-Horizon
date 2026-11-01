@@ -1,5 +1,5 @@
 # v0.40 historical master — source extraction 3/10
-Source: Offline_Adult_Gacha_RPG_Master_Architecture_Baseline_v0.40_FINAL_PRECODING_FREEZE_RELEASE.docx, 175 pages; uploaded 2026-11-01. Parsed original text lines 1801–2700. Historical source only: newer explicit instructions, verified latest code decisions and v0.41 (missing) may supersede conflicting clauses. Original DOCX remains higher-fidelity for embedded images and precise tables.
+Source: Offline_Adult_Gacha_RPG_Master_Architecture_Baseline_v0.40_FINAL_PRECODING_FREEZE_RELEASE.docx, 175 pages; uploaded 2026-11-01. Parsed original text lines 1801–2700. Historical source only: newer explicit instructions, verified latest code decisions and v0.41 authoritative narrow addendum `docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md` and later explicit user decisions may supersede conflicting clauses. Original DOCX remains higher-fidelity for embedded images and precise tables.
 
     tetration mathematics; a compact significand/exponent or equivalent large-number type is
     appropriate.
