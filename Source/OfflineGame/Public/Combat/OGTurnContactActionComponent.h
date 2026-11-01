@@ -63,6 +63,7 @@ private:
     FOGResolvedCombatAction StagedAction;
     FOGEntityId BattleId;
     FName SourceSemantic = NAME_None;
+    FName StagedMotionId = NAME_None;
     bool bStaged = false;
     bool bNaturalCompletionAuthorized = false;
     bool bResolving = false;

@@ -157,7 +157,14 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
         DropStagedAction(false);
         return false;
     }
+    StagedMotionId=Motion->CurrentMotionId;
     bNaturalCompletionAuthorized=Motion->IsCurrentNaturalCompletionContact();
+    if (StagedMotionId.IsNone())
+    {
+        OutError=TEXT("The source controller started no identifiable original motion.");
+        DropStagedAction(true);
+        return false;
+    }
     return true;
 }
 
@@ -171,7 +178,7 @@ void UOGTurnContactActionComponent::ResolveSourceMotionEvent(
     FName GameplayAction, FName MotionId, bool bSourceFinished)
 {
     if (!bStaged || bResolving || GameplayAction != SourceSemantic ||
-        MotionId.IsNone())
+        MotionId.IsNone() || MotionId!=StagedMotionId)
         return;
     FString Error;
     if (!IsSameLiveTurn(Error, bSourceFinished))
@@ -256,14 +263,23 @@ void UOGTurnContactActionComponent::HandleSourceMotionFinished(
     UOGSharedMotionControllerComponent* Source,
     FName GameplayAction, FName MotionId)
 {
-    if (!bResolving && bStaged && bNaturalCompletionAuthorized &&
-        Source == BoundMotion.Get() && GameplayAction == SourceSemantic)
+    if (!bResolving && bStaged && Source == BoundMotion.Get() &&
+        GameplayAction == SourceSemantic && MotionId==StagedMotionId)
     {
-        // This is the real end of a source-verified, nonlooping native
-        // sequence. Original legacy clips often lack contact-notify data:
-        // settle once only after that real movement finishes, not when a
-        // fabricated clock or UI request says it ought to have hit.
-        ResolveSourceMotionEvent(GameplayAction, MotionId, true);
+        if (bNaturalCompletionAuthorized)
+        {
+            // The source explicitly declared its natural nonlooping finish
+            // to be the authoritative contact, not a fabricated hit time.
+            ResolveSourceMotionEvent(GameplayAction,MotionId,true);
+        }
+        else
+        {
+            // A contact-marked source finishing WITHOUT its authored contact
+            // must NOT inflict damage or indefinitely lock the next turn.
+            UE_LOG(LogTemp,Warning,
+                TEXT("Original combat motion ended without the declared contact; uncommitted action cancelled."));
+            DropStagedAction(false);
+        }
     }
 }
 
@@ -280,6 +296,7 @@ void UOGTurnContactActionComponent::DropStagedAction(bool bStopSourcePlayback)
     BattleId = FOGEntityId();
     StagedAction = FOGResolvedCombatAction();
     SourceSemantic = NAME_None;
+    StagedMotionId = NAME_None;
     if (Motion)
     {
         Motion->OnAuthoredContact.RemoveAll(this);
