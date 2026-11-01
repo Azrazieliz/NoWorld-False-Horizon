@@ -1,5 +1,6 @@
 # NoWorld — non-destructive repository execution map
 **Updated 2026-11-01. Importance: 4★ operational map, never a replacement for 7★ canon.**
+**Latest source correction:** GitHub is the durable home; the PC is a temporary native Unreal/Koikatsu/Blender worker. Live animation catalog has been normalized without any pre-phone QA approval boolean; all 3,222 original native references are preserved. Historical approval counts later in this map refer to an older snapshot, not the active eligibility or owner review state. Only an explicit owner response after a phone test can be a rejection verdict.
 **Active integration:** `work/gate12-whole-character-shared-motion-20261031` (PR #89).
 **Production baseline:** `production/gate12-full-continuation-20261023`.
 **User runs ChatGPT on Android only.** Native PC is an authorized build/source worker, not a disposable clone.
