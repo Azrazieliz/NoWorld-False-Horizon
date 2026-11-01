@@ -789,6 +789,7 @@ protected:
     UPROPERTY() TObjectPtr<ACharacter> ProtagonistRepresentation;
     UPROPERTY() TObjectPtr<USoundMix> OwnedDynamicRangeMix;
     bool bIntegrationCourseBuilt = false;
+    bool bMissingNativeWorldSourceReported = false;
     // First World needs a real UI/interaction runtime, not fixture actors.
     // Guard against invoking the diagnostic course on every World tick.
     bool bNativeFirstWorldRuntimeInitialized = false;
