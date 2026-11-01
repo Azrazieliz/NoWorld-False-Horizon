@@ -937,7 +937,18 @@
         "title": "Offline mobile startup and free World entry",
         "issue": 27,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "7ac87b9f",
+            "type": "SOURCE_PARTIAL",
+            "change": "World pawn now tracks first occurrence of a missing native First World source independently from diagnostic-course creation, preventing error floods without modifying canonical world state."
+          },
+          {
+            "commit": "361dbb0b",
+            "type": "SOURCE_PARTIAL",
+            "change": "First World source startup no longer silently spawns the synthetic Foundation integration obstacle course when the authoritative Gate02 R1 source actor is missing. Only explicit -FoundationFixtures non-Shipping opt-in runs the existing developer course; real World streaming is retried and absence is logged once."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -948,7 +959,18 @@
         "title": "Playable character movement, camera and touch traversal",
         "issue": 28,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "7ac87b9f",
+            "type": "SOURCE_PARTIAL",
+            "change": "World pawn now tracks first occurrence of a missing native First World source independently from diagnostic-course creation, preventing error floods without modifying canonical world state."
+          },
+          {
+            "commit": "361dbb0b",
+            "type": "SOURCE_PARTIAL",
+            "change": "First World source startup no longer silently spawns the synthetic Foundation integration obstacle course when the authoritative Gate02 R1 source actor is missing. Only explicit -FoundationFixtures non-Shipping opt-in runs the existing developer course; real World streaming is retried and absence is logged once."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -1167,7 +1189,18 @@
         "title": "First World terrain, deterministic streaming and navigation",
         "issue": 38,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "7ac87b9f",
+            "type": "SOURCE_PARTIAL",
+            "change": "World pawn now tracks first occurrence of a missing native First World source independently from diagnostic-course creation, preventing error floods without modifying canonical world state."
+          },
+          {
+            "commit": "361dbb0b",
+            "type": "SOURCE_PARTIAL",
+            "change": "First World source startup no longer silently spawns the synthetic Foundation integration obstacle course when the authoritative Gate02 R1 source actor is missing. Only explicit -FoundationFixtures non-Shipping opt-in runs the existing developer course; real World streaming is retried and absence is logged once."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -2082,9 +2115,49 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T15:52:00Z"
+    },
+    {
+      "source_commit": "7ac87b9f99ffb0cb80e0898661ed47da0282f33b",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11"
+      ],
+      "result": "World pawn now tracks first occurrence of a missing native First World source independently from diagnostic-course creation, preventing error floods without modifying canonical world state.",
+      "remaining_player_visible_work": "Complete runtime Source/First World guard in the matching implementation and verify streaming readiness on actual Android.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Preserved original Gate02 source and existing explicit -FoundationFixtures flag; targeted GitHub source binding with no current executable checkout for 5★ recorder CLI.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T15:57:00Z"
+    },
+    {
+      "source_commit": "361dbb0b8e55db3199168d822cd4bc66b3569038",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11"
+      ],
+      "result": "First World source startup no longer silently spawns the synthetic Foundation integration obstacle course when the authoritative Gate02 R1 source actor is missing. Only explicit -FoundationFixtures non-Shipping opt-in runs the existing developer course; real World streaming is retried and absence is logged once.",
+      "remaining_player_visible_work": "Confirm native R1 map/World Partition actor is installed and streamed, real local Ruler pawn grounds on collision, moves/jumps/swims with touch controls, and persists on packaged Android.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Preserved original Gate02 source and existing explicit -FoundationFixtures flag; targeted GitHub source binding with no current executable checkout for 5★ recorder CLI.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-01T15:57:00Z"
     }
   ],
-  "continuation_last_source_commit": "62510f92142f7d677d70645d3f04723ee496dc40",
+  "continuation_last_source_commit": "361dbb0b8e55db3199168d822cd4bc66b3569038",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
