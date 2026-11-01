@@ -42,6 +42,7 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Motion|Character")
     FOGContentId BoundCharacterIdentity;
 
+    UFUNCTION(BlueprintCallable, Category="Motion|Binding")
     bool BindCanonicalCharacter(const FOGContentId& IdentityId);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
