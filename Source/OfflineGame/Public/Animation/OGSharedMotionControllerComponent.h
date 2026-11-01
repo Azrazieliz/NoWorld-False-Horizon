@@ -99,6 +99,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     bool RegisterNativeParts(const TArray<USkeletalMeshComponent*>& Parts);
 
+    /** One-call rig + actual skeletal-part binding for every canonical actor.
+     * One shared source catalog remains authoritative for ALL Versions/outfits.
+     * On failure, rig profiles and existing visual parts remain unchanged.
+     * Call BindCanonicalCharacter once when the authoritative identity is known. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Binding")
+    bool BindNativeRigAndParts(FName InRig, FName InAnatomy, FName InOutfit,
+        const TArray<FName>& InCapabilities,
+        const TArray<USkeletalMeshComponent*>& InParts);
+
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     void SetCurrentOutfit(FName InOutfitProfile);
 
