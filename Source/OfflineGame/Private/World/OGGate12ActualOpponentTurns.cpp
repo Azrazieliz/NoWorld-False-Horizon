@@ -13,6 +13,7 @@
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "Runtime/OGPresentationModeSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
@@ -34,9 +35,16 @@ UOGSharedMotionControllerComponent* OpponentMotion(AActor* Actor)
 
 void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
 {
+    // Autonomous canonical turns are not player movement/camera input.
+    // A native combat UMG overlay may suppress player controls while time
+    // continues. Only an actual game pause or leaving rendered World suspends
+    // this physical, source-contact-bound opponent presentation.
     if (!GetWorld() || !GetWorld()->IsGameWorld() ||
-        !IsLocallyControlled() || !IsFoundationWorldInputAllowed())
+        !IsLocallyControlled() || GetWorld()->IsPaused())
         return;
+    if (const auto* Mode=GetGameInstance()
+            ? GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>() : nullptr;
+        Mode && Mode->GetMode()!=EOGPresentationMode::World) return;
     const AOGLuminousV3PlayableCharacter* Luminous =
         Cast<AOGLuminousV3PlayableCharacter>(this);
     const AOGContentPlayableCharacter* ContentCharacter = Cast<AOGContentPlayableCharacter>(this);
@@ -52,6 +60,9 @@ void AOGWorldPrototypeCharacter::AdvanceCanonicalNonPlayerBattleTurn()
     if (!Battle || Battle->GetState().Status != EOGTurnBattleStatus::Running)
         return;
     const FOGTurnBattleState& State = Battle->GetState();
+    // Real-time World actions belong to UOGNativeTurnAgentComponent and
+    // UOGWorldAbilityExecutionComponent, never this turn-contact fallback.
+    if (State.ExecutionMode!=EOGCombatExecutionMode::Turn) return;
     const FOGCombatUnitState* Owned = State.Units.FindByPredicate(
         [Session](const FOGCombatUnitState& U)
         { return U.UnitEntityId == Session->SelectedManifestationId; });

@@ -248,10 +248,21 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
         if (!Battle->ValidateResolvedAction(Proposal,Action,LastFailure)) continue;
         bool MissingBody=false;
         for (const auto& Id:Action.TargetUnitIds)
-            if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id))
+        {
+            const auto* Target=Battle->GetState().Units.FindByPredicate(
+                [&Id](const auto& Unit){ return Unit.UnitEntityId==Id; });
+            // A genuine defeated allied Manifestation can be revived without
+            // an active World body. Canonical ValidateResolvedAction already
+            // enforces the exact source skill's death/soul/revival windows.
+            const bool bRevivalRecipient=Target &&
+                Target->Presence==EOGCombatPresence::Defeated &&
+                !Target->IsAlive() && Target->TeamIndex==Battle->GetState().Units[Acting].TeamIndex;
+            if (!Target || (!bRevivalRecipient &&
+                !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id)))
             { MissingBody=true; break; }
+        }
         if (MissingBody)
-        { LastFailure=TEXT("An authored turn target has no connected native body."); continue; }
+        { LastFailure=TEXT("An authored living target has no native body, or its canonical target vanished."); continue; }
         const FName OriginalSemantic =
             Battle->ResolveNativeAbilityMotion(
                 Battle->GetState().Units[Acting], Action.SkillId);
