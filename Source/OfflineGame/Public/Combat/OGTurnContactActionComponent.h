@@ -34,6 +34,13 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Combat|Turn")
     bool IsAwaitingAuthoredContact() const { return bStaged; }
+    /** Real canonical focus during authored character combat motion.
+     * Used only for camera composition, never targeting or damage authority. */
+    FOGEntityId GetPendingBattleId() const
+    { return bStaged ? BattleId : FOGEntityId(); }
+    FOGEntityId GetPendingPrimaryTarget() const
+    { return bStaged && !StagedAction.TargetUnitIds.IsEmpty()
+        ? StagedAction.TargetUnitIds[0] : FOGEntityId(); }
 
 protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
