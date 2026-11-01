@@ -412,7 +412,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
             DrawGameButton(Command.Label,
                 FName(*FString::Printf(TEXT("OG.Battle.Command.%s"),*Command.Id.ToString())),
                 Edge+(Index%Columns)*(ButtonW+Gap),
-                Top+(Index/Columns)*(ButtonH+Gap),
+                CommandGridTop+(Index/Columns)*(ButtonH+Gap),
                 ButtonW,ButtonH,Command.ActiveSlot==0,bExecutable,158);
         }
     }
