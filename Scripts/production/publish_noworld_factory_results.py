@@ -39,15 +39,16 @@ def export_job(job,pc):
         raise ValueError("Cannot publish an incomplete/no-source job: "+ident)
     created=[]
     native=pc/"Content/NoWorld/ContentFactory"
-    if data["kind"] in ("character","bundle","artwork"):
+    if data["kind"] in ("character","bundle","artwork","motion") or data.get("animations"):
         receipts=pathlib.Path(pc)/"Saved/NoWorldContentFactory"/ident
-        for name in ("unreal_receipt.json","artwork_receipt.json"):
+        for name in ("unreal_receipt.json","artwork_receipt.json","animation_receipt.json"):
             proof=receipts/name
             if not proof.is_file():continue
             row=read(proof)
             if row.get("status") not in (
                 "NATIVE_ORIGINAL_CHARACTER_SOURCE_ASSET_REGISTERED",
-                "ORIGINAL_ARTWORK_UASSET_IMPORTED"):
+                "ORIGINAL_ARTWORK_UASSET_IMPORTED",
+                "NATIVE_SOURCE_ANIMATION_SEQUENCES_IMPORTED"):
                 raise ValueError("Native original asset not actually saved: "+name)
             # Copy all importer-created skeletal materials, textures, native
             # skeletons and geometry; not just the top-level mesh.
@@ -84,8 +85,7 @@ def export_job(job,pc):
             target.parent.mkdir(parents=True,exist_ok=True)
             target.write_text(json.dumps(dst,indent=2,ensure_ascii=False)+"\n","utf-8")
             created.append(target.relative_to(REPO).as_posix())
-    if data.get("motions_recipe"):
-        from importlib.util import spec_from_file_location,module_from_spec
+    if data.get("motions_recipe") or data.get("animations"):
         # Merge only the newly authored, source-approved motion IDs,
         # using exactly the immutable recipes already accepted by the binder.
         source=pc/"Content/NoWorld/Animation/SharedMotionCatalog.json"
@@ -93,7 +93,9 @@ def export_job(job,pc):
         if not source.is_file():raise FileNotFoundError(str(source))
         native_motions=read(source)
         current=read(target)
-        recipe=read(REPO/data["motions_recipe"])
+        recipe_path=(REPO/data["motions_recipe"] if data.get("motions_recipe")
+                     else pc/"Saved/NoWorldContentFactory"/ident/"auto_motion_bindings.json")
+        recipe=read(recipe_path)
         ids={r["motion_id"].casefold() for r in recipe["motions"]}
         approved=[m for m in native_motions["motions"] if m["motion_id"].casefold() in ids]
         if len(approved)!=len(ids):raise ValueError("Some authored native actions never entered Unreal catalog")
