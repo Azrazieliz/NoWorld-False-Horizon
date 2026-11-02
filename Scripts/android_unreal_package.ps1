@@ -76,6 +76,34 @@ function Assert-AuthenticFirstWorld {
     Write-Host "Original source World, ecology and motion-bank preflight passed."
 }
 
+function Assert-OriginalUnrealLfsHydrated {
+    # Git LFS pointers are text, not original Unreal skeletal meshes.
+    $Tracked = @(& git -C $Root lfs ls-files -n)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git LFS is required to package original native character assets."
+    }
+    $Missing = New-Object System.Collections.Generic.List[string]
+    foreach ($Name in $Tracked) {
+        if (-not $Name.StartsWith("Content/")) { continue }
+        if (-not ($Name.EndsWith(".uasset") -or $Name.EndsWith(".umap"))) { continue }
+        $ItemPath = Join-Path $Root $Name
+        if (-not (Test-Path -LiteralPath $ItemPath -PathType Leaf)) {
+            $Missing.Add($Name)
+            continue
+        }
+        if ((Get-Item -LiteralPath $ItemPath).Length -lt 256) {
+            $Missing.Add($Name)
+        }
+    }
+    if ($Missing.Count -gt 0) {
+        $Sample = ($Missing | Select-Object -First 5) -join ", "
+        throw ("Original Unreal files remain LFS pointers or are missing: " +
+            $Missing.Count + " files; first: " + $Sample +
+            ". Hydrate the tracked source in an isolated checkout before cooking.")
+    }
+    Write-Host "Tracked original Unreal LFS objects are hydrated." -ForegroundColor Green
+}
+
 function Find-Unreal58 {
     param([string]$Preferred)
 
@@ -118,6 +146,7 @@ if (-not $AndroidFirst) {
 }
 
 Assert-AuthenticFirstWorld
+Assert-OriginalUnrealLfsHydrated
 $EngineRoot = Find-Unreal58 $EngineRoot
 $RunUAT = Join-Path $EngineRoot "Engine\Build\BatchFiles\RunUAT.bat"
 
