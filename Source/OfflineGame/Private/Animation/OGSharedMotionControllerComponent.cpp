@@ -223,9 +223,122 @@ bool UOGSharedMotionControllerComponent::CanResolveTurnContactAction(FName Actio
             HasActualMeleeContactBone(RegisteredParts));
 }
 
+bool UOGSharedMotionControllerComponent::ResolveCoherentNativeAction(
+    const UOGSharedMotionLibrary* Library,
+    FName Action, FName Context, bool bAuthorizedAdult,
+    int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip,
+    TOptional<bool> RootPolicy,
+    const TArray<USkeletalMeshComponent*>& RigDrivers,
+    TArray<UAnimSequence*>& OutSequences,
+    TArray<const FOGSharedMotionEntry*>& OutEntries) const
+{
+    OutSequences.Reset();
+    OutEntries.Reset();
+    if (RigDrivers.IsEmpty() || Action.IsNone()) return false;
+
+    struct FCandidate
+    {
+        FName Source;
+        FName Motion;
+        int32 OutfitRank = 2;
+        int32 Priority = 0;
+        bool bSpecificContext = false;
+    };
+    TArray<FCandidate> Candidates;
+    const UOGSharedMotionLibrary* Global = FOGSharedMotionResolver::GetInstalledLibrary();
+    const UOGSharedMotionLibrary* Libraries[] = {Library, Global};
+    for (const UOGSharedMotionLibrary* Current : Libraries)
+    {
+        if (!Current) continue;
+        for (const FOGSharedMotionEntry& Entry : Current->Motions)
+        {
+            if (Entry.MotionId.IsNone() || Entry.SourceClipId.IsNone() ||
+                Entry.NativeSequence.IsNull() || Entry.GameplayAction != Action ||
+                Entry.CompatibleRigProfile != RigProfile ||
+                (!RequiredSourceClip.IsNone() && Entry.SourceClipId != RequiredSourceClip) ||
+                (!Entry.AnatomyProfile.IsNone() && Entry.AnatomyProfile != AnatomyProfile) ||
+                (!Entry.GameplayContext.IsNone() && Entry.GameplayContext != Context) ||
+                Entry.RequiredParticipants != ParticipantCount ||
+                (ParticipantCount > 1
+                    ? (ParticipantRole.IsNone() || Entry.SceneRole != ParticipantRole ||
+                       Entry.AuthoredSceneId.IsNone())
+                    : !Entry.SceneRole.IsNone()))
+                continue;
+            bool bCapable = true;
+            for (const FName Capability : Entry.RequiredCapabilities)
+                if (!Capabilities.Contains(Capability)) { bCapable = false; break; }
+            if (!bCapable) continue;
+            const int32 OutfitRank = Entry.OutfitProfile == OutfitProfile ? 0 :
+                (Entry.OutfitProfile.IsNone() ? 1 : 2);
+            FCandidate* Existing = Candidates.FindByPredicate(
+                [&Entry](const FCandidate& C){return C.Source == Entry.SourceClipId;});
+            if (!Existing)
+            {
+                FCandidate C;
+                C.Source = Entry.SourceClipId;
+                C.Motion = Entry.MotionId;
+                C.OutfitRank = OutfitRank;
+                C.Priority = Entry.Priority;
+                C.bSpecificContext = !Entry.GameplayContext.IsNone();
+                Candidates.Add(C);
+            }
+            else if (OutfitRank < Existing->OutfitRank ||
+                     (OutfitRank == Existing->OutfitRank && Entry.Priority > Existing->Priority))
+            {
+                Existing->Motion = Entry.MotionId;
+                Existing->OutfitRank = OutfitRank;
+                Existing->Priority = Entry.Priority;
+                Existing->bSpecificContext = !Entry.GameplayContext.IsNone();
+            }
+        }
+        if (Current == Global) break;
+    }
+    Candidates.Sort([](const FCandidate& A,const FCandidate& B)
+    {
+        if (A.OutfitRank != B.OutfitRank) return A.OutfitRank < B.OutfitRank;
+        if (A.Priority != B.Priority) return A.Priority > B.Priority;
+        if (A.bSpecificContext != B.bSpecificContext)
+            return A.bSpecificContext;
+        return A.Motion.LexicalLess(B.Motion);
+    });
+
+    // An original source performance wins ONLY if every separate real rig can
+    // play an exact-Skeleton derivative of that same source. No invented
+    // retargeting, timestamps or per-character motion copies are introduced.
+    for (const FCandidate& Candidate : Candidates)
+    {
+        TArray<UAnimSequence*> Sequences;
+        TArray<const FOGSharedMotionEntry*> Entries;
+        bool bCoherent = true;
+        for (USkeletalMeshComponent* Driver : RigDrivers)
+        {
+            UAnimSequence* Sequence = nullptr;
+            const FOGSharedMotionEntry* Entry = nullptr;
+            if (!ResolveForPart(Library,Driver,Action,Context,bAuthorizedAdult,
+                    ParticipantCount,ParticipantRole,Sequence,Entry,
+                    Candidate.Source,RootPolicy) ||
+                !Entry || Entry->SourceClipId != Candidate.Source ||
+                (!Entries.IsEmpty() &&
+                 (Entry->bLoop != Entries[0]->bLoop ||
+                  Entry->AuthoredSceneId != Entries[0]->AuthoredSceneId)))
+            { bCoherent = false; break; }
+            Sequences.Add(Sequence);
+            Entries.Add(Entry);
+        }
+        if (bCoherent && Sequences.Num() == RigDrivers.Num())
+        {
+            OutSequences = MoveTemp(Sequences);
+            OutEntries = MoveTemp(Entries);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
-    int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy) const
+    int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip,
+    TOptional<bool> RootPolicy) const
 {
     if (RigProfile.IsNone() || GameplayAction.IsNone() || Context.IsNone() ||
         RegisteredParts.IsEmpty() || ParticipantCount < 1)
@@ -235,51 +348,36 @@ bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
     TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
     if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
         Shared, Source, Mapping, SharedError, RequiredSourceClip)) return true;
+
     const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
         ? nullptr : SharedLibrary.LoadSynchronous();
     if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
-    FName SourceId = NAME_None;
-    bool bInitialLoop = false;
-    USkeletalMeshComponent* Leader = nullptr;
-    int32 ValidCount = 0;
-    TArray<USkeletalMeshComponent*> RigDrivers;
+
+    TArray<USkeletalMeshComponent*> Drivers;
     for (USkeletalMeshComponent* Part : RegisteredParts)
     {
-        // A wardrobe can contain dozens of source parts with the exact same
-        // rest rig. Preflight one authentic clip for that rig, not each part.
-        if (bGroupPartsByReferencePose && !bUseIdenticalTopologyLeaderPose)
-        {
-            bool bFollower = false;
-            for (USkeletalMeshComponent* Driver : RigDrivers)
-                if (HaveIdenticalReferencePose(Driver, Part))
-                { bFollower = true; break; }
-            if (bFollower) { ++ValidCount; continue; }
-        }
-        UAnimSequence* Clip = nullptr;
-        const FOGSharedMotionEntry* Entry = nullptr;
-        if (!ResolveForPart(Library, Part, GameplayAction, Context,
-            bAdultContextAuthorized, ParticipantCount, ParticipantRole, Clip, Entry, RequiredSourceClip, RootPolicy))
-            return false;
-        if (!SourceId.IsNone() &&
-            (SourceId != Entry->SourceClipId || bInitialLoop != Entry->bLoop))
-            return false;
-        SourceId = Entry->SourceClipId;
-        bInitialLoop = Entry->bLoop;
+        if (!Part || !Part->GetSkeletalMeshAsset()) return false;
         if (bUseIdenticalTopologyLeaderPose)
         {
-            for (USkeletalMeshComponent* Candidate : RegisteredParts)
-                if (Candidate && Candidate->GetSkeletalMeshAsset() &&
-                    Candidate->GetSkeletalMeshAsset()->GetSkeleton() == Clip->GetSkeleton())
-                { Leader = Candidate; break; }
-            if (!Leader) return false;
-            for (USkeletalMeshComponent* Candidate : RegisteredParts)
-                if (!HaveIdenticalReferencePose(Leader, Candidate)) return false;
-            return true;
+            if (Drivers.IsEmpty()) Drivers.Add(Part);
+            else if (!HaveIdenticalReferencePose(Drivers[0],Part)) return false;
+            continue;
         }
-        RigDrivers.Add(Part);
-        ++ValidCount;
+        if (bGroupPartsByReferencePose)
+        {
+            bool bFollower = false;
+            for (USkeletalMeshComponent* Driver : Drivers)
+                if (HaveIdenticalReferencePose(Driver,Part))
+                { bFollower = true; break; }
+            if (bFollower) continue;
+        }
+        Drivers.Add(Part);
     }
-    return ValidCount == RegisteredParts.Num();
+    TArray<UAnimSequence*> Sequences;
+    TArray<const FOGSharedMotionEntry*> Entries;
+    return ResolveCoherentNativeAction(Library,GameplayAction,Context,
+        bAdultContextAuthorized,ParticipantCount,ParticipantRole,
+        RequiredSourceClip,RootPolicy,Drivers,Sequences,Entries);
 }
 
 bool UOGSharedMotionControllerComponent::PreviewStagedSource(FName Action,FName Context,
