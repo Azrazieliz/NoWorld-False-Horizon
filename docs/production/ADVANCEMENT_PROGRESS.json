@@ -994,6 +994,11 @@
             "commit": "732f78ba",
             "type": "SOURCE_PARTIAL",
             "change": "The actual native pawn ground snap now covers original Gate02 R1 elevations up to 750m instead of the former +/-120m trace, accepts only the genuine native R1 procedural terrain collision rather than an unrelated prop/fixture, and safely retries after a three-second stream delay at a bounded one-second interval rather than releasing the player to fall into missing World geometry. Source terrain and player state remain unchanged."
+          },
+          {
+            "commit": "3be2b51f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
           }
         ],
         "completed_in_this_update": false,
@@ -1283,6 +1288,11 @@
             "commit": "bbb4ec2f",
             "type": "SOURCE_PARTIAL",
             "change": "Turn combat now preflights authentic motion impact on the selected exact rig; an unmarked animation finishing cannot settle authoritative damage/cost/turn. The existing 5-star binder preserves explicit natural_completion_contact metadata, rejects ambiguous or placeholder impact evidence, both native UMG and fallback canvas disable unbound turn commands, and authentic reference/native playback only triggers contact or expressly sourced natural completion. Original 3222 clips/executors retained."
+          },
+          {
+            "commit": "3be2b51f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
           }
         ],
         "completed_in_this_update": false,
@@ -1326,6 +1336,11 @@
             "commit": "732f78ba",
             "type": "SOURCE_PARTIAL",
             "change": "The actual native pawn ground snap now covers original Gate02 R1 elevations up to 750m instead of the former +/-120m trace, accepts only the genuine native R1 procedural terrain collision rather than an unrelated prop/fixture, and safely retries after a three-second stream delay at a bounded one-second interval rather than releasing the player to fall into missing World geometry. Source terrain and player state remain unchanged."
+          },
+          {
+            "commit": "3be2b51f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
           }
         ],
         "completed_in_this_update": false,
@@ -1481,7 +1496,13 @@
         "title": "Premium home, gacha, records and territory UI",
         "issue": 50,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "3be2b51f",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -2497,9 +2518,32 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T03:22:00+01:00"
+    },
+    {
+      "source_commit": "3be2b51fd35004f6856d8c36d798f4a088aab724",
+      "system_ids": [
+        "M02",
+        "M09",
+        "M11",
+        "M23"
+      ],
+      "result": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations.",
+      "remaining_player_visible_work": "Requires restored original R1 JSONL source and native source ecology module meshes; verify actual touch hit, authorized harvest/destruction and stable post-reload removals on Android.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h",
+        "Source/OfflineGame/Private/World/OGGate02R1RealSourceRuntime.cpp",
+        "Source/OfflineGame/Private/World/OGGate02R1EcologyMutation.cpp"
+      ],
+      "5star_reused_program": "Scripts/Gate12World/gate12_create_source_preserving_r1_streaming_runtime_ue583.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Original single Gate02 source-indexed streaming and native SQLite ecology persists. GitHub source-only; no native build.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:27:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "732f78ba3c4b56ad28121d27f05cf48710ee1c41",
+  "continuation_last_source_commit": "3be2b51fd35004f6856d8c36d798f4a088aab724",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
