@@ -3363,9 +3363,35 @@
       "status": "SHARED_ANIMATION_COHERENCE_SOURCE_COMMITTED_NATIVE_BUILD_PENDING",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T18:44:00Z"
+    },
+    {
+      "source_commit": "56a818892cc0844c339252a77c685c38d04d02bf",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M07",
+        "M14"
+      ],
+      "result": "Full original native motion catalog packaging omission resolved. Exactly 3,201 Alter original Studio animation UAssets had not been explicitly cooked via the UFS JSON manifest; Config/DefaultGame.ini now always-cooks their authentic source directory. All other five source directories already cooked. New reusable read-only 5star verify_shared_motion_cook_coverage.py independently checked the original source PC 3222 catalog entries/3222 UAssets against current GitHub config: 3222 native files present, zero missing, zero invalid Unreal native file headers, zero uncooked native file paths, UFS manifest staged, pass=true. Original 937 combat source entries preserve no fake contact timestamps. Cross-rig exact SourceClipId native selection committed on 38d59b9, so original multipart bodies no longer independently choose inconsistent source takes.",
+      "remaining_player_visible_work": "Full 3222 entry actual UE5.8 native runtime animation playback and authentic physical contact 937 combat animations not tested/complete. Android cook/asset package, phone framerate, full app runtime, owner acceptance unverified. UE5.8 isolated new animation native build ongoing (UHT completed, 15 source/native link actions in progress), not yet a verified success. Older successful UE5.8 build is previous revision.",
+      "source_paths": [
+        "Config/DefaultGame.ini",
+        "Scripts/production/verify_shared_motion_cook_coverage.py",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
+        "docs/production/CONTENT_BINDING_5STAR.md"
+      ],
+      "5star_reused_program": "Scripts/production/reconcile_native_motion_catalog.py",
+      "5star_new_program": "Scripts/production/verify_shared_motion_cook_coverage.py",
+      "5star_new_program_reason": "Existing catalog reconciliation validated original asset inventory and GitHub path retention but did not inspect Android Unreal ProjectPackagingSettings DirectoriesToAlwaysCook and staged UFS manifest; the legacy 900-clip cook excluded 2301 actual native source motions from the 3222 catalog. New reusable read-only full original cook coverage gate fills exactly this execution gap.",
+      "5star_execution": "Executed native original read-only asset/cook verifier on PC using D:\\UnrealProjects\\Gate12_WholeCharacter_Build_20261031 as source and isolated latest GitHub config staged under D:\\RelocatedTemp\\NoWorldCookAudit_20261102. Its source_cook_audit.json returned pass:true, catalog 3222, missing 0, bad 0, uncooked 0, UFS true; protected PC source unmodified.",
+      "status": "FULL_ORIGINAL_MOTION_ASSET_AND_COOK_COVERAGE_VERIFIED_NATIVE_PLAYBACK_AND_DEVICE_OPEN",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T18:49:00Z"
     }
   ],
-  "continuation_last_source_commit": "38d59b9db06cd191584e205a41b9ae03624a2cc4",
+  "continuation_last_source_commit": "56a818892cc0844c339252a77c685c38d04d02bf",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
