@@ -977,6 +977,11 @@
             "commit": "cd29fa54",
             "type": "SOURCE_PARTIAL",
             "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
+          },
+          {
+            "commit": "a1072c51",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
           }
         ],
         "completed_in_this_update": false,
@@ -1054,6 +1059,11 @@
             "commit": "48f23804",
             "type": "SOURCE_PARTIAL",
             "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
+          },
+          {
+            "commit": "a1072c51",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
           }
         ],
         "completed_in_this_update": false,
@@ -1461,6 +1471,11 @@
             "commit": "cd29fa54",
             "type": "SOURCE_PARTIAL",
             "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
+          },
+          {
+            "commit": "a1072c51",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
           }
         ],
         "completed_in_this_update": false,
@@ -1483,6 +1498,11 @@
             "commit": "cd29fa54",
             "type": "SOURCE_PARTIAL",
             "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
+          },
+          {
+            "commit": "a1072c51",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
           }
         ],
         "completed_in_this_update": false,
@@ -2937,9 +2957,30 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T09:02:42.509Z"
+    },
+    {
+      "source_commit": "a1072c51f49c6f7888b7748cf1e24211976b9e76",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11",
+        "M12"
+      ],
+      "result": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source.",
+      "remaining_player_visible_work": "Requires UE5.8 native compile/render verification, authentic foliage and market mesh imports, terrain collision/spawn and movement phone test, source-combat contact bindings, and real user acceptance.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "5star_reused_program": "Scripts/production/record_noworld_progress.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reused the existing 5★ checkpoint schema through direct GitHub writes; git-dependent CLI not executed in an up-to-date local checkout. Existing C++ native authoring and gameplay actor retained.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T09:10:05.252Z"
     }
   ],
-  "continuation_last_source_commit": "cd29fa549f00758df161cb8cfdcb5c3fd47dbe73",
+  "continuation_last_source_commit": "a1072c51f49c6f7888b7748cf1e24211976b9e76",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
