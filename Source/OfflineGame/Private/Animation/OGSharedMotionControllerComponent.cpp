@@ -694,13 +694,22 @@ bool UOGSharedMotionControllerComponent::PlayResolvedAction(
     TArray<int32> RigDriverForPart;
     USkeletalMeshComponent* Leader = nullptr;
 
-    // One shared semantic action drives the entire character. Exact matching
-    // rest-pose mesh parts follow one rig driver. Distinct authentic rig
-    // families resolve separate native clips against the SAME source action.
+    // Construct the exact distinct rig families before choosing a performance.
+    // Every member of a multipart character must share the SAME original
+    // SourceClipId; never pick incompatible alternate takes by mesh order.
     for (USkeletalMeshComponent* Part : RegisteredParts)
     {
         if (!Part || !Part->GetSkeletalMeshAsset()) return false;
-        if (bGroupPartsByReferencePose && !bUseIdenticalTopologyLeaderPose)
+        if (bUseIdenticalTopologyLeaderPose)
+        {
+            if (RigDrivers.IsEmpty())
+                RigDrivers.Add(Part);
+            else if (!HaveIdenticalReferencePose(RigDrivers[0],Part))
+                return false;
+            RigDriverForPart.Add(0);
+            continue;
+        }
+        if (bGroupPartsByReferencePose)
         {
             int32 ExistingDriver = INDEX_NONE;
             for (int32 I = 0; I < RigDrivers.Num(); ++I)
@@ -712,37 +721,21 @@ bool UOGSharedMotionControllerComponent::PlayResolvedAction(
                 continue;
             }
         }
-        const FOGSharedMotionEntry* Entry = nullptr;
-        UAnimSequence* Sequence = nullptr;
-        if (!ResolveForPart(Library, Part, GameplayAction, Context,
-            bAdultContextAuthorized, ParticipantCount, ParticipantRole,
-            Sequence, Entry, RequiredSourceClip)) return false;
-
-        if (!Sequences.IsEmpty() &&
-            (Entry->SourceClipId != Entries[0]->SourceClipId ||
-             Entry->bLoop != Entries[0]->bLoop))
-            return false; // Prevent mismatched source timing or identity.
-
         RigDriverForPart.Add(RigDrivers.Num());
         RigDrivers.Add(Part);
-        Sequences.Add(Sequence);
-        Entries.Add(Entry);
-        if (bUseIdenticalTopologyLeaderPose) break;
     }
+
+    if (!ResolveCoherentNativeAction(Library,GameplayAction,Context,
+            bAdultContextAuthorized,ParticipantCount,ParticipantRole,
+            RequiredSourceClip,{},RigDrivers,Sequences,Entries))
+        return false;
 
     if (bUseIdenticalTopologyLeaderPose)
     {
-        for (USkeletalMeshComponent* Part : RegisteredParts)
-        {
-            if (Part->GetSkeletalMeshAsset()->GetSkeleton() == Sequences[0]->GetSkeleton())
-            {
-                Leader = Part;
-                break;
-            }
-        }
-        if (!Leader) return false;
-        for (USkeletalMeshComponent* Part : RegisteredParts)
-            if (!HaveIdenticalReferencePose(Leader, Part)) return false;
+        Leader=RigDrivers[0];
+        if (!Leader->GetSkeletalMeshAsset() ||
+            Leader->GetSkeletalMeshAsset()->GetSkeleton()!=Sequences[0]->GetSkeleton())
+            return false;
     }
     else if (RigDriverForPart.Num() != RegisteredParts.Num() ||
              Sequences.Num() != RigDrivers.Num()) return false;
@@ -1047,6 +1040,9 @@ bool UOGSharedMotionControllerComponent::PlaySharedSourceMotion(FName Id,bool Lo
             if (!PlayResolvedAction(Entry.GameplayAction,Context,false,
                 Entry.RequiredParticipants,Entry.SceneRole,Id)) continue;
             bLooping=Loop;
+            // Forced looping is presentation-only: never turn completion into
+            // a fabricated authoritative combat contact.
+            if (Loop) bNaturalCompletionContact=false;
             for (const auto& Part:PlayingParts)
                 if (Part) if (auto* Node=Part->GetSingleNodeInstance()) Node->SetLooping(Loop);
             return true;
