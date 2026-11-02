@@ -5198,8 +5198,16 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
     ++GroundSnapAttempts;
 
     const FVector Current = GetActorLocation();
-    const FVector TraceStart(Current.X, Current.Y, 12000.0f);
-    const FVector TraceEnd(Current.X, Current.Y, -12000.0f);
+    // Authored Gate02 R1 relief is -20m to 750m. The old +/-120m
+    // ray could miss legitimate source highlands and leave a player falling.
+    const bool bSourceR1 = StartingRegion.IsValid() &&
+        StartingRegion->bGate02R1RegionSource;
+    const float ProbeTop = bSourceR1
+        ? FMath::Max(Current.Z+5000.f,100000.f)
+        : FMath::Max(Current.Z+5000.f,12000.f);
+    const float ProbeBottom = FMath::Min(Current.Z-10000.f,-12000.f);
+    const FVector TraceStart(Current.X,Current.Y,ProbeTop);
+    const FVector TraceEnd(Current.X,Current.Y,ProbeBottom);
 
     FHitResult Hit;
     FCollisionQueryParams QueryParams(
@@ -5212,7 +5220,10 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
             TraceStart,
             TraceEnd,
             ECC_Visibility,
-            QueryParams))
+            QueryParams) &&
+        Hit.ImpactNormal.Z > .35f &&
+        (!bSourceR1 || (Hit.GetActor()==StartingRegion.Get() &&
+            Cast<UProceduralMeshComponent>(Hit.GetComponent()))))
     {
         const float HalfHeight =
             GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -5240,14 +5251,19 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
         return;
     }
 
-    if (GroundSnapAttempts < 30)
+    if (GroundSnapAttempts < 30 || bSourceR1)
     {
+        if (GroundSnapAttempts == 30 && bSourceR1)
+            UE_LOG(LogOfflineGame,Warning,
+                TEXT("Gate02 R1 ground is still streaming; retaining safe spawn until original collision is available."));
+        // Keep genuine source-bound players safe when streamed terrain arrives
+        // after the old 3-second deadline. Never stand on a fixture floor.
         FTimerHandle RetryHandle;
         GetWorldTimerManager().SetTimer(
             RetryHandle,
             this,
             &AOGWorldPrototypeCharacter::TrySnapToGeneratedGround,
-            0.1f,
+            GroundSnapAttempts<30 ? .1f : 1.f,
             false);
         return;
     }
