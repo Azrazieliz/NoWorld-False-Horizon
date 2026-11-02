@@ -1034,6 +1034,11 @@
             "commit": "dde554d0",
             "type": "SOURCE_PARTIAL",
             "change": "The existing actual Ruler/owned Manifestation World-pawn possession path now flushes real Gate02 R1 exploration into the canonical SQLite store BEFORE releasing the locally possessed pawn, refuses unsafe swaps if the journal cannot be persisted, and restores the current Ruler's journal into a reused previously parked body AFTER successful possession. Prevents stale per-pawn trail/visited-tile snapshots overwriting account exploration during repeated swaps."
+          },
+          {
+            "commit": "e7b06703",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual World Tick exploration samples now require a locally possessed PlayerController, preventing parked former owned bodies and roaming AI from marking the shared Ruler's exploration dirty and later overwriting the canonical SQLite trail after possession switches."
           }
         ],
         "completed_in_this_update": false,
@@ -1421,6 +1426,11 @@
             "commit": "dde554d0",
             "type": "SOURCE_PARTIAL",
             "change": "The existing actual Ruler/owned Manifestation World-pawn possession path now flushes real Gate02 R1 exploration into the canonical SQLite store BEFORE releasing the locally possessed pawn, refuses unsafe swaps if the journal cannot be persisted, and restores the current Ruler's journal into a reused previously parked body AFTER successful possession. Prevents stale per-pawn trail/visited-tile snapshots overwriting account exploration during repeated swaps."
+          },
+          {
+            "commit": "e7b06703",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual World Tick exploration samples now require a locally possessed PlayerController, preventing parked former owned bodies and roaming AI from marking the shared Ruler's exploration dirty and later overwriting the canonical SQLite trail after possession switches."
           }
         ],
         "completed_in_this_update": false,
@@ -1591,6 +1601,11 @@
             "commit": "dde554d0",
             "type": "SOURCE_PARTIAL",
             "change": "The existing actual Ruler/owned Manifestation World-pawn possession path now flushes real Gate02 R1 exploration into the canonical SQLite store BEFORE releasing the locally possessed pawn, refuses unsafe swaps if the journal cannot be persisted, and restores the current Ruler's journal into a reused previously parked body AFTER successful possession. Prevents stale per-pawn trail/visited-tile snapshots overwriting account exploration during repeated swaps."
+          },
+          {
+            "commit": "e7b06703",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual World Tick exploration samples now require a locally possessed PlayerController, preventing parked former owned bodies and roaming AI from marking the shared Ruler's exploration dirty and later overwriting the canonical SQLite trail after possession switches."
           }
         ],
         "completed_in_this_update": false,
@@ -2779,9 +2794,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T08:45:00+01:00"
+    },
+    {
+      "source_commit": "e7b067036cda23ff0f39e94e35bf2e840bf667e4",
+      "system_ids": [
+        "M02",
+        "M11",
+        "M23"
+      ],
+      "result": "Actual World Tick exploration samples now require a locally possessed PlayerController, preventing parked former owned bodies and roaming AI from marking the shared Ruler's exploration dirty and later overwriting the canonical SQLite trail after possession switches.",
+      "remaining_player_visible_work": "Needs real original Gate02 R1 five-source-file availability and UE5.8 Android multi-body movement/possession verification; not built or phone tested.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "5star_reused_program": "Scripts/production/gate12_luminous_exact_owned_manifestation_world_binding_20261020.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reuses existing source trail and same canonical WorldStore; corrected live pawn-authorship guard.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T08:45:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "dde554d0210bb0dab04ee29e9006b81bb060c568",
+  "continuation_last_source_commit": "e7b067036cda23ff0f39e94e35bf2e840bf667e4",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
