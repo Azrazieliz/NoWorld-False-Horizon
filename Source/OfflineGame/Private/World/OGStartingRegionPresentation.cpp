@@ -5659,9 +5659,21 @@ void AOGWorldPresentationGameMode::StartPlay()
             }
             if (!Region)
             {
-                Region = World->SpawnActor<AOGStartingRegionGenerator>(
+                // Spawn deferred so the source mode and original Gate02 tag
+                // exist BEFORE BeginPlay->GenerateRegion. Ordinary SpawnActor
+                // could run BeginPlay immediately, generating the legacy
+                // synthetic region before this method set the source flag.
+                Region = World->SpawnActorDeferred<AOGStartingRegionGenerator>(
                     AOGStartingRegionGenerator::StaticClass(),
-                    FVector::ZeroVector, FRotator::ZeroRotator);
+                    FTransform::Identity, nullptr, nullptr,
+                    ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+                if (Region)
+                {
+                    Region->bGate02R1RegionSource = true;
+                    Region->Tags.AddUnique(FName(TEXT("Gate02R1Source")));
+                    UGameplayStatics::FinishSpawningActor(
+                        Region, FTransform::Identity);
+                }
             }
             if (Region)
             {
