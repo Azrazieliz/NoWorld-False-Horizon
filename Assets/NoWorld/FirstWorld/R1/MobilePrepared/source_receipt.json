@@ -1,0 +1,169 @@
+{
+  "schema": "noworld.r1.native_source_preparation.v1",
+  "source_reused_without_proxy": true,
+  "mobile_source_derivative": true,
+  "native_unreal_verified": false,
+  "accepted_by_owner": false,
+  "sources": [
+    {
+      "source": "D:\\NoWorld_Art_Production\\NoWorld_FirstWorld_RegionKit_R1_20261019\\anchors\\eastern_market_town.glb",
+      "source_sha256": "a6373a82b629b667714f4e39b741ff66450d8ece338bf5eaf72431148d489e3c",
+      "source_stats": {
+        "source_objects": 508,
+        "vertices": 9455450,
+        "polygons": 10607212,
+        "triangle_faces": 10607212
+      },
+      "output_stats": {
+        "triangle_faces": 1273373
+      },
+      "geometry_preserved": false,
+      "outputs": [
+        {
+          "section": 0,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_00.glb",
+          "sha256": "ad7cea06d23b2b2b60e0d2193f7b6e4cdb5515f2f522efd3f463adb6a5e12cf7",
+          "source_master_sha256": "8a1d72758aa030f4b073676ee1ea4e326895baa3810612432448b09fd6997d1e",
+          "source_original_triangles": 4288018,
+          "triangle_faces": 514562,
+          "bytes": 49713428,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.11999996268672379,
+          "passthrough_source_geometry": false
+        },
+        {
+          "section": 1,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_01.glb",
+          "sha256": "281b15969b4a1153d6bc7262d1eed5c3168f6d5cdf58ac2d7be4812c4f4d6215",
+          "source_master_sha256": "281b15969b4a1153d6bc7262d1eed5c3168f6d5cdf58ac2d7be4812c4f4d6215",
+          "source_original_triangles": 156,
+          "triangle_faces": 156,
+          "bytes": 12364,
+          "original_mesh_derived": true,
+          "mobile_ratio": 1.0,
+          "passthrough_source_geometry": true
+        },
+        {
+          "section": 2,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_02.glb",
+          "sha256": "ceb866dfa8f462fd85efb8cf1404d66fde3009e563cc37b19de0985114fb9d4c",
+          "source_master_sha256": "d0fa72ae0706194346e6301498df433cbda2f706e7376189941d4ba1e6cafb04",
+          "source_original_triangles": 139332,
+          "triangle_faces": 16719,
+          "bytes": 1642768,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.12,
+          "passthrough_source_geometry": false
+        },
+        {
+          "section": 3,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_03.glb",
+          "sha256": "8a179594dc9205cc83497efed349920cd0c344c43c927a6b940b7862ef147eec",
+          "source_master_sha256": "485f1e9ade1089c942bce34c89ba455c6aaa3bd15f38b0fe23d7c90518d1d553",
+          "source_original_triangles": 683316,
+          "triangle_faces": 81997,
+          "bytes": 7393412,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.12,
+          "passthrough_source_geometry": false
+        },
+        {
+          "section": 4,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_04.glb",
+          "sha256": "c58912f209e574ede7929b435e1222c8157c022e7557abad8adb8a12768ea924",
+          "source_master_sha256": "20202c26115e9aacfa5cf79f74830bff97ba697783a5f90044099572c5624971",
+          "source_original_triangles": 1196496,
+          "triangle_faces": 143579,
+          "bytes": 12906064,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.12,
+          "passthrough_source_geometry": false
+        },
+        {
+          "section": 5,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_05.glb",
+          "sha256": "e1554d96a5d16040275e2b6774a6c9b355296831fd43dce82c56ad3bd29f758f",
+          "source_master_sha256": "ee08251e94d83351761688718eb3a3e1344e3db49cb1056efa75077012b16333",
+          "source_original_triangles": 216020,
+          "triangle_faces": 25922,
+          "bytes": 2478416,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.12,
+          "passthrough_source_geometry": false
+        },
+        {
+          "section": 6,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_06.glb",
+          "sha256": "5a37f050638d27550d69d6aa06f8a8cbbe1d01fb823d5ef7a7d852ef4bff799f",
+          "source_master_sha256": "5a37f050638d27550d69d6aa06f8a8cbbe1d01fb823d5ef7a7d852ef4bff799f",
+          "source_original_triangles": 204,
+          "triangle_faces": 204,
+          "bytes": 14992,
+          "original_mesh_derived": true,
+          "mobile_ratio": 1.0,
+          "passthrough_source_geometry": true
+        },
+        {
+          "section": 7,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_07.glb",
+          "sha256": "0153d592151850893e39f51df3f58004e34a4fcde9140b5964c613448d4633c6",
+          "source_master_sha256": "0153d592151850893e39f51df3f58004e34a4fcde9140b5964c613448d4633c6",
+          "source_original_triangles": 136,
+          "triangle_faces": 136,
+          "bytes": 11516,
+          "original_mesh_derived": true,
+          "mobile_ratio": 1.0,
+          "passthrough_source_geometry": true
+        },
+        {
+          "section": 8,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_08.glb",
+          "sha256": "817b9bfe809d97df601327839595675c231e86b1499b6e2ca83497d1a17cde5c",
+          "source_master_sha256": "817b9bfe809d97df601327839595675c231e86b1499b6e2ca83497d1a17cde5c",
+          "source_original_triangles": 86,
+          "triangle_faces": 86,
+          "bytes": 6912,
+          "original_mesh_derived": true,
+          "mobile_ratio": 1.0,
+          "passthrough_source_geometry": true
+        },
+        {
+          "section": 9,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_09.glb",
+          "sha256": "3521fc56c5c5f2dfa7923c5ba2ea33a3d490af7124d817c8121c5d08a832ef4a",
+          "source_master_sha256": "b1d92f9aae2a24306ea32aca6145ed5a318bb7aaa512e7c5fab544407b8113dc",
+          "source_original_triangles": 133576,
+          "triangle_faces": 16029,
+          "bytes": 1584644,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.12,
+          "passthrough_source_geometry": false
+        },
+        {
+          "section": 10,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_10.glb",
+          "sha256": "ea326be3c9dbb885c74c1690f5ec0e41c1107999f1ab204b8fe93528cdbab95b",
+          "source_master_sha256": "8ba1bf98f921e3a8c383481f93114aaa1dc4efa6609b10a6d2a2c744c5a9c40d",
+          "source_original_triangles": 617674,
+          "triangle_faces": 74120,
+          "bytes": 7128832,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.12,
+          "passthrough_source_geometry": false
+        },
+        {
+          "section": 11,
+          "file": "D:\\UnrealProjects\\NoWorld_R1_NativeImports_20261102\\PreparedMarketMobile\\market\\SM_R1_EasternMarket_SourceSection_11.glb",
+          "sha256": "707592103c182eb92b53f9a5095894b5f01af8cb684f397d21d2c9d8e5271c4c",
+          "source_master_sha256": "ad945001068e8736c3e85beb52e1eb899631c7b19fbf20ec38b6f74e378a4123",
+          "source_original_triangles": 3332198,
+          "triangle_faces": 399863,
+          "bytes": 38310972,
+          "original_mesh_derived": true,
+          "mobile_ratio": 0.12,
+          "passthrough_source_geometry": false
+        }
+      ]
+    }
+  ]
+}
