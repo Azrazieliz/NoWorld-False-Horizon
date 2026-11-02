@@ -967,6 +967,11 @@
             "commit": "dde554d0",
             "type": "SOURCE_PARTIAL",
             "change": "The existing actual Ruler/owned Manifestation World-pawn possession path now flushes real Gate02 R1 exploration into the canonical SQLite store BEFORE releasing the locally possessed pawn, refuses unsafe swaps if the journal cannot be persisted, and restores the current Ruler's journal into a reused previously parked body AFTER successful possession. Prevents stale per-pawn trail/visited-tile snapshots overwriting account exploration during repeated swaps."
+          },
+          {
+            "commit": "48f23804",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
           }
         ],
         "completed_in_this_update": false,
@@ -1039,6 +1044,11 @@
             "commit": "e7b06703",
             "type": "SOURCE_PARTIAL",
             "change": "Actual World Tick exploration samples now require a locally possessed PlayerController, preventing parked former owned bodies and roaming AI from marking the shared Ruler's exploration dirty and later overwriting the canonical SQLite trail after possession switches."
+          },
+          {
+            "commit": "48f23804",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
           }
         ],
         "completed_in_this_update": false,
@@ -1225,6 +1235,11 @@
             "commit": "3724c433",
             "type": "SOURCE_PARTIAL",
             "change": "The shared native skill-branch motion resolver now accepts the original unbranched actions that carry no ResolutionJson, using their exact installed native skill mapping, while still rejecting malformed nonempty branch/mode JSON and refusing to substitute a different authored Ultimate branch. Restores compatibility for native NPC/source actions without weakening canonical skill identity."
+          },
+          {
+            "commit": "48f23804",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
           }
         ],
         "completed_in_this_update": false,
@@ -1764,6 +1779,11 @@
             "commit": "e808e55c",
             "type": "SOURCE_PARTIAL",
             "change": "The fallback native Android encounter UI now uses the already committed GameCore outcome receipt and victory flag instead of guessing victory/defeat from the selected Manifestation's remaining HP; it also renders genuine combat controls for the currently possessed canonical Ruler where the original body/battle binding has already been independently verified. Closing the native UMG result restores GameOnly input and hides the mouse cursor, preserving real World camera/touch controls."
+          },
+          {
+            "commit": "48f23804",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
           }
         ],
         "completed_in_this_update": false,
@@ -1809,6 +1829,11 @@
             "commit": "45668957",
             "type": "SOURCE_PARTIAL",
             "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
+          },
+          {
+            "commit": "48f23804",
+            "type": "SOURCE_PARTIAL",
+            "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
           }
         ],
         "completed_in_this_update": false,
@@ -2814,9 +2839,31 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T08:45:00+01:00"
+    },
+    {
+      "source_commit": "48f23804d08105b860bfa44735ceb1a58d18af6b",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M05",
+        "M33",
+        "M36"
+      ],
+      "result": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names.",
+      "remaining_player_visible_work": "Hydrate exact original LFS objects in an isolated checkout, recover five missing R1 dataset files, then native compile/cook/package and phone acceptance; source-side preflight only, no APK.",
+      "source_paths": [
+        "Scripts/android_unreal_package.ps1"
+      ],
+      "5star_reused_program": "Scripts/android_unreal_package.ps1",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reused the existing real Android packaging program, adding tracked source-asset hydration safety before UE cook.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T08:45:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "e7b067036cda23ff0f39e94e35bf2e840bf667e4",
+  "continuation_last_source_commit": "48f23804d08105b860bfa44735ceb1a58d18af6b",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
