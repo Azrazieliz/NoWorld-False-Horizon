@@ -221,7 +221,7 @@ bool FOGCombatVitalityService::Commit(const FOGTurnBattleState& Before,const FOG
         Saved->SetObjectField(TEXT("hp"),LargeJson(Unit.CurrentHp)); Saved->SetObjectField(TEXT("maximum_hp"),LargeJson(Unit.Stats.MaxHp));
         auto Record=MakeShared<FJsonObject>(); Record->SetObjectField(VitalityField,Saved);
         FWrite Write; Write.Entity=VitalityRowId(Unit.UnitEntityId); Write.Kind=TEXT("combat_vitality");
-        if (!FJsonSerializer::Serialize(Record.ToSharedRef(),TJsonWriterFactory<>::Create(&Write.Json)))
+        if (!FJsonSerializer::Serialize(Record,TJsonWriterFactory<>::Create(&Write.Json)))
         { Error=TEXT("Cannot serialize canonical combat vitality."); return false; }
         Writes.Add(MoveTemp(Write));
     }
