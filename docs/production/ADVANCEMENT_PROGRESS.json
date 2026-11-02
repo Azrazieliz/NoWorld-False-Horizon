@@ -957,6 +957,11 @@
             "commit": "732f78ba",
             "type": "SOURCE_PARTIAL",
             "change": "The actual native pawn ground snap now covers original Gate02 R1 elevations up to 750m instead of the former +/-120m trace, accepts only the genuine native R1 procedural terrain collision rather than an unrelated prop/fixture, and safely retries after a three-second stream delay at a bounded one-second interval rather than releasing the player to fall into missing World geometry. Source terrain and player state remain unchanged."
+          },
+          {
+            "commit": "45668957",
+            "type": "SOURCE_PARTIAL",
+            "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
           }
         ],
         "completed_in_this_update": false,
@@ -1004,6 +1009,11 @@
             "commit": "d656c5a5",
             "type": "SOURCE_PARTIAL",
             "change": "Existing authored R1 world exploration persistence now requires the actual locally possessed PlayerController before reading or writing the canonical Ruler-owned trail and source-tile journal. Other NPC/AI WorldPrototypeCharacter actors no longer share the local Ruler's GameInstance and can overwrite saved player exploration with unrelated movement or trigger needless per-NPC SQL scans."
+          },
+          {
+            "commit": "45668957",
+            "type": "SOURCE_PARTIAL",
+            "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
           }
         ],
         "completed_in_this_update": false,
@@ -1165,6 +1175,11 @@
             "commit": "0817c0a2",
             "type": "SOURCE_PARTIAL",
             "change": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons."
+          },
+          {
+            "commit": "45668957",
+            "type": "SOURCE_PARTIAL",
+            "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
           }
         ],
         "completed_in_this_update": false,
@@ -1659,6 +1674,11 @@
             "commit": "0817c0a2",
             "type": "SOURCE_PARTIAL",
             "change": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons."
+          },
+          {
+            "commit": "45668957",
+            "type": "SOURCE_PARTIAL",
+            "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
           }
         ],
         "completed_in_this_update": false,
@@ -1699,7 +1719,13 @@
         "title": "Complete integrated full-game phone acceptance",
         "issue": 63,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "45668957",
+            "type": "SOURCE_PARTIAL",
+            "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -2576,9 +2602,31 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T03:30:00+01:00"
+    },
+    {
+      "source_commit": "4566895706485da7aa079a99602ecb376cb44a08",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M05",
+        "M33",
+        "M36"
+      ],
+      "result": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered.",
+      "remaining_player_visible_work": "The five actual R1 source files are absent from the GitHub active branch, so packaging correctly remains blocked; restore original authored binaries to GitHub, compile UE5.8, build Android, install on owner phone, and obtain real verdict. No PC/ADB used or build claimed.",
+      "source_paths": [
+        "Scripts/android_unreal_package.ps1"
+      ],
+      "5star_reused_program": "Scripts/android_unreal_package.ps1",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Extended the existing native Unreal Android BuildCookRun driver, no alternate build/packaging pipeline invented. Source only, cannot execute packaged workflow on GitHub-hosted environment without native Unreal toolchain.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:38:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "d656c5a53a859db58bc69652f1abf105b3c714b7",
+  "continuation_last_source_commit": "4566895706485da7aa079a99602ecb376cb44a08",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
