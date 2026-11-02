@@ -9,10 +9,103 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "CollisionQueryParams.h"
+
+namespace
+{
+bool IsActualMeleeSemantic(FName Action)
+{
+    const FString Semantic=Action.ToString();
+    return Semantic.StartsWith(TEXT("Combat.Melee.")) ||
+           Semantic.StartsWith(TEXT("Combat.Sword."));
+}
+}
 
 UOGTurnContactActionComponent::UOGTurnContactActionComponent()
 {
-    PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bStartWithTickEnabled = false;
+    PrimaryComponentTick.TickGroup = TG_PostPhysics;
+}
+
+void UOGTurnContactActionComponent::TickComponent(
+    float DeltaSeconds,ELevelTick TickType,
+    FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaSeconds,TickType,ThisTickFunction);
+    if(!bStaged || !bPhysicalMeleeContact || bResolving || !GetWorld() ||
+       !GetOwner() || DeltaSeconds<=0.f) return;
+
+    // An original attack without source notify is NOT contact-approved just
+    // because it played. Check the same battle/owner/receipt every frame.
+    FString Error;
+    if(!IsSameLiveTurn(Error,false))
+    {
+        DropStagedAction(true);
+        return;
+    }
+    TArray<USkeletalMeshComponent*> Parts;
+    GetOwner()->GetComponents<USkeletalMeshComponent>(Parts);
+    // Only original mapped hand bones, never the root/pawn center or a
+    // synthetic timed hit radius. Both transforms are actual animated source
+    // poses from two consecutive post-physics frames.
+    static const FName HandBones[]={
+        TEXT("cf_J_Hand_R"),TEXT("cf_J_Hand_L"),
+        TEXT("hand_r"),TEXT("hand_l"),
+        TEXT("RightHand"),TEXT("LeftHand"),
+        TEXT("Hand_R"),TEXT("Hand_L")};
+    TSet<FName> Seen;
+    for(USkeletalMeshComponent* Mesh:Parts)
+    {
+        if(!Mesh || !Mesh->GetSkeletalMeshAsset() || !Mesh->IsVisible())
+            continue;
+        for(const FName Bone:HandBones)
+        {
+            if(Seen.Contains(Bone) || Mesh->GetBoneIndex(Bone)==INDEX_NONE)
+                continue;
+            Seen.Add(Bone);
+            const FVector Current=Mesh->GetBoneLocation(Bone);
+            if(!Current.IsFinite())continue;
+            const FVector* Last=PreviousPhysicalMeleeBones.Find(Bone);
+            PreviousPhysicalMeleeBones.Add(Bone,Current);
+            if(!Last)continue;
+            // Guard against resting hand proximity and zero-length sweeps.
+            const FVector Old=*Last;
+            if(FVector::DistSquared(Old,Current)<
+               FMath::Square(FMath::Max(2.f,DeltaSeconds*55.f)))
+                continue;
+            FCollisionObjectQueryParams Objects;
+            Objects.AddObjectTypesToQuery(ECC_Pawn);
+            Objects.AddObjectTypesToQuery(ECC_WorldDynamic);
+            FCollisionQueryParams Query(
+                FName(TEXT("NoWorldOriginalMeleeSourceContact")),false,GetOwner());
+            TArray<FHitResult> Hits;
+            if(!GetWorld()->SweepMultiByObjectType(
+                Hits,Old,Current,FQuat::Identity,Objects,
+                FCollisionShape::MakeSphere(14.f),Query))continue;
+            for(const FOGEntityId& Id:StagedAction.TargetUnitIds)
+            {
+                AActor* PhysicalTarget=
+                    UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                        GetWorld(),BattleId,Id);
+                if(!PhysicalTarget || PhysicalTarget==GetOwner())continue;
+                if(!Hits.ContainsByPredicate([PhysicalTarget](const FHitResult& Hit)
+                    {return Hit.GetActor()==PhysicalTarget;}))
+                    continue;
+                // World obstacles still block contact. This is not a
+                // distance-only/aim-only strike through walls.
+                FHitResult Obstruction;
+                if(GetWorld()->LineTraceSingleByChannel(
+                    Obstruction,Old,PhysicalTarget->GetActorLocation(),
+                    ECC_Visibility,Query) &&
+                   Obstruction.GetActor()!=PhysicalTarget)
+                    continue;
+                ResolveSourceMotionEvent(SourceSemantic,StagedMotionId,false);
+                return; // authoritative executor settles once, or rejects.
+            }
+        }
+    }
 }
 
 bool UOGTurnContactActionComponent::IsSameLiveTurn(
@@ -165,6 +258,12 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
         DropStagedAction(true);
         return false;
     }
+    // No source AnimationEvent was invented. Original Melee/Sword can commit
+    // ONLY when its actual hand bone physically sweeps a live World target.
+    bPhysicalMeleeContact=IsActualMeleeSemantic(SourceSemantic) &&
+        !bNaturalCompletionAuthorized;
+    PreviousPhysicalMeleeBones.Reset();
+    SetComponentTickEnabled(bPhysicalMeleeContact);
     return true;
 }
 
@@ -290,6 +389,9 @@ void UOGTurnContactActionComponent::DropStagedAction(bool bStopSourcePlayback)
     const FOGEntityId OldReceipt = StagedAction.ActionId;
     bStaged = false;
     bNaturalCompletionAuthorized = false;
+    bPhysicalMeleeContact = false;
+    PreviousPhysicalMeleeBones.Reset();
+    SetComponentTickEnabled(false);
     BoundCore.Reset();
     BoundMotion.Reset();
     OriginalPawnController.Reset();
