@@ -982,6 +982,11 @@
             "commit": "a1072c51",
             "type": "SOURCE_PARTIAL",
             "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
+          },
+          {
+            "commit": "6687df70",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1064,6 +1069,11 @@
             "commit": "a1072c51",
             "type": "SOURCE_PARTIAL",
             "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
+          },
+          {
+            "commit": "6687df70",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1481,6 +1491,11 @@
             "commit": "1c91c1b8",
             "type": "SOURCE_PARTIAL",
             "change": "Genuine source foliage prepared with provenance and preserved geometry in native isolated worker; 5★ reusable world-content importer source added, native UE and phone still unverified."
+          },
+          {
+            "commit": "6687df70",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1513,6 +1528,11 @@
             "commit": "1c91c1b8",
             "type": "SOURCE_PARTIAL",
             "change": "Genuine source foliage prepared with provenance and preserved geometry in native isolated worker; 5★ reusable world-content importer source added, native UE and phone still unverified."
+          },
+          {
+            "commit": "6687df70",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1535,6 +1555,11 @@
             "commit": "1c91c1b8",
             "type": "SOURCE_PARTIAL",
             "change": "Genuine source foliage prepared with provenance and preserved geometry in native isolated worker; 5★ reusable world-content importer source added, native UE and phone still unverified."
+          },
+          {
+            "commit": "6687df70",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1789,7 +1814,13 @@
         "title": "Character and environmental visual polish",
         "issue": 58,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "6687df70",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -3077,9 +3108,38 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T09:31:13.078Z"
+    },
+    {
+      "source_commit": "6687df70e0988a79294740b83112b973901c44db",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11",
+        "M12",
+        "M13",
+        "M31",
+        "M34"
+      ],
+      "result": "Executed original R1 native UE5.8 static-mesh import for fir (433021 source triangles), oak (495533), and shrub (6827), preserving frozen GLB hashes and real material/texture dependencies. Published all 27 actual Unreal .uasset files through Git LFS at the canonical existing /Game/NoWorld/FirstWorld/R1/Modules/SM_R1_{Fir,Oak,Shrub}Source object paths on GitHub commit 6687df70, and verified 4b6ca0a6...6687df70 adds exactly 27 files with no removals. Imports are native authoring proof, not phone-ready optimized LOD or owner acceptance.",
+      "remaining_player_visible_work": "Original 10.6m-triangle Eastern Market must be source-authentically optimized/imported into 12 section UAssets; game native UE5.8 module/terrain render, real World movement/collision and mobile memory optimization still unverified. Combat 937 original action contacts remain unsourced until validated Unity events/physical contact mappings; APK/phone testing outstanding.",
+      "source_paths": [
+        "Content/NoWorld/FirstWorld/R1/Modules/SM_R1_FirSource.uasset",
+        "Content/NoWorld/FirstWorld/R1/Modules/SM_R1_OakSource.uasset",
+        "Content/NoWorld/FirstWorld/R1/Modules/SM_R1_ShrubSource.uasset",
+        "Content/NoWorld/FirstWorld/R1/Modules/OriginalSource_SM_R1_FirSource",
+        "Content/NoWorld/FirstWorld/R1/Modules/OriginalSource_SM_R1_OakSource",
+        "Content/NoWorld/FirstWorld/R1/Modules/OriginalSource_SM_R1_ShrubSource"
+      ],
+      "5star_reused_program": "Scripts/production/noworld_r1_unreal_import.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Executed Blender source preparation and separate UnrealEditor-Cmd native imports in isolated original-content project; authenticated three authoring receipts; uploaded 27 original assets and dependencies through Git LFS, GitHub compare verified exactly 27 added paths, protected original PC work untouched.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T09:49:18.687Z"
     }
   ],
-  "continuation_last_source_commit": "b99095e8c52fe86d65c799737bccaafb5ea348e7",
+  "continuation_last_source_commit": "6687df70e0988a79294740b83112b973901c44db",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
