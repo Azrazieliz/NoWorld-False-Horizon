@@ -262,7 +262,7 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
     // No source AnimationEvent was invented. Original Melee/Sword can commit
     // ONLY when its actual hand bone physically sweeps a live World target.
     bPhysicalMeleeContact=IsActualMeleeSemantic(SourceSemantic) &&
-        !bNaturalCompletionAuthorized;
+        !bNaturalCompletionAuthorized && !Motion->IsCurrentSourceAuthoredContact();
     PreviousPhysicalMeleeBones.Reset();
     SetComponentTickEnabled(bPhysicalMeleeContact);
     return true;
