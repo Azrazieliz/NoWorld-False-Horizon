@@ -12,6 +12,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
+#include "Engine/EngineTypes.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -307,8 +308,8 @@ bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCas
             { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
             if (!Step.StartSocket.IsNone())
             {
-                FName Start,End;
-                if (!TracePart(Step,Start,End,Error)) return false;
+                FName SocketStart,SocketEnd;
+                if (!TracePart(Step,SocketStart,SocketEnd,Error)) return false;
             }
         }
     }
