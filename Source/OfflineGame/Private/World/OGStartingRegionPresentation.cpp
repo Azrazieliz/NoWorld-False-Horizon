@@ -6211,6 +6211,14 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 FailAndReturnToRuler(TEXT("The canonical Ruler's existing physical body is unavailable; current character preserved."));
                 return;
             }
+            FString ExplorationError;
+            if (!Previous->FlushR1ExplorationBeforePossession(ExplorationError))
+            {
+                FailAndReturnToRuler(ExplorationError.IsEmpty()
+                    ? TEXT("Cannot switch Ruler while World exploration is unsaved.")
+                    : ExplorationError);
+                return;
+            }
             PlayerOwner->Possess(OriginalRuler);
             if (PlayerOwner->GetPawn() != OriginalRuler)
             {
@@ -6218,6 +6226,9 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 FailAndReturnToRuler(TEXT("Ruler possession failed; previous pawn preserved."));
                 return;
             }
+            // The parked Ruler's journal may predate exploration performed
+            // by this Manifestation. Load the shared canonical owner record.
+            OriginalRuler->RefreshR1ExplorationAfterPossession();
             // The existing World is already initialized. Preserve its actors,
             // player location and state rather than rebuilding the test course.
             RememberEmbodiedOwnedCharacter(Previous);
@@ -6308,6 +6319,15 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 PreservedRulerWorldPawn = Previous; PreservedRulerOwnerId = Session->BoundRulerId;
             }
         }
+        FString ExplorationError;
+        if (!Previous->FlushR1ExplorationBeforePossession(ExplorationError))
+        {
+            if (!bReusingBody) Replacement->Destroy();
+            FailAndReturnToRuler(ExplorationError.IsEmpty()
+                ? TEXT("Cannot switch character while World exploration is unsaved.")
+                : ExplorationError);
+            return;
+        }
         PlayerOwner->Possess(Replacement);
         if (PlayerOwner->GetPawn() != Replacement)
         {
@@ -6317,6 +6337,7 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 TEXT("Player possession failed; old playable character restored."));
             return;
         }
+        Replacement->RefreshR1ExplorationAfterPossession();
         RememberEmbodiedOwnedCharacter(Replacement);
         if (bPreviousIsOwned && Previous != Replacement) RememberEmbodiedOwnedCharacter(Previous);
     }

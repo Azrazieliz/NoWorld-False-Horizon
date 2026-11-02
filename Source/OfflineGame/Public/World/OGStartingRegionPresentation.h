@@ -676,6 +676,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
     bool SubmitApprovedLuminousWorldCommand(FName CommandId,FString& Error);
     bool HasNativeOwnedLuminousEncounter() const;
+    /** Flush the canonical Ruler's actual exploration before relinquishing
+     * this possessed body, so another body cannot load a stale map journal. */
+    bool FlushR1ExplorationBeforePossession(FString& OutError);
+    /** Invalidate a previously cached per-pawn journal after possession.
+     * The newly controlled pawn restores the current Ruler's shared store. */
+    void RefreshR1ExplorationAfterPossession();
     // Advance non-player participants on the REAL canonical encounter timeline,
     // using their existing approved skills and world actors. Never spawn foes.
     void AdvanceCanonicalNonPlayerBattleTurn();

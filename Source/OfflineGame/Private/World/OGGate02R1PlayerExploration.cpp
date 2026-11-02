@@ -183,6 +183,44 @@ bool AOGWorldPrototypeCharacter::SaveR1ExplorationToWorldStore(FString& OutError
     return true;
 }
 
+
+bool AOGWorldPrototypeCharacter::FlushR1ExplorationBeforePossession(
+    FString& OutError)
+{
+    OutError.Reset();
+    if (!bR1ExplorationDirty) return true;
+    if (!bR1ExplorationLoaded || bR1ExplorationRestoreRejected)
+    {
+        OutError=TEXT("The existing source exploration has not been safely restored.");
+        return false;
+    }
+    return SaveR1ExplorationToWorldStore(OutError);
+}
+
+void AOGWorldPrototypeCharacter::RefreshR1ExplorationAfterPossession()
+{
+    // All actor swaps call FlushR1ExplorationBeforePossession on the outgoing
+    // locally possessed pawn before changing controller ownership. A
+    // previously parked body may hold an older snapshot of that same Ruler's
+    // exploration; reload one canonical SQLite record, never overwrite it.
+    if (bR1ExplorationDirty)
+    {
+        UE_LOG(LogTemp,Error,
+            TEXT("Refusing to discard an unflushed R1 exploration journal during possession."));
+        return;
+    }
+    bR1ExplorationLoaded=false;
+    bR1ExplorationRestoreRejected=false;
+    bR1ExplorationDirty=false;
+    R1ExplorationRuler=FOGEntityId();
+    R1ExploredSourceTiles.Reset();
+    VisitedMapTrail.Reset();
+    bHasMapTrailSample=false;
+    LastMapTrailSample=FVector2D::ZeroVector;
+    R1NextExplorationSaveSeconds=0.;
+    RestoreR1ExplorationFromWorldStore();
+}
+
 void AOGWorldPrototypeCharacter::RecordR1ExplorationAndSaveIfDue(
     const FVector& WorldLocation)
 {
