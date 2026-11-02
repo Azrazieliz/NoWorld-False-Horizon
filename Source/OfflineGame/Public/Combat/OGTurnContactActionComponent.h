@@ -27,6 +27,11 @@ class OFFLINEGAME_API UOGTurnContactActionComponent final : public UActorCompone
 public:
     UOGTurnContactActionComponent();
 
+    /** Sweeps the actual animated hand path against an existing canonical
+     * World combat target. No generic impact timestamps or damage packets. */
+    virtual void TickComponent(float DeltaSeconds,ELevelTick TickType,
+        FActorComponentTickFunction* ThisTickFunction) override;
+
     bool StageActualTurnAction(const FOGResolvedCombatAction& Requested,
         FName ApprovedMotionSemantic, FString& OutError);
 
@@ -64,7 +69,9 @@ private:
     FOGEntityId BattleId;
     FName SourceSemantic = NAME_None;
     FName StagedMotionId = NAME_None;
+    TMap<FName,FVector> PreviousPhysicalMeleeBones;
     bool bStaged = false;
+    bool bPhysicalMeleeContact = false;
     bool bNaturalCompletionAuthorized = false;
     bool bResolving = false;
 };
