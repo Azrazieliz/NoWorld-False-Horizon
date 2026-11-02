@@ -7,6 +7,9 @@
 #include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGTurnBattle.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Combat/OGTurnContactActionComponent.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
 #include "EngineUtils.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
@@ -110,7 +113,8 @@ void UOGNativeBattleWidget::AddButton(UPanelWidget* Parent,const FString& Label,
     Parent->AddChild(Bounds);
     auto* Button=WidgetTree->ConstructWidget<UOGNativeBattleButton>();
     Button->Screen=this; Button->Command=Command; Button->TargetIndex=TargetIndex;
-    Button->SetIsFocusable(false); Button->SetIsEnabled(Enabled); Button->SetToolTipText(FText::FromString(Hint));
+    // Native touch, keyboard and gamepad share the same authoritative action.
+    Button->SetIsEnabled(Enabled); Button->SetToolTipText(FText::FromString(Hint));
     Button->SetBackgroundColor(Selected?FLinearColor(.26f,.17f,.31f,1):FLinearColor(.07f,.045f,.105f,1));
     Button->OnClicked.AddDynamic(Button,&UOGNativeBattleButton::Invoke);
     FOGNativeUiStyle::SkinButton(*Button);
@@ -118,8 +122,8 @@ void UOGNativeBattleWidget::AddButton(UPanelWidget* Parent,const FString& Label,
     auto* Text=WidgetTree->ConstructWidget<UTextBlock>(); Text->SetFont(BattleFont(17));
     Text->SetAutoWrapText(true); Text->SetText(FText::FromString(Label));
     Text->SetColorAndOpacity(Selected?Gold:Enabled?Pale:FLinearColor(.49f,.47f,.53f,1));
-    if (auto* Slot=Cast<UButtonSlot>(Button->AddChild(Text)))
-    { Slot->SetPadding(FMargin(12,10)); Slot->SetVerticalAlignment(VAlign_Center); }
+    if (auto* NativeButtonSlot=Cast<UButtonSlot>(Button->AddChild(Text)))
+    { NativeButtonSlot->SetPadding(FMargin(12,10)); NativeButtonSlot->SetVerticalAlignment(VAlign_Center); }
 }
 void UOGNativeBattleWidget::Refresh()
 {
@@ -168,6 +172,10 @@ void UOGNativeBattleWidget::Refresh()
     const auto* Source=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Controlled;});
     if (!Source) { SetVisibility(ESlateVisibility::Collapsed); return; }
     SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+    const UOGTurnContactActionComponent* PendingContact =
+        Body->FindComponentByClass<UOGTurnContactActionComponent>();
+    const bool bPerformingAuthoredStrike = PendingContact &&
+        PendingContact->IsAwaitingAuthoredContact();
     int32 Resource=0,Charge=0,OwnerActions=0;
     Battle->ReadLuminousCommandResources(Source->UnitEntityId,Resource,Charge,OwnerActions);
     FString Key=State.BattleId.ToString()+Source->UnitEntityId.ToString()+
@@ -178,6 +186,8 @@ void UOGNativeBattleWidget::Refresh()
     for (const auto& Id:Body->GetSelectedCanonicalTurnTargets()) Key+=Id.ToString();
     if (Body->HasTargetHudProjectionForHud()) Key+=Body->GetTargetHudProjectionForHud().TargetEntityId.ToString();
     Key+=Core->NativeEncounterRecoveryStatus;
+    Key+=bPerformingAuthoredStrike ? TEXT("|AUTHORED_CONTACT_PENDING") :
+        TEXT("|AUTHORED_CONTACT_IDLE");
     if (Key==Signature) return;
     Signature=Key;
     FOGNativeBattleCommandSet Set; FString Error;
@@ -186,8 +196,13 @@ void UOGNativeBattleWidget::Refresh()
     const bool WorldMode=State.ExecutionMode==EOGCombatExecutionMode::World;
     const int32 Acting=Battle->SelectNextActingUnitIndex();
     const bool Own=(WorldMode || (State.Units.IsValidIndex(Acting) && State.Units[Acting].UnitEntityId==Source->UnitEntityId)) &&
-        Source->CanAct() && Body->IsFoundationWorldInputAllowed() && !Core->IsNativeEncounterAwaitingWorldRebind();
-    Heading->SetText(FText::FromString(WorldMode?TEXT("WORLD COMBAT"):Own?TEXT("YOUR TURN"):TEXT("OPPONENT / ALLY TURN")));
+        Source->CanAct() && Body->IsFoundationWorldInputAllowed() &&
+        !Core->IsNativeEncounterAwaitingWorldRebind() &&
+        !bPerformingAuthoredStrike;
+    Heading->SetText(FText::FromString(
+        bPerformingAuthoredStrike ? TEXT("AUTHORED ACTION IN PROGRESS") :
+        WorldMode ? TEXT("WORLD COMBAT") : Own ? TEXT("YOUR TURN") :
+        TEXT("OPPONENT / ALLY TURN")));
     FString ResourceText=FString::Printf(TEXT("HP %s / %s"),*Source->CurrentHp.ToDebugString(),*Source->Stats.MaxHp.ToDebugString());
     if (!Set.ResourceLabel.IsEmpty())
         ResourceText+=FString::Printf(TEXT("   |   %s %d / %d   |   Ultimate %d%% / %d%%"),
@@ -218,7 +233,9 @@ void UOGNativeBattleWidget::Refresh()
         UltimateBar->SetPercent(Set.ChargeCap>0?FMath::Clamp(static_cast<float>(Charge)/Set.ChargeCap,0.f,1.f):0.f);
         UltimateBar->SetFillColorAndOpacity(UOGReactiveUiSubsystem::Find(this)?UOGReactiveUiSubsystem::Find(this)->GetPalette().Accent:Gold);
     }
-    Feedback->SetText(FText::FromString(LastActionMessage.IsEmpty()?
+    Feedback->SetText(FText::FromString(bPerformingAuthoredStrike ?
+        TEXT("Your original character is performing this action. Real contact commits its effects; interruption cancels them.") :
+        LastActionMessage.IsEmpty()?
         TEXT("Choose a primary target. Area effects include every eligible field participant."):LastActionMessage));
     if (!Own && State.Units.IsValidIndex(Acting))
     {
@@ -249,13 +266,37 @@ void UOGNativeBattleWidget::Refresh()
     if (!Bodies.Contains(Source->UnitEntityId)) Bodies.Add(Source->UnitEntityId,Body);
     for (int32 I=0;I<State.Units.Num();++I)
     {
-        const auto& Unit=State.Units[I]; if (Unit.Presence!=EOGCombatPresence::Active) continue;
+        const auto& Unit=State.Units[I];
+        const bool bDefeatedAlly=Unit.Presence==EOGCombatPresence::Defeated &&
+            !Unit.IsAlive() && Unit.TeamIndex==Source->TeamIndex;
+        if (Unit.Presence!=EOGCombatPresence::Active && !bDefeatedAlly) continue;
         const bool Selected=Body->IsOwnedBattleTargetSelected(Unit.UnitEntityId);
         const FString Side=Unit.UnitEntityId==Source->UnitEntityId?TEXT("SELF"):Unit.TeamIndex==Source->TeamIndex?TEXT("ALLY"):TEXT("OPPONENT");
         const bool Embodied=Bodies.Contains(Unit.UnitEntityId) && !AmbiguousBodies.Contains(Unit.UnitEntityId);
-        const FString Suffix=!Embodied?TEXT(" / CHARACTER UNAVAILABLE"):Selected?TEXT(" / SELECTED"):TEXT("");
-        AddButton(Targets,FString::Printf(TEXT("%s %d%s\nHP %s / %s"),*Side,I+1,*Suffix,*Unit.CurrentHp.ToDebugString(),*Unit.Stats.MaxHp.ToDebugString()),
-            TEXT("Select this actual battle participant."),NAME_None,I,Own && Unit.CanAct() && Embodied,Selected,176);
+        const FString Suffix=bDefeatedAlly?TEXT(" / DEFEATED - REVIVAL ELIGIBILITY CHECKED ON CAST"):
+            !Embodied?TEXT(" / CHARACTER UNAVAILABLE"):Selected?TEXT(" / SELECTED"):TEXT("");
+        FString HpLine=Unit.TeamIndex==Source->TeamIndex
+            ?FString::Printf(TEXT("HP %s / %s"),
+                *Unit.CurrentHp.ToDebugString(),*Unit.Stats.MaxHp.ToDebugString())
+            :TEXT("HP Unknown");
+        // Never expose unobserved opponent HP from the privileged battle
+        // resolver. Use only the actual knowledge-scoped HUD projection.
+        if (Unit.TeamIndex!=Source->TeamIndex)
+        {
+            const FOGWorldTargetViewModel* Observed=nullptr;
+            if (Body->HasTargetHudProjectionForHud() &&
+                Body->GetTargetHudProjectionForHud().TargetEntityId==Unit.UnitEntityId)
+                Observed=&Body->GetTargetHudProjectionForHud();
+            if (!Observed)
+                for (const auto& Other:Body->GetSecondaryTargetHudProjectionsForHud())
+                    if (Other.TargetEntityId==Unit.UnitEntityId) { Observed=&Other;break; }
+            if (Observed && !Observed->HpDisplay.IsEmpty())
+                HpLine=Observed->HpDisplay;
+        }
+        AddButton(Targets,FString::Printf(TEXT("%s %d%s\n%s"),
+                *Side,I+1,*Suffix,*HpLine),
+            TEXT("Select an actual participant; the canonical ability still checks target and revival eligibility."),
+            NAME_None,I,Own && (bDefeatedAlly || (Unit.CanAct() && Embodied)),Selected,176);
     }
     const bool Portrait=ViewWidth<ViewHeight;
     const float Available=FMath::Max(200.f,ViewWidth*.96f-32.f);
@@ -278,20 +319,59 @@ void UOGNativeBattleWidget::Refresh()
             if (Cooldown>0) Reason=FString::Printf(TEXT("Ready in %.1f s"),Cooldown/1000.0);
         }
         else Enabled=Own && Battle->ValidateResolvedAction(Proposal,Expanded,Reason);
-        if (Enabled) for (const auto& Id:Expanded.TargetUnitIds)
-            if (!Bodies.Contains(Id) || AmbiguousBodies.Contains(Id))
-            { Enabled=false; Reason=TEXT("Waiting for the battlefield characters."); break; }
-        if (!Own) Reason=TEXT("Available on this character's next turn.");
+        // An eligible defeated ally is a real canonical participant without
+        // a living World actor. The approved revival executor validates its
+        // soul/defeat window. Do not disable actual revival simply because
+        // there is deliberately no active skeletal body to click.
+        if (Enabled)
+            for (const auto& Id:Expanded.TargetUnitIds)
+            {
+                const FOGCombatUnitState* Target =
+                    State.Units.FindByPredicate(
+                        [&Id](const FOGCombatUnitState& Unit)
+                        { return Unit.UnitEntityId==Id; });
+                const bool bDefeatedAlly =
+                    Target && Target->Presence==EOGCombatPresence::Defeated &&
+                    !Target->IsAlive() && Target->TeamIndex==Source->TeamIndex;
+                if (!bDefeatedAlly &&
+                    (!Bodies.Contains(Id) || AmbiguousBodies.Contains(Id)))
+                {
+                    Enabled=false;
+                    Reason=TEXT("Waiting for the original battlefield character.");
+                    break;
+                }
+            }
+        // Turn commands execute only when their exact original motion is playable.
+        // The same shared controller is used by StageActualTurnAction at commit;
+        // do not offer a touch action that cannot reach its authored contact.
+        if (!WorldMode && Own && Enabled)
+        {
+            const UOGCharacterAppearanceComponent* Appearance =
+                Body->FindComponentByClass<UOGCharacterAppearanceComponent>();
+            const UOGSharedMotionControllerComponent* Motion = Appearance
+                ? Appearance->GetMotionController() : nullptr;
+            if (!Motion)
+                Motion=Body->FindComponentByClass<UOGSharedMotionControllerComponent>();
+            const FName ExactMotion=FOGNativeBattleCommands::MotionForResolvedAction(
+                *Source,Expanded,Battle->ResolveNativeAbilityMotion(*Source,Expanded.SkillId));
+            if (!Motion || ExactMotion.IsNone() ||
+                !Motion->CanResolveTurnContactAction(ExactMotion))
+            {
+                Enabled=false;
+                Reason=TEXT("This source skill branch lacks actual character rig contact playback.");
+            }
+        }
+        if (!Own) Reason=bPerformingAuthoredStrike ?
+            TEXT("The original attack is awaiting its physical contact.") :
+            TEXT("Available on this character's next turn.");
         if (!WorldMode && Own && !Enabled && Expanded.TargetUnitIds.IsEmpty()) Reason=TEXT("Select a primary target.");
         const FString Label=Command.Label+(Own && !Enabled?TEXT("\n")+Reason:FString());
         AddButton(Commands,Label,Enabled?Command.Hint:Reason,Command.Id,INDEX_NONE,Enabled,false,Width);
     }
-    FString ModeReason;
-    const bool CanChangeMode=Core->CanSetOwnedCombatExecutionMode(
-        WorldMode?EOGCombatExecutionMode::Turn:EOGCombatExecutionMode::World,ModeReason);
-    AddButton(Commands,WorldMode?TEXT("TURN MODE"):TEXT("WORLD MODE"),
-        CanChangeMode?TEXT("Keep the current combatants and state."):ModeReason,
-        TEXT("screen_combat_mode"),INDEX_NONE,CanChangeMode,false,Width);
+    // v0.36 AH.8: World/Turn hybrid phases are encounter-owned mechanics,
+    // never an unrestricted player button. The boss phase controller/actual
+    // authoritative battle transition is responsible for changing modes.
+    // Current UMG reflects the canonical execution mode without changing it.
     AddButton(Commands,TEXT("Pause"),TEXT("Open the existing pause controls."),TEXT("screen_pause"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Settings"),TEXT("Open the existing game settings."),TEXT("screen_settings"),INDEX_NONE,true,false,Width);
     AddButton(Commands,TEXT("Ruler"),TEXT("Return to the existing Ruler interface."),TEXT("screen_ruler"),INDEX_NONE,true,false,Width);
@@ -304,18 +384,26 @@ void UOGNativeBattleWidget::Activate(FName Command,int32 TargetIndex)
     {
         const auto* Game=Character->GetGameInstance(); const auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
         if (Core) DismissedResultReceipt=Core->GetLastNativeBattleOutcome().CompletionEventId;
-        SetVisibility(ESlateVisibility::Collapsed); return;
+        // Release the real World's touch/camera input from the completed
+        // combat overlay. A dismissed native UMG result cannot keep the
+        // player stuck in GameAndUI mode during ordinary exploration.
+        SetVisibility(ESlateVisibility::Collapsed);
+        if (APlayerController* Player=Cast<APlayerController>(Character->GetController()))
+        {
+            Player->SetInputMode(FInputModeGameOnly());
+            Player->bShowMouseCursor=false;
+            Character->RefreshFoundationInputState();
+        }
+        return;
     }
     if (Command==TEXT("screen_combat_mode"))
     {
-        auto* Game=Character->GetGameInstance(); auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
-        FString Error;
-        if (Core && Core->GetOwnedLuminousTurnBattle())
-        {
-            const auto Mode=Core->GetOwnedLuminousTurnBattle()->GetState().ExecutionMode;
-            Core->SetOwnedCombatExecutionMode(Mode==EOGCombatExecutionMode::World?EOGCombatExecutionMode::Turn:EOGCombatExecutionMode::World,Error);
-        }
-        LastActionMessage=Error; Signature.Reset(); Refresh(); return;
+        // Retired the former generic mode-switch interaction. Old delayed
+        // input/focus receipts must not bypass encounter-authored boss phases.
+        LastActionMessage=TEXT("Combat phases follow the current encounter mechanics.");
+        Signature.Reset();
+        Refresh();
+        return;
     }
     if (Command==TEXT("screen_pause")) { Character->SetFoundationPauseMenuOpen(true); return; }
     if (Command==TEXT("screen_settings")) { Character->SetFoundationSettingsOpen(true); return; }
@@ -335,7 +423,16 @@ void UOGNativeBattleWidget::NativeTick(const FGeometry& Geometry,float DeltaSeco
 {
     Super::NativeTick(Geometry,DeltaSeconds);
     const auto Size=Geometry.GetLocalSize(); ViewWidth=Size.X; ViewHeight=Size.Y;
-    if (ActionPanelSlot) ActionPanelSlot->SetAnchors(FAnchors(.02f,Size.X<Size.Y?.55f:.61f,.98f,.98f));
+    // Changing Canvas anchors every frame invalidates layout and can
+    // interrupt gamepad focus on Android. Re-anchor only when the screen
+    // actually changes between portrait and landscape.
+    const bool bPortrait=Size.X<Size.Y;
+    if (ActionPanelSlot && (!bActionAnchorsApplied || bActionPortraitLayout!=bPortrait))
+    {
+        ActionPanelSlot->SetAnchors(FAnchors(.02f,bPortrait?.55f:.61f,.98f,.98f));
+        bActionAnchorsApplied=true;
+        bActionPortraitLayout=bPortrait;
+    }
     RefreshElapsed+=DeltaSeconds;
     if (RefreshElapsed>=.2f) { RefreshElapsed=0; Refresh(); }
 }

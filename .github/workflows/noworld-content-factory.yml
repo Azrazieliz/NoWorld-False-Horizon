@@ -1,0 +1,79 @@
+name: NoWorld 5-star genuine source content factory
+on:
+  workflow_dispatch:
+    inputs:
+      job_file:
+        description: "Repository-relative approved JSON recipe; empty processes the prepared inbox"
+        required: false
+        type: string
+  push:
+    paths:
+      - 'ContentFactory/Jobs/*.json'
+      - '.github/workflows/noworld-content-factory.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  native-source-import:
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 240
+    concurrency:
+      group: noworld-unreal-content-factory
+      cancel-in-progress: false
+    steps:
+      - name: Checkout original project and Git LFS source refs
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: true
+      - name: Install isolated real Koikatsu card queue plugin
+        shell: pwsh
+        run: |
+          & ./Scripts/production/install_noworld_factory_koikatsu.ps1
+      - name: Execute actual native content production
+        shell: pwsh
+        env:
+          NOWORLD_FACTORY_ONE_JOB: ${{ inputs.job_file }}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:NOWORLD_FACTORY_ONE_JOB) {
+            $job=$env:NOWORLD_FACTORY_ONE_JOB
+            if($job -notmatch '^ContentFactory/Jobs/[a-z0-9_.-]+[.]json$'){throw 'Invalid approved job path'}
+            python Scripts/production/noworld_content_factory.py --job $job --config ContentFactory/windows_worker.json
+          } else {
+            if(!(Test-Path ContentFactory/Jobs)){Write-Output 'NO_AUTHORED_JOBS_YET';exit 0}
+            $jobs=@(Get-ChildItem ContentFactory/Jobs -Filter '*.json' -File)
+            if($jobs.Count -eq 0){Write-Output 'NO_AUTHORED_JOBS_YET';exit 0}
+            python Scripts/production/noworld_content_factory.py --inbox ContentFactory/Jobs --config ContentFactory/windows_worker.json
+          }
+          if($LASTEXITCODE -ne 0){throw 'Original source factory blocked: read precise native Saved ledger'}
+      - name: Stage only explicitly repository-approved native products
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          python Scripts/production/publish_noworld_factory_results.py --inbox ContentFactory/Jobs
+          if($LASTEXITCODE -ne 0){throw 'Native asset publication refused unsafe/missing provenance'}
+      - name: Commit exact new native assets via Git LFS
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          git lfs install --local
+          git config user.name "noworld-content-factory[bot]"
+          git config user.email "noworld-content-factory[bot]@users.noreply.github.com"
+          git add -- Content/NoWorld/ContentFactory Content/NoWorld/Animation/SharedMotionCatalog.json docs/production/content_receipts
+          $dirty=(git diff --cached --name-only)
+          if($dirty) {
+            git commit -m "5-star: import approved native character, art and original action source products"
+            if($LASTEXITCODE -ne 0){throw 'Native asset Git commit failed'}
+            git push origin "HEAD:$env:GITHUB_REF_NAME"
+            if($LASTEXITCODE -ne 0){throw 'Native asset push blocked by branch permissions'}
+          } else {Write-Output 'NO_NEW_APPROVED_NATIVE_ASSETS'}
+      - name: Export receipts, not proprietary source cards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: noworld-content-factory-native-ledger
+          path: D:/UnrealProjects/Gate12_WholeCharacter_Build_20261031/Saved/NoWorldContentFactory/*/status.json
+          if-no-files-found: ignore
+          retention-days: 30

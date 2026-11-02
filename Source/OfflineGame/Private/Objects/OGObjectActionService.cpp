@@ -8,13 +8,13 @@ namespace
 {
 const FName ActionEvent(TEXT("object_action_applied")),OfferEvent(TEXT("object_action_offer_published"));
 void AppendObjectServicePart(FString& S,const FString& V) { S+=LexToString(V.Len())+TEXT(":")+V; }
-FString Digest(const FString& Text)
+FString ObjectActionStableDigest(const FString& Text)
 {
     FTCHARToUTF8 Bytes(*Text); FMD5 Hash; Hash.Update(reinterpret_cast<const uint8*>(Bytes.Get()),Bytes.Length());
     uint8 Result[16]; Hash.Final(Result); return BytesToHex(Result,16);
 }
 FOGEntityId StableId(const FString& Text)
-{ FGuid Guid; FGuid::ParseExact(Digest(Text),EGuidFormats::Digits,Guid); return FOGEntityId(Guid); }
+{ FGuid Guid; FGuid::ParseExact(ObjectActionStableDigest(Text),EGuidFormats::Digits,Guid); return FOGEntityId(Guid); }
 FOGEntityId OfferId(const FOGEntityId& Counterparty,const FOGContentId& Action)
 { return StableId(TEXT("object_offer|")+Counterparty.ToString()+TEXT("|")+Action.ToString()); }
 bool Object(const FString& S,TSharedPtr<FJsonObject>& J)
@@ -187,7 +187,7 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
         for (const auto& Value:{Output.ObjectId.ToString(),ObjectDefinition->InitialRankId.ToString(),ObjectDefinition->InitialQualityId.ToString(),
             ObjectDefinition->InitialDurabilityJson,ObjectDefinition->InitialEvolutionJson}) AppendObjectServicePart(Quote,Value);
     }
-    Out.bCanApply=Out.MissingRequirements.IsEmpty(); Out.ConfirmationToken=Digest(Quote); return true;
+    Out.bCanApply=Out.MissingRequirements.IsEmpty(); Out.ConfirmationToken=ObjectActionStableDigest(Quote); return true;
 }
 bool FOGObjectActionService::Apply(const UOGObjectActionDefinition& Definition,const FOGObjectActionPreview& Reviewed,
     const FOGEntityId& Request,int64 Tick,bool& Already,TArray<FOGEntityId>& Created,FString& Error)

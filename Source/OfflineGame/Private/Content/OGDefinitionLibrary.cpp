@@ -1,6 +1,7 @@
 #include "Content/OGDefinitionLibrary.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistry/AssetData.h"
 #include "Characters/OGCharacterAppearanceDefinition.h"
 #include "Combat/OGNativeCombatAbility.h"
 #include "Effects/OGNativeCombatEffect.h"
@@ -68,7 +69,7 @@ bool RawArrays(const FString& Json,const TArray<FString>& Fields,const TArray<FS
         !Root->TryGetStringField(TEXT("schema"),Schema)) return Fail(Error,TEXT("Definition catalog requires a schema."));
     for (const auto& Pair:Root->Values)
         if (Pair.Key!=TEXT("schema") && !Fields.Contains(Pair.Key) && !MetadataFields.Contains(Pair.Key))
-            return Fail(Error,TEXT("Unknown catalog root field: ")+Pair.Key);
+            return Fail(Error,FString(TEXT("Unknown catalog root field: "))+FString(Pair.Key.ToString()));
     int32 I=0; Space(Json,I); if (I>=Json.Len() || Json[I++]!='{') return false;
     while (I<Json.Len())
     {
@@ -154,7 +155,7 @@ void UOGDefinitionLibrary::Initialize(FSubsystemCollectionBase& Collection)
             auto Empty=MakeShared<FJsonObject>(); Empty->SetStringField(TEXT("schema"),Schema);
             Empty->SetStringField(TEXT("calibration_basis"),Basis); Empty->SetStringField(TEXT("calibration_skeleton"),Skeleton);
             Empty->SetArrayField(TEXT("clips"),{}); Empty->SetArrayField(TEXT("routes"),{});
-            FString EmptyJson; FJsonSerializer::Serialize(Empty.ToSharedRef(),TJsonWriterFactory<>::Create(&EmptyJson));
+            FString EmptyJson; FJsonSerializer::Serialize(Empty,TJsonWriterFactory<>::Create(&EmptyJson));
             if (!RegisterCatalogSystem(TEXT("source_motion"),SourcePath,EmptyJson,{TEXT("clips"),TEXT("routes")},
                 [](const FString& Json,FString& Failure){return FOGSharedReferenceLibrary::ValidateManifestJson(Json,Failure,true);},
                 Error,{TEXT("calibration_basis"),TEXT("calibration_skeleton"),TEXT("coverage")}))

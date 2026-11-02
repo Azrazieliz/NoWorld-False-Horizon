@@ -60,6 +60,8 @@
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Combat/OGTurnContactActionComponent.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
 
 #include "UI/OGGate12CharacterVisualCatalog.h"
@@ -549,6 +551,7 @@ void AOGStartingRegionGenerator::ClearGeneratedContent()
     }
     if(R1RiverSurface)
         R1RiverSurface->ClearAllMeshSections();
+    R1PendingTerrainSections.Reset();
     UnloadR1MarketSections();
 
     UHierarchicalInstancedStaticMeshComponent* Components[] =
@@ -2361,6 +2364,56 @@ void AOGWorldPrototypeCharacter::CameraZoomOutPressed()
 void AOGWorldPrototypeCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 {
     Super::CalcCamera(DeltaTime, OutResult);
+    // Physically frame the real combat target only while the currently
+    // possessed original character plays an authored contact-bound skill.
+    // No generic orbit, fake target, camera teleports, opponent information
+    // leak, interaction with the canonical damage/target resolver, or
+    // permanent replacement of player camera preferences.
+    if (IsLocallyControlled() && !bReducedMotion && GetWorld() &&
+        GetWorld()->IsGameWorld())
+    {
+        const auto* Contact =
+            FindComponentByClass<UOGTurnContactActionComponent>();
+        if (Contact && Contact->IsAwaitingAuthoredContact())
+        {
+            const FOGEntityId Battle = Contact->GetPendingBattleId();
+            const FOGEntityId Focus = Contact->GetPendingPrimaryTarget();
+            if (Battle.IsValid() && Focus.IsValid())
+            {
+                AActor* ActualTarget =
+                    UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                        GetWorld(), Battle, Focus);
+                if (IsValid(ActualTarget) && ActualTarget != this)
+                {
+                    FVector Center, Extent;
+                    ActualTarget->GetActorBounds(false, Center, Extent);
+                    const FVector ActorCenter =
+                        GetActorLocation() + FVector(0.f, 0.f, 86.f);
+                    const FVector PhysicalFocus =
+                        FMath::Lerp(ActorCenter,
+                            Center + FVector(0.f, 0.f, Extent.Z * .35f),
+                            .54f);
+                    const FVector Aim = PhysicalFocus - OutResult.Location;
+                    if (Aim.SizeSquared() > FMath::Square(60.f))
+                    {
+                        FRotator Desired = Aim.Rotation();
+                        Desired.Pitch = FMath::Clamp(Desired.Pitch,
+                            WorldCameraPitchMin, WorldCameraPitchMax);
+                        OutResult.Rotation = FMath::RInterpTo(
+                            OutResult.Rotation, Desired,
+                            FMath::Max(0.f, DeltaTime), 4.5f);
+                        const float Separation =
+                            FVector::Dist(ActorCenter, Center);
+                        const float FovDelta =
+                            FMath::Clamp((Separation - 350.f) / 300.f,
+                                0.f, 6.f);
+                        OutResult.FOV = FMath::Min(
+                            110.f, OutResult.FOV + FovDelta);
+                    }
+                }
+            }
+        }
+    }
     // Keep spring-arm collision intact. Hide the owner's body only when the
     // collision-shortened view is inside its silhouette; restore on retreat.
     const FVector RelativeCamera = OutResult.Location - GetActorLocation();
@@ -5145,8 +5198,16 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
     ++GroundSnapAttempts;
 
     const FVector Current = GetActorLocation();
-    const FVector TraceStart(Current.X, Current.Y, 12000.0f);
-    const FVector TraceEnd(Current.X, Current.Y, -12000.0f);
+    // Authored Gate02 R1 relief is -20m to 750m. The old +/-120m
+    // ray could miss legitimate source highlands and leave a player falling.
+    const bool bSourceR1 = StartingRegion.IsValid() &&
+        StartingRegion->bGate02R1RegionSource;
+    const float ProbeTop = bSourceR1
+        ? FMath::Max(Current.Z+5000.f,100000.f)
+        : FMath::Max(Current.Z+5000.f,12000.f);
+    const float ProbeBottom = FMath::Min(Current.Z-10000.f,-12000.f);
+    const FVector TraceStart(Current.X,Current.Y,ProbeTop);
+    const FVector TraceEnd(Current.X,Current.Y,ProbeBottom);
 
     FHitResult Hit;
     FCollisionQueryParams QueryParams(
@@ -5159,7 +5220,10 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
             TraceStart,
             TraceEnd,
             ECC_Visibility,
-            QueryParams))
+            QueryParams) &&
+        Hit.ImpactNormal.Z > .35f &&
+        (!bSourceR1 || (Hit.GetActor()==StartingRegion.Get() &&
+            Cast<UProceduralMeshComponent>(Hit.GetComponent()))))
     {
         const float HalfHeight =
             GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -5187,14 +5251,19 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
         return;
     }
 
-    if (GroundSnapAttempts < 30)
+    if (GroundSnapAttempts < 30 || bSourceR1)
     {
+        if (GroundSnapAttempts == 30 && bSourceR1)
+            UE_LOG(LogOfflineGame,Warning,
+                TEXT("Gate02 R1 ground is still streaming; retaining safe spawn until original collision is available."));
+        // Keep genuine source-bound players safe when streamed terrain arrives
+        // after the old 3-second deadline. Never stand on a fixture floor.
         FTimerHandle RetryHandle;
         GetWorldTimerManager().SetTimer(
             RetryHandle,
             this,
             &AOGWorldPrototypeCharacter::TrySnapToGeneratedGround,
-            0.1f,
+            GroundSnapAttempts<30 ? .1f : 1.f,
             false);
         return;
     }
@@ -8773,7 +8842,22 @@ void AOGWorldPresentationHud::DrawHUD()
     if (NativeBattleWidget && (!Character || !NativeBattleWidget->IsForCharacter(Character) ||
         FoundationSurface!=TEXT("world") || bSettingsOpen || bPauseOpen || bInteractionMenuOpen ||
         !Character->HasNativeOwnedLuminousEncounter()))
+    {
+        const bool bWasBattleVisible=NativeBattleWidget->IsVisible();
         NativeBattleWidget->SetVisibility(ESlateVisibility::Collapsed);
+        // Battle's native UMG owns GameAndUI focus only while it is visible.
+        // A hidden combat overlay must not retain pointer focus and prevent
+        // actual camera-drag and mobile input after returning to the World.
+        // Never override the separate Ruler, opening or interaction modals.
+        if (bWasBattleVisible && PlayerOwner && Character &&
+            FoundationSurface==TEXT("world") && !bSettingsOpen &&
+            !bPauseOpen && !bInteractionMenuOpen)
+        {
+            PlayerOwner->SetInputMode(FInputModeGameOnly());
+            PlayerOwner->bShowMouseCursor=false;
+            Character->RefreshFoundationInputState();
+        }
+    }
     if (bInteractionMenuOpen)
         if (const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
             if (const auto* Battle = NativeCore->GetOwnedLuminousTurnBattle();
@@ -10456,8 +10540,21 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
                     TEXT("Invalid canonical target selection.") : Error;
             else FoundationStatusMessage.Reset();
         }
+        else if (Hit.StartsWith(TEXT("OG.Battle.Command.")))
+        {
+            // Use the exact command identity issued by the approved source
+            // registry, identical to the native UMG command path.
+            const FString Id=Hit.Mid(FCString::Strlen(TEXT("OG.Battle.Command.")));
+            if (Id.IsEmpty() ||
+                !Character->SubmitApprovedLuminousWorldCommand(FName(*Id),Error))
+                FoundationStatusMessage=Error.IsEmpty()
+                    ?TEXT("This exact native combat command is unavailable."):Error;
+            else FoundationStatusMessage.Reset();
+        }
         else
         {
+            // Retain historical saved input aliases; new controls must use
+            // OG.Battle.Command.<source command ID> for every kit and branch.
             // -1 is the valid Ultimate command, so it cannot also mean unknown.
             int32 Slot = MIN_int32;
             FName Branch = NAME_None;
@@ -11687,12 +11784,26 @@ void AOGWorldPrototypeCharacter::InitializeFoundationIntegration()
         {
             if (DiagnosticMenu) DiagnosticMenu->Initialize();
             if (InteractionHost) InteractionHost->Initialize();
+            bMissingNativeWorldSourceReported = false;
             bNativeFirstWorldRuntimeInitialized = true;
             UE_LOG(LogOfflineGame,Display,
                    TEXT("Gate02 R1 first World: genuine gameplay services initialized without diagnostic fixture"));
             return;
         }
 
+    // An absent native R1 actor is a missing production World source, not
+    // permission to replace the real offline game with a diagnostic course.
+    // The course remains available only by explicit native developer opt-in.
+    if (!AreFoundationDebugFixturesEnabled())
+    {
+        if (!bMissingNativeWorldSourceReported)
+        {
+            UE_LOG(LogOfflineGame, Error,
+                TEXT("Gate02 R1 source actor is missing; no diagnostic World will be substituted in production."));
+            bMissingNativeWorldSourceReported = true;
+        }
+        return; // Recheck after World Partition streams the genuine source.
+    }
     if (!IntegrationWorld) IntegrationWorld = GetWorld()->SpawnActor<AOGFoundationIntegrationWorld>(FVector::ZeroVector, FRotator::ZeroRotator);
     if (!IntegrationWorld) return;
     for (TActorIterator<AOGStartingRegionGenerator> It(GetWorld()); It; ++It)

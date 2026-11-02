@@ -6,6 +6,7 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
+#include "Components/Overlay.h"
 #include "Components/ButtonSlot.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -50,8 +51,8 @@ void UOGNativeInteractionWidget::NativeConstruct()
     auto* Panel = WidgetTree->ConstructWidget<UBorder>();
     Panel->SetBrushColor(FLinearColor(.009f, .007f, .019f, .95f));
     Panel->SetPadding(FMargin(20));
-    auto* Slot = Canvas->AddChildToCanvas(FOGNativeUiStyle::Surface(*WidgetTree,Panel));
-    Slot->SetAnchors(FAnchors(.04f, .08f, .60f, .92f)); Slot->SetOffsets(FMargin(0));
+    auto* RootCanvasSlot = Canvas->AddChildToCanvas(FOGNativeUiStyle::Surface(*WidgetTree,Panel));
+    RootCanvasSlot->SetAnchors(FAnchors(.04f, .08f, .60f, .92f)); RootCanvasSlot->SetOffsets(FMargin(0));
     auto* Column = WidgetTree->ConstructWidget<UVerticalBox>(); Panel->AddChild(Column);
     auto* Title = WidgetTree->ConstructWidget<UTextBlock>();
     Title->SetText(FText::FromString(TEXT("INTERACTION"))); Title->SetFont(InteractionFont(28, true));
@@ -122,8 +123,8 @@ void UOGNativeInteractionWidget::NativeTick(const FGeometry& Geometry, float Del
     if (WidgetTree && WidgetTree->RootWidget)
         if (auto* Safe = Cast<USafeZone>(WidgetTree->RootWidget))
             if (auto* Canvas = Cast<UCanvasPanel>(Safe->GetChildAt(0)))
-                if (auto* Slot = Cast<UCanvasPanelSlot>(Canvas->GetChildAt(0)->Slot))
-                { const auto Size = Geometry.GetLocalSize(); Slot->SetAnchors(FAnchors(.04f, .08f, Size.X < Size.Y ? .96f : .60f, .92f)); }
+                if (auto* ActiveCanvasSlot = Cast<UCanvasPanelSlot>(Canvas->GetChildAt(0)->Slot))
+                { const auto Size = Geometry.GetLocalSize(); ActiveCanvasSlot->SetAnchors(FAnchors(.04f, .08f, Size.X < Size.Y ? .96f : .60f, .92f)); }
     RefreshElapsed += DeltaSeconds;
     if (RefreshElapsed >= .15f) { RefreshElapsed = 0; Refresh(); }
 }

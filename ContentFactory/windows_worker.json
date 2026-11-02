@@ -1,0 +1,11 @@
+{
+  "schema": "noworld.factory.windows_worker.v1",
+  "work_root": "D:\\UnrealProjects\\Gate12_WholeCharacter_Build_20261031\\Saved\\NoWorldContentFactory",
+  "koikatsu_queue": "D:\\UnrealProjects\\Gate12_WholeCharacter_Build_20261031\\Saved\\NoWorldFactory\\koikatsu_queue",
+  "koikatsu_exe": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\Koikatsu Party.exe",
+  "launch_koikatsu_worker": true,
+  "blender_exe": "auto",
+  "unreal_editor_cmd": "D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+  "unreal_project": "D:\\UnrealProjects\\Gate12_WholeCharacter_Build_20261031\\OfflineGame.uproject",
+  "stage_timeout_seconds": 3600
+}

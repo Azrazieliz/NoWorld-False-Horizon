@@ -101,10 +101,17 @@ void AOGContentPlayableCharacter::HandleResolvedCombatAction(const FOGResolvedCo
     const FName Registered=Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId);
     const FName Semantic = Authored ? *Authored : !Registered.IsNone() ? Registered : FName(*Key);
     FString Error;
-    auto* Controller=Appearance->GetMotionController();
-    if (!Controller || !Controller->EnqueueCombatAction(Semantic,Battle->GetState().BattleId,Action.ActionId))
-        UE_LOG(LogTemp, Warning, TEXT("Source combat motion %s is unavailable: %s"), *Semantic.ToString(), *Error);
-    else LastPresentedActionId = Action.ActionId;
+    UOGSharedMotionControllerComponent* ActionMotion = Appearance->GetMotionController();
+    if (!ActionMotion || !ActionMotion->EnqueueCombatAction(Semantic,Battle->GetState().BattleId,Action.ActionId))
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("Source combat motion %s is unavailable: %s"),
+            *Semantic.ToString(), *Error);
+    }
+    else
+    {
+        LastPresentedActionId = Action.ActionId;
+    }
 }
 
 void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
@@ -133,15 +140,15 @@ void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
         }
     }
     if (UOGSharedAnimationReceiver::DrivesAutomaticMotion(this)) return;
-    UOGSharedMotionControllerComponent* Controller = Appearance->GetMotionController();
-    if (!Controller) return;
-    if (LastMotionController.Get() != Controller)
+    UOGSharedMotionControllerComponent* TraversalMotion = Appearance->GetMotionController();
+    if (!TraversalMotion) return;
+    if (LastMotionController.Get() != TraversalMotion)
     {
-        LastMotionController = Controller;
+        LastMotionController = TraversalMotion;
         FailedTraversalAction = NAME_None;
     }
-    if (Controller->IsPlayingAction() &&
-        !Controller->CurrentAction.ToString().StartsWith(TEXT("Traversal."))) return;
+    if (TraversalMotion->IsPlayingAction() &&
+        !TraversalMotion->CurrentAction.ToString().StartsWith(TEXT("Traversal."))) return;
     const UCharacterMovementComponent* Movement = GetCharacterMovement();
     const float Speed = GetVelocity().Size2D();
     FName Action(TEXT("Traversal.Idle"));
@@ -150,7 +157,7 @@ void AOGContentPlayableCharacter::Tick(float DeltaSeconds)
     else if (Movement && Movement->IsFalling()) Action = GetVelocity().Z > 0.f ? TEXT("Traversal.Jump") : TEXT("Traversal.Fall");
     else if (Speed > 1.f) Action = RunAnimationSpeedCmPerSecond > 0.f && Speed >= RunAnimationSpeedCmPerSecond
         ? TEXT("Traversal.Run") : TEXT("Traversal.Walk");
-    if ((!Controller->IsPlayingAction() || Controller->CurrentAction != Action) && FailedTraversalAction != Action)
+    if ((!TraversalMotion->IsPlayingAction() || TraversalMotion->CurrentAction != Action) && FailedTraversalAction != Action)
     {
         FString Error;
         if (Appearance->PlaySemanticAction(Action, TEXT("Traversal"), false, 1, NAME_None, Error))

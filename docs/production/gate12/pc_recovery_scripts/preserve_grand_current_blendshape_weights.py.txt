@@ -1,0 +1,40 @@
+# HISTORICAL PC-ONLY SOURCE — DO NOT EXECUTE
+# Retrieved from protected native workspace on 2026-11-01.
+# Original: Scripts/production/preserve_grand_current_blendshape_weights.py
+# Original PC file SHA-256: efe66316a1c34fcef6e9c0444f117c183531d9e05456554b674e9a9cd9465a30
+# WARNING: one-time in-place source migration. Preserve as original evidence only.
+# The generalized 5-star factory supersedes ad hoc reruns when applicable.
+
+from pathlib import Path
+r=Path(__file__).resolve().parents[2]
+cs=r/"Scripts/production/Gate12GrandExactUnityMeshStream.cs"
+py=r/"Scripts/production/verify_grand_exact_unity_source_stream.py"
+s=cs.read_text("utf8")
+assert s.count("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS")==1
+s=s.replace("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS",
+    "NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V3_SPARSE_MORPHS_CURRENT_WEIGHTS")
+old='''                w.Write(m.GetBlendShapeName(shape));
+                int frames=m.GetBlendShapeFrameCount(shape);'''
+new='''                w.Write(m.GetBlendShapeName(shape));
+                // Current authored facial/body proportions are not necessarily
+                // the neutral Basis. Preserve original active morph weights.
+                w.Write(renderer.GetBlendShapeWeight(shape));
+                int frames=m.GetBlendShapeFrameCount(shape);'''
+assert s.count(old)==1;s=s.replace(old,new)
+cs.write_text(s,"utf8")
+s=py.read_text("utf8")
+assert s.count("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS")==1
+s=s.replace("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS",
+            "NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V3_SPARSE_MORPHS_CURRENT_WEIGHTS")
+old='''   shapename=rd.text()
+   if not shapename:raise ValueError("Invalid source morph")
+   frames=rd.i()'''
+new='''   shapename=rd.text()
+   if not shapename:raise ValueError("Invalid source morph")
+   source_current_weight=struct.unpack("<f",rd.n(4))[0]
+   if not -100000.0<=source_current_weight<=100000.0:
+    raise ValueError("Invalid exact current character morph weight")
+   frames=rd.i()'''
+assert s.count(old)==1;s=s.replace(old,new)
+py.write_text(s,"utf8")
+print("GRAND_USER_APPROVED_CHARACTER_CURRENT_MORPH_WEIGHTS_PRESERVED")

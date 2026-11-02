@@ -213,11 +213,16 @@ private:
     TArray<float> R1RockMask;
     TArray<float> R1RiverMask;
     TMap<FIntPoint,TArray<FR1Placement>> R1TilePlacements;
+    // Built from the exact 10,454 original source records once, not invented
+    // on interaction. Stable ID -> actual authored prototype index.
+    TMap<FString,int32> R1SourceTypeById;
     // Per-HISM instance index -> actual source record, reconstructed on every
     // streaming window swap. Never infer an instance's identity from position.
     TArray<TArray<FString>> R1VisibleScatterSourceIdByType;
     FIntPoint LastR1StreamTile = FIntPoint(MIN_int32,MIN_int32);
     bool bR1DatasetLoaded = false;
+    // Authentic source collision terrain, queued without a monolithic startup mesh build.
+    TArray<int32> R1PendingTerrainSections;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> R1MarketSectionComponents;
     TSharedPtr<struct FStreamableHandle> R1MarketStreamHandle;
@@ -228,6 +233,7 @@ private:
     bool bR1MarketSourceAssetUnavailable = false;
     bool LoadR1MetricData();
     void BuildR1SourceTerrain();
+    void BuildR1SourceTerrainTile(int32 SectionIndex);
     void BuildR1SourceRiver();
     void LoadR1SourceScatter();
     // Exact original Eastern Market assets are loaded on demand by source
@@ -789,6 +795,7 @@ protected:
     UPROPERTY() TObjectPtr<ACharacter> ProtagonistRepresentation;
     UPROPERTY() TObjectPtr<USoundMix> OwnedDynamicRangeMix;
     bool bIntegrationCourseBuilt = false;
+    bool bMissingNativeWorldSourceReported = false;
     // First World needs a real UI/interaction runtime, not fixture actors.
     // Guard against invoking the diagnostic course on every World tick.
     bool bNativeFirstWorldRuntimeInitialized = false;

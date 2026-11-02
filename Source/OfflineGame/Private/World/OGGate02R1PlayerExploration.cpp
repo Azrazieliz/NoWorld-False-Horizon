@@ -3,6 +3,7 @@
 #include "World/OGStartingRegionPresentation.h"
 #include "EngineUtils.h"
 #include "Engine/GameInstance.h"
+#include "GameFramework/PlayerController.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Persistence/OGWorldStore.h"
@@ -32,6 +33,12 @@ bool ReadRealOwner(AOGWorldPrototypeCharacter* Pawn,
                    int64& OutTick)
 {
     OutStore=nullptr;OutTick=-1;OutOwner=FOGEntityId();
+    // Exploration belongs only to the actually locally possessed Ruler/
+    // Manifestation. Native AI pawns share this GameInstance but must never
+    // write their roaming trail over the owner's canonical explored tiles.
+    const APlayerController* Player=Pawn
+        ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+    if(!Player || !Player->IsLocalController())return false;
     UGameInstance* GI=Pawn?Pawn->GetGameInstance():nullptr;
     if(!GI)return false;
     UOGGate12RulerSessionSubsystem* Session=
@@ -64,7 +71,8 @@ TSharedPtr<FJsonValue> Pair(double X,double Y)
 
 void AOGWorldPrototypeCharacter::RestoreR1ExplorationFromWorldStore()
 {
-    if(bR1ExplorationLoaded || bR1ExplorationRestoreRejected || !FindOriginalR1(this))
+    if(bR1ExplorationLoaded || bR1ExplorationRestoreRejected ||
+       !Cast<APlayerController>(GetController()) || !FindOriginalR1(this))
         return;
     FOGEntityId RulerOwner;
     IOGWorldStore* Store=nullptr;
@@ -178,6 +186,8 @@ bool AOGWorldPrototypeCharacter::SaveR1ExplorationToWorldStore(FString& OutError
 void AOGWorldPrototypeCharacter::RecordR1ExplorationAndSaveIfDue(
     const FVector& WorldLocation)
 {
+    // Enemy/NPC actor ticks are never a player's persisted exploration.
+    if(!Cast<APlayerController>(GetController()))return;
     AOGStartingRegionGenerator* R1=FindOriginalR1(this);
     if(!R1 || !bR1ExplorationLoaded || bR1ExplorationRestoreRejected ||
        !IsFoundationWorldInputAllowed())return;

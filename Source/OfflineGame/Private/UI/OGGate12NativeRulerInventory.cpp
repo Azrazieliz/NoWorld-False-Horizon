@@ -11,7 +11,6 @@
 #include "UI/OGGate12GothicChromeWidget.h"
 #include "Objects/OGObjectActionDefinition.h"
 #include "Content/OGDefinitionLibrary.h"
-#include "Misc/GuardValue.h"
 
 namespace
 {

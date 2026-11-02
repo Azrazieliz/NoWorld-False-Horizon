@@ -11,6 +11,11 @@ $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $Project = Join-Path $Root "OfflineGame.uproject"
 $GateStamp = Join-Path $Root "Saved\Automation\last_unreal_gate.json"
+$SourceCommit = (& git -C $Root rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $SourceCommit -notmatch '^[0-9a-fA-F]{40}$') {
+    throw "Native Android package requires a recorded GitHub source commit."
+}
+$BuildStartUtc = [DateTime]::UtcNow
 $PreferredSdkRoot = if ($env:OG_ANDROID_SDK_ROOT) {
     $env:OG_ANDROID_SDK_ROOT
 } else {
@@ -27,6 +32,48 @@ function Invoke-Checked {
     if ($LASTEXITCODE -ne 0) {
         throw "Command failed with exit code ${LASTEXITCODE}: $FilePath"
     }
+}
+
+function Assert-AuthenticFirstWorld {
+    # These are original source contracts, NOT random terrain fallbacks.
+    $Map = Join-Path $Root "Content\Maps\StartingWorld.umap"
+    if (-not (Test-Path -LiteralPath $Map -PathType Leaf)) {
+        throw "The original tracked StartingWorld carrier map is missing."
+    }
+    $Source = Join-Path $Root "Content\NoWorld\FirstWorld\Source"
+    $Required = @(
+        "height_513_float32.raw", "soil_mask_513_float32.raw",
+        "rock_mask_513_float32.raw", "river_mask_513_float32.raw",
+        "baked_seed1412_scatter.jsonl"
+    )
+    $Missing = @($Required | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $Source $_) -PathType Leaf)
+    })
+    if ($Missing.Count -gt 0) {
+        throw ("Original Gate02 R1 First World data missing: " +
+            ($Missing -join ", ") +
+            ". Recover the real authored source instead of packaging an empty World.")
+    }
+    $GridBytes = [long]513*513*4
+    foreach ($Name in @($Required | Where-Object { $_ -like "*.raw" })) {
+        if ((Get-Item -LiteralPath (Join-Path $Source $Name)).Length -ne $GridBytes) {
+            throw "Original 513x513 float grid length mismatch: $Name"
+        }
+    }
+    $Scatter = Join-Path $Source "baked_seed1412_scatter.jsonl"
+    if ((Get-Content -LiteralPath $Scatter | Measure-Object -Line).Lines -ne 10454) {
+        throw "Original Gate02 R1 ecology must have exactly 10454 genuine records."
+    }
+    $Motion = Join-Path $Root "Content\NoWorld\Animation\SharedMotionCatalog.json"
+    if (-not (Test-Path -LiteralPath $Motion -PathType Leaf)) {
+        throw "Original shared motion bank is missing."
+    }
+    $Catalog = Get-Content -LiteralPath $Motion -Raw | ConvertFrom-Json
+    if ($Catalog.schema -ne "noworld.shared_motion_catalog.v1" -or
+        $Catalog.motions.Count -lt 3222) {
+        throw "Original 3222-entry native shared motion catalog missing or truncated."
+    }
+    Write-Host "Original source World, ecology and motion-bank preflight passed."
 }
 
 function Find-Unreal58 {
@@ -70,6 +117,7 @@ if (-not $AndroidFirst) {
     Write-Host "Android-first build: Win64 automation is NOT marked passed." -ForegroundColor Yellow
 }
 
+Assert-AuthenticFirstWorld
 $EngineRoot = Find-Unreal58 $EngineRoot
 $RunUAT = Join-Path $EngineRoot "Engine\Build\BatchFiles\RunUAT.bat"
 
@@ -129,19 +177,32 @@ Invoke-Checked -FilePath $RunUAT -Arguments @(
 # A successful RunUAT exit is necessary but never sufficient: verify a real
 # current generated APK before offering or attempting to install it.
 $Artifact = Get-ChildItem -LiteralPath $ArchiveDirectory -Recurse -Filter "*.apk" -File |
+    Where-Object { $_.LastWriteTimeUtc -ge $BuildStartUtc -and $_.Length -gt 1000000 } |
     Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
-if (-not $Artifact -or $Artifact.Length -lt 1000000) {
-    throw "RunUAT exited but no valid packaged Android APK was found."
+if (-not $Artifact) {
+    throw "RunUAT exited but produced no NEW nontrivial Android APK for this exact build; older APKs are rejected."
 }
-Write-Host "Android package completed." -ForegroundColor Green
+$ReceiptPath = Join-Path $ArchiveDirectory "noworld_android_build_receipt.json"
+$Receipt = [ordered]@{
+    schema = "noworld.android.build_receipt.v1"
+    source_commit = $SourceCommit
+    build_started_utc = $BuildStartUtc.ToString("o")
+    apk_path = $Artifact.FullName
+    apk_sha256 = (Get-FileHash -LiteralPath $Artifact.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    apk_size_bytes = [long]$Artifact.Length
+    native_build = "RunUAT BuildCookRun"
+    owner_phone_accepted = $false
+}
+$Receipt | ConvertTo-Json | Set-Content -LiteralPath $ReceiptPath -Encoding UTF8
+Write-Host "Android package generated with authentic first World and SHA256 source receipt." -ForegroundColor Green
+Write-Host "Build receipt: $ReceiptPath"
 Write-Host "APK: $($Artifact.FullName)" -ForegroundColor Green
 Write-Host "APK size (bytes): $($Artifact.Length)"
 
 if ($InstallOnDevice) {
     $Adb = Join-Path $PreferredSdkRoot "platform-tools\adb.exe"
     if (-not (Test-Path $Adb)) { throw "ADB missing from configured SDK." }
-    $Connected = @(& $Adb devices | Where-Object { $_ -match '^[^\s]+\s+device
- })
+    $Connected = @(& $Adb devices | Where-Object { $_ -match '^\S+\s+device\s*$' })
     if ($Connected.Count -ne 1) {
         throw "Expected exactly one authorized Android device; got $($Connected.Count)."
     }

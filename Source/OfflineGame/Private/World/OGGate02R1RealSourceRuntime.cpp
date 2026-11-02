@@ -114,13 +114,34 @@ bool AOGStartingRegionGenerator::LoadR1MetricData()
 
 void AOGStartingRegionGenerator::BuildR1SourceTerrain()
 {
+    R1PendingTerrainSections.Reset();
     if (!bR1DatasetLoaded || !Terrain) return;
-    // 64 independently collidable 400x400m terrain mesh sections. No huge
-    // singular static mesh, and exactly the source's 6.25m grid and relief.
-    int32 SectionIndex=0;
-    for (int32 TileY=0;TileY<8;++TileY)
-    for (int32 TileX=0;TileX<8;++TileX)
+    // Original central clearing gets physical source collision before play.
+    for(int32 Y=3;Y<=4;++Y)
+    for(int32 X=3;X<=4;++X)
+        BuildR1SourceTerrainTile(Y*8+X);
+    // Preserve exact section identity, original height/mask and UV/normal data.
+    for(int32 Section=0;Section<64;++Section)
     {
+        const int32 X=Section%8,Y=Section/8;
+        if(X>=3 && X<=4 && Y>=3 && Y<=4) continue;
+        R1PendingTerrainSections.Add(Section);
+    }
+    R1PendingTerrainSections.Sort([](int32 A,int32 B)
+    {
+        const int32 AX=A%8,AY=A/8,BX=B%8,BY=B/8;
+        const int32 AD=FMath::Square(2*AX-7)+FMath::Square(2*AY-7);
+        const int32 BD=FMath::Square(2*BX-7)+FMath::Square(2*BY-7);
+        return AD==BD ? A<B : AD<BD;
+    });
+    UE_LOG(LogTemp,Display,
+        TEXT("GATE02_R1 source terrain: central original collision ready; 60 authentic sections queued."));
+}
+
+void AOGStartingRegionGenerator::BuildR1SourceTerrainTile(int32 SectionIndex)
+{
+    if (!bR1DatasetLoaded || !Terrain || SectionIndex<0 || SectionIndex>=64) return;
+    const int32 TileX=SectionIndex%8,TileY=SectionIndex/8;
         TArray<FVector> V,N;
         TArray<FVector2D> UV;
         TArray<FLinearColor> C;
@@ -161,18 +182,17 @@ void AOGStartingRegionGenerator::BuildR1SourceTerrain()
         // Applying material slot 0 only left 63/64 source terrain sections
         // rendering with Unreal's default grey fallback, hiding Gate02's
         // actual authored biome colors across almost the entire landscape.
-        const int32 CurrentSection=SectionIndex++;
+        const int32 CurrentSection=SectionIndex;
         Terrain->CreateMeshSection_LinearColor(CurrentSection,
             V,Indices,N,UV,C,Tan,true);
         if(TerrainMaterial)
-            Terrain->SetMaterial(CurrentSection,TerrainMaterial);
-    }
-    UE_LOG(LogTemp,Display,TEXT("GATE02_R1 source terrain: 513 grid, 64 collision sections, 3200m"));
+            Terrain->SetMaterial(CurrentSection,TerrainMaterial.Get());
 }
 
 void AOGStartingRegionGenerator::LoadR1SourceScatter()
 {
     R1TilePlacements.Reset();
+    R1SourceTypeById.Reset();
     FString Source;
     if (!FFileHelper::LoadFileToString(Source,
         *R1SourcePath(TEXT("baked_seed1412_scatter.jsonl"))))
@@ -192,8 +212,12 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         P.PersistentId=J->GetStringField(TEXT("persistent_id"));
         P.TypeIndex=SourceType(J->GetStringField(TEXT("prototype")));
         const TArray<TSharedPtr<FJsonValue>>& XYZ=J->GetArrayField(TEXT("position_m"));
-        if(P.PersistentId.IsEmpty() || P.TypeIndex==INDEX_NONE || XYZ.Num()!=3)
-        { bR1DatasetLoaded=false;return; }
+        if(P.PersistentId.IsEmpty() || P.TypeIndex==INDEX_NONE || XYZ.Num()!=3 ||
+           R1SourceTypeById.Contains(P.PersistentId))
+        {
+            UE_LOG(LogTemp,Error,TEXT("Gate02 R1 original scatter contains an absent/duplicate stable ID or invalid source prototype."));
+            bR1DatasetLoaded=false;return;
+        }
         P.PositionCm=FVector(
             XYZ[0]->AsNumber()*100.,XYZ[1]->AsNumber()*100.,
             XYZ[2]->AsNumber()*100.);
@@ -204,9 +228,11 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         P.TileIndex=FIntPoint(
             FMath::Clamp(FMath::FloorToInt((P.PositionCm.X+R1HalfExtentCm)/R1EcologyTileCm),0,24),
             FMath::Clamp(FMath::FloorToInt((P.PositionCm.Y+R1HalfExtentCm)/R1EcologyTileCm),0,24));
+        R1SourceTypeById.Add(P.PersistentId,P.TypeIndex);
         R1TilePlacements.FindOrAdd(P.TileIndex).Add(MoveTemp(P));
     }
-    if(Rows.Num()!=10454 || R1TilePlacements.Num()>R1TileGrid*R1TileGrid)
+    if(Rows.Num()!=10454 || R1SourceTypeById.Num()!=Rows.Num() ||
+       R1TilePlacements.Num()>R1TileGrid*R1TileGrid)
     {
         UE_LOG(LogTemp,Error,TEXT("Gate02 R1 scatter signature count wrong: %d"),Rows.Num());
         bR1DatasetLoaded=false;
@@ -302,6 +328,14 @@ void AOGStartingRegionGenerator::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     if(bGate02R1RegionSource)
     {
+        // Four original source mesh/collision sections per frame instead
+        // of all 64 synchronously; source IDs and authored terrain are unchanged.
+        for(int32 Budget=0;Budget<4 && !R1PendingTerrainSections.IsEmpty();++Budget)
+        {
+            const int32 Index=R1PendingTerrainSections[0];
+            R1PendingTerrainSections.RemoveAt(0,1,EAllowShrinking::No);
+            BuildR1SourceTerrainTile(Index);
+        }
         RefreshR1StreamedTiles(false);
         UpdateR1MarketStreaming();
     }

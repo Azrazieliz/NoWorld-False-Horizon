@@ -1,0 +1,59 @@
+# HISTORICAL PC-ONLY SOURCE — DO NOT EXECUTE
+# Retrieved from protected native workspace on 2026-11-01.
+# Original: Scripts/production/optimize_grand_exact_unity_morph_stream.py
+# Original PC file SHA-256: 6c79dbf544e59b418e166b609764594c4cae56bac6d947f22392399fdab7291c
+# WARNING: one-time in-place source migration. Preserve as original evidence only.
+# The generalized 5-star factory supersedes ad hoc reruns when applicable.
+
+"""Preserve every source morph exactly as sparse (index, nine IEEE floats),
+instead of allocating up to 36 bytes * all vertices * all 2000 morphs on disk.
+The direct Koikatsu exporter retains all topology/skin/rest data as before."""
+from pathlib import Path
+r=Path(__file__).resolve().parents[2]
+c=r/"Scripts/production/Gate12GrandExactUnityMeshStream.cs"
+v=r/"Scripts/production/verify_grand_exact_unity_source_stream.py"
+s=c.read_text("utf8")
+assert s.count('NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V1')==1
+s=s.replace("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V1","NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS")
+old='''                    m.GetBlendShapeFrameVertices(shape,frame,deltaV,deltaN,deltaT);
+                    for(int i=0;i<v.Length;i++) WriteVec(w,deltaV[i]);
+                    for(int i=0;i<v.Length;i++) WriteVec(w,deltaN[i]);
+                    for(int i=0;i<v.Length;i++) WriteVec(w,deltaT[i]);'''
+new='''                    Array.Clear(deltaV,0,deltaV.Length);
+                    Array.Clear(deltaN,0,deltaN.Length);
+                    Array.Clear(deltaT,0,deltaT.Length);
+                    m.GetBlendShapeFrameVertices(shape,frame,deltaV,deltaN,deltaT);
+                    int changed=0;
+                    for(int i=0;i<v.Length;i++)
+                        if(deltaV[i]!=Vector3.zero || deltaN[i]!=Vector3.zero ||
+                           deltaT[i]!=Vector3.zero)changed++;
+                    w.Write(changed);
+                    for(int i=0;i<v.Length;i++)
+                    {
+                        if(deltaV[i]==Vector3.zero && deltaN[i]==Vector3.zero &&
+                           deltaT[i]==Vector3.zero)continue;
+                        w.Write(i);
+                        WriteVec(w,deltaV[i]);
+                        WriteVec(w,deltaN[i]);
+                        WriteVec(w,deltaT[i]);
+                    }'''
+assert s.count(old)==1
+c.write_text(s.replace(old,new),"utf8")
+s=v.read_text("utf8")
+assert s.count("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V1")==1
+s=s.replace("NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V1","NOWORLD_EXACT_KOIKATSU_UNITY_SKIN_V2_SPARSE_MORPHS")
+old='''    rd.skip(4+36*verts)
+   frames_total+=frames'''
+new='''    rd.skip(4)
+    changed=rd.i()
+    if changed<0 or changed>verts:raise ValueError("Invalid source morph's active vertex count")
+    last=-1
+    for _ in range(changed):
+     ix=rd.i()
+     if ix<=last or ix>=verts:raise ValueError("Noncanonical or duplicate exact morph vertex index")
+     last=ix
+     rd.skip(36)
+   frames_total+=frames'''
+assert s.count(old)==1,s.count(old)
+v.write_text(s.replace(old,new),"utf8")
+print("GRAND_EXACT_SOURCE_LOSSLESS_SPARSE_MORPH_FORMAT_V2_APPLIED")

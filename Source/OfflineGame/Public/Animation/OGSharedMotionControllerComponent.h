@@ -42,6 +42,7 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Motion|Character")
     FOGContentId BoundCharacterIdentity;
 
+    UFUNCTION(BlueprintCallable, Category="Motion|Binding")
     bool BindCanonicalCharacter(const FOGContentId& IdentityId);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
@@ -60,6 +61,13 @@ public:
      * Otherwise ALL registered parts must accept the exact same clip Skeleton. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
     bool bUseIdenticalTopologyLeaderPose = false;
+
+    /** Whole-character rig cohorts: each exact reference-pose family has one
+     * native clip driver, with all compatible original mesh parts following
+     * its pose. Incompatible skeletons get their own authentic clip; no
+     * character Version-specific copies or approximate retargeting. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
+    bool bGroupPartsByReferencePose = false;
 
     /** Keep same source-action phase across independently rigged visual parts. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Motion|Character")
@@ -91,6 +99,15 @@ public:
     /** Configures existing components only; never constructs or replaces mesh assets. */
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     bool RegisterNativeParts(const TArray<USkeletalMeshComponent*>& Parts);
+
+    /** One-call rig + actual skeletal-part binding for every canonical actor.
+     * One shared source catalog remains authoritative for ALL Versions/outfits.
+     * On failure, rig profiles and existing visual parts remain unchanged.
+     * Call BindCanonicalCharacter once when the authoritative identity is known. */
+    UFUNCTION(BlueprintCallable, Category="Motion|Binding")
+    bool BindNativeRigAndParts(FName InRig, FName InAnatomy, FName InOutfit,
+        const TArray<FName>& InCapabilities,
+        const TArray<USkeletalMeshComponent*>& InParts);
 
     UFUNCTION(BlueprintCallable, Category="Motion|Shared")
     void SetCurrentOutfit(FName InOutfitProfile);
@@ -130,6 +147,12 @@ public:
     bool CanPlayAction(FName GameplayAction, FName Context,
         bool bAdultContextAuthorized = false, int32 ParticipantCount = 1,
         FName ParticipantRole = NAME_None) const;
+
+    /** Pure real-turn preflight: actual source contact or expressly declared
+     * natural completion, with compatible authentic rig playback. */
+    bool CanResolveTurnContactAction(FName GameplayAction) const;
+    bool IsCurrentNaturalCompletionContact() const
+    { return bPlaying && bNaturalCompletionContact; }
 
     /** Pure source query under the no-root policy used by staged interactions. */
     bool PreviewStagedSource(FName Action,FName Context,bool Authorized,int32 Count,
@@ -202,6 +225,10 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<USkeletalMeshComponent>> PlayingParts;
 
+    /** Only actual animated drivers; followers never replay an extra clip. */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<USkeletalMeshComponent>> PlayingDriverParts;
+
     UPROPERTY(Transient)
     TObjectPtr<USkeletalMeshComponent> CurrentLeader;
 
@@ -225,6 +252,7 @@ private:
     bool bPlaying = false;
     bool bLooping = false;
     bool bHasContact = false;
+    bool bNaturalCompletionContact = false;
     float SourceContactSeconds = -1.f;
     float ElapsedSeconds = 0.f;
     float SequenceSeconds = 0.f;

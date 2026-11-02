@@ -1,0 +1,17 @@
+# HISTORICAL PC-ONLY SOURCE — DO NOT EXECUTE
+# Retrieved from protected native workspace on 2026-11-01.
+# Original: Scripts/production/correct_texture_manifest_tsv.py
+# Original PC file SHA-256: fa7cd05641b22c205b1a43acdb66d09fa728e7c5239d2cd3693fa4b17c23f206
+# WARNING: one-time in-place source migration. Preserve as original evidence only.
+# The generalized 5-star factory supersedes ad hoc reruns when applicable.
+
+from pathlib import Path
+p=Path(r"D:\UnrealProjects\Gate12_WholeCharacter_Build_20261031\Scripts\production\Gate12GrandExactUnityMeshStream.cs")
+s=p.read_text("utf8")
+assert s.count(r'rows.Write("\\t");')==7,s.count(r'rows.Write("\\t");')
+s=s.replace(r'rows.Write("\\t");','rows.Write((char)9);')
+old=r'renderer\\tmaterial\\tproperty_utf8_base64\\ttexture_utf8_base64\\tpng_file\\twidth\\theight\\tpng_sha256'
+assert s.count(old)==1
+s=s.replace(old,old.replace(r'\t',chr(9)))
+p.write_text(s,"utf8")
+print("ORIGINAL_TEXTURE_TSV_REAL_TAB_DELIMITERS_FIXED")

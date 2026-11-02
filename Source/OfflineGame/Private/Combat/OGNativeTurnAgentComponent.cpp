@@ -1,9 +1,11 @@
+#include "Combat/OGTurnContactActionComponent.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
 
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "Combat/OGNativeCombatAbility.h"
+#include "Combat/OGNativeBattleCommands.h"
 #include "Combat/OGWorldAbilityExecutionComponent.h"
 #include "AIController.h"
 #include "Dom/JsonObject.h"
@@ -175,6 +177,12 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
     { Error = TEXT("No live authored opponent turn is bound."); return false; }
     const UOGPresentationModeSubsystem* Mode = GetWorld()->GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>();
     if (Mode && Mode->GetMode()!=EOGPresentationMode::World && Battle->GetState().ExecutionMode!=EOGCombatExecutionMode::World) return false;
+    // Do not submit a second action while the source character is
+    // physically performing one that has not reached its contact marker.
+    if (const auto* Pending =
+        GetOwner()->FindComponentByClass<UOGTurnContactActionComponent>();
+        Pending && Pending->IsAwaitingAuthoredContact())
+        return false;
     if (ObserveHumanControl())
     { Error = TEXT("Human control replaced this opponent's AI control."); Status = Error; ReadyAtSeconds = -1.0; return false; }
     const bool WorldMode=Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World;
@@ -241,12 +249,50 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
         if (!Battle->ValidateResolvedAction(Proposal,Action,LastFailure)) continue;
         bool MissingBody=false;
         for (const auto& Id:Action.TargetUnitIds)
-            if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id))
+        {
+            const auto* Target=Battle->GetState().Units.FindByPredicate(
+                [&Id](const auto& Unit){ return Unit.UnitEntityId==Id; });
+            // A genuine defeated allied Manifestation can be revived without
+            // an active World body. Canonical ValidateResolvedAction already
+            // enforces the exact source skill's death/soul/revival windows.
+            const bool bRevivalRecipient=Target &&
+                Target->Presence==EOGCombatPresence::Defeated &&
+                !Target->IsAlive() && Target->TeamIndex==Battle->GetState().Units[Acting].TeamIndex;
+            if (!Target || (!bRevivalRecipient &&
+                !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id)))
             { MissingBody=true; break; }
+        }
         if (MissingBody)
-        { LastFailure=TEXT("An authored turn target has no connected native body."); continue; }
-        if (!Core->ApplyOwnedLuminousTurnAction(Action,LastFailure)) continue;
-        // The bound canonical body receives every accepted root/reaction action from GameCore.
+        { LastFailure=TEXT("An authored living target has no native body, or its canonical target vanished."); continue; }
+        const FName OriginalSemantic =
+            FOGNativeBattleCommands::MotionForResolvedAction(
+                Battle->GetState().Units[Acting],Action,
+                Battle->ResolveNativeAbilityMotion(
+                    Battle->GetState().Units[Acting],Action.SkillId));
+        if (OriginalSemantic.IsNone())
+        {
+            LastFailure = TEXT(
+                "Opponent has no source-authored action animation/contact binding.");
+            continue;
+        }
+        UOGTurnContactActionComponent* Staged =
+            GetOwner()->FindComponentByClass<UOGTurnContactActionComponent>();
+        if (!Staged)
+        {
+            Staged = NewObject<UOGTurnContactActionComponent>(GetOwner());
+            if (!Staged)
+            {
+                LastFailure = TEXT("Could not attach the actual NPC contact action.");
+                continue;
+            }
+            GetOwner()->AddInstanceComponent(Staged);
+            Staged->RegisterComponent();
+        }
+        if (!Staged->StageActualTurnAction(
+                Action, OriginalSemantic, LastFailure))
+            continue;
+        // No damage has occurred yet: authored contact triggers exactly
+        // one canonical GameCore commit, after the actual character moves.
         Status.Reset(); FailedSequence = -1; ReadyAtSeconds = -1.0;
         return true;
     }
