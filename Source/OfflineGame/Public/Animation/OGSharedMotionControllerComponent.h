@@ -313,6 +313,16 @@ private:
     void UpdateReferencePose();
     void RestoreReferencePose();
 
+    // Resolve ONE authentic original SourceClipId for the complete character,
+    // checking every distinct real skeleton before playback or contact starts.
+    // Never choose incompatible takes independently for separate wardrobe parts.
+    bool ResolveCoherentNativeAction(const UOGSharedMotionLibrary* Library,
+        FName Action, FName Context, bool bAuthorizedAdult,
+        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip,
+        TOptional<bool> RootPolicy,
+        const TArray<USkeletalMeshComponent*>& RigDrivers,
+        TArray<UAnimSequence*>& OutSequences,
+        TArray<const FOGSharedMotionEntry*>& OutEntries) const;
     bool CanPlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
         int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip,
         TOptional<bool> RootPolicy = {}) const;
