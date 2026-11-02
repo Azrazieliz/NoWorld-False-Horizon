@@ -987,6 +987,11 @@
             "commit": "6687df70",
             "type": "SOURCE_PARTIAL",
             "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
+          },
+          {
+            "commit": "effca330",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic market 12 sections native UE5.8 authored and 257 source-backed UAssets published; full game/Android still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1074,6 +1079,11 @@
             "commit": "6687df70",
             "type": "SOURCE_PARTIAL",
             "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
+          },
+          {
+            "commit": "effca330",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic market 12 sections native UE5.8 authored and 257 source-backed UAssets published; full game/Android still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1496,6 +1506,11 @@
             "commit": "6687df70",
             "type": "SOURCE_PARTIAL",
             "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
+          },
+          {
+            "commit": "effca330",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic market 12 sections native UE5.8 authored and 257 source-backed UAssets published; full game/Android still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1533,6 +1548,11 @@
             "commit": "6687df70",
             "type": "SOURCE_PARTIAL",
             "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
+          },
+          {
+            "commit": "effca330",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic market 12 sections native UE5.8 authored and 257 source-backed UAssets published; full game/Android still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1560,6 +1580,11 @@
             "commit": "6687df70",
             "type": "SOURCE_PARTIAL",
             "change": "Real original fir/oak/shrub Unreal native StaticMesh+textures imported from source and published GitHub LFS; exact runtime paths present, game and phone unverified."
+          },
+          {
+            "commit": "effca330",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic market 12 sections native UE5.8 authored and 257 source-backed UAssets published; full game/Android still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -3183,9 +3208,33 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T10:30:00Z"
+    },
+    {
+      "source_commit": "effca330fc2f456f76ee741ad17ecc6bbfbd5568",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11",
+        "M12",
+        "M13",
+        "M34"
+      ],
+      "result": "Source-authentic 2026-10-19 Eastern Market: authored all 12 UE5.8 native StaticMesh sections from 12 SHA-proven mobile GLBs and imported real material/texture dependencies. Source geometry reduced from 10,607,212 to 1,273,373 triangles, original master GLBs preserved. Confirmed GitHub branch commit effca330 adds exactly 257 native UAsset files with no removals, including exact twelve canonical runtime StaticMesh section package paths. 12 source GLBs and SHA manifests already Git LFS published at b1587493. GitHub repo validation, production contract, shared animation validation and C++ source preflight returned success for effca330; these do not constitute a native UE game compile or phone runtime validation.",
+      "remaining_player_visible_work": "The full integrated game needs actual UE5.8 compile/cook, verification of source R1 terrain and collision+player controls, runtime streaming, Android performance, original content artistic and licensing approval. 937 contact bank is still not end-to-end accepted; source melee/sword swept contact is code-only, Ranged/Cast and all physical targets need test.",
+      "source_paths": [
+        "Content/NoWorld/FirstWorld/R1/Anchors/Market",
+        "Assets/NoWorld/FirstWorld/R1/MobilePrepared"
+      ],
+      "5star_reused_program": "Scripts/production/noworld_r1_unreal_import.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Executed genuine Blender/meshoptimizer source work then UnrealEditor 5.8 native import on isolated PC. Verified native receipts section 00 and sections 01–11 and GitHub compare of 257 added native files. GitHub Actions preflight passed; no full Unreal game or phone acceptance.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T11:30:00Z"
     }
   ],
-  "continuation_last_source_commit": "116b0d2e26b736498442b46f79773163cd1a35d5",
+  "continuation_last_source_commit": "effca330fc2f456f76ee741ad17ecc6bbfbd5568",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
@@ -3249,12 +3298,18 @@
   },
   "first_world_market_source_preparation_20261102": {
     "original_triangle_count": 10607212,
-    "derived_triangle_count": 10607212,
+    "source_derived_mobile_triangle_count": 1273373,
+    "source_derived_mobile_glb_bytes": 121204320,
     "sections": 12,
-    "files_present_on_pc": true,
-    "derived_total_mib": 707.2,
-    "native_uasset_import_verified": false,
+    "original_master_retained": true,
+    "github_mobile_source_commit": "b1587493e539a0547f6844fd1dbd621e2e290ccb",
+    "github_native_uasset_commit": "effca330fc2f456f76ee741ad17ecc6bbfbd5568",
+    "native_uasset_added_count": 257,
+    "canonical_native_static_mesh_section_count": 12,
+    "native_ue58_authoring_verified": true,
     "android_verified": false,
-    "notes": "12 Blender source partitions all present with original geometry count preserved; 707.2 MiB raw GLB exports before native import and source-preserving mobile LOD authoring."
+    "full_game_compiled": false,
+    "owner_accepted": false,
+    "notes": "All 12 original Eastern Market source-derived mobile GLBs and provenance manifest published through Git LFS; 257 native UE section StaticMesh and original materials/textures files published. No device frame-rate, full project compile, authoritative acceptance or original candidate artistic signoff."
   }
 }
