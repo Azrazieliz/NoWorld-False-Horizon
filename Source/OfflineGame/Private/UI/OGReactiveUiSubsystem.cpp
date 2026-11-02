@@ -37,13 +37,14 @@ bool MatchJson(const FString& Text,const TMap<FName,FString>& Required)
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),Json) || !Json) return false;
     for (const auto& Pair:Required)
     {
-        const auto* Field=Json->TryGetField(Pair.Key.ToString()); if (!Field || !Field->IsValid()) return false;
+        const TSharedPtr<FJsonValue> Field=Json->TryGetField(Pair.Key.ToString());
+        if (!Field.IsValid()) return false;
         FString Value;
-        switch ((*Field)->Type)
+        switch (Field->Type)
         {
-        case EJson::String: Value=(*Field)->AsString(); break;
-        case EJson::Boolean: Value=(*Field)->AsBool()?TEXT("true"):TEXT("false"); break;
-        case EJson::Number: Value=LexToString((*Field)->AsNumber()); break;
+        case EJson::String: Value=Field->AsString(); break;
+        case EJson::Boolean: Value=Field->AsBool()?TEXT("true"):TEXT("false"); break;
+        case EJson::Number: Value=LexToString(Field->AsNumber()); break;
         case EJson::Null: Value=TEXT("null"); break;
         default: return false;
         }
