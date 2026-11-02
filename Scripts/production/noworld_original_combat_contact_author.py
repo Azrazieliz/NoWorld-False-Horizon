@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import zipfile
 
 EVENT= re.compile(r"^(?:On)?(?:AttackHit|HitContact|WeaponImpact|StrikeContact|DamageContact|CombatImpact)$",re.I)
 NON_IMPACT=("Combat.HitReaction","Combat.Reaction.","Combat.Defense.")
@@ -33,9 +34,9 @@ def get_event(e,key):
     if isinstance(e,dict):
         return next((e.get(k) for k in key if k in e),None)
     return next((getattr(e,k) for k in key if hasattr(e,k)),None)
-def inspect_bundle(file,wanted):
+def inspect_bundle(data,wanted):
     import UnityPy
-    env=UnityPy.load(str(file))
+    env=UnityPy.load(data)
     out={}
     for obj in env.objects:
         if obj.path_id not in wanted:continue
@@ -86,14 +87,28 @@ def main():
             "unresolved_motion_count":0,"ambiguous_events":[],
             "not_a_gameplay_acceptance":True,"updated":False}
     for (filename,digest),rows in sorted(groups.items()):
-        original=Path(filename)
-        if not original.is_file():
-            raise FileNotFoundError("Cannot inspect actual protected Unity source: "+str(original))
-        observed=sha(original)
+        # Canonical Koikatsu Sideloader source locators can identify an exact
+        # Unity bundle *inside* an original .zipmod: <zipmod>::<entry>.
+        # Hash and inspect the original member bytes, never the ZIP container.
+        if "::" in filename:
+            archive,entry=filename.split("::",1)
+            original=Path(archive)
+            if not original.is_file():
+                raise FileNotFoundError("Original Koikatsu zipmod absent: "+str(original))
+            with zipfile.ZipFile(original) as z:
+                raw=z.read(entry.replace("\\\\","/"))
+            observed=hashlib.sha256(raw).hexdigest()
+            input_data=raw
+        else:
+            original=Path(filename)
+            if not original.is_file():
+                raise FileNotFoundError("Cannot inspect protected Unity source: "+str(original))
+            observed=sha(original)
+            input_data=str(original)
         if observed.lower()!=digest.lower():
-            raise ValueError("Source bundle SHA256 mismatch: "+str(original))
+            raise ValueError("Original Unity bundle member SHA256 mismatch: "+filename)
         wanted={int(m["source_unity_path_id"]) for m in rows}
-        discovered=inspect_bundle(original,wanted)
+        discovered=inspect_bundle(input_data,wanted)
         report["by_source_bundle"].append({
             "original":str(original),"sha256":observed,
             "indexed_motion_count":len(rows),
