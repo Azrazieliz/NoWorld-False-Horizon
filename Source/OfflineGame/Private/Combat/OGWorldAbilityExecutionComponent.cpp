@@ -13,6 +13,7 @@
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/OverlapResult.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
