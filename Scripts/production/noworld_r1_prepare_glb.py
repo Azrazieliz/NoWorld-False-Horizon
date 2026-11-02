@@ -30,6 +30,8 @@ def read_args():
     p.add_argument("--source-root",required=True)
     p.add_argument("--output-root",required=True)
     p.add_argument("--role",choices=["all","foliage","market"],default="all")
+    p.add_argument("--mobile-ratio",type=float,default=1.0,
+                   help="Explicit source-derived LOD triangle ratio (0,1]; untouched source remains intact")
     return p.parse_args(raw)
 
 def mesh_stats(items):
@@ -41,7 +43,7 @@ def mesh_stats(items):
                              for o in items for p in o.data.polygons)
     }
 
-def prepare(src,dst,name,parts):
+def prepare(src,dst,name,parts,mobile_ratio=1.0):
     import bpy
     from mathutils import Matrix
     bpy.ops.object.select_all(action="SELECT")
@@ -50,8 +52,22 @@ def prepare(src,dst,name,parts):
     meshes=[o for o in bpy.context.scene.objects if o.type=="MESH"]
     if not meshes:raise RuntimeError("Original has no real mesh: "+str(src))
     expected=mesh_stats(meshes)
+    if not (0 < mobile_ratio <= 1.0):
+        raise ValueError("Original-source LOD ratio must be (0,1]")
     if len(meshes)<parts:
         raise RuntimeError("Insufficient original meshes for requested spatial sections")
+    if mobile_ratio < 1.0:
+        # Mobile mesh is a marked derivative of original source polygons,
+        # NOT a geometry-identical master or invented substitute object.
+        for o in meshes:
+            if len(o.data.polygons) <= 1000:continue
+            bpy.ops.object.select_all(action="DESELECT")
+            o.select_set(True)
+            bpy.context.view_layer.objects.active=o
+            modifier=o.modifiers.new("NoWorld_OriginalGeometry_MobileLOD","DECIMATE")
+            modifier.ratio=mobile_ratio
+            bpy.ops.object.modifier_apply(modifier=modifier.name)
+    derived=mesh_stats(meshes)
     # Use the actual imported world-space bounds; section order is stable and
     # local-origin meshes are not re-placed at arbitrary derived coordinates.
     for o in meshes:
@@ -94,11 +110,14 @@ def prepare(src,dst,name,parts):
     total={k:sum(x[k] for x in outputs)
            for k in ("vertices","polygons","triangle_faces")}
     for k,v in total.items():
-        if v!=expected[k]:raise RuntimeError(
-            "Source geometry changed: "+k+" expected="+str(expected[k])+
+        if v!=derived[k]:raise RuntimeError(
+            "Output diverged from prepared original/LOD geometry: "+k+" expected="+str(derived[k])+
             " output="+str(v))
     return {"source":str(src),"source_sha256":sha256(src),"source_stats":expected,
-            "output_stats":total,"outputs":outputs,"geometry_preserved":True}
+            "output_stats":total,"outputs":outputs,
+            "geometry_preserved":mobile_ratio==1.0,
+            "source_authentic_mobile_derivative":mobile_ratio<1.0,
+            "mobile_ratio":mobile_ratio}
 
 def main():
     args=read_args()
@@ -119,7 +138,7 @@ def main():
         if not src.is_file():raise FileNotFoundError(src)
         dst=output/("market" if count>1 else "modules")
         dst.mkdir(parents=True,exist_ok=True)
-        receipts.append(prepare(src,dst,name,count))
+        receipts.append(prepare(src,dst,name,count,args.mobile_ratio))
     receipt={"schema":"noworld.r1.native_source_preparation.v1",
              "accepted_by_owner":False,"native_unreal_verified":False,
              "source_reused_without_proxy":True,"sources":receipts}
