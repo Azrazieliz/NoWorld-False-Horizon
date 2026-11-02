@@ -9,6 +9,8 @@ FString Digest(const FString& Text)
     uint8 Result[16]; Hash.Final(Result); return BytesToHex(Result,16).ToLower();
 }
 void AppendNarrativeFingerprintPart(FString& Out, const FString& Value) { Out += FString::Printf(TEXT("%d:"),Value.Len()) + Value; }
+// Preserve the existing canonical fingerprint encoding for narrative callers.
+void Part(FString& Out, const FString& Value) { AppendNarrativeFingerprintPart(Out, Value); }
 namespace
 {
 void Branches(FString& S, const TArray<FOGNarrativeBranch>& B)
