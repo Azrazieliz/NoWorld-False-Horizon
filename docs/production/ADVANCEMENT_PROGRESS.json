@@ -3232,9 +3232,52 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T11:30:00Z"
+    },
+    {
+      "source_commit": "4c1c930855d5fcc46e458f21a606f31b054a3431",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11",
+        "M12"
+      ],
+      "result": "Corrected preplaced StartingWorld actor source-first lifecycle. Region BeginPlay now selects original Gate02 R1 before its own GenerateRegion instead of depending on subsequent GameMode StartPlay; prevents old synthetic region from generating and possibly persisting prior to canonical source selection. Native compilation and phone movement/collision remain unverified.",
+      "remaining_player_visible_work": "Run full native UE5.8 gameplay compile and Android runtime; verify player moving over all 64 authentic terrain sections, streaming 10,454 persistent ecology, 12 original market sections, and actual source projectiles/melee/cast physical contact with canonical targets. 937 motions still not independently acceptance-tested.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "5star_reused_program": "Scripts/production/record_noworld_progress.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Used existing Source gameplay and source-authored real rig/projectile/World binding, native compile invoked against isolated sparse current checkout; no full native acceptance yet.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T11:52:11.402Z"
+    },
+    {
+      "source_commit": "bb2bafe84a8860cc0764a9cc2835ae278bac9f4a",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M07",
+        "M14"
+      ],
+      "result": "Original World mode ranged projectiles now spawn at explicitly authored live native rig StartSocket rather than pawn/root position; both new casts and recovered casts preflight matching source rig sockets. Actual physical projectile collision, authorized world step filter and canonical authoritative commit remain unchanged. Does not fabricate motion contact_seconds or supply absent source projectile meshes. Native game test pending.",
+      "remaining_player_visible_work": "Run full native UE5.8 gameplay compile and Android runtime; verify player moving over all 64 authentic terrain sections, streaming 10,454 persistent ecology, 12 original market sections, and actual source projectiles/melee/cast physical contact with canonical targets. 937 motions still not independently acceptance-tested.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ],
+      "5star_reused_program": "Scripts/production/record_noworld_progress.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Used existing Source gameplay and source-authored real rig/projectile/World binding, native compile invoked against isolated sparse current checkout; no full native acceptance yet.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T11:52:11.405Z"
     }
   ],
-  "continuation_last_source_commit": "effca330fc2f456f76ee741ad17ecc6bbfbd5568",
+  "continuation_last_source_commit": "bb2bafe84a8860cc0764a9cc2835ae278bac9f4a",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
