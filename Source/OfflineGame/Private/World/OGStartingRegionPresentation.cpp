@@ -4388,10 +4388,15 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
     RestoreR1ExplorationFromWorldStore();
     const FVector Location = GetActorLocation();
     const FVector2D MapPoint(Location.X, Location.Y);
-    if (!bHasMapTrailSample ||
-        FVector2D::Distance(
-            MapPoint,
-            LastMapTrailSample) >= 280.0f)
+    // Only the locally possessed player owns the Ruler's exploration
+    // journal. Parked former playable bodies, companion AI and streamed NPCs
+    // must never append movement samples to the account's shared map.
+    const bool bActualLocalPlayer =
+        IsLocallyControlled() &&
+        Cast<APlayerController>(GetController()) != nullptr;
+    if (bActualLocalPlayer &&
+        (!bHasMapTrailSample ||
+         FVector2D::Distance(MapPoint,LastMapTrailSample)>=280.0f))
     {
         VisitedMapTrail.Add(MapPoint);
         if(bR1ExplorationLoaded && IsFoundationWorldInputAllowed())
