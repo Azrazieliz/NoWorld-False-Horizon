@@ -3340,9 +3340,32 @@
       },
       "device_verified": false,
       "user_accepted": false
+    },
+    {
+      "source_commit": "38d59b9db06cd191584e205a41b9ae03624a2cc4",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M07",
+        "M14"
+      ],
+      "result": "Original character shared-motion controller now uses one reusable exact-SourceClipId selection across all distinct native rig/skeleton drivers at both preflight and actual playback. It considers only real indexed native sequences, source origin, rig/anatomy/outfit/context/capabilities/scene roles; checks all actual rig families before stopping the current animation, then synchronizes durations across attached parts. This closes the independently resolved incompatible takes failure and preserves one global 3222-entry source bank; no per-character copies, fabricated retargets or impact times. Forced looping no longer emits natural-completion contact. Original protected PC source inventory inspected: 3222 original indexed entries, 3222 native paths present in protected source checkout, 1077 unique original source clip IDs, 1075 semantic actions, categories Traversal=313, Interaction=1070, Combat=937, AdultInteraction=902. These counts indicate on-disk presence, not gameplay/Android playback or authored combat contact.",
+      "remaining_player_visible_work": "Native new-source UE5.8 rebuild in isolated checkout entered 15 compile actions after UHT; new revision not yet native-verified. Need completed C++ build, native animation tests, actual compatible rigs/character playback, 937 combat clip contact/authored ability mapping especially projectile/cast, Android cook and owner phone acceptance. Source clip catalog has no authored impact seconds and no natural completion evidence; never invent them.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp"
+      ],
+      "5star_reused_program": "Scripts/production/reconcile_native_motion_catalog.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Used the original global 3222-entry bank and validated 3222 corresponding native source asset file paths through a read-only audit of protected canonical PC source; did not reset or mutate protected PC project. Native build executed in disposable isolated test checkout with low-memory settings after relocating only Unreal DDC cache by a preserving junction.",
+      "status": "SHARED_ANIMATION_COHERENCE_SOURCE_COMMITTED_NATIVE_BUILD_PENDING",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T18:44:00Z"
     }
   ],
-  "continuation_last_source_commit": "4630d62e174c186dbdbe500c67c8185c0d8dc8ef",
+  "continuation_last_source_commit": "38d59b9db06cd191584e205a41b9ae03624a2cc4",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
