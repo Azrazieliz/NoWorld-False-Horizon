@@ -164,8 +164,16 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     {
         if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         { FName Start,End; if (!TracePart(Step,Start,End,Error)) return false; }
-        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
-        { Error=TEXT("The original projectile mesh is unavailable."); return false; }
+        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
+        {
+            if (!Step.ProjectileMesh.LoadSynchronous())
+            { Error=TEXT("The original projectile mesh is unavailable."); return false; }
+            if (!Step.StartSocket.IsNone())
+            {
+                FName Start,End;
+                if (!TracePart(Step,Start,End,Error)) return false;
+            }
+        }
     }
     const FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Request.SkillId);
     if (!Semantic.IsNone())
@@ -469,13 +477,29 @@ void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tic
         if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
         {
             if (SpawnedProjectiles.Contains(Index)) continue;
+            // Source-authored projectile socket is authoritative whenever
+            // declared; spawning at the pawn origin could immediately hit
+            // the ground or pass through the character's real geometry.
+            FVector LaunchPosition=GetOwner()->GetActorLocation();
+            if (!Step.StartSocket.IsNone())
+            {
+                FName Start,End; FString SocketError;
+                if (USceneComponent* Part=TracePart(Step,Start,End,SocketError))
+                    LaunchPosition=Part->GetSocketLocation(Start);
+                else
+                {
+                    Status=SocketError;
+                    CommitContacts(Index,{},Error);
+                    continue;
+                }
+            }
             FVector Direction=GetOwner()->GetActorForwardVector();
             if (!Root.TargetUnitIds.IsEmpty())
                 if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Root.TargetUnitIds[0]))
-                    Direction=(Target->GetActorLocation()-GetOwner()->GetActorLocation()).GetSafeNormal();
+                    Direction=(Target->GetActorLocation()-LaunchPosition).GetSafeNormal();
             FActorSpawnParameters Params; Params.Owner=GetOwner(); Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
             auto* Projectile=GetWorld()->SpawnActor<AOGNativeWorldProjectile>(AOGNativeWorldProjectile::StaticClass(),
-                GetOwner()->GetActorLocation(),Direction.Rotation(),Params);
+                LaunchPosition,Direction.Rotation(),Params);
             if (!Projectile || !Projectile->InitializeAcceptedStep(this,ActiveCast,Index,Step,Direction,Error))
             { if (Projectile) Projectile->Destroy(); Status=Error; CommitContacts(Index,{},Error); }
             else
