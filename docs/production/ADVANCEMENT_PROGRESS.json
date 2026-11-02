@@ -947,6 +947,11 @@
             "commit": "361dbb0b",
             "type": "SOURCE_PARTIAL",
             "change": "First World source startup no longer silently spawns the synthetic Foundation integration obstacle course when the authoritative Gate02 R1 source actor is missing. Only explicit -FoundationFixtures non-Shipping opt-in runs the existing developer course; real World streaming is retried and absence is logged once."
+          },
+          {
+            "commit": "a22f6bc9",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
           }
         ],
         "completed_in_this_update": false,
@@ -974,6 +979,11 @@
             "commit": "9ba5ecc6",
             "type": "SOURCE_PARTIAL",
             "change": "Autonomous source-backed opponent turn scheduler now identifies the locally possessed canonical battle unit via the existing ReadControlledCanonicalBattleUnit authority rather than restricting the runtime to Luminous/Content Manifestation subclasses. This extends legitimate non-player actions to the actual connected Ruler World pawn without manufacturing ownership, enemy actors, skills or a new executor."
+          },
+          {
+            "commit": "a22f6bc9",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
           }
         ],
         "completed_in_this_update": false,
@@ -1281,6 +1291,11 @@
             "commit": "361dbb0b",
             "type": "SOURCE_PARTIAL",
             "change": "First World source startup no longer silently spawns the synthetic Foundation integration obstacle course when the authoritative Gate02 R1 source actor is missing. Only explicit -FoundationFixtures non-Shipping opt-in runs the existing developer course; real World streaming is retried and absence is logged once."
+          },
+          {
+            "commit": "a22f6bc9",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
           }
         ],
         "completed_in_this_update": false,
@@ -1568,6 +1583,11 @@
             "commit": "62510f92",
             "type": "SOURCE_PARTIAL",
             "change": "Native rendered battle canvas now places canonical status/error feedback on the existing reserved command guide line, not across the last row of real Android skill touch targets. For absent action kits the unchanged fallback error remains visible. No executor or UI architecture replaced."
+          },
+          {
+            "commit": "a22f6bc9",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
           }
         ],
         "completed_in_this_update": false,
@@ -2376,9 +2396,32 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-01T16:26:00Z"
+    },
+    {
+      "source_commit": "a22f6bc9b9bce4ee637aa2b4b29eb8c701ea4cd0",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11",
+        "M33"
+      ],
+      "result": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build.",
+      "remaining_player_visible_work": "Original five R1 metric/scatter source files are not present in the active GitHub tree (Content/NoWorld/FirstWorld/Source absent), so genuine source load/terrain/streaming cannot be validated or packaged from GitHub yet. Recover original files without inventing samples. Native UE5.8/Android performance and collision test pending.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h",
+        "Source/OfflineGame/Private/World/OGGate02R1RealSourceRuntime.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "5star_reused_program": "Scripts/Gate12World/gate12_create_source_preserving_r1_streaming_runtime_ue583.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Extended the existing original source-preserving Gate02 native streaming pipeline. GitHub only; UE source authored but native execution not available in this pass.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:15:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "c00c2c08c98ab9065fd5c5fe56452350caf8d779",
+  "continuation_last_source_commit": "a22f6bc9b9bce4ee637aa2b4b29eb8c701ea4cd0",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
@@ -2403,5 +2446,23 @@
     "native_compile_performed": false,
     "native_factory_executed": false,
     "android_package_created": false
+  },
+  "native_world_source_missing_from_github": {
+    "path": "Content/NoWorld/FirstWorld/Source",
+    "status": "MISSING_GITHUB_CONTENT",
+    "files": [
+      "height_513_float32.raw",
+      "soil_mask_513_float32.raw",
+      "rock_mask_513_float32.raw",
+      "river_mask_513_float32.raw",
+      "baked_seed1412_scatter.jsonl"
+    ],
+    "observed_date": "2026-11-02",
+    "required_by": [
+      "AOGWorldPresentationGameMode::StartPlay",
+      "AOGStartingRegionGenerator::LoadR1MetricData",
+      "AOGStartingRegionGenerator::LoadR1SourceScatter"
+    ],
+    "repair": "Recover exact original authored source data and provenance from protected source/approved archive; do not generate synthetic substitute. Source world boot not guaranteed by tracked tree."
   }
 }
