@@ -78,14 +78,21 @@ def import_one(source,expected_name):
             "asset_paths":[str(p) for p in assetlib.list_assets(staging,True,False)]}
 
 try:
+    # Small authenticated batches are required on the real 8 GB Unreal
+    # worker. Never initialize every original mesh/material at once.
+    allowed={x.strip() for x in os.environ.get("NOWORLD_R1_ONLY","").split(",") if x.strip()}
     for item in plan["sources"]:
-        summary["source_sha256"].append(item["source_sha256"])
         for source in item["outputs"]:
             name=Path(source["file"]).stem
+            if allowed and name not in allowed:continue
+            if item["source_sha256"] not in summary["source_sha256"]:
+                summary["source_sha256"].append(item["source_sha256"])
             summary["packages"].append(import_one(source,name))
             receipt.parent.mkdir(parents=True,exist_ok=True)
             summary["status"]="PARTIAL"
             receipt.write_text(json.dumps(summary,indent=2)+"\n","utf-8")
+    if not summary["packages"]:
+        raise ValueError("No authenticated original assets matched selected batch")
     summary["status"]="NATIVE_IMPORTED_SOURCE_UNVERIFIED_ON_DEVICE"
 except Exception as exc:
     summary["status"]="FAILED"
