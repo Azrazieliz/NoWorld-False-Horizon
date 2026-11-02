@@ -1019,6 +1019,11 @@
             "commit": "4d76125a",
             "type": "SOURCE_PARTIAL",
             "change": "Native battle UMG now explicitly returns focus to Game-only input when a visible battle surface is collapsed while resuming the genuine World. The existing Ruler, opening, settings, pause and interaction modals retain their own input-mode ownership; a hidden battle widget cannot keep Android camera-drag/movement routed through an obsolete UI focus state."
+          },
+          {
+            "commit": "e808e55c",
+            "type": "SOURCE_PARTIAL",
+            "change": "The fallback native Android encounter UI now uses the already committed GameCore outcome receipt and victory flag instead of guessing victory/defeat from the selected Manifestation's remaining HP; it also renders genuine combat controls for the currently possessed canonical Ruler where the original body/battle binding has already been independently verified. Closing the native UMG result restores GameOnly input and hides the mouse cursor, preserving real World camera/touch controls."
           }
         ],
         "completed_in_this_update": false,
@@ -1096,6 +1101,11 @@
             "commit": "3724c433",
             "type": "SOURCE_PARTIAL",
             "change": "The shared native skill-branch motion resolver now accepts the original unbranched actions that carry no ResolutionJson, using their exact installed native skill mapping, while still rejecting malformed nonempty branch/mode JSON and refusing to substitute a different authored Ultimate branch. Restores compatibility for native NPC/source actions without weakening canonical skill identity."
+          },
+          {
+            "commit": "e808e55c",
+            "type": "SOURCE_PARTIAL",
+            "change": "The fallback native Android encounter UI now uses the already committed GameCore outcome receipt and victory flag instead of guessing victory/defeat from the selected Manifestation's remaining HP; it also renders genuine combat controls for the currently possessed canonical Ruler where the original body/battle binding has already been independently verified. Closing the native UMG result restores GameOnly input and hides the mouse cursor, preserving real World camera/touch controls."
           }
         ],
         "completed_in_this_update": false,
@@ -1237,6 +1247,11 @@
             "commit": "3724c433",
             "type": "SOURCE_PARTIAL",
             "change": "The shared native skill-branch motion resolver now accepts the original unbranched actions that carry no ResolutionJson, using their exact installed native skill mapping, while still rejecting malformed nonempty branch/mode JSON and refusing to substitute a different authored Ultimate branch. Restores compatibility for native NPC/source actions without weakening canonical skill identity."
+          },
+          {
+            "commit": "e808e55c",
+            "type": "SOURCE_PARTIAL",
+            "change": "The fallback native Android encounter UI now uses the already committed GameCore outcome receipt and victory flag instead of guessing victory/defeat from the selected Manifestation's remaining HP; it also renders genuine combat controls for the currently possessed canonical Ruler where the original body/battle binding has already been independently verified. Closing the native UMG result restores GameOnly input and hides the mouse cursor, preserving real World camera/touch controls."
           }
         ],
         "completed_in_this_update": false,
@@ -1709,6 +1724,11 @@
             "commit": "4d76125a",
             "type": "SOURCE_PARTIAL",
             "change": "Native battle UMG now explicitly returns focus to Game-only input when a visible battle surface is collapsed while resuming the genuine World. The existing Ruler, opening, settings, pause and interaction modals retain their own input-mode ownership; a hidden battle widget cannot keep Android camera-drag/movement routed through an obsolete UI focus state."
+          },
+          {
+            "commit": "e808e55c",
+            "type": "SOURCE_PARTIAL",
+            "change": "The fallback native Android encounter UI now uses the already committed GameCore outcome receipt and victory flag instead of guessing victory/defeat from the selected Manifestation's remaining HP; it also renders genuine combat controls for the currently possessed canonical Ruler where the original body/battle binding has already been independently verified. Closing the native UMG result restores GameOnly input and hides the mouse cursor, preserving real World camera/touch controls."
           }
         ],
         "completed_in_this_update": false,
@@ -2694,9 +2714,31 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T03:46:00+01:00"
+    },
+    {
+      "source_commit": "e808e55cb0fbedbc65751e38c88ceccb48d31835",
+      "system_ids": [
+        "M02",
+        "M03",
+        "M06",
+        "M33"
+      ],
+      "result": "The fallback native Android encounter UI now uses the already committed GameCore outcome receipt and victory flag instead of guessing victory/defeat from the selected Manifestation's remaining HP; it also renders genuine combat controls for the currently possessed canonical Ruler where the original body/battle binding has already been independently verified. Closing the native UMG result restores GameOnly input and hides the mouse cursor, preserving real World camera/touch controls.",
+      "remaining_player_visible_work": "Verify actual authored combat outcomes, the Ruler-alone and owned Manifestation case, real rewards shown in the existing native UMG and Android touch/modal focus on compiled UE5.8; missing R1 source and exact combat contacts remain blockers.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate12OwnedLuminousCombatSurface.cpp",
+        "Source/OfflineGame/Private/UI/OGNativeBattleWidget.cpp"
+      ],
+      "5star_reused_program": "FOGGameCoreSubsystem::GetLastNativeBattleOutcome and existing native UMG fallback",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Existing native GameCore persisted combat receipt/UI reused with no outcome estimator or parallel reward ledger. GitHub-only commit, no PC/ADB, runtime unverified.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:52:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "3724c43302202f5562ff11eb1940ee4f7add8394",
+  "continuation_last_source_commit": "e808e55cb0fbedbc65751e38c88ceccb48d31835",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
