@@ -3137,9 +3137,31 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T09:49:18.687Z"
+    },
+    {
+      "source_commit": "6dea7cc9c1bfee9dd99c8f39b3251f7e4ed337c9",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M07",
+        "M14"
+      ],
+      "result": "Executed source-authentic combat event scan against live global 3,222-motion catalog: 937 Combat entries in 17 original source bundle groups, 145 catalog semantically labeled reactions/defenses, 792 remaining entries, zero specifically named original Unity AnimationEvent attack contacts found under current strict matcher; no synthetic timestamps written, no catalog modification and no owner approval. Original UnityPy reader handles authenticated zipmod member payloads. Machine report saved on isolated PC at D:/UnrealProjects/NoWorld_R1_Recovery_20261102/original_combat_contact_evidence.json.",
+      "remaining_player_visible_work": "Authentic physical attack-contact integration for 792 candidate clips remains unfinished; verify whether source clips use other authored notifies or if physical hit trace against real World target is necessary. Native turn executor and real-time combat need UE/game/phone tests. Reactions/defenses are not damage infliction. Strictly no invented hit frames.",
+      "source_paths": [
+        "Scripts/production/noworld_original_combat_contact_author.py"
+      ],
+      "5star_reused_program": "Scripts/production/noworld_original_combat_contact_author.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Ran UnityPy source scan on original Koikatsu files/zipmods from native PC; exact SHA-verified source provenance, 17 groups. READ ONLY: 0 proven authored attack contact events, 145 non-impact semantic entries, 792 unresolved; no catalog mutation.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T10:00:00Z"
     }
   ],
-  "continuation_last_source_commit": "6687df70e0988a79294740b83112b973901c44db",
+  "continuation_last_source_commit": "6dea7cc9c1bfee9dd99c8f39b3251f7e4ed337c9",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
@@ -3188,5 +3210,27 @@
     "recovery_verified_diff_base": "929b93d52650ad0be132ff6cc447282920da6eaa",
     "recovery_verified_diff_head": "cd29fa549f00758df161cb8cfdcb5c3fd47dbe73",
     "native_gameplay_tested": false
+  },
+  "combat_contact_source_evidence_20261102": {
+    "catalog_total": 3222,
+    "combat_total": 937,
+    "source_bundle_groups": 17,
+    "semantic_non_impact_reaction_defense": 145,
+    "remaining_need_contact_evidence": 792,
+    "strict_source_attack_event_count": 0,
+    "catalog_mutated": false,
+    "android_verified": false,
+    "report_location": "D:\\UnrealProjects\\NoWorld_R1_Recovery_20261102\\original_combat_contact_evidence.json",
+    "notes": "No fabricated contact timing. 145 semantically labeled reaction/defense, not necessarily all gameplay non-damage cases. Remaining require further authentic authored source or real physical combat contact."
+  },
+  "first_world_market_source_preparation_20261102": {
+    "original_triangle_count": 10607212,
+    "derived_triangle_count": 10607212,
+    "sections": 12,
+    "files_present_on_pc": true,
+    "derived_total_mib": 707.2,
+    "native_uasset_import_verified": false,
+    "android_verified": false,
+    "notes": "12 Blender source partitions all present with original geometry count preserved; 707.2 MiB raw GLB exports before native import and source-preserving mobile LOD authoring."
   }
 }
