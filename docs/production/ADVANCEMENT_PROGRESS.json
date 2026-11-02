@@ -3,7 +3,7 @@
   "master": "docs/production/ADVANCEMENT_MASTER.md",
   "source_catalog": "Content/NoWorld/Animation/SharedMotionCatalog.json",
   "source_branch": "work/gate12-whole-character-shared-motion-20261031",
-  "last_synchronized": "2026-11-01",
+  "last_synchronized": "2026-11-02",
   "status_convention": {
     "MASTER_CHECKED_SCOPED": "Historical scoped checkbox in the existing master; not a new Android/device acceptance claim.",
     "OPEN": "Unfinished; no new verification claimed.",
@@ -1446,6 +1446,11 @@
             "commit": "e7b06703",
             "type": "SOURCE_PARTIAL",
             "change": "Actual World Tick exploration samples now require a locally possessed PlayerController, preventing parked former owned bodies and roaming AI from marking the shared Ruler's exploration dirty and later overwriting the canonical SQLite trail after possession switches."
+          },
+          {
+            "commit": "441ba929",
+            "type": "SOURCE_PARTIAL",
+            "change": "The genuine Gate02 R1 Eastern Market native async 12-section source streamer now resets a failed source-asset request after the player exits the market's unload radius. Previously the early failure guard prevented exit-driven recovery permanently; original native assets and load radius remain unchanged. No substitute geometry, reward or world actor was created."
           }
         ],
         "completed_in_this_update": false,
@@ -1458,7 +1463,13 @@
         "title": "World landmarks, geography, settlements and interiors",
         "issue": 39,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "441ba929",
+            "type": "SOURCE_PARTIAL",
+            "change": "The genuine Gate02 R1 Eastern Market native async 12-section source streamer now resets a failed source-asset request after the player exits the market's unload radius. Previously the early failure guard prevented exit-driven recovery permanently; original native assets and load radius remain unchanged. No substitute geometry, reward or world actor was created."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -2861,9 +2872,28 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T08:45:00+01:00"
+    },
+    {
+      "source_commit": "441ba92950c49cfdd620f2b97453516f99ba735f",
+      "system_ids": [
+        "M11",
+        "M12"
+      ],
+      "result": "The genuine Gate02 R1 Eastern Market native async 12-section source streamer now resets a failed source-asset request after the player exits the market's unload radius. Previously the early failure guard prevented exit-driven recovery permanently; original native assets and load radius remain unchanged. No substitute geometry, reward or world actor was created.",
+      "remaining_player_visible_work": "Recover the five original authored Gate02 R1 terrain/ecology files missing from GitHub, hydrate tracked authentic UE LFS sources and verify the 12 actual market assets in a full UE5.8 native Android game with streamed close/far re-entry. No native build, phone test or owner acceptance performed.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1MarketSourceStreaming.cpp"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": "Existing 5★ checkpoint program would record this exact source revision, but no local current checkout is accessible to run the git-dependent recorder. GitHub Contents API was used to preserve the 6★ checkpoint schema and exact commit without falsely claiming the CLI ran.",
+      "5star_execution": "Existing 5★ record_noworld_progress.py checkpoint schema applied directly to current GitHub branch; CLI --resume/--commit NOT executed because no current checkout is accessible. The existing native source streamer was patched in place, not replaced.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T08:53:44.828Z"
     }
   ],
-  "continuation_last_source_commit": "48f23804d08105b860bfa44735ceb1a58d18af6b",
+  "continuation_last_source_commit": "441ba92950c49cfdd620f2b97453516f99ba735f",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
