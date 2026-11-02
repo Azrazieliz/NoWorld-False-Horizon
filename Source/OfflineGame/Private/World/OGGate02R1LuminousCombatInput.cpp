@@ -138,8 +138,18 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
         AddInstanceComponent(Contact);
         Contact->RegisterComponent();
     }
+    // Use the same actual source variant as native opponents, committed
+    // visuals and the live UI preflight. A generic Ultimate semantic is not
+    // permitted to silently replace a Day/Night or other authored branch.
+    const FName ExactMotion=FOGNativeBattleCommands::MotionForResolvedAction(
+        *Source,Action,Encounter->ResolveNativeAbilityMotion(*Source,Action.SkillId));
+    if (ExactMotion.IsNone())
+    {
+        Error=TEXT("This exact character skill branch has no original source motion.");
+        return false;
+    }
     if (!Contact->StageActualTurnAction(
-            Action, Command->MotionSemantic(), Error))
+            Action,ExactMotion, Error))
         return false;
     ClearSelectedCanonicalTurnTargets();
     return true;

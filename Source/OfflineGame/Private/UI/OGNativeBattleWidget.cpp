@@ -352,10 +352,13 @@ void UOGNativeBattleWidget::Refresh()
                 ? Appearance->GetMotionController() : nullptr;
             if (!Motion)
                 Motion=Body->FindComponentByClass<UOGSharedMotionControllerComponent>();
-            if (!Motion || !Motion->CanResolveTurnContactAction(Command.MotionSemantic()))
+            const FName ExactMotion=FOGNativeBattleCommands::MotionForResolvedAction(
+                *Source,Expanded,Battle->ResolveNativeAbilityMotion(*Source,Expanded.SkillId));
+            if (!Motion || ExactMotion.IsNone() ||
+                !Motion->CanResolveTurnContactAction(ExactMotion))
             {
                 Enabled=false;
-                Reason=TEXT("The original combat motion is not bound to this character rig.");
+                Reason=TEXT("This source skill branch lacks actual character rig contact playback.");
             }
         }
         if (!Own) Reason=bPerformingAuthoredStrike ?

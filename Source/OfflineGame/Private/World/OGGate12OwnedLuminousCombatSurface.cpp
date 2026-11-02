@@ -424,8 +424,14 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
             bool bExecutable=bOwnTurn && Command.SkillId.IsValid() &&
                 Battle->HasNativeActionExecutor(*Owned,Command.SkillId,ReadyError);
             if (bExecutable && bTurnMode)
-                bExecutable=SourceMotion && SourceMotion->CanResolveTurnContactAction(
-                    Command.MotionSemantic());
+            {
+                FOGResolvedCombatAction Preview;
+                Command.BuildAction(*Owned,{},Preview);
+                const FName ExactMotion=FOGNativeBattleCommands::MotionForResolvedAction(
+                    *Owned,Preview,Battle->ResolveNativeAbilityMotion(*Owned,Command.SkillId));
+                bExecutable=SourceMotion && !ExactMotion.IsNone() &&
+                    SourceMotion->CanResolveTurnContactAction(ExactMotion);
+            }
             DrawGameButton(Command.Label,
                 FName(*FString::Printf(TEXT("OG.Battle.Command.%s"),*Command.Id.ToString())),
                 Edge+(Index%Columns)*(ButtonW+Gap),
