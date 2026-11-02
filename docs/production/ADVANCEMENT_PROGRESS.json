@@ -972,6 +972,11 @@
             "commit": "48f23804",
             "type": "SOURCE_PARTIAL",
             "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
+          },
+          {
+            "commit": "cd29fa54",
+            "type": "SOURCE_PARTIAL",
+            "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1451,6 +1456,11 @@
             "commit": "441ba929",
             "type": "SOURCE_PARTIAL",
             "change": "The genuine Gate02 R1 Eastern Market native async 12-section source streamer now resets a failed source-asset request after the player exits the market's unload radius. Previously the early failure guard prevented exit-driven recovery permanently; original native assets and load radius remain unchanged. No substitute geometry, reward or world actor was created."
+          },
+          {
+            "commit": "cd29fa54",
+            "type": "SOURCE_PARTIAL",
+            "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1468,6 +1478,11 @@
             "commit": "441ba929",
             "type": "SOURCE_PARTIAL",
             "change": "The genuine Gate02 R1 Eastern Market native async 12-section source streamer now resets a failed source-asset request after the player exits the market's unload radius. Previously the early failure guard prevented exit-driven recovery permanently; original native assets and load radius remain unchanged. No substitute geometry, reward or world actor was created."
+          },
+          {
+            "commit": "cd29fa54",
+            "type": "SOURCE_PARTIAL",
+            "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1480,7 +1495,13 @@
         "title": "Ecology, resources, water and environmental simulation",
         "issue": 40,
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "cd29fa54",
+            "type": "SOURCE_PARTIAL",
+            "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -2891,9 +2912,34 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T08:53:44.828Z"
+    },
+    {
+      "source_commit": "cd29fa549f00758df161cb8cfdcb5c3fd47dbe73",
+      "system_ids": [
+        "M01",
+        "M11",
+        "M12",
+        "M13"
+      ],
+      "result": "Recovered the genuine source-authored Gate02 R1 terrain/ecology dataset (four 513x513 float32 metric grids and 10,454 stable seed1412 scatter records) from D:/UnrealProjects/Gate12_AcceptedArtwork_20261030 into the actual GitHub branch. The first intermediate no-checkout commit d6bddd18 erroneously omitted prior tree entries; corrective fast-forward cd29fa54 restored the complete prior project tree and retains exactly five source additions, verified by GitHub compare 929b93d5...cd29fa54. Raw grids preserved at original byte length; Git normalized JSONL line endings without altering 10,454 records. Protected PC worktree not modified.",
+      "remaining_player_visible_work": "Native Unreal Android source-cook verification of the original R1 masks/scatter is still outstanding, along with hydrated existing character Git LFS packages, authentic combat contact mapping, full gameplay integration and phone acceptance. No terrain World rendering or APK claimed.",
+      "source_paths": [
+        "Content/NoWorld/FirstWorld/Source/baked_seed1412_scatter.jsonl",
+        "Content/NoWorld/FirstWorld/Source/height_513_float32.raw",
+        "Content/NoWorld/FirstWorld/Source/soil_mask_513_float32.raw",
+        "Content/NoWorld/FirstWorld/Source/rock_mask_513_float32.raw",
+        "Content/NoWorld/FirstWorld/Source/river_mask_513_float32.raw"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": null,
+      "5star_new_program_reason": "The existing 5★ generic content factory handles authored characters, animation and art but not recovering five previously authored native first-World grid/scatter datasets missing from GitHub. No new program was authored; this isolated Git source recovery was verified by GitHub tree compare and logged without claiming 5★ script execution.",
+      "5star_execution": "Used Git from an isolated native temporary source-recovery checkout, and GitHub create_tree/create_commit/update_ref to repair and preserve the full previous tree. Verified GitHub compare added precisely five original files; did not execute 5★ checkpoint CLI due to absent current checkout in model container.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T09:02:42.509Z"
     }
   ],
-  "continuation_last_source_commit": "441ba92950c49cfdd620f2b97453516f99ba735f",
+  "continuation_last_source_commit": "cd29fa549f00758df161cb8cfdcb5c3fd47dbe73",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
@@ -2921,7 +2967,7 @@
   },
   "native_world_source_missing_from_github": {
     "path": "Content/NoWorld/FirstWorld/Source",
-    "status": "MISSING_GITHUB_CONTENT",
+    "status": "RECOVERED_ON_GITHUB_SOURCE_NOT_NATIVE_VERIFIED",
     "files": [
       "height_513_float32.raw",
       "soil_mask_513_float32.raw",
@@ -2935,6 +2981,12 @@
       "AOGStartingRegionGenerator::LoadR1MetricData",
       "AOGStartingRegionGenerator::LoadR1SourceScatter"
     ],
-    "repair": "Recover exact original authored source data and provenance from protected source/approved archive; do not generate synthetic substitute. Source world boot not guaranteed by tracked tree."
+    "repair": "Five source files recovered and verified in complete GitHub tree. Cook and gameplay verification still pending; source JSONL line endings normalized by Git.",
+    "source_commit": "cd29fa549f00758df161cb8cfdcb5c3fd47dbe73",
+    "original_native_source": "D:\\UnrealProjects\\Gate12_AcceptedArtwork_20261030\\Content\\NoWorld\\FirstWorld\\Source",
+    "recovery_file_count": 5,
+    "recovery_verified_diff_base": "929b93d52650ad0be132ff6cc447282920da6eaa",
+    "recovery_verified_diff_head": "cd29fa549f00758df161cb8cfdcb5c3fd47dbe73",
+    "native_gameplay_tested": false
   }
 }
