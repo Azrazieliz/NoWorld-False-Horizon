@@ -1046,6 +1046,11 @@
             "commit": "c00c2c08",
             "type": "SOURCE_PARTIAL",
             "change": "Authentic turn contact stage now records the exact selected original native motion ID, discards mismatched source callbacks, and cancels without costs/damage when a contact-marked animation reaches its natural end without emitting its authored impact. Explicit natural-completion actions still resolve only at authorized source finish. Prevents unresolved stuck turns and unsourced hit settlement without inventing generic damage."
+          },
+          {
+            "commit": "0817c0a2",
+            "type": "SOURCE_PARTIAL",
+            "change": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons."
           }
         ],
         "completed_in_this_update": false,
@@ -1135,6 +1140,11 @@
             "commit": "c00c2c08",
             "type": "SOURCE_PARTIAL",
             "change": "Authentic turn contact stage now records the exact selected original native motion ID, discards mismatched source callbacks, and cancels without costs/damage when a contact-marked animation reaches its natural end without emitting its authored impact. Explicit natural-completion actions still resolve only at authorized source finish. Prevents unresolved stuck turns and unsourced hit settlement without inventing generic damage."
+          },
+          {
+            "commit": "0817c0a2",
+            "type": "SOURCE_PARTIAL",
+            "change": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons."
           }
         ],
         "completed_in_this_update": false,
@@ -1162,6 +1172,11 @@
             "commit": "88924e6c",
             "type": "SOURCE_PARTIAL",
             "change": "One reusable native FOGNativeBattleCommands::MotionForResolvedAction source dispatcher now distinguishes the exact canonical skill branch/mode for executed turn actions. Native agent AI, autonomous opponent fallback, and connected original combat actors all use it rather than silently substituting the general skill motion for Day/Night/Harvest or other distinct effects. Missing variant animation remains unavailable rather than borrowing another branch. Both existing executors remain unmodified."
+          },
+          {
+            "commit": "0817c0a2",
+            "type": "SOURCE_PARTIAL",
+            "change": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons."
           }
         ],
         "completed_in_this_update": false,
@@ -1588,6 +1603,11 @@
             "commit": "a22f6bc9",
             "type": "SOURCE_PARTIAL",
             "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
+          },
+          {
+            "commit": "0817c0a2",
+            "type": "SOURCE_PARTIAL",
+            "change": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons."
           }
         ],
         "completed_in_this_update": false,
@@ -2419,9 +2439,32 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T03:15:00+01:00"
+    },
+    {
+      "source_commit": "0817c0a20034ecb0a4533a5d7e04bdb6bc2d3752",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M33"
+      ],
+      "result": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons.",
+      "remaining_player_visible_work": "Original authored branch-specific contact/motion needs installation and proof for the genuine playable characters; validate turn action selection/impact/outcome and native mobile UI in UE5.8/Android.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1LuminousCombatInput.cpp",
+        "Source/OfflineGame/Private/UI/OGNativeBattleWidget.cpp",
+        "Source/OfflineGame/Private/World/OGGate12OwnedLuminousCombatSurface.cpp"
+      ],
+      "5star_reused_program": "FOGNativeBattleCommands::MotionForResolvedAction",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reused 5★ indexed native shared command resolver rather than defining new character/form-specific motion banks. GitHub-only source; no compile/Android evidence.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:19:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "a22f6bc9b9bce4ee637aa2b4b29eb8c701ea4cd0",
+  "continuation_last_source_commit": "0817c0a20034ecb0a4533a5d7e04bdb6bc2d3752",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
