@@ -3035,9 +3035,51 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T09:17:26.962Z"
+    },
+    {
+      "source_commit": "dd4b5adebb01e149b4fdebe5984db7f91bd3d791",
+      "system_ids": [
+        "M11",
+        "M12",
+        "M34"
+      ],
+      "result": "5-star real native static World importer now supports individually source-verified, safely selected source-module/market batches via NOWORLD_R1_ONLY, avoiding simultaneous loading of all heavy original meshes on the constrained 8 GB Unreal worker. Isolated UE5.8 imported the genuine shrub StaticMesh and original materials/textures at the exact runtime path, as evidenced by native_import_shrub_receipt.json; other assets and phone/game verification still pending.",
+      "remaining_player_visible_work": "Native fir and oak imports and 12 original Eastern Market sections still require successful UE source imports, LFS publication, runtime streamed movement and Android verification; original market is 10.6 million triangles and needs source-derived mobile LOD without pretending low-res mesh is the accepted master.",
+      "source_paths": [
+        "Scripts/production/noworld_r1_unreal_import.py"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": "Scripts/production/noworld_r1_unreal_import.py",
+      "5star_new_program_reason": "Existing 5-star content importer and binder cannot safely process per-batch original static environment GLBs or recover omitted source Unity AnimationEvents from already indexed original combat entries; this utility adds reusable, source-authentic missing authoring capabilities instead of replacing active gameplay.",
+      "5star_execution": "Actual isolated UE5.8 native StaticMesh shrub import passed; result on PC, not yet GitHub/native gameplay.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T09:31:13.078Z"
+    },
+    {
+      "source_commit": "b99095e8c52fe86d65c799737bccaafb5ea348e7",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M07",
+        "M14"
+      ],
+      "result": "Added reusable source-provenance combat motion authoring extractor for the exact 937 existing native Koikatsu entries, verifying original Unity bundle SHA and path IDs, distinguishing reactions/defenses from attack contacts, accepting only original Unity AnimationEvents with explicit combat hit semantics, and refusing synthetic contact timestamps or blanket 937 damage approvals. UnityPy installed on native worker for source examination; output/contact counts not yet verified.",
+      "remaining_player_visible_work": "Run source bundle event scan and bind exact authored evidence where present; 937 cannot be settled by motion duration alone. Complete genuine skill→compatible animation matching, missing physical contact authoring for eventless clips, native UE combat tests and Android gameplay.",
+      "source_paths": [
+        "Scripts/production/noworld_original_combat_contact_author.py"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": "Scripts/production/noworld_original_combat_contact_author.py",
+      "5star_new_program_reason": "Existing 5-star content importer and binder cannot safely process per-batch original static environment GLBs or recover omitted source Unity AnimationEvents from already indexed original combat entries; this utility adds reusable, source-authentic missing authoring capabilities instead of replacing active gameplay.",
+      "5star_execution": "Source extractor committed and indexed; UnityPy dependency now installed on native PC, full source report not yet run.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T09:31:13.078Z"
     }
   ],
-  "continuation_last_source_commit": "b1e753d8f5cfe13575bba9d11fe179d84e910dea",
+  "continuation_last_source_commit": "b99095e8c52fe86d65c799737bccaafb5ea348e7",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
