@@ -66,12 +66,13 @@ void UOGTurnContactActionComponent::TickComponent(
                 continue;
             Seen.Add(Bone);
             const FVector Current=Mesh->GetBoneLocation(Bone);
-            if(!Current.IsFinite())continue;
+            if(Current.ContainsNaN())continue;
             const FVector* Last=PreviousPhysicalMeleeBones.Find(Bone);
+            const bool bHadPrevious=Last!=nullptr;
+            const FVector Old=bHadPrevious ? *Last : Current;
             PreviousPhysicalMeleeBones.Add(Bone,Current);
-            if(!Last)continue;
+            if(!bHadPrevious)continue;
             // Guard against resting hand proximity and zero-length sweeps.
-            const FVector Old=*Last;
             if(FVector::DistSquared(Old,Current)<
                FMath::Square(FMath::Max(2.f,DeltaSeconds*55.f)))
                 continue;
