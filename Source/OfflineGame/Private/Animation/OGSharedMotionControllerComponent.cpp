@@ -12,6 +12,35 @@
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/OGSharedReferenceAnimInstance.h"
 
+namespace
+{
+// Original melee/sword clips frequently have no authored Unity contact notify.
+// Their only valid no-timestamp alternative is measured physical collision
+// from the actual animated source hand/weapon on the actual World target.
+// Never extend this rule to reactions, defense, ranged shots or spells.
+bool IsOriginalPhysicalMeleeAction(FName Action)
+{
+    const FString Name=Action.ToString();
+    return Name.StartsWith(TEXT("Combat.Melee.")) ||
+           Name.StartsWith(TEXT("Combat.Sword."));
+}
+bool HasActualMeleeContactBone(const TArray<TObjectPtr<USkeletalMeshComponent>>& Parts)
+{
+    static const FName Candidates[]={
+        TEXT("cf_J_Hand_R"),TEXT("cf_J_Hand_L"),
+        TEXT("hand_r"),TEXT("hand_l"),
+        TEXT("RightHand"),TEXT("LeftHand"),
+        TEXT("Hand_R"),TEXT("Hand_L")};
+    for(const USkeletalMeshComponent* Mesh:Parts)
+        if(Mesh && Mesh->GetSkeletalMeshAsset())
+            for(FName Bone:Candidates)
+                if(Mesh->GetBoneIndex(Bone)!=INDEX_NONE)
+                    return true;
+    return false;
+}
+}
+
+
 bool UOGSharedMotionControllerComponent::BindCanonicalCharacter(const FOGContentId& IdentityId)
 {
     // A live actor/controller belongs to one canonical character, not to each
@@ -166,7 +195,9 @@ bool UOGSharedMotionControllerComponent::CanResolveTurnContactAction(FName Actio
     if (FindReference(Action,TEXT("Combat"),1,NAME_None,Shared,Reference,Mapping,Error))
         return Reference && !Shared.bLoop &&
             ((Shared.ContactSeconds>=0.f && Shared.ContactSeconds<=Reference->Duration) ||
-             Shared.bNaturalCompletionContact);
+             Shared.bNaturalCompletionContact ||
+             (IsOriginalPhysicalMeleeAction(Action) &&
+              HasActualMeleeContactBone(RegisteredParts)));
 
     const UOGSharedMotionLibrary* Library=SharedLibrary.IsNull()
         ? nullptr : SharedLibrary.LoadSynchronous();
@@ -187,7 +218,9 @@ bool UOGSharedMotionControllerComponent::CanResolveTurnContactAction(FName Actio
                 return true;
         return false;
     }
-    return Entry->bNaturalCompletionContact;
+    return Entry->bNaturalCompletionContact ||
+           (IsOriginalPhysicalMeleeAction(Action) &&
+            HasActualMeleeContactBone(RegisteredParts));
 }
 
 bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
