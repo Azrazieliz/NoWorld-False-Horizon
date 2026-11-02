@@ -1,0 +1,80 @@
+{
+  "schema": "noworld.gate12.alter.ue583.independent_cold_world_asset_checkpoint.v1",
+  "status": "COLD_VALIDATED_ALL_THREE_ALTER_WORLD_WARDROBES_AND_NINE_SOURCE_NATIVE_MOTIONS",
+  "approved_original_art_modified": false,
+  "real_time_visual_acceptance": false,
+  "native_editor_build_validated_on_20261022": true,
+  "complete_characters": [
+    {
+      "state": "CLOTHED",
+      "source_bones": 1131,
+      "native_parts": 6,
+      "native_motions": {
+        "Walk": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Walk",
+          "duration_s": 2.8333332538604736,
+          "original_mocap_bone_tracks": 21
+        },
+        "Run": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Run",
+          "duration_s": 1.4333332777023315,
+          "original_mocap_bone_tracks": 21
+        },
+        "Jump": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_CLOTHED_RealCMU_Jump",
+          "duration_s": 4.0,
+          "original_mocap_bone_tracks": 21
+        }
+      }
+    },
+    {
+      "state": "UNDERWEAR",
+      "source_bones": 1131,
+      "native_parts": 6,
+      "native_motions": {
+        "Walk": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Walk",
+          "duration_s": 2.8333332538604736,
+          "original_mocap_bone_tracks": 21
+        },
+        "Run": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Run",
+          "duration_s": 1.4333332777023315,
+          "original_mocap_bone_tracks": 21
+        },
+        "Jump": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_UNDERWEAR_RealCMU_Jump",
+          "duration_s": 4.0,
+          "original_mocap_bone_tracks": 21
+        }
+      }
+    },
+    {
+      "state": "NUDE",
+      "source_bones": 1123,
+      "native_parts": 6,
+      "native_motions": {
+        "Walk": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Walk",
+          "duration_s": 2.8333332538604736,
+          "original_mocap_bone_tracks": 21
+        },
+        "Run": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Run",
+          "duration_s": 1.4333332777023315,
+          "original_mocap_bone_tracks": 21
+        },
+        "Jump": {
+          "native": "/Game/NoWorld/Characters/Luminous/Alter/NativeMocapRealCMU/AN_G12_Alter_NUDE_RealCMU_Jump",
+          "duration_s": 4.0,
+          "original_mocap_bone_tracks": 21
+        }
+      }
+    }
+  ],
+  "character_catalog_choices": [
+    "CLOTHED",
+    "UNDERWEAR",
+    "NUDE"
+  ]
+}

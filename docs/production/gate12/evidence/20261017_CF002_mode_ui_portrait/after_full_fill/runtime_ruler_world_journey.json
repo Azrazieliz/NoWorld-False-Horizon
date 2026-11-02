@@ -1,0 +1,128 @@
+{
+	"schema": "GATE12_ISOLATED_NATIVE_WIN64_GAME_JOURNEY_V1",
+	"original_project_saves": "NO_ACCESS_ISOLATED_PROJECT_ONLY",
+	"android_cooked_or_installed": false,
+	"production_assets_modified": false,
+	"programmatic_native_ui_actions": true,
+	"physical_touch_inputs_verified": false,
+	"complete": true,
+	"passed": true,
+	"status": "PASS_NATIVE_GAME_JOURNEY_NOT_ANDROID",
+	"steps": [
+		{
+			"name": "world_begin_play",
+			"passed": true,
+			"detail": "World=StartingWorld, project_isolated=1"
+		},
+		{
+			"name": "starting_world_real_local_player_hud",
+			"passed": true,
+			"detail": "Map=StartingWorld, Pawn=OGWorldPrototypeCharacter, Hud=OGWorldPresentationHud, CoreReady=1"
+		},
+		{
+			"name": "native_opening_umg_controls_present",
+			"passed": true,
+			"detail": "Viewport=1 Buttons=1 WidthConstraint=1"
+		},
+		{
+			"name": "starting_world_real_local_player_hud",
+			"passed": true,
+			"detail": "Map=StartingWorld, Pawn=OGWorldPrototypeCharacter, Hud=OGWorldPresentationHud, CoreReady=1"
+		},
+		{
+			"name": "opening_to_ruler_via_real_canvas_action",
+			"passed": true,
+			"detail": "Called existing OG.Opening.Ruler click handler"
+		},
+		{
+			"name": "ruler_ui_presented",
+			"passed": true,
+			"detail": "RulerMode=1 Root=1 Title=1 Page=1 Nav=1 Interactive=1 VisibilityEnum=4 Blueprint=WBP_NoWorld_RulerShell_C"
+		},
+		{
+			"name": "canonical_ruler_create_or_restore",
+			"passed": true,
+			"detail": "ActualOwner=53b6287d-427d-98bf-3247-8ba17d06bdde, owned=0, claimed=0"
+		},
+		{
+			"name": "native_ruler_navigation_home",
+			"passed": true,
+			"detail": "ActualPage=0 Selected=0, AuthenticOwner=53b6287d-427d-98bf-3247-8ba17d06bdde"
+		},
+		{
+			"name": "native_ruler_navigation_characters",
+			"passed": true,
+			"detail": "ActualPage=1 Selected=1, AuthenticOwner=53b6287d-427d-98bf-3247-8ba17d06bdde"
+		},
+		{
+			"name": "development_45part_preview_noncanonical",
+			"passed": true,
+			"detail": "RealMeshParts=45 RenderTarget=1 FakeOwnership=0"
+		},
+		{
+			"name": "development_45part_preview_survives_shader_warmup",
+			"passed": true,
+			"detail": "Meshes=45 RT=1 OwnerChanged=0"
+		},
+		{
+			"name": "native_ruler_navigation_gacha",
+			"passed": true,
+			"detail": "ActualPage=2 Selected=2, AuthenticOwner=53b6287d-427d-98bf-3247-8ba17d06bdde"
+		},
+		{
+			"name": "native_ruler_navigation_territory",
+			"passed": true,
+			"detail": "ActualPage=3 Selected=3, AuthenticOwner=53b6287d-427d-98bf-3247-8ba17d06bdde"
+		},
+		{
+			"name": "native_ruler_navigation_records",
+			"passed": true,
+			"detail": "ActualPage=4 Selected=4, AuthenticOwner=53b6287d-427d-98bf-3247-8ba17d06bdde"
+		},
+		{
+			"name": "ruler_to_world_validated_native_transition",
+			"passed": true,
+			"detail": "WorldMode=1, PawnUnchanged=1, owner=53b6287d-427d-98bf-3247-8ba17d06bdde"
+		},
+		{
+			"name": "live_world_still_active",
+			"passed": true,
+			"detail": "Same real World Pawn after three seconds; no cloned ownership"
+		},
+		{
+			"name": "world_privacy_toggle_saved_in_isolated_profile",
+			"passed": true,
+			"detail": "PawnToggle=1 persisted=1 modeWorld=1 error="
+		},
+		{
+			"name": "world_privacy_setting_restored_without_ownership_changes",
+			"passed": true,
+			"detail": "restored=1 original=0 owned=0"
+		},
+		{
+			"name": "world_interaction_menu_real_native_controls",
+			"passed": true,
+			"detail": "Host=1 rows=8 worldEnabled=1 selectEnabled=0"
+		},
+		{
+			"name": "real_neutral_world_interaction_entry",
+			"passed": true,
+			"detail": "canEnter=1 active=1 status=world: 1 canonical participants. Neutral actions; world time continues. | align | 1 participants | 1.00x | tick 99848"
+		},
+		{
+			"name": "interaction_privacy_and_exit_restore_world",
+			"passed": true,
+			"detail": "privacy=1 exit=1 world=1 owned=0"
+		},
+		{
+			"name": "world_to_ruler_via_real_canvas_action",
+			"passed": true,
+			"detail": "Called existing OG.World.Ruler click handler"
+		},
+		{
+			"name": "ruler_world_ruler_end_to_end",
+			"passed": true,
+			"detail": "OwnerPreserved=1 UMG=1 PawnPreserved=1 NoFakeAssets=1"
+		}
+	]
+}

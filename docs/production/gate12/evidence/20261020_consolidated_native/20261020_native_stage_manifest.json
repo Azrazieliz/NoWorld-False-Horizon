@@ -1,0 +1,21 @@
+{
+  "status": "ACTUAL_UNREAL_UE583_NATIVE_PACKAGE_AND_QA_MAP_COLD_SAVED",
+  "map": "/Game/Experimental/FirstWorldR1/Maps/L_FirstWorld_R1_REAL_ART_QA",
+  "gate02": {
+    "imported_source_count": 3,
+    "persistent_seed1412_rock_count": 1,
+    "terrain_height_source_texture_imported": true,
+    "genuine_landscape_actor_created": false,
+    "art_acceptance": false
+  },
+  "gate09": {
+    "cold_reloaded_clip_count": 4,
+    "actual_clip_skeleton": "/Game/Experimental/LuminousValentineV3/CLOTHED/Parts/Mesh000Prim000/Mesh_00_Prim_00/SkeletalMeshes/Mesh_00_Prim_00_Skeleton.Mesh_00_Prim_00_Skeleton",
+    "note": "Base CLOTHED native animation controller must bind to exact Mesh00 skeleton and validate independent rest hierarchy; no Alter retarget acceptance yet"
+  },
+  "source_provenance": {
+    "gate02_archive_sha256": "0b12490cf3559f134b1ec40514c318604e0f4c27ae9a5468a1328460b7eb1db9"
+  },
+  "gameplay_character_manifestation_fabricated": false,
+  "android_device_validated": false
+}

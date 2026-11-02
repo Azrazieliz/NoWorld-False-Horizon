@@ -1,0 +1,177 @@
+{
+  "schema": "noworld.luminous_original_koikatsu_source_cards.v1",
+  "original_source_directory": "D:\\Tools\\Steam\\steamapps\\common\\Koikatsu Party\\UserData\\chara\\female",
+  "artwork_reference_manifest": "Content/NoWorld/Characters/Luminous/Art/Accepted2D/APPROVED_FIVE_FORMS_MANIFEST.json",
+  "canonical_identity": "character:luminous_valentine.identity",
+  "source_card_count": 15,
+  "form_count": 5,
+  "character_level_animation_library": "Content/NoWorld/Animation/SharedMotionCatalog.json",
+  "status": "BYTE_IDENTICAL_SOURCES_STORED_NOT_ENGINE_IMPORT_OR_GAMEPLAY_ACCEPTED",
+  "sources": [
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Base",
+      "wardrobe": "CLOTHED",
+      "source_original_filename": "LUMINOUS_BASE_CLOTHED_KK.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_BASE_CLOTHED_KK.png",
+      "sha256": "484190e00cfa00295cfe2e492012eb10721f0e8fa98abe47d18b17bbe0e69f9c",
+      "size_bytes": 14461604,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Base",
+      "wardrobe": "UNDERWEAR",
+      "source_original_filename": "LUMINOUS_BASE_UNDERWEAR_KK.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_BASE_UNDERWEAR_KK.png",
+      "sha256": "01eb529484692a5462fd784643d66867f31d83f447d24c28a17c5c303773626a",
+      "size_bytes": 14461604,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Base",
+      "wardrobe": "NUDE",
+      "source_original_filename": "LUMINOUS_BASE_NUDE_KK.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_BASE_NUDE_KK.png",
+      "sha256": "5b68f5a2c01d2de6338c28dca730c926dc4590ec1bcc6de6050120c2e605b05c",
+      "size_bytes": 14461604,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Alter",
+      "wardrobe": "CLOTHED",
+      "source_original_filename": "Koikatu_F_20261013225235666_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_ALTER_CLOTHED_KK.png",
+      "sha256": "9cd089e70890ae7a120c14156652b03919433ed0108530e00c5eedac2f608c9a",
+      "size_bytes": 14438881,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Alter",
+      "wardrobe": "UNDERWEAR",
+      "source_original_filename": "Koikatu_F_20261013224655353_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_ALTER_UNDERWEAR_KK.png",
+      "sha256": "4aac8ec3e4d6c76828c5adcf0a126680c7d15c937257f894dec0d5f04d4e124a",
+      "size_bytes": 14465037,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Alter",
+      "wardrobe": "NUDE",
+      "source_original_filename": "Koikatu_F_20261013224249541_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_ALTER_NUDE_KK.png",
+      "sha256": "15d51bcebde9599a986c0e585313c34119d428327b713c770e874b6fe2f0f254",
+      "size_bytes": 14464243,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Awakened",
+      "wardrobe": "CLOTHED",
+      "source_original_filename": "Koikatu_F_20261020163646604_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_AWAKENED_CLOTHED_KK.png",
+      "sha256": "e6b53e82c0d87ecdbd0ff8bf510ce93a1d7e557b436382271fcfed6451897bd5",
+      "size_bytes": 14481304,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Awakened",
+      "wardrobe": "UNDERWEAR",
+      "source_original_filename": "Koikatu_F_20261020163254893_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_AWAKENED_UNDERWEAR_KK.png",
+      "sha256": "a570ac519b7dc0a578f9987189d4c6bcf3b2f922ef697c087e1dd25b8aba8851",
+      "size_bytes": 14469209,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Awakened",
+      "wardrobe": "NUDE",
+      "source_original_filename": "Koikatu_F_20261020164224738_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_AWAKENED_NUDE_KK.png",
+      "sha256": "d8c4d17aaa5432d05e536942ec42814e5c7745f7bc9f51f6c38160caefba1b9e",
+      "size_bytes": 14461065,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Berserker",
+      "wardrobe": "CLOTHED",
+      "source_original_filename": "Koikatu_F_20261020181953705_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_BERSERKER_CLOTHED_KK.png",
+      "sha256": "820307ce971382af9b620fa8610af60918ad01cc7267994ba9ac5cde96070862",
+      "size_bytes": 14452380,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Berserker",
+      "wardrobe": "UNDERWEAR",
+      "source_original_filename": "Koikatu_F_20261020190327674_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_BERSERKER_UNDERWEAR_KK.png",
+      "sha256": "7a77d3f035bdb4e5a4fc07f769e37a415d11a82c298550106cd9c145b72f17f7",
+      "size_bytes": 14462376,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Berserker",
+      "wardrobe": "NUDE",
+      "source_original_filename": "Koikatu_F_20261020190405616_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_BERSERKER_NUDE_KK.png",
+      "sha256": "1c20c52a62812ec8d407fe04f266ae9076f272fb9b2edfac839ad4f96d689299",
+      "size_bytes": 14453772,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Grand Convergence",
+      "wardrobe": "CLOTHED",
+      "source_original_filename": "Koikatu_F_20261020202050734_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_GRAND_CONVERGENCE_CLOTHED_KK.png",
+      "sha256": "26c48e1c03c154f9f39a0b06afaade53423c11dbd079604e430162eb4cae5353",
+      "size_bytes": 14454719,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Grand Convergence",
+      "wardrobe": "UNDERWEAR",
+      "source_original_filename": "Koikatu_F_20261020200911508_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_GRAND_CONVERGENCE_UNDERWEAR_KK.png",
+      "sha256": "fb476c483dbba99d2712bc7369765c2ce25514e23a602852ea97a7249fd0eb05",
+      "size_bytes": 14469761,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    },
+    {
+      "identity": "character:luminous_valentine.identity",
+      "form": "Grand Convergence",
+      "wardrobe": "NUDE",
+      "source_original_filename": "Koikatu_F_20261020200119808_Valentine Luminous.png",
+      "repo_path": "Assets/NoWorld/Luminous/KoikatsuOriginalCards/LUMINOUS_GRAND_CONVERGENCE_NUDE_KK.png",
+      "sha256": "35555ee04eef670a705eb9d7dc09bf7d9eae4a66768aae2a571b40cf4399f159",
+      "size_bytes": 14460366,
+      "file_kind": "KOIKATSU_SOURCE_CARD_PNG_WITH_EMBEDDED_CHARACTER_DATA",
+      "runtime_3d_import": "NOT_VERIFIED"
+    }
+  ]
+}

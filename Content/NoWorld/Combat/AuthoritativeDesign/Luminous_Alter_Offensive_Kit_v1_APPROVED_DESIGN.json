@@ -1,0 +1,938 @@
+{
+  "schema": "gate04.luminous_valentine.alter.ln23.offensive_risk_v1",
+  "date": "2026-10-19",
+  "status": "USER_VALIDATED_GATE04_DESIGN_V1_PENDING_GATE11_GATE12_GATE09",
+  "foundation_commit": "3f54f07cacbf193e160d0be15a7be5a7bc730c3b",
+  "authority": {
+    "identity": "Luminous Valentine SAME approved Identity as Base; draft ID only",
+    "identity_id": "draft:character.luminous_valentine",
+    "version_id": "draft:character.luminous_valentine.alter",
+    "origin_rarity": "MR",
+    "origin_rarity_approval": "INHERITED_APPROVED_AT_IDENTITY_LEVEL",
+    "alter_visual_source": "USER_CONFIRMED_NATIVE_20261016",
+    "alter_combat_status": "USER_APPROVED_COMBAT_DESIGN_V1_NOT_REGISTRY_ACTIVATED",
+    "primary_lore_reference": "Tensura LN23 (abilities), Alter game expression independently authored, not canon LN23 Alter",
+    "current_rarity_at_acquisition": "MR — Gate 04 v1 proposed progression state accepted as design baseline; actual manifestation must be registered by Gate 11/12",
+    "rank_start": "Hero Rank Level 1 — user-approved Gate 04 initial gameplay balance reference; not LN23 canonical strength",
+    "do_not_mutate": [
+      "Base kit v6",
+      "Foundation",
+      "Registry v2",
+      "PR #16",
+      "user save",
+      "Alter native cards"
+    ]
+  },
+  "source_evidence": {
+    "pc_archive": "D:\\Tools\\GameAssetPipeline\\KoikatsuParty\\handoffs\\GATE01_LUMINOUS_BASE_AND_ALTER_NATIVE_3D_SOURCES_20261016.zip",
+    "manifest_entry": "02_USER_CONFIRMED_FINAL_NATIVE_SOURCE_MANIFEST.json",
+    "alter_cards_sha256": {
+      "CLOTHED": "9cd089e70890ae7a120c14156652b03919433ed0108530e00c5eedac2f608c9a",
+      "UNDERWEAR": "4aac8ec3e4d6c76828c5adcf0a126680c7d15c937257f894dec0d5f04d4e124a",
+      "NUDE_CURRENT": "15d51bcebde9599a986c0e585313c34119d428327b713c770e874b6fe2f0f254"
+    },
+    "confirmed_clothes_coordinate": 0,
+    "other_coordinate_indexes_inherit_base_and_are_not_approved": true,
+    "2d_art": "awaiting user supplied 2D",
+    "native_unreal": "not integrated",
+    "visual_notes": "card preview: dark brown hair, strong cobalt-blue rose, red/amber and pale blue heterochromia, lavender tear mark, light high collar; no redesign"
+  },
+  "core_slots": {
+    "actives": 3,
+    "passives": 6,
+    "ultimate": 1,
+    "world_fantasm_separate": 1,
+    "learned_skills_separate": true,
+    "qte": "embedded in P4 switch behavior"
+  },
+  "role": "High-risk ST execution and four-target hemorrhage; self-funded damage, independent recovery via confirmed HP theft. No team-revival/support mirror of Base.",
+  "baseline_hero_lv1": {
+    "hp": 7650,
+    "atk": 4830,
+    "def": 1040,
+    "spd": 151,
+    "crit_rate": 3700,
+    "crit_damage": 13200,
+    "crit_resist": 600,
+    "crit_damage_resist": 700,
+    "hit": 12400,
+    "dodge": 1900,
+    "block": 300,
+    "block_reduction": 1400,
+    "pen": 1700,
+    "damage_dealt": 10000,
+    "damage_taken": 10000,
+    "true_damage_resist": 0
+  },
+  "native_stat_keys": [
+    "max_hp",
+    "attack",
+    "defense",
+    "speed",
+    "crit_rate_bps",
+    "crit_damage_bonus_bps",
+    "crit_rate_resistance_bps",
+    "crit_damage_resistance_bps",
+    "hit_bps",
+    "dodge_bps",
+    "block_rate_bps",
+    "block_reduction_bps",
+    "defense_penetration_bps",
+    "damage_dealt_multiplier_bps",
+    "damage_taken_multiplier_bps",
+    "true_damage_resistance_bps"
+  ],
+  "extended_stats": {
+    "direct_lifesteal_bps": 1800,
+    "severing_wound_lifesteal_bps": 900,
+    "total_owner_action_lifesteal_cap_max_hp_bps": 1600,
+    "self_revive_hp_bps": 1800,
+    "self_revive_cost_red_tithe": 75,
+    "bleed_atk_bps_per_stack": 1600,
+    "bleed_max_stacks": 2,
+    "max_rupture_seals": 3,
+    "max_red_tithe": 100,
+    "martyr_crown_attack_bonus_bps": 2600,
+    "martyr_crown_speed_bonus_bps": 1200,
+    "martyr_crown_crit_rate_bonus_bps": 1800,
+    "stance_bleed_potency_bonus_bps": 2200,
+    "stance_pen_vs_bleeding_bps": 1200,
+    "healing_done_bonus_bps": 0,
+    "normal_regeneration_per_action_bps": 0,
+    "base_damage_taken_multiplier_bps": 10000
+  },
+  "rank_progression": {
+    "names": [
+      "Mortal",
+      "Awakened",
+      "Elite",
+      "Champion",
+      "Hero",
+      "Sage",
+      "Saint",
+      "Legend",
+      "Mythic",
+      "Astral",
+      "Celestial",
+      "Divine",
+      "Cosmic",
+      "Dimensional",
+      "Immortal",
+      "Eternal",
+      "Primordial"
+    ],
+    "start_ordinal": 4,
+    "reference_values": {
+      "hp": 7650,
+      "atk": 4830,
+      "def": 1040,
+      "spd": 151,
+      "crit_rate": 3700,
+      "crit_damage": 13200,
+      "crit_resist": 600,
+      "crit_damage_resist": 700,
+      "hit": 12400,
+      "dodge": 1900,
+      "block": 300,
+      "block_reduction": 1400,
+      "pen": 1700,
+      "damage_dealt": 10000,
+      "damage_taken": 10000,
+      "true_damage_resist": 0
+    },
+    "alpha": {
+      "hp": 1.31,
+      "atk": 1.45,
+      "def": 1.18
+    },
+    "rank_coefficient": "R(r)=10^(0.4r+0.04*r^2)",
+    "magnitude_formula": "heroLv1Stat * (R(r)/R(4))^alpha * (R(min(16,r+1))/R(r))^(0.35*alpha*((level-1)/99)^1.15), rank16 uses 15->16 step envelope",
+    "speed_formula": "heroSPD*(1+0.07*(r-4))*(1+0.22*((level-1)/99)^1.15)",
+    "other_bps_progression": {
+      "crit_rate": [
+        3700,
+        65,
+        400
+      ],
+      "crit_damage": [
+        13200,
+        220,
+        850
+      ],
+      "crit_resist": [
+        600,
+        20,
+        80
+      ],
+      "crit_damage_resist": [
+        700,
+        20,
+        80
+      ],
+      "hit": [
+        12400,
+        55,
+        220
+      ],
+      "dodge": [
+        1900,
+        17,
+        120
+      ],
+      "block": [
+        300,
+        2,
+        30
+      ],
+      "block_reduction": [
+        1400,
+        20,
+        90
+      ],
+      "pen": [
+        1700,
+        90,
+        250
+      ],
+      "damage_dealt": [
+        10000,
+        0,
+        0
+      ],
+      "damage_taken": [
+        10000,
+        0,
+        0
+      ],
+      "true_damage_resist": [
+        0,
+        0,
+        0
+      ]
+    },
+    "accuracy": "user-approved character-design projection; simulation/native balance not yet independently validated",
+    "absolute": "Absolute is potential Transcendence grade, not automatic Rank"
+  },
+  "resources": {
+    "red_tithe": {
+      "minimum": 0,
+      "maximum": 100,
+      "initial": 20,
+      "grants": {
+        "a1_self_cost": 8,
+        "a2_self_cost": 15,
+        "a3_self_cost": 20,
+        "severing_tick_hp_damage": 5,
+        "perfect_dodge": 12,
+        "world_negation_success": 8
+      },
+      "per_action_deduplication": true,
+      "no_source_from_lifesteal": true
+    },
+    "ultimate_charge": {
+      "minimum_percent": 0,
+      "maximum_percent": 200,
+      "a_cost_percent": 100,
+      "b_cost_percent": 150
+    },
+    "revival_ledger": "once per encounter for Alter self-revive only; no Base ally revival reuse unless same physical manifestation and appropriately shared global rules"
+  },
+  "effect_families": {
+    "Bleed": {
+      "category": "base_effect",
+      "status": "must resolve against registered effect family, not invented resistance"
+    },
+    "Severing Wound": {
+      "parent": "Bleed",
+      "damage": "16% current resolved caster ATK per stack per tick; ordinary physical DoT",
+      "stacks": 2,
+      "turn_duration": 2,
+      "world_duration_ms": 10000,
+      "blood_eligibility": true
+    },
+    "Rupture Seal": {
+      "parent": null,
+      "category": "source_target_mark",
+      "stacks": 3,
+      "turn_duration": 3,
+      "world_duration_ms": 14000,
+      "not_a_bleed": true
+    },
+    "Martyr Momentum": {
+      "category": "self_buff",
+      "stacks": 3,
+      "turn_duration": 2,
+      "world_duration_ms": 10000
+    },
+    "Martyr Crown": {
+      "category": "self_stance",
+      "stacks": 1,
+      "turn_duration": 2,
+      "world_duration_ms": 10000
+    }
+  },
+  "actives": [
+    {
+      "id": "draft:luminous_valentine.alter.active_1",
+      "index": 1,
+      "name": "Vesperblade — Litany of Thorns",
+      "type": "active",
+      "target_mode": "ST_ENEMY",
+      "scaling": {
+        "atk_bps_per_hit": [
+          4800,
+          6400,
+          10500
+        ],
+        "total_atk_bps": 21700,
+        "hit_overflow_replication": false
+      },
+      "red_tithe_cost": 0,
+      "cooldown_owner_actions": 0,
+      "world_cooldown_ms": 0,
+      "description": "A three-stage blade chain that pays a controlled vitality tithe to carve permanent-looking but mechanically temporary wounds. Final hit detonates her accumulated Rupture Seals.",
+      "effects": [
+        {
+          "mechanic": "BladeSequence",
+          "trigger": "OnContact",
+          "formula": "0.48/0.64/1.05 × resolved ATK",
+          "condition": "one enemy in 2.9 m sword range",
+          "limit": "3 authored hits; independent crit; Hit overflow prohibited",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "VitalityOffering",
+          "trigger": "OnThirdHitCommit",
+          "formula": "2% of current Max HP",
+          "condition": "caster HP strictly above 8% Max HP; paid once even if finisher misses",
+          "limit": "cannot defeat caster; never converts cost into enemy damage",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "RuptureSeal",
+          "trigger": "OnConfirmedHpDamage",
+          "formula": "+1 seal per first and third valid sword hits",
+          "condition": "blood-bearing target; positive target HP loss; same source",
+          "limit": "max 3; 3 turns/14s; max 2 per chain",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "Laceration",
+          "trigger": "OnThirdConfirmedHpDamage",
+          "formula": "1 stack of Severing Wound, derived from Bleed",
+          "condition": "eligible target has ≥2 Alter-owned Rupture Seals",
+          "limit": "max 2; once per chain; independent of mark application",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "SealDetonation",
+          "trigger": "AfterThirdHit",
+          "formula": "+0.75 × ATK additional hit",
+          "condition": "3 Rupture Seals already present before finisher; consumes all 3",
+          "limit": "once per active use; 0 free mark creation",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "TitheGain",
+          "trigger": "AfterActualHpCost",
+          "formula": "+8 Red Tithe",
+          "condition": "real positive self HP paid",
+          "limit": "once per authored action, not per hit",
+          "priority": "normal"
+        }
+      ],
+      "visual": {
+        "animation": "Short reverse-grip half-draw, low lateral cut, then long axial thrust; the third blade contact pulls indigo blood-thread taut.",
+        "colors": [
+          "#20182D",
+          "#671E3D",
+          "#3656BB"
+        ],
+        "notifies_ms": [
+          140,
+          360,
+          640
+        ],
+        "cancel_from_ms": 520,
+        "never": "Do not create blood from the enemy on bloodless-target fallback"
+      }
+    },
+    {
+      "id": "draft:luminous_valentine.alter.active_2",
+      "index": 2,
+      "name": "Black Eucharist — Rain of Thorns",
+      "type": "active",
+      "target_mode": "AOE_ENEMIES_MAX4",
+      "scaling": {
+        "atk_bps_per_target": [
+          9800,
+          11200
+        ],
+        "primary_bonus_atk_bps": 10000,
+        "max_targets": 4
+      },
+      "red_tithe_cost": 35,
+      "cooldown_owner_actions": 2,
+      "world_cooldown_ms": 13000,
+      "description": "Four-target raining needle-blades of Alter-owned sacrificial blood. Main target can be impaled a third time when enough seals are present.",
+      "effects": [
+        {
+          "mechanic": "SacrificialBloodSupply",
+          "trigger": "AtCastValidation",
+          "formula": "4% caster Max HP",
+          "condition": "caster above 8% Max HP after payment; genuine self-blood source",
+          "limit": "self cost always paid once per cast; no blood extracted from stone",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "NeedleRain",
+          "trigger": "OnProjectileHit",
+          "formula": "0.98 + 1.12 × ATK per enemy",
+          "condition": "up to four line-of-sight enemies within 13 m",
+          "limit": "two hits per enemy; independently critting; no Hit overflow",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "ExecutionImpalement",
+          "trigger": "AfterSecondHit",
+          "formula": "1.00 × ATK extra against primary only",
+          "condition": "primary had 3 Alter-owned Rupture Seals on activation; consume them",
+          "limit": "one primary only; cannot duplicate on other three",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "SeveringWound",
+          "trigger": "OnConfirmedPositiveDamage",
+          "formula": "one Bleed-family Severing Wound to each eligible blood-bearing enemy",
+          "condition": "genuine HP damage; status application legal",
+          "limit": "max 2 stacks; no imaginary blood resistance",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "BloodTitheRefill",
+          "trigger": "AfterActualSelfHpCost",
+          "formula": "+15 Red Tithe",
+          "condition": "self cost paid and cast actually starts",
+          "limit": "once per cast; heal cannot be counted as cost",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "ThornSpread",
+          "trigger": "OnPrimaryKill",
+          "formula": "transfer one Rupture Seal to nearest eligible wounded enemy",
+          "condition": "the bonus impalement defeated primary; valid other enemy within 5 m",
+          "limit": "one transferred stack; no transferred damage",
+          "priority": "normal"
+        }
+      ],
+      "visual": {
+        "animation": "Cobalt rose hair ornament emits a luminous hairline; four overhead fractured thorn constellations rain inward in a surgical pattern, not an indiscriminate explosion.",
+        "colors": [
+          "#1D2347",
+          "#A42B68",
+          "#D9CEE8"
+        ],
+        "notifies_ms": [
+          430,
+          680,
+          860
+        ],
+        "cancel_from_ms": 520
+      }
+    },
+    {
+      "id": "draft:luminous_valentine.alter.active_3",
+      "index": 3,
+      "name": "Martyr’s Communion — Scarlet Apostasy",
+      "type": "active",
+      "target_mode": "SELF_BUFF",
+      "scaling": {
+        "cost_current_max_hp_bps": 800,
+        "duration_owner_turns": 2,
+        "duration_world_ms": 10000
+      },
+      "red_tithe_cost": 25,
+      "cooldown_owner_actions": 3,
+      "world_cooldown_ms": 18000,
+      "description": "A personal high-risk stance. Transfers her own vitality into critical force, sword pressure and bleed exploitation; offers no team heal or borrowed Base resurrection.",
+      "effects": [
+        {
+          "mechanic": "RiteOfExpenditure",
+          "trigger": "OnCast",
+          "formula": "8% Max HP self cost",
+          "condition": "current HP > 15% Max HP; enough Red Tithe to spend 25",
+          "limit": "nonlethal: cast illegal if HP would drop to or below 1 HP",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "MartyrCrown",
+          "trigger": "OnCastSuccess",
+          "formula": "+26% ATK, +12% SPD, +18% Crit Rate",
+          "condition": "Rite of Expenditure completed",
+          "limit": "2 owner turns/10 s; one stance, refresh replaces not stacks",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "OpenVein",
+          "trigger": "WhileStanceActive",
+          "formula": "+22% authored Bleed potency; +12% DEF penetration vs actively Bleeding target",
+          "condition": "valid existing Bleed-family status",
+          "limit": "only eligible Bleed; no generic all-resistance reduction",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "NextFinisher",
+          "trigger": "FirstThirdHitDuringStance",
+          "formula": "+0.50 × ATK bonus physical strike",
+          "condition": "third hit of A1 actually contacts target HP",
+          "limit": "once per stance; consumed on activation",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "Overdraw",
+          "trigger": "OnStanceEnd",
+          "formula": "loss of all temporary stance bonuses",
+          "condition": "duration exhausted, caster defeated or genuine dispel",
+          "limit": "no permanent debuff; removes only its own modifiers",
+          "priority": "normal"
+        }
+      ],
+      "visual": {
+        "animation": "She presses the blade edge against palm, pays visible self-blood cost, and a cobalt rose-shaped crown blooms behind the head; coat/hair react to localized pressure.",
+        "colors": [
+          "#18112B",
+          "#8B164D",
+          "#315BCC"
+        ],
+        "notifies_ms": [
+          210,
+          430
+        ],
+        "cancel_from_ms": 450
+      }
+    }
+  ],
+  "passives": [
+    {
+      "id": "draft:luminous_valentine.alter.passive_1",
+      "index": 1,
+      "name": "Blood’s Accounting",
+      "type": "passive",
+      "events": [
+        "OnSelfHpCostPaid",
+        "OnConfirmedEnemyHpDamage",
+        "OnRegisteredBleedTick"
+      ],
+      "description": "Pays real HP for offense and refunds only confirmed damage—not shields, fake hits or looped restores.",
+      "effects": [
+        {
+          "mechanic": "RedTitheAccrual",
+          "trigger": "OnSelfHpCostPaid",
+          "formula": "+8 from A1; +15 from A2; +20 from A3",
+          "condition": "genuine HP lost to a listed authored cost",
+          "limit": "per named action once; max resource 100",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "PredatorySiphon",
+          "trigger": "OnEnemyHpLoss",
+          "formula": "heal 18% of eligible direct sword/blood HP damage",
+          "condition": "source owned by Alter; damage actually reduced HP",
+          "limit": "cap 16% caster Max HP per owner action; excludes A2 extra if shield only",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "WoundSiphon",
+          "trigger": "OnSeveringWoundTick",
+          "formula": "heal 9% of eligible DoT HP loss",
+          "condition": "source-owned registered Bleed-derived status",
+          "limit": "once per tick; capped in same action healing allowance",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "RiteSafety",
+          "trigger": "BeforeHpCost",
+          "formula": "reject self payment that would reduce to 0 HP",
+          "condition": "all HP sacrificial costs",
+          "limit": "never prevents external lethal attacks",
+          "priority": "normal"
+        }
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.alter.passive_2",
+      "index": 2,
+      "name": "Anatomy of Ruin",
+      "type": "passive",
+      "events": [
+        "OnThirdSwordHit",
+        "OnBloodProjectileHit",
+        "OnBleedTick"
+      ],
+      "description": "Converts ordinary Bleed into source-specific Severing Wound pressure; never invents a new universal resistance.",
+      "effects": [
+        {
+          "mechanic": "SeveringWound",
+          "trigger": "OnFirstValidProc",
+          "formula": "16% ATK physical DoT per stack",
+          "condition": "blood-bearing target with registered Bleed susceptibility; must actually be inflicted",
+          "limit": "max 2; every owner turn start/5 sec; 2 owner turns/10 sec",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "RuptureSeal",
+          "trigger": "OnA1Hit1And3",
+          "formula": "one mark per successful eligible hit",
+          "condition": "positive HP loss; no blood immunity",
+          "limit": "max 3; 3 turns/14sec",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "OpenWound",
+          "trigger": "TargetWith2SeveringStacks",
+          "formula": "+14% Alter-owned sword damage against this target",
+          "condition": "source-owned two active stacks at damage resolution",
+          "limit": "not additive to generic damage-dealt stat; one authored modifier category",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "OnExpiry",
+          "trigger": "Expiration",
+          "formula": "remove stack/status-specific glyphs",
+          "condition": "expired or legitimate cleanse",
+          "limit": "no lingering hidden damage",
+          "priority": "normal"
+        }
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.alter.passive_3",
+      "index": 3,
+      "name": "Ecstasy of Attrition",
+      "type": "passive",
+      "events": [
+        "OnSelfHpCostPaid",
+        "OnEncounterEnd"
+      ],
+      "description": "Escalating critical damage as Luminous pays HP, with deterministic once-per-action counting.",
+      "effects": [
+        {
+          "mechanic": "MartyrMomentum",
+          "trigger": "OnSelfHpCostPaid",
+          "formula": "+1 Martyr Momentum",
+          "condition": "≥1% Max HP spent as legitimate cost in authored action",
+          "limit": "max 3; once per action; 2 owner turns/10 s; refresh on new cost",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "MomentumCrit",
+          "trigger": "WhileMomentumActive",
+          "formula": "+8% Crit Damage Bonus per stack",
+          "condition": "caster alive and stacks exist",
+          "limit": "max +24%; separate crit bonus category",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "DesperationThreshold",
+          "trigger": "OnHit",
+          "formula": "+12% damage to bleeding target",
+          "condition": "current HP ≤ 40% Max HP",
+          "limit": "conditional only; no undying state",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "Reset",
+          "trigger": "OnEncounterEnd",
+          "formula": "remove Momentum",
+          "condition": "encounter ends",
+          "limit": "no carrying temporary buffs into next battle",
+          "priority": "normal"
+        }
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.alter.passive_4",
+      "index": 4,
+      "name": "Eclipse Harrier",
+      "type": "passive",
+      "events": [
+        "OnPerfectDodge",
+        "OnSwitchEnter",
+        "OnRiposteContact"
+      ],
+      "description": "Turns precise dodges into repositioned attacks. No generic perfect-dodge damage reward.",
+      "effects": [
+        {
+          "mechanic": "CobaltStep",
+          "trigger": "OnPerfectDodge",
+          "formula": "+12 Red Tithe and +25% ATK to next ST sword opener",
+          "condition": "confirmed perfect dodge; not generic dodge",
+          "limit": "once per 6s World / once per 2 owner actions Turn; next hit within 8s",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "RazorEntry",
+          "trigger": "OnValidSwitchEntry",
+          "formula": "0.90 × ATK ST, apply one Rupture Seal if legal",
+          "condition": "selected lock-on enemy in 3m and switch is legal",
+          "limit": "once per entry; no persistent companion clone",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "Pursuit",
+          "trigger": "OnBleedingEnemyDefeat",
+          "formula": "advance next resolved action delay by 8%",
+          "condition": "Alter dealt last positive HP damage and foe had active source-owned Bleed",
+          "limit": "once per owner turn; bounded to existing timeline resolver",
+          "priority": "normal"
+        }
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.alter.passive_5",
+      "index": 5,
+      "name": "The Unfinished Death",
+      "type": "passive",
+      "events": [
+        "OnDefeat",
+        "OnRevivalWindowResolve"
+      ],
+      "description": "Single high-risk self-revival. Separate from Base’s ally revival and Day Ultimate.",
+      "effects": [
+        {
+          "mechanic": "LastPulse",
+          "trigger": "OnDefeat",
+          "formula": "revive at 18% Max HP; subtract 75 Red Tithe (retain any excess)",
+          "condition": "75 Red Tithe available at defeat resolution; soul continuity; no greater Rule/Authority blocks; not already used",
+          "limit": "one per encounter; before promotion/succession; consumes 75 at trigger",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "DeathPrice",
+          "trigger": "AfterSuccessfulSelfRevival",
+          "formula": "-30% healing received from Alter-owned lifesteal; +20% Crit Damage",
+          "condition": "self-revival succeeded",
+          "limit": "one owner action / 6s; one-shot; never unconditionally prevents death",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "Failure",
+          "trigger": "FailedSelfRevivalCheck",
+          "formula": "normal defeat and succession",
+          "condition": "insufficient resource, severed continuity, seal, or consumed charge",
+          "limit": "no free restoration or emergency resource mint",
+          "priority": "normal"
+        }
+      ]
+    },
+    {
+      "id": "draft:luminous_valentine.alter.passive_6",
+      "index": 6,
+      "name": "Debts the World Cannot Collect",
+      "type": "passive",
+      "events": [
+        "OnEffectObserved",
+        "OnFieldActivation",
+        "OnRuleContest"
+      ],
+      "description": "Maintains source-identified effect observation and lawful authority contests.",
+      "effects": [
+        {
+          "mechanic": "WitnessLedger",
+          "trigger": "OnObservedEnemyEffect",
+          "formula": "record effect family+source+instance+ownership",
+          "condition": "actually observed, not hidden",
+          "limit": "last 3 observed effect families in encounter; no automatic effect copying",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "TargetAffirmation",
+          "trigger": "AgainstRecordedFamily",
+          "formula": "+10% effect penetration to specifically matching authored Severance attempt",
+          "condition": "Luminous observed same effect family and has targeting permission",
+          "limit": "does not grant generic ignore-resistance stat",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "NegationAccount",
+          "trigger": "OnSuccessfulWorldNegation",
+          "formula": "refund 8 Red Tithe",
+          "condition": "one of Alter-specific four World Negation rules succeeded",
+          "limit": "once per field rule category, never on invalid attempts",
+          "priority": "normal"
+        },
+        {
+          "mechanic": "Lineage",
+          "trigger": "OnVersionSwitch",
+          "formula": "preserve Identity, owner and acquired Manifestation progression according to Version rules",
+          "condition": "legally allowed Version switch",
+          "limit": "not separate duplicate Identity",
+          "priority": "normal"
+        }
+      ]
+    }
+  ],
+  "ultimate": {
+    "id": "draft:luminous_valentine.alter.ultimate.black_mass",
+    "name": "Black Mass — Testament of the Last Rose",
+    "implementation": "one FOGResolvedSkillSet.UltimateSkill content ID with two branch choices; both offensive, unlike Base Day/Night",
+    "variants": [
+      {
+        "id": "ruin",
+        "name": "Rite of Ruin",
+        "target_mode": "AOE_ENEMIES_MAX4",
+        "cost_charge_percent": 100,
+        "red_tithe_cost": 25,
+        "self_hp_cost_max_bps": 500,
+        "scaling": {
+          "atk_bps_per_target": [
+            14500,
+            14500,
+            8000
+          ],
+          "total_atk_bps": 37000
+        },
+        "effects": [
+          "3 authored physical strikes per enemy; each independent crit and standard DEF, zero Hit overflow replication",
+          "Apply Severing Wound to eligible blood-bearing targets on actual HP damage; one stack per target",
+          "Gain +10 Red Tithe on genuine primary defeat, once per cast; does not refund HP cost",
+          "Siphon using passive 18% lifesteal; cap 16% caster max HP per owner action"
+        ],
+        "visual": "A suspended blue-black rose breaks into four ink-thorn arrays, striking individual actual targets. No omnipresent field damage."
+      },
+      {
+        "id": "harvest",
+        "name": "Rite of the Hollow Crown",
+        "target_mode": "ST_ENEMY",
+        "cost_charge_percent": 150,
+        "red_tithe_cost": 40,
+        "self_hp_cost_max_bps": 800,
+        "scaling": {
+          "atk_bps_per_hit": [
+            5500,
+            6500,
+            7500,
+            9000,
+            10500,
+            13500
+          ],
+          "total_atk_bps": 52500,
+          "bonus_seals_3_atk_bps": 13000
+        },
+        "effects": [
+          "6 discrete sword/blood hits, independent crit; single target only",
+          "If 3 Rupture Seals already present before cast, consume them on successful first hit and add a seventh 130% ATK finisher",
+          "While owner HP <=40% Max HP: +20% authored multiplier to final 2 hits only; not max-HP target damage",
+          "Lifesteal ratio 22% on eligible Ultimate HP damage replacing P1 18% on those same hits; owner-action 16% Max HP cap remains"
+        ],
+        "visual": "The blue rose darkens, six thin blades step through a single silhouette; final strike draws a reversed cobalt halo around only the primary target."
+      }
+    ],
+    "charge_selection": "tap=Ruin; hold=Hollow Crown; separate direct turn commands",
+    "ultimate_cannot_kill_caster_with_self_cost": true
+  },
+  "world_fantasm": {
+    "id": "draft:luminous_valentine.alter.world_fantasm.cathedral",
+    "name": "Cathedral of the Unwritten Death",
+    "grade": "World Negation",
+    "grade_origin": "immutable MR Origin Rarity upon Current Rarity MR",
+    "field_radius_m": 14,
+    "duration_owner_turns": 3,
+    "duration_world_ms": 16000,
+    "activation_cost_red_tithe": 60,
+    "appearance": "False cathedral of hanging ink-glass ribs, obsidian-veined floor, cobalt rose windows, inverted crimson script, and sharp blue boundary seams; physically intersects existing terrain and enemy fields",
+    "activation_cue_ms": 1000,
+    "repeat_cue_ms": 170,
+    "rule_claims": [
+      {
+        "key": "red_reversal",
+        "title": "Blood Reversal — Denied Recovery",
+        "trigger": "target with two source-owned Severing Wound stacks begins a registered temporary heal event",
+        "cost_red_tithe": 15,
+        "resolution": "Contest that one healing effect instance via normal Authority/priority; on win, negate only that instance and restore 6 Red Tithe; on loss healing proceeds. No damage conversion.",
+        "once": "one target event per 5s and maximum two successful negations per field",
+        "success_visual": "Crimson inverted rose freezes ONE incoming gold/heal thread which breaks into cobalt dust",
+        "failure_visual": "inverted rose collapses; original healing thread completes"
+      },
+      {
+        "key": "thorn_unbinding",
+        "title": "Thorn Unbinding — Broken Continuation",
+        "trigger": "observed eligible temporary regeneration or summon-maintenance tether linked to a target with ≥3 Rupture Seals",
+        "cost_red_tithe": 20,
+        "resolution": "Consume three marks only upon a successful contest; sever only chosen temporary instance. A failed contest preserves marks but costs the committed resource.",
+        "once": "once per target per field",
+        "success_visual": "Three sapphire nails pin the actual tether, then cut its center; tether vanishes",
+        "failure_visual": "nails shatter and the intact tether returns visibly"
+      },
+      {
+        "key": "mirror_debt",
+        "title": "Mirror Debt — No Returned Wound",
+        "trigger": "observed eligible reflected-damage copy would apply to Alter during field; original enemy attack already legitimately resolved",
+        "cost_red_tithe": 20,
+        "resolution": "Contest ONLY the reflected-damage copy and negate on win. Cannot erase original hit, original counterattack, unobserved effect, or independent authored reflect rules.",
+        "once": "one success per field",
+        "success_visual": "A mirrored scarlet blade appears over her shoulder, then cracks without impact",
+        "failure_visual": "mirror fracture turns red and the reflected event proceeds"
+      },
+      {
+        "key": "boundary_decree",
+        "title": "Boundary Decree — The Unwritten Margin",
+        "trigger": "World Fantasm/Domain overlaps the field at a physically intersecting boundary",
+        "cost_red_tithe": 0,
+        "resolution": "Per-segment priority/strength/compatibility contest, not globally guaranteed. Winning boundary sector permits only that spatial rule overlay to persist; lost sector retracts. Other rules remain intact.",
+        "once": "repeat on actual boundary changes, stable deterministic ordering",
+        "success_visual": "Black ribs advance with blue rose vertices, displacing only contested local geometry",
+        "failure_visual": "black ribs bend inward and dissolve, showing opposing field intact"
+      }
+    ],
+    "rules": "Negates precisely one eligible effect instance when a contest succeeds; no generic suppression of all debuffs, immunity or superior Authority; no world-scale automatic win",
+    "field_end": "Only field overlays collapse; inflicted damage/injuries/physical consequences persist"
+  },
+  "timeline_and_determinism": {
+    "same_resolved_kit_both_executors": true,
+    "action_delays": "supplied by authorized timing layer, never invent fixed SPD formula",
+    "hit_roll_order": "frozen math, bps seeded",
+    "crit": "frozen crit-resist, overflow 1:2, crit-damage-resist",
+    "defense": "positive DEF ratio, negative DEF exponential; rank suppression applied per channel",
+    "true_damage": "none added by this kit",
+    "self_hp_payment": "prevalidate and pay once before effect trigger; no self-killing costs",
+    "revive_order": "current action completes -> OnDefeat trigger resolution -> revive or succession",
+    "hit_overflow_replication": false,
+    "statuses": "expire in owner turns or world ms maintaining one persistent status state during hybrid transitions"
+  },
+  "visual_production": {
+    "actor": "user-authored Alter card, no 2D substitute",
+    "rig": "Gate09/Gate12 must verify shared rig mapping, never claim 975 compatibility automatically",
+    "special_colors": [
+      "#25182F",
+      "#6D1C42",
+      "#2750B2",
+      "#D8CEDF"
+    ],
+    "status_cues": [
+      "Bleed: generic red droplet",
+      "Severing Wound: droplet with cobalt thorn (derived)",
+      "Rupture Seal: stackable triangular blue scar glyph",
+      "Red Tithe: three-sided reservoir, not Base Scarlet Reserve",
+      "Martyr Crown: cobalt rose halo",
+      "World Negation: successful instance-specific geometry deletion; failed thorn visibly snaps"
+    ]
+  },
+  "ownership": {
+    "gate04": "mechanics and tuning",
+    "gate09": "animation/VFX editable source and Unreal clips",
+    "gate12": "native handlers, field rendering and dual-executor implementation",
+    "gate07": "equipment",
+    "gate11": "canonical content IDs, Registry and artifact acceptance",
+    "gate00": "final approval"
+  },
+  "cannot_claim": [
+    "Alter Unreal native gameplay implemented",
+    "Alter 2D art exists",
+    "Grand Convergence eligible",
+    "Alter physical rig retarget proven",
+    "Gate11 canonical Registry acceptance granted",
+    "Actual playable Alter Unreal assets exist",
+    "Alter fully validated on target Android device"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "status": "PASS_SOURCE_FACE_BASIS_MEASURED_NATIVE_MAPPING_PENDING_DEVICE",
+  "method": "Recursive global glTF node transform composition for paired eye centers and cf_J_Nose_tip in original three distinct Mesh_03_Prim_00.glb files; no re-import or modification",
+  "samples": [
+    {
+      "wardrobe": "CLOTHED",
+      "bytes": 5904800,
+      "sha256": "E582A77A166AB380E0383DE9366D8500FBA04E96F0B2AC0033CB67961DF08DCA"
+    },
+    {
+      "wardrobe": "UNDERWEAR",
+      "bytes": 5981452,
+      "sha256": "A48C3F8B91294B4789F329CC8518A270C1BEB9B662A968BFBDA73CF9F4BEC7A1"
+    },
+    {
+      "wardrobe": "NUDE",
+      "bytes": 5980940,
+      "sha256": "17524BEE4004609D6B8EC908AA4125DAF4F7231BC3417936CF7D08DD17B4D63D"
+    }
+  ],
+  "sourceEyeMidMeters": [
+    -0.0000055,
+    1.335147,
+    0.037346
+  ],
+  "sourceNoseTipMeters": [
+    0,
+    1.319871,
+    0.09049
+  ],
+  "sourceEyeMidToNoseMeters": [
+    0.0000055,
+    -0.015276,
+    0.053144
+  ],
+  "sourceHorizontalFaceUnitXZ": [
+    0.000103492397459,
+    0,
+    0.999999994645
+  ],
+  "sourceDotPositiveZ": 0.999999994645,
+  "allWardrobesHaveIdenticalMeasuredFacePoints": true,
+  "previousNativeUnrealGLBImportTranslationMapping": "(X,Z,Y)*100",
+  "nativeImportedVisualFaceVectorUE": [
+    0,
+    1,
+    0
+  ],
+  "unrealCharacterActorForward": [
+    1,
+    0,
+    0
+  ],
+  "componentRotationYawDegToAlignVisualWithActor": -90,
+  "sourceAssetsModified": false,
+  "scope": "Only reversible runtime skeletal-mesh-component relative yaw; no actor/world movement basis or original asset edits",
+  "motionQuality": "NOT_ANDROID_TESTED",
+  "nativeDirectionRegression": "AUTHORED_PENDING_RUN",
+  "sourceReportPath": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\LuminousV3\\source_face_axis_calibration_20261013.json"
+}

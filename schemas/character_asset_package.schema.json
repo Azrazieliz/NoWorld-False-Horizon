@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:noworld:character-asset-package:1.0",
+  "title": "NoWorld explicit native character asset package",
+  "description": "Shape validation only. The Python validator additionally checks hashes, containment, counts, references and output collisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "package_id", "character_id", "character_version", "destination_root", "sources", "provenance", "settings", "textures", "materials", "wardrobes"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "package_id": {"$ref": "#/$defs/id"},
+    "character_id": {"$ref": "#/$defs/text"},
+    "character_version": {"$ref": "#/$defs/text"},
+    "destination_root": {"type": "string", "pattern": "^/Game(/[A-Za-z0-9_]+)+$"},
+    "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source"}},
+    "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}},
+    "settings": {"$ref": "#/$defs/settings"},
+    "textures": {"type": "array", "items": {"$ref": "#/$defs/texture"}},
+    "materials": {"type": "array", "items": {"$ref": "#/$defs/material"}},
+    "wardrobes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/wardrobe"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"},
+    "text": {"type": "string", "minLength": 1},
+    "object_path": {"type": "string", "pattern": "^/Game(/[A-Za-z0-9_]+)+\\.[A-Za-z0-9_]+$"},
+    "names": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "vector": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number"}},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "root", "path", "role", "version", "sha256"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "root": {"$ref": "#/$defs/id"},
+        "path": {"$ref": "#/$defs/text"},
+        "role": {"enum": ["skeletal_mesh", "texture", "provenance"]},
+        "version": {"$ref": "#/$defs/text"},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_id", "evidence_source_ids", "statement"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/id"},
+        "evidence_source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "statement": {"$ref": "#/$defs/text"}
+      }
+    },
+    "settings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uniform_scale", "convert_scene", "convert_scene_unit", "force_front_x_axis", "translation", "rotation"],
+      "properties": {
+        "uniform_scale": {"type": "number", "exclusiveMinimum": 0},
+        "convert_scene": {"type": "boolean"}, "convert_scene_unit": {"type": "boolean"},
+        "force_front_x_axis": {"type": "boolean"},
+        "translation": {"$ref": "#/$defs/vector"}, "rotation": {"$ref": "#/$defs/vector"}
+      }
+    },
+    "texture": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "source_id", "object_path", "srgb", "compression"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "source_id": {"$ref": "#/$defs/id"},
+        "object_path": {"$ref": "#/$defs/object_path"}, "srgb": {"type": "boolean"},
+        "compression": {"enum": ["default", "normalmap", "masks"]}
+      }
+    },
+    "material": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "object_path", "two_sided", "blend_mode", "textures"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "object_path": {"$ref": "#/$defs/object_path"},
+        "two_sided": {"type": "boolean"}, "blend_mode": {"enum": ["opaque", "masked"]},
+        "textures": {
+          "type": "object", "minProperties": 1, "additionalProperties": false,
+          "properties": {
+            "base_color": {"$ref": "#/$defs/id"}, "normal": {"$ref": "#/$defs/id"},
+            "roughness": {"$ref": "#/$defs/id"}, "metallic": {"$ref": "#/$defs/id"},
+            "emissive_color": {"$ref": "#/$defs/id"}, "opacity_mask": {"$ref": "#/$defs/id"}
+          }
+        }
+      }
+    },
+    "skeleton": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "object_path", "source_bone_count", "expected_bone_count", "bone_names"],
+      "properties": {
+        "mode": {"enum": ["create", "reuse"]}, "object_path": {"$ref": "#/$defs/object_path"},
+        "source_bone_count": {"type": "integer", "minimum": 1},
+        "expected_bone_count": {"type": "integer", "minimum": 1},
+        "bone_names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}}
+      }
+    },
+    "slot": {
+      "type": "object", "additionalProperties": false, "required": ["name", "material_id"],
+      "properties": {"name": {"$ref": "#/$defs/text"}, "material_id": {"$ref": "#/$defs/id"}}
+    },
+    "part": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "source_id", "filename", "object_path", "morph_targets", "material_slots"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "source_id": {"$ref": "#/$defs/id"},
+        "filename": {"type": "string", "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]*\\.fbx$"},
+        "object_path": {"$ref": "#/$defs/object_path"},
+        "morph_targets": {"$ref": "#/$defs/names"},
+        "material_slots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/slot"}}
+      }
+    },
+    "wardrobe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "version", "expected_part_count", "skeleton", "parts"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "version": {"$ref": "#/$defs/text"},
+        "expected_part_count": {"type": "integer", "minimum": 1},
+        "skeleton": {"$ref": "#/$defs/skeleton"},
+        "parts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/part"}}
+      }
+    }
+  }
+}

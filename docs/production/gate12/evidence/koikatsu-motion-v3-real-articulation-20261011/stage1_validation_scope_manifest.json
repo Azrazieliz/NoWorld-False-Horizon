@@ -1,0 +1,39 @@
+﻿{
+    "status":  "PASS_REAL_MOCAP_3_NATIVE_UNREAL_FIRST_SKELETON_PRE_VISUAL",
+    "exact_source_rig":  "Koikatsu M03P00",
+    "native_UE_cold_verified_assets":  3,
+    "actual_native_bone_tracks_each":  19,
+    "full_19_part_character_animation":  "NOT_DONE",
+    "real_renderer_visual_fidelity":  "NOT_TESTED",
+    "physical_S26_v3":  "NOT_BUILT",
+    "new_android_apk":  "NOT_CREATED",
+    "win64_native_Cplusplus_build":  "BLOCKED_COMMIT_MEMORY_NO_COMPILE_ACCEPTANCE",
+    "gate11_artifact_ready":  false,
+    "v2_quality_status":  "USER_REJECTED",
+    "source_immutable":  true,
+    "cmu_human_mocap_sources":  [
+                                    "02_01_walk.bvh",
+                                    "02_03_jog.bvh",
+                                    "02_04_jump.bvh"
+                                ],
+    "original_source_skeleton_geometry":  "UNCHANGED",
+    "baseline_10_file_lock":  "PASS",
+    "native_files":  [
+                         {
+                             "name":  "AN_KK_V3CMU_Jump_M03_P00.uasset",
+                             "sha256":  "e0a17ba730d6cb516f01bbc2b486a1afa9909107539a55e784d258c39a40feed",
+                             "bytes":  223297
+                         },
+                         {
+                             "name":  "AN_KK_V3CMU_Run_M03_P00.uasset",
+                             "sha256":  "38400267ccb4cb80e8d8a8bc5ce8096f5db5110b473aa53895756229e22675aa",
+                             "bytes":  97626
+                         },
+                         {
+                             "name":  "AN_KK_V3CMU_Walk_M03_P00.uasset",
+                             "sha256":  "2965d12f9ba4d74291fa4e0ad4dd1f10516c335982d8bef66a6cece23a7d380e",
+                             "bytes":  166174
+                         }
+                     ],
+    "time_utc":  "2026-10-11T10:02:47.2732917Z"
+}

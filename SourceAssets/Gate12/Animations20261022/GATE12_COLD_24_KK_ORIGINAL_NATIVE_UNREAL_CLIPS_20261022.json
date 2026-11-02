@@ -1,0 +1,249 @@
+{
+  "schema": "noworld.gate12.native.koikatsu.studio.animsequence.cold.v1",
+  "status": "COLD_VALIDATED_24_GENUINE_KOIKATSU_STUDIO_NATIVE_UNREAL_ANIMSEQUENCES",
+  "source_original_modified": false,
+  "gameplay_approval": false,
+  "original_user_approved_character_visuals_overwritten": false,
+  "clips": [
+    {
+      "original_clip_name": "Idle_03_01",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": -7892993139783174395,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Idle_03_01.AN_G12_KK_Original_CLOTHED_Idle_03_01",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Idle_03_01",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": -7892993139783174395,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Idle_03_01.AN_G12_KK_Original_UNDERWEAR_Idle_03_01",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Idle_03_01",
+      "state": "NUDE",
+      "original_unity_source_path_id": -7892993139783174395,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Idle_03_01.AN_G12_KK_Original_NUDE_Idle_03_01",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Idle_00_00",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": 911608361165461249,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Idle_00_00.AN_G12_KK_Original_CLOTHED_Idle_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Idle_00_00",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": 911608361165461249,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Idle_00_00.AN_G12_KK_Original_UNDERWEAR_Idle_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Idle_00_00",
+      "state": "NUDE",
+      "original_unity_source_path_id": 911608361165461249,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Idle_00_00.AN_G12_KK_Original_NUDE_Idle_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_Land_00_00",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": -4124000652880671663,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_Land_00_00.AN_G12_KK_Original_CLOTHED_f_Land_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 0.7333333492279053,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_Land_00_00",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": -4124000652880671663,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_Land_00_00.AN_G12_KK_Original_UNDERWEAR_f_Land_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 0.7333333492279053,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_Land_00_00",
+      "state": "NUDE",
+      "original_unity_source_path_id": -4124000652880671663,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_Land_00_00.AN_G12_KK_Original_NUDE_f_Land_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 0.7333333492279053,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "live_dance",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": 6283368424223209103,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_live_dance.AN_G12_KK_Original_CLOTHED_live_dance",
+      "verified_bone_tracks": 187,
+      "duration_s": 232.0,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "live_dance",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": 6283368424223209103,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_live_dance.AN_G12_KK_Original_UNDERWEAR_live_dance",
+      "verified_bone_tracks": 187,
+      "duration_s": 232.0,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "live_dance",
+      "state": "NUDE",
+      "original_unity_source_path_id": 6283368424223209103,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_live_dance.AN_G12_KK_Original_NUDE_live_dance",
+      "verified_bone_tracks": 187,
+      "duration_s": 232.0,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_talk_00_13_01",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": -8893552557918170937,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_talk_00_13_01.AN_G12_KK_Original_CLOTHED_f_talk_00_13_01",
+      "verified_bone_tracks": 187,
+      "duration_s": 5.166666507720947,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_talk_00_13_01",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": -8893552557918170937,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_talk_00_13_01.AN_G12_KK_Original_UNDERWEAR_f_talk_00_13_01",
+      "verified_bone_tracks": 187,
+      "duration_s": 5.166666507720947,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_talk_00_13_01",
+      "state": "NUDE",
+      "original_unity_source_path_id": -8893552557918170937,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_talk_00_13_01.AN_G12_KK_Original_NUDE_f_talk_00_13_01",
+      "verified_bone_tracks": 187,
+      "duration_s": 5.166666507720947,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Stand_Oth_00",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": -9105619608636082962,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Stand_Oth_00.AN_G12_KK_Original_CLOTHED_Stand_Oth_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Stand_Oth_00",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": -9105619608636082962,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Stand_Oth_00.AN_G12_KK_Original_UNDERWEAR_Stand_Oth_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "Stand_Oth_00",
+      "state": "NUDE",
+      "original_unity_source_path_id": -9105619608636082962,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Stand_Oth_00.AN_G12_KK_Original_NUDE_Stand_Oth_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_sleep_00_03_L",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": -7985680787048710339,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_sleep_00_03_L.AN_G12_KK_Original_CLOTHED_f_sleep_00_03_L",
+      "verified_bone_tracks": 169,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_sleep_00_03_L",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": -7985680787048710339,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_sleep_00_03_L.AN_G12_KK_Original_UNDERWEAR_f_sleep_00_03_L",
+      "verified_bone_tracks": 169,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_sleep_00_03_L",
+      "state": "NUDE",
+      "original_unity_source_path_id": -7985680787048710339,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_sleep_00_03_L.AN_G12_KK_Original_NUDE_f_sleep_00_03_L",
+      "verified_bone_tracks": 169,
+      "duration_s": 1.3333333730697632,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_action_00_00",
+      "state": "CLOTHED",
+      "original_unity_source_path_id": -8576842330767781367,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalClothed/SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton.SK_Luminous_Alter_CLOTHED_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_action_00_00.AN_G12_KK_Original_CLOTHED_f_action_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 6.5,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_action_00_00",
+      "state": "UNDERWEAR",
+      "original_unity_source_path_id": -8576842330767781367,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalUnderwear/SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton.SK_Luminous_Alter_UNDERWEAR_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_action_00_00.AN_G12_KK_Original_UNDERWEAR_f_action_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 6.5,
+      "visual_approval": "PENDING"
+    },
+    {
+      "original_clip_name": "f_action_00_00",
+      "state": "NUDE",
+      "original_unity_source_path_id": -8576842330767781367,
+      "real_UE_skeleton": "/Game/NoWorld/Characters/Luminous/Alter/NativeOriginalNude/SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton.SK_Luminous_Alter_NUDE_OriginalPart_00_Skeleton",
+      "native_asset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_action_00_00.AN_G12_KK_Original_NUDE_f_action_00_00",
+      "verified_bone_tracks": 187,
+      "duration_s": 6.5,
+      "visual_approval": "PENDING"
+    }
+  ]
+}

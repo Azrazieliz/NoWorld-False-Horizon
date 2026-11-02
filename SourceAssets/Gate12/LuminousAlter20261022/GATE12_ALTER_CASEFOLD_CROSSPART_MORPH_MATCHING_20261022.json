@@ -1,0 +1,174 @@
+{
+  "status": "EXACT_CASE_INSENSITIVE_CROSS_PART_MORPH_NAME_AUDIT_PERFORMED",
+  "source_original_modified": false,
+  "native_ue_character_modified": false,
+  "rule": "NFKC Unicode casefold and alphanumeric normalized matching",
+  "states": [
+    {
+      "state": "UNDERWEAR",
+      "parts": [
+        {
+          "part": 0,
+          "source_deforming": 125,
+          "native_morphs": 120,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 120,
+          "matched_another_native_part": [
+            "Mouth \"Nn\" Sound (S), Closed"
+          ],
+          "unmatched_any_original_native_part": [
+            "sexfaces.lsided.left.kuti_nose.nl00n Small",
+            "sexfaces.lsided.right.kuti_nose.nl00n Small",
+            "sexfaces.lsided.left.kuti_nose.nl00n Big",
+            "sexfaces.lsided.right.kuti_nose.nl00n Big"
+          ]
+        },
+        {
+          "part": 1,
+          "source_deforming": 3,
+          "native_morphs": 3,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 3,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 2,
+          "source_deforming": 0,
+          "native_morphs": 0,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 0,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 3,
+          "source_deforming": 0,
+          "native_morphs": 0,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 0,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 4,
+          "source_deforming": 114,
+          "native_morphs": 696,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 102,
+          "matched_another_native_part": [
+            "Eye Default",
+            "Eye Thinking",
+            "Eye Worried",
+            "Eye Circle Eyes 1",
+            "Eye Circle Eyes 2",
+            "Eye Spiral Eyes",
+            "Eye Heart Eyes",
+            "Eye Cartoony Wink",
+            "Eye Vertical Line",
+            "Eye Deformed Tsumuri",
+            "Eye Horizontal Line",
+            "Eye Cartoony Crying"
+          ],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 5,
+          "source_deforming": 0,
+          "native_morphs": 0,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 0,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        }
+      ],
+      "total_original_source_deforming": 242,
+      "casefold_alnum_same_part_unmatched": 17,
+      "cross_part_available": 13,
+      "unmatched_in_all_native_parts": 4
+    },
+    {
+      "state": "NUDE",
+      "parts": [
+        {
+          "part": 0,
+          "source_deforming": 125,
+          "native_morphs": 120,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 120,
+          "matched_another_native_part": [
+            "Mouth \"Nn\" Sound (S), Closed"
+          ],
+          "unmatched_any_original_native_part": [
+            "sexfaces.lsided.left.kuti_nose.nl00n Small",
+            "sexfaces.lsided.right.kuti_nose.nl00n Small",
+            "sexfaces.lsided.left.kuti_nose.nl00n Big",
+            "sexfaces.lsided.right.kuti_nose.nl00n Big"
+          ]
+        },
+        {
+          "part": 1,
+          "source_deforming": 3,
+          "native_morphs": 3,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 3,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 2,
+          "source_deforming": 0,
+          "native_morphs": 0,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 0,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 3,
+          "source_deforming": 0,
+          "native_morphs": 0,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 0,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 4,
+          "source_deforming": 114,
+          "native_morphs": 702,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 102,
+          "matched_another_native_part": [
+            "Eye Default",
+            "Eye Thinking",
+            "Eye Worried",
+            "Eye Circle Eyes 1",
+            "Eye Circle Eyes 2",
+            "Eye Spiral Eyes",
+            "Eye Heart Eyes",
+            "Eye Cartoony Wink",
+            "Eye Vertical Line",
+            "Eye Deformed Tsumuri",
+            "Eye Horizontal Line",
+            "Eye Cartoony Crying"
+          ],
+          "unmatched_any_original_native_part": []
+        },
+        {
+          "part": 5,
+          "source_deforming": 0,
+          "native_morphs": 0,
+          "casefold_exact_matches": 0,
+          "same_part_casefold_alnum_matches": 0,
+          "matched_another_native_part": [],
+          "unmatched_any_original_native_part": []
+        }
+      ],
+      "total_original_source_deforming": 242,
+      "casefold_alnum_same_part_unmatched": 17,
+      "cross_part_available": 13,
+      "unmatched_in_all_native_parts": 4
+    }
+  ]
+}

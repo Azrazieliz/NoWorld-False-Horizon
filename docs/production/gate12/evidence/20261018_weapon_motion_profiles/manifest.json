@@ -1,0 +1,20 @@
+{
+  "source_branch": "production/gate12-koikatsu-ue583-fixture-20261010",
+  "build": "Saved/Gate12Readiness/Gate12_Combat_GeneralWeaponsMotion_20261018_Rebuild.log",
+  "editor_build": "4/4 succeeded exit0 after fixing Unreal checked formatting",
+  "native_test": "OfflineGame.Gate12.Combat.MotionProfiles.NoUniversalRifleOrSword 1 succeeded, 0 failed, 0 warnings, editor exit0",
+  "onscreen_run_id": "b3bf2e138a2d4e44ad3850a14923df9c",
+  "onscreen_result": "NATIVE_JOURNEY_UNVERIFIED: game window not visible, zero valid screenshots, no visual acceptance",
+  "device": "Samsung Galaxy S26 Ultra ADB visible at 2026-10-18 17:45; no current build deployed or tested",
+  "files": [
+    {
+      "name": "targeted_native_test_index.json",
+      "sha256": "02ce704f47dbf14cbccda67b9c08c2a1f7eaf3251a015d93a05ff42fe9d7954e"
+    },
+    {
+      "name": "unverified_visual_journey.json",
+      "sha256": "fe0fc76345867bf6628dabe955f257409aadbcde48dd78e27ad94e15df4d4d32"
+    }
+  ],
+  "state": "SCOPED_CODE_READY, PRODUCTION_ART_AND_VISUAL_QA_OPEN"
+}

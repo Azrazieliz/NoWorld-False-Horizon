@@ -1,0 +1,233 @@
+{
+  "schema": "noworld.gate12.original_installed_koikatsu.animation_intake.v1",
+  "created_at_utc": "2026-10-22T11:23:24.633597+00:00",
+  "status": "ALL_LOCAL_ORIGINAL_CLIP_SOURCES_CAPTURED_AND_24_GENUINE_NATIVE_UNREAL_PREVIEW_CLIPS_IMPORTED",
+  "installed_base_unity_bundles": 1685,
+  "installed_base_h_animation_bundles": 288,
+  "installed_additional_bundles": 1397,
+  "installed_h_original_curve_objects": 59218,
+  "other_installed_original_curve_objects": 2214,
+  "base_total_original_clip_objects": 61432,
+  "gate09_preexisting_animation_mod_and_studio_objects": 2741,
+  "exact_source_objects_total_including_unique_mods": 63309,
+  "overlap_of_existing_gate09_with_installed_base": 864,
+  "source_bundle_files_unmodified": true,
+  "source_original_gz_unmodified": true,
+  "original_KK_animsequence_imported_native_UE_now": 24,
+  "imported_native_UE_preview_clips_distinct": 8,
+  "rigs": [
+    "alter CLOTHED 1131",
+    "alter UNDERWEAR 1131",
+    "alter NUDE 1123"
+  ],
+  "native_clips_user_approved": false,
+  "native_animation_source_lossless_for_every_clip": false,
+  "studio_native_rotation_only_not_original_unity_translation_or_scale": true,
+  "original_h_context_not_attached_to_characters": true,
+  "animation_assets_not_equivalent_to_source_clip_inventory": true,
+  "pending_native_conversion": 63301,
+  "unapproved_dance_gameplay_binding_untouched": true,
+  "source_H_index_sha256": "573798112aad3c933c87391356f9de8db4a6da99a56bdaa8221fb50aedfdeaea",
+  "original_H_source_index": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261021\\KoikatsuHOriginalSourceCurves\\GATE12_INSTALLED_H_ANIMATION_SOURCE_CURVE_INDEX_COMPLETE.json",
+  "original_gate09_index": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261021\\ImportedGate09OriginalUnityCurves\\GATE09_ALL_SOURCE_INTAKE_PROGRESS.json",
+  "additional_source_batches": [
+    {
+      "start": 0,
+      "end": 80,
+      "clips": 1091,
+      "source_manifest": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_0000_0080.json",
+      "source_manifest_sha256": "a875b8b75c1cd29ba0adae5a01a4bf0178c1e74bdeeee584b524e8b5d975abfa"
+    },
+    {
+      "start": 80,
+      "end": 500,
+      "clips": 4,
+      "source_manifest": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_0080_0500.json",
+      "source_manifest_sha256": "da11298ad8144fd22b175f1918cf617bf280a96f780d1a2c55c19aae60ab95df"
+    },
+    {
+      "start": 500,
+      "end": 1100,
+      "clips": 155,
+      "source_manifest": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_0500_1100.json",
+      "source_manifest_sha256": "f26c8464497c33cdded64ee75d812315c9ba9fff19f7827907884bcbe4e8fe20"
+    },
+    {
+      "start": 1100,
+      "end": 1397,
+      "clips": 964,
+      "source_manifest": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\SourceAssets\\Gate12\\Animations20261022\\KoikatsuAdditionalOriginalUnityCurves\\GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_1100_1397.json",
+      "source_manifest_sha256": "924c2f6bd622f997bb47ace199834259ebe4e1947e66589472c7b0999f59c210"
+    }
+  ],
+  "native_unreal_assets": [
+    {
+      "clip": "Idle_03_01",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Idle_03_01.AN_G12_KK_Original_CLOTHED_Idle_03_01",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 282238
+    },
+    {
+      "clip": "Idle_03_01",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Idle_03_01.AN_G12_KK_Original_UNDERWEAR_Idle_03_01",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 282258
+    },
+    {
+      "clip": "Idle_03_01",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Idle_03_01.AN_G12_KK_Original_NUDE_Idle_03_01",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 282200
+    },
+    {
+      "clip": "Idle_00_00",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Idle_00_00.AN_G12_KK_Original_CLOTHED_Idle_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 269118
+    },
+    {
+      "clip": "Idle_00_00",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Idle_00_00.AN_G12_KK_Original_UNDERWEAR_Idle_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 269138
+    },
+    {
+      "clip": "Idle_00_00",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Idle_00_00.AN_G12_KK_Original_NUDE_Idle_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 269080
+    },
+    {
+      "clip": "f_Land_00_00",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_Land_00_00.AN_G12_KK_Original_CLOTHED_f_Land_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 250470
+    },
+    {
+      "clip": "f_Land_00_00",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_Land_00_00.AN_G12_KK_Original_UNDERWEAR_f_Land_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 250490
+    },
+    {
+      "clip": "f_Land_00_00",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_Land_00_00.AN_G12_KK_Original_NUDE_f_Land_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 250432
+    },
+    {
+      "clip": "live_dance",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_live_dance.AN_G12_KK_Original_CLOTHED_live_dance",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 25122886
+    },
+    {
+      "clip": "live_dance",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_live_dance.AN_G12_KK_Original_UNDERWEAR_live_dance",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 25122906
+    },
+    {
+      "clip": "live_dance",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_live_dance.AN_G12_KK_Original_NUDE_live_dance",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 25122848
+    },
+    {
+      "clip": "f_talk_00_13_01",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_talk_00_13_01.AN_G12_KK_Original_CLOTHED_f_talk_00_13_01",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 693845
+    },
+    {
+      "clip": "f_talk_00_13_01",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_talk_00_13_01.AN_G12_KK_Original_UNDERWEAR_f_talk_00_13_01",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 693865
+    },
+    {
+      "clip": "f_talk_00_13_01",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_talk_00_13_01.AN_G12_KK_Original_NUDE_f_talk_00_13_01",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 693807
+    },
+    {
+      "clip": "Stand_Oth_00",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_Stand_Oth_00.AN_G12_KK_Original_CLOTHED_Stand_Oth_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 269126
+    },
+    {
+      "clip": "Stand_Oth_00",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_Stand_Oth_00.AN_G12_KK_Original_UNDERWEAR_Stand_Oth_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 269146
+    },
+    {
+      "clip": "Stand_Oth_00",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_Stand_Oth_00.AN_G12_KK_Original_NUDE_Stand_Oth_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 269088
+    },
+    {
+      "clip": "f_sleep_00_03_L",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_sleep_00_03_L.AN_G12_KK_Original_CLOTHED_f_sleep_00_03_L",
+      "original_imported_tracks": 169,
+      "uasset_file_size": 252034
+    },
+    {
+      "clip": "f_sleep_00_03_L",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_sleep_00_03_L.AN_G12_KK_Original_UNDERWEAR_f_sleep_00_03_L",
+      "original_imported_tracks": 169,
+      "uasset_file_size": 252054
+    },
+    {
+      "clip": "f_sleep_00_03_L",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_sleep_00_03_L.AN_G12_KK_Original_NUDE_f_sleep_00_03_L",
+      "original_imported_tracks": 169,
+      "uasset_file_size": 251996
+    },
+    {
+      "clip": "f_action_00_00",
+      "state": "CLOTHED",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_CLOTHED_f_action_00_00.AN_G12_KK_Original_CLOTHED_f_action_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 808145
+    },
+    {
+      "clip": "f_action_00_00",
+      "state": "UNDERWEAR",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_UNDERWEAR_f_action_00_00.AN_G12_KK_Original_UNDERWEAR_f_action_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 808165
+    },
+    {
+      "clip": "f_action_00_00",
+      "state": "NUDE",
+      "uasset": "/Game/NoWorld/Characters/Luminous/Alter/KoikatsuOriginalStudioMotionQA/AN_G12_KK_Original_NUDE_f_action_00_00.AN_G12_KK_Original_NUDE_f_action_00_00",
+      "original_imported_tracks": 187,
+      "uasset_file_size": 808107
+    }
+  ]
+}

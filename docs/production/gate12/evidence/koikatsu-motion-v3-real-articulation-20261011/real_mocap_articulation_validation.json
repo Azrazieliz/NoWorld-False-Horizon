@@ -1,0 +1,247 @@
+{
+  "status": "PASS_OFFLINE_REAL_MOCAP_ARTICULATION_3_CLIPS_NOT_UE",
+  "source_glb": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Koikatsu\\full_fidelity_primitive_shards\\Mesh_03_Prim_00.glb",
+  "source_character_mutated": false,
+  "provenance": "CMU Graphics Lab mocap BVH, Bruce Hahne 2010 conversion",
+  "source_rights": "Original CMU raw data + BVH converter rights/readme retained",
+  "actual_ue_bone_axes": "NOT_VERIFIED",
+  "game_ready": "NO",
+  "clips": {
+    "walk": {
+      "source_filename": "02_01_walk.bvh",
+      "source_sha256": "cf56db43157acc3d200b3d4215523f54d354a8926bea67e1f6c8031bd335ba7e",
+      "source_frames": 344,
+      "source_fps": 120.00048000192001,
+      "samples_30fps": 85,
+      "bone_map_count": 0,
+      "target_bone_map_count": 128,
+      "articulation": {
+        "l_knee_source": {
+          "min": 8.959,
+          "max": 73.276,
+          "range": 64.316,
+          "mean": 34.259
+        },
+        "l_knee_target": {
+          "min": 10.125,
+          "max": 74.413,
+          "range": 64.289,
+          "mean": 35.414
+        },
+        "l_elbow_target": {
+          "min": 24.398,
+          "max": 51.884,
+          "range": 27.486,
+          "mean": 35.151
+        },
+        "r_knee_source": {
+          "min": 9.395,
+          "max": 73.274,
+          "range": 63.878,
+          "mean": 37.312
+        },
+        "r_knee_target": {
+          "min": 10.561,
+          "max": 74.411,
+          "range": 63.851,
+          "mean": 38.466
+        },
+        "r_elbow_target": {
+          "min": 21.671,
+          "max": 43.85,
+          "range": 22.179,
+          "mean": 30.935
+        },
+        "left_right_alternation_fraction": 0.7529
+      },
+      "knee_retarget_error": {
+        "l": {
+          "max_abs_knee_angle_error": 1.1652,
+          "mean_abs_knee_angle_error": 1.1552
+        },
+        "r": {
+          "max_abs_knee_angle_error": 1.1653,
+          "mean_abs_knee_angle_error": 1.1541
+        }
+      },
+      "source_contact_candidates": {
+        "LeftFoot": {
+          "low_foot_samples": 31,
+          "support_candidates_with_low_velocity": 23,
+          "median_foot_xz_displacement_per_frame": 0.1372,
+          "sample_count": 84,
+          "threshold_y": 1.559,
+          "notes": "Candidate contacts only, requires matching target foot lock and UE scene test."
+        },
+        "RightFoot": {
+          "low_foot_samples": 46,
+          "support_candidates_with_low_velocity": 36,
+          "median_foot_xz_displacement_per_frame": 0.5532,
+          "sample_count": 84,
+          "threshold_y": 1.864,
+          "notes": "Candidate contacts only, requires matching target foot lock and UE scene test."
+        }
+      },
+      "clip_native_unreal_ue583": "NOT_YET_AUTHORED",
+      "target_planted_foot_ik": "NOT_IMPLEMENTED",
+      "visually_approved": "NO"
+    },
+    "jog": {
+      "source_filename": "02_03_jog.bvh",
+      "source_sha256": "6f4d38b92b041221030de2e1058903e0f7a8fa08f9c6c9efabf7df9a128011ac",
+      "source_frames": 174,
+      "source_fps": 120.00048000192001,
+      "samples_30fps": 43,
+      "bone_map_count": 0,
+      "target_bone_map_count": 128,
+      "articulation": {
+        "l_knee_source": {
+          "min": 24.084,
+          "max": 111.281,
+          "range": 87.197,
+          "mean": 59.188
+        },
+        "l_knee_target": {
+          "min": 25.243,
+          "max": 112.388,
+          "range": 87.145,
+          "mean": 60.331
+        },
+        "l_elbow_target": {
+          "min": 56.818,
+          "max": 67.943,
+          "range": 11.125,
+          "mean": 62.554
+        },
+        "r_knee_source": {
+          "min": 25.64,
+          "max": 108.093,
+          "range": 82.453,
+          "mean": 55.435
+        },
+        "r_knee_target": {
+          "min": 26.799,
+          "max": 109.204,
+          "range": 82.404,
+          "mean": 56.58
+        },
+        "r_elbow_target": {
+          "min": 49.839,
+          "max": 67.002,
+          "range": 17.164,
+          "mean": 59.854
+        },
+        "left_right_alternation_fraction": 0.8837
+      },
+      "knee_retarget_error": {
+        "l": {
+          "max_abs_knee_angle_error": 1.1596,
+          "mean_abs_knee_angle_error": 1.1422
+        },
+        "r": {
+          "max_abs_knee_angle_error": 1.1592,
+          "mean_abs_knee_angle_error": 1.145
+        }
+      },
+      "source_contact_candidates": {
+        "LeftFoot": {
+          "low_foot_samples": 11,
+          "support_candidates_with_low_velocity": 10,
+          "median_foot_xz_displacement_per_frame": 1.8478,
+          "sample_count": 42,
+          "threshold_y": 1.796,
+          "notes": "Candidate contacts only, requires matching target foot lock and UE scene test."
+        },
+        "RightFoot": {
+          "low_foot_samples": 12,
+          "support_candidates_with_low_velocity": 11,
+          "median_foot_xz_displacement_per_frame": 1.2824,
+          "sample_count": 42,
+          "threshold_y": 1.599,
+          "notes": "Candidate contacts only, requires matching target foot lock and UE scene test."
+        }
+      },
+      "clip_native_unreal_ue583": "NOT_YET_AUTHORED",
+      "target_planted_foot_ik": "NOT_IMPLEMENTED",
+      "visually_approved": "NO"
+    },
+    "jump": {
+      "source_filename": "02_04_jump.bvh",
+      "source_sha256": "1b9f80f045608eaf50e2912c2f9180e97cffc708ce717c227f52ce1bc6fe091b",
+      "source_frames": 484,
+      "source_fps": 120.00048000192001,
+      "samples_30fps": 120,
+      "bone_map_count": 0,
+      "target_bone_map_count": 128,
+      "articulation": {
+        "l_knee_source": {
+          "min": 16.322,
+          "max": 98.751,
+          "range": 82.428,
+          "mean": 38.437
+        },
+        "l_knee_target": {
+          "min": 17.485,
+          "max": 99.87,
+          "range": 82.385,
+          "mean": 39.59
+        },
+        "l_elbow_target": {
+          "min": 26.553,
+          "max": 54.266,
+          "range": 27.713,
+          "mean": 38.192
+        },
+        "r_knee_source": {
+          "min": 12.61,
+          "max": 101.15,
+          "range": 88.54,
+          "mean": 38.012
+        },
+        "r_knee_target": {
+          "min": 13.774,
+          "max": 102.268,
+          "range": 88.493,
+          "mean": 39.165
+        },
+        "r_elbow_target": {
+          "min": 21.911,
+          "max": 55.948,
+          "range": 34.037,
+          "mean": 37.93
+        }
+      },
+      "knee_retarget_error": {
+        "l": {
+          "max_abs_knee_angle_error": 1.1625,
+          "mean_abs_knee_angle_error": 1.1527
+        },
+        "r": {
+          "max_abs_knee_angle_error": 1.1641,
+          "mean_abs_knee_angle_error": 1.1529
+        }
+      },
+      "source_contact_candidates": {
+        "LeftFoot": {
+          "low_foot_samples": 96,
+          "support_candidates_with_low_velocity": 40,
+          "median_foot_xz_displacement_per_frame": 0.0398,
+          "sample_count": 119,
+          "threshold_y": 2.054,
+          "notes": "Candidate contacts only, requires matching target foot lock and UE scene test."
+        },
+        "RightFoot": {
+          "low_foot_samples": 87,
+          "support_candidates_with_low_velocity": 39,
+          "median_foot_xz_displacement_per_frame": 0.0416,
+          "sample_count": 119,
+          "threshold_y": 2.097,
+          "notes": "Candidate contacts only, requires matching target foot lock and UE scene test."
+        }
+      },
+      "clip_native_unreal_ue583": "NOT_YET_AUTHORED",
+      "target_planted_foot_ik": "NOT_IMPLEMENTED",
+      "visually_approved": "NO"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+﻿{
+    "scope":  "Gate12",
+    "pattern":  "OfflineGame.Gate12",
+    "utc":  "2026-10-16T17:07:15.2147485Z",
+    "compiled_current_source_required":  true,
+    "editor_exit":  0,
+    "report_path":  "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Saved\\Gate12Readiness\\Native_Gate12_20261016_190628\\index.json",
+    "report_exists":  true,
+    "passed":  true,
+    "reason":  "",
+    "native_succeeded":  10,
+    "native_warnings":  1,
+    "native_failed":  0
+}

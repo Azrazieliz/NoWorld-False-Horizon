@@ -1,0 +1,90 @@
+﻿{
+    "schema":  "noworld.gate12.luminousalter.originalmorph.verified.audit.20261022.v1",
+    "status":  "VERIFIED_SOURCE_MORPH_NONZERO_DATA_NATIVE_17_PER_STATE_UNMATCHED_BY_NAME",
+    "accepted_source_preserved":  true,
+    "compiled_native_ue_gamecode":  true,
+    "all_three_wardrobes_bound":  true,
+    "nine_native_real_mocap_sequences_bound":  true,
+    "morphs_per_wardrobe":  [
+                                {
+                                    "native_unreal_morph_channels":  819,
+                                    "approved_source_sha256":  "57d3fb22130b5157d740cae9b7b9290137b384f863a710c84e7ed2ea3e9ece20",
+                                    "missing_name_details":  [
+                                                                 {
+                                                                     "not_name_matched":  [
+                                                                                              "sexfaces.lsided.left.kuti_nose.nl00n Small",
+                                                                                              "sexfaces.lsided.right.kuti_nose.nl00n Small",
+                                                                                              "sexfaces.lsided.left.kuti_nose.nl00n Big",
+                                                                                              "sexfaces.lsided.right.kuti_nose.nl00n Big",
+                                                                                              "Mouth \"Nn\" Sound (S), Closed"
+                                                                                          ],
+                                                                     "part":  0,
+                                                                     "mesh":  "Body ValentineLuminous"
+                                                                 },
+                                                                 {
+                                                                     "not_name_matched":  [
+                                                                                              "Eye Default",
+                                                                                              "Eye Thinking",
+                                                                                              "Eye Worried",
+                                                                                              "Eye Circle Eyes 1",
+                                                                                              "Eye Circle Eyes 2",
+                                                                                              "Eye Spiral Eyes",
+                                                                                              "Eye Heart Eyes",
+                                                                                              "Eye Cartoony Wink",
+                                                                                              "Eye Vertical Line",
+                                                                                              "Eye Deformed Tsumuri",
+                                                                                              "Eye Horizontal Line",
+                                                                                              "Eye Cartoony Crying"
+                                                                                          ],
+                                                                     "part":  4,
+                                                                     "mesh":  "Tears ValentineLuminous"
+                                                                 }
+                                                             ],
+                                    "source_total_shape_keys":  2146,
+                                    "original_nonzero_deformation_keys":  242,
+                                    "state":  "UNDERWEAR",
+                                    "source_nonzero_not_name_matched_in_unreal":  17
+                                },
+                                {
+                                    "native_unreal_morph_channels":  825,
+                                    "approved_source_sha256":  "7d3ee274c5b43d45da448296a557660dce3fa8c93f2371b1aaa3fb06c0e86ab1",
+                                    "missing_name_details":  [
+                                                                 {
+                                                                     "not_name_matched":  [
+                                                                                              "sexfaces.lsided.left.kuti_nose.nl00n Small",
+                                                                                              "sexfaces.lsided.right.kuti_nose.nl00n Small",
+                                                                                              "sexfaces.lsided.left.kuti_nose.nl00n Big",
+                                                                                              "sexfaces.lsided.right.kuti_nose.nl00n Big",
+                                                                                              "Mouth \"Nn\" Sound (S), Closed"
+                                                                                          ],
+                                                                     "part":  0,
+                                                                     "mesh":  "Body ãƒãƒ¬ãƒ³ã‚¿ã‚¤ãƒ³ãƒ«ãƒŸãƒŠã‚¹"
+                                                                 },
+                                                                 {
+                                                                     "not_name_matched":  [
+                                                                                              "Eye Default",
+                                                                                              "Eye Thinking",
+                                                                                              "Eye Worried",
+                                                                                              "Eye Circle Eyes 1",
+                                                                                              "Eye Circle Eyes 2",
+                                                                                              "Eye Spiral Eyes",
+                                                                                              "Eye Heart Eyes",
+                                                                                              "Eye Cartoony Wink",
+                                                                                              "Eye Vertical Line",
+                                                                                              "Eye Deformed Tsumuri",
+                                                                                              "Eye Horizontal Line",
+                                                                                              "Eye Cartoony Crying"
+                                                                                          ],
+                                                                     "part":  4,
+                                                                     "mesh":  "Tears ãƒãƒ¬ãƒ³ã‚¿ã‚¤ãƒ³ãƒ«ãƒŸãƒŠã‚¹"
+                                                                 }
+                                                             ],
+                                    "source_total_shape_keys":  2170,
+                                    "original_nonzero_deformation_keys":  242,
+                                    "state":  "NUDE",
+                                    "source_nonzero_not_name_matched_in_unreal":  17
+                                }
+                            ],
+    "visual_morph_approval":  "PENDING",
+    "note":  "Counts alone cannot establish per-channel fidelity; these 17 native-name differences require a direct visual/shape-delta inspection. Unreal channel count may include morph names with zero Blender vertex displacement."
+}

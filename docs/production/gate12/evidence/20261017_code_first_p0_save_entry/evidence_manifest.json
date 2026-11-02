@@ -1,0 +1,31 @@
+{
+  "schema": "GATE12_CODE_FIRST_P0_NATIVE_EVIDENCE_V1",
+  "source_commit": "82fc98ec77e8c1e786e0d08cabe830cd0857b819",
+  "branch": "production/gate12-koikatsu-ue583-fixture-20261010",
+  "platform": "UE5.8.3 Win64 Development Editor",
+  "build": {
+    "exit_code": 0,
+    "actions_succeeded": 7,
+    "actions_total": 7,
+    "log_local_relative": "Saved/Gate12Readiness/Gate12_CodeFirst_SaveEntry_Build_20261017.log"
+  },
+  "gate12_native": {
+    "clean": 11,
+    "warnings": 1,
+    "failed": 0,
+    "editor_exit": 0
+  },
+  "full_native": {
+    "clean": 133,
+    "warnings": 18,
+    "failed": 0,
+    "editor_exit": 0
+  },
+  "claim_scope": "Native code regressions only; no Android/device/visual acceptance",
+  "sha256": {
+    "native_full_index.json": "7f2ee81cd8d43a5c2bae75591207a7cd5fbe540d4c743e8fc0a7314d24c2a9b7",
+    "native_full_verification_summary.json": "398d83631eef5196014dbffeda5b14b814ba5b109a7e06f63f4a81ef49d4b73a",
+    "native_gate12_index.json": "f2895a6b8edf20995a2e874fb27d0b96fe963e55d27e20c4e961b9f5a74342d7",
+    "native_gate12_verification_summary.json": "f977be45893854572c001e8fe34ae93d5274ac585462abebd30965aeb6c23da6"
+  }
+}

@@ -1,0 +1,405 @@
+{
+  "acceptance": "metadata_coverage_only_not_native_or_gameplay_acceptance",
+  "catalog": {
+    "duplicate_identity_rows": 2125,
+    "metadata": {
+      "approved_for_gameplay": {
+        "populated": 3222,
+        "present": 3222,
+        "valid": 3222
+      },
+      "native_duration_seconds": {
+        "populated": 3182,
+        "present": 3182,
+        "valid": 3182
+      },
+      "native_sequence": {
+        "populated": 3222,
+        "present": 3222,
+        "valid": 3222
+      },
+      "participants": {
+        "populated": 3222,
+        "present": 3222,
+        "valid": 3222
+      },
+      "scene_id": {
+        "populated": 0,
+        "present": 0,
+        "valid": 0
+      },
+      "scene_role": {
+        "populated": 0,
+        "present": 0,
+        "valid": 0
+      },
+      "source_bundle_sha256": {
+        "populated": 3182,
+        "present": 3182,
+        "valid": 3182
+      },
+      "source_clip_id": {
+        "populated": 3222,
+        "present": 3222,
+        "valid": 3222
+      },
+      "source_hash": {
+        "populated": 3182,
+        "present": 3182,
+        "valid": 3182
+      },
+      "source_unity_path_id": {
+        "populated": 3182,
+        "present": 3182,
+        "valid": 3182
+      }
+    },
+    "multi_participant_rows_missing_scene_metadata": 0,
+    "native_paths": {
+      "rows": {
+        "error": 0,
+        "invalid": 0,
+        "missing": 0,
+        "outside_root": 0,
+        "present": 3222
+      },
+      "unique_paths": {
+        "error": 0,
+        "invalid": 0,
+        "missing": 0,
+        "outside_root": 0,
+        "present": 3222
+      }
+    },
+    "participants": {
+      "1": 3222
+    },
+    "rows": 3222,
+    "rows_with_complete_scene_metadata": 0,
+    "rows_without_valid_actual_id": 40,
+    "schema": "noworld.shared_motion_catalog.v1",
+    "unique_actual_ids": 1057,
+    "unique_native_references": 3222,
+    "unique_source_clip_labels": 1077
+  },
+  "coverage": {
+    "approval_note": "existing_catalog_declarations_only_no_new_approval_or_playback_verification",
+    "by_group": {
+      "additional": {
+        "matched": 366,
+        "without_catalog_entry": 1848
+      },
+      "gate09": {
+        "matched": 759,
+        "without_catalog_entry": 1982
+      },
+      "h": {
+        "matched": 298,
+        "without_catalog_entry": 58920
+      }
+    },
+    "catalog_ids_outside_inventory": 0,
+    "inventory_ids_without_catalog_entry": 62252,
+    "matched_ids_declared_approved_in_catalog": 298,
+    "matched_ids_with_existing_native_path": 1057,
+    "matched_unique_actual_ids": 1057
+  },
+  "generated_utc": "2026-10-27T21:02:46+00:00",
+  "identity": "declared_original_bundle_sha256_and_signed_unity_path_id",
+  "inventory": {
+    "curve_paths": {
+      "rows": {
+        "error": 0,
+        "invalid": 0,
+        "missing": 0,
+        "outside_root": 0,
+        "present": 64173
+      },
+      "unique_paths": {
+        "error": 0,
+        "invalid": 0,
+        "missing": 0,
+        "outside_root": 0,
+        "present": 64173
+      }
+    },
+    "duplicate_identity_rows": 864,
+    "groups": {
+      "additional": {
+        "batch_intervals": [
+          [
+            0,
+            80
+          ],
+          [
+            80,
+            500
+          ],
+          [
+            500,
+            1100
+          ],
+          [
+            1100,
+            1397
+          ]
+        ],
+        "duplicate_identity_rows": 0,
+        "identity_fields": {
+          "bundle_sha256": "source_bundle_sha256",
+          "unity_path_id": "path_id"
+        },
+        "issues": [],
+        "manifests": [
+          {
+            "manifest": "SourceAssets/Gate12/Animations20261022/KoikatsuAdditionalOriginalUnityCurves/GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_0000_0080.json",
+            "rows": 1091,
+            "schema": "noworld.gate12.all_installed_kk_original_additional_clips.v1",
+            "unique_actual_ids": 1091
+          },
+          {
+            "manifest": "SourceAssets/Gate12/Animations20261022/KoikatsuAdditionalOriginalUnityCurves/GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_0080_0500.json",
+            "rows": 4,
+            "schema": "noworld.gate12.all_installed_kk_original_additional_clips.v1",
+            "unique_actual_ids": 4
+          },
+          {
+            "manifest": "SourceAssets/Gate12/Animations20261022/KoikatsuAdditionalOriginalUnityCurves/GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_0500_1100.json",
+            "rows": 155,
+            "schema": "noworld.gate12.all_installed_kk_original_additional_clips.v1",
+            "unique_actual_ids": 155
+          },
+          {
+            "manifest": "SourceAssets/Gate12/Animations20261022/KoikatsuAdditionalOriginalUnityCurves/GATE12_ALL_INSTALLED_KK_ADDITIONAL_ANIMATIONS_PART_1100_1397.json",
+            "rows": 964,
+            "schema": "noworld.gate12.all_installed_kk_original_additional_clips.v1",
+            "unique_actual_ids": 964
+          }
+        ],
+        "metadata": {
+          "approved_for_gameplay": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "native_duration_seconds": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "native_sequence": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "participants": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "scene_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "scene_role": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_bundle_sha256": {
+            "populated": 2214,
+            "present": 2214,
+            "valid": 2214
+          },
+          "source_clip_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_hash": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_unity_path_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          }
+        },
+        "rows": 2214,
+        "rows_without_valid_actual_id": 0,
+        "unique_actual_ids": 2214
+      },
+      "gate09": {
+        "duplicate_identity_rows": 0,
+        "identity_fields": {
+          "bundle_sha256": "source_hash",
+          "unity_path_id": "original_clip_path_id"
+        },
+        "issues": [],
+        "manifests": [
+          {
+            "manifest": "SourceAssets/Gate12/Animations20261021/ImportedGate09OriginalUnityCurves/GATE09_ALL_SOURCE_INTAKE_PROGRESS.json",
+            "rows": 2741,
+            "schema": "noworld.gate12.gate09_source_curve_intake.v2",
+            "unique_actual_ids": 2741
+          }
+        ],
+        "metadata": {
+          "approved_for_gameplay": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "native_duration_seconds": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "native_sequence": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "participants": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "scene_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "scene_role": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_bundle_sha256": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_clip_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_hash": {
+            "populated": 2741,
+            "present": 2741,
+            "valid": 2741
+          },
+          "source_unity_path_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          }
+        },
+        "rows": 2741,
+        "rows_without_valid_actual_id": 0,
+        "unique_actual_ids": 2741
+      },
+      "h": {
+        "duplicate_identity_rows": 0,
+        "identity_fields": {
+          "bundle_sha256": "source_digest_sha256",
+          "unity_path_id": "native_path_id"
+        },
+        "issues": [],
+        "manifests": [
+          {
+            "manifest": "SourceAssets/Gate12/Animations20261021/KoikatsuHOriginalSourceCurves/GATE12_INSTALLED_H_ANIMATION_SOURCE_CURVE_INDEX_COMPLETE.json",
+            "rows": 59218,
+            "schema": "noworld.gate12.kkh_local_source_manifest_join.v1",
+            "unique_actual_ids": 59218
+          }
+        ],
+        "metadata": {
+          "approved_for_gameplay": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "native_duration_seconds": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "native_sequence": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "participants": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "scene_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "scene_role": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_bundle_sha256": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_clip_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_hash": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          },
+          "source_unity_path_id": {
+            "populated": 0,
+            "present": 0,
+            "valid": 0
+          }
+        },
+        "rows": 59218,
+        "rows_without_valid_actual_id": 0,
+        "unique_actual_ids": 59218
+      }
+    },
+    "intake_complete": true,
+    "manifest_intake_complete": true,
+    "pairwise_group_overlap": {
+      "gate09__additional": 864,
+      "h__additional": 0,
+      "h__gate09": 0
+    },
+    "rows": 64173,
+    "rows_without_valid_actual_id": 0,
+    "triple_group_overlap": 0,
+    "unique_actual_ids": 63309
+  },
+  "native_files_hashed": 0,
+  "next_batch": {
+    "instruction": "Recover original role/group/placement metadata before scheduling synchronized scene conversion; counts alone do not define scene jobs.",
+    "required_original_metadata": [
+      "participants",
+      "scene_id",
+      "scene_role",
+      "anchor_relative_role_placements"
+    ],
+    "scene_jobs_derivable_from_manifests": false,
+    "unique_source_ids_without_catalog_entry": 62252
+  },
+  "path_checks": "local_existence_only_no_curve_bundle_or_native_asset_contents_read",
+  "privacy": "aggregate_counts_only_no_source_names_paths_curves_or_raw_ids",
+  "schema": "noworld.koikatsu_motion_coverage.v1"
+}

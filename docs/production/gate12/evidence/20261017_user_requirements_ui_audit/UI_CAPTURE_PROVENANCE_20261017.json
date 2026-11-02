@@ -1,0 +1,51 @@
+{
+  "baseline": "a68f85ae88a7d21b5aee8bafef2963f6daf6b3da",
+  "run_id": "0056e50b34044963aa6c0cd0af95e9e8",
+  "screenshots": [
+    {
+      "screen": "Opening",
+      "file": "opening_native_portrait.png",
+      "status": "PARTIAL / motion unverified",
+      "sha256": "34100d10046eed7ee843cedabc393907a1f0647e001586704e7186b7039d25f0"
+    },
+    {
+      "screen": "Ruler Home",
+      "file": "ruler_nav_home.png",
+      "status": "VISUAL NOT ACCEPTED",
+      "sha256": "da641e1b707f7a9748734fbedfa7fb3972303fbd2f82e4edd5060342dd03312d"
+    },
+    {
+      "screen": "Records",
+      "file": "ruler_nav_records.png",
+      "status": "VISUAL NOT ACCEPTED",
+      "sha256": "326fdd7545e1d86d77d64cf6b6f1ea5d154c5710e0e20ad24ce8f7c3ec4a5f09"
+    },
+    {
+      "screen": "Gacha",
+      "file": "ruler_nav_gacha.png",
+      "status": "LATER USER VISUAL APPROVAL",
+      "sha256": "d9721bd9981595f37f177fa3a3474d08a4bb101bb785747ae107e09841915056"
+    },
+    {
+      "screen": "Territory",
+      "file": "ruler_nav_territory.png",
+      "status": "MAP CONTENT MISSING",
+      "sha256": "bbecc2722c23da0929e036e3a6b5cab4bcfdafe20ece20540ec12ae5243a4f95"
+    },
+    {
+      "screen": "Character roster",
+      "file": "ruler_characters_real_source_qa_warm.png",
+      "status": "QA VIEWER ONLY / 0 OWNED",
+      "sha256": "b63565f3e9cb5d669cd4c2845bccdb0829dfb2b78696e1a5c9b360d50482e815"
+    },
+    {
+      "screen": "World",
+      "file": "world.png",
+      "status": "PORTRAIT QA / PARTY DEFEATED",
+      "sha256": "424745e09c7b3daf792310b84c5bac9ba6ef1e3f96bb7b3c55955a0d79ce6fe2"
+    }
+  ],
+  "contact_sheet_sha256": "12c520c28b6f14bc81c9ca058d11012d07a4ff137e902c3d1ab5530962e87786",
+  "authority": "Gate10 global correction 2026-10-17, latest direct gacha approval overrides illustrative old gacha mockup",
+  "caveat": "actual native game capture, not final portrait/landscape Android UI acceptance"
+}

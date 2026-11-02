@@ -1,0 +1,101 @@
+# HISTORICAL PC-ONLY SOURCE — DO NOT EXECUTE
+# Retrieved from protected native workspace on 2026-11-01.
+# Original: Scripts/production/gate12_connect_grand_actual_native_assets.py
+# Original PC file SHA-256: 689c63319cedaf6a7481139d3e72962b50910028cdbf41f1ebf4914e5a2922f1
+# WARNING: one-time in-place source migration. Preserve as original evidence only.
+# The generalized 5-star factory supersedes ad hoc reruns when applicable.
+
+"""Bind only the REAL imported original-card Grand skeletal assets to Luminous.
+
+Requires all 57 original Unity renderer meshes to exist in the ACTUAL game
+source tree. Changes the single original character-level motion binding; does
+not add a fifth ordinary lineage, a placeholder or a duplicate animation bank.
+This is production source authoring, not a build/test command.
+"""
+import hashlib
+import json
+from pathlib import Path
+
+ROOT=Path(r"D:\UnrealProjects\Gate12_WholeCharacter_Build_20261031")
+SRC=Path(r"D:\UnrealProjects\G12_LuminousNativeImport_20261031\AuthenticClothedOriginalCard3D\Grand")
+SOURCE=SRC/"GRAND_EXACT_ORIGINAL_SOURCE_BLENDER_MANIFEST.json"
+GAME=ROOT/"Content/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed"
+CPP=ROOT/"Source/OfflineGame/Private/Koikatsu/OGExactOriginalLuminousParts.cpp"
+CARD_HASH="26c48e1c03c154f9f39a0b06afaade53423c11dbd079604e430162eb4cae5353"
+
+source=json.loads(SOURCE.read_text("utf8"))
+assert source["card_sha256"]==CARD_HASH and source["original_active_renderer_count"]==57
+groups=source["groups"]
+assert len(groups)==9
+all_source_indices=[]
+native=[]
+for group in groups:
+    i=group["id"]
+    ids=sorted(group["original_renderer_indices"])
+    assert 0<=i<9 and ids
+    assert sum(int(s["vertices"]) for s in source["source_renderers"] if s["renderer"] in ids)==group["source_vertices"]
+    all_source_indices.extend(ids)
+    folder=GAME/("Part_%02d"%i)
+    assert folder.is_dir(), "The actual game is missing Grand original group %02d"%i
+    skeletal=sorted(p for p in folder.rglob("*.uasset") if
+        "SkeletalMeshes" in p.parts and
+        not p.stem.endswith(("_Skeleton","_PhysicsAsset")))
+    skeleton=sorted(p for p in folder.rglob("*_Skeleton.uasset"))
+    assert len(skeletal)==len(ids), "Unreal did not import every renderer in Grand group %02d: %d of %d"%(i,len(skeletal),len(ids))
+    assert skeleton,"Original source group %02d has no native skeletal rig"%i
+    if len(ids)>1:
+        for idx in ids:
+            name="Grand_ExactRenderer_%03d"%idx
+            candidates=[p for p in skeletal if p.stem==name]
+            assert len(candidates)==1, "Missing exact original renderer %03d native asset"%idx
+            p=candidates[0]
+            native.append((idx,p))
+    else:
+        native.append((ids[0],skeletal[0]))
+assert len(all_source_indices)==57 and len(set(all_source_indices))==57
+assert set(all_source_indices)==set(s["renderer"] for s in source["source_renderers"])
+assert len(native)==57 and len({str(p) for _,p in native})==57
+native.sort(key=lambda x:x[0])
+
+# Preserve existing Awakened and Berserker asset tables, with no replacement.
+original=CPP.read_text("utf8")
+assert "static const TCHAR* const GGrandParts[]" not in original
+before="static const FExactForm GForms[] = {"
+assert original.count(before)==1
+soft=[]
+for idx,p in native:
+    relative=p.relative_to(ROOT/"Content").with_suffix("")
+    uri="/Game/"+relative.as_posix()+"."+p.stem
+    soft.append(dict(renderer=idx,uri=uri,bytes=p.stat().st_size))
+table="static const TCHAR* const GGrandParts[] = {\n"+ "".join(
+    '    TEXT("%s"),\n'%row["uri"] for row in soft)+"};\n\n"
+revised=original.replace(before,table+before)
+anchor=' { TEXT("character:luminous_valentine.version_berserker_v4"), 882, GBerserkerParts, UE_ARRAY_COUNT(GBerserkerParts) },'
+assert revised.count(anchor)==1
+revised=revised.replace(anchor,anchor+'\n { TEXT("character:luminous_valentine.version_grand_v4"), 561, GGrandParts, UE_ARRAY_COUNT(GGrandParts) },')
+anchor_return="            return Form.Count == 9;"
+assert revised.count(anchor_return)==1
+revised=revised.replace(anchor_return,
+    '            return Form.Count == 9 ||\n                (VersionId == TEXT("character:luminous_valentine.version_grand_v4") && Form.Count == 57);')
+CPP.write_text(revised,"utf8")
+
+# Portable registry with literal original card identity, per-renderer native
+# path and actual size. No original cards or private source files committed.
+manifest={
+ "schema":"noworld.grand_exact_card_ue_native_57_renderers.v1",
+ "source_card_sha256":CARD_HASH,
+ "character_identity":"character:luminous_valentine.identity",
+ "exceptional_version":"character:luminous_valentine.version_grand_v4",
+ "original_renderers":57,"native_skeletal_parts":len(native),
+ "shared_character_motion_controller":True,
+ "original_source_bones":561,
+ "mode":"real_unreal_game_native_asset_source_import",
+ "native_assets":soft,
+ "status":"SOURCE_NATIVE_IMPORT_AND_REGISTRATION_ONLY_NO_UNREAL_BUILD_OR_DEVICE_PROOF"}
+out=ROOT/"docs/production/gate12/evidence/verified-original-koikatsu-native/G12_Grand_ExactOriginal_NativeUEImportSource.json"
+out.parent.mkdir(parents=True,exist_ok=True)
+out.write_text(json.dumps(manifest,indent=2)+"\n","utf8")
+print("ORIGINAL_GRAND_ALL_57_RENDERERS_IN_GAME_NATIVE_SOURCE")
+print("UNREAL_NATIVE_GRAND_SKINNED_ASSETS",len(native))
+print("GRAND_REAL_SHARED_MOTION_CPP_REGISTERED",CPP)
+print("GRAND_NATIVE_GAME_SOURCE_MANIFEST",out)

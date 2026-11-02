@@ -1,0 +1,43 @@
+{
+	"schema": "GATE12_ISOLATED_NATIVE_WIN64_GAME_JOURNEY_V1",
+	"original_project_saves": "NO_ACCESS_ISOLATED_PROJECT_ONLY",
+	"android_cooked_or_installed": false,
+	"production_assets_modified": false,
+	"programmatic_native_ui_actions": true,
+	"physical_touch_inputs_verified": false,
+	"complete": true,
+	"passed": false,
+	"status": "FAIL_NATIVE_GAME_JOURNEY",
+	"steps": [
+		{
+			"name": "world_begin_play",
+			"passed": true,
+			"detail": "World=StartingWorld, project_isolated=1"
+		},
+		{
+			"name": "starting_world_real_local_player_hud",
+			"passed": true,
+			"detail": "Map=StartingWorld, Pawn=OGWorldPrototypeCharacter, Hud=OGWorldPresentationHud, CoreReady=1"
+		},
+		{
+			"name": "native_opening_umg_controls_present",
+			"passed": true,
+			"detail": "Viewport=1 Buttons=1 WidthConstraint=1"
+		},
+		{
+			"name": "starting_world_real_local_player_hud",
+			"passed": true,
+			"detail": "Map=StartingWorld, Pawn=OGWorldPrototypeCharacter, Hud=OGWorldPresentationHud, CoreReady=1"
+		},
+		{
+			"name": "opening_to_ruler_via_real_canvas_action",
+			"passed": true,
+			"detail": "Called existing OG.Opening.Ruler click handler"
+		},
+		{
+			"name": "ruler_ui_presented",
+			"passed": false,
+			"detail": "RulerMode=1 Root=0 Title=0 Page=0 Nav=0 Interactive=0 VisibilityEnum=1 Blueprint=None"
+		}
+	]
+}

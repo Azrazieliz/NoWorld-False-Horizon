@@ -1,0 +1,44 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "LAPTOP-1LI4VRCJ",
+			"instance": "505DAB8D460AB66608B1D79277F4017E",
+			"instanceName": "LAPTOP-1LI4VRCJ-7408",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9711] ",
+			"model": "Default",
+			"gPU": "Intel(R) UHD Graphics",
+			"cPUModel": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+			"rAMInGB": 8,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.18-16.06.16",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.074442401528358459,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "NoUniversalRifleOrSword",
+			"fullTestPath": "OfflineGame.Gate12.Combat.MotionProfiles.NoUniversalRifleOrSword",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"505DAB8D460AB66608B1D79277F4017E"
+			],
+			"duration": 0.074442401528358459,
+			"dateTime": "2026.10.18-16.06.16",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

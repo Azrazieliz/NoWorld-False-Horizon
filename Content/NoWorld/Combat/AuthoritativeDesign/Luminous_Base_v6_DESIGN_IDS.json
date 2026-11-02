@@ -1,0 +1,319 @@
+{
+  "schema": "gate11.intake.luminous_base_kit.v1",
+  "as_of": "2026-10-20",
+  "approval_source": "GATE00_CONSOLIDATED_20261020_OVERRIDES_SOURCE_PROPOSED_FLAG_FOR_BASE_ONLY",
+  "intended_identity_content_id": "character:luminous_valentine.identity",
+  "intended_base_version_content_id": "character:luminous_valentine.version_ln_base",
+  "content_id_allocation_status": "GATE11_DESIGN_IDENTIFIERS_ALLOCATED_NO_PACKAGE_OR_NATIVE_REGISTRATION",
+  "ability_content_ids": [
+    {
+      "content_id": "combat:luminous_valentine.base.skill.scarlet_cadence",
+      "source_key": "draft:luminous_valentine.skill.scarlet_cadence",
+      "name": "Dharma — Scarlet Cadence",
+      "slot_type": "active",
+      "effect_mechanics": [
+        "SwordAttackSequence",
+        "ApplyHemalMark",
+        "InvokeVampiricSovereigntyScarletReserveGain",
+        "InvokeVampiricSovereigntyLifesteal",
+        "RiposteWindow",
+        "TargetedExecutionSequence"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.blood_throne",
+      "source_key": "draft:luminous_valentine.skill.blood_throne",
+      "name": "Blood Throne — Hematic Crucible",
+      "slot_type": "active",
+      "effect_mechanics": [
+        "HematicLance",
+        "ConsumeHemalMarks",
+        "InvokeVampiricSovereigntySiphon",
+        "BloodlessCost",
+        "Attunement",
+        "SpilloverJudgment"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.crimson_benediction",
+      "source_key": "draft:luminous_valentine.skill.crimson_benediction",
+      "name": "Crimson Benediction — Rose of Morning",
+      "slot_type": "active",
+      "effect_mechanics": [
+        "Restoration",
+        "Blessing",
+        "Cleanse",
+        "DawnOath",
+        "Attunement",
+        "ConsecratedMomentum"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.vampiric_sovereignty",
+      "source_key": "draft:luminous_valentine.skill.vampiric_sovereignty",
+      "name": "Vampiric Sovereignty",
+      "slot_type": "passive",
+      "effect_mechanics": [
+        "Lifesteal",
+        "LifestealFromBleed",
+        "BloodReserveGain",
+        "BloodAffinity"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.scarlet_rhythm",
+      "source_key": "draft:luminous_valentine.skill.scarlet_rhythm",
+      "name": "Scarlet Rhythm",
+      "slot_type": "passive",
+      "effect_mechanics": [
+        "CritDamageBonus",
+        "ApplyHemorrhage",
+        "OnMarkThreshold",
+        "ActionTempo",
+        "MomentumConversion"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.queen_nightfall",
+      "source_key": "draft:luminous_valentine.skill.queen_nightfall",
+      "name": "Queen of Nightfall",
+      "slot_type": "passive",
+      "effect_mechanics": [
+        "NightPressure",
+        "PerfectDodgeReward",
+        "SwitchQTE",
+        "LowDefenseTradeoff",
+        "NightExecutionPursuit"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.crimson_reconstitution",
+      "source_key": "draft:luminous_valentine.skill.crimson_reconstitution",
+      "name": "Crimson Reconstitution",
+      "slot_type": "passive",
+      "effect_mechanics": [
+        "Restoration",
+        "SelfReviveBeforeSuccession",
+        "RevivalAfterglow",
+        "RebirthPreventLoop"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.dawn_sanctification",
+      "source_key": "draft:luminous_valentine.skill.dawn_sanctification",
+      "name": "Dawn Sanctification",
+      "slot_type": "passive",
+      "effect_mechanics": [
+        "HealingDoneBonus",
+        "OverhealToBarrier",
+        "DawnOathGrant",
+        "WoundCleansing",
+        "MercifulEdge"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.skill.twilight_law",
+      "source_key": "draft:luminous_valentine.skill.twilight_law",
+      "name": "Twilight Lawkeeper",
+      "slot_type": "passive",
+      "effect_mechanics": [
+        "ObservedTechniqueLedger",
+        "AuthorityReadiness",
+        "WorldNegationUnlock",
+        "DawnNightAttunement",
+        "MercyEntry",
+        "RecordedWeakness"
+      ],
+      "source_path": "core_skills",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.ultimate.twin_principles",
+      "source_key": "draft:luminous_valentine.ultimate.twin_principles",
+      "name": "Twin Thrones — Ahura Mazda / Angra Mainyu",
+      "slot_type": "ultimate",
+      "source_path": "ultimate",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.fantasm.sovereign_eclipse",
+      "source_key": "draft:luminous_valentine.fantasm.sovereign_eclipse",
+      "name": "Sovereign Eclipse — The Rose Between Life and Nothing",
+      "slot_type": "fantasm",
+      "source_path": "world_fantasm",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    }
+  ],
+  "named_status_content_ids": [
+    {
+      "content_id": "combat:luminous_valentine.base.status.hemal_mark",
+      "source_name": "Hemal Mark",
+      "source_path": "statuses.Hemal Mark",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.status.hemorrhage",
+      "source_name": "Hemorrhage",
+      "source_path": "statuses.Hemorrhage",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.status.dawn_oath",
+      "source_name": "Dawn Oath",
+      "source_path": "statuses.Dawn Oath",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.status.eclipse_claim",
+      "source_name": "Eclipse Claim",
+      "source_path": "statuses.Eclipse Claim",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    },
+    {
+      "content_id": "combat:luminous_valentine.base.status.restoration_lock",
+      "source_name": "Restoration Lock",
+      "source_path": "statuses.Restoration Lock",
+      "approval": "APPROVED_DESIGN_NOT_INSTALLED"
+    }
+  ],
+  "effect_family_source_identifiers": [
+    "Bleed",
+    "AttackUp",
+    "SpeedUp",
+    "HealingReceivedUp",
+    "DamageTakenReduction",
+    "Shield",
+    "Marked",
+    "RevivalPrepared"
+  ],
+  "source_mechanic_identifiers": [
+    "ActionTempo",
+    "ApplyHemalMark",
+    "ApplyHemorrhage",
+    "Attunement",
+    "AuthorityReadiness",
+    "Blessing",
+    "BloodAffinity",
+    "BloodReserveGain",
+    "BloodlessCost",
+    "Cleanse",
+    "ConsecratedMomentum",
+    "ConsumeHemalMarks",
+    "CritDamageBonus",
+    "DawnNightAttunement",
+    "DawnOath",
+    "DawnOathGrant",
+    "HealingDoneBonus",
+    "HematicLance",
+    "InvokeVampiricSovereigntyLifesteal",
+    "InvokeVampiricSovereigntyScarletReserveGain",
+    "InvokeVampiricSovereigntySiphon",
+    "Lifesteal",
+    "LifestealFromBleed",
+    "LowDefenseTradeoff",
+    "MercifulEdge",
+    "MercyEntry",
+    "MomentumConversion",
+    "NightExecutionPursuit",
+    "NightPressure",
+    "ObservedTechniqueLedger",
+    "OnMarkThreshold",
+    "OverhealToBarrier",
+    "PerfectDodgeReward",
+    "RebirthPreventLoop",
+    "RecordedWeakness",
+    "Restoration",
+    "RevivalAfterglow",
+    "RiposteWindow",
+    "SelfReviveBeforeSuccession",
+    "SpilloverJudgment",
+    "SwitchQTE",
+    "SwordAttackSequence",
+    "TargetedExecutionSequence",
+    "WorldNegationUnlock",
+    "WoundCleansing"
+  ],
+  "source_payload": {
+    "path": "sources/g04_luminous_base_v6_exact_unmodified.json",
+    "sha256": "2221b8e7302ee1efb1b8c2c06e12ddd096fd43c1ea8b14f6f5054f4b4ee0c6da",
+    "bytes": 55485
+  },
+  "approval_scopes": {
+    "base_v6_design": "USER_AND_GATE00_APPROVED",
+    "stats_contract": "EXACT_SOURCE_V6_DESIGN",
+    "origin_rarity": "MR_IMMUTABLE",
+    "active_slots": 3,
+    "passive_slots": 6,
+    "ultimate_count": 1,
+    "fantasm_count": 1,
+    "learned_techniques_not_in_core_slots": true,
+    "alter_inherits_base_kit": false,
+    "gear_Dharma_auto_granted": false
+  },
+  "native_binding": {
+    "status": "BLOCKED_NO_TRUSTED_ACTIVE_VERSION_PACKAGE_OR_ABILITY_HANDLER_BINDING",
+    "selected_base_stats": {
+      "max_hp": 8455,
+      "attack": 4103,
+      "defense": 1219,
+      "speed": 136,
+      "crit_rate_bps": 3200,
+      "crit_damage_bonus_bps": 12000,
+      "crit_rate_resistance_bps": 800,
+      "crit_damage_resistance_bps": 1000,
+      "hit_bps": 12000,
+      "dodge_bps": 1600,
+      "block_rate_bps": 400,
+      "block_reduction_bps": 2000,
+      "defense_penetration_bps": 1200,
+      "damage_dealt_multiplier_bps": 10000,
+      "damage_taken_multiplier_bps": 10000,
+      "true_damage_resistance_bps": 0
+    },
+    "rank_reference": "Hero Rank Level 1, no gear or temporary buffs; playable starting owned Manifestation, not LN23 canonical existence value",
+    "required_handlers": [
+      "BloodEligibleSource",
+      "ScarletReserve",
+      "HemalMarks",
+      "HemorrhageDOT",
+      "ConditionalLifesteal",
+      "HealingDoneMultiplierAndOverhealShield",
+      "SoulContinuityAndPreSuccessionRevive",
+      "DawnNightAttunement",
+      "DayUltimateAllyHealBuff",
+      "NightUltimateMultiHitSiphon",
+      "WorldNegationPerEffectRuleContest",
+      "FantasmBoundaryAgainstWorldAndDomain",
+      "HybridDurationRemainingFraction",
+      "LearnedTechniqueProvenance",
+      "QTESwitchAndSuccessionMappings",
+      "NoUnregisteredResistanceFamiliesAndAbilityFailClosed"
+    ],
+    "artwork_reused": true,
+    "no_nonexistent_items": true
+  },
+  "policy": {
+    "draft_source_keys_are_not_native_ids": true,
+    "no_invented_abilities": true,
+    "no_generated_ownership": true,
+    "no_production_active_content": true,
+    "fantasm_requires_current_rarity_MR": true,
+    "no_generic_ultimate_grant_to_alter": true
+  }
+}

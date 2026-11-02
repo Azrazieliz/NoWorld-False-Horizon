@@ -1,0 +1,49 @@
+{
+  "run_id": "67bdc417ca3b4a069e48026b0c19264c",
+  "requested_resolution": "1280x720",
+  "actual_captured_sizes": {
+    "ruler_nav_records.png": [
+      432,
+      700
+    ],
+    "ruler_nav_territory.png": [
+      432,
+      700
+    ],
+    "ruler_nav_gacha.png": [
+      432,
+      700
+    ],
+    "ruler_nav_home.png": [
+      432,
+      700
+    ],
+    "world.png": [
+      432,
+      700
+    ],
+    "world_neutral_interaction_active.png": [
+      432,
+      700
+    ],
+    "ruler_after_world.png": [
+      432,
+      700
+    ]
+  },
+  "result": "23 checks passed; viewport remains 432x700 despite requested landscape; do not claim landscape QA",
+  "source_commit": "c785348fea052e40c28f9472e1460fabde7df035",
+  "sha256": {
+    "journey_23of23.json": "35e7bc885a887d250b94457e7316c05fb951f943d692e32c087866432f4f0585",
+    "observation.json": "f606ff59cdaa749ed0e953e04f6863e0f53492584c80134fd6a64f85cdfd5d5d",
+    "ruler_nav_records.png": "ffbb0b7c04f1979b1181399b0399429426419e8488b5bcc2e69caf78a9a9e8be",
+    "ruler_nav_territory.png": "beaf4aadfbbc19650988826c6b743831b1919e36a051b98b3d9c0a99d0d6b088",
+    "ruler_nav_gacha.png": "d9721bd9981595f37f177fa3a3474d08a4bb101bb785747ae107e09841915056",
+    "ruler_nav_home.png": "3037079a01f84e3c93f704ee9f804182a56b8c45115ae84469afc4c688229338",
+    "world.png": "0e2f8e9dba3873bf4ba6f82593b769ac14fbdd3109ee4bae1734d5a9be67f1c6",
+    "world_neutral_interaction_active.png": "3c967f9044249c0b8611e77c2de5a4e0b18a33b5945e466e1317d6c25e582094",
+    "ruler_after_world.png": "3037079a01f84e3c93f704ee9f804182a56b8c45115ae84469afc4c688229338"
+  },
+  "all_checks_pass": true,
+  "step_count": 23
+}

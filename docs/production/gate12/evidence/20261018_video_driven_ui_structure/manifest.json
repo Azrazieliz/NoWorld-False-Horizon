@@ -1,0 +1,37 @@
+{
+  "user_reference": "828231.mp4 supplied in chat (reference only, not copied)",
+  "preserved_approved_assets": "Gate10 original Gacha artwork, home source and Figma originals retained",
+  "resulting_changes": [
+    "remove duplicate Home Characters/Gacha actions",
+    "hide raw Ruler UUID and ownership-as-Ruler label",
+    "make bottom five-way nav pure dark native panels instead of an opaque white texture",
+    "equal Records tile dimensions",
+    "move development preview out of player roster",
+    "keep per-character 2D/3D choice for genuinely owned manifests",
+    "condense empty Territory caption",
+    "one Enter World Home action",
+    "reuse existing approved Vacant Throne art for empty Home background"
+  ],
+  "last_complete_native_journey": "be6033e57a71410cb440af62f91fcef6: 23/23 actual programmatic native UE run on structure change before full-width Home background",
+  "final_home_background_build": "Saved/Gate12Readiness/Gate12_UI_20261018_ApprovedFullStageHomeFinal_Build.log, succeeded 4/4",
+  "latest_home_background_visual_result": "UNVERIFIED: run b8718c3d2af04b8b9d8dbb7bdf5435cf failed at local_gameplay_ready before native UI; do not claim final screenshot parity",
+  "physical_android_validated": false,
+  "captures": [
+    {
+      "name": "ruler_nav_records.png",
+      "resolution": [
+        432,
+        700
+      ],
+      "sha256": "da233428e390706118d36013b3143db1d3b490b1563fccd376c3c06986a3f703"
+    },
+    {
+      "name": "ruler_nav_territory.png",
+      "resolution": [
+        432,
+        700
+      ],
+      "sha256": "6a6610fdd1a74881d9367553328c6e1c27ade75c279233aa188ff4e75a5f37fb"
+    }
+  ]
+}

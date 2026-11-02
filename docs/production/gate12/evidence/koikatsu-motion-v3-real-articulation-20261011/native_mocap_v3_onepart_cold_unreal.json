@@ -1,0 +1,49 @@
+{
+  "status": "PASS_FRESH_UE5_NATIVE_3_MOCAP_CLIPS_ONEPART_PRE_VISUAL",
+  "read_only": true,
+  "fresh_native_UE_process": true,
+  "clips": [
+    {
+      "name": "AN_KK_V3CMU_Walk_M03_P00",
+      "skeleton": "/Game/Experimental/Gate12Koikatsu/FullPrimitives/Mesh03Prim00/Mesh_03_Prim_00/SkeletalMeshes/Mesh_03_Prim_00_Skeleton.Mesh_03_Prim_00_Skeleton",
+      "native_asset_type": "AnimSequence",
+      "bones": 19,
+      "duration_seconds": 2.8333332538604736,
+      "frames": 86,
+      "genuine_real_motion_source": true,
+      "native_source_compatible": true,
+      "root_translation_tracks": 0,
+      "foot_contact_ik": "NOT_TESTED",
+      "natural_visual_motion": "NOT_APPROVED"
+    },
+    {
+      "name": "AN_KK_V3CMU_Run_M03_P00",
+      "skeleton": "/Game/Experimental/Gate12Koikatsu/FullPrimitives/Mesh03Prim00/Mesh_03_Prim_00/SkeletalMeshes/Mesh_03_Prim_00_Skeleton.Mesh_03_Prim_00_Skeleton",
+      "native_asset_type": "AnimSequence",
+      "bones": 19,
+      "duration_seconds": 1.4333332777023315,
+      "frames": 44,
+      "genuine_real_motion_source": true,
+      "native_source_compatible": true,
+      "root_translation_tracks": 0,
+      "foot_contact_ik": "NOT_TESTED",
+      "natural_visual_motion": "NOT_APPROVED"
+    },
+    {
+      "name": "AN_KK_V3CMU_Jump_M03_P00",
+      "skeleton": "/Game/Experimental/Gate12Koikatsu/FullPrimitives/Mesh03Prim00/Mesh_03_Prim_00/SkeletalMeshes/Mesh_03_Prim_00_Skeleton.Mesh_03_Prim_00_Skeleton",
+      "native_asset_type": "AnimSequence",
+      "bones": 19,
+      "duration_seconds": 4.0,
+      "frames": 121,
+      "genuine_real_motion_source": true,
+      "native_source_compatible": true,
+      "root_translation_tracks": 0,
+      "foot_contact_ik": "NOT_TESTED",
+      "natural_visual_motion": "NOT_APPROVED"
+    }
+  ],
+  "physical_visual_approval": false,
+  "runtime_on_S26": false,
+  "utc": "2026-10-11T10:00:04Z"
+}

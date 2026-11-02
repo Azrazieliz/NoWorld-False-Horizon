@@ -1,0 +1,66 @@
+{
+  "native_game_run": "c0d0163ceb614e2e84ed33f217710b22",
+  "UE_editor_build": "Saved/Gate12Readiness/Gate12_UI_20261018_CompactBottomNavCaptionFinal_Build.log",
+  "build_result": "succeeded exit0 4/4",
+  "native_game_result": "23/23 actual programmatic World-Ruler-World-Ruler steps, exit0",
+  "target_portrait_resolution": "360x720 actual screenshot",
+  "layout": "Characters full usable portrait viewport, exactly 3 tall owned portraits per row when owned, 2D/3D switch local to owned visual card, bottom five destinations within their cells",
+  "safe_data_contract": "Actual save has 0 owned Manifestations. No invented identities, currency, character art, or ownership.",
+  "qa_capture_note": "Character screenshot created during noncanonical 45-part dev viewer shader warmup, so engine shader/texture messages are visible at top. They are NOT intended production widgets. Actual unowned page contains no 3D development viewer button.",
+  "not_verified": [
+    "Visual match to highly illustrated external reference video because no owned and Registry accepted production hero art in save",
+    "Physical S26 Ultra touch, Android scaling and orientation (adb empty)",
+    "Accepted 2D/3D asset quality when actual ownership becomes available"
+  ],
+  "art_sources": "Only original approved Gate10 Vacant Throne ambient art; no copied third-party video art",
+  "assets": [
+    {
+      "file": "native_tall_portrait_23of23.json",
+      "sha256": "73c8e4372575bc1edfb48f8f9ac938fa489b6b2ed4b9776e125fba3d81625814",
+      "resolution": null
+    },
+    {
+      "file": "native_fullpage_characters_360x720.png",
+      "sha256": "6c35f3fd04b325c506092e82178917d8e851165586e4fd2ca1770ceb01b1f6c7",
+      "resolution": [
+        360,
+        720
+      ]
+    },
+    {
+      "file": "native_fullpage_records_360x720.png",
+      "sha256": "11bf32d164b507444b69cd57f0cb6799a88d3390b8c1a5996e64fc775ec64376",
+      "resolution": [
+        360,
+        720
+      ]
+    }
+  ],
+  "final_native_game_run": "3b7973b230914e2e9e8c35ab20a047ce",
+  "final_native_game_passed": true,
+  "final_native_steps_passed": 23,
+  "final_build": "Saved/Gate12Readiness/Gate12_UI_20261018_NoBrightScrollBar_Build.log - 4/4 exit0",
+  "final_visual_checks": [
+    "360x720: Characters content fills viewport under header and above bottom nav",
+    "No bright right ScrollBox rail, scrolling logic kept",
+    "Five navigation captions contained in their native bottom cells",
+    "Actual save contains zero owned Manifestations, no invented cards",
+    "3 portrait slots per owned row and 780-unit owned detail stage are implemented in native source, but cannot render without approved owned manifests and art"
+  ],
+  "completed_final_assets": [
+    {
+      "name": "native_final_23of23.json",
+      "sha256": "6611dd9366d630918d7c487df0c77b8eeda420ebc72d11b052a26d3de2d2836b",
+      "resolution": null
+    },
+    {
+      "name": "native_fullpage_characters_clean_360x720.png",
+      "sha256": "973b90fd43a7224de74858eeca9820a9dd30a071e6eba41729a344c19a6d81e9",
+      "resolution": [
+        360,
+        720
+      ]
+    }
+  ],
+  "remaining_acceptance": "Real owned character detail art quality, Samsung device validation, parity with illustrated reference video unverified; do not mark entire UI DONE"
+}

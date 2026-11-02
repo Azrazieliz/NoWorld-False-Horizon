@@ -1,0 +1,102 @@
+{
+  "schema": "noworld.gate12.original_koikatsu_body_minmemory.fidelity.v1",
+  "forms": {
+    "Berserker": {
+      "original_card_sha256": "820307ce971382af9b620fa8610af60918ad01cc7267994ba9ac5cde96070862",
+      "body_source_sha256": "7711c2a4cc63721ce35b2f9d8bf7fa21f544cc848caccc28cd87ab082331e636",
+      "original_body_morph_references": 1903,
+      "unchanged_grouped_morph_references": 1903,
+      "total_original_primitives": 11,
+      "groups": [
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\BerserkerExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_00-02.glb",
+          "sha256": "bc97555bec18c244cc0a047c8fa1c51ca777279b87758506645c60c5cc5039f8",
+          "source_primitive_indices": [
+            0,
+            1,
+            2
+          ],
+          "original_part_index": 0
+        },
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\BerserkerExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_03-05.glb",
+          "sha256": "7cabaab9f3b17386d5aa04d900027c10be3a887960712fce8601269d899b43c5",
+          "source_primitive_indices": [
+            3,
+            4,
+            5
+          ],
+          "original_part_index": 0
+        },
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\BerserkerExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_06-08.glb",
+          "sha256": "282735ffe4e845391de7802a5165a049828b7717f21df68858e159816e8bbfbb",
+          "source_primitive_indices": [
+            6,
+            7,
+            8
+          ],
+          "original_part_index": 0
+        },
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\BerserkerExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_09-10.glb",
+          "sha256": "68e957ce72472e64b44ad1a9cb8fbb6424bb97e67991ef7b84c94e79f04e434e",
+          "source_primitive_indices": [
+            9,
+            10
+          ],
+          "original_part_index": 0
+        }
+      ]
+    },
+    "Awakened": {
+      "original_card_sha256": "e6b53e82c0d87ecdbd0ff8bf510ce93a1d7e557b436382271fcfed6451897bd5",
+      "body_source_sha256": "82dacb325cd24b975946ac4d1132db11f24b6f4b6eaa09c185a47b129eea6150",
+      "original_body_morph_references": 1837,
+      "unchanged_grouped_morph_references": 1837,
+      "total_original_primitives": 11,
+      "groups": [
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\AwakenedExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_00-02.glb",
+          "sha256": "5fd5d0a088e43e30ffeefb13a68798fd414ebdbace4110f6bcdab5ba004d001c",
+          "source_primitive_indices": [
+            0,
+            1,
+            2
+          ],
+          "original_part_index": 0
+        },
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\AwakenedExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_03-05.glb",
+          "sha256": "7be8ece202b1d77d7a790d4971e57c522566016d77dd2911872dccf696e44bc8",
+          "source_primitive_indices": [
+            3,
+            4,
+            5
+          ],
+          "original_part_index": 0
+        },
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\AwakenedExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_06-08.glb",
+          "sha256": "9cd930bbcd478ff702c45cd0d998ffe8f4f5e065a33e4fb5f9a9635c780e64e2",
+          "source_primitive_indices": [
+            6,
+            7,
+            8
+          ],
+          "original_part_index": 0
+        },
+        {
+          "file": "D:\\UnrealProjects\\G12_LuminousNativeImport_20261031\\VerifiedNativePrimitiveBatches\\AwakenedExactOriginalCardBodyBatched3\\shards\\Mesh_00_PrimGroup_09-10.glb",
+          "sha256": "6dbd3032052d625a34b6a4f7d34c22a1b55f4bafe7b4c7b48e40ac97fb521243",
+          "source_primitive_indices": [
+            9,
+            10
+          ],
+          "original_part_index": 0
+        }
+      ]
+    }
+  },
+  "status": "PASS_ALL_ORIGINAL_BODY_PRIMITIVES_AND_MORPHS_PRESERVED"
+}

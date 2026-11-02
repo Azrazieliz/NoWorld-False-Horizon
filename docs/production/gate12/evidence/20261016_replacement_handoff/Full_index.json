@@ -1,0 +1,2982 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "LAPTOP-1LI4VRCJ",
+			"instance": "1754AAEC447BB7AEB5F782816015B8B3",
+			"instanceName": "LAPTOP-1LI4VRCJ-1328",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9711] ",
+			"model": "Default",
+			"gPU": "Intel(R) UHD Graphics",
+			"cPUModel": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+			"rAMInGB": 8,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.16-21.47.52",
+	"succeeded": 132,
+	"succeededWithWarnings": 18,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 53.287178039550781,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "KnowledgePromotionAdultRuntimeAndHeroicRecords",
+			"fullTestPath": "OfflineGame.Characters.KnowledgePromotionAdultRuntimeAndHeroicRecords",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 2.0831246376037598,
+			"dateTime": "2026.10.16-21.46.55",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IdentityExclusivity",
+			"fullTestPath": "OfflineGame.Combat.Action.IdentityExclusivity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.032060198485851288,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ResolvedHpPreservesPartyAndFallback",
+			"fullTestPath": "OfflineGame.Combat.Action.ResolvedHpPreservesPartyAndFallback",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.03452330082654953,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CritResistanceThenOverflow",
+			"fullTestPath": "OfflineGame.Combat.Math.CritResistanceThenOverflow",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.011913701891899109,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HitOverflowReplication",
+			"fullTestPath": "OfflineGame.Combat.Math.HitOverflowReplication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.029792502522468567,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IndivisibleHitDoesNotReplicate",
+			"fullTestPath": "OfflineGame.Combat.Math.IndivisibleHitDoesNotReplicate",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016841098666191101,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TrueDamageBypassesDefenseReductionAndBlock",
+			"fullTestPath": "OfflineGame.Combat.Math.TrueDamageBypassesDefenseReductionAndBlock",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.021757498383522034,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SameSeedSameCommandsSameFingerprint",
+			"fullTestPath": "OfflineGame.Combat.Replay.SameSeedSameCommandsSameFingerprint",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.020866099745035172,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IdentityExclusivityAndExplicitOverride",
+			"fullTestPath": "OfflineGame.Combat.Shared.IdentityExclusivityAndExplicitOverride",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.015871301293373108,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RankSuppressionIsChannelBasedAndDataResolved",
+			"fullTestPath": "OfflineGame.Combat.Shared.RankSuppressionIsChannelBasedAndDataResolved",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016696702688932419,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnknownRankDoesNotInventGap",
+			"fullTestPath": "OfflineGame.Combat.Shared.UnknownRankDoesNotInventGap",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.03101770207285881,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CooldownIsExplicitNotUniversal",
+			"fullTestPath": "OfflineGame.Combat.SkillReadiness.CooldownIsExplicitNotUniversal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.08584730327129364,
+			"dateTime": "2026.10.16-21.46.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PersonalResource",
+			"fullTestPath": "OfflineGame.Combat.SkillReadiness.PersonalResource",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016628198325634003,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ConditionEvaluator",
+			"fullTestPath": "OfflineGame.Combat.Triggers.ConditionEvaluator",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016424700617790222,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DeterministicOrdering",
+			"fullTestPath": "OfflineGame.Combat.Triggers.DeterministicOrdering",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016386900097131729,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefeatCompletesAfterActionWindow",
+			"fullTestPath": "OfflineGame.Combat.Turn.DefeatCompletesAfterActionWindow",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016934297978878021,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DirectLaneSuccessionAfterAction",
+			"fullTestPath": "OfflineGame.Combat.Turn.DirectLaneSuccessionAfterAction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016681399196386337,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ExhaustedLaneBorrowsDeepReserve",
+			"fullTestPath": "OfflineGame.Combat.Turn.ExhaustedLaneBorrowsDeepReserve",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016519598662853241,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RevivalBeforeSuccession",
+			"fullTestPath": "OfflineGame.Combat.Turn.RevivalBeforeSuccession",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016718499362468719,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TimelineOrdering",
+			"fullTestPath": "OfflineGame.Combat.Turn.TimelineOrdering",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.017025597393512726,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AdultIdentityCanReferenceAdultContent",
+			"fullTestPath": "OfflineGame.Content.Character.AdultIdentityCanReferenceAdultContent",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016391098499298096,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AdultReferencesRequireCanonicalAdult",
+			"fullTestPath": "OfflineGame.Content.Character.AdultReferencesRequireCanonicalAdult",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.029294200241565704,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ExternalAdultIdentityCanReceiveAdultReferences",
+			"fullTestPath": "OfflineGame.Content.Character.ExternalAdultIdentityCanReceiveAdultReferences",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016423501074314117,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "OfflineGame.Content.ContentId.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016377799212932587,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PartitionPauseAndOverflow",
+			"fullTestPath": "OfflineGame.Core.Clock.PartitionPauseAndOverflow",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.029074300080537796,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NewIdIsValid",
+			"fullTestPath": "OfflineGame.Core.EntityId.NewIdIsValid",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016290199011564255,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CanonicalTurnDefeatAndReturn",
+			"fullTestPath": "OfflineGame.Diagnostic.CanonicalTurnDefeatAndReturn",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016223099082708359,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CanonicalTurnRoundTrip",
+			"fullTestPath": "OfflineGame.Diagnostic.CanonicalTurnRoundTrip",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.015726801007986069,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EarnedGachaHistoryAndTicketCurrency",
+			"fullTestPath": "OfflineGame.Diagnostic.EarnedGachaHistoryAndTicketCurrency",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.5107258558273315,
+			"dateTime": "2026.10.16-21.46.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QteUsesCanonicalTriggerConditions",
+			"fullTestPath": "OfflineGame.Diagnostic.QteUsesCanonicalTriggerConditions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.01647379994392395,
+			"dateTime": "2026.10.16-21.47.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BundleExcludesAbsoluteSavePath",
+			"fullTestPath": "OfflineGame.Diagnostics.BundleExcludesAbsoluteSavePath",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.4744688868522644,
+			"dateTime": "2026.10.16-21.47.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AsymmetricConceptsLineageAndHeartLoss",
+			"fullTestPath": "OfflineGame.DomainCore.Fusion.AsymmetricConceptsLineageAndHeartLoss",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.77788847684860229,
+			"dateTime": "2026.10.16-21.47.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProtectedCoreSurvivesPhysicalDamageAndExceptionalReconstitution",
+			"fullTestPath": "OfflineGame.DomainCore.Heart.ProtectedCoreSurvivesPhysicalDamageAndExceptionalReconstitution",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.82128852605819702,
+			"dateTime": "2026.10.16-21.47.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BreakRestoreAndPresentationPreserveCanonicalHistory",
+			"fullTestPath": "OfflineGame.Foundation.Character.BreakRestoreAndPresentationPreserveCanonicalHistory",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.53834360837936401,
+			"dateTime": "2026.10.16-21.47.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "KnownCraftCostsAreAtomicAndKnowledgeGated",
+			"fullTestPath": "OfflineGame.Foundation.Character.KnownCraftCostsAreAtomicAndKnowledgeGated",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.43279361724853516,
+			"dateTime": "2026.10.16-21.47.03",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LocalDialogueUsesBeliefAndCannotRewriteFacts",
+			"fullTestPath": "OfflineGame.Foundation.Character.LocalDialogueUsesBeliefAndCannotRewriteFacts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.3756641149520874,
+			"dateTime": "2026.10.16-21.47.03",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CorpseHasOneVisiblePresentationDriver",
+			"fullTestPath": "OfflineGame.Foundation.DeviceCorrections.CorpseHasOneVisiblePresentationDriver",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.23507049679756165,
+			"dateTime": "2026.10.16-21.47.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogWorld: UWorld::CleanupWorld called on a world that has begun play, missing call to EndPlay (Untitled)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.04"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LivingAssignmentRecoversDefeatedParty",
+			"fullTestPath": "OfflineGame.Foundation.DeviceCorrections.LivingAssignmentRecoversDefeatedParty",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.010338801890611649,
+			"dateTime": "2026.10.16-21.47.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SettingsTargetsContainReadableLabels",
+			"fullTestPath": "OfflineGame.Foundation.DeviceCorrections.SettingsTargetsContainReadableLabels",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.15809699892997742,
+			"dateTime": "2026.10.16-21.47.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_2.Untitled:PersistentLevel.OGWorldPresentationHud_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.04"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_2.Untitled:PersistentLevel.OGWorldPresentationHud_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.04"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_2.Untitled:PersistentLevel.OGWorldPrototypeCharacter_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.04"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_2.Untitled:PersistentLevel.PlayerCameraManager_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.04"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_2.Untitled:PersistentLevel.PlayerController_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.04"
+				}
+			],
+			"warnings": 5,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TenPullUsesCanonicalAtomicAcquisition",
+			"fullTestPath": "OfflineGame.Foundation.DeviceCorrections.TenPullUsesCanonicalAtomicAcquisition",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.69186758995056152,
+			"dateTime": "2026.10.16-21.47.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorldActionTargetsRemainDistinct",
+			"fullTestPath": "OfflineGame.Foundation.DeviceCorrections.WorldActionTargetsRemainDistinct",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.059285599738359451,
+			"dateTime": "2026.10.16-21.47.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_3.Untitled:PersistentLevel.OGWorldPresentationHud_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_3.Untitled:PersistentLevel.OGWorldPresentationHud_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_3.Untitled:PersistentLevel.OGWorldPrototypeCharacter_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_3.Untitled:PersistentLevel.PlayerCameraManager_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_3.Untitled:PersistentLevel.PlayerController_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				}
+			],
+			"warnings": 5,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GeometryAndPhysicalWater",
+			"fullTestPath": "OfflineGame.Foundation.Integration.GeometryAndPhysicalWater",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.097289599478244781,
+			"dateTime": "2026.10.16-21.47.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Failed to find object 'SoundMix /Game/Foundation/Audio/SM_FoundationVolumes.SM_FoundationVolumes'",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Failed to find object 'SoundClass /Game/Foundation/Audio/SC_Music.SC_Music'",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Failed to find object 'SoundClass /Game/Foundation/Audio/SC_Voice.SC_Voice'",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Failed to find object 'SoundClass /Game/Foundation/Audio/SC_SFX.SC_SFX'",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Failed to find object 'SoundClass /Game/Foundation/Audio/SC_Ambience.SC_Ambience'",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Failed to find object 'SoundMix /Game/Foundation/Audio/SM_DynamicFull.SM_DynamicFull'",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogWorld: UWorld::CleanupWorld called on a world that has begun play, missing call to EndPlay (Untitled)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.05"
+				}
+			],
+			"warnings": 7,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ActionsSequenceZeroPacingAndSharedClockPersistence",
+			"fullTestPath": "OfflineGame.Foundation.Interaction.ActionsSequenceZeroPacingAndSharedClockPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.4237723350524902,
+			"dateTime": "2026.10.16-21.47.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CanonicalRulerVariableArityAndGraphReferences",
+			"fullTestPath": "OfflineGame.Foundation.Interaction.CanonicalRulerVariableArityAndGraphReferences",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.1039237976074219,
+			"dateTime": "2026.10.16-21.47.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PrivacySubstitutionPreservesAuthoritativeParity",
+			"fullTestPath": "OfflineGame.Foundation.Interaction.PrivacySubstitutionPreservesAuthoritativeParity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.83457821607589722,
+			"dateTime": "2026.10.16-21.47.08",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StagingFailureInterruptionAndFailedExitRestoreGameplay",
+			"fullTestPath": "OfflineGame.Foundation.Interaction.StagingFailureInterruptionAndFailedExitRestoreGameplay",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32517379522323608,
+			"dateTime": "2026.10.16-21.47.08",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_5.Untitled:PersistentLevel.CameraActor_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.09"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CanonicalProjectionPreservesRuntimeState",
+			"fullTestPath": "OfflineGame.Foundation.Party.CanonicalProjectionPreservesRuntimeState",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.0065325982868671417,
+			"dateTime": "2026.10.16-21.47.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NestedScopesPreserveOuterAtomicity",
+			"fullTestPath": "OfflineGame.Foundation.Persistence.NestedScopesPreserveOuterAtomicity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.22750380635261536,
+			"dateTime": "2026.10.16-21.47.09",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BodyRigModularAndMissingOptionalPreserveCurrent",
+			"fullTestPath": "OfflineGame.Foundation.Presentation.BodyRigModularAndMissingOptionalPreserveCurrent",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.23879179358482361,
+			"dateTime": "2026.10.16-21.47.09",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_0' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.09"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_1' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.09"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_1' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.09"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_1' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.09"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_0' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.09"
+				}
+			],
+			"warnings": 5,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CoreReleaseRestoresBaselineAndReleasesOptionalReferences",
+			"fullTestPath": "OfflineGame.Foundation.Presentation.CoreReleaseRestoresBaselineAndReleasesOptionalReferences",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.4510703980922699,
+			"dateTime": "2026.10.16-21.47.09",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_4' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.10"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_5' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.10"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_4' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.10"
+				}
+			],
+			"warnings": 3,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DefaultProviderAndOverrideSurviveRebind",
+			"fullTestPath": "OfflineGame.Foundation.Presentation.DefaultProviderAndOverrideSurviveRebind",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.25486549735069275,
+			"dateTime": "2026.10.16-21.47.10",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_6' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.10"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ExactCanonicalMetadataSelection",
+			"fullTestPath": "OfflineGame.Foundation.Presentation.ExactCanonicalMetadataSelection",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.51375168561935425,
+			"dateTime": "2026.10.16-21.47.10",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_7' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.10"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HitTargetsFollowCanvasTransform",
+			"fullTestPath": "OfflineGame.Foundation.Presentation.HitTargetsFollowCanvasTransform",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.024254396557807922,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.OGWorldPresentationHud_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.PlayerController_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.OGWorldPresentationHud_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.PlayerController_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.OGWorldPresentationHud_2",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.PlayerController_2",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.OGWorldPresentationHud_3",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_10.Untitled:PersistentLevel.PlayerController_3",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				}
+			],
+			"warnings": 8,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InjuryOutfitEquipmentRestorationAndPrivacyAreDerived",
+			"fullTestPath": "OfflineGame.Foundation.Presentation.InjuryOutfitEquipmentRestorationAndPrivacyAreDerived",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32819849252700806,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogAnimation: Skeletal Mesh asset 'SkeletalMesh_8' has no render data",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RiggedDiagnosticHumanoid",
+			"fullTestPath": "OfflineGame.Foundation.Presentation.RiggedDiagnosticHumanoid",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016769099980592728,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AuthoredCaptionsCooldownAndWorldOwnership",
+			"fullTestPath": "OfflineGame.Foundation.SemanticAudio.AuthoredCaptionsCooldownAndWorldOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.034617099910974503,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_12.Untitled:PersistentLevel.Actor_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DynamicFallbackAndAuthoredMixOwnership",
+			"fullTestPath": "OfflineGame.Foundation.SemanticAudio.DynamicFallbackAndAuthoredMixOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.021733500063419342,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_13.Untitled:PersistentLevel.Actor_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HapticsDisableWorldCancelAndOwnerCleanup",
+			"fullTestPath": "OfflineGame.Foundation.SemanticAudio.HapticsDisableWorldCancelAndOwnerCleanup",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.017614901065826416,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_14.Untitled:PersistentLevel.PlayerController_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_14.Untitled:PersistentLevel.Pawn_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				}
+			],
+			"warnings": 2,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RouteAndProfileGainAppliedOnce",
+			"fullTestPath": "OfflineGame.Foundation.SemanticAudio.RouteAndProfileGainAppliedOnce",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.020719900727272034,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SharedCanonicalPresenterRemainsReadOnly",
+			"fullTestPath": "OfflineGame.Foundation.SemanticAudio.SharedCanonicalPresenterRemainsReadOnly",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.2521640956401825,
+			"dateTime": "2026.10.16-21.47.11",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_16.Untitled:PersistentLevel.Actor_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.11"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CommandsReportsAndSeedUseSharedCanonicalRuler",
+			"fullTestPath": "OfflineGame.Foundation.Strategy.CommandsReportsAndSeedUseSharedCanonicalRuler",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.3898254930973053,
+			"dateTime": "2026.10.16-21.47.12",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DirectorReplayDoesNotDuplicateCompletionReports",
+			"fullTestPath": "OfflineGame.Foundation.Strategy.DirectorReplayDoesNotDuplicateCompletionReports",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.42162090539932251,
+			"dateTime": "2026.10.16-21.47.12",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BoundaryRecoveryClearsAttachment",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.BoundaryRecoveryClearsAttachment",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.039669197052717209,
+			"dateTime": "2026.10.16-21.47.12",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogOfflineGame: World Mode safety recovery applied. Reason=declared_map_boundary Location=(0.0, 0.0, 100.0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.12"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CarrierGravityAndBlockedDismount",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.CarrierGravityAndBlockedDismount",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.01961129903793335,
+			"dateTime": "2026.10.16-21.47.12",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ClimbLedgeAndBlockedTop",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.ClimbLedgeAndBlockedTop",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.022764600813388824,
+			"dateTime": "2026.10.16-21.47.12",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ClimbLossAndDrop",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.ClimbLossAndDrop",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.021403498947620392,
+			"dateTime": "2026.10.16-21.47.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ContextInteractionObstruction",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.ContextInteractionObstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.020921401679515839,
+			"dateTime": "2026.10.16-21.47.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RealWaterHonorsCapability",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.RealWaterHonorsCapability",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.020893998444080353,
+			"dateTime": "2026.10.16-21.47.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TeleportEndsPreviousTraversal",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.TeleportEndsPreviousTraversal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.020601999014616013,
+			"dateTime": "2026.10.16-21.47.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TeleportRejectsOccupiedLanding",
+			"fullTestPath": "OfflineGame.Foundation.Traversal.TeleportRejectsOccupiedLanding",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.022366698831319809,
+			"dateTime": "2026.10.16-21.47.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AccessGateAndFirstTerritoryAnchor",
+			"fullTestPath": "OfflineGame.Gacha.AccessGateAndFirstTerritoryAnchor",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.42492648959159851,
+			"dateTime": "2026.10.16-21.47.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CompatibleTicketIsConsumedBeforeCurrency",
+			"fullTestPath": "OfflineGame.Gacha.CompatibleTicketIsConsumedBeforeCurrency",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32433518767356873,
+			"dateTime": "2026.10.16-21.47.13",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PersistentPityCurrencyAndDuplicateAcquisition",
+			"fullTestPath": "OfflineGame.Gacha.PersistentPityCurrencyAndDuplicateAcquisition",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32379859685897827,
+			"dateTime": "2026.10.16-21.47.14",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AppearancePrivacyRenderMatrix",
+			"fullTestPath": "OfflineGame.Gate12.Luminous.AppearancePrivacyRenderMatrix",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.015615899115800858,
+			"dateTime": "2026.10.16-21.47.14",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MeasuredSourceFacingMatchesActor16Directions",
+			"fullTestPath": "OfflineGame.Gate12.Luminous.MeasuredSourceFacingMatchesActor16Directions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.03014799952507019,
+			"dateTime": "2026.10.16-21.47.14",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PrivacyDoesNotMutateCanonicalOutfitOrOwnership",
+			"fullTestPath": "OfflineGame.Gate12.Luminous.PrivacyDoesNotMutateCanonicalOutfitOrOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.33933049440383911,
+			"dateTime": "2026.10.16-21.47.14",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AllNativeModularPartsLOD0Integrity",
+			"fullTestPath": "OfflineGame.Gate12.P0.AllNativeModularPartsLOD0Integrity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 4.4305381774902344,
+			"dateTime": "2026.10.16-21.47.14",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_FULL_CLOTHED: SOURCED=45 LOADED=45 SRC_VERTS=58930 UE_LOD0_VERTS=59922 UE_LOD0_TRIS=91933 MISSING_MATERIAL=0 WRONG_BONES=0 NO_UV0=0 NO_LOD0=0 MORPHS_IMPORTED=580",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.16"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_FULL_UNDERWEAR: SOURCED=39 LOADED=39 SRC_VERTS=49309 UE_LOD0_VERTS=50396 UE_LOD0_TRIS=77832 MISSING_MATERIAL=0 WRONG_BONES=0 NO_UV0=0 NO_LOD0=0 MORPHS_IMPORTED=575",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.17"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_FULL_NUDE: SOURCED=37 LOADED=37 SRC_VERTS=41874 UE_LOD0_VERTS=42651 UE_LOD0_TRIS=63695 MISSING_MATERIAL=0 WRONG_BONES=0 NO_UV0=0 NO_LOD0=0 MORPHS_IMPORTED=575",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.19"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LuminousImportedBodyLOD0AndNativeScale",
+			"fullTestPath": "OfflineGame.Gate12.P0.LuminousImportedBodyLOD0AndNativeScale",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.1019246578216553,
+			"dateTime": "2026.10.16-21.47.19",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_IMPORTED_CLOTHED: UE_LOD0_VERTICES=9996 UE_LOD0_TRIANGLES=16754 SOURCE_PRIMITIVE_VERTICES=9604 BOUNDS_WIDTH_CM=123.8300 BOUNDS_HEIGHT_CM=128.1429",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.19"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_MORPHS_CLOTHED: SOURCE_EFFECTIVE_POSITION=15 UE_IMPORTED=9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.19"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "P0_CLOTHED: 15 nonzero source position morphs vs 9 imported; UE 0.015cm morph threshold is under investigation. DO NOT accept full facial/anatomy fidelity yet.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Private\\Tests\\OGGate12P0CharacterFidelityTests.cpp",
+					"lineNumber": 99,
+					"timestamp": "2026.10.16-21.47.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_IMPORTED_UNDERWEAR: UE_LOD0_VERTICES=9996 UE_LOD0_TRIANGLES=16754 SOURCE_PRIMITIVE_VERTICES=9604 BOUNDS_WIDTH_CM=123.8300 BOUNDS_HEIGHT_CM=128.1429",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_MORPHS_UNDERWEAR: SOURCE_EFFECTIVE_POSITION=15 UE_IMPORTED=9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.20"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "P0_UNDERWEAR: 15 nonzero source position morphs vs 9 imported; UE 0.015cm morph threshold is under investigation. DO NOT accept full facial/anatomy fidelity yet.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Private\\Tests\\OGGate12P0CharacterFidelityTests.cpp",
+					"lineNumber": 99,
+					"timestamp": "2026.10.16-21.47.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_IMPORTED_NUDE: UE_LOD0_VERTICES=9996 UE_LOD0_TRIANGLES=16754 SOURCE_PRIMITIVE_VERTICES=9604 BOUNDS_WIDTH_CM=123.8300 BOUNDS_HEIGHT_CM=128.1429",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "P0_MORPHS_NUDE: SOURCE_EFFECTIVE_POSITION=15 UE_IMPORTED=9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.20"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "P0_NUDE: 15 nonzero source position morphs vs 9 imported; UE 0.015cm morph threshold is under investigation. DO NOT accept full facial/anatomy fidelity yet.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "D:\\UnrealProjects\\OfflineGame_Gate12_Koikatsu_20261010\\Source\\OfflineGame\\Private\\Tests\\OGGate12P0CharacterFidelityTests.cpp",
+					"lineNumber": 99,
+					"timestamp": "2026.10.16-21.47.20"
+				}
+			],
+			"warnings": 3,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterPresentationPreferencePersistence",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.CharacterPresentationPreferencePersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.036719799041748047,
+			"dateTime": "2026.10.16-21.47.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DevelopmentSourceViewerIsExactAndNoncanonical",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.DevelopmentSourceViewerIsExactAndNoncanonical",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.097953900694847107,
+			"dateTime": "2026.10.16-21.47.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LocalPlayerCreateRestoreNoFabricatedOwnership",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.LocalPlayerCreateRestoreNoFabricatedOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.46306100487709045,
+			"dateTime": "2026.10.16-21.47.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReportBrowsingAcknowledgementAndReload",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.ReportBrowsingAcknowledgementAndReload",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.29388830065727234,
+			"dateTime": "2026.10.16-21.47.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReservedBindingCollisionFailsClosed",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.ReservedBindingCollisionFailsClosed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.25295591354370117,
+			"dateTime": "2026.10.16-21.47.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "VisualAssetsExactVersionAndMissing2D",
+			"fullTestPath": "OfflineGame.Gate12.Ruler.VisualAssetsExactVersionAndMissing2D",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.015872199088335037,
+			"dateTime": "2026.10.16-21.47.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AffinityProficiencyTransferAndPresentationRemainDistinct",
+			"fullTestPath": "OfflineGame.Items.AffinityProficiencyTransferAndPresentationRemainDistinct",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.40203580260276794,
+			"dateTime": "2026.10.16-21.47.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RequiresValidationBeforeActivation",
+			"fullTestPath": "OfflineGame.Persistence.ContentPackage.RequiresValidationBeforeActivation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.28364378213882446,
+			"dateTime": "2026.10.16-21.47.22",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LegacyDuplicateCounterFansOutDeterministically",
+			"fullTestPath": "OfflineGame.Persistence.Migration0007.LegacyDuplicateCounterFansOutDeterministically",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 2.2729980945587158,
+			"dateTime": "2026.10.16-21.47.22",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LegacyTerritoryAndGachaStateArePreserved",
+			"fullTestPath": "OfflineGame.Persistence.Migration0008.LegacyTerritoryAndGachaStateArePreserved",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.7097586393356323,
+			"dateTime": "2026.10.16-21.47.24",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LegacyCoreAspectsAndHeartStateArePreserved",
+			"fullTestPath": "OfflineGame.Persistence.Migration0009.LegacyCoreAspectsAndHeartStateArePreserved",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.7048037052154541,
+			"dateTime": "2026.10.16-21.47.26",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LegacyProgressionIsPreservedWithoutFabricatedOntology",
+			"fullTestPath": "OfflineGame.Persistence.Migration0010.LegacyProgressionIsPreservedWithoutFabricatedOntology",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.5360527038574219,
+			"dateTime": "2026.10.16-21.47.28",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DoesNotFabricateRealityCalendarOrDirectorState",
+			"fullTestPath": "OfflineGame.Persistence.Migration0011.DoesNotFabricateRealityCalendarOrDirectorState",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.256224513053894,
+			"dateTime": "2026.10.16-21.47.29",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PreservesWarHistoryWithoutFabricatingCapabilities",
+			"fullTestPath": "OfflineGame.Persistence.Migration0012.PreservesWarHistoryWithoutFabricatingCapabilities",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.2844096422195435,
+			"dateTime": "2026.10.16-21.47.31",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PreservesKnowledgeWithoutInventingCharacterOntology",
+			"fullTestPath": "OfflineGame.Persistence.Migration0013.PreservesKnowledgeWithoutInventingCharacterOntology",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.88771700859069824,
+			"dateTime": "2026.10.16-21.47.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PackageDefaultsWithoutFabricatedReportsOrManagement",
+			"fullTestPath": "OfflineGame.Persistence.Migration0014.PackageDefaultsWithoutFabricatedReportsOrManagement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.60924327373504639,
+			"dateTime": "2026.10.16-21.47.33",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FailurePreservesAuthoritativeDatabase",
+			"fullTestPath": "OfflineGame.Persistence.MigrationBootstrap.FailurePreservesAuthoritativeDatabase",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.43144869804382324,
+			"dateTime": "2026.10.16-21.47.33",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PromotesValidatedWorkingCopy",
+			"fullTestPath": "OfflineGame.Persistence.MigrationBootstrap.PromotesValidatedWorkingCopy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 1.4752084016799927,
+			"dateTime": "2026.10.16-21.47.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BackupRestore",
+			"fullTestPath": "OfflineGame.Persistence.BackupRestore",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.41326779127120972,
+			"dateTime": "2026.10.16-21.47.35",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterManifestationSurvivesRestart",
+			"fullTestPath": "OfflineGame.Persistence.CharacterManifestationSurvivesRestart",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.29012268781661987,
+			"dateTime": "2026.10.16-21.47.36",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EntitySurvivesRestart",
+			"fullTestPath": "OfflineGame.Persistence.EntitySurvivesRestart",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.26823359727859497,
+			"dateTime": "2026.10.16-21.47.36",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RecoverySnapshotRotation",
+			"fullTestPath": "OfflineGame.Persistence.RecoverySnapshotRotation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.35237619280815125,
+			"dateTime": "2026.10.16-21.47.36",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterRosterDetailWardrobeAdultEquipment",
+			"fullTestPath": "OfflineGame.PreUnreal.UI.CharacterRosterDetailWardrobeAdultEquipment",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.48139488697052002,
+			"dateTime": "2026.10.16-21.47.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GachaRecordsTerritoryWorldHudTurnBattle",
+			"fullTestPath": "OfflineGame.PreUnreal.UI.GachaRecordsTerritoryWorldHudTurnBattle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.29081618785858154,
+			"dateTime": "2026.10.16-21.47.37",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RecoveryPackageProjectDispatchWarRisk",
+			"fullTestPath": "OfflineGame.PreUnreal.UI.RecoveryPackageProjectDispatchWarRisk",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.42934879660606384,
+			"dateTime": "2026.10.16-21.47.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RoutesFormsTranscendenceAndWorldExpressions",
+			"fullTestPath": "OfflineGame.Progression.Character.RoutesFormsTranscendenceAndWorldExpressions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.39277040958404541,
+			"dateTime": "2026.10.16-21.47.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CrownIsNonUniqueGrandSeatIsUnique",
+			"fullTestPath": "OfflineGame.Progression.Classes.CrownIsNonUniqueGrandSeatIsUnique",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32410261034965515,
+			"dateTime": "2026.10.16-21.47.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PreservesSourcesAndCreatesGrandManifestation",
+			"fullTestPath": "OfflineGame.Progression.GrandConvergence.PreservesSourcesAndCreatesGrandManifestation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.31402680277824402,
+			"dateTime": "2026.10.16-21.47.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DataDrivenAndAllFactorsRemainCausal",
+			"fullTestPath": "OfflineGame.Progression.RankAndFactors.DataDrivenAndAllFactorsRemainCausal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.34164369106292725,
+			"dateTime": "2026.10.16-21.47.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "OfflineGame.Rules.Effects.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016533002257347107,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BasicArithmetic",
+			"fullTestPath": "OfflineGame.Rules.LargeNumber.BasicArithmetic",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016981799155473709,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AuthorityThenSpecificity",
+			"fullTestPath": "OfflineGame.Rules.Priority.AuthorityThenSpecificity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016509398818016052,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ResolverSelectsHighestPriority",
+			"fullTestPath": "OfflineGame.Rules.Priority.ResolverSelectsHighestPriority",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.031016699969768524,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Reproducible",
+			"fullTestPath": "OfflineGame.Rules.Rng.Reproducible",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016132500022649765,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RejectsDuplicates",
+			"fullTestPath": "OfflineGame.Rules.SkillSet.RejectsDuplicates",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016833901405334473,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Validation",
+			"fullTestPath": "OfflineGame.Rules.Triggers.Validation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.016568798571825027,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProtectedManifestationSurvivesBackupAndBlocksConvergenceUntilConfirmed",
+			"fullTestPath": "OfflineGame.Runtime.Management.ProtectedManifestationSurvivesBackupAndBlocksConvergenceUntilConfirmed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.37458139657974243,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DependencyVersionsPhysicalIdentityAndOrder",
+			"fullTestPath": "OfflineGame.Runtime.OptionalPackages.DependencyVersionsPhysicalIdentityAndOrder",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.3330720067024231,
+			"dateTime": "2026.10.16-21.47.40",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EmbeddedExternalTrustAndLeases",
+			"fullTestPath": "OfflineGame.Runtime.OptionalPackages.EmbeddedExternalTrustAndLeases",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.28977000713348389,
+			"dateTime": "2026.10.16-21.47.41",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FailedMountActivationAndUnmountRetainResidency",
+			"fullTestPath": "OfflineGame.Runtime.OptionalPackages.FailedMountActivationAndUnmountRetainResidency",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.33464118838310242,
+			"dateTime": "2026.10.16-21.47.41",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MissingAssetsAndHostReplacementPreserveLogicalState",
+			"fullTestPath": "OfflineGame.Runtime.OptionalPackages.MissingAssetsAndHostReplacementPreserveLogicalState",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.2519422173500061,
+			"dateTime": "2026.10.16-21.47.41",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Failed to find object 'Object /Game/__ClosureMissing__/NoAsset.NoAsset'",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.16-21.47.42"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeReceiptsVerifyBytesAndRejectImportedProvenance",
+			"fullTestPath": "OfflineGame.Runtime.OptionalPackages.NativeReceiptsVerifyBytesAndRejectImportedProvenance",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.29379388689994812,
+			"dateTime": "2026.10.16-21.47.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeStorageMovePreservesReceiptAndFailedPersistence",
+			"fullTestPath": "OfflineGame.Runtime.OptionalPackages.NativeStorageMovePreservesReceiptAndFailedPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32418149709701538,
+			"dateTime": "2026.10.16-21.47.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimumVersionsCyclesAndActivation",
+			"fullTestPath": "OfflineGame.Runtime.Packages.MinimumVersionsCyclesAndActivation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.38056570291519165,
+			"dateTime": "2026.10.16-21.47.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StorageMovePreservesExistingAndFailedPersistence",
+			"fullTestPath": "OfflineGame.Runtime.Packages.StorageMovePreservesExistingAndFailedPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.26276159286499023,
+			"dateTime": "2026.10.16-21.47.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ConstantMemoryBudgets",
+			"fullTestPath": "OfflineGame.Runtime.PerformanceTelemetry.ConstantMemoryBudgets",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.015760697424411774,
+			"dateTime": "2026.10.16-21.47.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ManualExportImportPreservesPreviousWorld",
+			"fullTestPath": "OfflineGame.Runtime.Recovery.ManualExportImportPreservesPreviousWorld",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.43702960014343262,
+			"dateTime": "2026.10.16-21.47.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AcknowledgementAndAndroidProjectionDoNotRewriteWorldEvent",
+			"fullTestPath": "OfflineGame.Runtime.Reports.AcknowledgementAndAndroidProjectionDoNotRewriteWorldEvent",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32374018430709839,
+			"dateTime": "2026.10.16-21.47.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProfileOrientationAndRecoveryCatalogStayOutsideWorldCausality",
+			"fullTestPath": "OfflineGame.Runtime.Sidecars.ProfileOrientationAndRecoveryCatalogStayOutsideWorldCausality",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.42986920475959778,
+			"dateTime": "2026.10.16-21.47.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CapabilityFramework",
+			"fullTestPath": "OfflineGame.Runtime.Traversal.CapabilityFramework",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.017402999103069305,
+			"dateTime": "2026.10.16-21.47.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MapBoundaryRecoveryPolicy",
+			"fullTestPath": "OfflineGame.Runtime.WorldSafety.MapBoundaryRecoveryPolicy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.015788599848747253,
+			"dateTime": "2026.10.16-21.47.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OverlappingClaimsReclamationAndPermanentGachaUnlock",
+			"fullTestPath": "OfflineGame.Sovereignty.OverlappingClaimsReclamationAndPermanentGachaUnlock",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.44151750206947327,
+			"dateTime": "2026.10.16-21.47.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CapabilityVectorsAreAuthoritativeNotSummaryPower",
+			"fullTestPath": "OfflineGame.Strategy.Army.CapabilityVectorsAreAuthoritativeNotSummaryPower",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.31794720888137817,
+			"dateTime": "2026.10.16-21.47.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MandatoryObjectivesCannotBeSilentlyBypassed",
+			"fullTestPath": "OfflineGame.Strategy.Dispatch.MandatoryObjectivesCannotBeSilentlyBypassed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.27985990047454834,
+			"dateTime": "2026.10.16-21.47.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MultipleFrontsOrdersDisobedienceAndParticipantHistory",
+			"fullTestPath": "OfflineGame.Strategy.War.MultipleFrontsOrdersDisobedienceAndParticipantHistory",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.39338868856430054,
+			"dateTime": "2026.10.16-21.47.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProjectsCivilizationDimensionsAndCapabilityRoutes",
+			"fullTestPath": "OfflineGame.Strategy.World.ProjectsCivilizationDimensionsAndCapabilityRoutes",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.33962780237197876,
+			"dateTime": "2026.10.16-21.47.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IdentityGroupedRosterUsesLastUsedManifestation",
+			"fullTestPath": "OfflineGame.UI.Characters.IdentityGroupedRosterUsesLastUsedManifestation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.30552598834037781,
+			"dateTime": "2026.10.16-21.47.46",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GachaTerritoryOpeningAndLargeNumbersFollowFreeze",
+			"fullTestPath": "OfflineGame.UI.Projections.GachaTerritoryOpeningAndLargeNumbersFollowFreeze",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.30733358860015869,
+			"dateTime": "2026.10.16-21.47.47",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GachaHistoryChronicleAndIntelligenceAreQueryable",
+			"fullTestPath": "OfflineGame.UI.Records.GachaHistoryChronicleAndIntelligenceAreQueryable",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.25662440061569214,
+			"dateTime": "2026.10.16-21.47.47",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StableFiveDestinationGrammarAndRecordsHub",
+			"fullTestPath": "OfflineGame.UI.RulerMode.StableFiveDestinationGrammarAndRecordsHub",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.24004089832305908,
+			"dateTime": "2026.10.16-21.47.47",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CompactHudRespectsKnowledgeAndUpperRightCompanions",
+			"fullTestPath": "OfflineGame.UI.WorldMode.CompactHudRespectsKnowledgeAndUpperRightCompanions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.2773297131061554,
+			"dateTime": "2026.10.16-21.47.48",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PersistentEndToEndRestart",
+			"fullTestPath": "OfflineGame.VerticalSlice.Reconciled.PersistentEndToEndRestart",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.71660512685775757,
+			"dateTime": "2026.10.16-21.47.48",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DeterministicSchedulingBoundsAndProvenance",
+			"fullTestPath": "OfflineGame.World.Director.DeterministicSchedulingBoundsAndProvenance",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.3241100013256073,
+			"dateTime": "2026.10.16-21.47.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OfflineGovernorDefersNewCatastropheButPreservesLockedConsequences",
+			"fullTestPath": "OfflineGame.World.Director.OfflineGovernorDefersNewCatastropheButPreservesLockedConsequences",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.32700431346893311,
+			"dateTime": "2026.10.16-21.47.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GraphWorldRankAndJunctionLifecycle",
+			"fullTestPath": "OfflineGame.World.Reality.GraphWorldRankAndJunctionLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.38343730568885803,
+			"dateTime": "2026.10.16-21.47.49",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NestedRationalProjectionAndCalendarResolver",
+			"fullTestPath": "OfflineGame.World.Time.NestedRationalProjectionAndCalendarResolver",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.2988918125629425,
+			"dateTime": "2026.10.16-21.47.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ResultOrientedPersistence",
+			"fullTestPath": "OfflineGame.WorldState.Dispatch.ResultOrientedPersistence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.31862878799438477,
+			"dateTime": "2026.10.16-21.47.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CaptureRequiresIntactCore",
+			"fullTestPath": "OfflineGame.WorldState.DomainCore.CaptureRequiresIntactCore",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.36599829792976379,
+			"dateTime": "2026.10.16-21.47.51",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DeclareWarDoesNotInventAllianceHistory",
+			"fullTestPath": "OfflineGame.WorldState.FactionWar.DeclareWarDoesNotInventAllianceHistory",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.2757532000541687,
+			"dateTime": "2026.10.16-21.47.51",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimalPersistentState",
+			"fullTestPath": "OfflineGame.WorldState.FactionWar.MinimalPersistentState",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.33904248476028442,
+			"dateTime": "2026.10.16-21.47.51",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AggregateResourcesAndLazyProgress",
+			"fullTestPath": "OfflineGame.WorldState.Project.AggregateResourcesAndLazyProgress",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.37165290117263794,
+			"dateTime": "2026.10.16-21.47.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorldModeDiscoveryVisibleInRulerModeAfterRestart",
+			"fullTestPath": "OfflineGame.WorldState.WorldModeDiscoveryVisibleInRulerModeAfterRestart",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"1754AAEC447BB7AEB5F782816015B8B3"
+			],
+			"duration": 0.30391409993171692,
+			"dateTime": "2026.10.16-21.47.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}
