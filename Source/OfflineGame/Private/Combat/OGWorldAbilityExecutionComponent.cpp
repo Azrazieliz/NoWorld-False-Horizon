@@ -407,12 +407,35 @@ void UOGWorldAbilityExecutionComponent::QueryContacts(const FOGWorldAbilityStep&
         {
             FVector Center=Origin;
             if (!Root.TargetUnitIds.IsEmpty())
-                if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Root.TargetUnitIds[0]))
-                {
-                    if (FVector::DistSquared(Origin,Target->GetActorLocation())>FMath::Square(Step.RangeCentimeters)) return;
-                    Center=Target->GetActorLocation();
-                }
-            GetWorld()->SweepMultiByChannel(Hits,Center,Center,FQuat::Identity,Step.TraceChannel,FCollisionShape::MakeSphere(Step.RadiusCentimeters),Query);
+            {
+                // Never retarget a source-authored cast to arbitrary nearby
+                // actors when the original selected target streamed away.
+                auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                    GetWorld(),BattleId,Root.TargetUnitIds[0]);
+                if (!Target ||
+                    FVector::DistSquared(Origin,Target->GetActorLocation())>
+                        FMath::Square(Step.RangeCentimeters))
+                    return;
+                Center=Target->GetActorLocation();
+            }
+            // AoE is a genuine stationary overlap of the actual native
+            // collision shapes. A zero-length sweep can miss initial
+            // overlaps on several Chaos collision configurations.
+            TArray<FOverlapResult> Overlaps;
+            GetWorld()->OverlapMultiByChannel(
+                Overlaps,Center,FQuat::Identity,Step.TraceChannel,
+                FCollisionShape::MakeSphere(Step.RadiusCentimeters),Query);
+            for (const FOverlapResult& Contact:Overlaps)
+            {
+                AActor* Actor=Contact.GetActor();
+                const FOGEntityId Id=BodyId(Actor,BattleId);
+                if (!Id.IsValid())continue;
+                if (Step.bRequireLineOfSight &&
+                    !VisibleBetween(GetWorld(),GetOwner(),Actor,Origin,
+                                    Actor->GetActorLocation(),Step.VisibilityChannel))
+                    continue;
+                Out.AddUnique(Id);
+            }
         }
         else if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         {
