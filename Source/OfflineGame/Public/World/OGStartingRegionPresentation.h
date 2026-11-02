@@ -218,6 +218,8 @@ private:
     TArray<TArray<FString>> R1VisibleScatterSourceIdByType;
     FIntPoint LastR1StreamTile = FIntPoint(MIN_int32,MIN_int32);
     bool bR1DatasetLoaded = false;
+    // Authentic source collision terrain, queued without a monolithic startup mesh build.
+    TArray<int32> R1PendingTerrainSections;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> R1MarketSectionComponents;
     TSharedPtr<struct FStreamableHandle> R1MarketStreamHandle;
@@ -228,6 +230,7 @@ private:
     bool bR1MarketSourceAssetUnavailable = false;
     bool LoadR1MetricData();
     void BuildR1SourceTerrain();
+    void BuildR1SourceTerrainTile(int32 SectionIndex);
     void BuildR1SourceRiver();
     void LoadR1SourceScatter();
     // Exact original Eastern Market assets are loaded on demand by source

@@ -551,6 +551,7 @@ void AOGStartingRegionGenerator::ClearGeneratedContent()
     }
     if(R1RiverSurface)
         R1RiverSurface->ClearAllMeshSections();
+    R1PendingTerrainSections.Reset();
     UnloadR1MarketSections();
 
     UHierarchicalInstancedStaticMeshComponent* Components[] =
