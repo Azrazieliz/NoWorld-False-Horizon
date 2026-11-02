@@ -222,20 +222,20 @@ void UOGGate12NativeRulerWidget::BuildInventory()
     if (!PendingObjectReview.ConfirmationToken.IsEmpty()) return;
     AddMessage(Body, TEXT("EQUIPMENT SLOTS"), 20, InventorySilver);
     if (!Snapshot.bHasTarget) AddMessage(Body, TEXT("Choose a character to inspect its slots."), 16, InventoryMuted);
-    for (const auto& Slot : Snapshot.Slots)
+    for (const auto& EquipmentSlot : Snapshot.Slots)
     {
         const auto* Equipped = Snapshot.Items.FindByPredicate([&](const auto& I)
-        { return I.Item.ItemId == Slot.Binding.ItemId; });
-        AddMessage(Body, Slot.DisplayName + TEXT(" / ") + (Slot.bOccupied ?
+        { return I.Item.ItemId == EquipmentSlot.Binding.ItemId; });
+        AddMessage(Body, EquipmentSlot.DisplayName + TEXT(" / ") + (EquipmentSlot.bOccupied ?
             (Equipped ? InventoryItemLabel(Snapshot, *Equipped) : FString(TEXT("Stored item unavailable"))) : FString(TEXT("Empty"))),
             18, InventoryText);
-        if (!Slot.bAuthored)
+        if (!EquipmentSlot.bAuthored)
             AddMessage(Body, TEXT("Stored binding; no approved slot rule is installed for new equipment."), 15, InventoryMuted);
-        if (Slot.bOccupied)
+        if (EquipmentSlot.bOccupied)
         {
             FOGOwnedEquipmentPreview Removal;
-            if (Session->ReviewOwnedEquipment(Slot.SlotId, Slot.Binding.ItemId, true, Removal, Error) && Removal.bCanApply)
-                AddAction(Body, TEXT("REVIEW UNEQUIP"), TEXT("inventory/unequip/") + Slot.SlotId.ToString());
+            if (Session->ReviewOwnedEquipment(EquipmentSlot.SlotId, EquipmentSlot.Binding.ItemId, true, Removal, Error) && Removal.bCanApply)
+                AddAction(Body, TEXT("REVIEW UNEQUIP"), TEXT("inventory/unequip/") + EquipmentSlot.SlotId.ToString());
             else if (!Error.IsEmpty()) AddMessage(Body, Error, 15, InventoryMuted);
         }
     }
@@ -255,23 +255,23 @@ void UOGGate12NativeRulerWidget::BuildInventory()
         AddMessage(Body, FString::Printf(TEXT("Stored modifiers: %d"), Selected->Modifiers.Num()), 15, InventoryMuted);
     for (const auto& Binding : Selected->Bindings)
     {
-        const auto* Slot = Snapshot.Slots.FindByPredicate([&](const auto& S) { return S.SlotId == Binding.SlotId; });
+        const auto* LocatedSlot = Snapshot.Slots.FindByPredicate([&](const auto& S) { return S.SlotId == Binding.SlotId; });
         AddMessage(Body, TEXT("Equipped by ") + InventoryCopyLabel(Session, Binding.WearerEntityId) +
-            TEXT(" / ") + (Slot ? Slot->DisplayName : FString(TEXT("Stored equipment slot"))), 15, InventoryMuted);
+            TEXT(" / ") + (LocatedSlot ? LocatedSlot->DisplayName : FString(TEXT("Stored equipment slot"))), 15, InventoryMuted);
     }
-    for (const auto& Slot : Snapshot.Slots)
+    for (const auto& EquipmentSlot : Snapshot.Slots)
     {
-        if (!Slot.bAuthored) continue;
+        if (!EquipmentSlot.bAuthored) continue;
         FOGOwnedEquipmentPreview Option;
-        if (Session->ReviewOwnedEquipment(Slot.SlotId, Selected->Item.ItemId, false, Option, Error))
+        if (Session->ReviewOwnedEquipment(EquipmentSlot.SlotId, Selected->Item.ItemId, false, Option, Error))
         {
             if (Option.bCanApply)
-                AddAction(Body, TEXT("REVIEW EQUIP / ") + Slot.DisplayName,
-                    TEXT("inventory/equip/") + Slot.SlotId.ToString() + TEXT("|") + Selected->Item.ItemId.ToString());
-            else AddMessage(Body, Slot.DisplayName + TEXT(": ") + FString::Join(Option.MissingRequirements, TEXT(" ")),
+                AddAction(Body, TEXT("REVIEW EQUIP / ") + EquipmentSlot.DisplayName,
+                    TEXT("inventory/equip/") + EquipmentSlot.SlotId.ToString() + TEXT("|") + Selected->Item.ItemId.ToString());
+            else AddMessage(Body, EquipmentSlot.DisplayName + TEXT(": ") + FString::Join(Option.MissingRequirements, TEXT(" ")),
                 15, InventoryMuted);
         }
-        else if (!Error.IsEmpty()) AddMessage(Body, Slot.DisplayName + TEXT(": ") + Error, 15, InventoryMuted);
+        else if (!Error.IsEmpty()) AddMessage(Body, EquipmentSlot.DisplayName + TEXT(": ") + Error, 15, InventoryMuted);
     }
 }
 
@@ -370,16 +370,16 @@ void UOGGate12NativeRulerWidget::HandleInventoryAction(
         ClearInventoryReview();
         const bool bUnequip = Action.StartsWith(TEXT("inventory/unequip/"));
         const FString Payload = Action.Mid(bUnequip ? 18 : 16);
-        FString Slot = Payload, Item;
+        FString SlotKey = Payload, Item;
         FOGEntityId ItemId;
         FGuid Guid;
-        if (!bUnequip && (!Payload.Split(TEXT("|"), &Slot, &Item) || !FGuid::Parse(Item, Guid)))
+        if (!bUnequip && (!Payload.Split(TEXT("|"), &SlotKey, &Item) || !FGuid::Parse(Item, Guid)))
             Error = TEXT("This equipment choice is invalid. Review an owned item again.");
         else
         {
             if (!bUnequip) ItemId = FOGEntityId(Guid);
             FOGOwnedEquipmentPreview Review;
-            if (Session.ReviewOwnedEquipment(FOGContentId(Slot), ItemId, bUnequip, Review, Error))
+            if (Session.ReviewOwnedEquipment(FOGContentId(SlotKey), ItemId, bUnequip, Review, Error))
             {
                 if (!Review.bCanApply) Error = FString::Join(Review.MissingRequirements, TEXT(" "));
                 else
