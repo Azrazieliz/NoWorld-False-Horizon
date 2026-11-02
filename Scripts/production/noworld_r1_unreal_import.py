@@ -36,7 +36,9 @@ def sha256(path):
     return h.hexdigest()
 
 def import_one(source,expected_name):
-    file=Path(source["file"]).resolve(strict=True)
+    file=Path(source["file"])
+    if not file.is_file():file=root/file.name
+    file=file.resolve(strict=True)
     if file.suffix.lower()!=".glb" or sha256(file)!=source["sha256"] or not source.get("triangle_faces"):
         raise ValueError("Imported GLB not authentic or geometric: "+str(file))
     dest="/Game/NoWorld/FirstWorld/R1/"
