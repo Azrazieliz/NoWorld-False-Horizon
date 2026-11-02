@@ -8842,7 +8842,22 @@ void AOGWorldPresentationHud::DrawHUD()
     if (NativeBattleWidget && (!Character || !NativeBattleWidget->IsForCharacter(Character) ||
         FoundationSurface!=TEXT("world") || bSettingsOpen || bPauseOpen || bInteractionMenuOpen ||
         !Character->HasNativeOwnedLuminousEncounter()))
+    {
+        const bool bWasBattleVisible=NativeBattleWidget->IsVisible();
         NativeBattleWidget->SetVisibility(ESlateVisibility::Collapsed);
+        // Battle's native UMG owns GameAndUI focus only while it is visible.
+        // A hidden combat overlay must not retain pointer focus and prevent
+        // actual camera-drag and mobile input after returning to the World.
+        // Never override the separate Ruler, opening or interaction modals.
+        if (bWasBattleVisible && PlayerOwner && Character &&
+            FoundationSurface==TEXT("world") && !bSettingsOpen &&
+            !bPauseOpen && !bInteractionMenuOpen)
+        {
+            PlayerOwner->SetInputMode(FInputModeGameOnly());
+            PlayerOwner->bShowMouseCursor=false;
+            Character->RefreshFoundationInputState();
+        }
+    }
     if (bInteractionMenuOpen)
         if (const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
             if (const auto* Battle = NativeCore->GetOwnedLuminousTurnBattle();
