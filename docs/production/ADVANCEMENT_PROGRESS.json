@@ -1476,6 +1476,11 @@
             "commit": "a1072c51",
             "type": "SOURCE_PARTIAL",
             "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
+          },
+          {
+            "commit": "1c91c1b8",
+            "type": "SOURCE_PARTIAL",
+            "change": "Genuine source foliage prepared with provenance and preserved geometry in native isolated worker; 5★ reusable world-content importer source added, native UE and phone still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1503,6 +1508,11 @@
             "commit": "a1072c51",
             "type": "SOURCE_PARTIAL",
             "change": "Real StartingWorld generator creation now uses Unreal deferred actor spawning; sets original Gate02 R1 source-mode and source tag before FinishSpawningActor invokes BeginPlay, preventing previous legacy synthetic environment generation from racing ahead of source selection. Existing placed/source generators remain intact; original 513-grid and 10,454 scatter now read from recovered source."
+          },
+          {
+            "commit": "1c91c1b8",
+            "type": "SOURCE_PARTIAL",
+            "change": "Genuine source foliage prepared with provenance and preserved geometry in native isolated worker; 5★ reusable world-content importer source added, native UE and phone still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1520,6 +1530,11 @@
             "commit": "cd29fa54",
             "type": "SOURCE_PARTIAL",
             "change": "Original Gate02 R1 terrain height, masks and stable scatter recovered to GitHub; full branch restored after isolated index repair; native Android World rendering remains unverified."
+          },
+          {
+            "commit": "1c91c1b8",
+            "type": "SOURCE_PARTIAL",
+            "change": "Genuine source foliage prepared with provenance and preserved geometry in native isolated worker; 5★ reusable world-content importer source added, native UE and phone still unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -2978,9 +2993,51 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T09:10:05.252Z"
+    },
+    {
+      "source_commit": "1c91c1b8ce32aed34b0568a722d2e9afa772e150",
+      "system_ids": [
+        "M11",
+        "M12",
+        "M13",
+        "M34"
+      ],
+      "result": "Added and actually executed reusable Blender 5.2.2 source-only conversion for original R1 fir/oak/shrub GLB. Exact 3 source hashes matched frozen 2026-10-19 native region kit and source vertex/triangle counts were preserved (515299/433021 fir, 680067/495533 oak, 6866/6827 shrub); resulting three authentic isolated prepared GLBs have SHA receipts. Original Eastern Market 478-mesh 12-section conversion initiated, not yet verified complete.",
+      "remaining_player_visible_work": "Must finish 12 original Eastern Market source partitions, import all exact native UE StaticMesh/material packages and publish them through GitHub, then compile/render/stream on Android. Source GLBs are not UAssets or device gameplay.",
+      "source_paths": [
+        "Scripts/production/noworld_r1_prepare_glb.py"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": "Scripts/production/noworld_r1_prepare_glb.py",
+      "5star_new_program_reason": "Existing noworld_unreal_content_import.py only handles characters, FBX animations and artwork; it cannot assemble, section, and import source-authored static World GLBs into the existing Gate02 R1 runtime object names, so reusable static World geometry authoring was required.",
+      "5star_execution": "Blender 5.2.2 ran on PC and emitted verified foliage geometry source receipts. Market pass still in execution.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T09:17:26.962Z"
+    },
+    {
+      "source_commit": "b1e753d8f5cfe13575bba9d11fe179d84e910dea",
+      "system_ids": [
+        "M11",
+        "M12",
+        "M13",
+        "M34"
+      ],
+      "result": "Implemented native UnrealEditor 5.8 Python static-mesh import program for genuine original R1 foliage and twelve Eastern Market partitions, preserving source SHA checks and canonical runtime asset paths and refusing overwrites; isolated PC Unreal import execution initiated. Reuses existing 5-star native import pattern but separate source-static-mesh capability was missing.",
+      "remaining_player_visible_work": "Actual import receipt, native mesh files, material/texture dependencies, Git LFS publication, UE native game test and Android approval still required; never count an importer script or started process as completed native assets.",
+      "source_paths": [
+        "Scripts/production/noworld_r1_unreal_import.py"
+      ],
+      "5star_reused_program": null,
+      "5star_new_program": "Scripts/production/noworld_r1_unreal_import.py",
+      "5star_new_program_reason": "Existing noworld_unreal_content_import.py only handles characters, FBX animations and artwork; it cannot assemble, section, and import source-authored static World GLBs into the existing Gate02 R1 runtime object names, so reusable static World geometry authoring was required.",
+      "5star_execution": "Real UE5.8 isolated native import launched, pending receipt and native verification.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T09:17:26.962Z"
     }
   ],
-  "continuation_last_source_commit": "a1072c51f49c6f7888b7748cf1e24211976b9e76",
+  "continuation_last_source_commit": "b1e753d8f5cfe13575bba9d11fe179d84e910dea",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
