@@ -306,6 +306,17 @@ void AOGStartingRegionGenerator::BeginPlay()
 {
     Super::BeginPlay();
     if (Tags.Contains(TEXT("Gate02R1Source"))) bGate02R1RegionSource = true;
+    // Preplaced StartingWorld actors receive BeginPlay BEFORE GameMode
+    // StartPlay. Configuring them only in StartPlay allowed the legacy
+    // randomized region to generate and persist a fake layout first.
+    // The existing StartingWorld is the source-backed boot carrier.
+    if (UWorld* World=GetWorld())
+        if (World->IsGameWorld() &&
+            World->GetMapName().EndsWith(TEXT("StartingWorld")))
+        {
+            bGate02R1RegionSource=true;
+            Tags.AddUnique(FName(TEXT("Gate02R1Source")));
+        }
 
     if (UGameInstance* GameInstance = GetGameInstance())
     {
