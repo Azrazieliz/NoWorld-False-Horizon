@@ -1014,6 +1014,11 @@
             "commit": "45668957",
             "type": "SOURCE_PARTIAL",
             "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
+          },
+          {
+            "commit": "4d76125a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native battle UMG now explicitly returns focus to Game-only input when a visible battle surface is collapsed while resuming the genuine World. The existing Ruler, opening, settings, pause and interaction modals retain their own input-mode ownership; a hidden battle widget cannot keep Android camera-drag/movement routed through an obsolete UI focus state."
           }
         ],
         "completed_in_this_update": false,
@@ -1081,6 +1086,11 @@
             "commit": "0817c0a2",
             "type": "SOURCE_PARTIAL",
             "change": "The real controlled character, native UMG combat buttons and fallback Android Canvas now select the same exact canonical skill branch/mode motion as AI and actual World actor presentation. Player action submission no longer uses a different generic motion semantic from its registered combat executor; skills without a physical original source route are correctly unavailable rather than producing misleading player-visible buttons."
+          },
+          {
+            "commit": "4d76125a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native battle UMG now explicitly returns focus to Game-only input when a visible battle surface is collapsed while resuming the genuine World. The existing Ruler, opening, settings, pause and interaction modals retain their own input-mode ownership; a hidden battle widget cannot keep Android camera-drag/movement routed through an obsolete UI focus state."
           }
         ],
         "completed_in_this_update": false,
@@ -1679,6 +1689,11 @@
             "commit": "45668957",
             "type": "SOURCE_PARTIAL",
             "change": "The existing real Unreal Android BuildCookRun script now checks the actual tracked StartingWorld map, all five original 513-source Gate02 metric/ecology files (including RAW byte lengths and 10,454 stable placements), and intact 3,222-entry shared animation bank before expensive native packaging. It rejects an old/stale APK even when RunUAT succeeds and writes the generated APK SHA256, source Git commit, size and time in a build receipt. No fake APK is offered."
+          },
+          {
+            "commit": "4d76125a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native battle UMG now explicitly returns focus to Game-only input when a visible battle surface is collapsed while resuming the genuine World. The existing Ruler, opening, settings, pause and interaction modals retain their own input-mode ownership; a hidden battle widget cannot keep Android camera-drag/movement routed through an obsolete UI focus state."
           }
         ],
         "completed_in_this_update": false,
@@ -2624,9 +2639,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T03:38:00+01:00"
+    },
+    {
+      "source_commit": "4d76125ac3b5dbc8bd816fef70b8e3a39d4b3430",
+      "system_ids": [
+        "M02",
+        "M03",
+        "M33"
+      ],
+      "result": "Native battle UMG now explicitly returns focus to Game-only input when a visible battle surface is collapsed while resuming the genuine World. The existing Ruler, opening, settings, pause and interaction modals retain their own input-mode ownership; a hidden battle widget cannot keep Android camera-drag/movement routed through an obsolete UI focus state.",
+      "remaining_player_visible_work": "UE5.8/Android input testing needed across battle completion, World return, Ruler and native interaction modals. Requires genuine original World source and APK build for owner review.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "5star_reused_program": "AOGWorldPresentationHud::DrawHUD",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Native World UMG input ownership corrected in existing HUD, GitHub source only.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:43:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "4566895706485da7aa079a99602ecb376cb44a08",
+  "continuation_last_source_commit": "4d76125ac3b5dbc8bd816fef70b8e3a39d4b3430",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
