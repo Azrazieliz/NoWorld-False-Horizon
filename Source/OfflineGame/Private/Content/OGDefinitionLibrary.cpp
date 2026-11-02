@@ -69,7 +69,7 @@ bool RawArrays(const FString& Json,const TArray<FString>& Fields,const TArray<FS
         !Root->TryGetStringField(TEXT("schema"),Schema)) return Fail(Error,TEXT("Definition catalog requires a schema."));
     for (const auto& Pair:Root->Values)
         if (Pair.Key!=TEXT("schema") && !Fields.Contains(Pair.Key) && !MetadataFields.Contains(Pair.Key))
-            return Fail(Error,FString(TEXT("Unknown catalog root field: "))+FString(Pair.Key.ToString()));
+            return Fail(Error,FString(TEXT("Unknown catalog root field: "))+FString(*Pair.Key));
     int32 I=0; Space(Json,I); if (I>=Json.Len() || Json[I++]!='{') return false;
     while (I<Json.Len())
     {
