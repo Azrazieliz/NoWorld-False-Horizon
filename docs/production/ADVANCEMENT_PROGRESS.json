@@ -3351,7 +3351,7 @@
         "M14"
       ],
       "result": "Original character shared-motion controller now uses one reusable exact-SourceClipId selection across all distinct native rig/skeleton drivers at both preflight and actual playback. It considers only real indexed native sequences, source origin, rig/anatomy/outfit/context/capabilities/scene roles; checks all actual rig families before stopping the current animation, then synchronizes durations across attached parts. This closes the independently resolved incompatible takes failure and preserves one global 3222-entry source bank; no per-character copies, fabricated retargets or impact times. Forced looping no longer emits natural-completion contact. Original protected PC source inventory inspected: 3222 original indexed entries, 3222 native paths present in protected source checkout, 1077 unique original source clip IDs, 1075 semantic actions, categories Traversal=313, Interaction=1070, Combat=937, AdultInteraction=902. These counts indicate on-disk presence, not gameplay/Android playback or authored combat contact.",
-      "remaining_player_visible_work": "Native new-source UE5.8 rebuild in isolated checkout entered 15 compile actions after UHT; new revision not yet native-verified. Need completed C++ build, native animation tests, actual compatible rigs/character playback, 937 combat clip contact/authored ability mapping especially projectile/cast, Android cook and owner phone acceptance. Source clip catalog has no authored impact seconds and no natural completion evidence; never invent them.",
+      "remaining_player_visible_work": "Compilation SUCCESS on 38d59b9; 3222 source asset files and cook coverage PASS read-only; actual native animation automation attempted after compile and awaiting completion, not recorded as passed. 937 authored combat-contact source mappings and individual native motion/rig playback, Android cook, FPS/visual device acceptance still unverified. Cannot claim every original animation finished.",
       "source_paths": [
         "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
         "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp"
@@ -3360,9 +3360,11 @@
       "5star_new_program": null,
       "5star_new_program_reason": null,
       "5star_execution": "Used the original global 3222-entry bank and validated 3222 corresponding native source asset file paths through a read-only audit of protected canonical PC source; did not reset or mutate protected PC project. Native build executed in disposable isolated test checkout with low-memory settings after relocating only Unreal DDC cache by a preserving junction.",
-      "status": "SHARED_ANIMATION_COHERENCE_SOURCE_COMMITTED_NATIVE_BUILD_PENDING",
+      "status": "NATIVE_UE58_COMPILED_SHARED_ANIMATION_COHERENCE_DEVICE_PLAYBACK_OPEN",
       "counted_as_completed_system": false,
-      "saved_utc": "2026-11-02T18:44:00Z"
+      "saved_utc": "2026-11-02T20:29:00Z",
+      "native_editor_build_verified": true,
+      "native_compile_evidence": "Native UE5.8 OfflineGameEditor Win64 Development incremental UHT + 15/15 actions succeeded, native_shared_animation_20261102_retry.log: Result: Succeeded, 4266.23 seconds, actual UnrealEditor-OfflineGame.dll present. Compiled isolated source HEAD 38d59b9db06cd191584e205a41b9ae03624a2cc4; contains coherent source controller change; later 3222 cook directory addition is config only and separately audited."
     },
     {
       "source_commit": "56a818892cc0844c339252a77c685c38d04d02bf",
