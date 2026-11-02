@@ -999,6 +999,11 @@
             "commit": "3be2b51f",
             "type": "SOURCE_PARTIAL",
             "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
+          },
+          {
+            "commit": "d656c5a5",
+            "type": "SOURCE_PARTIAL",
+            "change": "Existing authored R1 world exploration persistence now requires the actual locally possessed PlayerController before reading or writing the canonical Ruler-owned trail and source-tile journal. Other NPC/AI WorldPrototypeCharacter actors no longer share the local Ruler's GameInstance and can overwrite saved player exploration with unrelated movement or trigger needless per-NPC SQL scans."
           }
         ],
         "completed_in_this_update": false,
@@ -1341,6 +1346,11 @@
             "commit": "3be2b51f",
             "type": "SOURCE_PARTIAL",
             "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
+          },
+          {
+            "commit": "d656c5a5",
+            "type": "SOURCE_PARTIAL",
+            "change": "Existing authored R1 world exploration persistence now requires the actual locally possessed PlayerController before reading or writing the canonical Ruler-owned trail and source-tile journal. Other NPC/AI WorldPrototypeCharacter actors no longer share the local Ruler's GameInstance and can overwrite saved player exploration with unrelated movement or trigger needless per-NPC SQL scans."
           }
         ],
         "completed_in_this_update": false,
@@ -1501,6 +1511,11 @@
             "commit": "3be2b51f",
             "type": "SOURCE_PARTIAL",
             "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
+          },
+          {
+            "commit": "d656c5a5",
+            "type": "SOURCE_PARTIAL",
+            "change": "Existing authored R1 world exploration persistence now requires the actual locally possessed PlayerController before reading or writing the canonical Ruler-owned trail and source-tile journal. Other NPC/AI WorldPrototypeCharacter actors no longer share the local Ruler's GameInstance and can overwrite saved player exploration with unrelated movement or trigger needless per-NPC SQL scans."
           }
         ],
         "completed_in_this_update": false,
@@ -2541,9 +2556,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T03:27:00+01:00"
+    },
+    {
+      "source_commit": "d656c5a53a859db58bc69652f1abf105b3c714b7",
+      "system_ids": [
+        "M02",
+        "M11",
+        "M23"
+      ],
+      "result": "Existing authored R1 world exploration persistence now requires the actual locally possessed PlayerController before reading or writing the canonical Ruler-owned trail and source-tile journal. Other NPC/AI WorldPrototypeCharacter actors no longer share the local Ruler's GameInstance and can overwrite saved player exploration with unrelated movement or trigger needless per-NPC SQL scans.",
+      "remaining_player_visible_work": "Verify actual multi-NPC source World encounters and possessed character swaps preserve one Ruler's canonical SQLite map, trail, and tiles after app restart; missing original R1 input data still blocks native proof.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1PlayerExploration.cpp"
+      ],
+      "5star_reused_program": "Scripts/Gate12World/gate12_create_source_preserving_r1_streaming_runtime_ue583.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Corrected canonical native source-backed exploration read/write ownership path in place. GitHub only, no native compilation.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:30:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "3be2b51fd35004f6856d8c36d798f4a088aab724",
+  "continuation_last_source_commit": "d656c5a53a859db58bc69652f1abf105b3c714b7",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
