@@ -35,3 +35,6 @@ Assets/NoWorld/Luminous/VerifiedOriginalCards3D/Grand/**/*.unitymesh filter=lfs 
 Assets/NoWorld/Luminous/VerifiedOriginalCards3D/Grand/**/*.png filter=lfs diff=lfs merge=lfs -text
 # Exact factory-authored native SkeletalMesh/Skeleton/material assets. No raw user cards.
 Content/NoWorld/ContentFactory/**/*.uasset filter=lfs diff=lfs merge=lfs -text
+# Original authored R1 native StaticMesh/material/texture content, never ASCII pointers in cooked game.
+Content/NoWorld/FirstWorld/R1/Modules/**/*.uasset filter=lfs diff=lfs merge=lfs -text
+Content/NoWorld/FirstWorld/R1/Anchors/Market/**/*.uasset filter=lfs diff=lfs merge=lfs -text
