@@ -952,6 +952,11 @@
             "commit": "a22f6bc9",
             "type": "SOURCE_PARTIAL",
             "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
+          },
+          {
+            "commit": "732f78ba",
+            "type": "SOURCE_PARTIAL",
+            "change": "The actual native pawn ground snap now covers original Gate02 R1 elevations up to 750m instead of the former +/-120m trace, accepts only the genuine native R1 procedural terrain collision rather than an unrelated prop/fixture, and safely retries after a three-second stream delay at a bounded one-second interval rather than releasing the player to fall into missing World geometry. Source terrain and player state remain unchanged."
           }
         ],
         "completed_in_this_update": false,
@@ -984,6 +989,11 @@
             "commit": "a22f6bc9",
             "type": "SOURCE_PARTIAL",
             "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
+          },
+          {
+            "commit": "732f78ba",
+            "type": "SOURCE_PARTIAL",
+            "change": "The actual native pawn ground snap now covers original Gate02 R1 elevations up to 750m instead of the former +/-120m trace, accepts only the genuine native R1 procedural terrain collision rather than an unrelated prop/fixture, and safely retries after a three-second stream delay at a bounded one-second interval rather than releasing the player to fall into missing World geometry. Source terrain and player state remain unchanged."
           }
         ],
         "completed_in_this_update": false,
@@ -1311,6 +1321,11 @@
             "commit": "a22f6bc9",
             "type": "SOURCE_PARTIAL",
             "change": "Native original Gate02 R1 513-grid terrain authoring now builds the central four physical/collidable source sections before first World gameplay, then schedules the exact 60 remaining original-source mesh/collision sections in four-section per-frame batches nearest spawn first. Section indices, authored height, river/scatter/masks, collision material and World generation IDs are unchanged; this removes a 64-section blocking startup build."
+          },
+          {
+            "commit": "732f78ba",
+            "type": "SOURCE_PARTIAL",
+            "change": "The actual native pawn ground snap now covers original Gate02 R1 elevations up to 750m instead of the former +/-120m trace, accepts only the genuine native R1 procedural terrain collision rather than an unrelated prop/fixture, and safely retries after a three-second stream delay at a bounded one-second interval rather than releasing the player to fall into missing World geometry. Source terrain and player state remain unchanged."
           }
         ],
         "completed_in_this_update": false,
@@ -2462,9 +2477,29 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T03:19:00+01:00"
+    },
+    {
+      "source_commit": "732f78ba3c4b56ad28121d27f05cf48710ee1c41",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11"
+      ],
+      "result": "The actual native pawn ground snap now covers original Gate02 R1 elevations up to 750m instead of the former +/-120m trace, accepts only the genuine native R1 procedural terrain collision rather than an unrelated prop/fixture, and safely retries after a three-second stream delay at a bounded one-second interval rather than releasing the player to fall into missing World geometry. Source terrain and player state remain unchanged.",
+      "remaining_player_visible_work": "Original R1 source data missing from GitHub still blocks guaranteed World collision at boot. Verify R1 highland ground, map streaming and capsule movement in UE5.8/Android after retrieving actual source binary files.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ],
+      "5star_reused_program": "Scripts/Gate12World/gate12_create_source_preserving_r1_streaming_runtime_ue583.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Patched original 5★ native R1 World generation/grounding path only through GitHub, without new terrain, assets or PC access.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T03:22:00+01:00"
     }
   ],
-  "continuation_last_source_commit": "0817c0a20034ecb0a4533a5d7e04bdb6bc2d3752",
+  "continuation_last_source_commit": "732f78ba3c4b56ad28121d27f05cf48710ee1c41",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
