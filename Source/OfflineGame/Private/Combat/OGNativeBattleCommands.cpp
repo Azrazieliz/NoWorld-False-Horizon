@@ -69,12 +69,19 @@ FName FOGNativeBattleCommands::MotionForResolvedAction(
     if (Source.UnitEntityId!=Action.SourceUnitId || !Action.SkillId.IsValid())
         return NAME_None;
     TSharedPtr<FJsonObject> Context;
-    if (!FJsonSerializer::Deserialize(
-        TJsonReaderFactory<>::Create(Action.ResolutionJson),Context) || !Context)
+    // Older genuine unbranched native actions legitimately carry no extra
+    // branch/mode JSON. Preserve their exact installed skill mapping, while
+    // refusing malformed nonempty context and never borrowing other variants.
+    if (!Action.ResolutionJson.IsEmpty() &&
+        (!FJsonSerializer::Deserialize(
+            TJsonReaderFactory<>::Create(Action.ResolutionJson),Context) || !Context))
         return NAME_None;
     FString Branch,Mode;
-    Context->TryGetStringField(TEXT("branch"),Branch);
-    Context->TryGetStringField(TEXT("mode"),Mode);
+    if (Context)
+    {
+        Context->TryGetStringField(TEXT("branch"),Branch);
+        Context->TryGetStringField(TEXT("mode"),Mode);
+    }
     const FName ExactBranch(*Branch),ExactMode(*Mode);
     const bool bVariant=!ExactBranch.IsNone() || !ExactMode.IsNone();
     FOGNativeBattleCommandSet Commands; FString Error;
