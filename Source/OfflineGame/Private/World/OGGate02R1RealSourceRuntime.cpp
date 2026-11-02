@@ -3,6 +3,7 @@
 // and independently streamed 128m ecology tiles; NO fake NPCs or settlements.
 #include "World/OGStartingRegionPresentation.h"
 #include "ProceduralMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
