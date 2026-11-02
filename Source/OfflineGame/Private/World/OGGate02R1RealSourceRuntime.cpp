@@ -192,6 +192,7 @@ void AOGStartingRegionGenerator::BuildR1SourceTerrainTile(int32 SectionIndex)
 void AOGStartingRegionGenerator::LoadR1SourceScatter()
 {
     R1TilePlacements.Reset();
+    R1SourceTypeById.Reset();
     FString Source;
     if (!FFileHelper::LoadFileToString(Source,
         *R1SourcePath(TEXT("baked_seed1412_scatter.jsonl"))))
@@ -211,8 +212,12 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         P.PersistentId=J->GetStringField(TEXT("persistent_id"));
         P.TypeIndex=SourceType(J->GetStringField(TEXT("prototype")));
         const TArray<TSharedPtr<FJsonValue>>& XYZ=J->GetArrayField(TEXT("position_m"));
-        if(P.PersistentId.IsEmpty() || P.TypeIndex==INDEX_NONE || XYZ.Num()!=3)
-        { bR1DatasetLoaded=false;return; }
+        if(P.PersistentId.IsEmpty() || P.TypeIndex==INDEX_NONE || XYZ.Num()!=3 ||
+           R1SourceTypeById.Contains(P.PersistentId))
+        {
+            UE_LOG(LogTemp,Error,TEXT("Gate02 R1 original scatter contains an absent/duplicate stable ID or invalid source prototype."));
+            bR1DatasetLoaded=false;return;
+        }
         P.PositionCm=FVector(
             XYZ[0]->AsNumber()*100.,XYZ[1]->AsNumber()*100.,
             XYZ[2]->AsNumber()*100.);
@@ -223,9 +228,11 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         P.TileIndex=FIntPoint(
             FMath::Clamp(FMath::FloorToInt((P.PositionCm.X+R1HalfExtentCm)/R1EcologyTileCm),0,24),
             FMath::Clamp(FMath::FloorToInt((P.PositionCm.Y+R1HalfExtentCm)/R1EcologyTileCm),0,24));
+        R1SourceTypeById.Add(P.PersistentId,P.TypeIndex);
         R1TilePlacements.FindOrAdd(P.TileIndex).Add(MoveTemp(P));
     }
-    if(Rows.Num()!=10454 || R1TilePlacements.Num()>R1TileGrid*R1TileGrid)
+    if(Rows.Num()!=10454 || R1SourceTypeById.Num()!=Rows.Num() ||
+       R1TilePlacements.Num()>R1TileGrid*R1TileGrid)
     {
         UE_LOG(LogTemp,Error,TEXT("Gate02 R1 scatter signature count wrong: %d"),Rows.Num());
         bR1DatasetLoaded=false;

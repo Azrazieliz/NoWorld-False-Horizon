@@ -213,6 +213,9 @@ private:
     TArray<float> R1RockMask;
     TArray<float> R1RiverMask;
     TMap<FIntPoint,TArray<FR1Placement>> R1TilePlacements;
+    // Built from the exact 10,454 original source records once, not invented
+    // on interaction. Stable ID -> actual authored prototype index.
+    TMap<FString,int32> R1SourceTypeById;
     // Per-HISM instance index -> actual source record, reconstructed on every
     // streaming window swap. Never infer an instance's identity from position.
     TArray<TArray<FString>> R1VisibleScatterSourceIdByType;
