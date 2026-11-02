@@ -3159,9 +3159,33 @@
       "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-02T10:00:00Z"
+    },
+    {
+      "source_commit": "116b0d2e26b736498442b46f79773163cd1a35d5",
+      "system_ids": [
+        "M03",
+        "M05",
+        "M06",
+        "M07",
+        "M14"
+      ],
+      "result": "Implemented actual original-source turn melee contact with collision on live animated left/right hand bone trajectories against live canonical target World actors. A real physical swept overlap and an unblocked path are required; the existing turn executor still alone commits damage and persistence via the action receipt. Never assigns arbitrary contact_seconds or approves Reaction/Defense/Ranged/Cast entries. Native gameplay not yet compiled/verified.",
+      "remaining_player_visible_work": "Source physical sweep path applies to source-valid Melee/Sword catalog semantic actions only (390 Melee+102 Sword entries); original Ranged/Cast require actual projectile/effect source and hit binding, 145 Reaction/Defense should not inflict damage. Must compile and phone-test 492 source melee entries; no false 937 acceptance.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp",
+        "Source/OfflineGame/Public/Combat/OGTurnContactActionComponent.h",
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp"
+      ],
+      "5star_reused_program": "Scripts/production/noworld_original_combat_contact_author.py",
+      "5star_new_program": null,
+      "5star_new_program_reason": null,
+      "5star_execution": "Reused original global catalog, source animation rig controller, actual canonical World combat binding, and existing authoritative turn executor; no new animation sources fabricated. Code-only implementation not native built yet.",
+      "status": "SOURCE_IMPLEMENTED_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-02T10:30:00Z"
     }
   ],
-  "continuation_last_source_commit": "6dea7cc9c1bfee9dd99c8f39b3251f7e4ed337c9",
+  "continuation_last_source_commit": "116b0d2e26b736498442b46f79773163cd1a35d5",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
