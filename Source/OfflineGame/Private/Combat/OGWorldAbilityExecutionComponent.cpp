@@ -301,8 +301,16 @@ bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCas
     {
         if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         { FName A,B; if (!TracePart(Step,A,B,Error)) return false; }
-        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
-        { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
+        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
+        {
+            if (!Step.ProjectileMesh.LoadSynchronous())
+            { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
+            if (!Step.StartSocket.IsNone())
+            {
+                FName Start,End;
+                if (!TracePart(Step,Start,End,Error)) return false;
+            }
+        }
     }
     TSet<int32> PhysicalSteps;
     for (const auto& Projectile:Saved.Projectiles)
