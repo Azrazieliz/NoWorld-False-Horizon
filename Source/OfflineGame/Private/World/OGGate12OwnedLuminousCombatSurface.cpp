@@ -219,21 +219,16 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         { CompletedCombatBannerId=State.BattleId; CompletedCombatBannerExpires=Now+6.; }
         DrawNativeCombatImpacts(Scale);
         if(Now>CompletedCombatBannerExpires)return false;
-        const bool bOwnedSurvived=State.Units.ContainsByPredicate(
-            [Session](const FOGCombatUnitState& Unit)
-            { return Unit.UnitEntityId==Session->SelectedManifestationId && Unit.IsAlive(); });
-        const bool bEnemySurvived=State.Units.ContainsByPredicate(
-            [Session,&State](const FOGCombatUnitState& Unit)
-            {
-                const FOGCombatUnitState* Owned=State.Units.FindByPredicate(
-                    [Session](const FOGCombatUnitState& O)
-                    { return O.UnitEntityId==Session->SelectedManifestationId; });
-                return Owned && Unit.TeamIndex!=Owned->TeamIndex && Unit.IsAlive() &&
-                    Unit.Presence!=EOGCombatPresence::Removed;
-            });
-        const FString Outcome=bOwnedSurvived && !bEnemySurvived
-            ?TEXT("VICTORY") :!bOwnedSurvived && bEnemySurvived
-            ?TEXT("DEFEAT") :TEXT("ENCOUNTER RESOLVED");
+        // Outcome is already committed by the ONE canonical GameCore
+        // transaction. Do not guess from whether the currently possessed
+        // Manifestation survived: a Ruler can fight alone, be revived, or
+        // win with a different allied member still standing.
+        const auto& Settlement=Core->GetLastNativeBattleOutcome();
+        const bool bRecorded=Settlement.BattleId==State.BattleId &&
+            Settlement.CompletionEventId.IsValid();
+        const FString Outcome=bRecorded && Settlement.bHasPlayerTeam
+            ?(Settlement.bVictory ? TEXT("VICTORY") : TEXT("DEFEAT"))
+            :TEXT("ENCOUNTER RESOLVED");
         const float W=Canvas->ClipX,S=FMath::Clamp(Scale,.52f,1.3f);
         DrawGamePanel(FLinearColor(.02f,.018f,.028f,.86f),
             W*.22f,20.f*S,W*.56f,65.f*S);
@@ -249,9 +244,15 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
 
     const FOGCombatUnitState& Acting = State.Units[ActingIndex];
     const FOGCombatUnitState* Owned = State.Units.FindByPredicate(
-        [Session](const FOGCombatUnitState& U)
-        { return U.UnitEntityId == Session->SelectedManifestationId; });
-    if (!Owned || !MatchesActualOwnedLuminousBody(Character, *Session, *Owned)) return false;
+        [&Controlled](const FOGCombatUnitState& U)
+        { return U.UnitEntityId == Controlled; });
+    // ReadControlledCanonicalBattleUnit already proves the actual locally
+    // possessed Ruler's live actor/interaction/battle unit binding. Owned
+    // Manifestations retain their stricter original character/source checks.
+    const bool bActualRuler=Controlled==Session->BoundRulerId &&
+        !Session->SelectedManifestationId.IsValid();
+    if (!Owned || (!bActualRuler &&
+        !MatchesActualOwnedLuminousBody(Character, *Session, *Owned))) return false;
     const auto* Contact =
         Character->FindComponentByClass<UOGTurnContactActionComponent>();
     const bool bWaitingForRealContact =

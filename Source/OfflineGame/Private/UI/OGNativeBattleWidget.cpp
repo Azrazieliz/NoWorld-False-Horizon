@@ -389,7 +389,11 @@ void UOGNativeBattleWidget::Activate(FName Command,int32 TargetIndex)
         // player stuck in GameAndUI mode during ordinary exploration.
         SetVisibility(ESlateVisibility::Collapsed);
         if (APlayerController* Player=Cast<APlayerController>(Character->GetController()))
+        {
             Player->SetInputMode(FInputModeGameOnly());
+            Player->bShowMouseCursor=false;
+            Character->RefreshFoundationInputState();
+        }
         return;
     }
     if (Command==TEXT("screen_combat_mode"))
