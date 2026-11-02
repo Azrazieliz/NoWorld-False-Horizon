@@ -153,6 +153,8 @@ public:
     bool CanResolveTurnContactAction(FName GameplayAction) const;
     bool IsCurrentNaturalCompletionContact() const
     { return bPlaying && bNaturalCompletionContact; }
+    bool IsCurrentSourceAuthoredContact() const
+    { return bPlaying && bHasContact; }
 
     /** Pure source query under the no-root policy used by staged interactions. */
     bool PreviewStagedSource(FName Action,FName Context,bool Authorized,int32 Count,
