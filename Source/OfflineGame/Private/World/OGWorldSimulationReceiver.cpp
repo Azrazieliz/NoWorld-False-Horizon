@@ -316,6 +316,35 @@ bool UOGWorldSimulationReceiver::SavePhysicalCheckpoint(bool Arrived, FString& E
     if (!Runtime.Read(*Prepared, BoundContext.EntityId, Tick, Accepted, Error)) return false;
     LastCheckpointTick = Tick; return true;
 }
+bool UOGWorldSimulationReceiver::TryReadResidentNpcPresence(FOGWorldPresenceRecord& Out, FString& Error) const
+{
+    Out = FOGWorldPresenceRecord();
+    auto* Core = BoundCore.Get();
+    auto* Store = Core ? Core->GetWorldStore() : nullptr;
+    auto* Pawn = Cast<APawn>(GetOwner());
+    const auto* Frame = LocationFrame.Get();
+    const auto* Registry = GetWorld() ? GetWorld()->GetSubsystem<UOGWorldSimulationBodyRegistry>() : nullptr;
+    if (!IsInGameThread() || !bActive || !bHasAccepted || bRestoreRequired || !Prepared ||
+        Prepared->bControlledPresence || !Core || CurrentCore(this) != Core || !Core->IsCoreReady() ||
+        !Store || !Store->IsOpen() || Store->IsWriteTransactionActive() ||
+        !Pawn || Pawn->IsPlayerControlled() || Pawn->IsHidden() || Pawn->IsActorBeingDestroyed() ||
+        !Registry || !Registry->Owns(BoundContext.EntityId, this) || !Frame || !Frame->IsRegistered() ||
+        !Frame->GetComponentTransform().IsValid() || !Frame->GetComponentScale().Equals(FVector::OneVector) ||
+        HasExistingBodyActivity(Pawn, Core, BoundContext.EntityId))
+        return FailBody(Error, TEXT("The NPC's canonical World body is unavailable."));
+
+    // Read again so a committed absence or relocation takes effect even before the next receiver tick.
+    FOGFoundationWorldBodyState Current;
+    if (!FOGFoundationWorldSimulationRuntime(*Store).Read(*Prepared, BoundContext.EntityId,
+        Core->GetCanonicalWorldTick(), Current, Error)) return false;
+    if (Current.bAbsent || Frame->LocationId != Current.Presence.LocationId ||
+        !SamePosition(Accepted.Presence, Current.Presence))
+        return FailBody(Error, TEXT("The NPC is absent or its body has not restored current canonical presence."));
+
+    Out = Current.Presence;
+    return true;
+}
+
 void UOGWorldSimulationReceiver::Refresh()
 {
     if (IsControlledPresence()) { RefreshControlled(); return; }
