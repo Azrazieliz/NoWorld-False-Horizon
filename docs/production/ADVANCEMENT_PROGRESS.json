@@ -3,7 +3,7 @@
   "master": "docs/production/ADVANCEMENT_MASTER.md",
   "source_catalog": "Content/NoWorld/Animation/SharedMotionCatalog.json",
   "source_branch": "work/gate12-whole-character-shared-motion-20261031",
-  "last_synchronized": "2026-11-02",
+  "last_synchronized": "2026-11-05",
   "status_convention": {
     "MASTER_CHECKED_SCOPED": "Historical scoped checkbox in the existing master; not a new Android/device acceptance claim.",
     "OPEN": "Unfinished; no new verification claimed.",
@@ -3416,9 +3416,35 @@
       "saved_utc": "2026-11-02T21:09:00Z",
       "device_verified": false,
       "user_accepted": false
+    },
+    {
+      "source_commit": "46d1ac7f073bcd441f1e3bccfc313e42b7264f6c",
+      "system_ids": [
+        "M05",
+        "M07"
+      ],
+      "result": "Renamed five uses of encounter recovery's anonymous namespace ReadId to ReadEncounterRecoveryId to remove exact Android Clang unity compilation collision with the existing WorldSimulation helper; no gameplay logic change.",
+      "status": "ANDROID_NATIVE_BUILD_COMPILER_FIX_SOURCE_COMMITTED",
+      "native_build_verified": false,
+      "device_verified": false,
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-05"
+    },
+    {
+      "source_commit": "84a2d0dfac820329c3d2a2dba3f8c1c53d695b5e",
+      "system_ids": [
+        "M05",
+        "M07"
+      ],
+      "result": "Reordered OGNativeTurnAgentComponent.cpp to include its matching header first as required by UE5.8 Android UHT. Mirrored both fixes in isolated native worker and relaunched existing 5-star BuildCookRun packaging command; gameplay validation explicitly deferred to owner phone installation.",
+      "status": "ANDROID_NATIVE_BUILD_RESTARTED_APK_PENDING",
+      "native_build_verified": false,
+      "device_verified": false,
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-05"
     }
   ],
-  "continuation_last_source_commit": "798258871e8f438758e7ffcd1b3016f403478b7c",
+  "continuation_last_source_commit": "84a2d0dfac820329c3d2a2dba3f8c1c53d695b5e",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
@@ -3497,7 +3523,7 @@
     "notes": "All 12 original Eastern Market source-derived mobile GLBs and provenance manifest published through Git LFS; 257 native UE section StaticMesh and original materials/textures files published. No device frame-rate, full project compile, authoritative acceptance or original candidate artistic signoff."
   },
   "android_test_package_20261102": {
-    "status": "NATIVE_BUILDCOOKRUN_STARTED_APK_NOT_YET_DELIVERED",
+    "status": "ANDROID_BUILD_RESTARTED_AFTER_TWO_COMPILER_FIXES_NO_APK_YET",
     "native_pc": "LAPTOP-1LI4VRCJ",
     "isolated_project": "D:\\UnrealProjects\\NoWorld_P0_NativeCompile_20261102",
     "original_assets_staged_non_destructively": true,
@@ -3512,6 +3538,14 @@
     "archive_destination": "D:\\UnrealProjects\\NoWorld_Android_TestBuild_20261102",
     "source_checkout_head": "61534bc0458a1f408a3b8c2435b2d754fda6b8b8",
     "packaging_script_source_commit": "798258871e8f438758e7ffcd1b3016f403478b7c",
-    "required_next_action": "Continue native compile/cook/package, address actual build errors, deliver the real APK without imposing gameplay verification or new content acceptance gates."
+    "required_next_action": "Continue native compile/cook/package, address actual build errors, deliver the real APK without imposing gameplay verification or new content acceptance gates.",
+    "native_compile_error": "UE5.8 Android arm64 unity build collided on two anonymous namespace ReadId(FJsonObject, TCHAR*, FOGEntityId&) helpers in OGGameCoreEncounterRecovery.cpp and OGFoundationWorldSimulationRuntime.cpp; UHT also reported OGNativeTurnAgentComponent.h must be first include.",
+    "source_fix_commits": [
+      "46d1ac7f073bcd441f1e3bccfc313e42b7264f6c",
+      "84a2d0dfac820329c3d2a2dba3f8c1c53d695b5e"
+    ],
+    "build_restarted_date": "2026-11-05",
+    "build_restart_command": "D:\\RelocatedTemp\\noworld_android_build.cmd",
+    "next_action": "Let actual UE5.8 Android BuildCookRun compile/cook/package original game to an APK; fix build errors only if reported. No gameplay tests or approval gates before owner installs APK."
   }
 }
