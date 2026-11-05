@@ -187,7 +187,7 @@ bool UOGSharedMotionControllerComponent::CanPlayAction(
 bool UOGSharedMotionControllerComponent::CanResolveTurnContactAction(FName Action) const
 {
     // Reuse the exact shared source/skeleton resolver; never generate damage.
-    if (!CanPlayAction(Action,TEXT("Combat"),false,1,NAME_None)) return false;
+    if (Action.IsNone() || RigProfile.IsNone() || RegisteredParts.IsEmpty()) return false;
     FOGSharedMotionEntry Shared;
     TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Reference;
     TArray<TArray<FOGReferenceBoneConnection>> Mapping;
@@ -199,15 +199,17 @@ bool UOGSharedMotionControllerComponent::CanResolveTurnContactAction(FName Actio
              (IsOriginalPhysicalMeleeAction(Action) &&
               HasActualMeleeContactBone(RegisteredParts)));
 
-    const UOGSharedMotionLibrary* Library=SharedLibrary.IsNull()
-        ? nullptr : SharedLibrary.LoadSynchronous();
-    if (!Library) Library=FOGSharedMotionResolver::GetInstalledLibrary();
-    UAnimSequence* Sequence=nullptr;
-    const FOGSharedMotionEntry* Entry=nullptr;
-    if (RegisteredParts.IsEmpty() || !ResolveForPart(
-        Library,RegisteredParts[0],Action,TEXT("Combat"),false,1,
-        NAME_None,Sequence,Entry) || !Entry || !Sequence || Entry->bLoop)
+    TArray<USkeletalMeshComponent*> RigDrivers;
+    TArray<int32> RigDriverForPart;
+    TArray<UAnimSequence*> Sequences;
+    TArray<const FOGSharedMotionEntry*> Entries;
+    if (!ResolveNativeRigAction(Action, TEXT("Combat"), false, 1, NAME_None, NAME_None, {},
+            RigDrivers, RigDriverForPart, Sequences, Entries) || Entries[0]->bLoop)
+    {
         return false;
+    }
+    const FOGSharedMotionEntry* Entry = Entries[0];
+    const UAnimSequence* Sequence = Sequences[0];
     if (Entry->ContactSeconds>=0.f)
         return Entry->ContactSeconds<=Sequence->GetPlayLength();
     if (!Entry->ContactNotify.IsNone())
@@ -335,6 +337,61 @@ bool UOGSharedMotionControllerComponent::ResolveCoherentNativeAction(
     return false;
 }
 
+bool UOGSharedMotionControllerComponent::ResolveNativeRigAction(
+    FName Action, FName Context, bool bAuthorizedAdult, int32 ParticipantCount,
+    FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy,
+    TArray<USkeletalMeshComponent*>& RigDrivers, TArray<int32>& RigDriverForPart,
+    TArray<UAnimSequence*>& Sequences, TArray<const FOGSharedMotionEntry*>& Entries) const
+{
+    RigDrivers.Reset();
+    RigDriverForPart.Reset();
+    if (RigProfile.IsNone() || Action.IsNone() || Context.IsNone() ||
+        RegisteredParts.IsEmpty() || ParticipantCount < 1)
+    {
+        return false;
+    }
+
+    // Construct the exact distinct rig families before choosing a performance.
+    // Every member of a multipart character must share the SAME original
+    // SourceClipId; never pick incompatible alternate takes by mesh order.
+    for (USkeletalMeshComponent* Part : RegisteredParts)
+    {
+        if (!Part || !Part->GetSkeletalMeshAsset()) return false;
+        if (bUseIdenticalTopologyLeaderPose)
+        {
+            if (RigDrivers.IsEmpty())
+                RigDrivers.Add(Part);
+            else if (!HaveIdenticalReferencePose(RigDrivers[0],Part))
+                return false;
+            RigDriverForPart.Add(0);
+            continue;
+        }
+        if (bGroupPartsByReferencePose)
+        {
+            int32 ExistingDriver = INDEX_NONE;
+            for (int32 I = 0; I < RigDrivers.Num(); ++I)
+                if (HaveIdenticalReferencePose(RigDrivers[I], Part))
+                { ExistingDriver = I; break; }
+            if (ExistingDriver != INDEX_NONE)
+            {
+                RigDriverForPart.Add(ExistingDriver);
+                continue;
+            }
+        }
+        RigDriverForPart.Add(RigDrivers.Num());
+        RigDrivers.Add(Part);
+    }
+
+    const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull() ? nullptr : SharedLibrary.LoadSynchronous();
+    if (!Library)
+    {
+        Library = FOGSharedMotionResolver::GetInstalledLibrary();
+    }
+    return ResolveCoherentNativeAction(Library, Action, Context, bAuthorizedAdult,
+        ParticipantCount, ParticipantRole, RequiredSourceClip, RootPolicy,
+        RigDrivers, Sequences, Entries);
+}
+
 bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
     int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip,
@@ -349,81 +406,65 @@ bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
     if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
         Shared, Source, Mapping, SharedError, RequiredSourceClip)) return true;
 
-    const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
-        ? nullptr : SharedLibrary.LoadSynchronous();
-    if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
-
-    TArray<USkeletalMeshComponent*> Drivers;
-    for (USkeletalMeshComponent* Part : RegisteredParts)
-    {
-        if (!Part || !Part->GetSkeletalMeshAsset()) return false;
-        if (bUseIdenticalTopologyLeaderPose)
-        {
-            if (Drivers.IsEmpty()) Drivers.Add(Part);
-            else if (!HaveIdenticalReferencePose(Drivers[0],Part)) return false;
-            continue;
-        }
-        if (bGroupPartsByReferencePose)
-        {
-            bool bFollower = false;
-            for (USkeletalMeshComponent* Driver : Drivers)
-                if (HaveIdenticalReferencePose(Driver,Part))
-                { bFollower = true; break; }
-            if (bFollower) continue;
-        }
-        Drivers.Add(Part);
-    }
+    TArray<USkeletalMeshComponent*> RigDrivers;
+    TArray<int32> RigDriverForPart;
     TArray<UAnimSequence*> Sequences;
     TArray<const FOGSharedMotionEntry*> Entries;
-    return ResolveCoherentNativeAction(Library,GameplayAction,Context,
-        bAdultContextAuthorized,ParticipantCount,ParticipantRole,
-        RequiredSourceClip,RootPolicy,Drivers,Sequences,Entries);
+    return ResolveNativeRigAction(GameplayAction, Context, bAdultContextAuthorized,
+        ParticipantCount, ParticipantRole, RequiredSourceClip, RootPolicy,
+        RigDrivers, RigDriverForPart, Sequences, Entries);
 }
 
-bool UOGSharedMotionControllerComponent::PreviewStagedSource(FName Action,FName Context,
-    bool Authorized,int32 Count,FName Role,FName& OutSource,FName& OutScene) const
+bool UOGSharedMotionControllerComponent::PreviewResolvedSource(
+    FName Action, FName Context, bool bAuthorizedAdult, int32 ParticipantCount, FName ParticipantRole,
+    TOptional<bool> RootPolicy, FName& OutSourceClipId, FName& OutAuthoredSceneId) const
 {
-    OutSource=NAME_None; OutScene=NAME_None;
-    if (!CanPlayResolvedAction(Action,Context,Authorized,Count,Role,NAME_None,TOptional<bool>(false))) return false;
-    FOGSharedMotionEntry Shared;
-    TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe> Source;
-    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString Error;
-    if (FindReference(Action,Context,Count,Role,Shared,Source,Mapping,Error))
-    { OutSource=Shared.SourceClipId; OutScene=Shared.AuthoredSceneId; return !OutSource.IsNone(); }
-    const UOGSharedMotionLibrary* Library=SharedLibrary.IsNull()?nullptr:SharedLibrary.LoadSynchronous();
-    if (!Library) Library=FOGSharedMotionResolver::GetInstalledLibrary();
-    UAnimSequence* Sequence=nullptr; const FOGSharedMotionEntry* Entry=nullptr;
-    if (!ResolveForPart(Library,RegisteredParts[0],Action,Context,Authorized,Count,Role,
-        Sequence,Entry,NAME_None,TOptional<bool>(false))) return false;
-    OutSource=Entry->SourceClipId; OutScene=Entry->AuthoredSceneId; return !OutSource.IsNone();
+    OutSourceClipId = NAME_None;
+    OutAuthoredSceneId = NAME_None;
+    if (RigProfile.IsNone() || Action.IsNone() || Context.IsNone() ||
+        RegisteredParts.IsEmpty() || ParticipantCount < 1)
+    {
+        return false;
+    }
+
+    FOGSharedMotionEntry Reference;
+    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
+    TArray<TArray<FOGReferenceBoneConnection>> Mapping;
+    FString Error;
+    if (FindReference(Action, Context, ParticipantCount, ParticipantRole, Reference, Source, Mapping, Error))
+    {
+        OutSourceClipId = Reference.SourceClipId;
+        OutAuthoredSceneId = Reference.AuthoredSceneId;
+        return !OutSourceClipId.IsNone();
+    }
+
+    TArray<USkeletalMeshComponent*> RigDrivers;
+    TArray<int32> RigDriverForPart;
+    TArray<UAnimSequence*> Sequences;
+    TArray<const FOGSharedMotionEntry*> Entries;
+    if (!ResolveNativeRigAction(Action, Context, bAuthorizedAdult, ParticipantCount, ParticipantRole,
+            NAME_None, RootPolicy, RigDrivers, RigDriverForPart, Sequences, Entries))
+    {
+        return false;
+    }
+    OutSourceClipId = Entries[0]->SourceClipId;
+    OutAuthoredSceneId = Entries[0]->AuthoredSceneId;
+    return !OutSourceClipId.IsNone();
+}
+
+bool UOGSharedMotionControllerComponent::PreviewStagedSource(FName Action, FName Context,
+    bool bAuthorizedAdult, int32 Count, FName Role, FName& OutSource, FName& OutScene) const
+{
+    return PreviewResolvedSource(Action, Context, bAuthorizedAdult, Count, Role, TOptional<bool>(false), OutSource, OutScene);
 }
 
 bool UOGSharedMotionControllerComponent::PreviewSourceClipId(
     FName GameplayAction, FName Context, bool bAdultContextAuthorized,
     int32 ParticipantCount, FName ParticipantRole, FName& OutSourceClipId) const
 {
-    OutSourceClipId = NAME_None;
-    if (!CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
-        ParticipantCount, ParticipantRole)) return false;
-    FOGSharedMotionEntry Shared;
-    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
-    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
-    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
-        Shared, Source, Mapping, SharedError))
-    {
-        OutSourceClipId = Shared.SourceClipId;
-        return !OutSourceClipId.IsNone();
-    }
-    const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
-        ? nullptr : SharedLibrary.LoadSynchronous();
-    if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
-    UAnimSequence* Sequence = nullptr;
-    const FOGSharedMotionEntry* Entry = nullptr;
-    if (!ResolveForPart(Library, RegisteredParts[0], GameplayAction, Context,
-        bAdultContextAuthorized, ParticipantCount, ParticipantRole, Sequence, Entry))
-        return false;
-    OutSourceClipId = Entry->SourceClipId;
-    return !OutSourceClipId.IsNone();
+    FName Scene;
+    return PreviewResolvedSource(GameplayAction, Context, bAdultContextAuthorized,
+        ParticipantCount, ParticipantRole, {}, OutSourceClipId, Scene);
 }
 
 bool UOGSharedMotionControllerComponent::PreviewAuthoredSceneId(
@@ -431,28 +472,11 @@ bool UOGSharedMotionControllerComponent::PreviewAuthoredSceneId(
     int32 ParticipantCount, FName ParticipantRole, FName& OutSceneId) const
 {
     OutSceneId = NAME_None;
-    if (ParticipantCount < 2 ||
-        !CanPlayAction(GameplayAction, Context, bAdultContextAuthorized,
-            ParticipantCount, ParticipantRole)) return false;
-    FOGSharedMotionEntry Shared;
-    TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
-    TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
-    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
-        Shared, Source, Mapping, SharedError))
-    {
-        OutSceneId = Shared.AuthoredSceneId;
-        return !OutSceneId.IsNone();
-    }
-    const UOGSharedMotionLibrary* Library = SharedLibrary.IsNull()
-        ? nullptr : SharedLibrary.LoadSynchronous();
-    if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
-    UAnimSequence* Sequence = nullptr;
-    const FOGSharedMotionEntry* Entry = nullptr;
-    if (!ResolveForPart(Library, RegisteredParts[0], GameplayAction, Context,
-            bAdultContextAuthorized, ParticipantCount, ParticipantRole,
-            Sequence, Entry) || !Entry) return false;
-    OutSceneId = Entry->AuthoredSceneId;
-    return !OutSceneId.IsNone();
+    FName Source;
+    return ParticipantCount >= 2 &&
+        PreviewResolvedSource(GameplayAction, Context, bAdultContextAuthorized,
+            ParticipantCount, ParticipantRole, {}, Source, OutSceneId) &&
+        !OutSceneId.IsNone();
 }
 
 void UOGSharedMotionControllerComponent::SynchronizeToWorldTime(float SceneStartTime)
@@ -681,54 +705,17 @@ bool UOGSharedMotionControllerComponent::PlayResolvedAction(
     if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
         Shared, Source, Mapping, SharedError, RequiredSourceClip))
         return StartReference(Shared, MoveTemp(Source), MoveTemp(Mapping));
-    if (!CanPlayResolvedAction(GameplayAction, Context, bAdultContextAuthorized,
-        ParticipantCount, ParticipantRole, RequiredSourceClip)) return false;
-
-    const UOGSharedMotionLibrary* Library =
-        SharedLibrary.IsNull() ? nullptr : SharedLibrary.LoadSynchronous();
-    if (!Library) Library = FOGSharedMotionResolver::GetInstalledLibrary();
-
     TArray<UAnimSequence*> Sequences;
     TArray<const FOGSharedMotionEntry*> Entries;
     TArray<USkeletalMeshComponent*> RigDrivers;
     TArray<int32> RigDriverForPart;
     USkeletalMeshComponent* Leader = nullptr;
-
-    // Construct the exact distinct rig families before choosing a performance.
-    // Every member of a multipart character must share the SAME original
-    // SourceClipId; never pick incompatible alternate takes by mesh order.
-    for (USkeletalMeshComponent* Part : RegisteredParts)
+    if (!ResolveNativeRigAction(GameplayAction, Context, bAdultContextAuthorized,
+            ParticipantCount, ParticipantRole, RequiredSourceClip, {},
+            RigDrivers, RigDriverForPart, Sequences, Entries))
     {
-        if (!Part || !Part->GetSkeletalMeshAsset()) return false;
-        if (bUseIdenticalTopologyLeaderPose)
-        {
-            if (RigDrivers.IsEmpty())
-                RigDrivers.Add(Part);
-            else if (!HaveIdenticalReferencePose(RigDrivers[0],Part))
-                return false;
-            RigDriverForPart.Add(0);
-            continue;
-        }
-        if (bGroupPartsByReferencePose)
-        {
-            int32 ExistingDriver = INDEX_NONE;
-            for (int32 I = 0; I < RigDrivers.Num(); ++I)
-                if (HaveIdenticalReferencePose(RigDrivers[I], Part))
-                { ExistingDriver = I; break; }
-            if (ExistingDriver != INDEX_NONE)
-            {
-                RigDriverForPart.Add(ExistingDriver);
-                continue;
-            }
-        }
-        RigDriverForPart.Add(RigDrivers.Num());
-        RigDrivers.Add(Part);
-    }
-
-    if (!ResolveCoherentNativeAction(Library,GameplayAction,Context,
-            bAdultContextAuthorized,ParticipantCount,ParticipantRole,
-            RequiredSourceClip,{},RigDrivers,Sequences,Entries))
         return false;
+    }
 
     if (bUseIdenticalTopologyLeaderPose)
     {

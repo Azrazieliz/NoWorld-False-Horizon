@@ -323,6 +323,13 @@ private:
         const TArray<USkeletalMeshComponent*>& RigDrivers,
         TArray<UAnimSequence*>& OutSequences,
         TArray<const FOGSharedMotionEntry*>& OutEntries) const;
+    bool ResolveNativeRigAction(FName Action, FName Context, bool bAuthorizedAdult,
+        int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy,
+        TArray<USkeletalMeshComponent*>& OutRigDrivers, TArray<int32>& OutRigDriverForPart,
+        TArray<UAnimSequence*>& OutSequences, TArray<const FOGSharedMotionEntry*>& OutEntries) const;
+    bool PreviewResolvedSource(FName Action, FName Context, bool bAuthorizedAdult,
+        int32 ParticipantCount, FName ParticipantRole, TOptional<bool> RootPolicy,
+        FName& OutSourceClipId, FName& OutAuthoredSceneId) const;
     bool CanPlayResolvedAction(FName Action, FName Context, bool bAuthorizedAdult,
         int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip,
         TOptional<bool> RootPolicy = {}) const;
