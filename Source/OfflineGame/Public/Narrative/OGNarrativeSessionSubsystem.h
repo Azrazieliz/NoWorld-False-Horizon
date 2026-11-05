@@ -14,6 +14,12 @@ struct OFFLINEGAME_API FOGNarrativeJournalEntry
     FOGNarrativeQuestState State;
 };
 
+struct OFFLINEGAME_API FOGNarrativeMemoryEntry
+{
+    int64 WorldTick = 0;
+    FString Summary;
+};
+
 /** Native journal/conversation command boundary. Stores only transient selection/review.
  * All quest, choice, branch and resource truth remains in the existing WorldStore. */
 UCLASS()
@@ -28,6 +34,7 @@ public:
     void CloseSubject();
     bool HasOpenSubject() const { return SubjectActor.IsValid(); }
     bool ReadJournal(TArray<FOGNarrativeJournalEntry>& Out, FString& Error) const;
+    bool ReadRecentMemories(TArray<FOGNarrativeMemoryEntry>& Out, FString& Error) const;
     bool ReadSubjectDialogues(TArray<FOGNarrativeDialogueDefinition>& Out, FString& Error) const;
     bool ReadConversation(const FOGContentId& DialogueId, FOGNarrativeConversationView& Out, FString& Error) const;
     bool ReviewQuest(const FOGContentId& QuestId, EOGNarrativeCommand Kind,

@@ -28,6 +28,13 @@
 
 namespace
 {
+const FName LargeTextProfile(TEXT("large_text"));
+const FName HighContrastProfile(TEXT("high_contrast"));
+constexpr float LargeTextScale = 1.12f;
+const FLinearColor ContrastSecondaryText(.86f, .88f, .90f, 1.f);
+const FLinearColor ContrastPanel(.005f, .008f, .012f, 1.f);
+const FLinearColor ContrastButton(.073f, .048f, .097f, 1.f);
+
 bool FiniteColor(const FLinearColor& C)
 { return FMath::IsFinite(C.R)&&FMath::IsFinite(C.G)&&FMath::IsFinite(C.B)&&FMath::IsFinite(C.A); }
 bool MatchJson(const FString& Text,const TMap<FName,FString>& Required)
@@ -146,9 +153,9 @@ void UOGReactiveUiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     Super::Initialize(Collection);
     FOGPlayerProfileSettings Profile; FString Error;
     if (FOGPlayerProfileSettingsService::Load(FOGPlayerProfileSettingsService::DefaultProfilePath(),Profile,Error))
-        SetReducedMotion(Profile.bReducedMotion);
-    ProfileHandle=FOGPlayerProfileSettingsService::OnSettingsChanged().AddWeakLambda(this,
-        [this](const FOGPlayerProfileSettings& Changed){SetReducedMotion(Changed.bReducedMotion);});
+        ApplyPlayerProfile(Profile);
+    ProfileHandle = FOGPlayerProfileSettingsService::OnSettingsChanged().AddUObject(
+        this, &ThisClass::ApplyPlayerProfile);
     if (auto* Library=UOGDefinitionLibrary::Get())
         LibraryHandle=Library->OnDefinitionsChanged.AddUObject(this,&ThisClass::HandleDefinitions);
     SpawnHandle=GetWorld()->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this,&ThisClass::HandleActorSpawned));
@@ -172,9 +179,7 @@ void UOGReactiveUiSubsystem::Deinitialize()
     FOGPlayerProfileSettingsService::OnSettingsChanged().Remove(ProfileHandle);
     if (auto* Library=UOGDefinitionLibrary::Get()) Library->OnDefinitionsChanged.Remove(LibraryHandle);
     GetWorld()->RemoveOnActorSpawnedHandler(SpawnHandle);
-    for (const auto& Pair:Bindings)
-        if (auto* W=Pair.Key.Get())
-        { FLinearColor Now; if (ReadWidgetColor(W,Now)&&Now.Equals(Pair.Value.Last,.001f)) WriteWidgetColor(W,Pair.Value.Base); }
+    for (const auto& Pair : Bindings) Pair.Value.Restore();
     for (const auto& B:Materials) if (auto* M=B.Material.Get())
     {
         if (M->K2_GetVectorParameterValue(B.Accent).Equals(B.LastAccent,.001f)) M->SetVectorParameterValue(B.Accent,B.OriginalAccent);
@@ -284,6 +289,14 @@ void UOGReactiveUiSubsystem::SetEnvironmentLight(ULightComponent* Light)
 { if (!Light||Light->GetWorld()==GetWorld()) { EnvironmentLight=Light; bLightDirty=false; } }
 void UOGReactiveUiSubsystem::SelectInstalledTheme(FOGContentId Id) { ThemeId=MoveTemp(Id); bThemeDirty=true; bStyleDirty=true; }
 void UOGReactiveUiSubsystem::SetReducedMotion(bool Reduced) { bReducedMotion=Reduced; if (Reduced) Phase=0; }
+
+void UOGReactiveUiSubsystem::ApplyPlayerProfile(const FOGPlayerProfileSettings& Profile)
+{
+    SetReducedMotion(Profile.bReducedMotion);
+    if (ReadabilityProfile == Profile.UiReadabilityProfile) return;
+    ReadabilityProfile = Profile.UiReadabilityProfile;
+    Apply();
+}
 bool UOGReactiveUiSubsystem::BindMaterial(UMaterialInstanceDynamic* M,FName Accent,FName Glow)
 {
     if (!IsValid(M)||Accent.IsNone()||Glow.IsNone()) return false;
@@ -315,12 +328,34 @@ UOGReactiveUiSubsystem::ERole UOGReactiveUiSubsystem::Classify(UWidget* W,const 
     }
     return ERole::Original; // Semantic rarity, warning, HP and faction colours remain authored.
 }
+void UOGReactiveUiSubsystem::FBinding::Restore() const
+{
+    UWidget* W = Widget.Get();
+    if (!W) return;
+
+    FLinearColor Now;
+    if (ReadWidgetColor(W, Now) && Now.Equals(Last, .001f)) WriteWidgetColor(W, Base);
+
+    if (UTextBlock* Text = Cast<UTextBlock>(W); Text && BaseFontSize != LastFontSize)
+    {
+        FSlateFontInfo Font = Text->GetFont();
+        if (Font.Size == LastFontSize)
+        {
+            Font.Size = BaseFontSize;
+            Text->SetFont(Font);
+        }
+    }
+}
+
 void UOGReactiveUiSubsystem::PreserveOriginal(UWidget* W)
 {
     if (!W) return;
     OriginalWidgets.Add(W);
-    if (auto* B=Bindings.Find(W))
-    { FLinearColor Now; if (ReadWidgetColor(W,Now)&&Now.Equals(B->Last,.001f)) WriteWidgetColor(W,B->Base); Bindings.Remove(W); }
+    if (auto* B = Bindings.Find(W))
+    {
+        B->Restore();
+        Bindings.Remove(W);
+    }
 }
 void UOGReactiveUiSubsystem::Track(UUserWidget* Owner,UWidget* W)
 {
@@ -329,6 +364,8 @@ void UOGReactiveUiSubsystem::Track(UUserWidget* Owner,UWidget* W)
     FLinearColor Base; if (!ReadWidgetColor(W,Base)) return;
     FBinding B; B.Owner=Owner; B.Widget=W; B.Base=Base; B.Last=Base; B.Role=Classify(W,Base);
     if (Cast<UImage>(W)&&B.Role==ERole::Original) return;
+    if (const UTextBlock* Text = Cast<UTextBlock>(W); Text && B.Role != ERole::Original)
+        B.BaseFontSize = B.LastFontSize = Text->GetFont().Size;
     Bindings.Add(W,B);
 }
 void UOGReactiveUiSubsystem::TrackTree(UUserWidget* Owner)
@@ -347,28 +384,39 @@ void UOGReactiveUiSubsystem::TrackTree(UUserWidget* Owner)
         if (auto* Nested=Cast<UUserWidget>(W)) Pending.Add(Nested->GetRootWidget());
     }
     for (auto It=Bindings.CreateIterator();It;++It)
-        if (!It.Key().IsValid()||(It.Value().Owner.Get()==Owner&&!Seen.Contains(It.Key().Get()))) It.RemoveCurrent();
+        if (!It.Key().IsValid()||(It.Value().Owner.Get()==Owner&&!Seen.Contains(It.Key().Get())))
+        {
+            It.Value().Restore();
+            It.RemoveCurrent();
+        }
     Apply();
 }
 void UOGReactiveUiSubsystem::UntrackTree(UUserWidget* Owner)
 {
     for (auto It=Bindings.CreateIterator();It;++It)
         if (!It.Key().IsValid()||It.Value().Owner.Get()==Owner)
-        { if (auto* W=It.Key().Get()) { FLinearColor Now;
-            if (ReadWidgetColor(W,Now)&&Now.Equals(It.Value().Last,.001f)) WriteWidgetColor(W,It.Value().Base); }
-          It.RemoveCurrent(); }
+        {
+            It.Value().Restore();
+            It.RemoveCurrent();
+        }
 }
 FLinearColor UOGReactiveUiSubsystem::AccentFor(const FLinearColor& Base,float Strength) const
 { auto C=FMath::Lerp(Base,Current.Accent,FMath::Clamp(Strength,0.f,1.f)); C.A=Base.A; return C; }
 FLinearColor UOGReactiveUiSubsystem::Resolve(const FBinding& B) const
 {
     FLinearColor C=B.Base;
+    const bool bHighContrast = ReadabilityProfile == HighContrastProfile;
     switch (B.Role)
     {
-    case ERole::Primary: C=FMath::Lerp(C,Current.Text,.45f); break;
-    case ERole::Secondary: C=FMath::Lerp(C,Current.Muted,.3f); break;
-    case ERole::Accent: C=Current.Accent; break;
-    case ERole::Surface: C=FMath::Lerp(C,Current.Surface,.55f); break;
+    case ERole::Primary: C = bHighContrast ? FLinearColor::White : FMath::Lerp(C, Current.Text, .45f); break;
+    case ERole::Secondary: C = bHighContrast ? ContrastSecondaryText : FMath::Lerp(C, Current.Muted, .3f); break;
+    case ERole::Accent: C = bHighContrast ? FLinearColor::White : Current.Accent; break;
+    case ERole::Surface:
+        if (bHighContrast)
+            C = Cast<UButton>(B.Widget.Get()) ? ContrastButton : ContrastPanel;
+        else
+            C = FMath::Lerp(C, Current.Surface, .55f);
+        break;
     case ERole::Ornament: C=AccentFor(C,.28f); break;
     default: break;
     }
@@ -379,11 +427,33 @@ void UOGReactiveUiSubsystem::Apply()
     if (bApplying) return; TGuardValue<bool> Applying(bApplying,true);
     for (auto It=Bindings.CreateIterator();It;++It)
     {
-        auto* W=It.Key().Get(); auto& B=It.Value(); if (!W||!B.Owner.IsValid()) { It.RemoveCurrent(); continue; }
-        FLinearColor Now; if (!ReadWidgetColor(W,Now)) { It.RemoveCurrent(); continue; }
+        auto* W = It.Key().Get();
+        auto& B = It.Value();
+        FLinearColor Now;
+        if (!W || !B.Owner.IsValid() || !ReadWidgetColor(W, Now))
+        {
+            B.Restore();
+            It.RemoveCurrent();
+            continue;
+        }
         // Gameplay may have changed an existing label to a critical/disabled colour.
         if (!Now.Equals(B.Last,.001f)) { B.Base=Now; B.Role=Classify(W,Now); }
         const auto Next=Resolve(B); if (!Now.Equals(Next,.0001f)) WriteWidgetColor(W,Next); B.Last=Next;
+
+        if (UTextBlock* Text = Cast<UTextBlock>(W); Text && B.BaseFontSize > 0.f)
+        {
+            const auto FontSize = Text->GetFont().Size;
+            if (FontSize != B.LastFontSize) B.BaseFontSize = FontSize;
+            const auto DesiredSize = static_cast<decltype(FSlateFontInfo::Size)>(B.BaseFontSize *
+                (ReadabilityProfile == LargeTextProfile ? LargeTextScale : 1.f));
+            if (FontSize != DesiredSize)
+            {
+                FSlateFontInfo Font = Text->GetFont();
+                Font.Size = DesiredSize;
+                Text->SetFont(Font);
+            }
+            B.LastFontSize = DesiredSize;
+        }
     }
     for (int32 I=Materials.Num()-1;I>=0;--I)
         if (auto* M=Materials[I].Material.Get())

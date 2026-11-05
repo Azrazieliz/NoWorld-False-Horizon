@@ -302,9 +302,19 @@ bool UOGGameCoreSubsystem::CompleteNativeWorldRecovery(FString& Error)
     if (!bNativeRecoveryAwaitingWorld) return true;
     if (!OwnedLuminousTurnBattle || !GetWorld()) { Error=TEXT("Recovered World is not available."); return false; }
     const auto& State=OwnedLuminousTurnBattle->GetState();
-    for (const auto& Unit:State.Units) if (Unit.CanAct())
-        if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Unit.UnitEntityId))
+    if (State.EncounterDefinitionId.IsValid())
+    {
+        // Opening attached these bindings to the actors at runtime. After a restart,
+        // reconnect each streamed participant before restoring transforms or accepted casts.
+        if (UOGNativeEncounterReceiver::ReconnectParticipantBodies(GetWorld(),State)>0)
         { Error=TEXT("Recovered encounter waits for its actual participant bodies."); return false; }
+    }
+    else
+    {
+        for (const auto& Unit:State.Units) if (Unit.CanAct())
+            if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Unit.UnitEntityId))
+            { Error=TEXT("Recovered encounter waits for its actual participant bodies."); return false; }
+    }
     for (const auto& Cast:NativeWorldRecoveryPresentation.Casts)
     {
         FOGWorldAbilityCastView View;

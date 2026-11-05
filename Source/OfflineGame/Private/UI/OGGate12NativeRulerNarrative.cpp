@@ -118,10 +118,13 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
     }
 
     TArray<FOGNarrativeJournalEntry> Quests;
-    if (!Narrative->ReadJournal(Quests, Error)) { AddMessage(Body, Error, 18, JournalWarning); return; }
+    const bool bJournalAvailable = Narrative->ReadJournal(Quests, Error);
+    if (!bJournalAvailable)
+        AddMessage(Body, Error.IsEmpty() ? TEXT("The quest journal is unavailable.") : Error, 18, JournalWarning);
     if (OpenNarrativeQuestId.IsValid())
     {
         AddAction(Body, TEXT("BACK TO JOURNAL"), TEXT("narrative/list"));
+        if (!bJournalAvailable) return;
         const FOGNarrativeJournalEntry* Quest = Quests.FindByPredicate(
             [this](const FOGNarrativeJournalEntry& Q) { return Q.Definition.QuestId == OpenNarrativeQuestId; });
         if (!Quest) { AddMessage(Body, TEXT("This quest is no longer available in your current history."), 18, JournalMuted); return; }
@@ -144,17 +147,30 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
         return;
     }
 
-    if (Narrative->HasOpenSubject())
+    if (bJournalAvailable)
     {
-        TArray<FOGNarrativeDialogueDefinition> Dialogues;
-        if (!Narrative->ReadSubjectDialogues(Dialogues, Error)) AddMessage(Body, Error, 18, JournalWarning);
-        for (const FOGNarrativeDialogueDefinition& Dialogue : Dialogues)
-            AddAction(Body, Dialogue.DisplayName, TEXT("narrative/dialogue/") + Dialogue.DialogueId.ToString());
+        if (Narrative->HasOpenSubject())
+        {
+            TArray<FOGNarrativeDialogueDefinition> Dialogues;
+            if (!Narrative->ReadSubjectDialogues(Dialogues, Error)) AddMessage(Body, Error, 18, JournalWarning);
+            for (const FOGNarrativeDialogueDefinition& Dialogue : Dialogues)
+                AddAction(Body, Dialogue.DisplayName, TEXT("narrative/dialogue/") + Dialogue.DialogueId.ToString());
+        }
+        if (Quests.IsEmpty()) AddMessage(Body, TEXT("No quests are available in your current history."), 19, JournalMuted);
+        for (const FOGNarrativeJournalEntry& Quest : Quests)
+            AddAction(Body, Quest.Definition.DisplayName + (Quest.State.bCompleted ? TEXT("  ·  COMPLETED") : TEXT("")),
+                TEXT("narrative/quest/") + Quest.Definition.QuestId.ToString());
     }
-    if (Quests.IsEmpty()) AddMessage(Body, TEXT("No quests are available in your current history."), 19, JournalMuted);
-    for (const FOGNarrativeJournalEntry& Quest : Quests)
-        AddAction(Body, Quest.Definition.DisplayName + (Quest.State.bCompleted ? TEXT("  ·  COMPLETED") : TEXT("")),
-            TEXT("narrative/quest/") + Quest.Definition.QuestId.ToString());
+
+    AddMessage(Body, TEXT("RECENT STORY HISTORY"), 22, JournalGold);
+    TArray<FOGNarrativeMemoryEntry> Memories;
+    if (!Narrative->ReadRecentMemories(Memories, Error))
+        AddMessage(Body, Error, 18, JournalWarning);
+    else if (Memories.IsEmpty())
+        AddMessage(Body, TEXT("No story decisions have been recorded yet."), 18, JournalMuted);
+    for (const FOGNarrativeMemoryEntry& Memory : Memories)
+        AddMessage(Body, FString::Printf(TEXT("%s  /  world tick %lld"), *Memory.Summary, Memory.WorldTick),
+            18, JournalSilver);
 }
 
 void UOGGate12NativeRulerWidget::HandleNarrativeAction(const FString& Action)
