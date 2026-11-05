@@ -3515,9 +3515,110 @@
       "device_verified": false,
       "owner_accepted": false,
       "saved_utc": "2026-11-05"
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "ecd45543ac9be26acec20649714444bdb0eb7dab",
+      "integration_commit": "b7e813efc6ef8839563f87e829c728e8da0243d3",
+      "system_ids": [
+        "M03",
+        "M07",
+        "M14"
+      ],
+      "result": "World cast presentation now selects the explicit authored cast motion and the physical contact executor tracks that exact motion together with the accepted cast receipt for both player and AI.",
+      "remaining_player_visible_work": "Complete genuine missing contact authoring, encounter actor bindings, enemy tactics and specialized five-form World executors.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGCanonicalCombatActorBindingComponent.cpp",
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "f9c2f30c0fbe3fa1391ec19aebc3861f223f8528",
+      "integration_commit": "b7e813efc6ef8839563f87e829c728e8da0243d3",
+      "system_ids": [
+        "M24",
+        "M25",
+        "M26"
+      ],
+      "result": "A source-bound resident narrative NPC now opens the existing dialogue and journal from World interaction. Reach and canonical presence are checked again at confirmation and authored choices commit to WorldStore and Chronicle.",
+      "remaining_player_visible_work": "Install actual resident NPC, quest and dialogue definitions. Bind authored faction and relationship consequences, Codex discovery, and missed-event handling.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Narrative/OGNarrativeSessionSubsystem.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeWorldActor.cpp",
+        "Source/OfflineGame/Private/World/OGWorldSimulationReceiver.cpp",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeSessionSubsystem.h",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeWorldActor.h",
+        "Source/OfflineGame/Public/World/OGWorldSimulationReceiver.h"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "213a426ef098914dac4be9faf58ff8c1165c67f7",
+      "integration_commit": "b7e813efc6ef8839563f87e829c728e8da0243d3",
+      "system_ids": [
+        "M19",
+        "M20"
+      ],
+      "result": "NPC and station profiles publish authored market and crafting stock in one transaction. Any allocation failure rolls back the batch. Existing receipts and spent stock survive rebinding.",
+      "remaining_player_visible_work": "Install real stock and merchant profiles, connect regional production/logistics and pricing, and complete authored invention, repair and enhancement coverage.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Objects/OGObjectActionService.cpp",
+        "Source/OfflineGame/Private/Objects/OGObjectOfferDefinition.cpp",
+        "Source/OfflineGame/Public/Objects/OGObjectActionService.h"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "b7e813efc6ef8839563f87e829c728e8da0243d3",
+      "system_ids": [
+        "M10",
+        "M32"
+      ],
+      "result": "Manual snapshots, backup export, pre-import checkpoints, app background and shutdown now flush the live R1 exploration journal and controlled physical body state through the existing SQLite store and recovery APIs.",
+      "remaining_player_visible_work": "Source-bound World presence frames and native save/resume execution still need full-game integration and owner phone use.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Runtime/OGGameCoreSubsystem.cpp",
+        "Source/OfflineGame/Public/Runtime/OGGameCoreSubsystem.h"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "32906af22216ab5568a7bdbc70f94c8ee89d4a6e",
+      "integration_commit": "bb2b4b8f9b7edaa83914dd66c1efba77c626fcab",
+      "system_ids": [
+        "M30"
+      ],
+      "result": "Existing adaptive score and semantic audio now receive the real pawn’s swimming/diving state and actual turn/World encounter state. Authored sound assets can react through the current mix and crossfade runtime.",
+      "remaining_player_visible_work": "Install original rules and sound assets for the new inputs. Continue source-authored weather, biome, boss phase, action sound and Japanese voice bindings.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Runtime/OGAdaptiveScoreComponent.cpp",
+        "Source/OfflineGame/Private/Runtime/OGSemanticAudioRuntime.cpp",
+        "Source/OfflineGame/Public/Runtime/OGAdaptiveScoreComponent.h"
+      ]
     }
   ],
-  "continuation_last_source_commit": "c5c3ee7269ffa7890c5b1b1c30ae4859296b9490",
+  "continuation_last_source_commit": "32906af22216ab5568a7bdbc70f94c8ee89d4a6e",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
