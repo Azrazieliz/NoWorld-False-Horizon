@@ -3638,9 +3638,49 @@
         "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
         "Source/OfflineGame/Private/World/OGGate02R1RealSourceRuntime.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "9e3f600284f6442a5e673a6981cc10bb93e066d6",
+      "system_ids": [
+        "M05",
+        "M07",
+        "M29"
+      ],
+      "result": "The existing global motion resolver now returns the same whole-character source take for previewed clip IDs, staged scene IDs, native playback and the Turn impact preflight. It checks the actual distinct rig drivers and existing root policy rather than reporting a separately selected first-part take.",
+      "remaining_player_visible_work": "Recover and admit genuine missing source channels, paired/group scene definitions, and original attack contact mappings. The 3,222-entry global catalog and original assets are untouched.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "9b3cb61bfc6a6deb81e9ce088e4b50d9ffe4f539",
+      "system_ids": [
+        "M16",
+        "M23"
+      ],
+      "result": "An open acquisition page rotates genuine installed offers on their authored World-time boundaries. Expired reviews are cleared, committed result cards survive a banner rotation, and purchase validation reads current canonical access rather than the presentation cache.",
+      "remaining_player_visible_work": "Install the approved production banner schedules, eligible playable pools, currencies and source artwork. Verify their availability in the combined Android package during owner testing.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Gacha/OGSharedGachaBannerDefinition.h",
+        "Source/OfflineGame/Private/Gacha/OGSharedGachaBannerDefinition.cpp",
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerGacha.cpp",
+        "Source/OfflineGame/Private/World/OGNativeGachaReview.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "0b54f313ab9a7745103680fb31e3c0acb8e6cfa4",
+  "continuation_last_source_commit": "9b3cb61bfc6a6deb81e9ce088e4b50d9ffe4f539",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
