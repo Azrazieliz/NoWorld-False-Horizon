@@ -3616,9 +3616,31 @@
         "Source/OfflineGame/Private/Runtime/OGSemanticAudioRuntime.cpp",
         "Source/OfflineGame/Public/Runtime/OGAdaptiveScoreComponent.h"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "0b54f313ab9a7745103680fb31e3c0acb8e6cfa4",
+      "system_ids": [
+        "M01",
+        "M02",
+        "M11",
+        "M13",
+        "M32"
+      ],
+      "result": "Initial R1 grounding traces the actual procedural source terrain component, so streamed props do not intercept the terrain-only startup query. Canonical runtime release clears the visible ecology projection and the same tile reloads from the replacement WorldStore. Unavailable, corrupt, or conflicting saved ecology rows cannot silently restore a removed resource.",
+      "remaining_player_visible_work": "Complete genuine gather/harvest bindings, population and resource simulation, remaining source region anchors and full First World navigation. Original terrain, scatter IDs and canonical persistence are retained.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
+        "Source/OfflineGame/Private/World/OGGate02R1RealSourceRuntime.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "32906af22216ab5568a7bdbc70f94c8ee89d4a6e",
+  "continuation_last_source_commit": "0b54f313ab9a7745103680fb31e3c0acb8e6cfa4",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
