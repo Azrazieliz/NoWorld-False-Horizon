@@ -21,6 +21,7 @@ class UStaticMeshComponent;
 class USkeletalMeshComponent;
 class UTouchInterface;
 class UOGDiagnosticCombatComponent;
+class UOGGameCoreSubsystem;
 class UOGDiagnosticAnimationPresentation;
 class UOGSemanticAudioRuntime;
 class UOGAdaptiveScoreComponent;
@@ -114,6 +115,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|FirstWorld|SourceEcology")
     bool TryResolveGate02SourceScatterHit(
         const FHitResult& Hit,FString& OutStableSourceId,FString& OutError) const;
+
+    /** Initial grounding uses this exact R1 terrain component, even under authored scenery. */
+    bool TraceR1SourceGround(const FVector& TraceStart, const FVector& TraceEnd, FHitResult& OutHit) const;
 
     /** Query the actual 513x513 authored RiverVale mask/relief; no generated
      * global water plane or false volume. Shared with native swimming/hazards. */
@@ -250,6 +254,8 @@ private:
     TSharedPtr<struct FStreamableHandle> R1RoadStreamHandle;
     int32 R1RoadLoadGeneration = 0;
     void RefreshR1StreamedTiles(bool bForce);
+    void ClearR1EcologyProjection();
+    TWeakObjectPtr<UOGGameCoreSubsystem> R1EcologyCore;
     float R1HeightAt(int32 X,int32 Y) const;
     // One shared stable-ID resolver for streaming reads and canonical writes.
     static FOGEntityId R1PersistentStateId(const FString& SourceId);

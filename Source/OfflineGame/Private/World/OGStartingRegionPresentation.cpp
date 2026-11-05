@@ -348,6 +348,10 @@ void AOGStartingRegionGenerator::BeginPlay()
 
 void AOGStartingRegionGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (auto* Core = R1EcologyCore.Get())
+    {
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    }
     UnloadR1SourceRoads();
     UnloadR1MarketSections();
     Super::EndPlay(EndPlayReason);
@@ -571,6 +575,7 @@ void AOGStartingRegionGenerator::ClearGeneratedContent()
     if(R1RiverSurface)
         R1RiverSurface->ClearAllMeshSections();
     R1PendingTerrainSections.Reset();
+    ClearR1EcologyProjection();
     UnloadR1SourceRoads();
     UnloadR1MarketSections();
 
@@ -5240,15 +5245,10 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
         false,
         this);
 
-    if (World->LineTraceSingleByChannel(
-            Hit,
-            TraceStart,
-            TraceEnd,
-            ECC_Visibility,
-            QueryParams) &&
-        Hit.ImpactNormal.Z > .35f &&
-        (!bSourceR1 || (Hit.GetActor()==StartingRegion.Get() &&
-            Cast<UProceduralMeshComponent>(Hit.GetComponent()))))
+    const bool bGroundHit = bSourceR1
+        ? StartingRegion->TraceR1SourceGround(TraceStart, TraceEnd, Hit)
+        : World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+    if (bGroundHit && Hit.ImpactNormal.Z > .35f)
     {
         const float HalfHeight =
             GetCapsuleComponent()->GetScaledCapsuleHalfHeight();

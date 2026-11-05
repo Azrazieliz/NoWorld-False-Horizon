@@ -245,6 +245,34 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         Rows.Num(),R1TilePlacements.Num());
 }
 
+bool AOGStartingRegionGenerator::TraceR1SourceGround(
+    const FVector& TraceStart, const FVector& TraceEnd, FHitResult& OutHit) const
+{
+    if (!bGate02R1RegionSource || !bR1DatasetLoaded || !Terrain || !Terrain->IsRegistered())
+    {
+        return false;
+    }
+    const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(OGSourceTerrainGroundSnap), false);
+    return Terrain->LineTraceComponent(OutHit, TraceStart, TraceEnd, QueryParams);
+}
+
+void AOGStartingRegionGenerator::ClearR1EcologyProjection()
+{
+    LastR1StreamTile = FIntPoint(MIN_int32, MIN_int32);
+    R1VisibleScatterSourceIdByType.Reset();
+    UHierarchicalInstancedStaticMeshComponent* Components[] =
+    {
+        RockInstances, TrunkInstances, CanopyInstances, AccentInstances
+    };
+    for (UHierarchicalInstancedStaticMeshComponent* Component : Components)
+    {
+        if (Component)
+        {
+            Component->ClearInstances();
+        }
+    }
+}
+
 void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
 {
     if (!bR1DatasetLoaded || !GetWorld()) return;
@@ -255,6 +283,36 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
     const FIntPoint Center(
         FMath::Clamp(FMath::FloorToInt((Local.X+R1HalfExtentCm)/R1EcologyTileCm),0,24),
         FMath::Clamp(FMath::FloorToInt((Local.Y+R1HalfExtentCm)/R1EcologyTileCm),0,24));
+    auto* Game = GetGameInstance();
+    auto* Core = Game ? Game->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    if (Core != R1EcologyCore.Get())
+    {
+        if (auto* PreviousCore = R1EcologyCore.Get())
+        {
+            PreviousCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
+        }
+        R1EcologyCore = Core;
+        if (Core)
+        {
+            Core->OnCanonicalRuntimeReleasing.AddUObject(this, &AOGStartingRegionGenerator::ClearR1EcologyProjection);
+        }
+        ClearR1EcologyProjection();
+    }
+
+    const IOGWorldStore* Store = Core ? Core->GetWorldStore() : nullptr;
+    if (GetWorld()->IsGameWorld() && (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen()))
+    {
+        return;
+    }
+    if (Store && Store->IsWriteTransactionActive())
+    {
+        if (bForce)
+        {
+            LastR1StreamTile = FIntPoint(MIN_int32, MIN_int32);
+        }
+        return;
+    }
+
     if (!bForce && Center==LastR1StreamTile) return;
     LastR1StreamTile=Center;
     UHierarchicalInstancedStaticMeshComponent* Targets[]={
@@ -267,10 +325,6 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
         Targets[T]->ClearInstances();
         Targets[T]->SetStaticMesh(R1ActualModule(T));
     }
-    IOGWorldStore* Store=nullptr;
-    if(UGameInstance* GI=GetGameInstance())
-        if(UOGGameCoreSubsystem* Core=GI->GetSubsystem<UOGGameCoreSubsystem>())
-            Store=Core->GetWorldStore();
     int32 Count=0;
     for(int32 Y=FMath::Max(0,Center.Y-2);Y<=FMath::Min(24,Center.Y+2);++Y)
     for(int32 X=FMath::Max(0,Center.X-2);X<=FMath::Min(24,Center.X+2);++X)
@@ -285,24 +339,25 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
             {
                 const FOGEntityId PersistentId=R1PersistentStateId(P.PersistentId);
                 bool bFound=false;FName Kind;FString State;int64 Revision=0;FString Error;
-                if(PersistentId.IsValid() &&
-                    Store->TryReadEntity(PersistentId,bFound,Kind,State,Revision,Error) &&
-                    bFound && Kind==FName(TEXT("gate02_r1_ecology_v1")))
+                if (!PersistentId.IsValid() ||
+                    !Store->TryReadEntity(PersistentId, bFound, Kind, State, Revision, Error))
                 {
-                    // Persistence content is JSON, not a whitespace-dependent
-                    // substring: {"removed": true} and {"removed":true}
-                    // must have identical state after offline reload.
-                    // A corrupt persisted ecology record must not quietly
-                    // respawn a tree or rock whose removal may be canonical.
-                    bRemoved=true;
+                    // An unavailable read does not establish that a previously
+                    // removed source resource exists in the current save.
+                    continue;
+                }
+                if (bFound)
+                {
+                    bRemoved = true;
                     TSharedPtr<FJsonObject> PersistentState;
-                    bool bCanonicalRemoved=false;
-                    if(FJsonSerializer::Deserialize(
-                           TJsonReaderFactory<>::Create(State),PersistentState) &&
-                       PersistentState.IsValid() &&
-                       PersistentState->TryGetBoolField(
-                           TEXT("removed"),bCanonicalRemoved))
-                        bRemoved=bCanonicalRemoved;
+                    bool bCanonicalRemoved = false;
+                    if (Kind == TEXT("gate02_r1_ecology_v1") &&
+                        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(State), PersistentState) &&
+                        PersistentState.IsValid() &&
+                        PersistentState->TryGetBoolField(TEXT("removed"), bCanonicalRemoved))
+                    {
+                        bRemoved = bCanonicalRemoved;
+                    }
                 }
             }
             if(bRemoved)continue;
