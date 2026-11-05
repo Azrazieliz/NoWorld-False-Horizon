@@ -70,6 +70,8 @@ void UOGGate12NativeRulerWidget::ResetGachaUi()
     if (auto* Library=UOGDefinitionLibrary::Get()) Library->OnDefinitionsChanged.Remove(GachaLibraryHandle);
     GachaLibraryHandle.Reset();bGachaDefinitionsDirty=false;
     GachaContextRulerId=FOGEntityId();GachaContextBannerId=FOGContentId();
+    VisibleGachaBannerIds.Reset();
+    GachaNextScheduleTick = -1;
     ClearGachaReview();GachaQuotes.Reset();GachaSavedResults.Reset();GachaDrawButtons.Reset();GachaCostLabels.Reset();
     GachaWalletLabel=nullptr;GachaPityLabel=nullptr;GachaPityBar=nullptr;
     bGachaRatesExpanded=bGachaResultsExpanded=bGachaHistoryExpanded=false;
@@ -81,7 +83,22 @@ void UOGGate12NativeRulerWidget::ObserveGacha(UOGGate12RulerSessionSubsystem& Se
 {
     auto* Hud=AcquisitionHud(*this);
     const FOGContentId Banner=Hud&&Hud->HasActiveGachaPresentation()?Hud->GetActiveGachaBanner().BannerId:FOGContentId();
-    if (GachaContextRulerId==Session.BoundRulerId&&GachaContextBannerId==Banner) return;
+    if (GachaContextRulerId == Session.BoundRulerId)
+    {
+        if (GachaContextBannerId != Banner)
+        {
+            GachaContextBannerId = Banner;
+            if (PendingGachaRequestId.IsValid())
+            {
+                ClearGachaReview();
+                GachaFeedback = TEXT("The reviewed banner is no longer active. Select an available banner.");
+            }
+            GachaQuotes.Reset();
+            bGachaRatesExpanded = false;
+            bGachaDirty = true;
+        }
+        return;
+    }
     ResetGachaUi();GachaContextRulerId=Session.BoundRulerId;GachaContextBannerId=Banner;
     if (auto* Library=UOGDefinitionLibrary::Get())
         GachaLibraryHandle=Library->OnDefinitionsChanged.AddWeakLambda(this,[this](int64){bGachaDefinitionsDirty=true;});
@@ -98,16 +115,37 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
     if (!Session||!Session->IsBoundToStoredRuler()||Session->BoundRulerId!=GachaContextRulerId||
         Session->CurrentDestination!=EOGRulerPrimaryDestination::Gacha)
     { ResetGachaUi(); return; }
-    auto* Hud=AcquisitionHud(*this);
-    if (bGachaDefinitionsDirty&&Hud)
+    auto* Hud = AcquisitionHud(*this);
+    auto* Core = GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
+    const int64 Tick = Core && Core->IsCoreReady() ? Core->GetCanonicalWorldTick() : -1;
+    const bool bScheduleChanged = GachaNextScheduleTick >= 0 && Tick >= GachaNextScheduleTick;
+    if (Hud && Tick >= 0 && (bGachaDefinitionsDirty || bScheduleChanged))
     {
-        bGachaDefinitionsDirty=false;
-        FString Before,After,Error;
-        FOGGachaBannerDefinition::StaticStruct()->ExportText(Before,&Hud->GetActiveGachaBanner(),nullptr,nullptr,PPF_None,nullptr);
-        Hud->LoadInstalledGachaBannerForRuler(Error);
-        FOGGachaBannerDefinition::StaticStruct()->ExportText(After,&Hud->GetActiveGachaBanner(),nullptr,nullptr,PPF_None,nullptr);
-        if (Before!=After) {bGachaDirty=true;BuildCurrentPage();return;}
-        // A theme-only definition change never reconstructs the acquisition page.
+        bGachaDefinitionsDirty = false;
+        FString Before, After, Error;
+        FOGGachaBannerDefinition::StaticStruct()->ExportText(
+            Before, &Hud->GetActiveGachaBanner(), nullptr, nullptr, PPF_None, nullptr);
+        if (!Hud->LoadInstalledGachaBannerForRuler(Error))
+        {
+            Hud->ClearActiveGachaPresentation();
+        }
+        FOGGachaBannerDefinition::StaticStruct()->ExportText(
+            After, &Hud->GetActiveGachaBanner(), nullptr, nullptr, PPF_None, nullptr);
+
+        TArray<FOGGachaBannerDefinition> Installed;
+        FOGInstalledGachaBannerLibrary::Collect(Tick, Installed, Error, &GachaNextScheduleTick);
+        TArray<FOGContentId> CurrentIds;
+        for (const auto& Banner : Installed)
+        {
+            CurrentIds.Add(Banner.BannerId);
+        }
+        if (Before != After || CurrentIds != VisibleGachaBannerIds)
+        {
+            bGachaDirty = true;
+            BuildCurrentPage();
+            return;
+        }
+        // A theme-only change leaves the active controls and review in place.
     }
     if (!Hud||!Hud->HasActiveGachaPresentation()||Hud->GetActiveGachaBanner().BannerId!=GachaContextBannerId)
     {
@@ -119,7 +157,6 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
     if (GachaPityBar)
         if (auto* Style=UOGReactiveUiSubsystem::Find(this)) GachaPityBar->SetFillColorAndOpacity(Style->GetPalette().Accent);
     if (!bGachaDirty) return;
-    auto* Core=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
     auto* Store=Core?Core->GetWorldStore():nullptr;
     if (!Store||!Store->IsOpen()||Store->IsWriteTransactionActive()) return;
     bGachaDirty=false;GachaQuotes.SetNum(2);
@@ -129,7 +166,7 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
     {
         auto& Quote=GachaQuotes[I];
         const bool Read=FOGGachaService(*Store).PreviewBatch(Banner,GachaContextRulerId,
-            Core->GetCanonicalWorldTick(),I==0?1:10,Quote,Error);
+            Tick,I==0?1:10,Quote,Error);
         const bool Enabled=Read&&Quote.bCanPull;
         if (GachaDrawButtons.IsValidIndex(I)&&GachaDrawButtons[I]) GachaDrawButtons[I]->SetIsEnabled(Enabled&&!bGachaCommandInFlight);
         if (GachaCostLabels.IsValidIndex(I)&&GachaCostLabels[I])
@@ -157,7 +194,14 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
 }
 void UOGGate12NativeRulerWidget::BuildGacha()
 {
-    if (auto* Hud=AcquisitionHud(*this)) { FString Error; Hud->LoadInstalledGachaBannerForRuler(Error); }
+    if (auto* Hud = AcquisitionHud(*this))
+    {
+        FString Error;
+        if (!Hud->LoadInstalledGachaBannerForRuler(Error))
+        {
+            Hud->ClearActiveGachaPresentation();
+        }
+    }
     BuildGachaPortrait();
 }
 void UOGGate12NativeRulerWidget::BuildGachaPortrait()
@@ -238,7 +282,17 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     GachaPityBar->SetFillColorAndOpacity(Gold);GachaPityBar->SetVisibility(ESlateVisibility::HitTestInvisible);
     Place(GachaPityBar,90,1000,684,4);
     TArray<FOGGachaBannerDefinition> Installed; FString Error;
-    if (Hud) Hud->ListInstalledGachaBanners(Installed,Error);
+    VisibleGachaBannerIds.Reset();
+    GachaNextScheduleTick = -1;
+    if (const auto* Core = GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>(); Core && Core->IsCoreReady())
+    {
+        FOGInstalledGachaBannerLibrary::Collect(
+            Core->GetCanonicalWorldTick(), Installed, Error, &GachaNextScheduleTick);
+        for (const auto& InstalledBanner : Installed)
+        {
+            VisibleGachaBannerIds.Add(InstalledBanner.BannerId);
+        }
+    }
     Action(TEXT("PREVIOUS"),TEXT("gacha-banner-previous"),68,1038,242,80,Installed.Num()>1);
     const int32 Index=Banner?Installed.IndexOfByPredicate([&](const auto& B){return B.BannerId==Banner->BannerId;}):INDEX_NONE;
     Text(Index==INDEX_NONE?TEXT("NO BANNER"):FString::Printf(TEXT("%d / %d"),Index+1,Installed.Num()),332,1055,242,54,21,GachaMuted);

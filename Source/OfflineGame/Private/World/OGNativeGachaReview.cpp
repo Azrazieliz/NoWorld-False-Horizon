@@ -15,8 +15,8 @@ bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString
     auto* Session=Game?Game->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
     auto* Store=Core?Core->GetWorldStore():nullptr;
     if (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen() ||
-        !Session || !Session->IsBoundToStoredRuler() || !Session->bRealGachaAccessUnlocked)
-    { Error=TEXT("Acquisition requires the actual unlocked local Ruler and canonical World."); return false; }
+        !Session || !Session->IsBoundToStoredRuler())
+    { Error=TEXT("Acquisition requires the local Ruler and canonical World."); return false; }
     const auto BannerId=ActiveGachaBanner.BannerId;
     if (!SelectInstalledGachaBanner(BannerId,Error)) return false; // Revalidates actual current playable pool and schedule.
     const int64 Tick=Core->GetCanonicalWorldTick();

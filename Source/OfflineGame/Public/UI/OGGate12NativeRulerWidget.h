@@ -163,6 +163,8 @@ private:
     int32 RecordsSection = -1;
     FOGEntityId GachaContextRulerId;
     FOGContentId GachaContextBannerId;
+    TArray<FOGContentId> VisibleGachaBannerIds;
+    int64 GachaNextScheduleTick = -1;
     TSharedPtr<FOGWorldStoreCommittedEvents> GachaEventFeed;
     FDelegateHandle GachaEventHandle,GachaLibraryHandle;
     FOGGachaBatchPreview PendingGachaReview;
