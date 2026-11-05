@@ -231,8 +231,10 @@ bool UOGWorldAbilityExecutionComponent::IsAcceptedBodyCurrent() const
             Parts[Index].Get()!=Part || !Accepted.Mesh.IsValid() ||
             Part->GetSkeletalMeshAsset()!=Accepted.Mesh.Get()) return false;
     }
-    // Natural finish permits later cosmetic playback, never a replacement controller or physical rig.
-    return bSourceMotionFinished || SourceMotion->GetActiveCombatReceipt()==ActiveCast;
+    // Natural finish permits later cosmetic playback on the same physical rig.
+    return bSourceMotionFinished ||
+        (SourceMotion->GetActiveCombatReceipt()==ActiveCast &&
+         (Specification.MotionSemantic.IsNone() || SourceMotion->CurrentAction==Specification.MotionSemantic));
 }
 void UOGWorldAbilityExecutionComponent::ClearSourceMotionTracking()
 {
@@ -268,11 +270,14 @@ bool UOGWorldAbilityExecutionComponent::TrackAcceptedMotion(FString& Error)
 {
     ClearSourceMotionTracking();
     auto* Motion=WorldMotion(GetOwner());
-    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast) return CaptureSourceRig(*Motion,Error);
+    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast &&
+        (Specification.MotionSemantic.IsNone() || Motion->CurrentAction==Specification.MotionSemantic))
+        return CaptureSourceRig(*Motion,Error);
     const auto* Battle=Core.IsValid()?Core->GetOwnedLuminousTurnBattle():nullptr;
     const auto* Unit=Battle?Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Root.SourceUnitId;}):nullptr;
-    if (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone())
-    { Error=TEXT("Accepted World action has no matching source-motion receipt on its actual body."); return false; }
+    if (!Specification.MotionSemantic.IsNone() ||
+        (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone()))
+    { Error=TEXT("Accepted World action has no matching source motion and receipt on its actual body."); return false; }
     return true; // Motionless source staging remains valid.
 }
 void UOGWorldAbilityExecutionComponent::HandleSourceMotionFinished(FName,FName)
