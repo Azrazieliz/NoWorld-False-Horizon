@@ -3493,9 +3493,31 @@
       "device_verified": false,
       "user_accepted": false,
       "saved_utc": "2026-11-05"
+    },
+    {
+      "source_commit": "c5c3ee7269ffa7890c5b1b1c30ae4859296b9490",
+      "system_ids": [
+        "M11",
+        "M12"
+      ],
+      "result": "StartingWorld requests and attaches the six original Gate02 regional roads at the source assembly’s world-space origin. The original meshes and imported materials are cooked with the game. Region rebuild and shutdown cancel the load and release the source components.",
+      "remaining_player_visible_work": "Integrate the original source assembly and remaining authored settlement/interior anchors and the complete First World navigation and partitioned geography. Only the already published road meshes were connected here.",
+      "source_paths": [
+        "Config/DefaultGame.ini",
+        "Source/OfflineGame/Private/World/OGGate02R1RoadSourceRuntime.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h"
+      ],
+      "5star_reused_program": "Scripts/Gate12World/gate12_author_first_world_r1_source_level_ue583.py",
+      "5star_reuse_detail": "Reused exact source selection and world-space placement from the existing authoring script. The tracked native road output already existed, so there was no reimport.",
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05"
     }
   ],
-  "continuation_last_source_commit": "7a8e3d34ad8ef81ee609b349c6e6efa7b40609ed",
+  "continuation_last_source_commit": "c5c3ee7269ffa7890c5b1b1c30ae4859296b9490",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
