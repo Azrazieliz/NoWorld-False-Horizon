@@ -1,5 +1,16 @@
 # NoWorld: False Horizon — mandatory project continuation instructions
 
+## CURRENT OWNER EXECUTION ORDER — 2026-11-05 (read before older gates)
+
+**Codex: implement ALL 36 existing NoWorld systems at maximum practical speed. Implement first, owner phone test later.** The operative detailed rule is [`docs/production/CODEX_FAST_36_SYSTEM_IMPLEMENTATION_DIRECTIVE.md`](docs/production/CODEX_FAST_36_SYSTEM_IMPLEMENTATION_DIRECTIVE.md). It takes priority over any older assistant-imposed requirements for gameplay verification, repeated compilation/testing, audits, CI acceptance, or owner approval before continuing to the next implementation.
+
+- Parallelize disjoint systems on isolated worktrees, reuse 7★ canonical rules / existing 6★ state / 5★ tools and original source; do not reset or redesign.
+- **Actually finish** each system's runtime implementation and bindings. Then freeze as `IMPLEMENTED_FROZEN_AWAITING_PHONE_TEST`, move immediately on, and reopen only for a concrete cross-system/package blocker or an owner-reported on-device defect. No fake completions; no permanent `OWNER_ACCEPTED` without the owner's verdict.
+- Carry every M01–M35 implementation to completion, including later economic, NPC, narrative, audiovisual and UI systems, not merely World/animation/market. **M36 is reserved for real owner phone acceptance.**
+- **Do not run test / verification campaigns** or repeated builds between system implementations. After all implementable systems are source-integrated, make the actual Android APK (fix only concrete build/package blockers) and hand it to the owner to test. Do not block on CI or old QA status.
+- Preserve the separate already-running Android packaging worker; it is an earlier snapshot, not a final 36-system build. Commit code/assets to canonical PR #89 and record true provenance in 6★ without inflating owner/device acceptance.
+
+
 ## Source-of-truth read order (never reset)
 1. **7★:** `docs/production/NOWORLD_7STAR_AUTHORITY.md` — sole canonical index. **First consult the complete v0.40 master** in `docs/production/authority/v040_source_text/part_01.md`–`part_10.md`, then the recovered, mature-only `docs/MATURE_CONTENT_V041_PRODUCTION_FREEZE.md` where its specific clauses conflict; follow newer explicit approved decisions and deliberate subsequent native source revisions. The older v0.36 archive is history, not the master. Do not turn a coding defect into an invented design decision.
 2. **6★:** `docs/production/ADVANCEMENT_PROGRESS.json` — 111-task historical scope and the live 36-system advancement/evidence ledger. Do not count tests/builds or documentation as gameplay progress. Cross-check the original `docs/roadmap/milestones.json` and linked issue acceptance.
