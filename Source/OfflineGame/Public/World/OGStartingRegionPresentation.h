@@ -86,6 +86,7 @@ public:
 
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaSeconds) override;
 
     virtual bool IsInsidePlayableBoundary_Implementation(
@@ -241,6 +242,13 @@ private:
     void UpdateR1MarketStreaming();
     void OnR1MarketSectionLoaded(int32 RequestGeneration,int32 RequestedSection);
     void UnloadR1MarketSections();
+    void RequestR1SourceRoads();
+    void AttachR1SourceRoads(int32 Generation);
+    void UnloadR1SourceRoads();
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UStaticMeshComponent>> R1SourceRoadComponents;
+    TSharedPtr<struct FStreamableHandle> R1RoadStreamHandle;
+    int32 R1RoadLoadGeneration = 0;
     void RefreshR1StreamedTiles(bool bForce);
     float R1HeightAt(int32 X,int32 Y) const;
     // One shared stable-ID resolver for streaming reads and canonical writes.

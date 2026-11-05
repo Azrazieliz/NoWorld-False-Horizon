@@ -346,6 +346,13 @@ void AOGStartingRegionGenerator::BeginPlay()
         GeneratorVersion);
 }
 
+void AOGStartingRegionGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    UnloadR1SourceRoads();
+    UnloadR1MarketSections();
+    Super::EndPlay(EndPlayReason);
+}
+
 void AOGStartingRegionGenerator::RebuildPreview()
 {
     ActiveSeed = EditorPreviewSeed;
@@ -542,6 +549,7 @@ void AOGStartingRegionGenerator::GenerateRegion(int32 Seed)
         BuildR1SourceRiver();
         LoadR1SourceScatter();
         RefreshR1StreamedTiles(true);
+        RequestR1SourceRoads();
         return;
     }
     BuildLayout(Seed);
@@ -563,6 +571,7 @@ void AOGStartingRegionGenerator::ClearGeneratedContent()
     if(R1RiverSurface)
         R1RiverSurface->ClearAllMeshSections();
     R1PendingTerrainSections.Reset();
+    UnloadR1SourceRoads();
     UnloadR1MarketSections();
 
     UHierarchicalInstancedStaticMeshComponent* Components[] =
