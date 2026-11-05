@@ -5,7 +5,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "OGNarrativeSessionSubsystem.generated.h"
 
-class AOGNarrativeWorldActor;
+class AActor;
 class UOGGameCoreSubsystem;
 
 struct OFFLINEGAME_API FOGNarrativeJournalEntry
@@ -23,8 +23,8 @@ class OFFLINEGAME_API UOGNarrativeSessionSubsystem : public UGameInstanceSubsyst
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
-    bool CanOpenWorldSubject(const AOGNarrativeWorldActor& Subject, const AActor* Interactor, FString& Error) const;
-    bool OpenWorldSubject(AOGNarrativeWorldActor* Subject, AActor* Interactor, FString& Error);
+    bool CanOpenWorldSubject(const AActor& Subject, const AActor* Interactor, FString& Error) const;
+    bool OpenWorldSubject(AActor* Subject, AActor* Interactor, FString& Error);
     void CloseSubject();
     bool HasOpenSubject() const { return SubjectActor.IsValid(); }
     bool ReadJournal(TArray<FOGNarrativeJournalEntry>& Out, FString& Error) const;
@@ -37,13 +37,15 @@ public:
     bool ConfirmReview(const FString& Token, const FOGEntityId& RequestId, FString& Error);
     void ClearReview();
 private:
-    TWeakObjectPtr<AOGNarrativeWorldActor> SubjectActor;
+    TWeakObjectPtr<AActor> SubjectActor;
     TWeakObjectPtr<AActor> SubjectInteractor;
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
     FOGNarrativeCommand ReviewedCommand;
     FString ReviewedToken;
     FOGEntityId ReviewedRuler;
     bool bReviewedRequiresSubject = false;
+    bool ResolveWorldSubject(const AActor& Subject, const AActor* Interactor,
+        FOGNarrativeContext& Out, FString& Error) const;
     bool ResolveRuntime(UOGGameCoreSubsystem*& Core, IOGWorldStore*& Store,
         FOGNarrativeCatalog& Catalog, FOGNarrativeContext& Context, bool bUseSubject, FString& Error) const;
     bool PrepareQuestCommand(IOGWorldStore& Store, const FOGNarrativeCatalog& Catalog,

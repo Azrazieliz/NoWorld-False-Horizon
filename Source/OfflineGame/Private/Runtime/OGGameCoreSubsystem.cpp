@@ -1,5 +1,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "World/OGWorldSimulationReceiver.h"
+#include "World/OGStartingRegionPresentation.h"
 
 #include "Combat/OGNativeCombatPassive.h"
 #include "Combat/OGCombatVitalityService.h"
@@ -28,6 +29,7 @@
 #include "HAL/PlatformTime.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "Misc/DateTime.h"
 #include "Misc/App.h"
 #include "Misc/CoreDelegates.h"
@@ -436,6 +438,35 @@ bool UOGGameCoreSubsystem::TickPerformanceTelemetry(
 }
 
 
+bool UOGGameCoreSubsystem::CheckpointPlayerWorldState(FString& OutError)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return true;
+    }
+
+    // Only the locally possessed body owns the shared Ruler exploration
+    // journal. Flush it before SQLite snapshots or the app goes to sleep.
+    APlayerController* Player = World->GetFirstPlayerController();
+    if (Player && Player->IsLocalController())
+    {
+        if (auto* Character = Cast<AOGWorldPrototypeCharacter>(Player->GetPawn()))
+        {
+            if (!Character->FlushR1ExplorationBeforePossession(OutError))
+            {
+                return false;
+            }
+        }
+    }
+
+    if (auto* Bodies = World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
+    {
+        return Bodies->CheckpointControlledBodies(OutError);
+    }
+    return true;
+}
+
 void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
     const TCHAR* BoundaryName)
 {
@@ -455,6 +486,12 @@ void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
     {
         UE_LOG(LogOfflineGame,Error,TEXT("Encounter checkpoint failed at lifecycle boundary %s: %s"),
             BoundaryName ? BoundaryName : TEXT("unknown"),*Error);
+        return;
+    }
+    if (!CheckpointPlayerWorldState(Error))
+    {
+        UE_LOG(LogOfflineGame, Error, TEXT("Player World state checkpoint failed at lifecycle boundary %s: %s"),
+            BoundaryName ? BoundaryName : TEXT("unknown"), *Error);
         return;
     }
     if (!WorldStore->Checkpoint(Error))
@@ -570,9 +607,7 @@ bool UOGGameCoreSubsystem::CreateManualRecoverySnapshot(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
-    if (auto* World=GetWorld())
-        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
-            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
+    if (!CheckpointPlayerWorldState(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
@@ -612,9 +647,7 @@ bool UOGGameCoreSubsystem::ExportCanonicalWorldBackup(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
-    if (auto* World=GetWorld())
-        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
-            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
+    if (!CheckpointPlayerWorldState(OutError)) return false;
 
     FString CheckpointError;
     if (!WorldStore->Checkpoint(CheckpointError))
@@ -657,9 +690,7 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
-    if (auto* World=GetWorld())
-        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
-            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
+    if (!CheckpointPlayerWorldState(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
@@ -829,6 +860,9 @@ void UOGGameCoreSubsystem::Deinitialize()
         FString ClockError;
         if (!bApplicationBackgrounded && !FlushCanonicalClockBoundary(ClockError))
             UE_LOG(LogOfflineGame, Error, TEXT("Canonical clock shutdown boundary failed: %s"), *ClockError);
+        FString WorldStateError;
+        if (!CheckpointPlayerWorldState(WorldStateError))
+            UE_LOG(LogOfflineGame, Error, TEXT("Player World state shutdown boundary failed: %s"), *WorldStateError);
     }
     bCoreReady = false;
     if (UOGPresentationModeSubsystem* Modes = GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>())

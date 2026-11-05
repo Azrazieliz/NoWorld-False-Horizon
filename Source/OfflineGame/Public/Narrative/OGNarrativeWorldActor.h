@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Core/OGEntityId.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "World/OGWorldModeInterfaces.h"
 #include "OGNarrativeWorldActor.generated.h"
 
@@ -27,4 +28,23 @@ public:
     virtual void Interact_Implementation(AActor* Interactor) override;
 protected:
     virtual void BeginPlay() override;
+};
+
+/** Authored NPC body using the same system bindings for scheduling and narrative. */
+UCLASS(Blueprintable)
+class OFFLINEGAME_API AOGNarrativeWorldCharacter : public ACharacter, public IOGWorldInteractable
+{
+    GENERATED_BODY()
+public:
+    AOGNarrativeWorldCharacter();
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Systems")
+    TObjectPtr<UOGSystemBindingComponent> SystemBindings;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Narrative") FText InteractionPrompt;
+    /** Content supplies the interaction distance. Zero disables interaction. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Narrative", meta=(ClampMin="0"))
+    float InteractionRangeCm = 0.f;
+
+    virtual bool CanInteract_Implementation(AActor* Interactor) const override;
+    virtual FText GetInteractionPrompt_Implementation(AActor* Interactor) const override;
+    virtual void Interact_Implementation(AActor* Interactor) override;
 };

@@ -1,4 +1,5 @@
 #include "Objects/OGObjectActionService.h"
+#include "Objects/OGObjectOfferDefinition.h"
 #include "Dom/JsonObject.h"
 #include "Misc/SecureHash.h"
 #include "Serialization/JsonReader.h"
@@ -319,11 +320,60 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
     if (!Store.AppendWorldEvent(Event,Error) || (OwnTransaction && !Store.CommitTransaction(Error))) return Fail();
     return true;
 }
-bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& D,const FOGEntityId& Counterparty,
-    const FOGEntityId& AllowedRuler,int64 RemainingUses,int64 Opens,int64 Closes,const FOGEntityId& RequestId,int64 Tick,FString& Error)
+bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& Definition,
+    const FOGEntityId& Counterparty, const FOGEntityId& AllowedRuler, int64 RemainingUses,
+    int64 Opens, int64 Closes, const FOGEntityId& RequestId, int64 Tick, FString& Error)
 {
-    Error.Reset(); FString State; int64 Revision=0;
-    if (!IsInGameThread() || !D.ValidateDefinition(Error) || !D.UsesCounterparty() || !RequestId.IsValid() || Tick<0 ||
+    Error.Reset();
+    if (!IsInGameThread() || !Store.BeginTransaction(Error)) return false;
+    if (PublishOfferInTransaction(Definition, Counterparty, AllowedRuler, RemainingUses,
+            Opens, Closes, RequestId, Tick, Error) && Store.CommitTransaction(Error)) return true;
+    FString Ignored;
+    Store.RollbackTransaction(Ignored);
+    return false;
+}
+
+bool FOGObjectActionService::PublishOffers(const UOGObjectOfferDefinition& Profile,
+    const FOGEntityId& Counterparty, int64 Tick, FString& Error)
+{
+    Error.Reset();
+    if (!IsInGameThread() || !Profile.ValidateDefinition(Error)) return false;
+    auto* Library = UOGDefinitionLibrary::Get();
+    if (!Library)
+    {
+        Error = TEXT("The installed object action library is unavailable.");
+        return false;
+    }
+    if (!Store.BeginTransaction(Error)) return false;
+
+    for (const FOGObjectOfferSpecification& Offer : Profile.Offers)
+    {
+        const auto* Action = Cast<UOGObjectActionDefinition>(Library->Resolve(TEXT("object_action"), Offer.ActionId));
+        // Keep the original publication identity so saved receipts still prevent stock refills.
+        const FOGEntityId RequestId = StableId(TEXT("object_offer_allocation|") + Counterparty.ToString() +
+            TEXT("|") + Offer.PublicationId.ToString() + TEXT("|") + Offer.ActionId.ToString());
+        if (!Action || !PublishOfferInTransaction(*Action, Counterparty, Offer.AllowedRuler,
+                Offer.RemainingUses, Offer.OpensTick, Offer.ClosesTick, RequestId, Tick, Error))
+        {
+            FString Ignored;
+            Store.RollbackTransaction(Ignored);
+            Error = TEXT("Could not publish offer ") + Offer.ActionId.ToString() +
+                TEXT(". ") + (Error.IsEmpty() ? FString(TEXT("The installed allocation is unavailable.")) : Error);
+            return false;
+        }
+    }
+    if (Store.CommitTransaction(Error)) return true;
+    FString Ignored;
+    Store.RollbackTransaction(Ignored);
+    return false;
+}
+
+bool FOGObjectActionService::PublishOfferInTransaction(const UOGObjectActionDefinition& D,
+    const FOGEntityId& Counterparty, const FOGEntityId& AllowedRuler, int64 RemainingUses,
+    int64 Opens, int64 Closes, const FOGEntityId& RequestId, int64 Tick, FString& Error)
+{
+    FString State; int64 Revision=0;
+    if (!D.ValidateDefinition(Error) || !D.UsesCounterparty() || !RequestId.IsValid() || Tick<0 ||
         RemainingUses < -1 || Opens<0 || (Closes!=-1 && Closes<=Opens) ||
         !ReadParty(Store,Counterparty,D.CounterpartyEntityKind,State,Revision,Error)) return false;
     if (AllowedRuler.IsValid() && !ReadParty(Store,AllowedRuler,TEXT("ruler"),State,Revision,Error)) return false;
@@ -331,23 +381,20 @@ bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& D,con
     Offer->SetStringField(TEXT("counterparty_id"),Counterparty.ToString());
     Offer->SetStringField(TEXT("allowed_ruler_id"),AllowedRuler.IsValid()?AllowedRuler.ToString():TEXT(""));
     Offer->SetStringField(TEXT("remaining_uses_exact"),LexToString(RemainingUses));
-    Offer->SetStringField(TEXT("opens_tick_exact"),LexToString(Opens)); Offer->SetStringField(TEXT("closes_tick_exact"),LexToString(Closes));
+    Offer->SetStringField(TEXT("opens_tick_exact"),LexToString(Opens));
+    Offer->SetStringField(TEXT("closes_tick_exact"),LexToString(Closes));
     const auto Id=OfferId(Counterparty,D.DefinitionId); const FString Json=Write(Offer);
-    if (!Store.BeginTransaction(Error)) return false;
-    auto Fail=[&](){FString Ignored; Store.RollbackTransaction(Ignored); return false;};
     bool Found=false; FOGWorldEvent Prior;
-    if (!Store.TryReadWorldEvent(RequestId,Found,Prior,Error)) return Fail();
+    if (!Store.TryReadWorldEvent(RequestId,Found,Prior,Error)) return false;
     if (Found)
     {
         if (Prior.EventType!=OfferEvent || Prior.PrimaryEntity!=Id || Prior.PayloadJson!=Json)
-        { Error=TEXT("Offer request ID belongs to a different event."); return Fail(); }
-        if (!Store.CommitTransaction(Error)) return Fail();
+        { Error=TEXT("Offer request ID belongs to a different event."); return false; }
         return true; // Never replenish already-consumed stock on publication retries.
     }
-    if (!Store.UpsertEntity(Id,TEXT("object_action_offer"),Tick,Json,Error)) return Fail();
+    if (!Store.UpsertEntity(Id,TEXT("object_action_offer"),Tick,Json,Error)) return false;
     FOGWorldEvent Event; Event.EventId=RequestId; Event.EventType=OfferEvent; Event.PrimaryEntity=Id;
     Event.RelatedEntities={Counterparty}; if (AllowedRuler.IsValid()) Event.RelatedEntities.Add(AllowedRuler);
     Event.WorldTick=Tick; Event.PayloadJson=Json;
-    if (!Store.AppendWorldEvent(Event,Error) || !Store.CommitTransaction(Error)) return Fail();
-    return true;
+    return Store.AppendWorldEvent(Event,Error);
 }
