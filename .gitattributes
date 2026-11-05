@@ -41,3 +41,6 @@ Content/NoWorld/FirstWorld/R1/Anchors/Market/**/*.uasset filter=lfs diff=lfs mer
 # Original-market source-derived, hash-receipted and reversible mobile GLB partitions
 Assets/NoWorld/FirstWorld/R1/MobilePrepared/**/*.glb filter=lfs diff=lfs merge=lfs -text
 Assets/NoWorld/FirstWorld/R1/MobilePrepared/*.glb filter=lfs diff=lfs merge=lfs -text
+# Original Gate02 R1 native landmark packages and source assembly.
+Content/NoWorld/FirstWorld/R1/Anchors/*.uasset filter=lfs diff=lfs merge=lfs -text
+Content/NoWorld/FirstWorld/Maps/L_FirstWorld_Gate02_R1_SourceAssembly.umap filter=lfs diff=lfs merge=lfs -text
