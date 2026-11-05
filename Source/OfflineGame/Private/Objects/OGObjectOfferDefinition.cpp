@@ -3,7 +3,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-#include "Misc/SecureHash.h"
 
 bool UOGObjectOfferDefinition::ValidateDefinition_Implementation(FString& Error) const
 {
@@ -64,20 +63,17 @@ void UOGObjectOfferDefinitionReceiver::TickComponent(float Delta,ELevelTick Tick
     Super::TickComponent(Delta,Tick,Function); SetComponentTickEnabled(false);
     auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
     auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
-    auto* Store=Core?Core->GetWorldStore():nullptr; auto* Library=UOGDefinitionLibrary::Get();
-    if (!Prepared || !Core || !Core->IsCoreReady() || !Store || !Library)
+    auto* Store=Core?Core->GetWorldStore():nullptr;
+    if (!Prepared || !Core || !Core->IsCoreReady() || !Store)
     { Status=TEXT("Canonical offer producer is unavailable."); return; }
-    for (const auto& Offer:Prepared->Offers)
+
+    FString Error;
+    if (!FOGObjectActionService(*Store).PublishOffers(*Prepared, BoundContext.EntityId,
+            Core->GetCanonicalWorldTick(), Error))
     {
-        const auto* Action=Cast<UOGObjectActionDefinition>(Library->Resolve(TEXT("object_action"),Offer.ActionId));
-        const FString Key=TEXT("object_offer_allocation|")+BoundContext.EntityId.ToString()+TEXT("|")+
-            Offer.PublicationId.ToString()+TEXT("|")+Offer.ActionId.ToString();
-        FTCHARToUTF8 Bytes(*Key); FMD5 Hash; Hash.Update(reinterpret_cast<const uint8*>(Bytes.Get()),Bytes.Length());
-        uint8 Digest[16]; Hash.Final(Digest); FGuid Guid; FGuid::ParseExact(BytesToHex(Digest,16),EGuidFormats::Digits,Guid);
-        FString Error;
-        if (!Action || !FOGObjectActionService(*Store).PublishOffer(*Action,BoundContext.EntityId,Offer.AllowedRulerId,
-            Offer.RemainingUses,Offer.OpensTick,Offer.ClosesTick,FOGEntityId(Guid),Core->GetCanonicalWorldTick(),Error))
-        { Status=Error.IsEmpty()?TEXT("Installed offer allocation is unavailable."):Error; UE_LOG(LogTemp,Warning,TEXT("%s"),*Status); return; }
+        Status = Error.IsEmpty() ? TEXT("Installed offer profile is unavailable.") : Error;
+        UE_LOG(LogTemp, Warning, TEXT("%s"), *Status);
+        return;
     }
     Status.Reset();
 }

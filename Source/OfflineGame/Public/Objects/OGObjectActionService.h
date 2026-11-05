@@ -3,6 +3,8 @@
 #include "Objects/OGObjectActionDefinition.h"
 #include "Persistence/OGWorldStore.h"
 
+class UOGObjectOfferDefinition;
+
 /** One canonical transaction for use, crafting, repair and stocked exchanges.
  * No UI-provided prices/grants and no alternate item database or wallet. */
 class OFFLINEGAME_API FOGObjectActionService
@@ -21,7 +23,13 @@ public:
     bool PublishOffer(const UOGObjectActionDefinition& Definition,const FOGEntityId& Counterparty,
         const FOGEntityId& AllowedRuler,int64 RemainingUses,int64 OpensTick,int64 ClosesTick,
         const FOGEntityId& RequestId,int64 WorldTick,FString& Error);
+    /** Publish a bound NPC or station's authored profile as one transaction. */
+    bool PublishOffers(const UOGObjectOfferDefinition& Profile, const FOGEntityId& Counterparty,
+        int64 WorldTick, FString& Error);
 private:
+    bool PublishOfferInTransaction(const UOGObjectActionDefinition& Definition,
+        const FOGEntityId& Counterparty, const FOGEntityId& AllowedRuler, int64 RemainingUses,
+        int64 OpensTick, int64 ClosesTick, const FOGEntityId& RequestId, int64 WorldTick, FString& Error);
     bool ApplyImpl(const UOGObjectActionDefinition&,const FOGObjectActionPreview&,const FOGEntityId&,int64,
         bool&,TArray<FOGEntityId>&,FString&,bool OwnTransaction);
     IOGWorldStore& Store;
