@@ -144,6 +144,7 @@ void UOGNativeTurnAgentComponent::RetryDecision()
     StopAbilityApproach();
     bAutoBindingEnabled = true;
     FailedSequence = ObservedSequence = -1; FailedAbilityRevision=-1;
+    PendingTurnTargetBodies.Reset();
     ReadyAtSeconds = -1.0;
     LastAutoBattleId = LastAutoUnitId = FOGEntityId(); LastAutoAbilityRevision=-1; LastAutoDefinitionRevision=-1;
 }
@@ -165,6 +166,19 @@ bool UOGNativeTurnAgentComponent::ReadCanonicalPhase(const FOGCombatUnitState& U
     return ReadActualNpc(*Core->GetWorldStore(), *ActivePolicy, Unit,
         Session ? Session->BoundRulerId : FOGEntityId(),
         Core->GetOwnedLuminousTurnBattle() && Core->GetOwnedLuminousTurnBattle()->GetState().ExecutionMode==EOGCombatExecutionMode::World,OutPhase, Error);
+}
+
+bool UOGNativeTurnAgentComponent::IsTurnDecisionBlocked(const FOGTurnBattle& Battle) const
+{
+    if (FailedSequence!=Battle.GetLog().GetNextSequence() ||
+        FailedAbilityRevision!=Battle.GetNativeAbilityRevision())
+        return false;
+
+    // Streaming can restore a real target without advancing the battle log.
+    for (const FOGEntityId& Id:PendingTurnTargetBodies)
+        if (UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id))
+            return false;
+    return true;
 }
 
 bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
@@ -190,8 +204,9 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
     if (!Battle->GetState().Units.IsValidIndex(Acting) || Battle->GetState().Units[Acting].UnitEntityId != BoundUnitId) return false;
     if (WorldMode && Battle->GetUnitWorldCast(BoundUnitId).IsValid()) return false;
     const int64 Sequence = Battle->GetLog().GetNextSequence();
-    if (!WorldMode && FailedSequence == Sequence && FailedAbilityRevision==Battle->GetNativeAbilityRevision()) { Error = Status; return false; }
+    if (!WorldMode && IsTurnDecisionBlocked(*Battle)) { Error = Status; return false; }
     TGuardValue<bool> Submitting(bSubmitting, true);
+    PendingTurnTargetBodies.Reset();
     FName Phase;
     if (!ReadCanonicalPhase(Battle->GetState().Units[Acting], Phase, Error))
     { FailedSequence = Sequence; FailedAbilityRevision=Battle->GetNativeAbilityRevision(); Status = Error; return false; }
@@ -247,34 +262,39 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
             Status.Reset(); ReadyAtSeconds=-1; return true;
         }
         if (!Battle->ValidateResolvedAction(Proposal,Action,LastFailure)) continue;
-        bool MissingBody=false;
+        const auto& Source=Battle->GetState().Units[Acting];
+        const FName OriginalSemantic=FOGNativeBattleCommands::MotionForResolvedAction(
+            Source,Action,Battle->ResolveNativeAbilityMotion(Source,Action.SkillId));
+        if (OriginalSemantic.IsNone())
+        {
+            LastFailure=TEXT("Opponent has no source-authored action animation/contact binding.");
+            continue;
+        }
+
+        bool bTargetsReady=true;
         for (const auto& Id:Action.TargetUnitIds)
         {
             const auto* Target=Battle->GetState().Units.FindByPredicate(
                 [&Id](const auto& Unit){ return Unit.UnitEntityId==Id; });
-            // A genuine defeated allied Manifestation can be revived without
-            // an active World body. Canonical ValidateResolvedAction already
-            // enforces the exact source skill's death/soul/revival windows.
-            const bool bRevivalRecipient=Target &&
-                Target->Presence==EOGCombatPresence::Defeated &&
-                !Target->IsAlive() && Target->TeamIndex==Battle->GetState().Units[Acting].TeamIndex;
-            if (!Target || (!bRevivalRecipient &&
-                !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id)))
-            { MissingBody=true; break; }
+            if (!Target)
+            {
+                LastFailure=TEXT("An authored action's canonical target vanished.");
+                bTargetsReady=false;
+                break;
+            }
+            // The native executor already checked this skill's revival eligibility.
+            const bool bRevivalRecipient=Target->Presence==EOGCombatPresence::Defeated &&
+                !Target->IsAlive() && Target->TeamIndex==Source.TeamIndex;
+            if (!bRevivalRecipient &&
+                !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BoundBattleId,Id))
+            {
+                PendingTurnTargetBodies.Add(Id);
+                LastFailure=TEXT("An authored target is waiting for its actual native body.");
+                bTargetsReady=false;
+                break;
+            }
         }
-        if (MissingBody)
-        { LastFailure=TEXT("An authored living target has no native body, or its canonical target vanished."); continue; }
-        const FName OriginalSemantic =
-            FOGNativeBattleCommands::MotionForResolvedAction(
-                Battle->GetState().Units[Acting],Action,
-                Battle->ResolveNativeAbilityMotion(
-                    Battle->GetState().Units[Acting],Action.SkillId));
-        if (OriginalSemantic.IsNone())
-        {
-            LastFailure = TEXT(
-                "Opponent has no source-authored action animation/contact binding.");
-            continue;
-        }
+        if (!bTargetsReady) continue;
         UOGTurnContactActionComponent* Staged =
             GetOwner()->FindComponentByClass<UOGTurnContactActionComponent>();
         if (!Staged)
@@ -293,6 +313,7 @@ bool UOGNativeTurnAgentComponent::StepOwnTurn(FString& Error)
             continue;
         // No damage has occurred yet: authored contact triggers exactly
         // one canonical GameCore commit, after the actual character moves.
+        PendingTurnTargetBodies.Reset();
         Status.Reset(); FailedSequence = -1; ReadyAtSeconds = -1.0;
         return true;
     }
@@ -344,7 +365,7 @@ void UOGNativeTurnAgentComponent::TickComponent(float DeltaTime, ELevelTick Tick
     if (!Battle->GetState().Units.IsValidIndex(Acting) || Battle->GetState().Units[Acting].UnitEntityId != BoundUnitId)
     { ReadyAtSeconds = -1.0; return; }
     const int64 Sequence = Battle->GetLog().GetNextSequence();
-    if (FailedSequence == Sequence && FailedAbilityRevision==Battle->GetNativeAbilityRevision()) return;
+    if (IsTurnDecisionBlocked(*Battle)) return;
     const double Now = GetWorld()->GetTimeSeconds();
     if (ObservedSequence != Sequence || ReadyAtSeconds < 0.0)
     { ObservedSequence = Sequence; ReadyAtSeconds = Now + ActivePolicy->DecisionDelaySeconds; }

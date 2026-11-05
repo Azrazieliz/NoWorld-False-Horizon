@@ -96,6 +96,7 @@ private:
     int64 LastAutoDefinitionRevision=-1;
     int64 FailedSequence = -1;
     int64 FailedAbilityRevision = -1;
+    TSet<FOGEntityId> PendingTurnTargetBodies;
     double ReadyAtSeconds = -1.0;
     int64 ObservedSequence = -1;
     TWeakObjectPtr<AController> ObservedController;
@@ -103,6 +104,7 @@ private:
     void StopAbilityApproach();
     friend struct FOGNativeCombatExecutionTestAccess;
     bool ObserveHumanControl();
+    bool IsTurnDecisionBlocked(const FOGTurnBattle& Battle) const;
     bool bSubmitting = false;
     bool bAutoBindingEnabled = true;
     bool ReadCanonicalPhase(const FOGCombatUnitState& Unit, FName& OutPhase, FString& Error) const;
