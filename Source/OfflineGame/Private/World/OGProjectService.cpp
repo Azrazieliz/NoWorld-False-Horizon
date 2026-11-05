@@ -145,74 +145,76 @@ bool FOGProjectService::RefreshProject(
     FOGProjectRecord& OutProject,
     FString& OutError)
 {
-    OutProject =
-        FOGProjectRecord();
+    OutProject = FOGProjectRecord();
     OutError.Reset();
 
+    if (CurrentWorldTick < 0)
+    {
+        OutError = TEXT("Project refresh requires a non-negative world tick.");
+        return false;
+    }
+
     bool bFound = false;
-    if (!Store.TryReadProject(
-            ProjectId,
-            bFound,
-            OutProject,
-            OutError))
+    FOGProjectRecord Project;
+    if (!Store.TryReadProject(ProjectId, bFound, Project, OutError))
     {
         return false;
     }
 
     if (!bFound)
     {
-        OutError =
-            TEXT("Project does not exist.");
+        OutError = TEXT("Project does not exist.");
         return false;
     }
 
-    if (OutProject.Status !=
-        EOGProjectStatus::Active)
+    const EOGProjectStatus PreviousStatus = Project.Status;
+    const int32 PreviousProgress = Project.ProgressBps;
+    if (PreviousStatus == EOGProjectStatus::Active)
     {
+        const int64 Duration = Project.ResolveWorldTick - Project.StartWorldTick;
+        if (Duration <= 0 || CurrentWorldTick >= Project.ResolveWorldTick)
+        {
+            Project.ProgressBps = 10000;
+            Project.Status = EOGProjectStatus::Completed;
+        }
+        else if (CurrentWorldTick <= Project.StartWorldTick)
+        {
+            Project.ProgressBps = 0;
+        }
+        else
+        {
+            const int64 Elapsed = CurrentWorldTick - Project.StartWorldTick;
+            const double Fraction = static_cast<double>(Elapsed) / static_cast<double>(Duration);
+            Project.ProgressBps = FMath::Clamp(FMath::FloorToInt(Fraction * 10000.0), 0, 10000);
+        }
+    }
+    else if (PreviousStatus != EOGProjectStatus::Completed)
+    {
+        OutProject = MoveTemp(Project);
         return true;
     }
 
-    const int64 Duration =
-        OutProject.ResolveWorldTick -
-        OutProject.StartWorldTick;
-
-    if (Duration <= 0 ||
-        CurrentWorldTick >=
-            OutProject.ResolveWorldTick)
+    // Both the live strategic refresh and the due-action resolver enter here.
+    // Completed projects can have pending phases in saves from before this binding.
+    if (!Store.BeginTransaction(OutError))
     {
-        OutProject.ProgressBps =
-            10000;
-        OutProject.Status =
-            EOGProjectStatus::Completed;
-    }
-    else if (CurrentWorldTick <=
-             OutProject.StartWorldTick)
-    {
-        OutProject.ProgressBps = 0;
-    }
-    else
-    {
-        const int64 Elapsed =
-            CurrentWorldTick -
-            OutProject.StartWorldTick;
-        const double Fraction =
-            static_cast<double>(Elapsed) /
-            static_cast<double>(Duration);
-
-        OutProject.ProgressBps =
-            FMath::Clamp(
-                FMath::FloorToInt(
-                    Fraction * 10000.0),
-                0,
-                10000);
+        return false;
     }
 
-    return Store.UpsertProject(
-        OutProject,
-        OutProject.StartWorldTick,
-        OutError);
+    TArray<FOGProjectPhaseRecord> Phases;
+    const bool bProjectChanged = Project.Status != PreviousStatus || Project.ProgressBps != PreviousProgress;
+    if (!RefreshProjectPhases(ProjectId, CurrentWorldTick, Phases, OutError) ||
+        (bProjectChanged && !Store.UpsertProject(Project, Project.StartWorldTick, OutError)) ||
+        !Store.CommitTransaction(OutError))
+    {
+        FString RollbackError;
+        Store.RollbackTransaction(RollbackError);
+        return false;
+    }
+
+    OutProject = MoveTemp(Project);
+    return true;
 }
-
 
 bool FOGProjectService::SetProjectPhase(
     const FOGProjectPhaseRecord& Phase,
@@ -304,6 +306,8 @@ bool FOGProjectService::RefreshProjectPhases(
             continue;
         }
 
+        const FName PreviousStatus = Phase.Status;
+        const int32 PreviousProgress = Phase.ProgressBps;
         if (CurrentWorldTick <
             Phase.StartWorldTick)
         {
@@ -349,9 +353,8 @@ bool FOGProjectService::RefreshProjectPhases(
             }
         }
 
-        if (!Store.UpsertProjectPhase(
-                Phase,
-                OutError))
+        if ((Phase.Status != PreviousStatus || Phase.ProgressBps != PreviousProgress) &&
+            !Store.UpsertProjectPhase(Phase, OutError))
         {
             return false;
         }
