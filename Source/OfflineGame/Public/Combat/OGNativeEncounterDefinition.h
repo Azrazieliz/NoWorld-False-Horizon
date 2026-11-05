@@ -92,4 +92,7 @@ public:
     virtual void ReleaseDefinition_Implementation() override { SetActive(false); }
     UFUNCTION(BlueprintCallable,Category="Encounter")
     bool StartEncounter(const TArray<FOGResolvedEncounterParticipant>& Participants,FString& Error);
+
+    /** Reconnect existing active participant actors and return the number still missing. */
+    static int32 ReconnectParticipantBodies(UWorld* World,const FOGTurnBattleState& State);
 };

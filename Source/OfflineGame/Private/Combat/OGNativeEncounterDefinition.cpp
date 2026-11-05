@@ -164,26 +164,44 @@ bool UOGNativeEncounterReceiver::StartEncounter(const TArray<FOGResolvedEncounte
     const bool Started=Core->StartOwnedNativeEncounter(*D,Participants,Session->BoundRulerId,{},Error);
     if (!Started) { Status=Error; return false; }
     const auto State=Core->GetOwnedLuminousTurnBattle()->GetState(); LastStartedBattle=State.BattleId;
-    TSet<FOGEntityId> Connected;
-    for (TActorIterator<AActor> It(GetWorld());It;++It)
-    {
-        auto* Participant=It->FindComponentByClass<UOGInteractionParticipantComponent>();
-        const auto Id=Participant?Participant->GetBoundCanonicalEntityId():FOGEntityId();
-        const auto* Unit=State.Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Id;});
-        if (!Unit || !Unit->CanAct()) continue;
-        auto* Body=It->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
-        if (!Body)
-        {
-            Body=NewObject<UOGCanonicalCombatActorBindingComponent>(*It);
-            It->AddInstanceComponent(Body); Body->RegisterComponent();
-        }
-        FString BindingError;
-        if (Body->RefreshCanonicalEncounter(BindingError)) Connected.Add(Id);
-    }
-    int32 Missing=0;
-    for (const auto& Unit:State.Units) if (Unit.CanAct() && !Connected.Contains(Unit.UnitEntityId)) ++Missing;
+    const int32 Missing=ReconnectParticipantBodies(GetWorld(),State);
     Status=Missing
         ? FString::Printf(TEXT("Encounter saved; %d active participant bodies are not connected yet."),Missing)
         : TEXT("Encounter saved; actual participant bodies connected.");
     return true;
+}
+
+int32 UOGNativeEncounterReceiver::ReconnectParticipantBodies(UWorld* World,const FOGTurnBattleState& State)
+{
+    TSet<FOGEntityId> Missing;
+    for (const auto& Unit:State.Units)
+        if (Unit.CanAct()) Missing.Add(Unit.UnitEntityId);
+    if (!World || !World->IsGameWorld() || State.Status!=EOGTurnBattleStatus::Running)
+        return Missing.Num();
+
+    for (TActorIterator<AActor> It(World);It && !Missing.IsEmpty();++It)
+    {
+        AActor* Actor=*It;
+        if (!IsValid(Actor) || Actor->IsActorBeingDestroyed()) continue;
+        auto* Body=Actor->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+        if (Body && Body->GetBoundBattleId()==State.BattleId)
+        {
+            Missing.Remove(Body->GetBoundUnitId());
+            continue;
+        }
+        const auto* Participant=Actor->FindComponentByClass<UOGInteractionParticipantComponent>();
+        if (!Participant) continue;
+        const FOGEntityId Id=Participant->GetBoundCanonicalEntityId();
+        if (!Missing.Contains(Id)) continue;
+        if (!Body)
+        {
+            Body=NewObject<UOGCanonicalCombatActorBindingComponent>(Actor);
+            Actor->AddInstanceComponent(Body);
+            Body->RegisterComponent();
+        }
+        FString BindingError;
+        if (Body->RefreshCanonicalEncounter(BindingError) && Body->IsBoundTo(State.BattleId,Id))
+            Missing.Remove(Id);
+    }
+    return Missing.Num();
 }
