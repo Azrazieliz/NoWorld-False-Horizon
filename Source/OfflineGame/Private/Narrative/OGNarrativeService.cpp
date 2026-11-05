@@ -1,11 +1,11 @@
 #include "Narrative/OGNarrativeService.h"
+#include "Narrative/OGNarrativeChronicle.h"
 #include "Narrative/OGNarrativeFingerprint.h"
 #include "Narrative/OGNarrativeJson.h"
 
 namespace
 {
 using namespace OGNarrative;
-const FName ReceiptType(TEXT("noworld.narrative.command_applied"));
 const TCHAR* StateSchema = TEXT("noworld.narrative_state.v1");
 using FLocks = TMap<FOGContentId,FOGContentId>;
 
@@ -508,7 +508,7 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
     if (Found)
     {
         FObject Receipt; FString Hash, Confirmed;
-        if (Existing.EventType != ReceiptType || Existing.PrimaryEntity != Command.Context.RulerId ||
+        if (Existing.EventType != NarrativeReceiptType || Existing.PrimaryEntity != Command.Context.RulerId ||
             !ReadObject(Existing.PayloadJson,Receipt,Error) ||
             !String(Receipt,TEXT("command_hash"),Hash,TEXT("receipt"),Error) || Hash != CommandHash(Command) ||
             !String(Receipt,TEXT("confirmation_token"),Confirmed,TEXT("receipt"),Error) || Confirmed != Token)
@@ -526,13 +526,16 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
     const auto* D = IsQuest ? nullptr : Catalog.Dialogues.FindByPredicate([&](const auto& V){return V.DialogueId == Command.ContentId;});
     if ((IsQuest && !Q) || (!IsQuest && !D)) return Fail(Error,TEXT("narrative"),TEXT("validated definition disappeared"));
     FOGNarrativeEffects None; const FOGNarrativeEffects* Effects = &None;
+    const FOGNarrativeChoiceDefinition* AppliedChoice = nullptr;
     if (Command.Kind == EOGNarrativeCommand::AcceptQuest) Effects = &Q->AcceptEffects;
     else if (Command.Kind == EOGNarrativeCommand::CompleteQuest) Effects = &Q->CompletionEffects;
     else if (Command.Kind == EOGNarrativeCommand::ChooseDialogue)
     {
         for (const auto& N : D->Nodes)
             for (const auto& Choice : N.Choices)
-                if (Choice.ChoiceId == Command.ChoiceId) Effects = &Choice.Effects;
+                if (Choice.ChoiceId == Command.ChoiceId) AppliedChoice = &Choice;
+        if (!AppliedChoice) return Fail(Error,TEXT("dialogue"),TEXT("validated choice disappeared"));
+        Effects = &AppliedChoice->Effects;
     }
     // Validate all quoted arithmetic before writing any balance; a late error
     // (including event receipt collision) rolls back every project and resource.
@@ -592,7 +595,10 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
         }
         if (!Save(Store,LedgerContext,TEXT("branches"),BranchContent,FOGEntityId(),Root,Tick,false,0,Error)) return false;
     }
-    auto Receipt = MakeShared<FJsonObject>(); Receipt->SetStringField(TEXT("schema"),TEXT("noworld.narrative_receipt.v1"));
+    auto Receipt = MakeShared<FJsonObject>(); Receipt->SetStringField(TEXT("schema"),NarrativeReceiptSchema);
+    // Remember only the authored labels visible when this decision committed.
+    Receipt->SetStringField(TEXT("display_name"),Quote.DisplayName);
+    if (AppliedChoice) Receipt->SetStringField(TEXT("choice_text"),AppliedChoice->Text);
     Receipt->SetStringField(TEXT("command_hash"),CommandHash(Command)); Receipt->SetStringField(TEXT("confirmation_token"),Token);
     Receipt->SetStringField(TEXT("content_id"),Command.ContentId.Value); Receipt->SetStringField(TEXT("choice_id"),Command.ChoiceId.Value);
     Receipt->SetStringField(TEXT("kind"),LexToString(static_cast<int32>(Command.Kind)));
@@ -605,7 +611,7 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
         Changes.Add(MakeShared<FJsonValueObject>(Change));
     }
     Receipt->SetArrayField(TEXT("resources"),Changes);
-    FOGWorldEvent Event; Event.EventId = RequestId; Event.EventType = ReceiptType; Event.PrimaryEntity = C.RulerId;
+    FOGWorldEvent Event; Event.EventId = RequestId; Event.EventType = NarrativeReceiptType; Event.PrimaryEntity = C.RulerId;
     if (C.SubjectId.IsValid()) Event.RelatedEntities.Add(C.SubjectId);
     if (C.InteractorEntityId.IsValid() && C.InteractorEntityId != C.RulerId) Event.RelatedEntities.AddUnique(C.InteractorEntityId);
     Event.WorldTick = Tick; Event.PayloadJson = Write(Receipt); Event.bChronicleEligible = true;
