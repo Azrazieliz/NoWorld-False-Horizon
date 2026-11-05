@@ -1,5 +1,5 @@
-#include "Combat/OGTurnContactActionComponent.h"
 #include "Combat/OGNativeTurnAgentComponent.h"
+#include "Combat/OGTurnContactActionComponent.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterGameplayDefinition.h"
 
