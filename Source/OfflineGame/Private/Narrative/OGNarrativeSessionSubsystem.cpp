@@ -195,11 +195,16 @@ bool UOGNarrativeSessionSubsystem::ReadJournal(TArray<FOGNarrativeJournalEntry>&
     FOGNarrativeContext Context;
     if (!ResolveRuntime(Core, Store, Catalog, Context, false, Error)) return false;
     FOGNarrativeService Service(*Store);
+    FOGContentId TrackedQuest;
+    FString TrackingError;
+    // A failed preference read should still leave the quest journal usable.
+    Service.ReadTrackedQuestId(Context.RulerId, TrackedQuest, TrackingError);
     FOGNarrativeContext AvailableContext = Context;
     FString SubjectError;
     FOGNarrativeContext LocalContext;
-    if (SubjectActor.IsValid() && ResolveWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), LocalContext, SubjectError))
-        AvailableContext = LocalContext;
+    const bool bLocalSubject = SubjectActor.IsValid() &&
+        ResolveWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), LocalContext, SubjectError);
+    if (bLocalSubject) AvailableContext = LocalContext;
     for (const FOGNarrativeQuestDefinition& Definition : Catalog.Quests)
     {
         FOGNarrativeJournalEntry Entry;
@@ -221,9 +226,30 @@ bool UOGNarrativeSessionSubsystem::ReadJournal(TArray<FOGNarrativeJournalEntry>&
             if (!Service.Preview(Catalog, Command, Core->GetCanonicalWorldTick(), Preview, AvailabilityError) || !Preview.bCanApply)
                 continue;
         }
+        Entry.bTracked = TrackedQuest == Definition.QuestId &&
+            Entry.State.bExists && !Entry.State.bCompleted && !Entry.bExpired;
+        Entry.bTrackedSubjectHere = Entry.bTracked && bLocalSubject &&
+            Entry.State.SubjectId.IsValid() && Entry.State.SubjectId == LocalContext.SubjectId;
         Out.Add(MoveTemp(Entry));
     }
     return true;
+}
+
+bool UOGNarrativeSessionSubsystem::SetQuestTracking(const FOGEntityId& ExpectedRuler, const FOGContentId& QuestId,
+    bool bTrack, FString& Error)
+{
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    FOGNarrativeCatalog Catalog;
+    FOGNarrativeContext Context;
+    if (!ResolveRuntime(Core, Store, Catalog, Context, false, Error)) return false;
+    if (Context.RulerId != ExpectedRuler)
+    {
+        Error = TEXT("The active Ruler changed. Open the journal again.");
+        return false;
+    }
+    return FOGNarrativeService(*Store).SetTrackedQuest(
+        Catalog, Context.RulerId, QuestId, bTrack, Core->GetCanonicalWorldTick(), Error);
 }
 
 bool UOGNarrativeSessionSubsystem::ReadSubjectDialogues(TArray<FOGNarrativeDialogueDefinition>& Out, FString& Error) const

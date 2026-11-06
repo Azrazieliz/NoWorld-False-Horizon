@@ -162,6 +162,18 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
         {
             AddAction(Body, TEXT("REVIEW RECENT PROGRESS"), TEXT("narrative/advance"));
             AddAction(Body, TEXT("REVIEW COMPLETION"), TEXT("narrative/complete"));
+            const FString TrackingAction = Quest->bTracked ? TEXT("narrative/untrack/") : TEXT("narrative/track/");
+            AddAction(Body, Quest->bTracked ? TEXT("STOP TRACKING") : TEXT("TRACK QUEST"),
+                TrackingAction + NarrativePageRulerId.ToString() + TEXT("|") + Quest->Definition.QuestId.ToString());
+            if (Quest->bTracked)
+            {
+                AddMessage(Body, TEXT("This quest is tracked in your journal."), 16, JournalGold);
+                if (Quest->bTrackedSubjectHere)
+                    AddMessage(Body, TEXT("You are speaking with this quest's contact."), 16, JournalSilver);
+                else if (Quest->State.SubjectId.IsValid() && !Quest->Definition.bAllowRemoteCompletion)
+                    AddMessage(Body, TEXT("Return to this quest's contact to review completion."), 16, JournalMuted);
+                AddAction(Body, TEXT("RETURN TO WORLD"), TEXT("world"));
+            }
         }
         return;
     }
@@ -169,6 +181,24 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
     AddAction(Body, TEXT("OPEN CODEX"), TEXT("narrative/codex"));
     if (bJournalAvailable)
     {
+        if (const auto* Tracked = Quests.FindByPredicate(
+                [](const FOGNarrativeJournalEntry& Entry) { return Entry.bTracked; }))
+        {
+            AddMessage(Body, TEXT("TRACKED QUEST"), 19, JournalGold);
+            AddAction(Body, Tracked->Definition.DisplayName,
+                TEXT("narrative/quest/") + Tracked->Definition.QuestId.ToString());
+            if (Tracked->bTrackedSubjectHere)
+                AddMessage(Body, TEXT("You are speaking with this quest's contact."), 16, JournalSilver);
+            for (const FOGNarrativeObjective& Objective : Tracked->Definition.Objectives)
+            {
+                const auto* Credits = Tracked->State.CreditedEvents.Find(Objective.ObjectiveId);
+                const int32 Recorded = Credits ? Credits->Num() : 0;
+                if (Recorded >= Objective.RequiredCount) continue;
+                AddMessage(Body, FString::Printf(TEXT("%s   %d / %d"),
+                    *Objective.DisplayName, Recorded, Objective.RequiredCount), 16, JournalSilver);
+                break;
+            }
+        }
         if (Narrative->HasOpenSubject())
         {
             TArray<FOGNarrativeDialogueDefinition> Dialogues;
@@ -178,9 +208,12 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
         }
         if (Quests.IsEmpty()) AddMessage(Body, TEXT("No quests are available in your current history."), 19, JournalMuted);
         for (const FOGNarrativeJournalEntry& Quest : Quests)
+        {
+            if (Quest.bTracked) continue;
             AddAction(Body, Quest.Definition.DisplayName +
                 (Quest.State.bCompleted ? TEXT("  ·  COMPLETED") : Quest.bExpired ? TEXT("  ·  CLOSED") : TEXT("")),
                 TEXT("narrative/quest/") + Quest.Definition.QuestId.ToString());
+        }
     }
 
     AddMessage(Body, TEXT("STORY HISTORY"), 22, JournalGold);
@@ -312,6 +345,23 @@ void UOGGate12NativeRulerWidget::HandleNarrativeAction(const FString& Action)
         { OpenNarrativeQuestId = FOGContentId(*Action.Mid(16)); OpenNarrativeDialogueId = FOGContentId(); }
         else if (Action.StartsWith(TEXT("narrative/dialogue/")))
         { OpenNarrativeDialogueId = FOGContentId(*Action.Mid(19)); OpenNarrativeQuestId = FOGContentId(); }
+        else if (Action.StartsWith(TEXT("narrative/track/")) || Action.StartsWith(TEXT("narrative/untrack/")))
+        {
+            const bool bTrack = Action.StartsWith(TEXT("narrative/track/"));
+            const FString Prefix = bTrack ? TEXT("narrative/track/") : TEXT("narrative/untrack/");
+            FString RulerText, QuestText;
+            FGuid RulerGuid;
+            if (bNarrativeCodexOpen || OpenNarrativeDialogueId.IsValid() ||
+                !Action.Mid(Prefix.Len()).Split(TEXT("|"), &RulerText, &QuestText) ||
+                !FGuid::Parse(RulerText, RulerGuid) || !RulerGuid.IsValid() ||
+                FOGEntityId(RulerGuid) != NarrativePageRulerId ||
+                !OpenNarrativeQuestId.IsValid() || OpenNarrativeQuestId != FOGContentId(QuestText))
+            {
+                Error = TEXT("The journal selection changed. Open the quest again.");
+            }
+            else if (Narrative->SetQuestTracking(FOGEntityId(RulerGuid), OpenNarrativeQuestId, bTrack, Error))
+                NarrativeFeedback = bTrack ? TEXT("Quest tracked.") : TEXT("Quest tracking cleared.");
+        }
         else if (Action == TEXT("narrative/accept") || Action == TEXT("narrative/advance") || Action == TEXT("narrative/complete"))
         {
             const EOGNarrativeCommand Kind = Action == TEXT("narrative/accept") ? EOGNarrativeCommand::AcceptQuest :

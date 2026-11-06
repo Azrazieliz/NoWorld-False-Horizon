@@ -14,6 +14,8 @@ struct OFFLINEGAME_API FOGNarrativeJournalEntry
     FOGNarrativeQuestDefinition Definition;
     FOGNarrativeQuestState State;
     bool bExpired = false;
+    bool bTracked = false;
+    bool bTrackedSubjectHere = false;
 };
 
 struct OFFLINEGAME_API FOGNarrativeMemoryEntry
@@ -42,6 +44,8 @@ public:
     void CloseSubject();
     bool HasOpenSubject() const { return SubjectActor.IsValid(); }
     bool ReadJournal(TArray<FOGNarrativeJournalEntry>& Out, FString& Error) const;
+    bool SetQuestTracking(const FOGEntityId& ExpectedRuler, const FOGContentId& QuestId,
+        bool bTrack, FString& Error);
     bool ReadRecentMemories(TArray<FOGNarrativeMemoryEntry>& Out, FString& Error) const;
     bool ReadMemoryPage(const FOGWorldEventCursor& Before, TArray<FOGNarrativeMemoryEntry>& Out,
         FOGWorldEventCursor& Next, FString& Error) const;

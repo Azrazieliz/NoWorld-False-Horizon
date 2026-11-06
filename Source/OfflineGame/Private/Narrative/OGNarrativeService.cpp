@@ -17,6 +17,19 @@ FOGEntityId ProjectId(const FOGEntityId& Ruler, const TCHAR* Kind, const FOGCont
     Part(Key,Kind); Part(Key,Content.Value); Part(Key,Subject.ToString());
     FGuid Guid; FGuid::ParseExact(Digest(Key),EGuidFormats::Digits,Guid); return FOGEntityId(Guid);
 }
+const FName QuestTrackingKind(TEXT("narrative_quest_tracking"));
+const TCHAR* QuestTrackingSchema = TEXT("noworld.narrative_tracking.v1");
+
+FOGEntityId QuestTrackingId(const FOGEntityId& Ruler)
+{
+    FString Key;
+    Part(Key, QuestTrackingSchema);
+    Part(Key, Ruler.ToString());
+    FGuid Guid;
+    FGuid::ParseExact(Digest(Key), EGuidFormats::Digits, Guid);
+    return FOGEntityId(Guid);
+}
+
 FOGContentId ProjectType(const TCHAR* Kind) { return FOGContentId(FString(TEXT("noworld:narrative.")) + Kind); }
 void StampProject(FString& Stamp, bool Found, const FOGProjectRecord& P)
 {
@@ -407,6 +420,90 @@ bool FOGNarrativeService::ReadQuest(const FOGEntityId& RulerId, const FOGContent
 {
     Error.Reset(); FOGProjectRecord P; FString Hash; return LoadQuest(Store,RulerId,QuestId,Out,P,Hash,Error);
 }
+bool FOGNarrativeService::ReadTrackedQuestId(const FOGEntityId& Ruler, FOGContentId& Out, FString& Error) const
+{
+    Out = FOGContentId();
+    Error.Reset();
+    if (!Store.IsOpen() || !Ruler.IsValid())
+        return Fail(Error, TEXT("quest tracking"), TEXT("an open world and canonical Ruler are required"));
+
+    bool bFound = false;
+    FName Kind;
+    FString Json;
+    int64 Revision = 0;
+    if (!Store.TryReadEntity(QuestTrackingId(Ruler), bFound, Kind, Json, Revision, Error))
+        return false;
+    if (!bFound) return true;
+
+    FObject Payload;
+    FString Schema, Owner, Quest;
+    if (Kind != QuestTrackingKind || !ReadObject(Json, Payload, Error) ||
+        !String(Payload, TEXT("schema"), Schema, TEXT("quest tracking"), Error) || Schema != QuestTrackingSchema ||
+        !String(Payload, TEXT("ruler_id"), Owner, TEXT("quest tracking"), Error) || Owner != Ruler.ToString() ||
+        !String(Payload, TEXT("quest_id"), Quest, TEXT("quest tracking"), Error, true, true))
+        return Fail(Error, TEXT("quest tracking"), TEXT("saved tracking record has an invalid kind, owner or payload"));
+
+    if (!Quest.IsEmpty())
+    {
+        FOGContentId Id(Quest);
+        if (!Id.IsValid()) return Fail(Error, TEXT("quest tracking"), TEXT("saved quest ID is invalid"));
+        Out = MoveTemp(Id);
+    }
+    return true;
+}
+
+bool FOGNarrativeService::SetTrackedQuest(const FOGNarrativeCatalog& Catalog, const FOGEntityId& Ruler,
+    const FOGContentId& QuestId, bool bTrack, int64 Tick, FString& Error)
+{
+    Error.Reset();
+    if (!IsInGameThread() || !Store.IsOpen() || !Ruler.IsValid() || !QuestId.IsValid() || Tick < 0)
+        return Fail(Error, TEXT("quest tracking"), TEXT("a canonical Ruler, quest and world tick are required"));
+
+    FTransaction Transaction(Store, Error);
+    if (!Transaction.Begin()) return false;
+    FOGNarrativeContext Context;
+    Context.RulerId = Ruler;
+    FString Stamp;
+    TArray<FString> Missing;
+    if (!ContextCheck(Store, Context, false, Tick, Stamp, Missing, Error)) return false;
+    if (!Missing.IsEmpty())
+        return Fail(Error, TEXT("quest tracking"), Missing[0]);
+
+    FOGContentId Current;
+    if (!ReadTrackedQuestId(Ruler, Current, Error)) return false;
+    if (bTrack)
+    {
+        const auto* Definition = Catalog.Quests.FindByPredicate(
+            [&](const FOGNarrativeQuestDefinition& Quest) { return Quest.QuestId == QuestId; });
+        if (!Definition)
+            return Fail(Error, TEXT("quest tracking"), TEXT("this quest is no longer installed"));
+
+        FOGNarrativeQuestState State;
+        FOGProjectRecord Project;
+        FString Hash;
+        if (!LoadQuest(Store, Ruler, QuestId, State, Project, Hash, Error)) return false;
+        if (!State.bExists || State.bCompleted || Hash != DefinitionHash(*Definition))
+            return Fail(Error, TEXT("quest tracking"), TEXT("only an active accepted quest with its installed definition can be tracked"));
+
+        bool bExpired = false;
+        if (!ReadQuestExpiration(*Definition, Ruler, State.SubjectId, Tick, bExpired, Error)) return false;
+        if (bExpired)
+            return Fail(Error, TEXT("quest tracking"), TEXT("this quest has closed"));
+        if (Current == QuestId) return Transaction.Commit();
+    }
+    else if (Current != QuestId)
+    {
+        return Fail(Error, TEXT("quest tracking"), TEXT("the tracked quest changed"));
+    }
+
+    auto Payload = MakeShared<FJsonObject>();
+    Payload->SetStringField(TEXT("schema"), QuestTrackingSchema);
+    Payload->SetStringField(TEXT("ruler_id"), Ruler.ToString());
+    Payload->SetStringField(TEXT("quest_id"), bTrack ? QuestId.ToString() : FString());
+    return Store.UpsertEntity(QuestTrackingId(Ruler), QuestTrackingKind, Tick, Write(Payload), Error) &&
+        Transaction.Commit();
+}
+
 bool FOGNarrativeService::ReadQuestExpiration(const FOGNarrativeQuestDefinition& Quest,
     const FOGEntityId& Ruler, const FOGEntityId& Subject, int64 Tick, bool& bExpired, FString& Error) const
 {
