@@ -39,6 +39,7 @@
 #include "Persistence/OGSQLiteWorldStore.h"
 #include "Persistence/OGSnapshotService.h"
 #include "Runtime/OGAndroidMediaVolumeBridge.h"
+#include "Runtime/OGAndroidBackupDocumentBridge.h"
 #include "Persistence/OGWorldBootstrap.h"
 
 void UOGGameCoreSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -467,6 +468,38 @@ bool UOGGameCoreSubsystem::CheckpointPlayerWorldState(FString& OutError)
     return true;
 }
 
+void UOGGameCoreSubsystem::QueueAutomaticExternalBackup()
+{
+#if PLATFORM_ANDROID
+    auto* Session = GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+    if (!Session || !Session->IsBoundToStoredRuler() || !WorldStore || !WorldStore->IsOpen() ||
+        WorldStore->IsWriteTransactionActive() ||
+        !FOGAndroidBackupDocumentBridge::ShouldQueueAutomaticBackup())
+    {
+        return;
+    }
+
+    const FString Directory = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("OfflineGame/AutoRecoveryStaging"));
+    IFileManager& Files = IFileManager::Get();
+    if (!Files.MakeDirectory(*Directory, true) && !Files.DirectoryExists(*Directory))
+    {
+        UE_LOG(LogOfflineGame, Warning, TEXT("Cannot prepare an automatic external recovery snapshot."));
+        return;
+    }
+    const FString Name = FString::Printf(TEXT("NoWorld_Auto_%s_%s.db"),
+        *FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%SZ")),
+        *FGuid::NewGuid().ToString(EGuidFormats::Digits));
+    const FString Snapshot = FPaths::Combine(Directory, Name);
+    FString Error;
+    if (!WorldStore->BackupTo(Snapshot, Error) ||
+        !FOGAndroidBackupDocumentBridge::QueueAutomaticBackup(Snapshot, Name, Error))
+    {
+        Files.Delete(*Snapshot, false, true, true);
+        UE_LOG(LogOfflineGame, Warning, TEXT("Automatic external backup could not start: %s"), *Error);
+    }
+#endif
+}
+
 void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
     const TCHAR* BoundaryName)
 {
@@ -505,6 +538,8 @@ void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
         return;
     }
 
+    QueueAutomaticExternalBackup();
+
     UE_LOG(
         LogOfflineGame,
         Log,
@@ -542,6 +577,12 @@ void UOGGameCoreSubsystem::VerifyCoreAfterResume(
         Log,
         TEXT("Authoritative game core resumed without reinitialization at lifecycle boundary %s."),
         BoundaryName ? BoundaryName : TEXT("unknown"));
+#if PLATFORM_ANDROID
+    if (bWasBackgrounded && FOGAndroidBackupDocumentBridge::ShouldQueueAutomaticBackup())
+    {
+        CheckpointForLifecycleBoundary(TEXT("external_recovery_resume"));
+    }
+#endif
 }
 
 void UOGGameCoreSubsystem::HandleApplicationWillDeactivate()
@@ -684,13 +725,14 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
     OutPreservedWorldPath.Reset();
     OutError.Reset();
 
-    if (!WorldStore || !WorldStore->IsOpen())
+    const bool bReadableLiveWorld = bCoreReady && WorldStore && WorldStore->IsOpen();
+    if (bReadableLiveWorld &&
+        (!FlushCanonicalClockBoundary(OutError) ||
+         !CheckpointOwnedNativeEncounter(OutError) ||
+         !CheckpointPlayerWorldState(OutError)))
     {
-        OutError = TEXT("Authoritative game core is not ready.");
         return false;
     }
-    if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
-    if (!CheckpointPlayerWorldState(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
@@ -702,7 +744,7 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
             TEXT("WorldState.db"));
 
     FString CheckpointError;
-    if (!WorldStore->Checkpoint(CheckpointError))
+    if (bReadableLiveWorld && !WorldStore->Checkpoint(CheckpointError))
     {
         OutError = FString::Printf(
             TEXT("World checkpoint failed before import: %s"),
@@ -711,7 +753,7 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
     }
 
     if (!ReleaseCanonicalRuntime(&OutError)) return false;
-    WorldStore->Close();
+    if (WorldStore) WorldStore->Close();
     WorldStore.Reset();
     bCoreReady = false;
 
@@ -728,7 +770,8 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
             TEXT("offlinegame:canonical_world"),
             FApp::GetBuildVersion(),
             OutPreservedWorldPath,
-            OutError);
+            OutError,
+            !bReadableLiveWorld);
 
     WorldStore = MakeUnique<FOGSQLiteWorldStore>();
     FString ReopenError;

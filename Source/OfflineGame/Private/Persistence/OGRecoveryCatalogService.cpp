@@ -1,4 +1,5 @@
 #include "Persistence/OGRecoveryCatalogService.h"
+#include "Misc/ScopeExit.h"
 
 #include "Persistence/OGSQLiteWorldStore.h"
 #include "Persistence/OGWorldBootstrap.h"
@@ -445,7 +446,8 @@ bool FOGRecoveryCatalogService::ImportWorldBackup(
     const FString& WorldIdentity,
     const FString& SourceBuildVersion,
     FString& OutPreservedWorldPath,
-    FString& OutError)
+    FString& OutError,
+    bool bPreserveUnreadableWorld)
 {
     OutPreservedWorldPath.Reset();
     OutError.Reset();
@@ -593,9 +595,79 @@ bool FOGRecoveryCatalogService::ImportWorldBackup(
         return false;
     }
 
-    FString PreservedBackupId;
-    if (Files.FileExists(
-            *WorldDatabasePath))
+    TArray<FString> ArchivedRawSuffixes;
+    bool bRawWorldDisplaced = false;
+    bool bImportCommitted = false;
+    ON_SCOPE_EXIT
+    {
+        if (!bRawWorldDisplaced || bImportCommitted) return;
+        // The archive remains intact even if the destination is busy or full.
+        for (const TCHAR* Suffix : {TEXT(""), TEXT("-wal"), TEXT("-shm"), TEXT("-journal")})
+        {
+            const FString Target = WorldDatabasePath + Suffix;
+            if (ArchivedRawSuffixes.Contains(FString(Suffix)))
+            {
+                if (Files.Copy(*Target, *(OutPreservedWorldPath + Suffix), true, true) != COPY_OK)
+                {
+                    OutError += TEXT(" Original bytes are preserved in the recovery archive.");
+                }
+            }
+            else if (Files.FileExists(*Target))
+            {
+                Files.Delete(*Target, false, true, true);
+            }
+        }
+    };
+
+    if (bPreserveUnreadableWorld && Files.FileExists(*WorldDatabasePath))
+    {
+        OutPreservedWorldPath = FPaths::Combine(
+            ProtectedArchiveDirectory, TEXT("pre_import_unreadable_") + ImportSessionId + TEXT(".db"));
+        for (const TCHAR* Suffix : {TEXT(""), TEXT("-wal"), TEXT("-shm"), TEXT("-journal")})
+        {
+            const FString Original = WorldDatabasePath + Suffix;
+            if (!Files.FileExists(*Original)) continue;
+            const FString Archive = OutPreservedWorldPath + Suffix;
+            const FString OriginalHash = HashFile(Original);
+            if (OriginalHash.IsEmpty() || Files.Copy(*Archive, *Original, false, true) != COPY_OK ||
+                HashFile(Archive) != OriginalHash)
+            {
+                CleanupStaging();
+                OutError = TEXT("Could not preserve the unreadable World and its SQLite journal. No World files were replaced.");
+                return false;
+            }
+            ArchivedRawSuffixes.Add(Suffix);
+        }
+
+        FOGBackupCatalogEntry PreservedEntry;
+        PreservedEntry.BackupId = TEXT("pre_import_unreadable:") + ImportSessionId;
+        PreservedEntry.BackupPathOrUri = OutPreservedWorldPath;
+        PreservedEntry.SchemaVersion = 0;
+        PreservedEntry.WorldIdentity = WorldIdentity;
+        PreservedEntry.CreatedUtc = FDateTime::UtcNow().ToIso8601();
+        PreservedEntry.ContentHash = HashFile(OutPreservedWorldPath);
+        PreservedEntry.SourceBuildVersion = SourceBuildVersion;
+        PreservedEntry.ValidationState = TEXT("preserved_unreadable");
+        if (!AddOrUpdateEntry(CatalogPath, PreservedEntry, OutError))
+        {
+            CleanupStaging();
+            return false;
+        }
+
+        // Incoming save is already validated. Archive every original file
+        // before opening a replacement SQLite database at the canonical path.
+        bRawWorldDisplaced = true;
+        for (const FString& Suffix : ArchivedRawSuffixes)
+        {
+            if (!Files.Delete(*(WorldDatabasePath + Suffix), true, true, true))
+            {
+                CleanupStaging();
+                OutError = TEXT("Could not release the unreadable World. The archived original is preserved.");
+                return false;
+            }
+        }
+    }
+    else if (Files.FileExists(*WorldDatabasePath))
     {
         const FString Timestamp =
             FDateTime::UtcNow().ToString(
@@ -713,6 +785,11 @@ bool FOGRecoveryCatalogService::ImportWorldBackup(
             FinalBootstrap,
             OutError))
     {
+        if (bRawWorldDisplaced)
+        {
+            CleanupStaging();
+            return false;
+        }
         if (!OutPreservedWorldPath.IsEmpty() &&
             Files.FileExists(
                 *OutPreservedWorldPath))
@@ -775,6 +852,7 @@ bool FOGRecoveryCatalogService::ImportWorldBackup(
         return false;
     }
 
+    bImportCommitted = true;
     CleanupStaging();
     return true;
 }

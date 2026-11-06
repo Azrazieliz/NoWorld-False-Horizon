@@ -8542,6 +8542,20 @@ void AOGWorldPresentationHud::DrawFoundationRuler(
                 TEXT("Export current world to Files..."),
                 FName(TEXT("OG.Recovery.ExportCurrent")),
                 true);
+#if PLATFORM_ANDROID
+            const FName AutomaticBackupState = FOGAndroidBackupDocumentBridge::GetAutomaticBackupState();
+            const TCHAR* AutomaticBackupLabel = AutomaticBackupState == TEXT("backed_up")
+                ? TEXT("Automatic backup saved. Change folder...")
+                : AutomaticBackupState == TEXT("writing")
+                    ? TEXT("Saving automatic backup...")
+                    : AutomaticBackupState == TEXT("folder_ready")
+                        ? TEXT("Automatic backups enabled. Change folder...")
+                        : AutomaticBackupState == TEXT("backup_failed") || AutomaticBackupState == TEXT("folder_unavailable")
+                            ? TEXT("Backup folder unavailable. Choose another...")
+                            : TEXT("Choose folder for automatic backups...");
+            RecoveryAction(AutomaticBackupLabel, TEXT("OG.Recovery.ChooseFolder"),
+                AutomaticBackupState != TEXT("writing"));
+#endif
             RecoveryAction(
                 TEXT("Import backup from Files..."),
                 FName(TEXT("OG.Recovery.PickImport")),
@@ -8554,6 +8568,9 @@ void AOGWorldPresentationHud::DrawFoundationRuler(
                 TransferState == FName(TEXT("imported")) &&
                     IFileManager::Get().FileExists(
                         *ImportedBackupPath));
+
+            if (OpeningPage == TEXT("recover") || OpeningPage == TEXT("import"))
+                RecoveryAction(TEXT("Back to opening"), TEXT("OG.Recovery.BackToOpening"), true);
 
             DrawFoundationText(
                 FString::Printf(
@@ -8956,9 +8973,11 @@ void AOGWorldPresentationHud::DrawHUD()
         Gate12NativeOpeningWidget->IsInViewport())
         return;
 
+    const bool bRecoveryPanelRequested = RulerDestination == TEXT("records") &&
+        RecordsDestination == TEXT("recovery") && (OpeningPage == TEXT("recover") || OpeningPage == TEXT("import"));
     const bool bNativeRulerVisible =
         bGate12NativeRulerUMGEnabled && !bSettingsOpen && !bPauseOpen && !bInteractionMenuOpen &&
-        FoundationSurface == FName(TEXT("ruler"));
+        !bRecoveryPanelRequested && FoundationSurface == FName(TEXT("ruler"));
     SynchronizeGate12NativeRulerUMG(bNativeRulerVisible);
     if (bNativeRulerVisible && Gate12NativeRulerWidget &&
         Gate12NativeRulerWidget->IsInViewport())
@@ -10769,6 +10788,24 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
         return;
     }
 
+    if (BoxName == TEXT("OG.Recovery.ChooseFolder"))
+    {
+        FString Error;
+        if (!FOGAndroidBackupDocumentBridge::ChooseAutomaticBackupFolder(Error))
+        {
+            FoundationStatusMessage = Error;
+        }
+        return;
+    }
+
+    if (BoxName == TEXT("OG.Recovery.BackToOpening"))
+    {
+        bPendingImportedBackupRestore = false;
+        OpeningPage = TEXT("main");
+        SetFoundationSurface(TEXT("opening"));
+        return;
+    }
+
     if (BoxName == FName(TEXT("OG.Recovery.CreateBackup")))
     {
         if (UGameInstance* GameInstance = GetGameInstance())
@@ -10900,6 +10937,22 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
                 TEXT("OfflineGame"),
                 TEXT("Import"),
                 TEXT("selected_import.db"));
+
+#if PLATFORM_ANDROID
+        FString TransferDetail;
+        if (FOGAndroidBackupDocumentBridge::GetTransferState(TransferDetail) != TEXT("imported"))
+        {
+            bPendingImportedBackupRestore = false;
+            FoundationStatusMessage = TEXT("Choose and import a backup document before confirming restore.");
+            return;
+        }
+#endif
+        if (!IFileManager::Get().FileExists(*Candidate))
+        {
+            bPendingImportedBackupRestore = false;
+            FoundationStatusMessage = TEXT("The selected backup is no longer available.");
+            return;
+        }
 
         if (!bPendingImportedBackupRestore)
         {

@@ -1,4 +1,5 @@
 #include "Runtime/OGAndroidBackupDocumentBridge.h"
+#include "HAL/FileManager.h"
 
 #if PLATFORM_ANDROID
 #include "Android/AndroidApplication.h"
@@ -31,6 +32,12 @@ bool CallPickerMethod(
     {
         OutError = TEXT("Android backup document bridge method is unavailable.");
         return false;
+    }
+
+    if (Arguments.IsEmpty())
+    {
+        FJavaWrapper::CallVoidMethod(Env, FJavaWrapper::GameActivityThis, Method);
+        return true;
     }
 
     if (Arguments.Num() == 1)
@@ -83,7 +90,7 @@ bool FOGAndroidBackupDocumentBridge::LaunchExport(
     return CallPickerMethod(
         "AndroidThunkJava_OGExportBackup",
         "(Ljava/lang/String;Ljava/lang/String;)V",
-        { SourceBackupPath, SuggestedFileName },
+        { IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*SourceBackupPath), SuggestedFileName },
         OutError);
 #else
     OutError = TEXT("External document export is available on Android.");
@@ -106,7 +113,7 @@ bool FOGAndroidBackupDocumentBridge::LaunchImport(
     return CallPickerMethod(
         "AndroidThunkJava_OGImportBackup",
         "(Ljava/lang/String;)V",
-        { InternalDestinationPath },
+        { IFileManager::Get().ConvertToAbsolutePathForExternalAppForWrite(*InternalDestinationPath) },
         OutError);
 #else
     OutError = TEXT("External document import is available on Android.");
@@ -164,5 +171,74 @@ FName FOGAndroidBackupDocumentBridge::GetTransferState(
         : FName(*State);
 #else
     return FName(TEXT("unsupported"));
+#endif
+}
+
+bool FOGAndroidBackupDocumentBridge::ChooseAutomaticBackupFolder(FString& OutError)
+{
+    OutError.Reset();
+#if PLATFORM_ANDROID
+    return CallPickerMethod("AndroidThunkJava_OGChooseBackupFolder", "()V", {}, OutError);
+#else
+    OutError = TEXT("Android backup folders are available on Android.");
+    return false;
+#endif
+}
+
+bool FOGAndroidBackupDocumentBridge::ShouldQueueAutomaticBackup()
+{
+#if PLATFORM_ANDROID
+    if (JNIEnv* Env = FAndroidApplication::GetJavaEnv())
+    {
+        const jmethodID Method = FJavaWrapper::FindMethod(
+            Env, FJavaWrapper::GameActivityClassID, "AndroidThunkJava_OGShouldQueueAutomaticBackup", "()Z", false);
+        return Method && Env->CallBooleanMethod(FJavaWrapper::GameActivityThis, Method) == JNI_TRUE;
+    }
+#endif
+    return false;
+}
+
+bool FOGAndroidBackupDocumentBridge::QueueAutomaticBackup(
+    const FString& SourcePath, const FString& Name, FString& OutError)
+{
+    OutError.Reset();
+#if PLATFORM_ANDROID
+    return CallPickerMethod("AndroidThunkJava_OGQueueAutomaticBackup",
+        "(Ljava/lang/String;Ljava/lang/String;)V",
+        { IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*SourcePath), Name }, OutError);
+#else
+    OutError = TEXT("Android backup folders are available on Android.");
+    return false;
+#endif
+}
+
+FName FOGAndroidBackupDocumentBridge::GetAutomaticBackupState()
+{
+#if PLATFORM_ANDROID
+    if (JNIEnv* Env = FAndroidApplication::GetJavaEnv())
+    {
+        const jmethodID Method = FJavaWrapper::FindMethod(
+            Env, FJavaWrapper::GameActivityClassID, "AndroidThunkJava_OGGetAutomaticBackupState",
+            "()Ljava/lang/String;", false);
+        if (Method)
+        {
+            const jstring Result = static_cast<jstring>(
+                FJavaWrapper::CallObjectMethod(Env, FJavaWrapper::GameActivityThis, Method));
+            if (Result)
+            {
+                const char* Utf = Env->GetStringUTFChars(Result, nullptr);
+                const FName State(Utf ? UTF8_TO_TCHAR(Utf) : TEXT("no_folder"));
+                if (Utf)
+                {
+                    Env->ReleaseStringUTFChars(Result, Utf);
+                }
+                Env->DeleteLocalRef(Result);
+                return State;
+            }
+        }
+    }
+    return TEXT("no_folder");
+#else
+    return TEXT("unsupported");
 #endif
 }

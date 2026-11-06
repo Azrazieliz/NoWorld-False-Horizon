@@ -19,10 +19,13 @@ public:
         const FString& InternalDestinationPath,
         FString& OutError);
 
-    /**
-     * Returns idle / pending_export / pending_import / exported / imported /
-     * cancelled / error. OutDetail contains the selected URI or error detail.
-     */
+    /** Choose a writable Android SAF tree for rotating external snapshots. */
+    static bool ChooseAutomaticBackupFolder(FString& OutError);
+    static bool ShouldQueueAutomaticBackup();
+    static bool QueueAutomaticBackup(const FString& SourcePath, const FString& Name, FString& OutError);
+    static FName GetAutomaticBackupState();
+
+    /** Manual picker transfer state and selected URI or error detail. */
     static FName GetTransferState(
         FString& OutDetail);
 };
