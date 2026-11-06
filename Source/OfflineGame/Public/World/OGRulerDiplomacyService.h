@@ -11,7 +11,10 @@ enum class EOGRulerDiplomacyAction : uint8
     EndAlliance,
     PledgeSupport,
     WithdrawSupport,
-    EndSubordination
+    EndSubordination,
+    RequestAlliance,
+    RequestSupport,
+    OfferSubordination
 };
 
 struct OFFLINEGAME_API FOGRulerDiplomacyFaction
@@ -44,7 +47,10 @@ public:
         FOGRulerDiplomacyLinks& Out,FString& Error) const;
     bool Review(const FOGEntityId& Ruler,const FOGEntityId& Own,const FOGEntityId& Other,
         EOGRulerDiplomacyAction Action,FOGRulerDiplomacyReview& Out,FString& Error) const;
-    bool Confirm(const FOGRulerDiplomacyReview& Reviewed,const FOGEntityId& Request,int64 Tick,FString& Error);
+    bool Confirm(const FOGRulerDiplomacyReview& Reviewed,const FOGEntityId& Request,int64 Tick,FString& Error,FString* Reply=nullptr);
+    bool ReadRecentReplies(const FOGEntityId& Ruler,const FOGEntityId& Own,const FOGEntityId& Other,
+        TArray<FString>& Out,FString& Error) const;
+    static bool HasResponse(const FOGEntityId& Other,EOGRulerDiplomacyAction Action);
     static FString ActionLabel(EOGRulerDiplomacyAction Action);
 
 private:

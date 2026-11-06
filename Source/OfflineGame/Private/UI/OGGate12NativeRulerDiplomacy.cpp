@@ -63,6 +63,8 @@ void UOGGate12NativeRulerWidget::BuildDiplomacy(UOGGate12RulerSessionSubsystem& 
         {
             AddMessage(Content,FOGRulerDiplomacyService::ActionLabel(Fresh.Action),22,DiplomacyGold);
             AddMessage(Content,Fresh.OwnName+TEXT("  /  ")+Fresh.OtherName,18,DiplomacyText);
+            if (Fresh.Action>=EOGRulerDiplomacyAction::RequestAlliance)
+                AddMessage(Content,TEXT("The other faction will respond according to its current interests and commitments."),17,DiplomacyMuted);
             AddAction(Content,TEXT("CONFIRM"),TEXT("diplomacy/confirm/")+DiplomacyRequest.ToString());
             AddAction(Content,TEXT("CANCEL"),TEXT("diplomacy/cancel"));
             return;
@@ -85,6 +87,18 @@ void UOGGate12NativeRulerWidget::BuildDiplomacy(UOGGate12RulerSessionSubsystem& 
     if (Links.Alliance.bActive) Command(EOGRulerDiplomacyAction::EndAlliance);
     Command(Links.OutgoingSupport.bActive?EOGRulerDiplomacyAction::WithdrawSupport:EOGRulerDiplomacyAction::PledgeSupport);
     if (Links.Subordination.bActive) Command(EOGRulerDiplomacyAction::EndSubordination);
+    if (!Links.Alliance.bActive && Diplomacy.HasResponse(DiplomacyOtherFaction,EOGRulerDiplomacyAction::RequestAlliance))
+        Command(EOGRulerDiplomacyAction::RequestAlliance);
+    if (!Links.IncomingSupport.bActive && Diplomacy.HasResponse(DiplomacyOtherFaction,EOGRulerDiplomacyAction::RequestSupport))
+        Command(EOGRulerDiplomacyAction::RequestSupport);
+    if (!Links.Subordination.bActive && Diplomacy.HasResponse(DiplomacyOtherFaction,EOGRulerDiplomacyAction::OfferSubordination))
+        Command(EOGRulerDiplomacyAction::OfferSubordination);
+    TArray<FString> Replies;
+    if (Diplomacy.ReadRecentReplies(Session.BoundRulerId,DiplomacyOwnFaction,DiplomacyOtherFaction,Replies,Error) && !Replies.IsEmpty())
+    {
+        AddMessage(Content,TEXT("RECENT RESPONSES"),18,DiplomacyGold);
+        for (const auto& Reply:Replies) AddMessage(Content,Reply,17,DiplomacyText);
+    }
 }
 
 void UOGGate12NativeRulerWidget::HandleDiplomacyAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session)
@@ -115,9 +129,10 @@ void UOGGate12NativeRulerWidget::HandleDiplomacyAction(const FString& Action,UOG
         const auto Review=PendingDiplomacy;
         const auto Request=DiplomacyRequest;
         DiplomacyRequest=FOGEntityId(); PendingDiplomacy=FOGRulerDiplomacyReview();
-        if (Diplomacy.Confirm(Review,Request,Core->GetCanonicalWorldTick(),Error))
+        FString Reply;
+        if (Diplomacy.Confirm(Review,Request,Core->GetCanonicalWorldTick(),Error,&Reply))
         {
-            DiplomacyFeedback=FOGRulerDiplomacyService::ActionLabel(Review.Action)+TEXT(" saved.");
+            DiplomacyFeedback=Reply.IsEmpty()?FOGRulerDiplomacyService::ActionLabel(Review.Action)+TEXT(" saved."):MoveTemp(Reply);
             FString RefreshError;
             if (!Session.RefreshCanonicalProjections(RefreshError)) DiplomacyFeedback+=TEXT(" ")+RefreshError;
         }
@@ -142,7 +157,7 @@ void UOGGate12NativeRulerWidget::HandleDiplomacyAction(const FString& Action,UOG
     {
         int32 Value=INDEX_NONE;
         if (LexTryParseString(Value,*Action.Mid(ReviewPrefix.Len())) && Value>=0 &&
-            Value<=static_cast<int32>(EOGRulerDiplomacyAction::EndSubordination))
+            Value<=static_cast<int32>(EOGRulerDiplomacyAction::OfferSubordination))
         {
             FOGRulerDiplomacyReview Review;
             if (Diplomacy.Review(Session.BoundRulerId,DiplomacyOwnFaction,DiplomacyOtherFaction,
