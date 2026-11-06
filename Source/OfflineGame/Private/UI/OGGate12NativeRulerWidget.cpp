@@ -151,6 +151,7 @@ void UOGGate12NativeRulerWidget::NativeConstruct()
     {
         Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
         Core->OnCanonicalRuntimeReleasing.AddUObject(this,&UOGGate12NativeRulerWidget::ResetGachaUi);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(this,&UOGGate12NativeRulerWidget::ResetDiplomacy);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
             this, &UOGGate12NativeRulerWidget::ResetCharacterDevelopment);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
@@ -166,6 +167,7 @@ void UOGGate12NativeRulerWidget::NativeDestruct()
     ResetGachaUi();
     ResetNarrativePage();
     ResetInventoryUi();
+    ResetDiplomacy();
     ResetCharacterDevelopment();
     if (UOGGameCoreSubsystem* Core = GetGameInstance()
             ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
@@ -654,7 +656,10 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
     SynchronizeInventoryContext(Session);
     if (!Session || !Session->IsBoundToStoredRuler() ||
         Session->CurrentDestination != EOGRulerPrimaryDestination::Territory)
+    {
         ResetTerritoryProjectOrders();
+        ResetDiplomacy();
+    }
     RefreshFrozenScene(Session ? Session->CurrentDestination
                               : EOGRulerPrimaryDestination::Home);
 
@@ -1393,6 +1398,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
         AddMessage(Content,
             TEXT("Known traversed path only. Drag to pan; pinch controls and scroll to zoom. Undiscovered geography remains hidden."),
             12, TextMuted);
+    BuildDiplomacy(*Session);
     if (Territory.Territories.IsEmpty())
     {
         ResetTerritoryProjectOrders();
@@ -1983,6 +1989,11 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         return;
     }
 
+    if (Action.StartsWith(TEXT("diplomacy/")))
+    {
+        HandleDiplomacyAction(Action,*Session);
+        return;
+    }
     if (Action.StartsWith(TEXT("project-orders/")))
     {
         HandleTerritoryProjectAction(Action, *Session);

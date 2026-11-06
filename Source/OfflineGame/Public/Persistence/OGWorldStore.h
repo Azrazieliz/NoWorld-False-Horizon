@@ -211,6 +211,8 @@ public:
 
     virtual bool UpsertFaction(const FOGFactionRecord&, int64, FString&) = 0;
     virtual bool TryReadFaction(const FOGEntityId&, bool&, FOGFactionRecord&, FString&) const = 0;
+    virtual bool ListFactionIdsLedBy(const FOGEntityId&,TArray<FOGEntityId>& Out,FString& Error) const
+    { Out.Reset(); Error=TEXT("This World store cannot list factions by leader."); return false; }
     virtual bool UpsertFactionLink(const FOGFactionLinkRecord&, FString&) = 0;
     virtual bool TryReadFactionLink(const FOGEntityId&, const FOGEntityId&, EOGFactionLinkType, bool&, FOGFactionLinkRecord&, FString&) const = 0;
 

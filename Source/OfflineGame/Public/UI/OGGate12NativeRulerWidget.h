@@ -10,6 +10,7 @@
 #include "Types/SlateEnums.h"
 #include "Objects/OGObjectActionDefinition.h"
 #include "World/OGInventoryStorageService.h"
+#include "World/OGRulerDiplomacyService.h"
 #include "Gacha/OGGachaService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
@@ -190,6 +191,10 @@ private:
     bool bGachaRatesExpanded = false;
     bool bGachaResultsExpanded = false;
     FOGEntityId SelectedTerritoryId;
+    FOGEntityId DiplomacyRulerId,DiplomacyOwnFaction,DiplomacyOtherFaction,DiplomacyRequest;
+    FOGRulerDiplomacyReview PendingDiplomacy;
+    FString DiplomacyFeedback;
+    bool bDiplomacyOpen=false,bDiplomacyBusy=false;
     int32 SelectedTerritoryOverlayIndex = 0;
     FOGEntityId ProjectOrdersRulerId;
     FOGEntityId ProjectOrdersTerritoryId;
@@ -306,6 +311,9 @@ private:
     void ClearNarrativeReview();
     void ResetNarrativePage();
     void BuildTerritory();
+    void BuildDiplomacy(UOGGate12RulerSessionSubsystem& Session);
+    void HandleDiplomacyAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
+    void ResetDiplomacy();
     void BuildTerritoryProjectOrders(const UOGGate12RulerSessionSubsystem& Session,
         const FOGTerritorySummaryViewModel& Holding);
     void HandleTerritoryProjectAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);

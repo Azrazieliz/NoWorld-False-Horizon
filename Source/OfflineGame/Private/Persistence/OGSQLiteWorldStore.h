@@ -221,6 +221,7 @@ public:
 
     virtual bool UpsertFaction(const FOGFactionRecord&, int64, FString&) override;
     virtual bool TryReadFaction(const FOGEntityId&, bool&, FOGFactionRecord&, FString&) const override;
+    virtual bool ListFactionIdsLedBy(const FOGEntityId&,TArray<FOGEntityId>&,FString&) const override;
     virtual bool UpsertFactionLink(const FOGFactionLinkRecord&, FString&) override;
     virtual bool TryReadFactionLink(const FOGEntityId&, const FOGEntityId&, EOGFactionLinkType, bool&, FOGFactionLinkRecord&, FString&) const override;
 

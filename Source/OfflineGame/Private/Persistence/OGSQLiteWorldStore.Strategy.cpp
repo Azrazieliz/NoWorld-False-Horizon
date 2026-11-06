@@ -804,6 +804,38 @@ bool FOGSQLiteWorldStore::TryReadFaction(
     return true;
 }
 
+bool FOGSQLiteWorldStore::ListFactionIdsLedBy(const FOGEntityId& Ruler,TArray<FOGEntityId>& Out,FString& Error) const
+{
+    Error.Reset(); Out.Reset();
+    if (!Ruler.IsValid()) { Error=TEXT("Faction lookup needs a real Ruler."); return false; }
+    sqlite3_stmt* Statement=nullptr;
+    if (sqlite3_prepare_v2(Database,"SELECT faction_entity_id FROM factions "
+        "WHERE leader_ruler_entity_id = ? ORDER BY faction_entity_id;",-1,&Statement,nullptr)!=SQLITE_OK)
+    { Error=LastError(TEXT("Prepare led faction lookup")); return false; }
+    if (!BindStrategyText(Statement,1,Ruler.ToString()))
+    {
+        Error=LastError(TEXT("Bind led faction lookup"));
+        sqlite3_finalize(Statement); return false;
+    }
+    TArray<FOGEntityId> Rows;
+    int32 Step;
+    while ((Step=sqlite3_step(Statement))==SQLITE_ROW)
+    {
+        const auto Id=ParseStrategyEntityId(StrategyColumnText(Statement,0));
+        if (!Id.IsValid())
+        {
+            Error=TEXT("Saved faction identity is invalid.");
+            sqlite3_finalize(Statement); return false;
+        }
+        Rows.Add(Id);
+    }
+    if (Step!=SQLITE_DONE) Error=LastError(TEXT("Read led faction lookup"));
+    sqlite3_finalize(Statement);
+    if (Step!=SQLITE_DONE) return false;
+    Out=MoveTemp(Rows);
+    return true;
+}
+
 bool FOGSQLiteWorldStore::UpsertFactionLink(
     const FOGFactionLinkRecord& Link,
     FString& OutError)
