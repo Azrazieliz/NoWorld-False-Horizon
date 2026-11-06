@@ -4009,9 +4009,29 @@
         "Source/OfflineGame/Public/World/OGOwnedEquipmentService.h",
         "Source/OfflineGame/Private/World/OGOwnedEquipmentService.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "0f8a0b128ab286802337abc8275f4bdfb1a057af",
+      "system_ids": [
+        "M25"
+      ],
+      "result": "Accepted quest tracking persists per Ruler, displays the first unfinished objective from actual quest state in the native journal, and exposes direct tracked quest access when interacting with its original subject in the World.",
+      "remaining_player_visible_work": "The production catalog still needs original quest/dialogue definitions, resident NPC bindings and authored faction/relationship/missed-event consequences. Knowledge-dependent map guidance remains open.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Narrative/OGNarrativeService.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeSessionSubsystem.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerNarrative.cpp",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeService.h",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeSessionSubsystem.h"
+      ]
     }
   ],
-  "continuation_last_source_commit": "325999e6c2e955a2e340cb42f91902667bfbc6f4",
+  "continuation_last_source_commit": "0f8a0b128ab286802337abc8275f4bdfb1a057af",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
