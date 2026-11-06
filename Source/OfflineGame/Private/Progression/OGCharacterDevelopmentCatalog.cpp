@@ -249,6 +249,94 @@ bool Routes(const FObject& Object, const TCHAR* Key,
     return true;
 }
 
+bool ReadProgressionRequirements(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
+    const FString& Path, FString& Error)
+{
+    if (Row->HasField(TEXT("required_attained_rank_id")) &&
+        !Id(Row,TEXT("required_attained_rank_id"),Out.RequiredAttainedRankId,Path,Error)) return false;
+
+    const FArray* Rows = nullptr;
+    if (!Array(Row,TEXT("required_skills"),Rows,Path,Error)) return false;
+    for (const auto& Value : *Rows)
+    {
+        const FString At = Path + TEXT(".required_skills");
+        FObject Object;
+        FOGDevelopmentSkillRequirement Need;
+        if (!ObjectValue(Value,Object,At,Error) ||
+            !Fields(Object,{TEXT("skill_id"),TEXT("state"),TEXT("display_name")},At,Error) ||
+            !Id(Object,TEXT("skill_id"),Need.SkillId,At,Error) ||
+            !Name(Object,TEXT("state"),Need.State,At,Error,true) ||
+            !String(Object,TEXT("display_name"),Need.DisplayName,At,Error)) return false;
+        Out.RequiredSkills.Add(MoveTemp(Need));
+    }
+
+    if (!Array(Row,TEXT("required_proficiencies"),Rows,Path,Error)) return false;
+    for (const auto& Value : *Rows)
+    {
+        const FString At = Path + TEXT(".required_proficiencies");
+        FObject Object;
+        FOGDevelopmentProficiencyRequirement Need;
+        if (!ObjectValue(Value,Object,At,Error) ||
+            !Fields(Object,{TEXT("proficiency_id"),TEXT("grade_id"),TEXT("display_name")},At,Error) ||
+            !Id(Object,TEXT("proficiency_id"),Need.ProficiencyId,At,Error) ||
+            !Id(Object,TEXT("grade_id"),Need.GradeId,At,Error) ||
+            !String(Object,TEXT("display_name"),Need.DisplayName,At,Error)) return false;
+        Out.RequiredProficiencies.Add(MoveTemp(Need));
+    }
+
+    if (!Array(Row,TEXT("required_equipment"),Rows,Path,Error)) return false;
+    for (const auto& Value : *Rows)
+    {
+        const FString At = Path + TEXT(".required_equipment");
+        FObject Object;
+        FOGDevelopmentEquipmentRequirement Need;
+        if (!ObjectValue(Value,Object,At,Error) ||
+            !Fields(Object,{TEXT("slot_id"),TEXT("object_id"),TEXT("affinity_milestone_id"),TEXT("display_name")},At,Error) ||
+            !Id(Object,TEXT("slot_id"),Need.SlotId,At,Error) ||
+            !Id(Object,TEXT("object_id"),Need.ItemDefinitionId,At,Error) ||
+            !String(Object,TEXT("display_name"),Need.DisplayName,At,Error)) return false;
+        if (Object->HasField(TEXT("affinity_milestone_id")) &&
+            !Id(Object,TEXT("affinity_milestone_id"),Need.AffinityMilestoneId,At,Error)) return false;
+        Out.RequiredEquipment.Add(MoveTemp(Need));
+    }
+    return true;
+}
+
+bool ValidateProgressionRequirements(const FOGCharacterDevelopmentDefinition& D,
+    const FString& Path, FString& Error)
+{
+    if ((!D.RequiredAttainedRankId.IsEmpty() && !D.RequiredAttainedRankId.IsValid()) ||
+        (D.bReopensReinforcement && (D.bCompletesReinforcement || D.ResultReinforcementState.IsNone())))
+        return Fail(Error,Path,TEXT("invalid attained Rank or reinforcement extension"));
+
+    TSet<FOGContentId> Seen;
+    for (const auto& Need : D.RequiredSkills)
+    {
+        if (!Need.SkillId.IsValid() || !Token(Need.State.ToString()) ||
+            Need.DisplayName.TrimStartAndEnd().IsEmpty() || Seen.Contains(Need.SkillId))
+            return Fail(Error,Path + TEXT(".required_skills"),TEXT("invalid or duplicate required skill"));
+        Seen.Add(Need.SkillId);
+    }
+    Seen.Reset();
+    for (const auto& Need : D.RequiredProficiencies)
+    {
+        if (!Need.ProficiencyId.IsValid() || !Need.GradeId.IsValid() ||
+            Need.DisplayName.TrimStartAndEnd().IsEmpty() || Seen.Contains(Need.ProficiencyId))
+            return Fail(Error,Path + TEXT(".required_proficiencies"),TEXT("invalid or duplicate required proficiency"));
+        Seen.Add(Need.ProficiencyId);
+    }
+    Seen.Reset();
+    for (const auto& Need : D.RequiredEquipment)
+    {
+        if (!Need.SlotId.IsValid() || !Need.ItemDefinitionId.IsValid() ||
+            (!Need.AffinityMilestoneId.IsEmpty() && !Need.AffinityMilestoneId.IsValid()) ||
+            Need.DisplayName.TrimStartAndEnd().IsEmpty() || Seen.Contains(Need.SlotId))
+            return Fail(Error,Path + TEXT(".required_equipment"),TEXT("invalid equipment requirement or duplicate slot"));
+        Seen.Add(Need.SlotId);
+    }
+    return true;
+}
+
 bool ReadOffer(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
     const FString& Path, FString& Error)
 {
@@ -259,7 +347,8 @@ bool ReadOffer(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
         TEXT("required_routes"), TEXT("required_facts"), TEXT("costs"), TEXT("item_costs"),
         TEXT("result_level"), TEXT("result_rarity"), TEXT("result_reinforcement_state"),
         TEXT("completes_reinforcement"), TEXT("stat_grants"), TEXT("granted_routes"),
-        TEXT("granted_forms")}, Path, Error) ||
+        TEXT("granted_forms"), TEXT("required_attained_rank_id"), TEXT("required_skills"),
+        TEXT("required_proficiencies"), TEXT("required_equipment"), TEXT("reopens_reinforcement")}, Path, Error) ||
         !Id(Row, TEXT("development_id"), Out.DevelopmentId, Path, Error) ||
         !Id(Row, TEXT("identity_id"), Out.IdentityId, Path, Error) ||
         !Id(Row, TEXT("version_id"), Out.VersionId, Path, Error) ||
@@ -272,6 +361,8 @@ bool ReadOffer(const FObject& Row, FOGCharacterDevelopmentDefinition& Out,
         !Name(Row, TEXT("required_reinforcement_state"), Out.RequiredReinforcementState, Path, Error) ||
         !Name(Row, TEXT("result_reinforcement_state"), Out.ResultReinforcementState, Path, Error) ||
         !Boolean(Row, TEXT("completes_reinforcement"), Out.bCompletesReinforcement, Path, Error) ||
+        !Boolean(Row, TEXT("reopens_reinforcement"), Out.bReopensReinforcement, Path, Error) ||
+        !ReadProgressionRequirements(Row,Out,Path,Error) ||
         !Ids(Row, TEXT("prerequisite_development_ids"), Out.PrerequisiteDevelopmentIds, Path, Error) ||
         !Ids(Row, TEXT("excluded_development_ids"), Out.ExcludedDevelopmentIds, Path, Error) ||
         !Ids(Row, TEXT("granted_forms"), Out.GrantedForms, Path, Error) ||
@@ -578,10 +669,11 @@ bool FOGCharacterDevelopmentCatalog::ValidateDefinition(
             return Fail(Error, Path + TEXT(".required_facts"), TEXT("invalid or duplicate subject/event type requirement"));
         Facts.Add(Key);
     }
+    if (!ValidateProgressionRequirements(D,Path,Error)) return false;
     bool bHasOutcome = D.ResultLevel > D.MinimumLevel ||
         (!D.ResultRarity.IsNone() && D.ResultRarity != D.RequiredRarity) ||
         (!D.ResultReinforcementState.IsNone() && D.ResultReinforcementState != D.RequiredReinforcementState) ||
-        D.bCompletesReinforcement || !D.GrantedForms.IsEmpty();
+        D.bCompletesReinforcement || D.bReopensReinforcement || !D.GrantedForms.IsEmpty();
     for (const auto& Grant : D.StatGrants)
     {
         if (!ValidGrant(Grant.Key.ToString(), Grant.Value))

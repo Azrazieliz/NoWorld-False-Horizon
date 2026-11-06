@@ -7,8 +7,10 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/GameInstance.h"
+#include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "UI/OGGate12GothicChromeWidget.h"
+#include "UI/OGUiViewModelService.h"
 
 namespace
 {
@@ -252,6 +254,100 @@ void UOGGate12NativeRulerWidget::BuildCharacterDevelopment(
         Current.Level, *DevelopmentStateName(Current.CurrentRarity)), 18, DevelopmentText);
     AddMessage(Section, TEXT("Current reinforcement: ") +
         DevelopmentReinforcementName(Reinforcement, bMaxReinforced), 17, DevelopmentText);
+
+    // Saved progression is visible independently of which offers are installed.
+    const UOGGameCoreSubsystem* Core = GI->GetSubsystem<UOGGameCoreSubsystem>();
+    IOGWorldStore* Store = Core ? Core->GetWorldStore() : nullptr;
+    if (Store && Store->IsOpen())
+    {
+        const FOGEntityId& Copy = Current.ManifestationId;
+        FOGEntityRankStateRecord Rank;
+        bool bRankFound = false;
+        if (!Store->TryReadEntityRankState(Copy,bRankFound,Rank,Error))
+            AddMessage(Section,Error,16,DevelopmentWarning);
+        else if (bRankFound)
+        {
+            AddMessage(Section,FString::Printf(TEXT("Attained Rank %s / level %d"),
+                *Rank.AttainedRankId.Value,Rank.AttainedLevel),17,DevelopmentText);
+            if (Rank.EffectiveRankId.IsValid())
+                AddMessage(Section,FString::Printf(TEXT("Effective Rank %s / level %d"),
+                    *Rank.EffectiveRankId.Value,Rank.EffectiveLevel),17,DevelopmentText);
+            if (Rank.PeakRankId.IsValid() &&
+                (Rank.PeakRankId != Rank.AttainedRankId || Rank.PeakLevel != Rank.AttainedLevel))
+                AddMessage(Section,FString::Printf(TEXT("Peak Rank %s / level %d"),
+                    *Rank.PeakRankId.Value,Rank.PeakLevel),16,DevelopmentMuted);
+        }
+
+        FOGManifestationDetailViewModel Detail;
+        if (FOGUiViewModelService(*Store).BuildManifestationDetail(Session->BoundRulerId,Copy,
+            FString(),4,FOGResolvedStatsProjectionResolver(),Detail,Error))
+        {
+            AddMessage(Section,FString::Printf(TEXT("Learned techniques: %d"),Detail.TotalLearnedSkillCount),
+                17,DevelopmentText);
+            for (const FOGSkillViewModel& Skill : Detail.Skills)
+                AddMessage(Section,Skill.SkillId.Value + TEXT(" / ") + DevelopmentStateName(Skill.CurrentState),
+                    15,DevelopmentMuted);
+            for (const FOGRouteNodeViewModel& Route : Detail.RouteNodes)
+                if (Route.bEntered || Route.bCompleted)
+                    AddMessage(Section,Route.NodeId.Value + TEXT(" / ") + DevelopmentStateName(Route.State),
+                        16,DevelopmentText);
+            for (const FOGFormViewModel& Form : Detail.Forms)
+                if (Form.State == TEXT("unlocked") || Form.State == TEXT("active"))
+                    AddMessage(Section,TEXT("Form: ") + Form.FormId.Value,16,DevelopmentText);
+
+            if (!Detail.Proficiencies.IsEmpty())
+                AddMessage(Section,TEXT("EQUIPMENT PROFICIENCY"),18,DevelopmentGold);
+            for (const FOGEquipmentProficiencySummaryViewModel& Proficiency : Detail.Proficiencies)
+            {
+                const FString Grade = Proficiency.GradeId.IsValid()
+                    ? Proficiency.GradeId.Value : TEXT("No grade recorded");
+                AddMessage(Section,Proficiency.ProficiencyId.Value + TEXT(" / ") + Grade,16,DevelopmentText);
+            }
+            for (const FOGEquipmentSlotViewModel& Equipment : Detail.Equipment)
+                if (Equipment.bAffinityKnown && Equipment.AffinityMilestoneId.IsValid())
+                    AddMessage(Section,TEXT("Affinity: ") + Equipment.DefinitionId.Value +
+                        TEXT(" / ") + Equipment.AffinityMilestoneId.Value,16,DevelopmentText);
+        }
+        else
+            AddMessage(Section,Error,16,DevelopmentWarning);
+
+        FOGCharacterDevelopmentService Development(*Store);
+        TMap<FName,FOGLargeNumber> EarnedStats;
+        if (!Development.ReadEarnedStats(Copy,EarnedStats,Error))
+            AddMessage(Section,Error,16,DevelopmentWarning);
+        else if (!EarnedStats.IsEmpty())
+        {
+            AddMessage(Section,TEXT("EARNED DEVELOPMENT BONUSES"),18,DevelopmentGold);
+            TArray<FName> Names;
+            EarnedStats.GetKeys(Names);
+            Names.Sort(FNameLexicalLess());
+            for (FName Name : Names)
+                AddMessage(Section,Name.ToString().Replace(TEXT("_"),TEXT(" ")) + TEXT("  +") +
+                    FOGUiNumberFormatter::Format(EarnedStats.FindChecked(Name),true,false),16,DevelopmentText);
+        }
+
+        TArray<FOGDevelopmentHistoryEntry> History;
+        if (!Development.ReadAppliedHistory(Session->BoundRulerId,Copy,8,History,Error))
+            AddMessage(Section,Error,16,DevelopmentWarning);
+        else if (!History.IsEmpty())
+        {
+            AddMessage(Section,TEXT("RECENT DEVELOPMENT"),18,DevelopmentGold);
+            for (const FOGDevelopmentHistoryEntry& Entry : History)
+            {
+                AddMessage(Section,Entry.DisplayName + TEXT(" / world tick ") +
+                    DevelopmentNumber(Entry.WorldTick),16,DevelopmentText);
+                if (Entry.PreviousLevel != Entry.ResultLevel)
+                    AddMessage(Section,FString::Printf(TEXT("Level %d to %d"),Entry.PreviousLevel,Entry.ResultLevel),
+                        15,DevelopmentMuted);
+                if (Entry.PreviousRarity != Entry.ResultRarity)
+                    AddMessage(Section,DevelopmentStateName(Entry.PreviousRarity) + TEXT(" to ") +
+                        DevelopmentStateName(Entry.ResultRarity),15,DevelopmentMuted);
+                if (Entry.bCompletedCeiling || Entry.bReopenedCeiling)
+                    AddMessage(Section,Entry.bCompletedCeiling ? TEXT("Reinforcement ceiling reached") :
+                        TEXT("Further reinforcement opened"),15,DevelopmentSuccess);
+            }
+        }
+    }
 
     TArray<FOGCharacterDevelopmentPreview> Options;
     if (!Session->ReadOwnedDevelopmentOptions(Identity.IdentityId,
