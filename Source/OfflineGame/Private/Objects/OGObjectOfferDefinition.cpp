@@ -23,6 +23,21 @@ bool UOGObjectOfferDefinition::ValidateDefinition_Implementation(FString& Error)
         { Error=TEXT("Offer allocations need distinct real action/publication IDs and explicit count/time bounds."); return false; }
         Actions.Add(Offer.ActionId); Publications.Add(Offer.PublicationId);
     }
+    TSet<FOGContentId> RestockIds;
+    TSet<FString> StockKeys;
+    for (const auto& Rule:RestockRules)
+    {
+        const auto* Offer=Offers.FindByPredicate([&](const auto& Row){return Row.ActionId==Rule.OfferActionId;});
+        const FString StockKey=Rule.ObjectId.ToString()+TEXT("|")+Rule.RankId.ToString()+TEXT("|")+Rule.QualityId.ToString();
+        if (!Offer || Offer->RemainingUses!=-1 || !Rule.RestockId.IsValid() || RestockIds.Contains(Rule.RestockId) ||
+            StockKeys.Contains(StockKey) || !Rule.SupplierId.IsValid() || Rule.SupplierKind.IsNone() ||
+            Rule.SupplierKind==TEXT("ruler") || !Rule.RouteId.IsValid() || !Rule.ObjectId.IsValid() ||
+            (!Rule.RankId.IsEmpty() && !Rule.RankId.IsValid()) || (!Rule.QualityId.IsEmpty() && !Rule.QualityId.IsValid()) ||
+            Rule.MaximumOnHand<=0 || Rule.MaximumPerDelivery<=0 || Rule.MaximumPerDelivery>Rule.MaximumOnHand ||
+            Rule.DeliveryIntervalTicks<=0 || Rule.RouteLoadPerItem.GetSign()<=0)
+        { Error=TEXT("Restock needs distinct exact stock, an open-ended stock-backed offer, source, route, load and delivery bounds."); return false; }
+        RestockIds.Add(Rule.RestockId); StockKeys.Add(StockKey);
+    }
     return true;
 }
 void UOGObjectOfferDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const
@@ -38,6 +53,15 @@ bool UOGObjectOfferDefinition::ValidateResolvedReferences(const FOGDefinitionRes
         const auto* Action=Cast<UOGObjectActionDefinition>(Resolve(TEXT("object_action"),Offer.ActionId));
         if (!Action || !Action->UsesCounterparty())
         { Error=TEXT("Offer allocation must reference an installed counterparty action."); return false; }
+    }
+    for (const auto& Rule:RestockRules)
+    {
+        const auto* Action=Cast<UOGObjectActionDefinition>(Resolve(TEXT("object_action"),Rule.OfferActionId));
+        if (!Action || Action->Kind!=EOGObjectActionKind::Exchange || !Action->Inputs.ContainsByPredicate([&](const auto& Input)
+            { return Input.From==EOGObjectActionParty::Counterparty && Input.Disposition==EOGObjectInputDisposition::Transfer &&
+                Input.ObjectId==Rule.ObjectId && Input.RankId==Rule.RankId && Input.QualityId==Rule.QualityId &&
+                Input.InstanceCount<=Rule.MaximumOnHand; }))
+        { Error=TEXT("Restock must supply the exact physical stock sold by an authored exchange."); return false; }
     }
     return true;
 }
@@ -156,7 +180,12 @@ bool UOGObjectOfferDefinitionReceiver::OpenFromWorldInteraction(
 
     auto* PC = Cast<APlayerController>(Interactor.GetController());
     auto* Hud = PC ? Cast<AOGWorldPresentationHud>(PC->GetHUD()) : nullptr;
-    if (!Hud || !Hud->ShowNativeObjectOffers(BoundContext.EntityId, Error))
+    auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
+    auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    auto* Store=Core?Core->GetWorldStore():nullptr;
+    const bool Ready=Store && FOGObjectActionService(*Store).RestockOffers(*Prepared,BoundContext.EntityId,
+        Core->GetCanonicalWorldTick(),Error);
+    if (!Ready || !Hud || !Hud->ShowNativeObjectOffers(BoundContext.EntityId, Error))
     {
         if (Error.IsEmpty()) Error = TEXT("The native offers screen is unavailable.");
         WorldInteractionError = Error;

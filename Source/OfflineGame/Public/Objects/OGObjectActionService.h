@@ -24,6 +24,8 @@ public:
         const FOGEntityId& AllowedRuler,int64 RemainingUses,int64 OpensTick,int64 ClosesTick,
         const FOGEntityId& RequestId,int64 WorldTick,FString& Error);
     /** Publish a bound NPC or station's authored profile as one transaction. */
+    bool RestockOffers(const UOGObjectOfferDefinition& Profile,const FOGEntityId& Merchant,
+        int64 Tick,FString& Error);
     bool PublishOffers(const UOGObjectOfferDefinition& Profile, const FOGEntityId& Counterparty,
         int64 WorldTick, FString& Error);
 private:

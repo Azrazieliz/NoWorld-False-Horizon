@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Content/OGSystemBindingComponent.h"
+#include "Math/OGLargeNumber.h"
 #include "OGObjectOfferDefinition.generated.h"
 
 class AOGWorldPrototypeCharacter;
@@ -17,6 +18,24 @@ struct OFFLINEGAME_API FOGObjectOfferSpecification
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 OpensTick=0;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 ClosesTick=-1;
 };
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGMerchantRestockRule
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId RestockId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId OfferActionId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGEntityId SupplierId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FName SupplierKind;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGEntityId RouteId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId ObjectId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId RankId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId QualityId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 MaximumOnHand=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 MaximumPerDelivery=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 DeliveryIntervalTicks=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGLargeNumber RouteLoadPerItem;
+};
+
 UCLASS(BlueprintType)
 class OFFLINEGAME_API UOGObjectOfferDefinition : public UOGReusableDefinition
 {
@@ -27,6 +46,8 @@ public:
     /** Explicit opt-in for actors that already own a separate World interaction. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FText WorldInteractionPrompt;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectOfferSpecification> Offers;
+    /** Move existing supplier stock through an authored live route when a market is visited. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGMerchantRestockRule> RestockRules;
     virtual bool ValidateDefinition_Implementation(FString& Error) const override;
     virtual void CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const override;
     virtual bool ValidateResolvedReferences(const FOGDefinitionResolver& Resolve,FString& Error) const override;
