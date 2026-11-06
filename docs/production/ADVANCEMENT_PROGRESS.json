@@ -4047,9 +4047,52 @@
         "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerGacha.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "5fcfced64ac513125f6db389fe64e4392cefc13b",
+      "system_ids": [
+        "M15",
+        "M21",
+        "M22"
+      ],
+      "result": "Native character development now exposes retained Rank, skills, forms, routes, equipment proficiency and affinity, earned bonuses and history for the exact selected owned copy. Confirmed upgrades recheck authored Rank/skill/proficiency/affinity conditions in the transaction, preserve effective Rank overrides and can reopen a ceiling only through an explicit authored extension.",
+      "remaining_player_visible_work": "The approved per-Version offer catalog is still empty. Install its costs and effects, authored XP/proficiency earning, Rank breakthroughs and exact Grand Convergence sets.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Progression/OGCharacterDevelopmentCatalog.cpp",
+        "Source/OfflineGame/Private/Progression/OGCharacterDevelopmentService.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionDevelopment.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerDevelopment.cpp",
+        "Source/OfflineGame/Public/Progression/OGCharacterDevelopmentService.h"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "e35a1a020c7885e2ce1dc6c7efdd3344bd96f4fd",
+      "system_ids": [
+        "M19",
+        "M20"
+      ],
+      "result": "The normal World interact action on an in-range authored merchant or station now opens real published offers in the native interface. It uses the existing review, wallet, materials and finite stock transaction. Original other actor interactions keep priority unless the authored offer profile explicitly chooses otherwise.",
+      "remaining_player_visible_work": "The original Eastern Market still needs actual merchant and station offer profiles, prices, stock and production/restocking data. Invention, enhancement, commissioned crafting and regional pricing remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Objects/OGObjectOfferDefinition.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
+        "Source/OfflineGame/Private/World/OGWorldObjectOfferInteraction.cpp",
+        "Source/OfflineGame/Public/Objects/OGObjectOfferDefinition.h",
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h"
+      ]
     }
   ],
-  "continuation_last_source_commit": "d8d01507486077be546c3a334c98cf0eb9dc0e0a",
+  "continuation_last_source_commit": "e35a1a020c7885e2ce1dc6c7efdd3344bd96f4fd",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
