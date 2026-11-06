@@ -1432,6 +1432,9 @@
         "id": "M10",
         "title": "Persistent offline profile and local save/load",
         "issue": 37,
+        "implementation_state": "IMPLEMENTED_FROZEN_AWAITING_PHONE_TEST",
+        "implementation_commit": "e4a10645241964bb4b0da564a08a8695ff58ddc2",
+        "implementation_evidence": "The native Continue path restores the canonical local Ruler, the stored owned World-character choice and current SQLite projections. Player preferences stage changes and retain the prior readable profile. Manual and mobile lifecycle checkpoints flush existing runtime exploration, controlled-body and encounter state. Phone acceptance is open.",
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
         "completed_in_this_update": false,
@@ -3877,9 +3880,64 @@
       "device_verified": false,
       "owner_accepted": false,
       "saved_utc": "2026-11-06"
+    },
+    {
+      "source_commit": "25cdca3ac3120df672eb3a67b1084df6d50fcf3e",
+      "system_ids": [
+        "M04",
+        "M08",
+        "M22",
+        "M34"
+      ],
+      "result": "Recovered the original production native character catalog from the protected project. Base and Alter now have their actual Blueprint bindings available at the path the World and acquisition screens load. The native UI registry, Base and Grand original packages are explicitly in the cook list. Awakened, Berserker and Grand retain the existing exact native World-class bindings and all five original art assets.",
+      "remaining_player_visible_work": "Finish the original wardrobe variants and source-authored motion and transformation staging for the remaining forms. The approved gameplay banner catalog and authentic baseline Ruler rig remain absent.",
+      "source_paths": [
+        "Config/DefaultGame.ini",
+        "Content/NoWorld/UI/DA_NoWorld_CharacterVisuals.uasset"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06"
+    },
+    {
+      "source_commit": "ea76e422dc0424f08a20eebfaa8aceac6bed33cf",
+      "system_ids": [
+        "M10",
+        "M33"
+      ],
+      "result": "Player profile saves stage JSON and preserve the last readable settings before replacing the live file. Relaunch can recover the previous profile after an interrupted write.",
+      "remaining_player_visible_work": "Continue the native mobile graphics/language/accessibility options under M33.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Runtime/OGPlayerProfileSettings.cpp"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06"
+    },
+    {
+      "source_commit": "e4a10645241964bb4b0da564a08a8695ff58ddc2",
+      "system_ids": [
+        "M10"
+      ],
+      "result": "Canonical local Ruler restoration now reapplies the saved unlocked owned World character selection, while explicit protagonist selection clears it. Both the per-Identity selection and local World choice commit together. Older saves with no selection and invalid/removed copies retain the baseline Ruler route.",
+      "remaining_player_visible_work": "Implementation frozen for the offline save and restart scope. Android delivery and the owner's on-device verdict remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Runtime/OGGate12LocalRulerBootstrap.cpp",
+        "Source/OfflineGame/Public/Runtime/OGGate12LocalRulerBootstrap.h",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionSubsystem.cpp"
+      ],
+      "status": "IMPLEMENTED_FROZEN_AWAITING_PHONE_TEST",
+      "counted_as_completed_system": true,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06"
     }
   ],
-  "continuation_last_source_commit": "75d03009cd41cfa9ccc562d8986d54a1b404443a",
+  "continuation_last_source_commit": "e4a10645241964bb4b0da564a08a8695ff58ddc2",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
