@@ -1106,7 +1106,8 @@ public:
     const FOGGachaBannerDefinition& GetActiveGachaBanner() const { return ActiveGachaBanner; }
     const TArray<FOGGachaPullResult>& GetLastGachaResults() const { return LastGachaResults; }
     bool ExecuteActiveGachaDraw(int32 Count, FString& OutError);
-    bool ExecuteReviewedGachaDraw(int32 Count,const FString& ConfirmationToken,FString& OutError);
+    bool ExecuteReviewedGachaDraw(int32 Count,const FString& ConfirmationToken,FString& OutError,
+        const FOGContentId& BatchTicketId=FOGContentId());
     bool LoadInstalledGachaBannerForRuler(FString& OutError);
     bool ListInstalledGachaBanners(TArray<FOGGachaBannerDefinition>& Out,FString& Error) const;
     bool SelectInstalledGachaBanner(const FOGContentId& BannerId,FString& Error);

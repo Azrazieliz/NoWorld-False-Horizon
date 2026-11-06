@@ -233,9 +233,13 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
         FMath::Clamp(static_cast<float>(GachaQuotes[0].Pity.PullsSinceTopRarity)/Banner.HardPity,0.f,1.f):0.f);
     if (PendingGachaRequestId.IsValid())
     {
+        FOGGachaBatchPreview TicketQuote;
+        const bool TicketReview=PendingGachaReview.BatchTicketId.IsValid();
         const int32 Index=PendingGachaReview.Count==10?1:0;
-        const bool Same=GachaQuotes[Index].bCanPull&&
-            GachaQuotes[Index].ConfirmationToken==PendingGachaReview.ConfirmationToken;
+        const bool Read=!TicketReview || FOGGachaService(*Store).PreviewBatch(Banner,GachaContextRulerId,Tick,
+            PendingGachaReview.Count,TicketQuote,Error,PendingGachaReview.BatchTicketId);
+        const auto& Fresh=TicketReview?TicketQuote:GachaQuotes[Index];
+        const bool Same=Read && Fresh.bCanPull && Fresh.ConfirmationToken==PendingGachaReview.ConfirmationToken;
         if (GachaConfirmButton) GachaConfirmButton->SetIsEnabled(Same&&!bGachaCommandInFlight);
         if (GachaReviewStatus) GachaReviewStatus->SetText(FText::FromString(Same?
             TEXT("Confirm the exact payment shown above."):TEXT("Balance, access, pity or banner changed. Review the draw again.")));
@@ -387,8 +391,13 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
             AddMessage(Rows,FString::Printf(TEXT("%d draw%s"),PendingGachaReview.Count,PendingGachaReview.Count==1?TEXT(""):TEXT("s")),22,Main);
             for (const auto& Line:PendingGachaReview.Payments)
                 if (Line.Spend>0)
-                    AddMessage(Rows,FString::Printf(TEXT("%s\n%lld  ->  %lld   (cost %lld)"),*Line.ResourceId.ToString(),
+                {
+                    const auto* Ticket=Banner?Banner->CompatibleMultiPullTickets.FindByPredicate(
+                        [&](const auto& Row){return Row.ResourceId==Line.ResourceId;}):nullptr;
+                    const FString PaymentName=Ticket?Ticket->DisplayName.ToString():Line.ResourceId.ToString();
+                    AddMessage(Rows,FString::Printf(TEXT("%s\n%lld  ->  %lld   (cost %lld)"),*PaymentName,
                         Line.Balance,Line.Balance-Line.Spend,Line.Spend),18,GachaMuted);
+                }
             if (!PendingGachaReview.Payments.ContainsByPredicate([](const auto& L){return L.Spend>0;}))
                 AddMessage(Rows,TEXT("No currency required."),20,Main);
             AddMessage(Rows,TEXT("Every acquired duplicate is an independent owned Manifestation."),18,GachaMuted);
@@ -397,8 +406,10 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
             Rows->AddChildToVerticalBox(GachaReviewStatus)->SetPadding(FMargin(0,20));
             GachaConfirmButton=Action(TEXT("CONFIRM DRAW"),TEXT("gacha-confirm/")+PendingGachaRequestId.ToString(),
                 108,1138,648,88,true,EOGNativeSurface::PrimaryAction,22);
-            Action(TEXT("REVIEW AGAIN"),PendingGachaReview.Count==10?TEXT("gacha-review-10"):TEXT("gacha-review-1"),
-                108,1048,648,64,true,EOGNativeSurface::Action,22);
+            const FString ReviewAgain=PendingGachaReview.BatchTicketId.IsValid()
+                ?TEXT("gacha-ticket/")+PendingGachaReview.BatchTicketId.ToString()
+                :(PendingGachaReview.Count==10?TEXT("gacha-review-10"):TEXT("gacha-review-1"));
+            Action(TEXT("REVIEW AGAIN"),ReviewAgain,108,1048,648,64,true,EOGNativeSurface::Action,22);
         }
         else if (bGachaRatesExpanded&&Banner)
         {
@@ -406,6 +417,27 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
             AddMessage(Rows,FOGInstalledGachaBannerLibrary::DisplayName(Banner->BannerId),20,Main);
             AddMessage(Rows,FString::Printf(TEXT("Soft pity starts at %d. Hard pity: %d.\nTop tier: %s"),
                 Banner->SoftPityStart,Banner->HardPity,*Banner->TopRarity.ToString()),18,GachaMuted);
+            if (!Banner->CompatibleMultiPullTickets.IsEmpty())
+            {
+                AddMessage(Rows,TEXT("COMPATIBLE MULTI-PULL TICKETS"),20,Main);
+                auto* Core=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
+                auto* Store=Core?Core->GetWorldStore():nullptr;
+                if (Store && Store->IsOpen())
+                    for (const auto& Ticket:Banner->CompatibleMultiPullTickets)
+                    {
+                        FOGGachaBatchPreview Quote;
+                        FString TicketError;
+                        if (!FOGGachaService(*Store).PreviewBatch(*Banner,Session->BoundRulerId,
+                            Core->GetCanonicalWorldTick(),Ticket.PullCount,Quote,TicketError,Ticket.ResourceId)) continue;
+                        const FString Caption=Ticket.DisplayName.ToString()+FString::Printf(TEXT(" / %d draws"),Ticket.PullCount);
+                        const int64 Balance=Quote.Payments.IsEmpty()?0:Quote.Payments[0].Balance;
+                        if (Quote.bCanPull)
+                            AddAction(Rows,Caption+FString::Printf(TEXT(" / %lld owned"),Balance),
+                                TEXT("gacha-ticket/")+Ticket.ResourceId.ToString());
+                        else
+                            AddMessage(Rows,Caption+TEXT(" / ")+FString::Join(Quote.MissingRequirements,TEXT(" ")),17,GachaMuted);
+                    }
+            }
             AddMessage(Rows,TEXT("Source pool weights below are relative selection weights, not final draw percentages. The live pity panel shows the next top-rarity chance."),17,GachaMuted);
             for (const auto& E:Banner->Entries)
                 AddMessage(Rows,FString::Printf(TEXT("%s  |  %s  |  weight %d%s"),
@@ -497,13 +529,28 @@ void UOGGate12NativeRulerWidget::HandleGachaAction(const FString& Action,UOGGate
         { PendingGachaReview=MoveTemp(Quote);PendingGachaRequestId=FOGEntityId::NewId();GachaFeedback.Reset(); }
         else GachaFeedback=Error.IsEmpty()?FString::Join(Quote.MissingRequirements,TEXT(" ")):Error;
     }
+    else if (Action.StartsWith(TEXT("gacha-ticket/")))
+    {
+        ClearGachaReview(); bGachaRatesExpanded=bGachaHistoryExpanded=bGachaResultsExpanded=false;
+        const FOGContentId Id(Action.Mid(UE_ARRAY_COUNT(TEXT("gacha-ticket/"))-1));
+        const auto* Banner=Hud->HasActiveGachaPresentation()?&Hud->GetActiveGachaBanner():nullptr;
+        const auto* Ticket=Banner?Banner->CompatibleMultiPullTickets.FindByPredicate([&](const auto& Row){return Row.ResourceId==Id;}):nullptr;
+        auto* Core=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
+        auto* Store=Core?Core->GetWorldStore():nullptr;
+        FOGGachaBatchPreview Quote;
+        if (Ticket && Store && FOGGachaService(*Store).PreviewBatch(*Banner,Session.BoundRulerId,
+            Core->GetCanonicalWorldTick(),Ticket->PullCount,Quote,Error,Id) && Quote.bCanPull)
+        { PendingGachaReview=MoveTemp(Quote); PendingGachaRequestId=FOGEntityId::NewId(); GachaFeedback.Reset(); }
+        else GachaFeedback=Error.IsEmpty()?(Quote.MissingRequirements.IsEmpty()?FString(TEXT("This ticket is unavailable.")):
+            FString::Join(Quote.MissingRequirements,TEXT(" "))):Error;
+    }
     else if (Action.StartsWith(TEXT("gacha-confirm/")))
     {
         if (!PendingGachaRequestId.IsValid()||Action!=TEXT("gacha-confirm/")+PendingGachaRequestId.ToString()||
             PendingGachaReview.RulerId!=Session.BoundRulerId) return;
         TGuardValue<bool> Guard(bGachaCommandInFlight,true);
         const auto Review=PendingGachaReview;ClearGachaReview(); // Consume the UI request before any commit callback.
-        if (Hud->ExecuteReviewedGachaDraw(Review.Count,Review.ConfirmationToken,Error))
+        if (Hud->ExecuteReviewedGachaDraw(Review.Count,Review.ConfirmationToken,Error,Review.BatchTicketId))
         {
             bGachaRatesExpanded=bGachaHistoryExpanded=false;bGachaResultsExpanded=true;
             GachaSavedResults=Hud->GetLastGachaResults();

@@ -13,6 +13,7 @@ struct OFFLINEGAME_API FOGGachaBatchPreview
 {
     FOGEntityId RulerId; FOGContentId BannerId; int32 Count=0;
     TArray<FOGGachaPaymentPreview> Payments;
+    FOGContentId BatchTicketId;
     FOGGachaStateRecord Pity;
     int32 NextTopRarityChanceBps=0;
     bool bAccessUnlocked=false,bCanPull=false;
@@ -49,10 +50,10 @@ public:
 
     /** Read-only exact payment/pity quote; no RNG, ownership or persistence changes. */
     bool PreviewBatch(const FOGGachaBannerDefinition&,const FOGEntityId&,int64,int32,
-        FOGGachaBatchPreview&,FString&) const;
+        FOGGachaBatchPreview&,FString&,const FOGContentId& BatchTicketId=FOGContentId()) const;
     /** Validate the reviewed quote in the same root transaction as the acquisition. */
     bool PullBatchReviewed(const FOGGachaBannerDefinition&,const FOGEntityId&,int64,int64,int32,
-        const FString&,TArray<FOGGachaPullResult>&,FString&);
+        const FString&,TArray<FOGGachaPullResult>&,FString&,const FOGContentId& BatchTicketId=FOGContentId());
 
     static bool ValidateBanner(
         const FOGGachaBannerDefinition& Banner,
@@ -65,12 +66,13 @@ public:
 
 private:
     bool BuildBatchPreview(const FOGGachaBannerDefinition&,const FOGEntityId&,int64,int32,
-        FOGGachaBatchPreview&,FString&) const;
+        FOGGachaBatchPreview&,FString&,const FOGContentId& BatchTicketId) const;
     bool PullBatchInternal(const FOGGachaBannerDefinition&,const FOGEntityId&,int64,int64,int32,
-        TArray<FOGGachaPullResult>&,FString&,bool bOwnTransaction);
+        TArray<FOGGachaPullResult>&,FString&,bool bOwnTransaction,const FOGContentId& BatchTicketId=FOGContentId());
     bool PullInternal(const FOGGachaBannerDefinition& Banner, const FOGEntityId& RulerId,
         int64 WorldTick, int64 Seed, FOGGachaPullResult& OutResult,
         FString& OutError, bool bOwnTransaction,
-        bool bUpgradeFinalRToSR = false);
+        bool bUpgradeFinalRToSR=false,const FOGContentId& BatchTicketId=FOGContentId(),
+        const FOGEntityId& PaymentBatchId=FOGEntityId(),bool bFirstPrepaidPull=false);
     IOGWorldStore& Store;
 };

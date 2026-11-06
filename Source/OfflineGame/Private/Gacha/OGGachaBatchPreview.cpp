@@ -4,15 +4,15 @@
 #include "UObject/Class.h"
 
 bool FOGGachaService::PreviewBatch(const FOGGachaBannerDefinition& Banner,const FOGEntityId& Ruler,
-    int64 Tick,int32 Count,FOGGachaBatchPreview& Out,FString& Error) const
+    int64 Tick,int32 Count,FOGGachaBatchPreview& Out,FString& Error,const FOGContentId& BatchTicketId) const
 {
     Out=FOGGachaBatchPreview(); Error.Reset();
     if (Store.IsWriteTransactionActive())
     { Error=TEXT("Review committed acquisition state outside another write transaction."); return false; }
-    return BuildBatchPreview(Banner,Ruler,Tick,Count,Out,Error);
+    return BuildBatchPreview(Banner,Ruler,Tick,Count,Out,Error,BatchTicketId);
 }
 bool FOGGachaService::BuildBatchPreview(const FOGGachaBannerDefinition& Banner,const FOGEntityId& Ruler,
-    int64 Tick,int32 Count,FOGGachaBatchPreview& Out,FString& Error) const
+    int64 Tick,int32 Count,FOGGachaBatchPreview& Out,FString& Error,const FOGContentId& BatchTicketId) const
 {
     Out=FOGGachaBatchPreview(); Error.Reset();
     if (!Store.IsOpen() || !Ruler.IsValid() || Tick<0 || Count<1 || Count>10 || !ValidateBanner(Banner,Error))
@@ -26,25 +26,44 @@ bool FOGGachaService::BuildBatchPreview(const FOGGachaBannerDefinition& Banner,c
     if (!Out.bAccessUnlocked) Out.MissingRequirements.Add(TEXT("Acquisition access is not unlocked."));
     if (Count==10 && !Banner.Entries.ContainsByPredicate([](const auto& E){return E.Weight>0 && E.Rarity==TEXT("SR");}))
         Out.MissingRequirements.Add(TEXT("This banner cannot provide its authored ten-draw SR floor."));
-    int32 Remaining=Count;
-    for (const auto& Ticket:Banner.CompatibleTicketIds)
+    if (!BatchTicketId.IsEmpty() && !BatchTicketId.IsValid())
+    { Error=TEXT("The reviewed ticket identity is invalid."); return false; }
+    Out.BatchTicketId=BatchTicketId;
+    if (BatchTicketId.IsValid())
     {
-        FOGGachaPaymentPreview Line; Line.ResourceId=Ticket; Line.bTicket=true;
+        const auto* Ticket=Banner.CompatibleMultiPullTickets.FindByPredicate(
+            [&](const auto& Row){return Row.ResourceId==BatchTicketId;});
+        if (!Ticket || Ticket->PullCount!=Count)
+        { Error=TEXT("This exact multi-pull ticket is not compatible with the selected banner."); return false; }
+        FOGGachaPaymentPreview Line; Line.ResourceId=BatchTicketId; Line.bTicket=true; Line.Spend=1;
         bool Known=false;
-        if (!Store.TryReadResourceBalance(Ruler,Ticket,Known,Line.Balance,Error)) return false;
+        if (!Store.TryReadResourceBalance(Ruler,BatchTicketId,Known,Line.Balance,Error)) return false;
         if (!Known) Line.Balance=0;
-        Line.Spend=FMath::Min<int64>(FMath::Max<int64>(0,Line.Balance),Remaining);
-        Remaining-=static_cast<int32>(Line.Spend); Out.Payments.Add(Line);
+        if (Line.Balance<1) Out.MissingRequirements.Add(TEXT("This multi-pull ticket is no longer owned."));
+        Out.Payments.Add(Line);
     }
-    FOGGachaPaymentPreview Currency; Currency.ResourceId=Banner.CurrencyId;
-    bool CurrencyKnown=false;
-    if (!Store.TryReadResourceBalance(Ruler,Banner.CurrencyId,CurrencyKnown,Currency.Balance,Error)) return false;
-    if (!CurrencyKnown) Currency.Balance=0;
-    if (Remaining>0 && Banner.PullCost>MAX_int64/Remaining)
-    { Error=TEXT("The authored batch payment exceeds the account amount range."); return false; }
-    Currency.Spend=Banner.PullCost*Remaining; Out.Payments.Add(Currency);
-    if (Currency.Spend>FMath::Max<int64>(0,Currency.Balance))
-        Out.MissingRequirements.Add(TEXT("Insufficient compatible tickets or draw currency."));
+    else
+    {
+        int32 Remaining=Count;
+        for (const auto& Ticket:Banner.CompatibleTicketIds)
+        {
+            FOGGachaPaymentPreview Line; Line.ResourceId=Ticket; Line.bTicket=true;
+            bool Known=false;
+            if (!Store.TryReadResourceBalance(Ruler,Ticket,Known,Line.Balance,Error)) return false;
+            if (!Known) Line.Balance=0;
+            Line.Spend=FMath::Min<int64>(FMath::Max<int64>(0,Line.Balance),Remaining);
+            Remaining-=static_cast<int32>(Line.Spend); Out.Payments.Add(Line);
+        }
+        FOGGachaPaymentPreview Currency; Currency.ResourceId=Banner.CurrencyId;
+        bool CurrencyKnown=false;
+        if (!Store.TryReadResourceBalance(Ruler,Banner.CurrencyId,CurrencyKnown,Currency.Balance,Error)) return false;
+        if (!CurrencyKnown) Currency.Balance=0;
+        if (Remaining>0 && Banner.PullCost>MAX_int64/Remaining)
+        { Error=TEXT("The authored batch payment exceeds the account amount range."); return false; }
+        Currency.Spend=Banner.PullCost*Remaining; Out.Payments.Add(Currency);
+        if (Currency.Spend>FMath::Max<int64>(0,Currency.Balance))
+            Out.MissingRequirements.Add(TEXT("Insufficient compatible tickets or draw currency."));
+    }
     bool PityFound=false;
     if (!Store.TryReadGachaState(Ruler,Banner.PityCategory,PityFound,Out.Pity,Error)) return false;
     if (!PityFound) { Out.Pity.RulerId=Ruler; Out.Pity.PityCategory=Banner.PityCategory; }
@@ -59,6 +78,7 @@ bool FOGGachaService::BuildBatchPreview(const FOGGachaBannerDefinition& Banner,c
     TArray<FString> Parts={BannerText,Ruler.ToString(),State,LexToString(Revision),LexToString(Count),
         LexToString(Out.bAccessUnlocked),LexToString(PityFound),LexToString(Out.Pity.PullsSinceTopRarity),
         LexToString(Out.Pity.bFeaturedGuarantee),LexToString(Out.Pity.TotalPulls),LexToString(Out.Pity.UpdatedWorldTick)};
+    if (BatchTicketId.IsValid()) Parts.Add(BatchTicketId.ToString());
     for (const auto& Line:Out.Payments) { Parts.Add(LexToString(Line.Balance)); Parts.Add(LexToString(Line.Spend)); }
     FString Source;
     for (const auto& Part:Parts) Source+=LexToString(Part.Len())+TEXT(":")+Part;
@@ -68,7 +88,8 @@ bool FOGGachaService::BuildBatchPreview(const FOGGachaBannerDefinition& Banner,c
     return true;
 }
 bool FOGGachaService::PullBatchReviewed(const FOGGachaBannerDefinition& Banner,const FOGEntityId& Ruler,
-    int64 Tick,int64 Seed,int32 Count,const FString& Token,TArray<FOGGachaPullResult>& Out,FString& Error)
+    int64 Tick,int64 Seed,int32 Count,const FString& Token,TArray<FOGGachaPullResult>& Out,FString& Error,
+    const FOGContentId& BatchTicketId)
 {
     Out.Reset(); Error.Reset();
     if (Token.IsEmpty()) { Error=TEXT("Review the current acquisition payment before confirming."); return false; }
@@ -82,10 +103,10 @@ bool FOGGachaService::PullBatchReviewed(const FOGGachaBannerDefinition& Banner,c
         return false;
     };
     FOGGachaBatchPreview Current;
-    if (!BuildBatchPreview(Banner,Ruler,Tick,Count,Current,Error)) return Fail();
+    if (!BuildBatchPreview(Banner,Ruler,Tick,Count,Current,Error,BatchTicketId)) return Fail();
     if (!Current.bCanPull || Current.ConfirmationToken!=Token)
     { Error=TEXT("Acquisition payment, pity, access or banner details changed. Review the current offer again."); return Fail(); }
-    if (!PullBatchInternal(Banner,Ruler,Tick,Seed,Count,Out,Error,false)) return Fail();
+    if (!PullBatchInternal(Banner,Ruler,Tick,Seed,Count,Out,Error,false,BatchTicketId)) return Fail();
     if (!Store.CommitTransaction(Error)) return Fail();
     return true;
 }

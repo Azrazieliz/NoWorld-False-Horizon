@@ -4,10 +4,11 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
 
-bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString& Token,FString& Error)
+bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString& Token,FString& Error,
+    const FOGContentId& BatchTicketId)
 {
     Error.Reset();
-    if (bReviewedGachaDrawInFlight || Token.IsEmpty() || (Count!=1&&Count!=10) || !bHasActiveGachaPresentation)
+    if (bReviewedGachaDrawInFlight || Token.IsEmpty() || ((Count!=1&&Count!=10) && !BatchTicketId.IsValid()) || !bHasActiveGachaPresentation)
     { Error=TEXT("Review an available draw before confirming; another command may already be committing."); return false; }
     TGuardValue<bool> Guard(bReviewedGachaDrawInFlight,true);
     auto* Game=GetGameInstance();
@@ -24,7 +25,7 @@ bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString
     { Error=TEXT("The canonical acquisition lifetime changed."); return false; }
     TArray<FOGGachaPullResult> Results;
     if (!FOGGachaService(*Store).PullBatchReviewed(ActiveGachaBanner,Session->BoundRulerId,
-        Tick,GachaCommandSeed,Count,Token,Results,Error)) return false;
+        Tick,GachaCommandSeed,Count,Token,Results,Error,BatchTicketId)) return false;
     LastGachaResults=MoveTemp(Results);
     for (const auto& Result:LastGachaResults)
         GachaCommandSeed=static_cast<int64>(static_cast<uint64>(GachaCommandSeed)+
