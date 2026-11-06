@@ -151,6 +151,7 @@ struct OFFLINEGAME_API FOGNarrativeQuestState
 {
     bool bExists = false;
     bool bCompleted = false;
+    bool bFailed = false;
     FOGEntityId SubjectId;
     int64 StartedWorldTick = 0;
     int64 UpdatedWorldTick = 0;
@@ -225,6 +226,12 @@ public:
     bool ReadTrackedQuestId(const FOGEntityId& RulerId, FOGContentId& OutQuestId, FString& Error) const;
     bool SetTrackedQuest(const FOGNarrativeCatalog& Catalog, const FOGEntityId& RulerId,
         const FOGContentId& QuestId, bool bTrack, int64 WorldTick, FString& Error);
+    /** Remember an actually reviewed offer so later missed outcomes reveal only known quests. */
+    bool RememberReviewedQuestOffer(const FOGNarrativeCatalog& Catalog, const FOGNarrativeCommand& Command,
+        const FString& ReviewToken, int64 WorldTick, FString& Error);
+    /** Materialize an authored closing event once, without applying quest completion effects. */
+    bool ReconcileQuestLifecycle(const FOGNarrativeQuestDefinition& Quest, const FOGEntityId& Ruler,
+        int64 WorldTick, FOGNarrativeQuestState& Out, bool& bMissed, FString& Error);
     bool ReadQuestExpiration(const FOGNarrativeQuestDefinition& Quest, const FOGEntityId& Ruler,
         const FOGEntityId& Subject, int64 WorldTick, bool& bExpired, FString& Error) const;
     bool ReadDialogue(const FOGNarrativeContext& Context, const FOGContentId& DialogueId,
