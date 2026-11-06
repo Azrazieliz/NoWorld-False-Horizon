@@ -1069,6 +1069,8 @@ public:
     /** Content-driven World interactions enter the actual native HUD surface. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
     bool ShowNativeRulerSurface(FString& OutError);
+    /** Open the existing native transaction surface for a verified World interaction. */
+    bool ShowNativeObjectOffers(const FOGEntityId& Counterparty, FString& OutError);
     FName GetInteractionReturnSurface() const { return FoundationSurface; }
     /** Existing native HUD/presentation transition, without changing possession. */
     void SetInteractionSurface(FName Surface);

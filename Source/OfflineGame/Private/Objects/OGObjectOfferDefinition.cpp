@@ -3,6 +3,11 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Combat/OGTurnBattle.h"
+#include "GameFramework/PlayerController.h"
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "World/OGStartingRegionPresentation.h"
+#include "World/OGWorldModeInterfaces.h"
 
 bool UOGObjectOfferDefinition::ValidateDefinition_Implementation(FString& Error) const
 {
@@ -40,6 +45,7 @@ UOGObjectOfferDefinitionReceiver::UOGObjectOfferDefinitionReceiver()
 {
     AcceptedSystem=TEXT("object_offers"); ExclusiveChannels.Add(TEXT("economy.object_offers"));
     PrimaryComponentTick.bCanEverTick=true; PrimaryComponentTick.bStartWithTickEnabled=false;
+    PrimaryComponentTick.TickInterval = .25f;
 }
 bool UOGObjectOfferDefinitionReceiver::PrepareDefinition_Implementation(
     UDataAsset* Asset,const FOGDefinitionBindingContext& Context,FString& Error)
@@ -57,16 +63,31 @@ bool UOGObjectOfferDefinitionReceiver::PrepareDefinition_Implementation(
 void UOGObjectOfferDefinitionReceiver::ActivateDefinition_Implementation()
 { if (Prepared) SetComponentTickEnabled(true); }
 void UOGObjectOfferDefinitionReceiver::ReleaseDefinition_Implementation()
-{ SetComponentTickEnabled(false); Prepared=nullptr; }
+{
+    SetComponentTickEnabled(false);
+    Prepared = nullptr;
+    bOffersPublished = false;
+    WorldInteractionError.Reset();
+    WorldFeedbackUntil = 0.0;
+}
 void UOGObjectOfferDefinitionReceiver::TickComponent(float Delta,ELevelTick Tick,FActorComponentTickFunction* Function)
 {
-    Super::TickComponent(Delta,Tick,Function); SetComponentTickEnabled(false);
+    Super::TickComponent(Delta,Tick,Function);
+    if (!Prepared)
+    {
+        SetComponentTickEnabled(false);
+        return;
+    }
     auto* Game=GetWorld()?GetWorld()->GetGameInstance():nullptr;
     auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
     auto* Store=Core?Core->GetWorldStore():nullptr;
-    if (!Prepared || !Core || !Core->IsCoreReady() || !Store)
-    { Status=TEXT("Canonical offer producer is unavailable."); return; }
+    if (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen() || Store->IsWriteTransactionActive())
+    {
+        Status = TEXT("Waiting for canonical offer publication.");
+        return;
+    }
 
+    SetComponentTickEnabled(false);
     FString Error;
     if (!FOGObjectActionService(*Store).PublishOffers(*Prepared, BoundContext.EntityId,
             Core->GetCanonicalWorldTick(), Error))
@@ -75,5 +96,74 @@ void UOGObjectOfferDefinitionReceiver::TickComponent(float Delta,ELevelTick Tick
         UE_LOG(LogTemp, Warning, TEXT("%s"), *Status);
         return;
     }
+    bOffersPublished = true;
     Status.Reset();
+}
+
+UOGObjectOfferDefinitionReceiver* UOGObjectOfferDefinitionReceiver::FindWorldInteraction(
+    AActor* Target, const AOGWorldPrototypeCharacter* Interactor)
+{
+    if (!IsValid(Target) || !IsValid(Interactor) || Target == Interactor ||
+        Target->GetWorld() != Interactor->GetWorld() || Target->IsActorBeingDestroyed() ||
+        Target->IsHidden()) return nullptr;
+
+    auto* Receiver = Target->FindComponentByClass<UOGObjectOfferDefinitionReceiver>();
+    if (!Receiver || !Receiver->bOffersPublished || !Receiver->Prepared ||
+        !Receiver->BoundContext.EntityId.IsValid() || !Interactor->IsLocallyControlled() ||
+        !Interactor->IsFoundationWorldInputAllowed()) return nullptr;
+
+    if (Target->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()) &&
+        (Receiver->Prepared->WorldInteractionPrompt.IsEmpty() ||
+         !IOGWorldInteractable::Execute_CanInteract(Target, const_cast<AOGWorldPrototypeCharacter*>(Interactor))))
+        return nullptr;
+
+    const auto* PC = Cast<APlayerController>(Interactor->GetController());
+    const auto* Hud = PC ? Cast<AOGWorldPresentationHud>(PC->GetHUD()) : nullptr;
+    const auto* Game = Target->GetGameInstance();
+    const auto* Core = Game ? Game->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    const auto* Session = Game ? Game->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
+    const auto* Battle = Core ? Core->GetOwnedLuminousTurnBattle() : nullptr;
+    if (!Hud || !Hud->IsGate12NativeRulerUMGEnabled() || !Core || !Core->IsCoreReady() ||
+        !Session || !Session->IsBoundToStoredRuler() ||
+        (Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running))
+        return nullptr;
+    return Receiver;
+}
+
+FText UOGObjectOfferDefinitionReceiver::GetWorldInteractionPrompt() const
+{
+    return Prepared && !Prepared->WorldInteractionPrompt.IsEmpty()
+        ? Prepared->WorldInteractionPrompt
+        : NSLOCTEXT("NoWorldObjectOffers", "BrowseOffers", "Browse offers");
+}
+
+FText UOGObjectOfferDefinitionReceiver::GetWorldInteractionFeedback() const
+{
+    return GetWorld() && GetWorld()->GetTimeSeconds() < WorldFeedbackUntil
+        ? FText::FromString(WorldInteractionError) : FText::GetEmpty();
+}
+
+bool UOGObjectOfferDefinitionReceiver::OpenFromWorldInteraction(
+    AOGWorldPrototypeCharacter& Interactor, FString& Error)
+{
+    Error.Reset();
+    if (!IsInGameThread() || FindWorldInteraction(GetOwner(), &Interactor) != this ||
+        Interactor.GetContextInteractableForHud() != GetOwner())
+    {
+        Error = TEXT("This merchant or station is outside the current World interaction.");
+        return false;
+    }
+
+    auto* PC = Cast<APlayerController>(Interactor.GetController());
+    auto* Hud = PC ? Cast<AOGWorldPresentationHud>(PC->GetHUD()) : nullptr;
+    if (!Hud || !Hud->ShowNativeObjectOffers(BoundContext.EntityId, Error))
+    {
+        if (Error.IsEmpty()) Error = TEXT("The native offers screen is unavailable.");
+        WorldInteractionError = Error;
+        WorldFeedbackUntil = GetWorld()->GetTimeSeconds() + 5.0;
+        return false;
+    }
+    WorldInteractionError.Reset();
+    WorldFeedbackUntil = 0.0;
+    return true;
 }
