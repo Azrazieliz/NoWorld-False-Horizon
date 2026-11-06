@@ -328,7 +328,8 @@ bool UOGGate12RulerSessionSubsystem::ReadOwnedObjectActions(const FOGEntityId& S
         if (!Counterparty.IsValid() && Definition->Kind==EOGObjectActionKind::Use && (!HasSelected ||
             !Definition->Inputs.ContainsByPredicate([&](const auto& Input)
             { return Input.From==EOGObjectActionParty::Ruler && Input.Disposition==EOGObjectInputDisposition::Consume && Input.ObjectId==Selected.DefinitionId; }))) continue;
-        if (!Counterparty.IsValid() && Definition->Kind==EOGObjectActionKind::Repair && (!HasSelected || Selected.DefinitionId!=Definition->SubjectObjectId)) continue;
+        if (!Counterparty.IsValid() && (Definition->Kind==EOGObjectActionKind::Repair || Definition->Kind==EOGObjectActionKind::Enhance) &&
+            (!HasSelected || Selected.DefinitionId!=Definition->SubjectObjectId)) continue;
         FOGObjectActionPreview Review;
         if (!ReviewOwnedObjectAction(Definition->DefinitionId,SelectedItem,Counterparty,Review,Error)) return false;
         if (Definition->UsesCounterparty() && Review.OfferStateJson.IsEmpty()) continue;

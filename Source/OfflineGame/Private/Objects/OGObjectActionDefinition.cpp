@@ -33,9 +33,10 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
     if (!Super::ValidateDefinition_Implementation(Error)) return false;
     if (System!=TEXT("object_action") || DefinitionId.Value.StartsWith(TEXT("diagnostic:")) ||
         OriginalSourceReference.TrimStartAndEnd().IsEmpty() || DisplayName.IsEmpty() ||
-        static_cast<uint8>(Kind)>static_cast<uint8>(EOGObjectActionKind::Exchange) ||
+        static_cast<uint8>(Kind)>static_cast<uint8>(EOGObjectActionKind::Enhance) ||
         Inputs.Num()>4096 || Outputs.Num()>4096 || Resources.Num()>4096 ||
-        (Inputs.IsEmpty() && Outputs.IsEmpty() && Resources.IsEmpty() && Kind!=EOGObjectActionKind::Repair))
+        (Inputs.IsEmpty() && Outputs.IsEmpty() && Resources.IsEmpty() &&
+         Kind!=EOGObjectActionKind::Repair && Kind!=EOGObjectActionKind::Enhance))
     { Error=TEXT("Object action requires a sourced definition and actual executable operations."); return false; }
     bool Cost=false; int64 OutputCount=0;
     for (const auto& I:Inputs)
@@ -80,10 +81,22 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
             if (ExchangeCredits.FindRef(R.Key)!=R.Value)
             { Error=TEXT("Exchange debits and credits must balance exactly."); return false; }
     }
+    const bool Repairs=Kind==EOGObjectActionKind::Repair;
+    const bool Enhances=Kind==EOGObjectActionKind::Enhance;
     if (Cost==bExplicitNoCost || (UsesCounterparty() && CounterpartyEntityKind.IsNone()) ||
-        (Kind==EOGObjectActionKind::Repair && (!SubjectObjectId.IsValid() || RepairToConditionBps<1 || RepairToConditionBps>10000)) ||
-        (Kind!=EOGObjectActionKind::Repair && (!SubjectObjectId.IsEmpty() || RepairToConditionBps!=0)))
-    { Error=TEXT("Declare costs or explicit no-cost, an exact counterparty kind, and repair-only subject/condition rules."); return false; }
+        ((Repairs || Enhances)?!SubjectObjectId.IsValid():!SubjectObjectId.IsEmpty()) ||
+        (Repairs?(RepairToConditionBps<1 || RepairToConditionBps>10000):RepairToConditionBps!=0))
+    { Error=TEXT("Declare costs or explicit no-cost, an exact counterparty kind and the authored subject rules."); return false; }
+    if (Enhances)
+    {
+        if (!OptionalId(EnhanceFromRankId) || !OptionalId(EnhanceFromQualityId) ||
+            !OptionalId(EnhanceToRankId) || !OptionalId(EnhanceToQualityId) ||
+            (EnhanceFromRankId==EnhanceToRankId && EnhanceFromQualityId==EnhanceToQualityId))
+        { Error=TEXT("Enhancement needs distinct exact starting and resulting item grades."); return false; }
+    }
+    else if (!EnhanceFromRankId.IsEmpty() || !EnhanceFromQualityId.IsEmpty() ||
+             !EnhanceToRankId.IsEmpty() || !EnhanceToQualityId.IsEmpty())
+    { Error=TEXT("Only enhancement may change an item's Rank or Quality."); return false; }
     return true;
 }
 FString UOGObjectActionDefinition::Fingerprint() const
@@ -103,6 +116,9 @@ FString UOGObjectActionDefinition::Fingerprint() const
         AppendObjectDefinitionPart(S,TEXT("restore_health_bps"));
         AppendObjectDefinitionPart(S,LexToString(RestoreHealthBps));
     }
+    if (Kind==EOGObjectActionKind::Enhance)
+        for (const auto& Grade:{EnhanceFromRankId,EnhanceFromQualityId,EnhanceToRankId,EnhanceToQualityId})
+            AppendObjectDefinitionPart(S,Grade.ToString());
     return FMD5::HashAnsiString(*S);
 }
 void UOGObjectActionDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const

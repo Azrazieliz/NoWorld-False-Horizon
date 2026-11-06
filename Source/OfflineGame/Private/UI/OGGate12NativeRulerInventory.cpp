@@ -516,7 +516,7 @@ void UOGGate12NativeRulerWidget::BuildStorage(UVerticalBox* Parent,
 
 void UOGGate12NativeRulerWidget::BuildObjectActions(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session)
 {
-    AddMessage(Parent,ObjectActionCounterpartyId.IsValid()?TEXT("AVAILABLE OFFERS"):TEXT("CRAFT / USE / REPAIR"),20,InventorySilver);
+    AddMessage(Parent,ObjectActionCounterpartyId.IsValid()?TEXT("AVAILABLE OFFERS"):TEXT("CRAFT / USE / REPAIR / ENHANCE"),20,InventorySilver);
     if (ObjectActionCounterpartyId.IsValid()) AddAction(Parent,TEXT("LEAVE TRADE"),TEXT("inventory/object/leave"));
     FString Error;
     if (!PendingObjectReview.ConfirmationToken.IsEmpty())
@@ -544,6 +544,15 @@ void UOGGate12NativeRulerWidget::BuildObjectActions(UVerticalBox* Parent,UOGGate
                 const auto* Definition=Library?Cast<UOGObjectDefinition>(Library->Resolve(TEXT("object"),Output.ObjectId)):nullptr;
                 AddMessage(Parent,(Output.To==EOGObjectActionParty::Ruler?TEXT("Receive: "):TEXT("Give: "))+(Definition?Definition->DisplayName.ToString():TEXT("Item"))+
                     FString::Printf(TEXT(" x%d"),Output.InstanceCount),17,InventorySuccess);
+            }
+            if (Fresh.bEnhancesSubject)
+            {
+                const auto Grade=[](const FOGContentId& Id){return Id.IsEmpty()?FString(TEXT("Ungraded")):Id.ToString();};
+                AddMessage(Parent,TEXT("Item Rank  ")+Grade(Fresh.SubjectBefore.CurrentRankId)+TEXT(" → ")+
+                    Grade(Fresh.EnhancedRankId),17,InventorySuccess);
+                AddMessage(Parent,TEXT("Item Quality  ")+Grade(Fresh.SubjectBefore.QualityId)+TEXT(" → ")+
+                    Grade(Fresh.EnhancedQualityId),17,InventorySuccess);
+                AddMessage(Parent,TEXT("This item keeps its identity, condition and history."),16,InventoryMuted);
             }
             if (Fresh.bRestoresHealth)
             {

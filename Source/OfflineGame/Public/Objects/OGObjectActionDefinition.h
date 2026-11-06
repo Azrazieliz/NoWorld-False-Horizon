@@ -6,7 +6,7 @@
 #include "OGObjectActionDefinition.generated.h"
 
 UENUM(BlueprintType)
-enum class EOGObjectActionKind : uint8 { Use, Craft, Repair, Exchange };
+enum class EOGObjectActionKind : uint8 { Use, Craft, Repair, Exchange, Enhance };
 UENUM(BlueprintType)
 enum class EOGObjectActionParty : uint8 { Ruler, Counterparty };
 UENUM(BlueprintType)
@@ -69,9 +69,14 @@ public:
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectActionInput> Inputs;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectActionOutput> Outputs;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectActionResourceChange> Resources;
-    /** Required for repair. The selected owned instance is preserved, including its modifiers/history. */
+    /** Repair and enhancement preserve the selected owned instance, its modifiers and its history. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId SubjectObjectId;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 RepairToConditionBps=0;
+    /** Enhancement rows name both exact stages. Empty rank or quality explicitly means ungraded. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceFromRankId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceFromQualityId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceToRankId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceToQualityId;
     /** Authored out-of-combat recovery as basis points of the recipient's retained maximum HP. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly,meta=(ClampMin="0",ClampMax="10000")) int32 RestoreHealthBps=0;
     /** Any counterparty access requires a real, explicitly published canonical offer. */
@@ -126,6 +131,9 @@ struct OFFLINEGAME_API FOGObjectActionPreview
     UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthBefore;
     UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthAfter;
     UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthMaximum;
+    UPROPERTY(BlueprintReadOnly) bool bEnhancesSubject=false;
+    UPROPERTY(BlueprintReadOnly) FOGContentId EnhancedRankId;
+    UPROPERTY(BlueprintReadOnly) FOGContentId EnhancedQualityId;
     UPROPERTY(BlueprintReadOnly) bool bRepairsSubject=false;
     UPROPERTY(BlueprintReadOnly) int32 RepairBeforeConditionBps=0;
     UPROPERTY(BlueprintReadOnly) int32 RepairAfterConditionBps=0;

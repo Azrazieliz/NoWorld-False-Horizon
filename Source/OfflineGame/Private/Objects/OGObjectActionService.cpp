@@ -1,6 +1,7 @@
 #include "Objects/OGObjectActionService.h"
 #include "Objects/OGObjectOfferDefinition.h"
 #include "Combat/OGCombatVitalityService.h"
+#include "World/OGOwnedEquipmentService.h"
 #include "Dom/JsonObject.h"
 #include "Misc/SecureHash.h"
 #include "Serialization/JsonReader.h"
@@ -163,6 +164,60 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             ItemQuote(Quote,*Item); Used.Add(Item->ItemId);
         }
     }
+    if (D.Kind==EOGObjectActionKind::Enhance)
+    {
+        const auto* Item=PlayerItems.FindByPredicate([&](const auto& Row)
+        { return Row.ItemId==C.SelectedItemId && Row.DefinitionId==D.SubjectObjectId; });
+        if (!Item || Item->CurrentRankId!=D.EnhanceFromRankId || Item->QualityId!=D.EnhanceFromQualityId)
+            Out.MissingRequirements.Add(TEXT("Select an owned item at this enhancement's exact starting Rank and Quality."));
+        else
+        {
+            if (!ResolveObject(Item->DefinitionId,Error)) return false;
+            Out.bEnhancesSubject=true; Out.SubjectBefore=*Item;
+            Out.EnhancedRankId=D.EnhanceToRankId; Out.EnhancedQualityId=D.EnhanceToQualityId;
+            ItemQuote(Quote,*Item); Used.Add(Item->ItemId);
+            TArray<FOGContainerContentRecord> Storage;
+            if (!Store.ListContainerPlacementsForItem(Item->ItemId,Storage,Error)) return false;
+            if (Storage.Num()>1 || (!Storage.IsEmpty() && Storage[0].Amount!=1))
+                Out.MissingRequirements.Add(TEXT("Enhancement requires a single item instance in one physical location."));
+            TArray<FOGItemModifierRecord> Modifiers;
+            if (!Store.ListItemModifiers(Item->ItemId,Modifiers,Error)) return false;
+            for (const auto& Modifier:Modifiers)
+            {
+                AppendObjectServicePart(Quote,Modifier.ModifierId.ToString());
+                AppendObjectServicePart(Quote,LexToString(Modifier.Ordinal));
+                AppendObjectServicePart(Quote,Modifier.StateJson);
+            }
+            if (Equipped.Contains(Item->ItemId))
+            {
+                FOGEquipmentCatalog Equipment;
+                FString RulesError;
+                if (!FOGEquipmentCatalog::LoadInstalled(Equipment,RulesError))
+                    Out.MissingRequirements.Add(TEXT("This equipped item's resulting slot rule is unavailable."));
+                else
+                {
+                    auto Enhanced=*Item;
+                    Enhanced.CurrentRankId=D.EnhanceToRankId; Enhanced.QualityId=D.EnhanceToQualityId;
+                    TArray<FOGCharacterManifestationRecord> Copies;
+                    if (!Store.ListCharacterManifestationsByOwner(C.RulerId,Copies,Error)) return false;
+                    TArray<FOGEquipmentBindingRecord> RulerBindings;
+                    if (!Store.ListEquipmentBindings(C.RulerId,RulerBindings,Error)) return false;
+                    bool Compatible=!RulerBindings.ContainsByPredicate([&](const auto& B){return B.ItemId==Item->ItemId;});
+                    for (const auto& Copy:Copies)
+                    {
+                        TArray<FOGEquipmentBindingRecord> Bindings;
+                        if (!Store.ListEquipmentBindings(Copy.ManifestationId,Bindings,Error)) return false;
+                        for (const auto& Binding:Bindings)
+                            if (Binding.ItemId==Item->ItemId && !Equipment.FindRule(Copy,Binding.SlotId,Enhanced))
+                                Compatible=false;
+                    }
+                    if (!Compatible)
+                        Out.MissingRequirements.Add(TEXT("The resulting item grade has no authored rule for its current equipped slot."));
+                    AppendObjectServicePart(Quote,Equipment.Fingerprint());
+                }
+            }
+        }
+    }
     bool SelectedUsed=false;
     for (const auto& Input:D.Inputs)
     {
@@ -295,6 +350,17 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
         History->SetStringField(TEXT("last_repair_event"),RequestId.ToString()); Subject.HistoryStateJson=Write(History.ToSharedRef());
         if (!Store.UpsertItemInstance(Subject,Tick,Error)) return Fail();
     }
+    if (Fresh.bEnhancesSubject)
+    {
+        auto Subject=Fresh.SubjectBefore;
+        Subject.CurrentRankId=Fresh.EnhancedRankId;
+        Subject.QualityId=Fresh.EnhancedQualityId;
+        TSharedPtr<FJsonObject> History;
+        if (!Object(Subject.HistoryStateJson,History)) { Error=TEXT("Stored item provenance is invalid."); return Fail(); }
+        History->SetStringField(TEXT("last_enhancement_event"),RequestId.ToString());
+        Subject.HistoryStateJson=Write(History.ToSharedRef());
+        if (!Store.UpsertItemInstance(Subject,Tick,Error)) return Fail();
+    }
     int32 Ordinal=0;
     for (const auto& Output:D.Outputs)
     {
@@ -345,6 +411,14 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
         Receipt->SetStringField(TEXT("durability_before"),Fresh.SubjectBefore.DurabilityStateJson);
         Receipt->SetStringField(TEXT("durability_after"),Fresh.SubjectDurabilityAfter);
     }
+    if (Fresh.bEnhancesSubject)
+    {
+        Receipt->SetStringField(TEXT("enhanced_item_id"),Fresh.SubjectBefore.ItemId.ToString());
+        Receipt->SetStringField(TEXT("rank_before"),Fresh.SubjectBefore.CurrentRankId.ToString());
+        Receipt->SetStringField(TEXT("rank_after"),Fresh.EnhancedRankId.ToString());
+        Receipt->SetStringField(TEXT("quality_before"),Fresh.SubjectBefore.QualityId.ToString());
+        Receipt->SetStringField(TEXT("quality_after"),Fresh.EnhancedQualityId.ToString());
+    }
     if (Fresh.bRestoresHealth)
     {
         Receipt->SetStringField(TEXT("battle_id"),Fresh.HealthBattleId.ToString());
@@ -362,7 +436,7 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
     if (Fresh.Context.CounterpartyId.IsValid()) Event.RelatedEntities.Add(Fresh.Context.CounterpartyId);
     for (const auto& I:Fresh.Inputs) Event.RelatedEntities.AddUnique(I.Item.ItemId);
     for (const auto& Id:CreatedItems) Event.RelatedEntities.AddUnique(Id);
-    if (Fresh.bRepairsSubject) Event.RelatedEntities.AddUnique(Fresh.SubjectBefore.ItemId);
+    if (Fresh.bRepairsSubject || Fresh.bEnhancesSubject) Event.RelatedEntities.AddUnique(Fresh.SubjectBefore.ItemId);
     if (Fresh.bRestoresHealth) Event.RelatedEntities.AddUnique(Fresh.Context.HealthRecipientId);
     if (!Store.AppendWorldEvent(Event,Error) ||
         (Fresh.bRestoresHealth && !FOGCombatVitalityService(Store).CommitConsumableRestoration(
