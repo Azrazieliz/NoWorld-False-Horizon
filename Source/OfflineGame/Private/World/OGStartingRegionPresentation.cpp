@@ -5963,7 +5963,7 @@ bool ValidateInstalledPlayableGachaPool(
         OutError=TEXT("No installed accepted character visual Registry catalog.");
         return false;
     }
-    for (const FOGGachaPoolEntry& Pool:Banner.Entries)
+    auto CheckMember=[&](const FOGGachaPoolEntry& Pool)
     {
         const FOGGate12CharacterVisualEntry* Installed =
             Catalog->FindExact(Pool.IdentityId,Pool.VersionId);
@@ -5982,7 +5982,13 @@ bool ValidateInstalledPlayableGachaPool(
             OutError=TEXT("Banner member lacks an approved exact owned World actor.");
             return false;
         }
-    }
+        return true;
+    };
+    for (const auto& Pool:Banner.Entries)
+        if (!CheckMember(Pool)) return false;
+    for (const auto& Ticket:Banner.CompatibleGuaranteedTickets)
+        for (const auto& Pool:Ticket.Entries)
+            if (!CheckMember(Pool)) return false;
     return true;
 }
 }

@@ -389,12 +389,18 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
         {
             AddMessage(Rows,TEXT("CONFIRM ACQUISITION"),28,Main);
             AddMessage(Rows,FString::Printf(TEXT("%d draw%s"),PendingGachaReview.Count,PendingGachaReview.Count==1?TEXT(""):TEXT("s")),22,Main);
+            if (!PendingGachaReview.GuaranteedTicketRarity.IsNone())
+                AddMessage(Rows,TEXT("Guaranteed ")+PendingGachaReview.GuaranteedTicketRarity.ToString()+
+                    TEXT(" / separate pool. Ordinary banner pity stays unchanged."),18,Main);
             for (const auto& Line:PendingGachaReview.Payments)
                 if (Line.Spend>0)
                 {
                     const auto* Ticket=Banner?Banner->CompatibleMultiPullTickets.FindByPredicate(
                         [&](const auto& Row){return Row.ResourceId==Line.ResourceId;}):nullptr;
-                    const FString PaymentName=Ticket?Ticket->DisplayName.ToString():Line.ResourceId.ToString();
+                    const auto* Guaranteed=Banner?Banner->CompatibleGuaranteedTickets.FindByPredicate(
+                        [&](const auto& Row){return Row.ResourceId==Line.ResourceId;}):nullptr;
+                    const FString PaymentName=Guaranteed?Guaranteed->DisplayName.ToString():
+                        Ticket?Ticket->DisplayName.ToString():Line.ResourceId.ToString();
                     AddMessage(Rows,FString::Printf(TEXT("%s\n%lld  ->  %lld   (cost %lld)"),*PaymentName,
                         Line.Balance,Line.Balance-Line.Spend,Line.Spend),18,GachaMuted);
                 }
@@ -417,26 +423,31 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
             AddMessage(Rows,FOGInstalledGachaBannerLibrary::DisplayName(Banner->BannerId),20,Main);
             AddMessage(Rows,FString::Printf(TEXT("Soft pity starts at %d. Hard pity: %d.\nTop tier: %s"),
                 Banner->SoftPityStart,Banner->HardPity,*Banner->TopRarity.ToString()),18,GachaMuted);
-            if (!Banner->CompatibleMultiPullTickets.IsEmpty())
+            if (!Banner->CompatibleMultiPullTickets.IsEmpty() || !Banner->CompatibleGuaranteedTickets.IsEmpty())
             {
-                AddMessage(Rows,TEXT("COMPATIBLE MULTI-PULL TICKETS"),20,Main);
+                AddMessage(Rows,TEXT("COMPATIBLE TICKETS"),20,Main);
                 auto* Core=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
                 auto* Store=Core?Core->GetWorldStore():nullptr;
                 if (Store && Store->IsOpen())
-                    for (const auto& Ticket:Banner->CompatibleMultiPullTickets)
+                {
+                    auto AddTicket=[&](const FOGContentId& Id,int32 Count,const FString& Caption)
                     {
                         FOGGachaBatchPreview Quote;
                         FString TicketError;
                         if (!FOGGachaService(*Store).PreviewBatch(*Banner,Session->BoundRulerId,
-                            Core->GetCanonicalWorldTick(),Ticket.PullCount,Quote,TicketError,Ticket.ResourceId)) continue;
-                        const FString Caption=Ticket.DisplayName.ToString()+FString::Printf(TEXT(" / %d draws"),Ticket.PullCount);
+                            Core->GetCanonicalWorldTick(),Count,Quote,TicketError,Id)) return;
                         const int64 Balance=Quote.Payments.IsEmpty()?0:Quote.Payments[0].Balance;
                         if (Quote.bCanPull)
-                            AddAction(Rows,Caption+FString::Printf(TEXT(" / %lld owned"),Balance),
-                                TEXT("gacha-ticket/")+Ticket.ResourceId.ToString());
+                            AddAction(Rows,Caption+FString::Printf(TEXT(" / %lld owned"),Balance),TEXT("gacha-ticket/")+Id.ToString());
                         else
                             AddMessage(Rows,Caption+TEXT(" / ")+FString::Join(Quote.MissingRequirements,TEXT(" ")),17,GachaMuted);
-                    }
+                    };
+                    for (const auto& Ticket:Banner->CompatibleMultiPullTickets)
+                        AddTicket(Ticket.ResourceId,Ticket.PullCount,Ticket.DisplayName.ToString()+
+                            FString::Printf(TEXT(" / %d draws"),Ticket.PullCount));
+                    for (const auto& Ticket:Banner->CompatibleGuaranteedTickets)
+                        AddTicket(Ticket.ResourceId,1,Ticket.DisplayName.ToString()+TEXT(" / guaranteed ")+Ticket.GuaranteedRarity.ToString());
+                }
             }
             AddMessage(Rows,TEXT("Source pool weights below are relative selection weights, not final draw percentages. The live pity panel shows the next top-rarity chance."),17,GachaMuted);
             for (const auto& E:Banner->Entries)
@@ -535,11 +546,13 @@ void UOGGate12NativeRulerWidget::HandleGachaAction(const FString& Action,UOGGate
         const FOGContentId Id(Action.Mid(UE_ARRAY_COUNT(TEXT("gacha-ticket/"))-1));
         const auto* Banner=Hud->HasActiveGachaPresentation()?&Hud->GetActiveGachaBanner():nullptr;
         const auto* Ticket=Banner?Banner->CompatibleMultiPullTickets.FindByPredicate([&](const auto& Row){return Row.ResourceId==Id;}):nullptr;
+        const bool Guaranteed=Banner && Banner->CompatibleGuaranteedTickets.ContainsByPredicate([&](const auto& Row){return Row.ResourceId==Id;});
+        const int32 Count=Ticket?Ticket->PullCount:Guaranteed?1:0;
         auto* Core=GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
         auto* Store=Core?Core->GetWorldStore():nullptr;
         FOGGachaBatchPreview Quote;
-        if (Ticket && Store && FOGGachaService(*Store).PreviewBatch(*Banner,Session.BoundRulerId,
-            Core->GetCanonicalWorldTick(),Ticket->PullCount,Quote,Error,Id) && Quote.bCanPull)
+        if (Count>0 && Store && FOGGachaService(*Store).PreviewBatch(*Banner,Session.BoundRulerId,
+            Core->GetCanonicalWorldTick(),Count,Quote,Error,Id) && Quote.bCanPull)
         { PendingGachaReview=MoveTemp(Quote); PendingGachaRequestId=FOGEntityId::NewId(); GachaFeedback.Reset(); }
         else GachaFeedback=Error.IsEmpty()?(Quote.MissingRequirements.IsEmpty()?FString(TEXT("This ticket is unavailable.")):
             FString::Join(Quote.MissingRequirements,TEXT(" "))):Error;

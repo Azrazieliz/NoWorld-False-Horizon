@@ -155,6 +155,24 @@ bool FOGGachaService::ValidateBanner(
         SeenTickets.Add(Ticket.ResourceId);
     }
 
+    for (const auto& Ticket:Banner.CompatibleGuaranteedTickets)
+    {
+        if (!Ticket.ResourceId.IsValid() || Ticket.ResourceId==Banner.CurrencyId ||
+            SeenTickets.Contains(Ticket.ResourceId) || Ticket.DisplayName.IsEmpty() || Ticket.GuaranteedRarity.IsNone() || Ticket.Entries.IsEmpty())
+        { OutError=TEXT("Guaranteed tickets require distinct resources and an original rarity-specific pool."); return false; }
+        SeenTickets.Add(Ticket.ResourceId);
+        int64 Weight=0;
+        TSet<FOGContentId> Versions;
+        for (const auto& Entry:Ticket.Entries)
+        {
+            if (!Entry.IdentityId.IsValid() || !Entry.VersionId.IsValid() || Versions.Contains(Entry.VersionId) ||
+                Entry.Rarity!=Ticket.GuaranteedRarity || Entry.Weight<=0 || Weight>MAX_int32-Entry.Weight)
+            { OutError=TEXT("Guaranteed pool entries must be distinct, eligible for the exact rarity, and have valid weights."); return false; }
+            Weight+=Entry.Weight;
+            Versions.Add(Entry.VersionId);
+        }
+    }
+
     bool bHasTop = false;
     bool bHasFeaturedTop = false;
     bool bHasUnfeaturedTop = false;
@@ -245,19 +263,34 @@ bool FOGGachaService::PullBatchInternal(const FOGGachaBannerDefinition& Banner,
         return false;
     };
     FOGEntityId PaymentBatchId;
+    TOptional<FOGGachaBannerDefinition> GuaranteedPool;
     if (BatchTicketId.IsValid())
     {
         const auto* Ticket=Banner.CompatibleMultiPullTickets.FindByPredicate(
             [&](const auto& Row){return Row.ResourceId==BatchTicketId;});
+        const auto* Guaranteed=Banner.CompatibleGuaranteedTickets.FindByPredicate(
+            [&](const auto& Row){return Row.ResourceId==BatchTicketId;});
         bool Found=false; int64 Balance=0;
-        if (!Ticket || Ticket->PullCount!=Count)
+        if (!(Ticket && Ticket->PullCount==Count) && !(Guaranteed && Count==1))
         { OutError=TEXT("The selected ticket cannot pay this batch."); return Fail(); }
+        if (Guaranteed)
+        {
+            GuaranteedPool.Emplace(Banner);
+            auto& Draw=GuaranteedPool.GetValue();
+            Draw.Entries=Guaranteed->Entries;
+            Draw.TopRarity=Guaranteed->GuaranteedRarity;
+            Draw.SoftPityStart=0; Draw.SoftPityBonusPerPullBps=0;
+            Draw.bFeaturedGuaranteeAfterMiss=false;
+            Draw.CompatibleMultiPullTickets.Reset();
+            Draw.CompatibleGuaranteedTickets.Reset();
+        }
         if (!Store.TryReadResourceBalance(RulerId,BatchTicketId,Found,Balance,OutError)) return Fail();
         if (!Found || Balance<1)
         { OutError=TEXT("The selected multi-pull ticket is unavailable."); return Fail(); }
         if (!Store.SetResourceBalance(RulerId,BatchTicketId,Balance-1,OutError)) return Fail();
         PaymentBatchId=FOGEntityId::NewId();
     }
+    const auto& Draw=GuaranteedPool.IsSet()?GuaranteedPool.GetValue():Banner;
     int64 NextSeed = Seed;
     bool bAlreadyRolledSrPlus = false;
     for (int32 Index = 0; Index < Count; ++Index)
@@ -267,8 +300,8 @@ bool FOGGachaService::PullBatchInternal(const FOGGachaBannerDefinition& Banner,
         // final slot is still rolled normally before any conditional upgrade.
         const bool bApplyFloor = Count == 10 && Index == 9 &&
             !bAlreadyRolledSrPlus;
-        if (!PullInternal(Banner, RulerId, WorldTick, NextSeed, Result,
-                OutError, false, bApplyFloor, BatchTicketId, PaymentBatchId, Index==0))
+        if (!PullInternal(Draw, RulerId, WorldTick, NextSeed, Result,
+                OutError, false, bApplyFloor, BatchTicketId, PaymentBatchId, Index==0, GuaranteedPool.IsSet()))
             return Fail();
         if (Result.Rarity != FName(TEXT("R"))) bAlreadyRolledSrPlus = true;
         NextSeed = static_cast<int64>(static_cast<uint64>(NextSeed) +
@@ -294,7 +327,8 @@ bool FOGGachaService::PullInternal(
     FOGGachaPullResult& OutResult,
     FString& OutError,
     bool bOwnTransaction,
-    bool bUpgradeFinalRToSR,const FOGContentId& BatchTicketId,const FOGEntityId& PaymentBatchId,bool bFirstPrepaidPull)
+    bool bUpgradeFinalRToSR,const FOGContentId& BatchTicketId,const FOGEntityId& PaymentBatchId,
+    bool bFirstPrepaidPull,bool bPreserveBannerPity)
 {
     OutResult = FOGGachaPullResult();
     OutError.Reset();
@@ -449,7 +483,7 @@ bool FOGGachaService::PullInternal(
     }
 
     const int32 PullOrdinalSinceTop =
-        State.PullsSinceTopRarity + 1;
+        bPreserveBannerPity?1:State.PullsSinceTopRarity+1;
     const bool bHardPity =
         PullOrdinalSinceTop >= Banner.HardPity;
 
@@ -595,24 +629,27 @@ bool FOGGachaService::PullInternal(
         return Fail(Error);
     }
 
-    ++State.TotalPulls;
-    State.UpdatedWorldTick = WorldTick;
+    if (!bPreserveBannerPity)
+    {
+        ++State.TotalPulls;
+        State.UpdatedWorldTick = WorldTick;
 
-    if (bTopRarity)
-    {
-        State.PullsSinceTopRarity = 0;
-        State.bFeaturedGuarantee =
-            Banner.bFeaturedGuaranteeAfterMiss &&
-            !Selected->bFeatured;
-    }
-    else
-    {
-        State.PullsSinceTopRarity = PullOrdinalSinceTop;
-    }
+        if (bTopRarity)
+        {
+            State.PullsSinceTopRarity = 0;
+            State.bFeaturedGuarantee =
+                Banner.bFeaturedGuaranteeAfterMiss &&
+                !Selected->bFeatured;
+        }
+        else
+        {
+            State.PullsSinceTopRarity = PullOrdinalSinceTop;
+        }
 
-    if (!Store.UpsertGachaState(State, Error))
-    {
-        return Fail(Error);
+        if (!Store.UpsertGachaState(State, Error))
+        {
+            return Fail(Error);
+        }
     }
 
     const int64 PaymentAmount=bPrepaid?(bFirstPrepaidPull?1:0):(bUsedTicket?1:Banner.PullCost);
@@ -621,7 +658,7 @@ bool FOGGachaService::PullInternal(
         TEXT("{\"banner\":\"%s\",\"identity\":\"%s\",\"version\":\"%s\",")
         TEXT("\"rarity\":\"%s\",\"featured\":%s,\"duplicate\":%s,")
         TEXT("\"payment_resource\":\"%s\",\"used_ticket\":%s,")
-        TEXT("\"payment_amount_exact\":\"%lld\",\"payment_batch_id\":\"%s\",")
+        TEXT("\"payment_amount_exact\":\"%lld\",\"payment_batch_id\":\"%s\",\"advances_banner_pity\":%s,")
         TEXT("\"seed\":%lld,\"rng_draws\":%llu}"),
         *Banner.BannerId.ToString(),
         *Selected->IdentityId.ToString(),
@@ -633,6 +670,7 @@ bool FOGGachaService::PullInternal(
         bUsedTicket ? TEXT("true") : TEXT("false"),
         PaymentAmount,
         *(PaymentBatchId.IsValid()?PaymentBatchId.ToString():FString()),
+        bPreserveBannerPity?TEXT("false"):TEXT("true"),
         Seed,
         static_cast<unsigned long long>(Rng.GetDrawCount()));
 
@@ -662,6 +700,7 @@ bool FOGGachaService::PullInternal(
         bUsedTicket;
     OutResult.PaymentAmount=PaymentAmount;
     OutResult.PaymentBatchId=PaymentBatchId;
+    OutResult.bAdvancedBannerPity=!bPreserveBannerPity;
     OutResult.Seed = Seed;
     OutResult.RngDrawCount =
         static_cast<int64>(Rng.GetDrawCount());

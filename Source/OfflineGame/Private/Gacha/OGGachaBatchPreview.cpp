@@ -33,13 +33,16 @@ bool FOGGachaService::BuildBatchPreview(const FOGGachaBannerDefinition& Banner,c
     {
         const auto* Ticket=Banner.CompatibleMultiPullTickets.FindByPredicate(
             [&](const auto& Row){return Row.ResourceId==BatchTicketId;});
-        if (!Ticket || Ticket->PullCount!=Count)
-        { Error=TEXT("This exact multi-pull ticket is not compatible with the selected banner."); return false; }
+        const auto* Guaranteed=Banner.CompatibleGuaranteedTickets.FindByPredicate(
+            [&](const auto& Row){return Row.ResourceId==BatchTicketId;});
+        if (!(Ticket && Ticket->PullCount==Count) && !(Guaranteed && Count==1))
+        { Error=TEXT("This exact ticket is not compatible with the selected banner."); return false; }
+        if (Guaranteed) Out.GuaranteedTicketRarity=Guaranteed->GuaranteedRarity;
         FOGGachaPaymentPreview Line; Line.ResourceId=BatchTicketId; Line.bTicket=true; Line.Spend=1;
         bool Known=false;
         if (!Store.TryReadResourceBalance(Ruler,BatchTicketId,Known,Line.Balance,Error)) return false;
         if (!Known) Line.Balance=0;
-        if (Line.Balance<1) Out.MissingRequirements.Add(TEXT("This multi-pull ticket is no longer owned."));
+        if (Line.Balance<1) Out.MissingRequirements.Add(TEXT("This ticket is no longer owned."));
         Out.Payments.Add(Line);
     }
     else
@@ -71,7 +74,8 @@ bool FOGGachaService::BuildBatchPreview(const FOGGachaBannerDefinition& Banner,c
         Out.Pity.PullsSinceTopRarity<0 || Out.Pity.PullsSinceTopRarity==MAX_int32 || Out.Pity.TotalPulls<0 ||
         Out.Pity.TotalPulls>MAX_int64-Count)
     { Error=TEXT("The saved acquisition counter cannot be safely reviewed; preserve the existing record."); return false; }
-    Out.NextTopRarityChanceBps=CalculateTopRarityChanceBps(Banner,Out.Pity.PullsSinceTopRarity+1);
+    Out.NextTopRarityChanceBps=Out.GuaranteedTicketRarity.IsNone()
+        ?CalculateTopRarityChanceBps(Banner,Out.Pity.PullsSinceTopRarity+1):10000;
     Out.bCanPull=Out.MissingRequirements.IsEmpty();
     FString BannerText;
     FOGGachaBannerDefinition::StaticStruct()->ExportText(BannerText,&Banner,nullptr,nullptr,PPF_None,nullptr);

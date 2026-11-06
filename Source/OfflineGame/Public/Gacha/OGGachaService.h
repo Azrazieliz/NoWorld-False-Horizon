@@ -14,6 +14,7 @@ struct OFFLINEGAME_API FOGGachaBatchPreview
     FOGEntityId RulerId; FOGContentId BannerId; int32 Count=0;
     TArray<FOGGachaPaymentPreview> Payments;
     FOGContentId BatchTicketId;
+    FName GuaranteedTicketRarity;
     FOGGachaStateRecord Pity;
     int32 NextTopRarityChanceBps=0;
     bool bAccessUnlocked=false,bCanPull=false;
@@ -73,6 +74,6 @@ private:
         int64 WorldTick, int64 Seed, FOGGachaPullResult& OutResult,
         FString& OutError, bool bOwnTransaction,
         bool bUpgradeFinalRToSR=false,const FOGContentId& BatchTicketId=FOGContentId(),
-        const FOGEntityId& PaymentBatchId=FOGEntityId(),bool bFirstPrepaidPull=false);
+        const FOGEntityId& PaymentBatchId=FOGEntityId(),bool bFirstPrepaidPull=false,bool bPreserveBannerPity=false);
     IOGWorldStore& Store;
 };
