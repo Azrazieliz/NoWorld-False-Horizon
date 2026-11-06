@@ -89,6 +89,7 @@ bool ObjectActionTargets(IOGWorldStore& Store, const FOGObjectActionPreview& Rev
     {
         if (M.OwningRulerId != Review.Context.RulerId || M.LifecycleState != TEXT("active")) continue;
         bool Affected = M.ManifestationId == Selected || M.ManifestationId == Review.Context.HealthRecipientId ||
+            M.ManifestationId == Review.Context.PracticingManifestationId ||
             M.ManifestationId == Review.SubjectBefore.OwnerEntityId ||
             Review.Inputs.ContainsByPredicate([&](const auto& I) { return I.Item.OwnerEntityId == M.ManifestationId; });
         TArray<FOGEquipmentBindingRecord> Bindings;
@@ -348,6 +349,8 @@ bool UOGGate12RulerSessionSubsystem::ReviewOwnedObjectAction(const FOGContentId&
     const auto* Definition=Library?Cast<UOGObjectActionDefinition>(Library->Resolve(TEXT("object_action"),ActionId)):nullptr;
     if (!Definition) { Error=TEXT("This object action is unavailable."); return false; }
     FOGObjectActionContext Context; Context.RulerId=BoundRulerId; Context.CounterpartyId=Counterparty; Context.SelectedItemId=SelectedItem;
+    if (Definition->Practice.Gain>0)
+        Context.PracticingManifestationId=SelectedManifestationId;
     if (Definition->RestoreHealthBps>0)
         Context.HealthRecipientId=SelectedManifestationId.IsValid()?SelectedManifestationId:BoundRulerId;
     if (!FOGObjectActionService(*Store).Preview(*Definition,Context,Core->GetCanonicalWorldTick(),Out,Error)) return false;
@@ -377,6 +380,8 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedObjectAction(const FOGObjectAct
     if (!HasReceipt)
     {
         const auto Recipient=SelectedManifestationId.IsValid()?SelectedManifestationId:BoundRulerId;
+        if (Definition->Practice.Gain>0 && Reviewed.Context.PracticingManifestationId!=SelectedManifestationId)
+        { Error=TEXT("The practicing character changed. Review the action again."); return false; }
         if (Definition->RestoreHealthBps>0 && Reviewed.Context.HealthRecipientId!=Recipient)
         { Error=TEXT("The selected recipient changed. Review the consumable again."); return false; }
         if (!FOGObjectActionService(*Store).Preview(*Definition,Reviewed.Context,Core->GetCanonicalWorldTick(),Actual,Error)) return false;

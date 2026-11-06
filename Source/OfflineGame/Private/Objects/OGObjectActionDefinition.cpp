@@ -62,6 +62,24 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
          !Inputs.ContainsByPredicate([](const auto& Input)
          { return Input.From==EOGObjectActionParty::Ruler && Input.Disposition==EOGObjectInputDisposition::Consume; }))))
     { Error=TEXT("Health restoration must be an authored use that consumes an owned item."); return false; }
+    const bool HasPractice=Practice.Gain!=0 || !Practice.ToolObjectId.IsEmpty() ||
+        !Practice.ProficiencyId.IsEmpty() || !Practice.Grades.IsEmpty();
+    if (HasPractice)
+    {
+        if (Kind==EOGObjectActionKind::Exchange || Practice.Gain<=0 || !Practice.ToolObjectId.IsValid() ||
+            !Practice.ProficiencyId.IsValid() || Practice.Grades.IsEmpty() || !Inputs.ContainsByPredicate([&](const auto& Input)
+            { return Input.From==EOGObjectActionParty::Ruler && Input.Disposition==EOGObjectInputDisposition::Retain &&
+                Input.ObjectId==Practice.ToolObjectId; }))
+        { Error=TEXT("Equipment practice must identify the actual retained tool and its authored proficiency."); return false; }
+        int64 Previous=-1;
+        TSet<FOGContentId> SeenGrades;
+        for (const auto& Grade:Practice.Grades)
+        {
+            if (!Grade.GradeId.IsValid() || Grade.MinimumValue<=Previous || SeenGrades.Contains(Grade.GradeId))
+            { Error=TEXT("Proficiency grades require distinct IDs and increasing thresholds."); return false; }
+            Previous=Grade.MinimumValue; SeenGrades.Add(Grade.GradeId);
+        }
+    }
     TSet<FString> Accounts; TMap<FOGContentId,int64> ExchangeDebits,ExchangeCredits;
     for (const auto& R:Resources)
     {
@@ -119,6 +137,17 @@ FString UOGObjectActionDefinition::Fingerprint() const
     if (Kind==EOGObjectActionKind::Enhance)
         for (const auto& Grade:{EnhanceFromRankId,EnhanceFromQualityId,EnhanceToRankId,EnhanceToQualityId})
             AppendObjectDefinitionPart(S,Grade.ToString());
+    if (Practice.Gain>0)
+    {
+        AppendObjectDefinitionPart(S,TEXT("equipment_practice"));
+        for (const auto& Part:{Practice.ToolObjectId.ToString(),Practice.ProficiencyId.ToString(),LexToString(Practice.Gain)})
+            AppendObjectDefinitionPart(S,Part);
+        for (const auto& Grade:Practice.Grades)
+        {
+            AppendObjectDefinitionPart(S,Grade.GradeId.ToString());
+            AppendObjectDefinitionPart(S,LexToString(Grade.MinimumValue));
+        }
+    }
     return FMD5::HashAnsiString(*S);
 }
 void UOGObjectActionDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const

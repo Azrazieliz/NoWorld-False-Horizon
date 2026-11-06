@@ -545,6 +545,16 @@ void UOGGate12NativeRulerWidget::BuildObjectActions(UVerticalBox* Parent,UOGGate
                 AddMessage(Parent,(Output.To==EOGObjectActionParty::Ruler?TEXT("Receive: "):TEXT("Give: "))+(Definition?Definition->DisplayName.ToString():TEXT("Item"))+
                     FString::Printf(TEXT(" x%d"),Output.InstanceCount),17,InventorySuccess);
             }
+            if (Fresh.bGrantsPractice)
+            {
+                const auto Grade=[](const FOGContentId& Id){return Id.IsEmpty()?FString(TEXT("Unranked")):Id.ToString();};
+                AddMessage(Parent,InventoryCopyLabel(&Session,Fresh.Context.PracticingManifestationId)+TEXT(" / ")+
+                    Fresh.PracticeToolName.ToString()+TEXT(" practice"),17,InventorySuccess);
+                if (Fresh.PracticeBefore.GradeId!=Fresh.PracticeAfter.GradeId)
+                    AddMessage(Parent,Grade(Fresh.PracticeBefore.GradeId)+TEXT(" → ")+Grade(Fresh.PracticeAfter.GradeId),
+                        17,InventorySuccess);
+                else AddMessage(Parent,Grade(Fresh.PracticeAfter.GradeId)+TEXT(" / practice advances"),16,InventoryText);
+            }
             if (Fresh.bEnhancesSubject)
             {
                 const auto Grade=[](const FOGContentId& Id){return Id.IsEmpty()?FString(TEXT("Ungraded")):Id.ToString();};

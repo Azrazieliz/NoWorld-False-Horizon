@@ -218,14 +218,25 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             }
         }
     }
+    TSet<FOGEntityId> PractitionerEquipment;
+    if (D.Practice.Gain>0 && C.PracticingManifestationId.IsValid())
+    {
+        TArray<FOGEquipmentBindingRecord> Bindings;
+        if (!Store.ListEquipmentBindings(C.PracticingManifestationId,Bindings,Error)) return false;
+        for (const auto& Binding:Bindings) PractitionerEquipment.Add(Binding.ItemId);
+    }
     bool SelectedUsed=false;
     for (const auto& Input:D.Inputs)
     {
         const auto* Definition=ResolveObject(Input.ObjectId,Error); if (!Definition) return false;
         const auto& Items=Input.From==EOGObjectActionParty::Ruler?PlayerItems:OtherItems;
         TArray<const FOGItemInstanceRecord*> Matches;
+        const bool PracticeTool=D.Practice.Gain>0 && Input.From==EOGObjectActionParty::Ruler &&
+            Input.Disposition==EOGObjectInputDisposition::Retain && Input.ObjectId==D.Practice.ToolObjectId;
         for (const auto& Item:Items)
             if (!Used.Contains(Item.ItemId) && Item.DefinitionId==Input.ObjectId && Item.CurrentRankId==Input.RankId && Item.QualityId==Input.QualityId &&
+                (!PracticeTool || ((Item.OwnerEntityId==C.RulerId || Item.OwnerEntityId==C.PracticingManifestationId) &&
+                    (!Equipped.Contains(Item.ItemId) || PractitionerEquipment.Contains(Item.ItemId)))) &&
                 (Input.Disposition==EOGObjectInputDisposition::Retain || !Equipped.Contains(Item.ItemId))) Matches.Add(&Item);
         Matches.Sort([&](const FOGItemInstanceRecord& A,const FOGItemInstanceRecord& B)
         { if ((A.ItemId==C.SelectedItemId)!=(B.ItemId==C.SelectedItemId)) return A.ItemId==C.SelectedItemId; return A.ItemId.ToString()<B.ItemId.ToString(); });
@@ -247,6 +258,59 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             for (const auto& M:Modifiers)
             { AppendObjectServicePart(Quote,M.ModifierId.ToString()); AppendObjectServicePart(Quote,FString::FromInt(M.Ordinal)); AppendObjectServicePart(Quote,M.StateJson); }
             Out.Inputs.Add(MoveTemp(Selection));
+        }
+    }
+    if (D.Practice.Gain>0)
+    {
+        const auto* Tool=Out.Inputs.FindByPredicate([&](const auto& Input)
+        {
+            return Input.Disposition==EOGObjectInputDisposition::Retain && Input.Item.DefinitionId==D.Practice.ToolObjectId &&
+                (Input.Item.OwnerEntityId==C.RulerId || Input.Item.OwnerEntityId==C.PracticingManifestationId);
+        });
+        bool Found=false; FOGCharacterManifestationRecord Copy;
+        if (C.PracticingManifestationId.IsValid() &&
+            !Store.TryReadCharacterManifestation(C.PracticingManifestationId,Found,Copy,Error)) return false;
+        if (!Found || Copy.OwningRulerId!=C.RulerId || Copy.LifecycleState!=TEXT("active"))
+            Out.MissingRequirements.Add(TEXT("Choose the active owned character performing this practice."));
+        else if (!Tool)
+            Out.MissingRequirements.Add(TEXT("The practicing character needs the actual required tool."));
+        else
+        {
+            if (!Store.TryReadEquipmentProficiency(Copy.ManifestationId,D.Practice.ProficiencyId,Found,Out.PracticeBefore,Error))
+                return false;
+            if (!Found)
+            {
+                Out.PracticeBefore.OwnerEntityId=Copy.ManifestationId;
+                Out.PracticeBefore.ProficiencyId=D.Practice.ProficiencyId;
+            }
+            if (Out.PracticeBefore.ProficiencyValue<0 || Out.PracticeBefore.OwnerEntityId!=Copy.ManifestationId ||
+                Out.PracticeBefore.ProficiencyId!=D.Practice.ProficiencyId)
+            { Error=TEXT("Saved proficiency does not match the practicing character and tool."); return false; }
+            const int32 ExistingGrade=D.Practice.Grades.IndexOfByPredicate(
+                [&](const auto& Grade){return Grade.GradeId==Out.PracticeBefore.GradeId;});
+            if (Out.PracticeBefore.GradeId.IsValid() && ExistingGrade==INDEX_NONE)
+                Out.MissingRequirements.Add(TEXT("The installed practice rule does not include the saved proficiency grade."));
+            else if (Out.PracticeBefore.ProficiencyValue>MAX_int64-D.Practice.Gain)
+                Out.MissingRequirements.Add(TEXT("This proficiency cannot retain more practice."));
+            else
+            {
+                Out.PracticeAfter=Out.PracticeBefore;
+                Out.PracticeAfter.ProficiencyValue+=D.Practice.Gain;
+                Out.PracticeAfter.UpdatedWorldTick=Tick;
+                for (int32 I=ExistingGrade+1; I<D.Practice.Grades.Num(); ++I)
+                {
+                    const auto& Grade=D.Practice.Grades[I];
+                    if (Grade.MinimumValue>Out.PracticeAfter.ProficiencyValue) break;
+                    Out.PracticeAfter.GradeId=Grade.GradeId;
+                }
+                Out.bGrantsPractice=true;
+                Out.PracticeToolName=Tool->DisplayName;
+                Out.PracticeToolId=Tool->Item.ItemId;
+                for (const auto& Value:{Copy.ManifestationId.ToString(),Copy.ActiveVersionId.ToString(),
+                    D.Practice.ProficiencyId.ToString(),Out.PracticeBefore.GradeId.ToString(),
+                    LexToString(Out.PracticeBefore.ProficiencyValue),Out.PracticeBefore.StateJson})
+                    AppendObjectServicePart(Quote,Value);
+            }
         }
     }
     if (D.Kind==EOGObjectActionKind::Use && !SelectedUsed)
@@ -306,6 +370,12 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
               HealthRecipient!=Reviewed.Context.HealthRecipientId.ToString())) ||
             (!Receipt->HasField(TEXT("health_recipient_id")) && Reviewed.Context.HealthRecipientId.IsValid()))
         { Error=TEXT("Request ID belongs to a different consumable recipient."); return Fail(); }
+        FString Practitioner;
+        if ((Receipt->HasField(TEXT("practicing_manifestation_id")) &&
+             (!Receipt->TryGetStringField(TEXT("practicing_manifestation_id"),Practitioner) ||
+              Practitioner!=Reviewed.Context.PracticingManifestationId.ToString())) ||
+            (!Receipt->HasField(TEXT("practicing_manifestation_id")) && Reviewed.Context.PracticingManifestationId.IsValid()))
+        { Error=TEXT("Request ID belongs to a different practicing character."); return Fail(); }
         const TArray<TSharedPtr<FJsonValue>>* Ids=nullptr;
         if (!Receipt->TryGetArrayField(TEXT("created_item_ids"),Ids)) { Error=TEXT("Stored object receipt is incomplete."); return Fail(); }
         for (const auto& Value:*Ids)
@@ -387,7 +457,18 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
         if (Fresh.OfferRemaining>0) Offer->SetStringField(TEXT("remaining_uses_exact"),LexToString(Fresh.OfferRemaining-1));
         if (!Store.UpsertEntity(Fresh.OfferId,TEXT("object_action_offer"),Tick,Write(Offer.ToSharedRef()),Error)) return Fail();
     }
+    if (Fresh.bGrantsPractice && !Store.UpsertEquipmentProficiency(Fresh.PracticeAfter,Error)) return Fail();
     auto Receipt=MakeShared<FJsonObject>();
+    if (Fresh.bGrantsPractice)
+    {
+        Receipt->SetStringField(TEXT("practicing_manifestation_id"),Fresh.Context.PracticingManifestationId.ToString());
+        Receipt->SetStringField(TEXT("proficiency_id"),Fresh.PracticeAfter.ProficiencyId.ToString());
+        Receipt->SetStringField(TEXT("practice_tool_id"),Fresh.PracticeToolId.ToString());
+        Receipt->SetStringField(TEXT("practice_value_before_exact"),LexToString(Fresh.PracticeBefore.ProficiencyValue));
+        Receipt->SetStringField(TEXT("practice_value_after_exact"),LexToString(Fresh.PracticeAfter.ProficiencyValue));
+        Receipt->SetStringField(TEXT("practice_grade_before"),Fresh.PracticeBefore.GradeId.ToString());
+        Receipt->SetStringField(TEXT("practice_grade_after"),Fresh.PracticeAfter.GradeId.ToString());
+    }
     Receipt->SetStringField(TEXT("action_id"),D.DefinitionId.ToString());
     Receipt->SetStringField(TEXT("definition_fingerprint"),D.Fingerprint());
     Receipt->SetStringField(TEXT("confirmation_token"),Reviewed.ConfirmationToken);
@@ -438,6 +519,7 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
     for (const auto& Id:CreatedItems) Event.RelatedEntities.AddUnique(Id);
     if (Fresh.bRepairsSubject || Fresh.bEnhancesSubject) Event.RelatedEntities.AddUnique(Fresh.SubjectBefore.ItemId);
     if (Fresh.bRestoresHealth) Event.RelatedEntities.AddUnique(Fresh.Context.HealthRecipientId);
+    if (Fresh.bGrantsPractice) Event.RelatedEntities.AddUnique(Fresh.Context.PracticingManifestationId);
     if (!Store.AppendWorldEvent(Event,Error) ||
         (Fresh.bRestoresHealth && !FOGCombatVitalityService(Store).CommitConsumableRestoration(
             Fresh.Context.HealthRecipientId,D.RestoreHealthBps,Event,Error)) ||
