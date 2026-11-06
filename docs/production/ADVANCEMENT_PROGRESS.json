@@ -1858,6 +1858,9 @@
         "id": "M32",
         "title": "Persistent events, migration and recovery integrity",
         "issue": 59,
+        "implementation_state": "IMPLEMENTED_FROZEN_AWAITING_PHONE_TEST",
+        "implementation_commit": "75d03009cd41cfa9ccc562d8986d54a1b404443a",
+        "implementation_evidence": "The existing canonical migrations, transaction and snapshot paths now also cover the actual opening recovery route, a player-authorized Android folder with rotating durable copies, and restoration when the live database is unreadable. Existing original database and journal bytes are preserved before replacement. Android packaging and phone acceptance remain pending.",
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [],
         "completed_in_this_update": false,
@@ -3850,9 +3853,33 @@
       "device_verified": false,
       "owner_accepted": false,
       "saved_utc": "2026-11-06"
+    },
+    {
+      "source_commit": "75d03009cd41cfa9ccc562d8986d54a1b404443a",
+      "system_ids": [
+        "M32"
+      ],
+      "result": "Recover and Import now reach the existing native recovery screen. Automatic recovery exports use a player-selected persisted SAF folder and publish a byte-checked completed SQLite backup before rotating only their own prior files. A confirmed valid import can replace an unreadable world after preserving the original database and its journal files, with rollback on failure.",
+      "remaining_player_visible_work": "Recovery implementation frozen. Compile and cook in the combined Android package and use the owner's on-device recovery test for acceptance.",
+      "source_paths": [
+        "Build/Android/src/com/epicgames/unreal/OGExternalBackupStore.java",
+        "Source/OfflineGame/OfflineGame_APL.xml",
+        "Source/OfflineGame/Private/Persistence/OGRecoveryCatalogService.cpp",
+        "Source/OfflineGame/Private/Runtime/OGAndroidBackupDocumentBridge.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGameCoreSubsystem.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
+        "Source/OfflineGame/Public/Persistence/OGRecoveryCatalogService.h",
+        "Source/OfflineGame/Public/Runtime/OGAndroidBackupDocumentBridge.h",
+        "Source/OfflineGame/Public/Runtime/OGGameCoreSubsystem.h"
+      ],
+      "status": "IMPLEMENTED_FROZEN_AWAITING_PHONE_TEST",
+      "counted_as_completed_system": true,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06"
     }
   ],
-  "continuation_last_source_commit": "d691f99de32aa94e13de95498c577beee2206076",
+  "continuation_last_source_commit": "75d03009cd41cfa9ccc562d8986d54a1b404443a",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
