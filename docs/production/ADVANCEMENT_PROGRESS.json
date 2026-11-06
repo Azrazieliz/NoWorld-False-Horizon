@@ -4182,9 +4182,30 @@
         "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionInventory.cpp",
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerInventory.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "1cb21cfc3dd672d8716036939d834fd8144ae345",
+      "system_ids": [
+        "M24",
+        "M28"
+      ],
+      "result": "Ruler diplomacy now sends alliance, incoming-support and subordination proposals to the exact known foreign faction. Installed authored decision rules evaluate current faction or leader facts and directional links at confirmation. Accepted and refused responses persist with policy provenance, Chronicle history and Reports. Only an acceptance changes the relevant canonical link.",
+      "remaining_player_visible_work": "Install the approved faction-specific policy assets and response text. Production NPC/faction content, treaty variants beyond the canonical three link types and full war resolution remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGFactionDiplomacyPolicy.h",
+        "Source/OfflineGame/Private/World/OGFactionDiplomacyPolicy.cpp",
+        "Source/OfflineGame/Public/World/OGRulerDiplomacyService.h",
+        "Source/OfflineGame/Private/World/OGRulerDiplomacyService.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerDiplomacy.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "ea954b04f8e9b0024f141aa916fc3bf67051bf31",
+  "continuation_last_source_commit": "1cb21cfc3dd672d8716036939d834fd8144ae345",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
