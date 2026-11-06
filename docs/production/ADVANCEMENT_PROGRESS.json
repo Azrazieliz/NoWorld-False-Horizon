@@ -4223,9 +4223,48 @@
         "Source/OfflineGame/Private/Narrative/OGNarrativeSessionSubsystem.cpp",
         "Source/OfflineGame/Public/Narrative/OGNarrativeService.h"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "c28999f50d3bc01c75d1bdc9d53eb14b0dedc7ac",
+      "system_ids": [
+        "M20"
+      ],
+      "result": "A merchant visit can deliver actual supplier-owned item instances through the exact active logistics route. The transaction checks endpoint presence, route capacity and saved delivery intervals, preserves physical item identities and records provenance. Restock changes physical availability without resetting fixed offer allocations.",
+      "remaining_player_visible_work": "Install the original merchant supplier, route, item-grade and price definitions. Production regional price and native stock definitions remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Objects/OGObjectOfferDefinition.h",
+        "Source/OfflineGame/Public/Objects/OGObjectActionService.h",
+        "Source/OfflineGame/Private/Objects/OGObjectOfferDefinition.cpp",
+        "Source/OfflineGame/Private/Objects/OGMerchantRestock.cpp"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "e120a200514af2a20a336c243b45de6d6f281716",
+      "system_ids": [
+        "M28"
+      ],
+      "result": "Native Dispatch Orders support exploration, reconnaissance, espionage and support through authored capability, objective, evidence and risk rules. Canonical time resolves saved orders online or offline, and persists knowledge or real stock effects and their reports.",
+      "remaining_player_visible_work": "Install the original mission rules and native data for each issuing holding. Multi-participant and Army assignments, adjustable risk, and specialized consequences beyond the admitted effects remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerGathering.cpp",
+        "Source/OfflineGame/Private/World/OGDispatchAuthored.cpp",
+        "Source/OfflineGame/Private/World/OGDispatchAuthored.h",
+        "Source/OfflineGame/Private/World/OGGatheringDispatch.cpp",
+        "Source/OfflineGame/Public/World/OGGatheringDispatch.h"
+      ]
     }
   ],
-  "continuation_last_source_commit": "dcb14dbc282d85f463935f173af7e6c3467972db",
+  "continuation_last_source_commit": "e120a200514af2a20a336c243b45de6d6f281716",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
