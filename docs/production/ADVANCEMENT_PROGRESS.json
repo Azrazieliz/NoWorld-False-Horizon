@@ -4029,9 +4029,27 @@
         "Source/OfflineGame/Public/Narrative/OGNarrativeService.h",
         "Source/OfflineGame/Public/Narrative/OGNarrativeSessionSubsystem.h"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "d8d01507486077be546c3a334c98cf0eb9dc0e0a",
+      "system_ids": [
+        "M16",
+        "M23"
+      ],
+      "result": "The native acquisition page stages each already committed result as a rarity cue followed by approved character art. It supports next/skip, respects the existing reduced-motion preference, and opens the exact independent owned Manifestation from the result.",
+      "remaining_player_visible_work": "The production approved banner asset, exact schedules, weights, currencies, playable pools and any original summon audio/cinematics still need admission. Native/device gameplay remains untested.",
+      "source_paths": [
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerGacha.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "0f8a0b128ab286802337abc8275f4bdfb1a057af",
+  "continuation_last_source_commit": "d8d01507486077be546c3a334c98cf0eb9dc0e0a",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
