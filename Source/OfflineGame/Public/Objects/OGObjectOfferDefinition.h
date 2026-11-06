@@ -3,6 +3,8 @@
 #include "Content/OGSystemBindingComponent.h"
 #include "OGObjectOfferDefinition.generated.h"
 
+class AOGWorldPrototypeCharacter;
+
 USTRUCT(BlueprintType)
 struct OFFLINEGAME_API FOGObjectOfferSpecification
 {
@@ -22,6 +24,8 @@ class OFFLINEGAME_API UOGObjectOfferDefinition : public UOGReusableDefinition
 public:
     UOGObjectOfferDefinition() { System=TEXT("object_offers"); }
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FString OriginalSourceReference;
+    /** Explicit opt-in for actors that already own a separate World interaction. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FText WorldInteractionPrompt;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectOfferSpecification> Offers;
     virtual bool ValidateDefinition_Implementation(FString& Error) const override;
     virtual void CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const override;
@@ -39,8 +43,15 @@ public:
     virtual bool PrepareDefinition_Implementation(UDataAsset*,const FOGDefinitionBindingContext&,FString&) override;
     virtual void ActivateDefinition_Implementation() override;
     virtual void ReleaseDefinition_Implementation() override;
+    static UOGObjectOfferDefinitionReceiver* FindWorldInteraction(AActor* Target, const AOGWorldPrototypeCharacter* Interactor);
+    FText GetWorldInteractionPrompt() const;
+    FText GetWorldInteractionFeedback() const;
+    bool OpenFromWorldInteraction(AOGWorldPrototypeCharacter& Interactor, FString& Error);
 protected:
     virtual void TickComponent(float,ELevelTick,FActorComponentTickFunction*) override;
 private:
     UPROPERTY(Transient) TObjectPtr<UOGObjectOfferDefinition> Prepared;
+    bool bOffersPublished = false;
+    FString WorldInteractionError;
+    double WorldFeedbackUntil = 0.0;
 };

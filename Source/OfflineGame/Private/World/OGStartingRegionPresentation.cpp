@@ -14,6 +14,7 @@
 #include "AudioDevice.h"
 #include "Combat/OGWorldActionRuntime.h"
 #include "Combat/OGNativeEncounterDefinition.h"
+#include "Objects/OGObjectOfferDefinition.h"
 #include "Combat/OGDiagnosticCombatComponent.h"
 #include "World/OGFoundationIntegrationWorld.h"
 #include "Animation/OGDiagnosticAnimationPresentation.h"
@@ -3365,7 +3366,7 @@ AActor* AOGWorldPrototypeCharacter::FindBestInteractable(
                 : 1.0f;
         if (Facing < 0.15f) continue;
         const bool bEncounter = UOGNativeEncounterReceiver::FindWorldInteraction(Candidate, this) != nullptr;
-        if (!bEncounter &&
+        if (!bEncounter && !UOGObjectOfferDefinitionReceiver::FindWorldInteraction(Candidate, this) &&
             (!Candidate->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()) ||
              !IOGWorldInteractable::Execute_CanInteract(Candidate, const_cast<AOGWorldPrototypeCharacter*>(this))))
             continue;
@@ -3922,6 +3923,13 @@ void AOGWorldPrototypeCharacter::InteractPressed()
             FString Error;
             if (!Encounter->StartFromWorldInteraction(*this, Error))
                 UE_LOG(LogOfflineGame, Warning, TEXT("World encounter unavailable: %s"), *Error);
+            return;
+        }
+        if (auto* Offers = UOGObjectOfferDefinitionReceiver::FindWorldInteraction(Interactable, this))
+        {
+            FString Error;
+            if (!Offers->OpenFromWorldInteraction(*this, Error))
+                UE_LOG(LogOfflineGame, Warning, TEXT("World offers unavailable: %s"), *Error);
             return;
         }
         if (!Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass())) return;
@@ -10522,6 +10530,11 @@ void AOGWorldPresentationHud::DrawHUD()
             {
                 Prompt = Encounter->GetWorldInteractionPrompt();
                 Feedback = Encounter->GetWorldInteractionFeedback();
+            }
+            else if (const auto* Offers = UOGObjectOfferDefinitionReceiver::FindWorldInteraction(Interactable, Character))
+            {
+                Prompt = Offers->GetWorldInteractionPrompt();
+                Feedback = Offers->GetWorldInteractionFeedback();
             }
             else if (Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()))
                 Prompt = IOGWorldInteractable::Execute_GetInteractionPrompt(Interactable, Character);
