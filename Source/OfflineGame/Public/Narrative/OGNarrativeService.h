@@ -40,6 +40,8 @@ struct OFFLINEGAME_API FOGNarrativeConditions
     TArray<FOGNarrativeEventRule> RequiredEvents;
     TArray<FOGNarrativeEventRule> ExcludedEvents;
     TArray<FOGNarrativeBranch> RequiredBranches;
+    TArray<FOGContentId> RequiredDiscoveries;
+    TMap<FString, FString> InteractorStateEquals;
 };
 
 struct OFFLINEGAME_API FOGNarrativeResource
@@ -49,11 +51,23 @@ struct OFFLINEGAME_API FOGNarrativeResource
     int64 Amount = 0;
 };
 
+/** Player-facing reference knowledge explicitly disclosed by a committed effect. */
+struct OFFLINEGAME_API FOGNarrativeDiscovery
+{
+    FOGContentId EntryId;
+    FName Category;
+    FString DisplayName;
+    FString Summary;
+    FName BeliefState;
+    int32 ConfidenceBps = 0;
+};
+
 struct OFFLINEGAME_API FOGNarrativeEffects
 {
     TArray<FOGNarrativeResource> Costs;
     TArray<FOGNarrativeResource> Rewards;
     TArray<FOGNarrativeBranch> BranchLocks; // immutable, shared per ruler
+    TArray<FOGNarrativeDiscovery> Discoveries;
 };
 
 struct OFFLINEGAME_API FOGNarrativeObjective
@@ -76,6 +90,8 @@ struct OFFLINEGAME_API FOGNarrativeQuestDefinition
     FOGNarrativeEffects AcceptEffects;
     FOGNarrativeEffects CompletionEffects;
     TArray<FOGNarrativeObjective> Objectives;
+    /** An already committed world event may close this opportunity without player action. */
+    FOGNarrativeEventRule ExpirationEvent;
 };
 
 struct OFFLINEGAME_API FOGNarrativeChoiceDefinition
@@ -191,7 +207,7 @@ struct OFFLINEGAME_API FOGNarrativeConversationView
 };
 
 /** No Actors, UI, migrations or secondary database. Commands atomically update
- * existing projects/resources and append request-ID receipts to world_events.
+ * existing projects, resources and knowledge, with request-ID receipts in world_events.
  * Read-only previews are re-evaluated under the write transaction. */
 class OFFLINEGAME_API FOGNarrativeService
 {
@@ -205,6 +221,8 @@ public:
         bool& bAlreadyApplied, FString& Error);
     bool ReadQuest(const FOGEntityId& RulerId, const FOGContentId& QuestId,
         FOGNarrativeQuestState& Out, FString& Error) const;
+    bool ReadQuestExpiration(const FOGNarrativeQuestDefinition& Quest, const FOGEntityId& Ruler,
+        const FOGEntityId& Subject, int64 WorldTick, bool& bExpired, FString& Error) const;
     bool ReadDialogue(const FOGNarrativeContext& Context, const FOGContentId& DialogueId,
         FOGNarrativeDialogueState& Out, FString& Error) const;
     bool GetConversation(const FOGNarrativeCatalog& Catalog, const FOGNarrativeContext& Context,

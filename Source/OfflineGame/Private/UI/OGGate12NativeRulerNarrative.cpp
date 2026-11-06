@@ -2,6 +2,8 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
+#include "Components/ComboBoxString.h"
+#include "Components/EditableTextBox.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
 #include "Components/VerticalBox.h"
@@ -10,6 +12,7 @@
 #include "Narrative/OGNarrativeSessionSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "UI/OGGate12GothicChromeWidget.h"
+#include "UI/OGUiViewModelService.h"
 
 namespace
 {
@@ -17,6 +20,7 @@ const FLinearColor JournalSilver(.82f, .79f, .89f, 1.f);
 const FLinearColor JournalMuted(.57f, .56f, .63f, 1.f);
 const FLinearColor JournalGold(.76f, .65f, .46f, 1.f);
 const FLinearColor JournalWarning(.88f, .58f, .43f, 1.f);
+const TCHAR* AllCodexCategories = TEXT("All categories");
 }
 
 void UOGGate12NativeRulerWidget::ClearNarrativeReview()
@@ -33,6 +37,12 @@ void UOGGate12NativeRulerWidget::ResetNarrativePage()
     if (UOGNarrativeSessionSubsystem* Narrative = GetGameInstance()
         ? GetGameInstance()->GetSubsystem<UOGNarrativeSessionSubsystem>() : nullptr) Narrative->CloseSubject();
     bNarrativeJournalOpen = false;
+    bNarrativeCodexOpen = false;
+    NarrativeCodexSearch.Reset();
+    NarrativeCodexCategory = NAME_None;
+    NarrativeCodexRows.Reset();
+    NarrativeMemoryBefore = FOGWorldEventCursor();
+    NarrativeMemoryNext = FOGWorldEventCursor();
     OpenNarrativeQuestId = FOGContentId();
     OpenNarrativeDialogueId = FOGContentId();
     NarrativePageRulerId = FOGEntityId();
@@ -64,6 +74,13 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
     ChromeSlot->SetHorizontalAlignment(HAlign_Fill);
     ChromeSlot->SetVerticalAlignment(VAlign_Fill);
     Content->AddChildToVerticalBox(Layers)->SetPadding(FMargin(4.f, 8.f));
+    if (bNarrativeCodexOpen)
+    {
+        AddAction(Body, TEXT("BACK TO JOURNAL"), TEXT("narrative/list"));
+        AddMessage(Body, TEXT("CODEX"), 30, JournalSilver);
+        BuildNarrativeCodex(Body);
+        return;
+    }
     AddMessage(Body, TEXT("JOURNAL"), 30, JournalSilver);
     if (!NarrativeFeedback.IsEmpty()) AddMessage(Body, NarrativeFeedback, 18, JournalGold);
 
@@ -130,7 +147,9 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
         if (!Quest) { AddMessage(Body, TEXT("This quest is no longer available in your current history."), 18, JournalMuted); return; }
         AddMessage(Body, Quest->Definition.DisplayName, 26, JournalGold);
         AddMessage(Body, Quest->Definition.Description, 20, JournalSilver);
-        AddMessage(Body, Quest->State.bCompleted ? TEXT("COMPLETED") : Quest->State.bExists ? TEXT("IN PROGRESS") : TEXT("AVAILABLE"), 17, JournalMuted);
+        const TCHAR* Status = Quest->State.bCompleted ? TEXT("COMPLETED") :
+            Quest->bExpired ? TEXT("CLOSED") : Quest->State.bExists ? TEXT("IN PROGRESS") : TEXT("AVAILABLE");
+        AddMessage(Body, Status, 17, JournalMuted);
         for (const FOGNarrativeObjective& Objective : Quest->Definition.Objectives)
         {
             const TArray<FOGEntityId>* Credited = Quest->State.CreditedEvents.Find(Objective.ObjectiveId);
@@ -139,7 +158,7 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
         }
         if (!Quest->State.bExists)
             AddAction(Body, TEXT("REVIEW QUEST"), TEXT("narrative/accept"));
-        else if (!Quest->State.bCompleted)
+        else if (!Quest->State.bCompleted && !Quest->bExpired)
         {
             AddAction(Body, TEXT("REVIEW RECENT PROGRESS"), TEXT("narrative/advance"));
             AddAction(Body, TEXT("REVIEW COMPLETION"), TEXT("narrative/complete"));
@@ -147,6 +166,7 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
         return;
     }
 
+    AddAction(Body, TEXT("OPEN CODEX"), TEXT("narrative/codex"));
     if (bJournalAvailable)
     {
         if (Narrative->HasOpenSubject())
@@ -158,19 +178,98 @@ void UOGGate12NativeRulerWidget::BuildNarrativeJournal()
         }
         if (Quests.IsEmpty()) AddMessage(Body, TEXT("No quests are available in your current history."), 19, JournalMuted);
         for (const FOGNarrativeJournalEntry& Quest : Quests)
-            AddAction(Body, Quest.Definition.DisplayName + (Quest.State.bCompleted ? TEXT("  ·  COMPLETED") : TEXT("")),
+            AddAction(Body, Quest.Definition.DisplayName +
+                (Quest.State.bCompleted ? TEXT("  ·  COMPLETED") : Quest.bExpired ? TEXT("  ·  CLOSED") : TEXT("")),
                 TEXT("narrative/quest/") + Quest.Definition.QuestId.ToString());
     }
 
-    AddMessage(Body, TEXT("RECENT STORY HISTORY"), 22, JournalGold);
+    AddMessage(Body, TEXT("STORY HISTORY"), 22, JournalGold);
     TArray<FOGNarrativeMemoryEntry> Memories;
-    if (!Narrative->ReadRecentMemories(Memories, Error))
+    if (!Narrative->ReadMemoryPage(NarrativeMemoryBefore, Memories, NarrativeMemoryNext, Error))
         AddMessage(Body, Error, 18, JournalWarning);
     else if (Memories.IsEmpty())
         AddMessage(Body, TEXT("No story decisions have been recorded yet."), 18, JournalMuted);
     for (const FOGNarrativeMemoryEntry& Memory : Memories)
         AddMessage(Body, FString::Printf(TEXT("%s  /  world tick %lld"), *Memory.Summary, Memory.WorldTick),
             18, JournalSilver);
+    if (NarrativeMemoryBefore.EventId.IsValid())
+        AddAction(Body, TEXT("LATEST HISTORY"), TEXT("narrative/history/latest"));
+    if (NarrativeMemoryNext.EventId.IsValid())
+        AddAction(Body, TEXT("OLDER HISTORY"), TEXT("narrative/history/older"));
+}
+
+void UOGGate12NativeRulerWidget::BuildNarrativeCodex(UVerticalBox* Parent)
+{
+    if (!Parent || !WidgetTree) return;
+    UEditableTextBox* Search = WidgetTree->ConstructWidget<UEditableTextBox>();
+    Search->SetHintText(FText::FromString(TEXT("Search discovered entries")));
+    Search->SetText(FText::FromString(NarrativeCodexSearch));
+    Search->OnTextChanged.AddDynamic(this,&ThisClass::HandleNarrativeCodexSearch);
+    Parent->AddChildToVerticalBox(Search);
+
+    UComboBoxString* Categories = WidgetTree->ConstructWidget<UComboBoxString>();
+    Categories->AddOption(AllCodexCategories);
+    for (FName Category : FOGUiViewModelService::BuildCodex({},FString(),NAME_None).Categories)
+        Categories->AddOption(Category.ToString().Replace(TEXT("_"),TEXT(" ")));
+    Categories->SetSelectedOption(NarrativeCodexCategory.IsNone() ? FString(AllCodexCategories) :
+        NarrativeCodexCategory.ToString().Replace(TEXT("_"),TEXT(" ")));
+    Categories->OnSelectionChanged.AddDynamic(this,&ThisClass::HandleNarrativeCodexCategory);
+    Parent->AddChildToVerticalBox(Categories);
+
+    UVerticalBox* Rows = WidgetTree->ConstructWidget<UVerticalBox>();
+    Parent->AddChildToVerticalBox(Rows);
+    NarrativeCodexRows = Rows;
+    RebuildNarrativeCodexRows();
+}
+
+void UOGGate12NativeRulerWidget::HandleNarrativeCodexSearch(const FText& Search)
+{
+    NarrativeCodexSearch = Search.ToString();
+    RebuildNarrativeCodexRows();
+}
+
+void UOGGate12NativeRulerWidget::HandleNarrativeCodexCategory(FString Selected, ESelectInfo::Type)
+{
+    NarrativeCodexCategory = Selected == AllCodexCategories ? NAME_None : FName(*Selected.Replace(TEXT(" "),TEXT("_")));
+    RebuildNarrativeCodexRows();
+}
+
+void UOGGate12NativeRulerWidget::RebuildNarrativeCodexRows()
+{
+    UVerticalBox* Parent = NarrativeCodexRows.Get();
+    if (!Parent) return;
+    Parent->ClearChildren();
+    const UGameInstance* Game = GetGameInstance();
+    const auto* Narrative = Game ? Game->GetSubsystem<UOGNarrativeSessionSubsystem>() : nullptr;
+    TArray<FOGNarrativeCodexEntry> Entries;
+    FString Error;
+    if (!Narrative || !Narrative->ReadCodexDiscoveries(NarrativeCodexSearch,NarrativeCodexCategory,Entries,Error))
+    {
+        AddMessage(Parent, Error.IsEmpty() ? TEXT("Codex knowledge is unavailable.") : Error, 18, JournalWarning);
+        return;
+    }
+    if (Entries.IsEmpty())
+    {
+        AddMessage(Parent, TEXT("No discovered entries match this view."), 18, JournalMuted);
+        return;
+    }
+
+    for (const FOGNarrativeCodexEntry& Discovery : Entries)
+    {
+        const TCHAR* Belief = TEXT("Unknown");
+        switch (Discovery.Entry.KnowledgeState)
+        {
+        case EOGUiKnowledgeState::Confirmed: Belief = TEXT("Confirmed"); break;
+        case EOGUiKnowledgeState::Estimated: Belief = TEXT("Estimated"); break;
+        case EOGUiKnowledgeState::Rumor: Belief = TEXT("Rumor"); break;
+        case EOGUiKnowledgeState::Contradicted: Belief = TEXT("Contradicted"); break;
+        case EOGUiKnowledgeState::Outdated: Belief = TEXT("Outdated"); break;
+        default: break;
+        }
+        AddMessage(Parent, Discovery.Entry.DisplayNameKey, 21, JournalSilver);
+        AddMessage(Parent, Belief, 16, JournalMuted);
+        if (!Discovery.Summary.IsEmpty()) AddMessage(Parent, Discovery.Summary, 18, JournalSilver);
+    }
 }
 
 void UOGGate12NativeRulerWidget::HandleNarrativeAction(const FString& Action)
@@ -198,7 +297,17 @@ void UOGGate12NativeRulerWidget::HandleNarrativeAction(const FString& Action)
             RecordsSection = -1;
         }
         else if (Action == TEXT("narrative/list"))
-        { OpenNarrativeQuestId = FOGContentId(); OpenNarrativeDialogueId = FOGContentId(); }
+        {
+            bNarrativeCodexOpen = false;
+            OpenNarrativeQuestId = FOGContentId();
+            OpenNarrativeDialogueId = FOGContentId();
+        }
+        else if (Action == TEXT("narrative/codex"))
+            bNarrativeCodexOpen = true;
+        else if (Action == TEXT("narrative/history/latest"))
+            NarrativeMemoryBefore = FOGWorldEventCursor();
+        else if (Action == TEXT("narrative/history/older") && NarrativeMemoryNext.EventId.IsValid())
+            NarrativeMemoryBefore = NarrativeMemoryNext;
         else if (Action.StartsWith(TEXT("narrative/quest/")))
         { OpenNarrativeQuestId = FOGContentId(*Action.Mid(16)); OpenNarrativeDialogueId = FOGContentId(); }
         else if (Action.StartsWith(TEXT("narrative/dialogue/")))

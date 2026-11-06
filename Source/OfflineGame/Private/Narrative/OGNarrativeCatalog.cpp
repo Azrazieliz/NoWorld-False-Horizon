@@ -1,6 +1,7 @@
 #include "Content/OGDefinitionLibrary.h"
 #include "Narrative/OGNarrativeService.h"
 #include "Narrative/OGNarrativeJson.h"
+#include "Narrative/OGNarrativeKnowledge.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 
@@ -46,7 +47,8 @@ bool ReadBranches(const FObject& O, const TCHAR* Key, TArray<FOGNarrativeBranch>
 }
 bool ReadConditions(const FObject& O, FOGNarrativeConditions& Out, const FString& At, FString& Error)
 {
-    if (!Fields(O,{TEXT("completed_quests"),TEXT("required_events"),TEXT("excluded_events"),TEXT("required_branches")},At,Error)) return false;
+    if (!Fields(O,{TEXT("completed_quests"),TEXT("required_events"),TEXT("excluded_events"),TEXT("required_branches"),
+        TEXT("required_discoveries"),TEXT("interactor_state_equals")},At,Error)) return false;
     const FArray* A = nullptr; if (!Array(O,TEXT("completed_quests"),A,At,Error,false,64)) return false;
     for (const auto& V : *A)
     {
@@ -64,11 +66,26 @@ bool ReadConditions(const FObject& O, FOGNarrativeConditions& Out, const FString
             (Index == 0 ? Out.RequiredEvents : Out.ExcludedEvents).Add(MoveTemp(R));
         }
     }
-    return ReadBranches(O,TEXT("required_branches"),Out.RequiredBranches,At,Error);
+    if (!ReadBranches(O,TEXT("required_branches"),Out.RequiredBranches,At,Error) ||
+        !Array(O,TEXT("required_discoveries"),A,At,Error,false,64)) return false;
+    for (const auto& Value : *A)
+    {
+        FString IdText;
+        if (!Value.IsValid() || Value->Type != EJson::String || !Value->TryGetString(IdText))
+            return Fail(Error,At,TEXT("required_discoveries requires content ID strings"));
+        Out.RequiredDiscoveries.Emplace(MoveTemp(IdText));
+    }
+    if (O->HasField(TEXT("interactor_state_equals")))
+    {
+        FObject State;
+        if (!Child(O,TEXT("interactor_state_equals"),State,At,Error) ||
+            !StringMap(State,Out.InteractorStateEquals,At,Error)) return false;
+    }
+    return true;
 }
 bool ReadEffects(const FObject& O, FOGNarrativeEffects& Out, const FString& At, FString& Error)
 {
-    if (!Fields(O,{TEXT("costs"),TEXT("rewards"),TEXT("branch_locks")},At,Error)) return false;
+    if (!Fields(O,{TEXT("costs"),TEXT("rewards"),TEXT("branch_locks"),TEXT("discoveries")},At,Error)) return false;
     for (int32 Index = 0; Index < 2; ++Index)
     {
         const FArray* A = nullptr;
@@ -83,7 +100,27 @@ bool ReadEffects(const FObject& O, FOGNarrativeEffects& Out, const FString& At, 
             (Index == 0 ? Out.Costs : Out.Rewards).Add(MoveTemp(R));
         }
     }
-    return ReadBranches(O,TEXT("branch_locks"),Out.BranchLocks,At,Error);
+    if (!ReadBranches(O,TEXT("branch_locks"),Out.BranchLocks,At,Error)) return false;
+    const FArray* Discoveries = nullptr;
+    if (!Array(O,TEXT("discoveries"),Discoveries,At,Error,false,64)) return false;
+    for (const auto& Value : *Discoveries)
+    {
+        FObject ObjectValue;
+        FOGNarrativeDiscovery Discovery;
+        const FString DiscoveryAt = At + TEXT(".discoveries");
+        if (!Object(Value,ObjectValue,DiscoveryAt,Error) ||
+            !Fields(ObjectValue,{TEXT("entry_id"),TEXT("category"),TEXT("display_name"),TEXT("summary"),
+                TEXT("belief_state"),TEXT("confidence_bps")},DiscoveryAt,Error) ||
+            !Id(ObjectValue,TEXT("entry_id"),Discovery.EntryId,DiscoveryAt,Error) ||
+            !Name(ObjectValue,TEXT("category"),Discovery.Category,DiscoveryAt,Error) ||
+            !String(ObjectValue,TEXT("display_name"),Discovery.DisplayName,DiscoveryAt,Error) ||
+            !String(ObjectValue,TEXT("summary"),Discovery.Summary,DiscoveryAt,Error) ||
+            !Name(ObjectValue,TEXT("belief_state"),Discovery.BeliefState,DiscoveryAt,Error) ||
+            !Integer(ObjectValue,TEXT("confidence_bps"),Discovery.ConfidenceBps,DiscoveryAt,Error,0,10000))
+            return false;
+        Out.Discoveries.Add(MoveTemp(Discovery));
+    }
+    return true;
 }
 template<typename T, typename Reader>
 bool Optional(const FObject& O, const TCHAR* Key, T& Out, Reader Read, const FString& At, FString& Error)
@@ -122,7 +159,18 @@ bool ValidBranches(const TArray<FOGNarrativeBranch>& Values, const FString& At, 
 bool ValidConditions(const FOGNarrativeConditions& C, bool HasSubject, const FString& At, FString& Error)
 {
     if (C.CompletedQuests.Num() > 64 || C.RequiredEvents.Num() > 64 || C.ExcludedEvents.Num() > 64 ||
+        C.RequiredDiscoveries.Num() > 64 || C.InteractorStateEquals.Num() > 64 ||
         !ValidBranches(C.RequiredBranches,At,Error)) return Fail(Error,At,TEXT("invalid or oversized conditions"));
+    TSet<FOGContentId> Discoveries;
+    for (const FOGContentId& Id : C.RequiredDiscoveries)
+    {
+        if (!IsNarrativeDiscoveryId(Id) || Discoveries.Contains(Id))
+            return Fail(Error,At,TEXT("invalid or duplicate required discovery"));
+        Discoveries.Add(Id);
+    }
+    for (const auto& Predicate : C.InteractorStateEquals)
+        if (!Token(Predicate.Key) || Predicate.Value.IsEmpty())
+            return Fail(Error,At,TEXT("invalid canonical interactor state predicate"));
     TSet<FOGContentId> Quests;
     for (const auto& Q : C.CompletedQuests)
     {
@@ -146,7 +194,7 @@ bool ValidConditions(const FOGNarrativeConditions& C, bool HasSubject, const FSt
 }
 bool ValidEffects(const FOGNarrativeEffects& E, const FOGNarrativeConditions& C, const FString& At, FString& Error)
 {
-    if (!ValidBranches(E.BranchLocks,At,Error)) return false;
+    if (!ValidBranches(E.BranchLocks,At,Error) || !ValidateDiscoveries(E.Discoveries,At,Error)) return false;
     for (const auto* List : {&E.Costs,&E.Rewards})
     {
         if (List->Num() > 64) return Fail(Error,At,TEXT("too many resources"));
@@ -192,12 +240,20 @@ bool FOGNarrativeCatalog::Parse(const FString& Json, FOGNarrativeCatalog& Out, F
     {
         FObject O; FOGNarrativeQuestDefinition Q;
         const FString At = TEXT("quest");
-        if (!Object(V,O,At,Error) || !Fields(O,{TEXT("quest_id"),TEXT("display_name"),TEXT("description"),TEXT("subject"),TEXT("allow_remote_completion"),TEXT("conditions"),TEXT("accept_effects"),TEXT("completion_effects"),TEXT("objectives")},At,Error) ||
+        if (!Object(V,O,At,Error) || !Fields(O,{TEXT("quest_id"),TEXT("display_name"),TEXT("description"),TEXT("subject"),TEXT("allow_remote_completion"),TEXT("conditions"),TEXT("accept_effects"),TEXT("completion_effects"),TEXT("objectives"),TEXT("expires_on")},At,Error) ||
             !Id(O,TEXT("quest_id"),Q.QuestId,At,Error) || !String(O,TEXT("display_name"),Q.DisplayName,At,Error) ||
             !String(O,TEXT("description"),Q.Description,At,Error,false,true) ||
             !Boolean(O,TEXT("allow_remote_completion"),Q.bAllowRemoteCompletion,At,Error) ||
             !Optional(O,TEXT("subject"),Q.Subject,ReadSubject,At,Error) || !Optional(O,TEXT("conditions"),Q.Conditions,ReadConditions,At,Error) ||
             !Optional(O,TEXT("accept_effects"),Q.AcceptEffects,ReadEffects,At,Error) || !Optional(O,TEXT("completion_effects"),Q.CompletionEffects,ReadEffects,At,Error)) return false;
+        if (O->HasField(TEXT("expires_on")))
+        {
+            FObject Expiration;
+            const FString ExpirationAt = At + TEXT(".expires_on");
+            if (!Child(O,TEXT("expires_on"),Expiration,At,Error) ||
+                !Fields(Expiration,{TEXT("event_type"),TEXT("subject")},ExpirationAt,Error) ||
+                !ReadEvent(Expiration,Q.ExpirationEvent,ExpirationAt,Error)) return false;
+        }
         const FArray* Objectives = nullptr; if (!Array(O,TEXT("objectives"),Objectives,At,Error,true,64)) return false;
         for (const auto& Item : *Objectives)
         {
@@ -256,6 +312,9 @@ bool FOGNarrativeCatalog::Validate(const FOGNarrativeCatalog& Catalog, FString& 
             Q.Objectives.IsEmpty() || Q.Objectives.Num() > 64) return Fail(Error,At,TEXT("quest needs a unique ID, name and 1..64 objectives"));
         if (!ValidSubject(Q.Subject,false,At,Error) || !ValidConditions(Q.Conditions,HasSubject,At,Error) ||
             !ValidEffects(Q.AcceptEffects,Q.Conditions,At,Error) || !ValidEffects(Q.CompletionEffects,Q.Conditions,At,Error)) return false;
+        if (!Q.ExpirationEvent.EventType.IsNone() &&
+            (!Token(Q.ExpirationEvent.EventType.ToString()) || (!Q.ExpirationEvent.bSubjectIsRuler && !HasSubject)))
+            return Fail(Error,At,TEXT("expiration event needs an exact event type and bound subject"));
         for (const auto& A : Q.AcceptEffects.BranchLocks)
             for (const auto& B : Q.CompletionEffects.BranchLocks)
                 if (A.BranchId == B.BranchId && A.ValueId != B.ValueId) return Fail(Error,At,TEXT("acceptance and completion lock incompatible branches"));

@@ -602,6 +602,7 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
     ClearGachaReview();
     ClearInventoryReview();
     ClearNarrativeReview();
+    ClearTerritoryProjectReview();
     if (!Screen) BuildRoot();
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
@@ -621,7 +622,10 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
             if (!Session->RefreshCanonicalProjections(Error))
                 LastUiError = Error;
             else
+            {
                 LastUiError.Reset();
+                RestoreTerritoryProjectDeadlines(*Session);
+            }
         }
         else if (!Error.IsEmpty())
         {
@@ -648,6 +652,9 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     SynchronizeDevelopmentContext(Session);
     SynchronizeInventoryContext(Session);
+    if (!Session || !Session->IsBoundToStoredRuler() ||
+        Session->CurrentDestination != EOGRulerPrimaryDestination::Territory)
+        ResetTerritoryProjectOrders();
     RefreshFrozenScene(Session ? Session->CurrentDestination
                               : EOGRulerPrimaryDestination::Home);
 
@@ -1388,6 +1395,7 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
             12, TextMuted);
     if (Territory.Territories.IsEmpty())
     {
+        ResetTerritoryProjectOrders();
         AddMessage(Content,
             TEXT("No territories are owned in this world."),
             17, TextMuted);
@@ -1446,6 +1454,8 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
                     *Chosen->RootLocationId.ToString()), 15, TextMuted);
         if (Chosen->bContested)
             AddMessage(Content, TEXT("Control is contested."), 15, Gate12RulerGold);
+        SelectedTerritoryId = Chosen->TerritoryId;
+        BuildTerritoryProjectOrders(*Session, *Chosen);
     }
 
     AddMessage(Content,
@@ -1696,10 +1706,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
                 16, TextMain);
         break;
     case 2:
-        AddMessage(Detail,
-            TEXT("No verified installed Codex entries are available. "
-                 "Unknown lore remains unknown."),
-            16, TextMuted);
+        BuildNarrativeCodex(Detail);
         break;
     case 3:
         if (Session->IntelligenceProjection.IsEmpty())
@@ -1976,6 +1983,11 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         return;
     }
 
+    if (Action.StartsWith(TEXT("project-orders/")))
+    {
+        HandleTerritoryProjectAction(Action, *Session);
+        return;
+    }
     if (Action.StartsWith(TEXT("gacha")))
     {
         ClearDevelopmentReview(); ResetInventoryUi(); ResetNarrativePage();

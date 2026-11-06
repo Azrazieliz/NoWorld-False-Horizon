@@ -2,6 +2,7 @@
 #include "Narrative/OGNarrativeChronicle.h"
 #include "Narrative/OGNarrativeFingerprint.h"
 #include "Narrative/OGNarrativeJson.h"
+#include "Narrative/OGNarrativeKnowledge.h"
 
 namespace
 {
@@ -223,6 +224,25 @@ void StampEvent(FString& Stamp, const FOGWorldEvent& E)
     for (const auto& S : {E.EventId.ToString(),E.EventType.ToString(),LexToString(E.WorldTick),E.PrimaryEntity.ToString(),E.PayloadJson,LexToString(E.bChronicleEligible)}) Part(Stamp,S);
     Part(Stamp,LexToString(E.RelatedEntities.Num())); for (const auto& Id : E.RelatedEntities) Part(Stamp,Id.ToString());
 }
+bool ReadExpirationEvent(IOGWorldStore& Store, const FOGNarrativeEventRule& Rule, const FOGEntityId& Ruler,
+    const FOGEntityId& Subject, int64 Tick, FOGWorldEvent& Out, FString& Error)
+{
+    Out = FOGWorldEvent();
+    const FOGEntityId EventSubject = Rule.bSubjectIsRuler ? Ruler : Subject;
+    if (Rule.EventType.IsNone() || !EventSubject.IsValid()) return true;
+
+    TArray<FOGWorldEvent> Events;
+    if (!Store.ListWorldEvents(EventSubject,Rule.EventType,false,1,Events,Error)) return false;
+    if (Events.IsEmpty()) return true;
+
+    const FOGWorldEvent& Event = Events[0];
+    if (!Event.EventId.IsValid() || Event.WorldTick < 0 || Event.WorldTick > Tick ||
+        Event.EventType != Rule.EventType || !AppliesTo(Event,EventSubject))
+        return Fail(Error,TEXT("expiration"),TEXT("invalid canonical quest expiration event"));
+    Out = Event;
+    return true;
+}
+
 bool AcceptanceBaseline(IOGWorldStore& Store, const FOGNarrativeQuestDefinition& Q, const FOGNarrativeContext& C,
     int64 Tick, FOGNarrativeQuestState& State, FString& Stamp, FString& Error)
 {
@@ -258,6 +278,45 @@ bool Conditions(IOGWorldStore& Store, const FOGNarrativeConditions& C, const FOG
         if (!LoadQuest(Store,Context.RulerId,Id,State,P,Hash,Error)) return false;
         StampProject(Stamp,State.bExists,P);
         if (!State.bExists || !State.bCompleted) Missing.Add(TEXT("A required quest has not been completed."));
+    }
+    for (const FOGContentId& Id : C.RequiredDiscoveries)
+    {
+        bool bFound = false;
+        FOGKnowledgeFactRecord Fact;
+        if (!ReadDiscoveryFact(Store,Context.RulerId,Id,bFound,Fact,Error)) return false;
+        Part(Stamp,LexToString(bFound));
+        if (bFound)
+        {
+            Part(Stamp,Fact.SourceEventId.ToString());
+            Part(Stamp,LexToString(Fact.UpdatedWorldTick));
+            Part(Stamp,Fact.BeliefState.ToString());
+        }
+        if (!bFound || !Fact.SourceEventId.IsValid() || Fact.LearnedWorldTick > Tick || Fact.UpdatedWorldTick > Tick)
+            Missing.Add(TEXT("A required discovery has not been learned."));
+    }
+    if (!C.InteractorStateEquals.IsEmpty())
+    {
+        const FOGEntityId Interactor = Context.InteractorEntityId.IsValid()
+            ? Context.InteractorEntityId : Context.RulerId;
+        FName Kind;
+        FString Json;
+        if (!Entity(Store,Interactor,TEXT("Interactor"),Kind,Json,Stamp,Missing,Error)) return false;
+        if (!Json.IsEmpty())
+        {
+            FObject State;
+            if (!ReadObject(Json,State,Error)) return false;
+            for (const auto& Predicate : C.InteractorStateEquals)
+            {
+                FString Actual;
+                const auto* Value = State->Values.Find(Predicate.Key);
+                if (!Value || !Value->IsValid() || (*Value)->Type != EJson::String ||
+                    !(*Value)->TryGetString(Actual) || !Actual.Equals(Predicate.Value,ESearchCase::CaseSensitive))
+                {
+                    Missing.Add(TEXT("The current character does not meet this authored requirement."));
+                    break;
+                }
+            }
+        }
     }
     for (const auto& Need : C.RequiredBranches)
     {
@@ -348,6 +407,16 @@ bool FOGNarrativeService::ReadQuest(const FOGEntityId& RulerId, const FOGContent
 {
     Error.Reset(); FOGProjectRecord P; FString Hash; return LoadQuest(Store,RulerId,QuestId,Out,P,Hash,Error);
 }
+bool FOGNarrativeService::ReadQuestExpiration(const FOGNarrativeQuestDefinition& Quest,
+    const FOGEntityId& Ruler, const FOGEntityId& Subject, int64 Tick, bool& bExpired, FString& Error) const
+{
+    bExpired = false;
+    FOGWorldEvent Event;
+    if (!ReadExpirationEvent(Store,Quest.ExpirationEvent,Ruler,Subject,Tick,Event,Error)) return false;
+    bExpired = Event.EventId.IsValid();
+    return true;
+}
+
 bool FOGNarrativeService::ReadDialogue(const FOGNarrativeContext& Context, const FOGContentId& DialogueId,
     FOGNarrativeDialogueState& Out, FString& Error) const
 {
@@ -402,6 +471,17 @@ bool FOGNarrativeService::Preview(const FOGNarrativeCatalog& Catalog, const FOGN
             {
                 const auto* Credits = Out.Quest.CreditedEvents.Find(O.ObjectiveId);
                 if (!Credits || Credits->Num() > O.RequiredCount || !Out.Quest.AcceptanceBaseline.Contains(O.ObjectiveId)) return Fail(Error,Q->QuestId.Value,TEXT("invalid saved objective credits/baseline"));
+            }
+        }
+        if (!Out.Quest.bCompleted && !Q->ExpirationEvent.EventType.IsNone())
+        {
+            FOGWorldEvent Expiration;
+            const FOGEntityId Subject = Out.Quest.bExists ? Out.Quest.SubjectId : C.SubjectId;
+            if (!ReadExpirationEvent(Store,Q->ExpirationEvent,C.RulerId,Subject,Tick,Expiration,Error)) return false;
+            if (Expiration.EventId.IsValid())
+            {
+                StampEvent(Stamp,Expiration);
+                Out.MissingRequirements.Add(TEXT("This quest is no longer active."));
             }
         }
         if (Command.Kind == EOGNarrativeCommand::AcceptQuest)
@@ -616,6 +696,10 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
     if (C.InteractorEntityId.IsValid() && C.InteractorEntityId != C.RulerId) Event.RelatedEntities.AddUnique(C.InteractorEntityId);
     Event.WorldTick = Tick; Event.PayloadJson = Write(Receipt); Event.bChronicleEligible = true;
     if (!Store.AppendWorldEvent(Event,Error)) return false;
+    const bool bRemoteTurnInAllowed = Q && Command.Kind == EOGNarrativeCommand::CompleteQuest &&
+        Q->bAllowRemoteCompletion;
+    const FOGEntityId Source = Q ? (bRemoteTurnInAllowed ? FOGEntityId() : Quote.Quest.SubjectId) : C.SubjectId;
+    if (!RecordDiscoveries(Store,Effects->Discoveries,C.RulerId,Source,RequestId,Tick,Error)) return false;
     return Transaction.Commit();
 }
 

@@ -5,7 +5,6 @@
 #include "Narrative/OGNarrativeSessionSubsystem.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
-#include "UI/OGUiViewModelService.h"
 
 namespace
 {
@@ -29,8 +28,16 @@ const TCHAR* GetMemoryAction(const FString& Kind)
 bool UOGNarrativeSessionSubsystem::ReadRecentMemories(
     TArray<FOGNarrativeMemoryEntry>& Out, FString& Error) const
 {
+    FOGWorldEventCursor Next;
+    return ReadMemoryPage(FOGWorldEventCursor(),Out,Next,Error);
+}
+
+bool UOGNarrativeSessionSubsystem::ReadMemoryPage(const FOGWorldEventCursor& Before,
+    TArray<FOGNarrativeMemoryEntry>& Out, FOGWorldEventCursor& Next, FString& Error) const
+{
     using namespace OGNarrative;
     Out.Reset();
+    Next = FOGWorldEventCursor();
     Error.Reset();
     const UGameInstance* Game = GetGameInstance();
     const UOGGameCoreSubsystem* Core = BoundCore.Get();
@@ -43,19 +50,17 @@ bool UOGNarrativeSessionSubsystem::ReadRecentMemories(
         return false;
     }
 
-    FOGChronicleFilter Filter;
-    Filter.EventTypes.Add(NarrativeReceiptType);
-    Filter.Limit = 12;
-    TArray<FOGChronicleEntryViewModel> Events;
-    if (!FOGUiViewModelService(*Store).BuildChronicleFiltered(Ruler->BoundRulerId, Filter, Events, Error))
-        return false;
+    constexpr int32 PageSize = 12;
+    TArray<FOGWorldEvent> Events;
+    if (!Store->ListWorldEventsPage(Ruler->BoundRulerId,NarrativeReceiptType,true,PageSize + 1,
+        Before,Events,Next,Error)) return false;
 
     const int64 Now = Core->GetCanonicalWorldTick();
-    for (const FOGChronicleEntryViewModel& Event : Events)
+    for (int32 Index = 0; Index < FMath::Min(Events.Num(),PageSize); ++Index)
     {
-        // Related-entity matches are useful for the general Chronicle. Personal
-        // decisions belong only to the Ruler who committed the receipt.
-        if (Event.PrimaryEntityId != Ruler->BoundRulerId || Event.WorldTick > Now) continue;
+        const FOGWorldEvent& Event = Events[Index];
+        // Personal decisions belong only to the Ruler who committed the receipt.
+        if (Event.PrimaryEntity != Ruler->BoundRulerId || Event.WorldTick > Now) continue;
 
         FObject Receipt;
         FString ParseError, Schema, Kind;
@@ -79,6 +84,11 @@ bool UOGNarrativeSessionSubsystem::ReadRecentMemories(
             Entry.Summary += FString(TEXT(" / ")) + ChoiceText;
 
         Out.Add(MoveTemp(Entry));
+    }
+    if (Events.Num() > PageSize)
+    {
+        Next.EventId = Events[PageSize - 1].EventId;
+        Next.WorldTick = Events[PageSize - 1].WorldTick;
     }
     return true;
 }
