@@ -305,6 +305,8 @@ public:
     virtual bool UpsertContainerContent(const FOGContainerContentRecord&, FString&) override;
     virtual bool ListContainerContents(
         const FOGEntityId&, TArray<FOGContainerContentRecord>&, FString&) const override;
+    virtual bool ListContainerPlacementsForItem(const FOGEntityId&,
+        TArray<FOGContainerContentRecord>&,FString&) const override;
     virtual bool DeleteContainerContentsForItem(
         const FOGEntityId&, FString&) override;
     virtual bool UpsertItemOwnerAffinity(

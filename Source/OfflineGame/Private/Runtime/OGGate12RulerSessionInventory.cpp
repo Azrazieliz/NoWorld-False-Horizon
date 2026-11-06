@@ -8,6 +8,7 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Objects/OGObjectActionService.h"
+#include "World/OGInventoryStorageService.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
@@ -273,6 +274,34 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedEquipment(
         UE_LOG(LogTemp, Warning, TEXT("%s"), *OutError);
     }
     return true;
+}
+
+bool UOGGate12RulerSessionSubsystem::ReadOwnedStorage(const FOGEntityId& Item,
+    TArray<FOGInventoryStorageMove>& Out,FString& Error)
+{
+    UOGGameCoreSubsystem* Core=nullptr; IOGWorldStore* Store=nullptr;
+    return ResolveStore(Core,Store,Error) && bRulerValidated &&
+        FOGInventoryStorageService(*Store).ReadDestinations(BoundRulerId,Item,Out,Error);
+}
+
+bool UOGGate12RulerSessionSubsystem::ReviewOwnedStorage(const FOGEntityId& Item,
+    const FOGEntityId& Destination,FOGInventoryStorageMove& Out,FString& Error)
+{
+    UOGGameCoreSubsystem* Core=nullptr; IOGWorldStore* Store=nullptr;
+    return ResolveStore(Core,Store,Error) && bRulerValidated &&
+        FOGInventoryStorageService(*Store).Review(BoundRulerId,Item,Destination,Out,Error);
+}
+
+bool UOGGate12RulerSessionSubsystem::ConfirmOwnedStorage(const FOGInventoryStorageMove& Reviewed,
+    const FOGEntityId& Request,FString& Error)
+{
+    if (bInventoryCommandInFlight)
+    { Error=TEXT("An inventory confirmation is already in progress."); return false; }
+    TGuardValue<bool> InFlight(bInventoryCommandInFlight,true);
+    UOGGameCoreSubsystem* Core=nullptr; IOGWorldStore* Store=nullptr;
+    if (!ResolveStore(Core,Store,Error) || !bRulerValidated || Reviewed.RulerId!=BoundRulerId)
+    { if (Error.IsEmpty()) Error=TEXT("The active Ruler changed. Review the storage move again."); return false; }
+    return FOGInventoryStorageService(*Store).Move(Reviewed,Request,Core->GetCanonicalWorldTick(),Error);
 }
 
 bool UOGGate12RulerSessionSubsystem::ReadOwnedObjectActions(const FOGEntityId& SelectedItem,

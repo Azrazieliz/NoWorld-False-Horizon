@@ -292,6 +292,8 @@ public:
     virtual bool UpsertContainerContent(const FOGContainerContentRecord&, FString&) = 0;
     virtual bool ListContainerContents(
         const FOGEntityId&, TArray<FOGContainerContentRecord>&, FString&) const = 0;
+    virtual bool ListContainerPlacementsForItem(const FOGEntityId&,TArray<FOGContainerContentRecord>& Out,FString& Error) const
+    { Out.Reset(); Error=TEXT("This World store cannot read item locations."); return false; }
     virtual bool DeleteContainerContentsForItem(
         const FOGEntityId&, FString&) = 0;
     virtual bool UpsertItemOwnerAffinity(

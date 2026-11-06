@@ -9,6 +9,7 @@
 #include "Narrative/OGNarrativeService.h"
 #include "Types/SlateEnums.h"
 #include "Objects/OGObjectActionDefinition.h"
+#include "World/OGInventoryStorageService.h"
 #include "Gacha/OGGachaService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
@@ -218,6 +219,8 @@ private:
     FOGEntityId InventoryContextRulerId;
     FOGContentId InventoryContextIdentityId;
     FOGEntityId InventoryContextManifestationId;
+    FOGInventoryStorageMove PendingStorageReview;
+    FOGEntityId PendingStorageRequestId;
     FOGObjectActionPreview PendingObjectReview;
     FOGEntityId PendingObjectRequestId;
     FOGEntityId ObjectActionCounterpartyId;
@@ -274,6 +277,8 @@ private:
     void ResetCharacterDevelopment();
     bool SynchronizeDevelopmentContext(const UOGGate12RulerSessionSubsystem* Session);
     void BuildInventory();
+    void BuildStorage(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session,
+        const FOGEntityId& SelectedItem);
     void BuildObjectActions(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session);
     void BuildEquipmentReview(UVerticalBox* Parent, const FOGOwnedEquipmentPreview& Review);
     void HandleInventoryAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);

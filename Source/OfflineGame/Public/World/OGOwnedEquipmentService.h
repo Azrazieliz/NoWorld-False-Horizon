@@ -82,6 +82,8 @@ struct OFFLINEGAME_API FOGOwnedEquipmentPreview
     FString SlotName;
     FOGItemInstanceRecord Item;
     FString ItemName;
+    FOGEntityId StorageContainerId;
+    FString StorageContainerName;
     bool bUnequip = false;
     bool bHasPreviousItem = false;
     FOGItemInstanceRecord PreviousItem;
