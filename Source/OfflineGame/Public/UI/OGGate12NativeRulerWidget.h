@@ -181,7 +181,10 @@ private:
     UPROPERTY(Transient) TObjectPtr<UTextBlock> GachaReviewStatus;
     UPROPERTY(Transient) TObjectPtr<UOGGate12RulerActionButton> GachaConfirmButton;
     FString GachaFeedback;
-    int32 GachaRevealedResults=1;
+    int32 GachaRevealedResults=0;
+    double GachaRevealEndsAt=0.0;
+    bool bGachaRevealCue=false;
+    UPROPERTY(Transient) TObjectPtr<UWidget> GachaAnimatedReveal;
     bool bGachaDirty=true,bGachaCommandInFlight=false,bGachaDefinitionsDirty=false;
     bool bGachaHistoryExpanded = false;
     bool bGachaRatesExpanded = false;
@@ -257,6 +260,8 @@ private:
     void HandleGachaAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
     void ResetGachaUi();
     void ClearGachaReview();
+    void FinishGachaReveal();
+    bool AdvanceGachaReveal();
     void ObserveGacha(UOGGate12RulerSessionSubsystem& Session);
     void SynchronizeGachaUi();
     void HandleGachaEvents(const TArray<FOGWorldEvent>& Events);

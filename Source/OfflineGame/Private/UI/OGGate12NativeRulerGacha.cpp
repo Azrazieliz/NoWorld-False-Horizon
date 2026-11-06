@@ -27,10 +27,14 @@
 #include "Engine/GameInstance.h"
 #include "Engine/Texture2D.h"
 #include "GameFramework/PlayerController.h"
+#include "HAL/PlatformTime.h"
 #include "Misc/Paths.h"
 
 namespace
 {
+constexpr double GachaCueSeconds=.45;
+constexpr double GachaCardSeconds=.85;
+
 AOGWorldPresentationHud* AcquisitionHud(const UUserWidget& Screen)
 { return Screen.GetOwningPlayer()?Cast<AOGWorldPresentationHud>(Screen.GetOwningPlayer()->GetHUD()):nullptr; }
 FSlateFontInfo AcquisitionFont(int32 Size,bool Display=false)
@@ -63,6 +67,49 @@ void UOGGate12NativeRulerWidget::ClearGachaReview()
     PendingGachaReview=FOGGachaBatchPreview(); PendingGachaRequestId=FOGEntityId();
     GachaConfirmButton=nullptr; GachaReviewStatus=nullptr;
 }
+void UOGGate12NativeRulerWidget::FinishGachaReveal()
+{
+    GachaRevealEndsAt=0.0;
+    bGachaRevealCue=false;
+    GachaRevealedResults=GachaSavedResults.Num();
+    GachaAnimatedReveal=nullptr;
+}
+
+bool UOGGate12NativeRulerWidget::AdvanceGachaReveal()
+{
+    if (!bGachaResultsExpanded || GachaRevealEndsAt<=0.0 || GachaSavedResults.IsEmpty()) return false;
+    const double Now=FPlatformTime::Seconds();
+    if (Now<GachaRevealEndsAt)
+    {
+        const double Duration=bGachaRevealCue?GachaCueSeconds:GachaCardSeconds;
+        const float Progress=FMath::Clamp(static_cast<float>(1.0-(GachaRevealEndsAt-Now)/Duration),0.f,1.f);
+        if (GachaAnimatedReveal)
+        {
+            const float Entry=FMath::InterpEaseOut(0.f,1.f,FMath::Clamp(Progress*2.9f,0.f,1.f),2.5f);
+            GachaAnimatedReveal->SetRenderOpacity(FMath::Lerp(.22f,1.f,Entry));
+            const float Scale=FMath::Lerp(bGachaRevealCue?.94f:.975f,1.f,Entry);
+            GachaAnimatedReveal->SetRenderScale(FVector2D(Scale,Scale));
+        }
+        return false;
+    }
+
+    if (bGachaRevealCue && GachaSavedResults.IsValidIndex(GachaRevealedResults))
+    {
+        ++GachaRevealedResults;
+        bGachaRevealCue=false;
+        GachaRevealEndsAt=Now+GachaCardSeconds;
+    }
+    else if (GachaRevealedResults<GachaSavedResults.Num())
+    {
+        bGachaRevealCue=true;
+        GachaRevealEndsAt=Now+GachaCueSeconds;
+    }
+    else FinishGachaReveal();
+
+    BuildCurrentPage();
+    return true;
+}
+
 void UOGGate12NativeRulerWidget::ResetGachaUi()
 {
     if (GachaEventFeed) GachaEventFeed->Remove(GachaEventHandle);
@@ -75,7 +122,8 @@ void UOGGate12NativeRulerWidget::ResetGachaUi()
     ClearGachaReview();GachaQuotes.Reset();GachaSavedResults.Reset();GachaDrawButtons.Reset();GachaCostLabels.Reset();
     GachaWalletLabel=nullptr;GachaPityLabel=nullptr;GachaPityBar=nullptr;
     bGachaRatesExpanded=bGachaResultsExpanded=bGachaHistoryExpanded=false;
-    GachaFeedback.Reset();bGachaDirty=true;GachaRevealedResults=1;
+    GachaFeedback.Reset();bGachaDirty=true;
+    FinishGachaReveal();
 }
 void UOGGate12NativeRulerWidget::HandleGachaEvents(const TArray<FOGWorldEvent>& Events)
 { if (!Events.IsEmpty()) bGachaDirty=true; } // Never read intermediate transaction state in a commit callback.
@@ -115,6 +163,7 @@ void UOGGate12NativeRulerWidget::SynchronizeGachaUi()
     if (!Session||!Session->IsBoundToStoredRuler()||Session->BoundRulerId!=GachaContextRulerId||
         Session->CurrentDestination!=EOGRulerPrimaryDestination::Gacha)
     { ResetGachaUi(); return; }
+    if (AdvanceGachaReveal()) return;
     auto* Hud = AcquisitionHud(*this);
     auto* Core = GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
     const int64 Tick = Core && Core->IsCoreReady() ? Core->GetCanonicalWorldTick() : -1;
@@ -211,6 +260,7 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     if (!Session||!Session->IsBoundToStoredRuler()) { ResetGachaUi();return; }
     ObserveGacha(*Session);
     Gate10PortraitGachaCanvas->ClearChildren();
+    GachaAnimatedReveal=nullptr;
     GachaDrawButtons.Reset();GachaCostLabels.Reset();GachaReviewStatus=nullptr;GachaConfirmButton=nullptr;
     GachaWalletLabel=nullptr;GachaPityLabel=nullptr;GachaPityBar=nullptr;
     auto* Hud=AcquisitionHud(*this);
@@ -247,6 +297,7 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
     FOGPlayerProfileSettings Profile;FString ProfileError;
     if (!FOGPlayerProfileSettingsService::Load(FOGPlayerProfileSettingsService::DefaultProfilePath(),Profile,ProfileError))
         Profile.bSfwPresentation=true;
+    if (Profile.bReducedMotion && GachaRevealEndsAt>0.0) FinishGachaReveal();
     auto Artwork=[this,&Profile](const FOGContentId& Identity,const FOGContentId& Version)->UWidget*
     {
         const auto* Visual=VisualCatalog?VisualCatalog->FindExact(Identity,Version):nullptr;
@@ -368,29 +419,56 @@ void UOGGate12NativeRulerWidget::BuildGachaPortrait()
             else for (const auto& E:Session->GachaHistoryProjection)
                 AddMessage(Rows,FString::Printf(TEXT("%s  |  %s  |  tick %lld"),*Name(E.IdentityId),*E.Rarity.ToString(),E.WorldTick),18,Main);
         }
-        else if (bGachaResultsExpanded&&Hud)
+        else if (bGachaResultsExpanded&&!GachaSavedResults.IsEmpty())
         {
-            AddMessage(Rows,TEXT("ACQUISITION COMPLETE"),28,Main);
-            AddMessage(Rows,TEXT("Saved to your roster."),18,GachaMuted);
+            const bool Playing=GachaRevealEndsAt>0.0;
             const auto& Results=GachaSavedResults;
-            for (int32 I=0;I<FMath::Min(GachaRevealedResults,Results.Num());++I)
+            AddMessage(Rows,Playing?TEXT("SUMMON RESULTS"):TEXT("ACQUISITION COMPLETE"),28,Main);
+            if (Playing)
+                AddMessage(Rows,FString::Printf(TEXT("%d / %d"),FMath::Min(
+                    GachaRevealedResults+(bGachaRevealCue?1:0),Results.Num()),Results.Num()),19,GachaMuted);
+            else AddMessage(Rows,TEXT("Saved to your roster."),18,GachaMuted);
+            if (Playing && bGachaRevealCue && Results.IsValidIndex(GachaRevealedResults))
+            {
+                const auto& R=Results[GachaRevealedResults];
+                auto* Cue=WidgetTree->ConstructWidget<UVerticalBox>();
+                auto* Glow=WidgetTree->ConstructWidget<UBorder>();
+                const FLinearColor Accent=AcquisitionRarity(R.Rarity);
+                Glow->SetBrushColor(FLinearColor(Accent.R,Accent.G,Accent.B,.25f));
+                Glow->SetPadding(FMargin(22.f,108.f));
+                Glow->AddChild(Cue);
+                AddMessage(Cue,R.bTopRarity?TEXT("A RADIANT MANIFESTATION"):TEXT("A MANIFESTATION APPROACHES"),25,Main);
+                GachaAnimatedReveal=FOGNativeUiStyle::Surface(*WidgetTree,Glow,EOGNativeSurface::Hero);
+                GachaAnimatedReveal->SetRenderOpacity(.22f);
+                Rows->AddChildToVerticalBox(GachaAnimatedReveal)->SetPadding(FMargin(0,28));
+            }
+            const int32 First=Playing?FMath::Max(0,GachaRevealedResults-1):0;
+            const int32 Last=Playing && bGachaRevealCue?First:FMath::Min(GachaRevealedResults,Results.Num());
+            for (int32 I=First;I<Last;++I)
             {
                 const auto& R=Results[I];
                 auto* Card=WidgetTree->ConstructWidget<UVerticalBox>();
                 if (auto* Art=Artwork(R.IdentityId,R.VersionId))
-                { auto* Bounds=WidgetTree->ConstructWidget<USizeBox>();Bounds->SetHeightOverride(340);Bounds->AddChild(Art);Card->AddChildToVerticalBox(Bounds); }
+                {
+                    auto* Bounds=WidgetTree->ConstructWidget<USizeBox>();
+                    Bounds->SetHeightOverride(340); Bounds->AddChild(Art); Card->AddChildToVerticalBox(Bounds);
+                }
                 auto* Tier=WidgetTree->ConstructWidget<UTextBlock>();Tier->SetText(FText::FromName(R.Rarity));
                 Tier->SetColorAndOpacity(AcquisitionRarity(R.Rarity));Tier->SetFont(AcquisitionFont(24,true));
                 if (auto* Style=UOGReactiveUiSubsystem::Find(this)) Style->PreserveOriginal(Tier);
                 Card->AddChildToVerticalBox(Tier);
                 AddMessage(Card,Name(R.IdentityId),23,Main);
                 AddMessage(Card,R.bDuplicateIdentity?TEXT("INDEPENDENT COPY"):TEXT("NEW IDENTITY"),17,GachaMuted);
-                Rows->AddChildToVerticalBox(FOGNativeUiStyle::Surface(*WidgetTree,Card,EOGNativeSurface::Hero))->SetPadding(FMargin(0,12));
+                if (!Playing && R.ManifestationId.IsValid())
+                    AddAction(Card,TEXT("OPEN OWNED COPY"),TEXT("gacha-copy/")+R.ManifestationId.ToString());
+                auto* Surface=FOGNativeUiStyle::Surface(*WidgetTree,Card,EOGNativeSurface::Hero);
+                Rows->AddChildToVerticalBox(Surface)->SetPadding(FMargin(0,12));
+                if (Playing) { GachaAnimatedReveal=Surface; GachaAnimatedReveal->SetRenderOpacity(.22f); }
             }
-            if (GachaRevealedResults<Results.Num())
+            if (Playing)
             {
                 Action(TEXT("REVEAL NEXT"),TEXT("gacha-reveal-next"),100,1144,310,78,true,EOGNativeSurface::Action,22);
-                Action(TEXT("REVEAL ALL"),TEXT("gacha-reveal-all"),454,1144,310,78,true,EOGNativeSurface::PrimaryAction,22);
+                Action(TEXT("SKIP TO RESULTS"),TEXT("gacha-reveal-all"),454,1144,310,78,true,EOGNativeSurface::PrimaryAction,22);
             }
         }
     }
@@ -427,18 +505,39 @@ void UOGGate12NativeRulerWidget::HandleGachaAction(const FString& Action,UOGGate
         const auto Review=PendingGachaReview;ClearGachaReview(); // Consume the UI request before any commit callback.
         if (Hud->ExecuteReviewedGachaDraw(Review.Count,Review.ConfirmationToken,Error))
         {
-            bGachaRatesExpanded=bGachaHistoryExpanded=false;bGachaResultsExpanded=true;GachaRevealedResults=1;
+            bGachaRatesExpanded=bGachaHistoryExpanded=false;bGachaResultsExpanded=true;
             GachaSavedResults=Hud->GetLastGachaResults();
+            GachaRevealedResults=0;
+            bGachaRevealCue=!GachaSavedResults.IsEmpty();
+            GachaRevealEndsAt=bGachaRevealCue?FPlatformTime::Seconds()+GachaCueSeconds:0.0;
             GachaFeedback=TEXT("Acquisition saved.");
         }
         else GachaFeedback=Error;
     }
-    else if (Action==TEXT("gacha-reveal-next")) ++GachaRevealedResults;
-    else if (Action==TEXT("gacha-reveal-all")) GachaRevealedResults=GachaSavedResults.Num();
+    else if (Action==TEXT("gacha-reveal-next") && GachaRevealEndsAt>0.0)
+    {
+        if (GachaRevealedResults<GachaSavedResults.Num())
+        {
+            ++GachaRevealedResults;
+            bGachaRevealCue=false;
+            GachaRevealEndsAt=FPlatformTime::Seconds()+GachaCardSeconds;
+        }
+        else FinishGachaReveal();
+    }
+    else if (Action==TEXT("gacha-reveal-all")) FinishGachaReveal();
+    else if (Action.StartsWith(TEXT("gacha-copy/")) && bGachaResultsExpanded && GachaRevealEndsAt<=0.0)
+    {
+        FGuid Copy;
+        if (!FGuid::Parse(Action.Mid(UE_ARRAY_COUNT(TEXT("gacha-copy/"))-1),Copy)) return;
+        const auto* Result=GachaSavedResults.FindByPredicate([&](const auto& R){return R.ManifestationId==FOGEntityId(Copy);});
+        if (!Result || !Session.SelectOwnedManifestation(Result->IdentityId,Result->ManifestationId,Error))
+            GachaFeedback=Error.IsEmpty()?TEXT("This result is no longer selectable."):Error;
+    }
     else if (Action==TEXT("gacha-results")&&!GachaSavedResults.IsEmpty()) {ClearGachaReview();bGachaRatesExpanded=bGachaHistoryExpanded=false;bGachaResultsExpanded=true;}
     else if (Action==TEXT("gacha-rates")) {ClearGachaReview();bGachaRatesExpanded=!bGachaRatesExpanded;bGachaHistoryExpanded=bGachaResultsExpanded=false;}
     else if (Action==TEXT("gacha-history-toggle")) {ClearGachaReview();bGachaHistoryExpanded=!bGachaHistoryExpanded;bGachaRatesExpanded=bGachaResultsExpanded=false;}
-    else if (Action==TEXT("gacha-overlay-close")) {ClearGachaReview();bGachaRatesExpanded=bGachaHistoryExpanded=bGachaResultsExpanded=false;}
+    else if (Action==TEXT("gacha-overlay-close"))
+    {ClearGachaReview();FinishGachaReveal();bGachaRatesExpanded=bGachaHistoryExpanded=bGachaResultsExpanded=false;}
     else return;
     bGachaDirty=true;BuildCurrentPage();
 }
