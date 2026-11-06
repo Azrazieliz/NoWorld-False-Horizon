@@ -4114,9 +4114,35 @@
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerWidget.cpp",
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerDiplomacy.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "c7d3881c67eeedbc26b002a603aca05f0813891b",
+      "system_ids": [
+        "M18",
+        "M28"
+      ],
+      "result": "Ruler Territory now assigns an available owned copy to an authored gathering order and saves its canonical Dispatch and Director deadline. At the due tick, including offline catch-up, it rechecks actual site control and stock, transfers real resources on success, and records the outcome and a Report. Active copies cannot be selected as the World body.",
+      "remaining_player_visible_work": "Install approved holding and stock definitions. Reconnaissance, espionage, exploration, support and bespoke high-risk dispatch resolvers and consequences still need their own authored policies.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGGatheringDispatch.h",
+        "Source/OfflineGame/Private/World/OGGatheringDispatch.cpp",
+        "Source/OfflineGame/Public/Persistence/OGWorldStore.h",
+        "Source/OfflineGame/Private/Persistence/OGSQLiteWorldStore.h",
+        "Source/OfflineGame/Private/Persistence/OGSQLiteWorldStore.Strategy.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGameCoreSubsystem.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionSubsystem.cpp",
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerWidget.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerGathering.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "c50395e01d4aaa4ce73ea94c2171c1b8286291a3",
+  "continuation_last_source_commit": "c7d3881c67eeedbc26b002a603aca05f0813891b",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
