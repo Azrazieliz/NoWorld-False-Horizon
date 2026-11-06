@@ -4090,9 +4090,33 @@
         "Source/OfflineGame/Public/Objects/OGObjectOfferDefinition.h",
         "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "c50395e01d4aaa4ce73ea94c2171c1b8286291a3",
+      "system_ids": [
+        "M24",
+        "M28"
+      ],
+      "result": "Native Territory diplomacy discovers contacts only from the Ruler's saved knowledge, limits action to actual led factions, and reads the relationship between the exact factions. The player can pledge or withdraw outgoing support, end an alliance, or end their own subordination with review, persistent link change and Chronicle receipt.",
+      "remaining_player_visible_work": "Bilateral alliance and support requests, source-authored decisions and faction/war outcomes, production faction and NPC population bindings and NPC life schedules remain open. No acceptance claimed.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGRulerDiplomacyService.h",
+        "Source/OfflineGame/Private/World/OGRulerDiplomacyService.cpp",
+        "Source/OfflineGame/Public/Persistence/OGWorldStore.h",
+        "Source/OfflineGame/Private/Persistence/OGSQLiteWorldStore.h",
+        "Source/OfflineGame/Private/Persistence/OGSQLiteWorldStore.Strategy.cpp",
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerWidget.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerDiplomacy.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "e35a1a020c7885e2ce1dc6c7efdd3344bd96f4fd",
+  "continuation_last_source_commit": "c50395e01d4aaa4ce73ea94c2171c1b8286291a3",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
