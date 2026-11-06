@@ -103,7 +103,10 @@ bool ValidateSavedReceipt(IOGWorldStore& Store,const FOGStoredCombatVitality& Sa
         Event.EventType==TEXT("combat.world_impact_resolved") || Event.EventType==TEXT("combat.world_cast_cancelled") ||
         Event.EventType==TEXT("combat.world_clock_advanced");
     const TArray<TSharedPtr<FJsonValue>>* Rows=nullptr; int32 Matches=0;
-    if (Allowed && Payload->TryGetArrayField(Opening?TEXT("opening_units"):TEXT("unit_deltas"),Rows) && Rows)
+    FString Recipient;
+    const bool Consumable=Event.EventType==TEXT("object_action_applied") &&
+        Payload->TryGetStringField(TEXT("health_recipient_id"),Recipient) && Recipient==Saved.EntityId.ToString();
+    if ((Allowed || Consumable) && Payload->TryGetArrayField(Opening?TEXT("opening_units"):TEXT("unit_deltas"),Rows) && Rows)
         for (const auto& Value:*Rows)
         {
             if (!Value || Value->Type!=EJson::Object) continue;
@@ -120,9 +123,26 @@ bool ValidateSavedReceipt(IOGWorldStore& Store,const FOGStoredCombatVitality& Sa
     if (Matches!=1) { Error=TEXT("Stored health has no unique proven HP result."); return false; }
     return true;
 }
+bool EncodeVitality(const FOGStoredCombatVitality& Saved,FString& Json,FString& Error)
+{
+    auto State=MakeShared<FJsonObject>(); State->SetNumberField(TEXT("schema"),1);
+    State->SetStringField(TEXT("entity_id"),Saved.EntityId.ToString());
+    State->SetStringField(TEXT("life_id"),Saved.LifeId.ToString());
+    State->SetStringField(TEXT("identity_id"),Saved.IdentityId.ToString());
+    State->SetStringField(TEXT("version_id"),Saved.VersionId.ToString());
+    State->SetStringField(TEXT("battle_id"),Saved.BattleId.ToString());
+    State->SetStringField(TEXT("receipt_id"),Saved.ReceiptId.ToString());
+    State->SetStringField(TEXT("world_tick_exact"),LexToString(Saved.WorldTick));
+    State->SetObjectField(TEXT("hp"),LargeJson(Saved.CurrentHp));
+    State->SetObjectField(TEXT("maximum_hp"),LargeJson(Saved.MaximumHpAtCommit));
+    auto Record=MakeShared<FJsonObject>(); Record->SetObjectField(VitalityField,State);
+    if (FJsonSerializer::Serialize(Record,TJsonWriterFactory<>::Create(&Json))) return true;
+    Error=TEXT("Cannot serialize canonical vitality."); return false;
+}
 const FOGCombatUnitState* UnitById(const FOGTurnBattleState& State,const FOGEntityId& Id)
 { return State.Units.FindByPredicate([&](const auto& Unit){return Unit.UnitEntityId==Id;}); }
-bool HasHealthProof(const FJsonObject& Payload,const FOGCombatUnitState& Before,const FOGCombatUnitState& After,bool Opening)
+bool HasHealthProof(const FJsonObject& Payload,const FOGEntityId& Entity,
+    const FOGLargeNumber& Before,const FOGLargeNumber& After,bool Opening)
 {
     const TArray<TSharedPtr<FJsonValue>>* Rows=nullptr;
     if (!Payload.TryGetArrayField(Opening?TEXT("opening_units"):TEXT("unit_deltas"),Rows) || !Rows) return false;
@@ -132,9 +152,9 @@ bool HasHealthProof(const FJsonObject& Payload,const FOGCombatUnitState& Before,
         if (!Value || Value->Type!=EJson::Object) return false;
         const auto Row=Value->AsObject(); FString Id,Previous,Current;
         if (!Row || !Row->TryGetStringField(TEXT("unit_id"),Id)) return false;
-        if (Id!=After.UnitEntityId.ToString()) continue;
+        if (Id!=Entity.ToString()) continue;
         if (!Row->TryGetStringField(TEXT("hp_before"),Previous) || !Row->TryGetStringField(TEXT("hp_after"),Current) ||
-            Previous!=Before.CurrentHp.ToDebugString() || Current!=After.CurrentHp.ToDebugString()) return false;
+            Previous!=Before.ToDebugString() || Current!=After.ToDebugString()) return false;
         ++Matches;
     }
     return Matches==1;
@@ -146,6 +166,43 @@ bool FOGCombatVitalityService::Read(const FOGEntityId& Entity,bool& Found,FOGSto
     FName Kind; TSharedPtr<FJsonObject> Root;
     return ReadRoot(Store,Entity,Kind,Root,Error) && Decode(Entity,*Root,Found,Out,Error) &&
         (!Found || ValidateSavedReceipt(Store,Out,Error));
+}
+FOGLargeNumber FOGCombatVitalityService::ResolveRestoredHealth(const FOGStoredCombatVitality& Saved,int32 RestoreHealthBps)
+{
+    const auto Healed=FOGLargeNumber::Add(Saved.CurrentHp,FOGLargeNumber::ScaleByBasisPoints(Saved.MaximumHpAtCommit,RestoreHealthBps));
+    return FOGLargeNumber::Compare(Healed,Saved.MaximumHpAtCommit)>0?Saved.MaximumHpAtCommit:Healed;
+}
+bool FOGCombatVitalityService::CommitConsumableRestoration(const FOGEntityId& Recipient,int32 RestoreHealthBps,
+    const FOGWorldEvent& Receipt,FString& Error)
+{
+    if (!Store.IsWriteTransactionActive() || !Receipt.EventId.IsValid() || !Receipt.PrimaryEntity.IsValid() ||
+        Receipt.EventType!=TEXT("object_action_applied") || !Receipt.RelatedEntities.Contains(Recipient) ||
+        RestoreHealthBps<1 || RestoreHealthBps>10000)
+    { Error=TEXT("Consumable recovery requires its committed inventory action transaction."); return false; }
+
+    bool Found=false; FOGWorldEvent Durable; TSharedPtr<FJsonObject> Proof;
+    if (!Store.TryReadWorldEvent(Receipt.EventId,Found,Durable,Error)) return false;
+    if (!Found || Durable.EventType!=Receipt.EventType || Durable.PrimaryEntity!=Receipt.PrimaryEntity ||
+        Durable.WorldTick!=Receipt.WorldTick || Durable.PayloadJson!=Receipt.PayloadJson ||
+        !Parse(Durable.PayloadJson,Proof))
+    { Error=TEXT("Consumable recovery is missing its matching inventory receipt."); return false; }
+
+    FOGStoredCombatVitality Saved;
+    if (!Read(Recipient,Found,Saved,Error)) return false;
+    FString Battle,ProvenRecipient;
+    if (!Found || Saved.CurrentHp.GetSign()<=0 || Receipt.WorldTick<Saved.WorldTick ||
+        !Proof->TryGetStringField(TEXT("battle_id"),Battle) || Battle!=Saved.BattleId.ToString() ||
+        !Proof->TryGetStringField(TEXT("health_recipient_id"),ProvenRecipient) || ProvenRecipient!=Recipient.ToString())
+    { Error=TEXT("Consumable recovery no longer matches this living character's saved vitality."); return false; }
+    const auto After=ResolveRestoredHealth(Saved,RestoreHealthBps);
+    if (FOGLargeNumber::Compare(After,Saved.CurrentHp)<=0 || !HasHealthProof(*Proof,Recipient,Saved.CurrentHp,After,false))
+    { Error=TEXT("The inventory receipt does not prove the quoted health recovery."); return false; }
+    Saved.CurrentHp=After;
+    Saved.ReceiptId=Receipt.EventId;
+    Saved.WorldTick=Receipt.WorldTick;
+    FString Json;
+    return EncodeVitality(Saved,Json,Error) &&
+        Store.UpsertEntity(VitalityRowId(Recipient),TEXT("combat_vitality"),Receipt.WorldTick,Json,Error);
 }
 bool FOGCombatVitalityService::Project(FOGCombatUnitState& Unit,FString& Error) const
 {
@@ -210,19 +267,15 @@ bool FOGCombatVitalityService::Commit(const FOGTurnBattleState& Before,const FOG
         { Error=TEXT("Canonical life changed during this encounter; stale effects cannot affect a new life."); return false; }
         if (Found && FOGLargeNumber::Compare(Previous->CurrentHp,Unit.CurrentHp)==0 &&
             FOGLargeNumber::Compare(Prior.CurrentHp,Unit.CurrentHp)==0) continue;
-        if (!HasHealthProof(*Proof,*Previous,Unit,Opening))
+        if (!HasHealthProof(*Proof,Unit.UnitEntityId,Previous->CurrentHp,Unit.CurrentHp,Opening))
         { Error=TEXT("The durable receipt does not prove this actual HP projection."); return false; }
         FOGEntityId Life; if (!LifeId(*Root,Unit.UnitEntityId,Life,Error)) return false;
-        auto Saved=MakeShared<FJsonObject>(); Saved->SetNumberField(TEXT("schema"),1);
-        Saved->SetStringField(TEXT("entity_id"),Unit.UnitEntityId.ToString()); Saved->SetStringField(TEXT("life_id"),Life.ToString());
-        Saved->SetStringField(TEXT("identity_id"),Unit.IdentityId.ToString()); Saved->SetStringField(TEXT("version_id"),Unit.SkillSet.CurrentForm.ToString());
-        Saved->SetStringField(TEXT("battle_id"),After.BattleId.ToString()); Saved->SetStringField(TEXT("receipt_id"),Receipt.EventId.ToString());
-        Saved->SetStringField(TEXT("world_tick_exact"),LexToString(Receipt.WorldTick));
-        Saved->SetObjectField(TEXT("hp"),LargeJson(Unit.CurrentHp)); Saved->SetObjectField(TEXT("maximum_hp"),LargeJson(Unit.Stats.MaxHp));
-        auto Record=MakeShared<FJsonObject>(); Record->SetObjectField(VitalityField,Saved);
+        FOGStoredCombatVitality Saved;
+        Saved.EntityId=Unit.UnitEntityId; Saved.LifeId=Life; Saved.IdentityId=Unit.IdentityId;
+        Saved.VersionId=Unit.SkillSet.CurrentForm; Saved.BattleId=After.BattleId; Saved.ReceiptId=Receipt.EventId;
+        Saved.WorldTick=Receipt.WorldTick; Saved.CurrentHp=Unit.CurrentHp; Saved.MaximumHpAtCommit=Unit.Stats.MaxHp;
         FWrite Write; Write.Entity=VitalityRowId(Unit.UnitEntityId); Write.Kind=TEXT("combat_vitality");
-        if (!FJsonSerializer::Serialize(Record,TJsonWriterFactory<>::Create(&Write.Json)))
-        { Error=TEXT("Cannot serialize canonical combat vitality."); return false; }
+        if (!EncodeVitality(Saved,Write.Json,Error)) return false;
         Writes.Add(MoveTemp(Write));
     }
     for (const auto& Write:Writes) if (!Store.UpsertEntity(Write.Entity,Write.Kind,Receipt.WorldTick,Write.Json,Error)) return false;

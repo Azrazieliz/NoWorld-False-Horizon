@@ -20,6 +20,9 @@ public:
     bool Read(const FOGEntityId& Entity,bool& Found,FOGStoredCombatVitality& Out,FString& Error) const;
     /** Project exact stored HP, clamped down to the current resolved maximum. Never grants healing. */
     bool Project(FOGCombatUnitState& Unit,FString& Error) const;
+    static FOGLargeNumber ResolveRestoredHealth(const FOGStoredCombatVitality& Saved,int32 RestoreHealthBps);
+    bool CommitConsumableRestoration(const FOGEntityId& Recipient,int32 RestoreHealthBps,
+        const FOGWorldEvent& Receipt,FString& Error);
     /** Caller owns the action transaction and rolls back on failure. Requires its already appended receipt. */
     bool Commit(const FOGTurnBattleState& Before,const FOGTurnBattleState& After,
         const FOGEntityId& Ruler,const FOGWorldEvent& Receipt,FString& Error);

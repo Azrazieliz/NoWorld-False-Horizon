@@ -56,6 +56,11 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
     }
     if (OutputCount>10000 || (Kind==EOGObjectActionKind::Exchange && !Outputs.IsEmpty()))
     { Error=TEXT("An exchange transfers real stock; generated output counts must remain bounded."); return false; }
+    if (RestoreHealthBps<0 || RestoreHealthBps>10000 ||
+        (RestoreHealthBps>0 && (Kind!=EOGObjectActionKind::Use || UsesCounterparty() ||
+         !Inputs.ContainsByPredicate([](const auto& Input)
+         { return Input.From==EOGObjectActionParty::Ruler && Input.Disposition==EOGObjectInputDisposition::Consume; }))))
+    { Error=TEXT("Health restoration must be an authored use that consumes an owned item."); return false; }
     TSet<FString> Accounts; TMap<FOGContentId,int64> ExchangeDebits,ExchangeCredits;
     for (const auto& R:Resources)
     {
@@ -93,6 +98,11 @@ FString UOGObjectActionDefinition::Fingerprint() const
     for (const auto& O:Outputs) for (const auto& V:{O.ObjectId.ToString(),FString::FromInt(O.InstanceCount),FString::FromInt(static_cast<int32>(O.To))}) AppendObjectDefinitionPart(S,V);
     AppendObjectDefinitionPart(S,TEXT("resources"));
     for (const auto& R:Resources) for (const auto& V:{R.ResourceId.ToString(),FString::FromInt(static_cast<int32>(R.Account)),LexToString(R.Amount),R.DisplayName.ToString()}) AppendObjectDefinitionPart(S,V);
+    if (RestoreHealthBps>0)
+    {
+        AppendObjectDefinitionPart(S,TEXT("restore_health_bps"));
+        AppendObjectDefinitionPart(S,LexToString(RestoreHealthBps));
+    }
     return FMD5::HashAnsiString(*S);
 }
 void UOGObjectActionDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const

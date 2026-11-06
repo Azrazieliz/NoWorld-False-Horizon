@@ -1,5 +1,6 @@
 #include "Objects/OGObjectActionService.h"
 #include "Objects/OGObjectOfferDefinition.h"
+#include "Combat/OGCombatVitalityService.h"
 #include "Dom/JsonObject.h"
 #include "Misc/SecureHash.h"
 #include "Serialization/JsonReader.h"
@@ -112,6 +113,33 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
     }
     else if (C.CounterpartyId.IsValid())
     { Error=TEXT("This definition has no counterparty operation."); return false; }
+    if (D.RestoreHealthBps>0)
+    {
+        if (!C.HealthRecipientId.IsValid())
+        { Error=TEXT("Select the character who will use this consumable."); return false; }
+        if (C.HealthRecipientId!=C.RulerId)
+        {
+            FOGCharacterManifestationRecord Copy; bool Found=false;
+            if (!Store.TryReadCharacterManifestation(C.HealthRecipientId,Found,Copy,Error)) return false;
+            if (!Found || Copy.OwningRulerId!=C.RulerId || Copy.LifecycleState!=TEXT("active"))
+            { Error=TEXT("Consumable recovery requires the Ruler or an active owned Manifestation."); return false; }
+        }
+        FOGStoredCombatVitality Saved; bool Found=false;
+        if (!FOGCombatVitalityService(Store).Read(C.HealthRecipientId,Found,Saved,Error)) return false;
+        if (!Found || Saved.CurrentHp.GetSign()<=0)
+            Out.MissingRequirements.Add(TEXT("This character has no living saved HP to restore."));
+        else
+        {
+            Out.bRestoresHealth=true; Out.HealthBattleId=Saved.BattleId; Out.HealthBefore=Saved.CurrentHp;
+            Out.HealthMaximum=Saved.MaximumHpAtCommit;
+            Out.HealthAfter=FOGCombatVitalityService::ResolveRestoredHealth(Saved,D.RestoreHealthBps);
+            if (FOGLargeNumber::Compare(Out.HealthAfter,Out.HealthBefore)<=0)
+                Out.MissingRequirements.Add(TEXT("This character would not regain any HP."));
+            for (const auto& Value:{C.HealthRecipientId.ToString(),Saved.LifeId.ToString(),Saved.ReceiptId.ToString(),
+                Out.HealthBefore.ToDebugString(),Out.HealthAfter.ToDebugString(),Out.HealthMaximum.ToDebugString()})
+                AppendObjectServicePart(Quote,Value);
+        }
+    }
     TArray<FOGItemInstanceRecord> PlayerItems,OtherItems; TSet<FOGEntityId> Equipped;
     if (!OwnedItems(Store,C.RulerId,true,PlayerItems,Equipped,Quote,Error) ||
         (D.UsesCounterparty() && !OwnedItems(Store,C.CounterpartyId,false,OtherItems,Equipped,Quote,Error))) return false;
@@ -217,6 +245,12 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
             !Receipt->TryGetStringField(TEXT("counterparty_id"),Other) || Other!=(Reviewed.Context.CounterpartyId.IsValid()?Reviewed.Context.CounterpartyId.ToString():TEXT("")) ||
             !Receipt->TryGetStringField(TEXT("selected_item_id"),Subject) || Subject!=(Reviewed.Context.SelectedItemId.IsValid()?Reviewed.Context.SelectedItemId.ToString():TEXT("")))
         { Error=TEXT("Request ID belongs to a different canonical object action."); return Fail(); }
+        FString HealthRecipient;
+        if ((Receipt->HasField(TEXT("health_recipient_id")) &&
+             (!Receipt->TryGetStringField(TEXT("health_recipient_id"),HealthRecipient) ||
+              HealthRecipient!=Reviewed.Context.HealthRecipientId.ToString())) ||
+            (!Receipt->HasField(TEXT("health_recipient_id")) && Reviewed.Context.HealthRecipientId.IsValid()))
+        { Error=TEXT("Request ID belongs to a different consumable recipient."); return Fail(); }
         const TArray<TSharedPtr<FJsonValue>>* Ids=nullptr;
         if (!Receipt->TryGetArrayField(TEXT("created_item_ids"),Ids)) { Error=TEXT("Stored object receipt is incomplete."); return Fail(); }
         for (const auto& Value:*Ids)
@@ -311,13 +345,29 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
         Receipt->SetStringField(TEXT("durability_before"),Fresh.SubjectBefore.DurabilityStateJson);
         Receipt->SetStringField(TEXT("durability_after"),Fresh.SubjectDurabilityAfter);
     }
+    if (Fresh.bRestoresHealth)
+    {
+        Receipt->SetStringField(TEXT("battle_id"),Fresh.HealthBattleId.ToString());
+        Receipt->SetStringField(TEXT("health_recipient_id"),Fresh.Context.HealthRecipientId.ToString());
+        auto Delta=MakeShared<FJsonObject>();
+        Delta->SetStringField(TEXT("unit_id"),Fresh.Context.HealthRecipientId.ToString());
+        Delta->SetStringField(TEXT("hp_before"),Fresh.HealthBefore.ToDebugString());
+        Delta->SetStringField(TEXT("hp_after"),Fresh.HealthAfter.ToDebugString());
+        TArray<TSharedPtr<FJsonValue>> Deltas;
+        Deltas.Add(MakeShared<FJsonValueObject>(Delta));
+        Receipt->SetArrayField(TEXT("unit_deltas"),MoveTemp(Deltas));
+    }
     FOGWorldEvent Event; Event.EventId=RequestId; Event.EventType=ActionEvent; Event.WorldTick=Tick;
     Event.PrimaryEntity=Fresh.Context.RulerId; Event.bChronicleEligible=true; Event.PayloadJson=Write(Receipt);
     if (Fresh.Context.CounterpartyId.IsValid()) Event.RelatedEntities.Add(Fresh.Context.CounterpartyId);
     for (const auto& I:Fresh.Inputs) Event.RelatedEntities.AddUnique(I.Item.ItemId);
     for (const auto& Id:CreatedItems) Event.RelatedEntities.AddUnique(Id);
     if (Fresh.bRepairsSubject) Event.RelatedEntities.AddUnique(Fresh.SubjectBefore.ItemId);
-    if (!Store.AppendWorldEvent(Event,Error) || (OwnTransaction && !Store.CommitTransaction(Error))) return Fail();
+    if (Fresh.bRestoresHealth) Event.RelatedEntities.AddUnique(Fresh.Context.HealthRecipientId);
+    if (!Store.AppendWorldEvent(Event,Error) ||
+        (Fresh.bRestoresHealth && !FOGCombatVitalityService(Store).CommitConsumableRestoration(
+            Fresh.Context.HealthRecipientId,D.RestoreHealthBps,Event,Error)) ||
+        (OwnTransaction && !Store.CommitTransaction(Error))) return Fail();
     return true;
 }
 bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& Definition,

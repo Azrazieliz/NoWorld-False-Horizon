@@ -459,6 +459,15 @@ void UOGGate12NativeRulerWidget::BuildObjectActions(UVerticalBox* Parent,UOGGate
                 AddMessage(Parent,(Output.To==EOGObjectActionParty::Ruler?TEXT("Receive: "):TEXT("Give: "))+(Definition?Definition->DisplayName.ToString():TEXT("Item"))+
                     FString::Printf(TEXT(" x%d"),Output.InstanceCount),17,InventorySuccess);
             }
+            if (Fresh.bRestoresHealth)
+            {
+                const FString Recipient=Fresh.Context.HealthRecipientId==Fresh.Context.RulerId
+                    ? FString(TEXT("Protagonist")) : InventoryCopyLabel(&Session,Fresh.Context.HealthRecipientId);
+                AddMessage(Parent,Recipient+TEXT(" / HP"),17,InventorySilver);
+                AddMessage(Parent,FOGUiNumberFormatter::Format(Fresh.HealthBefore,true,false)+TEXT(" → ")+
+                    FOGUiNumberFormatter::Format(Fresh.HealthAfter,true,false)+TEXT(" / ")+
+                    FOGUiNumberFormatter::Format(Fresh.HealthMaximum,true,false),17,InventorySuccess);
+            }
             if (Fresh.bRepairsSubject)
                 AddMessage(Parent,FString::Printf(TEXT("Condition %s%.2f%% → %.2f%%"),
                     Fresh.bSubjectWasBroken?TEXT("Broken / "):TEXT(""),

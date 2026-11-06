@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Content/OGDefinitionLibrary.h"
+#include "Math/OGLargeNumber.h"
 #include "World/OGItemKnowledgeCharacterRecords.h"
 #include "OGObjectActionDefinition.generated.h"
 
@@ -71,6 +72,8 @@ public:
     /** Required for repair. The selected owned instance is preserved, including its modifiers/history. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId SubjectObjectId;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 RepairToConditionBps=0;
+    /** Authored out-of-combat recovery as basis points of the recipient's retained maximum HP. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,meta=(ClampMin="0",ClampMax="10000")) int32 RestoreHealthBps=0;
     /** Any counterparty access requires a real, explicitly published canonical offer. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FName CounterpartyEntityKind;
     bool UsesCounterparty() const;
@@ -87,6 +90,7 @@ struct OFFLINEGAME_API FOGObjectActionContext
     UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId RulerId;
     UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId CounterpartyId;
     UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId SelectedItemId;
+    UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId HealthRecipientId;
 };
 USTRUCT(BlueprintType)
 struct OFFLINEGAME_API FOGObjectActionSelectedInput
@@ -118,6 +122,10 @@ struct OFFLINEGAME_API FOGObjectActionPreview
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionSelectedInput> Inputs;
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionOutput> Outputs;
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionWalletPreview> Wallets;
+    UPROPERTY(BlueprintReadOnly) bool bRestoresHealth=false;
+    UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthBefore;
+    UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthAfter;
+    UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthMaximum;
     UPROPERTY(BlueprintReadOnly) bool bRepairsSubject=false;
     UPROPERTY(BlueprintReadOnly) int32 RepairBeforeConditionBps=0;
     UPROPERTY(BlueprintReadOnly) int32 RepairAfterConditionBps=0;
@@ -128,6 +136,7 @@ struct OFFLINEGAME_API FOGObjectActionPreview
     UPROPERTY(BlueprintReadOnly) TArray<FString> MissingRequirements;
     UPROPERTY(BlueprintReadOnly) FString ConfirmationToken;
     /** Internal canonical offer snapshot, included in the confirmation fingerprint. */
+    FOGEntityId HealthBattleId;
     FOGEntityId OfferId;
     FString OfferStateJson;
     int64 OfferRemaining=0;
