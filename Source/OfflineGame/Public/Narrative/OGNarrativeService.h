@@ -221,6 +221,10 @@ public:
         bool& bAlreadyApplied, FString& Error);
     bool ReadQuest(const FOGEntityId& RulerId, const FOGContentId& QuestId,
         FOGNarrativeQuestState& Out, FString& Error) const;
+    /** The tracked quest is a per-Ruler journal preference in this WorldStore. */
+    bool ReadTrackedQuestId(const FOGEntityId& RulerId, FOGContentId& OutQuestId, FString& Error) const;
+    bool SetTrackedQuest(const FOGNarrativeCatalog& Catalog, const FOGEntityId& RulerId,
+        const FOGContentId& QuestId, bool bTrack, int64 WorldTick, FString& Error);
     bool ReadQuestExpiration(const FOGNarrativeQuestDefinition& Quest, const FOGEntityId& Ruler,
         const FOGEntityId& Subject, int64 WorldTick, bool& bExpired, FString& Error) const;
     bool ReadDialogue(const FOGNarrativeContext& Context, const FOGContentId& DialogueId,
