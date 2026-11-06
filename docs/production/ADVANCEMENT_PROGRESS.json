@@ -936,6 +936,9 @@
         "id": "M01",
         "title": "Offline mobile startup and free World entry",
         "issue": 27,
+        "implementation_state": "IMPLEMENTED_FROZEN_AWAITING_PHONE_TEST",
+        "implementation_commit": "d691f99de32aa94e13de95498c577beee2206076",
+        "implementation_evidence": "The native opening and stored/new Ruler route hand over to the real source-backed First World only after the local pawn and original terrain exist. Entry requires no opening fight or tutorial. Android delivery is M34 and original protagonist body fidelity remains M02.",
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
         "source_only_delta": [
           {
@@ -3678,9 +3681,178 @@
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerGacha.cpp",
         "Source/OfflineGame/Private/World/OGNativeGachaReview.cpp"
       ]
+    },
+    {
+      "source_commit": "42d07142ecad5bf1b176d382d2e228f43d69e376",
+      "system_ids": [
+        "M26"
+      ],
+      "result": "Journal reads actual committed Ruler quest and dialogue history away from the resident NPC and retains the title and selected reply on the receipt.",
+      "remaining_player_visible_work": "Complete original narrative, discovery, and missed-event content.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Narrative/OGNarrativeChronicle.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeChronicle.h",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeService.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerNarrative.cpp",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeSessionSubsystem.h"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06",
+      "integration_commit": "ad9a8d035453df70c4a8a6e9b0824eabc07f641b"
+    },
+    {
+      "source_commit": "9b52aac89f60b353a71b79956f7f4e25f2a69466",
+      "system_ids": [
+        "M33"
+      ],
+      "result": "Persisted Large Text and High Contrast now apply on the native UMG screens at startup and after settings save.",
+      "remaining_player_visible_work": "Complete the custom-painted UI bindings, touch and color accessibility coverage.",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGReactiveUiSubsystem.cpp",
+        "Source/OfflineGame/Public/UI/OGReactiveUiSubsystem.h"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06",
+      "integration_commit": "ad9a8d035453df70c4a8a6e9b0824eabc07f641b"
+    },
+    {
+      "source_commit": "45343d30fe8dec53a0feeba6eef3d3348e3417ea",
+      "system_ids": [
+        "M27",
+        "M32"
+      ],
+      "result": "An authored World encounter rebinds the existing canonical bodies as they stream in before restoring saved transforms and casts. No opening or rewards are replayed.",
+      "remaining_player_visible_work": "Complete boss and dungeon source-specific triggers, phases and consequences.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGNativeEncounterDefinition.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGameCoreEncounterRecovery.cpp",
+        "Source/OfflineGame/Public/Combat/OGNativeEncounterDefinition.h"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06",
+      "integration_commit": "ad9a8d035453df70c4a8a6e9b0824eabc07f641b"
+    },
+    {
+      "source_commit": "d777694e5fbe5240f05c0fabebe6d9e5530047f5",
+      "system_ids": [
+        "M28"
+      ],
+      "result": "The project clock commits the original authored phase milestones with the parent project at the same canonical tick and catches up older phase records.",
+      "remaining_player_visible_work": "Complete authored production profiles and settlement or Domain completion effects.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGProjectService.cpp"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06",
+      "integration_commit": "ad9a8d035453df70c4a8a6e9b0824eabc07f641b"
+    },
+    {
+      "source_commit": "f03491ded56c65b9f011aa2bece30924123eef4f",
+      "system_ids": [
+        "M11",
+        "M12",
+        "M13",
+        "M31"
+      ],
+      "result": "The playable R1 carrier now streams the original Citadel, Watchwood Hamlet and Southern Farmland at their saved source coordinates alongside the existing twelve Eastern Market sections, six original roads, original terrain, river and vegetation. Native meshes, materials and the saved source assembly are published via Git LFS.",
+      "remaining_player_visible_work": "R1 covers 3.2 by 3.2 km. The full 100 by 100 km First World, remaining authored caves/interiors, canonical settlement actors and gather/wildlife behavior remain unfinished.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
+        "Source/OfflineGame/Private/World/OGGate02R1RealSourceRuntime.cpp",
+        "Source/OfflineGame/Private/World/OGGate02R1LandmarkStreaming.cpp"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06",
+      "asset_source_commit": "a40f8b0f2f107dad7eaaab194b0440a1019619e4",
+      "5star_reused_program": "Scripts/Gate12World/gate12_place_true_r1_source_anchors_ue583.py",
+      "5star_reuse_detail": "Reused the existing source authoring placements and its saved native products, using the exact source assembly receipt to recover the current Citadel package. No reimport."
+    },
+    {
+      "source_commit": "637d7fa188591a2e198ee0a3f62d475a02067bcf",
+      "system_ids": [
+        "M28"
+      ],
+      "result": "Territory Project Orders exposes real authored orders, costs, durations and phase state at the selected holding. Confirm spends resources and records project, phases and deadline atomically through the existing clock path.",
+      "remaining_player_visible_work": "Production project profiles with exact location IDs/costs/phases and authored settlement/Domain effects are still absent.",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerProjects.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerWidget.cpp",
+        "Source/OfflineGame/Private/World/OGTerritoryProjectDefinition.cpp",
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
+        "Source/OfflineGame/Public/World/OGTerritoryProjectDefinition.h"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06",
+      "integration_commit": "0f08a11a127429ead1679ae7154df563b2b543a5"
+    },
+    {
+      "source_commit": "2b269097677ecba9a4144fa1c2fb69314117248a",
+      "system_ids": [
+        "M24",
+        "M25",
+        "M26"
+      ],
+      "result": "NPC narrative can gate progression on known discoveries and current canonical character state, close quests on authored events, and persist player choices, rewards and Codex discoveries. Records opens the native searchable Codex and paged committed story history.",
+      "remaining_player_visible_work": "The production NarrativeCatalog has empty quests/dialogues. Original resident bindings, authored choices, relationship/faction effects, and missed-event content remain outstanding.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Narrative/OGNarrativeCatalog.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeChronicle.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeFingerprint.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeKnowledge.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeKnowledge.h",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeService.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeSessionSubsystem.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerNarrative.cpp",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeService.h",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeSessionSubsystem.h",
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h"
+      ],
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06",
+      "integration_commit": "0f08a11a127429ead1679ae7154df563b2b543a5"
+    },
+    {
+      "source_commit": "d691f99de32aa94e13de95498c577beee2206076",
+      "system_ids": [
+        "M01"
+      ],
+      "result": "The offline native opening and existing/new Ruler paths now hand over to a valid local World pawn and the original R1 runtime without forced tutorial or combat. A missing physical source returns safely to the native Ruler screen without writing over the save.",
+      "remaining_player_visible_work": "Implementation frozen. Deliver the combined Android APK in M34 and defer on-device acceptance to the owner. M02 continues the authentic protagonist body and traversal content.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h",
+        "Source/OfflineGame/Private/World/OGGate02R1RealSourceRuntime.cpp"
+      ],
+      "status": "IMPLEMENTED_FROZEN_AWAITING_PHONE_TEST",
+      "counted_as_completed_system": true,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-06"
     }
   ],
-  "continuation_last_source_commit": "9b3cb61bfc6a6deb81e9ce088e4b50d9ffe4f539",
+  "continuation_last_source_commit": "d691f99de32aa94e13de95498c577beee2206076",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
