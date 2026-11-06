@@ -209,10 +209,10 @@ bool UOGNarrativeSessionSubsystem::ReadJournal(TArray<FOGNarrativeJournalEntry>&
     {
         FOGNarrativeJournalEntry Entry;
         Entry.Definition = Definition;
-        if (!Service.ReadQuest(Context.RulerId, Definition.QuestId, Entry.State, Error)) return false;
-        if (Entry.State.bExists && !Entry.State.bCompleted &&
-            !Service.ReadQuestExpiration(Definition,Context.RulerId,Entry.State.SubjectId,
-                Core->GetCanonicalWorldTick(),Entry.bExpired,Error)) return false;
+        bool bMissed = false;
+        if (!Service.ReconcileQuestLifecycle(Definition, Context.RulerId, Core->GetCanonicalWorldTick(),
+                Entry.State, bMissed, Error)) return false;
+        Entry.bExpired = Entry.State.bFailed;
         // Unaccepted story text is revealed only when its authored conditions
         // actually permit acceptance in this context. A catalog is not a Codex.
         if (!Entry.State.bExists)
@@ -223,8 +223,16 @@ bool UOGNarrativeSessionSubsystem::ReadJournal(TArray<FOGNarrativeJournalEntry>&
             Command.ContentId = Definition.QuestId;
             FOGNarrativePreview Preview;
             FString AvailabilityError;
-            if (!Service.Preview(Catalog, Command, Core->GetCanonicalWorldTick(), Preview, AvailabilityError) || !Preview.bCanApply)
-                continue;
+            const bool bAvailable = Service.Preview(Catalog, Command, Core->GetCanonicalWorldTick(),
+                Preview, AvailabilityError) && Preview.bCanApply;
+            if (!bAvailable)
+            {
+                if (!bMissed) continue;
+                // The journal has a durable closed row for this known offer.
+                // The quest service still reports that it was never accepted.
+                Entry.State.bExists = true;
+                Entry.bExpired = true;
+            }
         }
         Entry.bTracked = TrackedQuest == Definition.QuestId &&
             Entry.State.bExists && !Entry.State.bCompleted && !Entry.bExpired;
@@ -375,6 +383,13 @@ bool UOGNarrativeSessionSubsystem::ReviewQuest(const FOGContentId& QuestId, EOGN
     {
         const FOGNarrativeQuestDefinition* Definition = Catalog.Quests.FindByPredicate(
             [&QuestId](const FOGNarrativeQuestDefinition& Q) { return Q.QuestId == QuestId; });
+        if (Kind == EOGNarrativeCommand::AcceptQuest &&
+            !FOGNarrativeService(*Store).RememberReviewedQuestOffer(Catalog, Command, Out.ConfirmationToken,
+                Core->GetCanonicalWorldTick(), Error))
+        {
+            Out = FOGNarrativePreview();
+            return false;
+        }
         bReviewedRequiresSubject = Command.Context.SubjectId.IsValid() &&
             (Kind == EOGNarrativeCommand::AcceptQuest ||
              (Kind == EOGNarrativeCommand::CompleteQuest && Definition && !Definition->bAllowRemoteCompletion));

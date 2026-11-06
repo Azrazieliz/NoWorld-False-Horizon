@@ -75,7 +75,7 @@ bool LoadQuest(IOGWorldStore& Store, const FOGEntityId& Ruler, const FOGContentI
     Out = FOGNarrativeQuestState(); FObject Root;
     if (!Load(Store,Ruler,TEXT("quest"),Id,FOGEntityId(),Out.bExists,P,Root,Error)) return false;
     if (!Out.bExists) return true;
-    if (!Fields(Root,{TEXT("schema"),TEXT("content_id"),TEXT("definition_hash"),TEXT("subject_id"),TEXT("completed"),TEXT("objectives"),TEXT("acceptance_baseline")},TEXT("quest state"),Error) ||
+    if (!Fields(Root,{TEXT("schema"),TEXT("content_id"),TEXT("definition_hash"),TEXT("subject_id"),TEXT("completed"),TEXT("objectives"),TEXT("acceptance_baseline"),TEXT("closure_event_id")},TEXT("quest state"),Error) ||
         !SavedIdentity(Root,Id,Out.SubjectId,Definition,Error) || !Root->HasField(TEXT("completed")) ||
         !Boolean(Root,TEXT("completed"),Out.bCompleted,TEXT("quest state"),Error)) return Fail(Error,TEXT("quest state"),TEXT("invalid saved quest fields"));
     for (int32 MapIndex = 0; MapIndex < 2; ++MapIndex)
@@ -100,7 +100,17 @@ bool LoadQuest(IOGWorldStore& Store, const FOGEntityId& Ruler, const FOGContentI
         }
       }
     }
-    if (P.Status != (Out.bCompleted ? EOGProjectStatus::Completed : EOGProjectStatus::Active))
+    Out.bFailed = P.Status == EOGProjectStatus::Failed;
+    if (Out.bFailed)
+    {
+        FString Closure;
+        FGuid Cause;
+        if (Out.bCompleted || !Root->TryGetStringField(TEXT("closure_event_id"), Closure) ||
+            !FGuid::Parse(Closure, Cause) || !Cause.IsValid())
+            return Fail(Error, TEXT("quest state"), TEXT("saved failure is missing its canonical closing event"));
+    }
+    else if (Root->HasField(TEXT("closure_event_id")) ||
+        P.Status != (Out.bCompleted ? EOGProjectStatus::Completed : EOGProjectStatus::Active))
         return Fail(Error,TEXT("quest state"),TEXT("saved completion/status mismatch"));
     Out.StartedWorldTick = P.StartWorldTick; Out.UpdatedWorldTick = P.ResolveWorldTick; return true;
 }
@@ -482,7 +492,7 @@ bool FOGNarrativeService::SetTrackedQuest(const FOGNarrativeCatalog& Catalog, co
         FOGProjectRecord Project;
         FString Hash;
         if (!LoadQuest(Store, Ruler, QuestId, State, Project, Hash, Error)) return false;
-        if (!State.bExists || State.bCompleted || Hash != DefinitionHash(*Definition))
+        if (!State.bExists || State.bCompleted || State.bFailed || Hash != DefinitionHash(*Definition))
             return Fail(Error, TEXT("quest tracking"), TEXT("only an active accepted quest with its installed definition can be tracked"));
 
         bool bExpired = false;
@@ -502,6 +512,167 @@ bool FOGNarrativeService::SetTrackedQuest(const FOGNarrativeCatalog& Catalog, co
     Payload->SetStringField(TEXT("quest_id"), bTrack ? QuestId.ToString() : FString());
     return Store.UpsertEntity(QuestTrackingId(Ruler), QuestTrackingKind, Tick, Write(Payload), Error) &&
         Transaction.Commit();
+}
+
+bool FOGNarrativeService::RememberReviewedQuestOffer(const FOGNarrativeCatalog& Catalog,
+    const FOGNarrativeCommand& Command, const FString& Token, int64 Tick, FString& Error)
+{
+    Error.Reset();
+    const auto* Quest = Catalog.Quests.FindByPredicate(
+        [&](const FOGNarrativeQuestDefinition& Definition) { return Definition.QuestId == Command.ContentId; });
+    if (Command.Kind != EOGNarrativeCommand::AcceptQuest || !Quest || Token.IsEmpty())
+        return Fail(Error, TEXT("quest opportunity"), TEXT("a reviewed quest offer is required"));
+    if (Quest->ExpirationEvent.EventType.IsNone()) return true;
+
+    const auto& Context = Command.Context;
+    FTransaction Transaction(Store, Error);
+    if (!Transaction.Begin()) return false;
+    FOGNarrativePreview Fresh;
+    if (!Preview(Catalog, Command, Tick, Fresh, Error)) return false;
+    if (!Fresh.bCanApply || Fresh.ConfirmationToken != Token)
+        return Fail(Error, TEXT("quest opportunity"), TEXT("the reviewed offer is no longer available"));
+
+    bool bFound = false;
+    FOGProjectRecord Existing;
+    FObject Old;
+    if (!Load(Store, Context.RulerId, TEXT("quest_opportunity"), Quest->QuestId, FOGEntityId(),
+            bFound, Existing, Old, Error)) return false;
+    const FString Hash = DefinitionHash(*Quest);
+    if (bFound)
+    {
+        FOGEntityId Subject;
+        FString SavedHash;
+        if (!SavedIdentity(Old, Quest->QuestId, Subject, SavedHash, Error)) return false;
+        if (SavedHash != Hash)
+            return Fail(Error, TEXT("quest opportunity"), TEXT("the reviewed offer requires a definition migration"));
+        // Keep the first observed opportunity. It remains tied to the exact
+        // subject the player met even when the same definition appears elsewhere.
+        return Transaction.Commit();
+    }
+
+    auto Payload = Base(Quest->QuestId, Fresh.Quest.SubjectId, Hash, false);
+    Payload->SetStringField(TEXT("display_name"), Quest->DisplayName);
+    return Save(Store, Context, TEXT("quest_opportunity"), Quest->QuestId, FOGEntityId(),
+            Payload, Tick, false, 0, Error) && Transaction.Commit();
+}
+
+namespace
+{
+bool FindFirstQuestClosure(IOGWorldStore& Store, const FOGNarrativeEventRule& Rule,
+    const FOGEntityId& Ruler, const FOGEntityId& Subject, int64 Since, int64 Tick,
+    FOGWorldEvent& Out, FString& Error)
+{
+    const FOGEntityId EventSubject = Rule.bSubjectIsRuler ? Ruler : Subject;
+    if (!EventSubject.IsValid() || Rule.EventType.IsNone()) return true;
+    FOGWorldEventCursor Before;
+    do
+    {
+        TArray<FOGWorldEvent> Events;
+        FOGWorldEventCursor Next;
+        if (!Store.ListWorldEventsPage(EventSubject, Rule.EventType, false, 128, Before, Events, Next, Error))
+            return false;
+        for (const FOGWorldEvent& Event : Events)
+        {
+            if (Event.WorldTick < Since) return true;
+            if (Event.WorldTick <= Tick && Event.EventId.IsValid() && Event.EventType == Rule.EventType &&
+                AppliesTo(Event, EventSubject))
+                Out = Event;
+        }
+        Before = Next;
+    } while (Before.EventId.IsValid());
+    return true;
+}
+}
+
+bool FOGNarrativeService::ReconcileQuestLifecycle(const FOGNarrativeQuestDefinition& Quest,
+    const FOGEntityId& Ruler, int64 Tick, FOGNarrativeQuestState& Out, bool& bMissed, FString& Error)
+{
+    Error.Reset();
+    bMissed = false;
+    if (Tick < 0) return Fail(Error, TEXT("quest lifecycle"), TEXT("canonical world time is unavailable"));
+
+    FOGProjectRecord Project;
+    FString Hash;
+    if (!LoadQuest(Store, Ruler, Quest.QuestId, Out, Project, Hash, Error)) return false;
+    if (Out.bCompleted || Out.bFailed || Quest.ExpirationEvent.EventType.IsNone()) return true;
+
+    const bool bAccepted = Out.bExists;
+    FOGEntityId Subject = Out.SubjectId;
+    FObject Payload;
+    if (bAccepted)
+    {
+        if (!ReadObject(Project.PayloadJson, Payload, Error)) return false;
+    }
+    else
+    {
+        bool bFound = false;
+        if (!Load(Store, Ruler, TEXT("quest_opportunity"), Quest.QuestId, FOGEntityId(),
+                bFound, Project, Payload, Error)) return false;
+        if (!bFound) return true;
+        if (!SavedIdentity(Payload, Quest.QuestId, Subject, Hash, Error)) return false;
+        if (Project.Status == EOGProjectStatus::Failed)
+        {
+            bMissed = true;
+            return true;
+        }
+        if (Project.Status != EOGProjectStatus::Active)
+            return Fail(Error, TEXT("quest opportunity"), TEXT("invalid saved opportunity status"));
+    }
+
+    // A changed definition cannot retroactively close an accepted or observed story.
+    if (Hash != DefinitionHash(Quest)) return true;
+    FOGWorldEvent Cause;
+    if (!FindFirstQuestClosure(Store, Quest.ExpirationEvent, Ruler, Subject, Project.StartWorldTick, Tick,
+            Cause, Error)) return false;
+    if (!Cause.EventId.IsValid()) return true;
+    if (Store.IsWriteTransactionActive())
+    {
+        // Do not publish a closure receipt from a UI rebuild during another command.
+        Out.bFailed = bAccepted;
+        bMissed = !bAccepted;
+        return true;
+    }
+
+    const FString PreviousPayload = Project.PayloadJson;
+    FTransaction Transaction(Store, Error);
+    if (!Transaction.Begin()) return false;
+    bool bStillFound = false;
+    FOGProjectRecord Current;
+    if (!Store.TryReadProject(Project.ProjectId, bStillFound, Current, Error)) return false;
+    if (!bStillFound || Current.Status != EOGProjectStatus::Active || Current.PayloadJson != PreviousPayload)
+        return Fail(Error, TEXT("quest lifecycle"), TEXT("the saved quest changed during closure"));
+
+    Payload->SetStringField(TEXT("closure_event_id"), Cause.EventId.ToString());
+    Project.PayloadJson = Write(Payload);
+    Project.Status = EOGProjectStatus::Failed;
+    Project.ResolveWorldTick = FMath::Max(Project.ResolveWorldTick, Cause.WorldTick);
+
+    const TCHAR* Kind = bAccepted ? TEXT("quest_failed") : TEXT("quest_missed");
+    auto Receipt = MakeShared<FJsonObject>();
+    Receipt->SetStringField(TEXT("schema"), NarrativeReceiptSchema);
+    Receipt->SetStringField(TEXT("kind"), Kind);
+    Receipt->SetStringField(TEXT("content_id"), Quest.QuestId.Value);
+    FString DisplayName;
+    if (!Payload->TryGetStringField(TEXT("display_name"), DisplayName) || DisplayName.IsEmpty())
+        DisplayName = Quest.DisplayName;
+    Receipt->SetStringField(TEXT("display_name"), DisplayName);
+    Receipt->SetStringField(TEXT("cause_event_id"), Cause.EventId.ToString());
+    FOGWorldEvent Event;
+    Event.EventId = ProjectId(Ruler, Kind, Quest.QuestId, Cause.EventId);
+    Event.EventType = NarrativeReceiptType;
+    Event.PrimaryEntity = Ruler;
+    if (Subject.IsValid()) Event.RelatedEntities.Add(Subject);
+    Event.WorldTick = Cause.WorldTick;
+    Event.PayloadJson = Write(Receipt);
+    Event.bChronicleEligible = true;
+    if (!Store.UpsertProject(Project, Project.StartWorldTick, Error) ||
+        !Store.AppendWorldEvent(Event, Error) || !Transaction.Commit())
+        return false;
+
+    Out.bFailed = bAccepted;
+    if (bAccepted) Out.UpdatedWorldTick = Project.ResolveWorldTick;
+    bMissed = !bAccepted;
+    return true;
 }
 
 bool FOGNarrativeService::ReadQuestExpiration(const FOGNarrativeQuestDefinition& Quest,
@@ -570,7 +741,9 @@ bool FOGNarrativeService::Preview(const FOGNarrativeCatalog& Catalog, const FOGN
                 if (!Credits || Credits->Num() > O.RequiredCount || !Out.Quest.AcceptanceBaseline.Contains(O.ObjectiveId)) return Fail(Error,Q->QuestId.Value,TEXT("invalid saved objective credits/baseline"));
             }
         }
-        if (!Out.Quest.bCompleted && !Q->ExpirationEvent.EventType.IsNone())
+        if (Out.Quest.bFailed)
+            Out.MissingRequirements.Add(TEXT("This quest has failed."));
+        else if (!Out.Quest.bCompleted && !Q->ExpirationEvent.EventType.IsNone())
         {
             FOGWorldEvent Expiration;
             const FOGEntityId Subject = Out.Quest.bExists ? Out.Quest.SubjectId : C.SubjectId;
@@ -744,6 +917,7 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
         Root->SetStringField(TEXT("node_id"),Quote.Dialogue.NodeId.Value);
         if (!Save(Store,C,TEXT("dialogue"),D->DialogueId,C.SubjectId,Root,Tick,Quote.Dialogue.bCompleted,Quote.Dialogue.bCompleted ? 10000 : 0,Error)) return false;
     }
+    FArray BranchChanges;
     if (!Effects->BranchLocks.IsEmpty())
     {
         FLocks Locks; bool Exists = false; FOGProjectRecord P;
@@ -751,8 +925,15 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
         for (const auto& Lock : Effects->BranchLocks)
         {
             if (const auto* Previous = Locks.Find(Lock.BranchId))
+            {
                 if (*Previous != Lock.ValueId) return Fail(Error,TEXT("branch"),TEXT("cannot overwrite a prior choice"));
+                continue;
+            }
             Locks.Add(Lock.BranchId,Lock.ValueId);
+            auto Change = MakeShared<FJsonObject>();
+            Change->SetStringField(TEXT("branch_id"), Lock.BranchId.Value);
+            Change->SetStringField(TEXT("value_id"), Lock.ValueId.Value);
+            BranchChanges.Add(MakeShared<FJsonValueObject>(Change));
         }
         if (Locks.Num() > 4096) return Fail(Error,TEXT("branches"),TEXT("narrative lock map exceeds supported capacity"));
         auto Root = MakeShared<FJsonObject>(); Root->SetStringField(TEXT("schema"),StateSchema);
@@ -788,6 +969,8 @@ bool FOGNarrativeService::Apply(const FOGNarrativeCatalog& Catalog, const FOGNar
         Changes.Add(MakeShared<FJsonValueObject>(Change));
     }
     Receipt->SetArrayField(TEXT("resources"),Changes);
+    if (!BranchChanges.IsEmpty())
+        Receipt->SetArrayField(TEXT("branch_changes"), MoveTemp(BranchChanges));
     FOGWorldEvent Event; Event.EventId = RequestId; Event.EventType = NarrativeReceiptType; Event.PrimaryEntity = C.RulerId;
     if (C.SubjectId.IsValid()) Event.RelatedEntities.Add(C.SubjectId);
     if (C.InteractorEntityId.IsValid() && C.InteractorEntityId != C.RulerId) Event.RelatedEntities.AddUnique(C.InteractorEntityId);

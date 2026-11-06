@@ -10,6 +10,8 @@ namespace
 {
 const TCHAR* GetMemoryAction(const FString& Kind)
 {
+    if (Kind == TEXT("quest_failed")) return TEXT("Quest failed");
+    if (Kind == TEXT("quest_missed")) return TEXT("Quest missed");
     const int32 Value = FCString::Atoi(*Kind);
     if (Kind != LexToString(Value)) return nullptr;
 
@@ -82,6 +84,11 @@ bool UOGNarrativeSessionSubsystem::ReadMemoryPage(const FOGWorldEventCursor& Bef
         if (Kind == LexToString(static_cast<int32>(EOGNarrativeCommand::ChooseDialogue)) &&
             Receipt->TryGetStringField(TEXT("choice_text"), ChoiceText) && !ChoiceText.IsEmpty())
             Entry.Summary += FString(TEXT(" / ")) + ChoiceText;
+
+        const FArray* BranchChanges = nullptr;
+        if (Receipt->TryGetArrayField(TEXT("branch_changes"), BranchChanges) &&
+            BranchChanges && !BranchChanges->IsEmpty())
+            Entry.Summary += TEXT(" / Story branch recorded");
 
         Out.Add(MoveTemp(Entry));
     }
