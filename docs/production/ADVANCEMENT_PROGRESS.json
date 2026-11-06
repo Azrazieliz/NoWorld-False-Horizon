@@ -4303,9 +4303,51 @@
         "Source/OfflineGame/Private/Narrative/OGNarrativeSessionSubsystem.cpp",
         "Source/OfflineGame/Public/Narrative/OGNarrativeSessionSubsystem.h"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "e0bc4e622819284aa592727601c5dd888f8eb038",
+      "system_ids": [
+        "M28"
+      ],
+      "result": "The native Dispatch Orders screen now lets players assign multiple independent owned Manifestations within source-authored party limits. The saved order retains the exact roster. Confirmation and recovery recheck readiness and prevent duplicate or concurrent assignment, and reports record member availability and qualification.",
+      "remaining_player_visible_work": "Install approved mission definitions with party limits. Ready Army selection, advanced risk and specialized sabotage/theft consequences remain outstanding.",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerGathering.cpp",
+        "Source/OfflineGame/Private/World/OGDispatchAuthored.cpp",
+        "Source/OfflineGame/Private/World/OGDispatchAuthored.h",
+        "Source/OfflineGame/Private/World/OGGatheringDispatch.cpp",
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
+        "Source/OfflineGame/Public/World/OGGatheringDispatch.h"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "886f0fc521f7993d75bd36cadfe0639ce7677d04",
+      "system_ids": [
+        "M16"
+      ],
+      "result": "The native acquisition screen now quotes and redeems an approved guaranteed-rarity ticket against its separate exact original pool. The normal Registry validates each possible result. One ticket pays the transaction, the awarded Manifestation is durable, and ordinary banner pity is preserved.",
+      "remaining_player_visible_work": "Production banner schedules, ticket/resource content and original eligible pools are absent. Explicit exceptional selector instruments and complete earned acquisition sources remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Gacha/OGGachaDefinitions.h",
+        "Source/OfflineGame/Public/Gacha/OGGachaService.h",
+        "Source/OfflineGame/Private/Gacha/OGGachaService.cpp",
+        "Source/OfflineGame/Private/Gacha/OGGachaBatchPreview.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerGacha.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "db4711ab9ca7f457c92742fee8839191ab572f38",
+  "continuation_last_source_commit": "886f0fc521f7993d75bd36cadfe0639ce7677d04",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
