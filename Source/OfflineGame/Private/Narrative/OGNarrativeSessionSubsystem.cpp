@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Narrative/OGNarrativeWorldActor.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Misc/CoreDelegates.h"
 #include "UI/OGGate12OwnedWorldCharacterBinding.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
@@ -21,17 +22,37 @@ void UOGNarrativeSessionSubsystem::Initialize(FSubsystemCollectionBase& Collecti
     Collection.InitializeDependency<UOGGameCoreSubsystem>();
     Collection.InitializeDependency<UOGGate12RulerSessionSubsystem>();
     BoundCore = GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
-    if (BoundCore.IsValid()) BoundCore->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::HandleRuntimeReleasing);
+    if (auto* Core = BoundCore.Get())
+    {
+        Core->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::HandleRuntimeReleasing);
+        Core->OnCanonicalWorldEventsCommitted.AddUObject(this, &ThisClass::QueueQuestClosingEvents);
+    }
+    QuestLifecycleForegroundHandle = FCoreDelegates::ApplicationHasEnteredForegroundDelegate.AddUObject(
+        this, &ThisClass::OnQuestLifecycleForeground);
+    QuestLifecycleTicker = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(this, &ThisClass::TickQuestLifecycle), 0.5f);
 }
 
 void UOGNarrativeSessionSubsystem::Deinitialize()
 {
-    if (BoundCore.IsValid()) BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    FTSTicker::GetCoreTicker().RemoveTicker(QuestLifecycleTicker);
+    QuestLifecycleTicker.Reset();
+    FCoreDelegates::ApplicationHasEnteredForegroundDelegate.Remove(QuestLifecycleForegroundHandle);
+    QuestLifecycleForegroundHandle.Reset();
+    if (auto* Core = BoundCore.Get())
+    {
+        Core->OnCanonicalWorldEventsCommitted.RemoveAll(this);
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    }
     HandleRuntimeReleasing();
     Super::Deinitialize();
 }
 
-void UOGNarrativeSessionSubsystem::HandleRuntimeReleasing() { CloseSubject(); }
+void UOGNarrativeSessionSubsystem::HandleRuntimeReleasing()
+{
+    ResetQuestLifecycle();
+    CloseSubject();
+}
 void UOGNarrativeSessionSubsystem::ClearReview()
 {
     ReviewedCommand = FOGNarrativeCommand();

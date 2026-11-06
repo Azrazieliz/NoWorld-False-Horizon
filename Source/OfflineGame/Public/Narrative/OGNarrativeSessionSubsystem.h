@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "Narrative/OGNarrativeService.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UI/OGUiViewModels.h"
@@ -67,6 +68,24 @@ private:
     FString ReviewedToken;
     FOGEntityId ReviewedRuler;
     bool bReviewedRequiresSubject = false;
+
+    FTSTicker::FDelegateHandle QuestLifecycleTicker;
+    FDelegateHandle QuestLifecycleForegroundHandle;
+    FOGEntityId QuestLifecycleRuler;
+    TArray<FOGNarrativeQuestDefinition> ClosingQuestDefinitions;
+    TSet<FName> QuestClosingEventTypes;
+    TMap<FName, TSet<int64>> PendingQuestClosingTicks;
+    int64 QuestLifecycleCatalogRevision = -1;
+    double QuestLifecycleRetryAfter = 0.0;
+    TAtomic<bool> bQuestLifecycleForegroundRequested{false};
+    bool bQuestLifecycleCatalogLoaded = false;
+    bool bQuestLifecycleNeedsCatchup = true;
+
+    void QueueQuestClosingEvents(const TArray<FOGWorldEvent>& Events);
+    void OnQuestLifecycleForeground();
+    void RequestQuestLifecycleCatchup();
+    bool TickQuestLifecycle(float DeltaSeconds);
+    void ResetQuestLifecycle();
     bool ResolveWorldSubject(const AActor& Subject, const AActor* Interactor,
         FOGNarrativeContext& Out, FString& Error) const;
     bool ResolveRuntime(UOGGameCoreSubsystem*& Core, IOGWorldStore*& Store,
