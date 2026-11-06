@@ -7,7 +7,10 @@ namespace OGDispatchAuthored
 bool Validate(const UOGGatheringDispatchDefinition& Definition,FString& Error);
 bool Prepare(IOGWorldStore& Store,const UOGGatheringDispatchDefinition& Definition,
     FOGGatheringDispatchQuote& Quote,FString& Error);
+bool CheckQualification(IOGWorldStore& Store,const UOGGatheringDispatchDefinition& Definition,
+    const TArray<FOGEntityId>& Participants,bool& Qualified,FString& Error);
 bool Evaluate(IOGWorldStore& Store,const FOGDispatchRecord& Order,const FOGDispatchResolutionContext& Policy,
-    const FOGEntityId& ReceiptId,int64 Tick,bool bOffline,bool bHoldingAccess,bool bParticipantAvailable,
+    const FOGEntityId& ReceiptId,int64 Tick,bool bOffline,bool bHoldingAccess,
+    const TArray<FOGEntityId>& UnavailableParticipants,
     FOGDispatchResolutionResult& Result,FString& Error);
 }

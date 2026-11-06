@@ -192,7 +192,8 @@ private:
     bool bGachaRatesExpanded = false;
     bool bGachaResultsExpanded = false;
     FOGEntityId SelectedTerritoryId;
-    FOGEntityId GatheringRulerId,GatheringTerritoryId,GatheringParticipantId,GatheringRequest;
+    FOGEntityId GatheringRulerId,GatheringTerritoryId,GatheringRequest;
+    TArray<FOGEntityId> GatheringParticipants;
     FOGGatheringDispatchQuote PendingGathering;
     FString GatheringFeedback;
     bool bGatheringOpen=false,bGatheringBusy=false,bGatheringRefresh=false;

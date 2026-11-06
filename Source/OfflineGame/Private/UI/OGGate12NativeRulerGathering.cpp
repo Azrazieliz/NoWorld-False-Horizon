@@ -32,14 +32,21 @@ FString CopyName(const UOGGate12RulerSessionSubsystem& Session,const FOGEntityId
                 const FString Name=Identity.DisplayNameKey.IsEmpty()?Identity.IdentityId.ToString():Identity.DisplayNameKey;
                 return Identity.Manifestations.Num()==1?Name:Name+FString::Printf(TEXT(" / copy %d"),I+1);
             }
-    return TEXT("Assigned character");
+    return TEXT("Assigned character / ")+Id.ToString();
+}
+
+FString PartyName(const UOGGate12RulerSessionSubsystem& Session,const TArray<FOGEntityId>& Participants)
+{
+    TArray<FString> Names;
+    for (const auto& Participant:Participants) Names.Add(CopyName(Session,Participant));
+    return FString::Join(Names,TEXT(", "));
 }
 }
 
 void UOGGate12NativeRulerWidget::ResetGathering()
 {
     bGatheringOpen=false; bGatheringRefresh=false;
-    GatheringRulerId=FOGEntityId(); GatheringTerritoryId=FOGEntityId(); GatheringParticipantId=FOGEntityId();
+    GatheringRulerId=FOGEntityId(); GatheringTerritoryId=FOGEntityId(); GatheringParticipants.Reset();
     GatheringRequest=FOGEntityId(); PendingGathering=FOGGatheringDispatchQuote(); GatheringFeedback.Reset();
 }
 
@@ -78,20 +85,20 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
             if (Order.Status!=EOGDispatchStatus::Active && ++Completed>8) continue;
             FString Name,Result;
             if (FOGGatheringDispatch::ReadSummary(Order,Name,Result))
-                AddMessage(Content,FString(DispatchTypeName(Order.Type))+TEXT("  /  ")+Name+TEXT("  /  ")+(Order.ParticipantEntityIds.Num()==1?
-                    CopyName(Session,Order.ParticipantEntityIds[0]):FString(TEXT("Party")))+TEXT("\n")+Result,17,GatheringText);
+                AddMessage(Content,FString(DispatchTypeName(Order.Type))+TEXT("  /  ")+Name+TEXT("  /  ")+
+                    PartyName(Session,Order.ParticipantEntityIds)+TEXT("\n")+Result,17,GatheringText);
         }
     }
     if (GatheringRequest.IsValid())
     {
         const auto* Definition=FOGGatheringDispatch::FindDefinition(PendingGathering.DefinitionId);
         FOGGatheringDispatchQuote Fresh;
-        if (Definition && GatheringParticipantId!=Session.SelectedManifestationId &&
-            Dispatch.Preview(*Definition,Session.BoundRulerId,Holding.TerritoryId,GatheringParticipantId,
+        if (Definition && !GatheringParticipants.Contains(Session.SelectedManifestationId) &&
+            Dispatch.PreviewParty(*Definition,Session.BoundRulerId,Holding.TerritoryId,GatheringParticipants,
                 Core->GetCanonicalWorldTick(),Fresh,Error) && Fresh.bCanStart && Fresh.Token==PendingGathering.Token)
         {
             AddMessage(Content,Fresh.Name,22,GatheringGold);
-            AddMessage(Content,CopyName(Session,Fresh.ParticipantId)+TEXT("  /  ")+
+            AddMessage(Content,PartyName(Session,Fresh.ParticipantIds)+TEXT("  /  ")+
                 DispatchTypeName(Fresh.Type),18,GatheringText);
             if (Fresh.Amount>0)
                 AddMessage(Content,Fresh.ResourceName+TEXT(" × ")+FText::AsNumber(Fresh.Amount).ToString(),18,GatheringText);
@@ -125,28 +132,44 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
     if (Assets.IsEmpty())
     { AddMessage(Content,TEXT("No dispatch orders are available from this holding."),16,GatheringMuted); return; }
 
-    AddMessage(Content,TEXT("ASSIGN AN OWNED CHARACTER"),20,GatheringGold);
+    AddMessage(Content,FString::Printf(TEXT("DISPATCH PARTY / %d SELECTED"),GatheringParticipants.Num()),20,GatheringGold);
+    for (const auto& Participant:GatheringParticipants)
+        AddAction(Content,TEXT("REMOVE / ")+CopyName(Session,Participant),
+            TEXT("gathering/participant/")+Participant.ToString());
+
+    TSet<FOGEntityId> Assigned;
+    if (!FOGGatheringDispatch::ReadAssignedParticipants(*Store,Assigned,Error))
+    {
+        AddMessage(Content,Error,16,GatheringMuted);
+        return;
+    }
     for (const auto& Identity:Session.OwnedRoster)
         for (const auto& Copy:Identity.Manifestations)
         {
-            if (Copy.bLocked || Copy.ManifestationId==Session.SelectedManifestationId) continue;
-            bool Assigned=false;
-            if (!FOGGatheringDispatch::IsAssigned(*Store,Session.BoundRulerId,Copy.ManifestationId,Assigned,Error) || Assigned) continue;
-            AddAction(Content,(Copy.ManifestationId==GatheringParticipantId?TEXT("SELECTED / "):TEXT(""))+
-                CopyName(Session,Copy.ManifestationId),TEXT("gathering/participant/")+Copy.ManifestationId.ToString());
+            if (Copy.bLocked || Copy.ManifestationId==Session.SelectedManifestationId ||
+                GatheringParticipants.Contains(Copy.ManifestationId) || Assigned.Contains(Copy.ManifestationId)) continue;
+            AddAction(Content,TEXT("ADD / ")+CopyName(Session,Copy.ManifestationId),
+                TEXT("gathering/participant/")+Copy.ManifestationId.ToString());
         }
-    if (!GatheringParticipantId.IsValid())
-    { AddMessage(Content,TEXT("Select an available owned copy other than the one you control."),16,GatheringMuted); return; }
+    if (GatheringParticipants.Contains(Session.SelectedManifestationId))
+    {
+        AddMessage(Content,TEXT("Remove the character you currently control from the party."),16,GatheringMuted);
+        return;
+    }
 
     bool bVisibleOrder=false;
     for (const auto* Asset:Assets)
     {
         const auto* Definition=CastChecked<UOGGatheringDispatchDefinition>(Asset);
         FOGGatheringDispatchQuote Quote;
-        if (!Dispatch.Preview(*Definition,Session.BoundRulerId,Holding.TerritoryId,GatheringParticipantId,
+        if (!Dispatch.PreviewParty(*Definition,Session.BoundRulerId,Holding.TerritoryId,GatheringParticipants,
             Core->GetCanonicalWorldTick(),Quote,Error) || !Quote.bVisible) continue;
         bVisibleOrder=true;
-        FString Label=FString(DispatchTypeName(Quote.Type))+TEXT(" / ")+Quote.Name;
+        const FString PartyLimit=Quote.MinimumPartySize==Quote.MaximumPartySize
+            ? FString::Printf(TEXT("%d"),Quote.MinimumPartySize)
+            : FString::Printf(TEXT("%d–%d"),Quote.MinimumPartySize,Quote.MaximumPartySize);
+        FString Label=FString(DispatchTypeName(Quote.Type))+TEXT(" / ")+Quote.Name+
+            TEXT(" / party size ")+PartyLimit;
         if (Quote.Amount>0)
             Label+=TEXT(" / ")+Quote.ResourceName+TEXT(" × ")+FText::AsNumber(Quote.Amount).ToString();
         if (Quote.bCanStart)
@@ -180,13 +203,13 @@ void UOGGate12NativeRulerWidget::HandleGatheringAction(const FString& Action,UOG
     if (Action.StartsWith(TEXT("gathering/confirm/")))
     {
         if (!GatheringRequest.IsValid() || Action!=TEXT("gathering/confirm/")+GatheringRequest.ToString() ||
-            PendingGathering.ParticipantId!=GatheringParticipantId ||
-            PendingGathering.ParticipantId==Session.SelectedManifestationId) return;
+            PendingGathering.ParticipantIds!=GatheringParticipants ||
+            GatheringParticipants.Contains(Session.SelectedManifestationId)) return;
         const auto Review=PendingGathering; const auto Request=GatheringRequest;
         GatheringRequest=FOGEntityId(); PendingGathering=FOGGatheringDispatchQuote();
         if (Dispatch.Start(Review,Request,*Clock,Error))
         {
-            GatheringParticipantId=FOGEntityId();
+            GatheringParticipants.Reset();
             GatheringFeedback=Error.IsEmpty()?TEXT("Party dispatched."):Error;
         }
         else GatheringFeedback=Error;
@@ -198,15 +221,30 @@ void UOGGate12NativeRulerWidget::HandleGatheringAction(const FString& Action,UOG
         if (Action.StartsWith(ParticipantPrefix))
         {
             FGuid Guid;
-            if (FGuid::Parse(Action.Mid(ParticipantPrefix.Len()),Guid) && FOGEntityId(Guid)!=Session.SelectedManifestationId)
-                GatheringParticipantId=FOGEntityId(Guid);
+            if (FGuid::Parse(Action.Mid(ParticipantPrefix.Len()),Guid) && Guid.IsValid())
+            {
+                const FOGEntityId Participant(Guid);
+                if (GatheringParticipants.RemoveSingle(Participant)==0 && Participant!=Session.SelectedManifestationId)
+                {
+                    const bool bOwnedSelectable=Session.OwnedRoster.ContainsByPredicate([&](const auto& Identity)
+                    {
+                        return Identity.Manifestations.ContainsByPredicate([&](const auto& Copy)
+                        { return Copy.ManifestationId==Participant && !Copy.bLocked; });
+                    });
+                    bool Assigned=false;
+                    if (bOwnedSelectable && FOGGatheringDispatch::IsAssigned(
+                        *Store,Session.BoundRulerId,Participant,Assigned,Error) && !Assigned)
+                        GatheringParticipants.Add(Participant);
+                    GatheringFeedback=Error;
+                }
+            }
         }
-        else if (Action.StartsWith(ReviewPrefix) && GatheringParticipantId!=Session.SelectedManifestationId)
+        else if (Action.StartsWith(ReviewPrefix) && !GatheringParticipants.Contains(Session.SelectedManifestationId))
         {
             const auto* Definition=FOGGatheringDispatch::FindDefinition(FOGContentId(Action.Mid(ReviewPrefix.Len())));
             FOGGatheringDispatchQuote Review;
             if (Definition && Definition->LocationId==Holding->RootLocationId &&
-                Dispatch.Preview(*Definition,Session.BoundRulerId,Holding->TerritoryId,GatheringParticipantId,
+                Dispatch.PreviewParty(*Definition,Session.BoundRulerId,Holding->TerritoryId,GatheringParticipants,
                     Core->GetCanonicalWorldTick(),Review,Error))
             {
                 if (Review.bCanStart) { PendingGathering=MoveTemp(Review); GatheringRequest=FOGEntityId::NewId(); }

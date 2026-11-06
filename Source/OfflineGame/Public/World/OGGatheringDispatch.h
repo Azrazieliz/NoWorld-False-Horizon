@@ -49,6 +49,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly) bool bRequireKnownTarget = false;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FOGContentId RequiredParticipantSkillId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName RequiredParticipantSkillState;
+    /** These limits count independently owned Manifestation IDs. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 MinimumPartySize = 1;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 MaximumPartySize = 1;
+    /** When a skill is required, at least this many available members must have it. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 MinimumQualifiedParticipants = 1;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TArray<FOGAuthoredDispatchObjective> Objectives;
     /** Explicit success effects. Support can transfer existing stock from the holding to the target. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly) bool bTransferHoldingStock = false;
@@ -66,6 +71,7 @@ struct OFFLINEGAME_API FOGGatheringDispatchQuote
 {
     FOGContentId DefinitionId,ResourceId;
     FOGEntityId RulerId,ParticipantId,TerritoryId,LocationId;
+    TArray<FOGEntityId> ParticipantIds;
     FString Name,ResourceName,Token,Reason;
     int64 Amount=0,Duration=0,Available=0;
     bool bCanStart=false;
@@ -77,6 +83,7 @@ struct OFFLINEGAME_API FOGGatheringDispatchQuote
     TArray<FOGDispatchObjectiveRecord> Objectives;
     TArray<FOGDispatchConstraintRecord> Constraints;
     int32 Risk=0,RiskTolerance=0;
+    int32 MinimumPartySize=1,MaximumPartySize=1;
 };
 
 class OFFLINEGAME_API FOGGatheringDispatch
@@ -85,12 +92,16 @@ public:
     explicit FOGGatheringDispatch(IOGWorldStore& InStore):Store(InStore) {}
     bool Preview(const UOGGatheringDispatchDefinition& Definition,const FOGEntityId& Ruler,
         const FOGEntityId& Territory,const FOGEntityId& Participant,int64 Tick,FOGGatheringDispatchQuote& Out,FString& Error) const;
+    bool PreviewParty(const UOGGatheringDispatchDefinition& Definition,const FOGEntityId& Ruler,
+        const FOGEntityId& Territory,const TArray<FOGEntityId>& Participants,int64 Tick,
+        FOGGatheringDispatchQuote& Out,FString& Error) const;
     bool Start(const FOGGatheringDispatchQuote& Quote,const FOGEntityId& Request,
         FOGCanonicalClockRuntime& Clock,FString& Error);
     bool ReadOrders(const FOGEntityId& Ruler,TArray<FOGDispatchRecord>& Out,FString& Error) const;
     static bool ReadSummary(const FOGDispatchRecord& Order,FString& Name,FString& Outcome);
     static const UOGGatheringDispatchDefinition* FindDefinition(const FOGContentId& Id);
     static bool AttachClock(IOGWorldStore& Store,FOGCanonicalClockRuntime& Clock,FString& Error);
+    static bool ReadAssignedParticipants(IOGWorldStore& Store,TSet<FOGEntityId>& Out,FString& Error);
     static bool IsAssigned(IOGWorldStore& Store,const FOGEntityId& Ruler,const FOGEntityId& Participant,
         bool& Assigned,FString& Error);
 private:
