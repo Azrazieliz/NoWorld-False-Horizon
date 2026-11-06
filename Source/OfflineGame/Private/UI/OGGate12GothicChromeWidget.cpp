@@ -49,7 +49,7 @@ int32 UOGGate12GothicChromeWidget::NativePaint(const FPaintArgs& Args,const FGeo
         Kind=Sigil!=INDEX_NONE?EOGNativeSurface::Navigation:H<W*.42f?EOGNativeSurface::Action:EOGNativeSurface::Hero;
     const bool Primary=Kind==EOGNativeSurface::PrimaryAction;
     const bool Action=Primary||Kind==EOGNativeSurface::Action;
-    const bool Navigation=Kind==EOGNativeSurface::Navigation;
+    const bool bNavigationSurface=Kind==EOGNativeSurface::Navigation;
     const float Breath=Driver&&!Driver->IsMotionReduced()? .96f+.04f*FMath::Sin(Driver->GetEffectPhase()):1.f;
     const auto SurfaceInk=FMath::Lerp(Palette.Surface,Metal,Pressed?.13f:Primary?.085f:Hover?.065f:.015f);
     auto Gradient=[&](FLinearColor Top,FLinearColor Bottom)
@@ -76,7 +76,7 @@ int32 UOGGate12GothicChromeWidget::NativePaint(const FPaintArgs& Args,const FGeo
     auto Rim=FMath::Lerp(Palette.Rim,Metal,Active?.72f:Primary?.5f:.12f); Rim.A=Active?.85f:.48f;
     auto Bright=Metal; Bright.A=(Active?.9f:Primary?.72f:.4f)*Breath;
     const float Cut=FMath::Min(9.f,H*.12f);
-    if (Navigation)
+    if (bNavigationSurface)
     {
         Line(8,1,W-8,1,FLinearColor(Palette.Rim.R,Palette.Rim.G,Palette.Rim.B,.28f));
         if (bSelected) { Line(W*.28f,2,W*.72f,2,Bright,2.f); Line(W*.38f,H-3,W*.62f,H-3,Bright,2.f); }
@@ -100,7 +100,7 @@ int32 UOGGate12GothicChromeWidget::NativePaint(const FPaintArgs& Args,const FGeo
         auto Focus=Metal; Focus.A=.8f;
         Line(5,6,5,H-6,Focus,2.f); Line(W-5,6,W-5,H-6,Focus,2.f);
     }
-    if (Navigation&&Sigil!=INDEX_NONE)
+    if (bNavigationSurface&&Sigil!=INDEX_NONE)
     {
         const float X=W*.5f,Y=H*.29f,R=FMath::Min(W*.12f,H*.15f);
         auto Icon=Active?Metal:FMath::Lerp(Palette.Muted,Metal,.12f); Icon.A=Active?1.f:.7f;

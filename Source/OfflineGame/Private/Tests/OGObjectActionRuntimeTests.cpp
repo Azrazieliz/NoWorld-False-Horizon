@@ -1,3 +1,4 @@
+#include "UObject/Package.h"
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Objects/OGObjectActionService.h"
@@ -28,7 +29,7 @@ struct FObjectActionFixture
     {
         IFileManager::Get().MakeDirectory(*Directory,true); Library=UOGDefinitionLibrary::Get(); if (!Library) return false;
         const FString Tag=FGuid::NewGuid().ToString(EGuidFormats::Digits);
-        auto* Package=CreatePackage(*(TEXT("/Game/NoWorld/Definitions/Automation/ObjectActions_")+Tag));
+        UPackage* Package=CreatePackage(*(TEXT("/Game/NoWorld/Definitions/Automation/ObjectActions_")+Tag));
         Material=NewObject<UOGObjectDefinition>(Package,TEXT("Material"),RF_Public|RF_Standalone);
         Product=NewObject<UOGObjectDefinition>(Package,TEXT("Product"),RF_Public|RF_Standalone);
         Material->DefinitionId=ObjectTestId(TEXT("material")); Product->DefinitionId=ObjectTestId(TEXT("product"));

@@ -9,6 +9,10 @@
 #include "Combat/OGTurnBattle.h"
 #include "UI/OGNativeBattleWidget.h"
 #include "Combat/OGCanonicalCombatActorBindingComponent.h"
+#include "Combat/OGNativeBattleCommands.h"
+#include "Combat/OGTurnContactActionComponent.h"
+#include "Animation/OGSharedMotionControllerComponent.h"
+#include "Characters/OGCharacterAppearanceComponent.h"
 #include "EngineUtils.h"
 #include "Engine/Canvas.h"
 #include "Engine/GameInstance.h"
@@ -65,13 +69,18 @@ bool AOGWorldPrototypeCharacter::SelectOwnedLuminousBattleTarget(
         return false;
     }
     const FOGCombatUnitState& Target = State.Units[UnitIndex];
-    if (!Source->CanAct() || !Target.CanAct() ||
-        !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Target.UnitEntityId))
+    // Revival may target a genuine defeated ally with no living actor.
+    // Never reinterpret a removed unit or an enemy corpse as a player focus.
+    // The canonical skill resolver still decides whether this precise
+    // ability can actually revive the selected participant.
+    const bool bDefeatedAlly=Target.Presence==EOGCombatPresence::Defeated &&
+        !Target.IsAlive() && Target.TeamIndex==Source->TeamIndex;
+    const bool bLivingBody=Target.CanAct() &&
+        UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+            GetWorld(),State.BattleId,Target.UnitEntityId)!=nullptr;
+    if (!Source->CanAct() || (!bLivingBody && !bDefeatedAlly))
     {
-        // Ally, self and enemy targets are all meaningful in the approved
-        // Base/Alter skills. Gate04's exact skill preflight, not this UI,
-        // determines allegiance, number, revival and target eligibility.
-        OutError = TEXT("Select a live canonical battle participant on the actual possessed character's turn.");
+        OutError = TEXT("Select a living field participant or a genuine defeated ally for an approved revival.");
         return false;
     }
     // Tap selects only a PRIMARY focus for primary-specific skill bonuses;
@@ -210,21 +219,16 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         { CompletedCombatBannerId=State.BattleId; CompletedCombatBannerExpires=Now+6.; }
         DrawNativeCombatImpacts(Scale);
         if(Now>CompletedCombatBannerExpires)return false;
-        const bool bOwnedSurvived=State.Units.ContainsByPredicate(
-            [Session](const FOGCombatUnitState& Unit)
-            { return Unit.UnitEntityId==Session->SelectedManifestationId && Unit.IsAlive(); });
-        const bool bEnemySurvived=State.Units.ContainsByPredicate(
-            [Session,&State](const FOGCombatUnitState& Unit)
-            {
-                const FOGCombatUnitState* Owned=State.Units.FindByPredicate(
-                    [Session](const FOGCombatUnitState& O)
-                    { return O.UnitEntityId==Session->SelectedManifestationId; });
-                return Owned && Unit.TeamIndex!=Owned->TeamIndex && Unit.IsAlive() &&
-                    Unit.Presence!=EOGCombatPresence::Removed;
-            });
-        const FString Outcome=bOwnedSurvived && !bEnemySurvived
-            ?TEXT("VICTORY") :!bOwnedSurvived && bEnemySurvived
-            ?TEXT("DEFEAT") :TEXT("ENCOUNTER RESOLVED");
+        // Outcome is already committed by the ONE canonical GameCore
+        // transaction. Do not guess from whether the currently possessed
+        // Manifestation survived: a Ruler can fight alone, be revived, or
+        // win with a different allied member still standing.
+        const auto& Settlement=Core->GetLastNativeBattleOutcome();
+        const bool bRecorded=Settlement.BattleId==State.BattleId &&
+            Settlement.CompletionEventId.IsValid();
+        const FString Outcome=bRecorded && Settlement.bHasPlayerTeam
+            ?(Settlement.bVictory ? TEXT("VICTORY") : TEXT("DEFEAT"))
+            :TEXT("ENCOUNTER RESOLVED");
         const float W=Canvas->ClipX,S=FMath::Clamp(Scale,.52f,1.3f);
         DrawGamePanel(FLinearColor(.02f,.018f,.028f,.86f),
             W*.22f,20.f*S,W*.56f,65.f*S);
@@ -240,11 +244,23 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
 
     const FOGCombatUnitState& Acting = State.Units[ActingIndex];
     const FOGCombatUnitState* Owned = State.Units.FindByPredicate(
-        [Session](const FOGCombatUnitState& U)
-        { return U.UnitEntityId == Session->SelectedManifestationId; });
-    if (!Owned || !MatchesActualOwnedLuminousBody(Character, *Session, *Owned)) return false;
+        [&Controlled](const FOGCombatUnitState& U)
+        { return U.UnitEntityId == Controlled; });
+    // ReadControlledCanonicalBattleUnit already proves the actual locally
+    // possessed Ruler's live actor/interaction/battle unit binding. Owned
+    // Manifestations retain their stricter original character/source checks.
+    const bool bActualRuler=Controlled==Session->BoundRulerId &&
+        !Session->SelectedManifestationId.IsValid();
+    if (!Owned || (!bActualRuler &&
+        !MatchesActualOwnedLuminousBody(Character, *Session, *Owned))) return false;
+    const auto* Contact =
+        Character->FindComponentByClass<UOGTurnContactActionComponent>();
+    const bool bWaitingForRealContact =
+        Contact && Contact->IsAwaitingAuthoredContact();
     const bool bOwnTurn =
-        Acting.UnitEntityId == Owned->UnitEntityId && Acting.CanAct();
+        (State.ExecutionMode == EOGCombatExecutionMode::World ||
+         Acting.UnitEntityId == Owned->UnitEntityId) &&
+        Owned->CanAct() && !bWaitingForRealContact;
 
     // Track REAL native visual actors separately from the executor roster.
     // World streaming may replace source actor instances: cache only weak refs.
@@ -289,6 +305,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
     DrawGameText(FString::Printf(
         TEXT("LIVE ENCOUNTER  |  ACTION VALUE %lld  |  %s"),
         static_cast<long long>(State.CurrentActionValue),
+        bWaitingForRealContact ? TEXT("ACTION IN PROGRESS") :
         bOwnTurn ? TEXT("YOUR TURN") : TEXT("OTHER COMBATANT'S TURN")),
         Edge+16.f*S,Edge+10.f*S,22.f*S,Pale,W*.64f);
     DrawGameText(FString::Printf(TEXT("OWN HP %s / %s"),
@@ -306,7 +323,10 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const FOGCombatUnitState& Unit = State.Units[I];
         // Never hide an eligible thirteenth (or later) unit from the field
         // just because an earlier prototype assumed two six-member teams.
-        if (Unit.Presence!=EOGCombatPresence::Active)
+        const bool bDefeatedAlly =
+            Unit.Presence==EOGCombatPresence::Defeated &&
+            !Unit.IsAlive() && Unit.TeamIndex==Owned->TeamIndex;
+        if (Unit.Presence!=EOGCombatPresence::Active && !bDefeatedAlly)
             continue;
         const float X = Edge+(ParticipantOrdinal%6)*(CardW+5.f*S);
         const float CardTop = Top+(ParticipantOrdinal/6)*(CardH+7.f*S);
@@ -323,7 +343,8 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         const TWeakObjectPtr<AActor>* Presence=
             NativeBattleWorldActors.Find(Unit.UnitEntityId);
         AActor* ActualBody=Presence ? Presence->Get() : nullptr;
-        DrawGameText(!Unit.IsAlive() ? TEXT("DEFEATED") :
+        DrawGameText(bDefeatedAlly ? TEXT("DEFEATED / REVIVAL") :
+            !Unit.IsAlive() ? TEXT("DEFEATED") :
             !ActualBody ? TEXT("BODY NOT YET BOUND") :
             bSelected ? TEXT("TARGET SELECTED") : TEXT("SELECT TARGET"),
             X+7.f*S,CardTop+35.f*S,12.f*S,Unit.IsAlive()?Border:Dim,CardW-14.f*S);
@@ -350,7 +371,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
                         true,163);
             }
         }
-        if (bOwnTurn && Unit.CanAct())
+        if (bOwnTurn && (Unit.CanAct() || bDefeatedAlly))
         {
             AddFoundationHitBox(FVector2D(X,CardTop),FVector2D(CardW,CardH),
                 FName(*FString::Printf(TEXT("OG.Battle.Target.%d"),I)),
@@ -359,83 +380,72 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
         ++ParticipantOrdinal;
     }
 
-    // Buttons map to the real approved ActiveSkill slots, not diagnostic
-    // Basic/Skill1/Skill2 placeholders. Ultimate selection is always explicit.
-    const int32 ActiveCount = Owned->SkillSet.ActiveSkills.Num();
-    const FString Form = Owned->SkillSet.CurrentForm.ToString();
-    const bool bBase = Form == TEXT("character:luminous_valentine.version_ln_base");
-    const bool bAlter = Form == TEXT("character:luminous_valentine.version_alter_v1");
-    const bool bAwakened = Form == TEXT("character:luminous_valentine.version_awakened_v4");
-    const bool bBerserker = Form == TEXT("character:luminous_valentine.version_berserker_v4");
-    const bool bGrand = Form == TEXT("character:luminous_valentine.version_grand_v4");
-    // Base and Alter have two authored branches on an established executor.
-    // Awakened and Berserker have ONE ultimate each, Grand has THREE distinct
-    // ultimates. Never label all non-Base characters with Alter's two branches.
-    TArray<FName> UltimateControls;
-    TArray<FString> UltimateLabels;
-    if (bBase)
+    // One command source drives both the native UMG widget and the fallback
+    // canvas. Never display form-shaped controls without a real installed
+    // executor, and never translate a button into a different form's skill.
+    FOGNativeBattleCommandSet NativeCommands;
+    FString CommandError;
+    if (!Character->ReadOwnedLuminousBattleCommands(NativeCommands,CommandError))
     {
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Day")));
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Night")));
-        UltimateLabels = { TEXT("DAY"), TEXT("NIGHT") };
+        DrawGameText(CommandError.IsEmpty()
+            ? TEXT("No executable native combat kit is installed.") : CommandError,
+            Edge+6.f*S,H-85.f*S,17.f*S,Accent,W-2.f*Edge);
+        return true;
     }
-    else if (bAlter)
+    // The fallback canvas and native UMG must agree that an authored turn
+    // contact can actually play on this possessed character's genuine rig.
+    const UOGCharacterAppearanceComponent* Appearance =
+        Character->FindComponentByClass<UOGCharacterAppearanceComponent>();
+    const UOGSharedMotionControllerComponent* SourceMotion =
+        Appearance ? Appearance->GetMotionController() : nullptr;
+    if (!SourceMotion)
+        SourceMotion=Character->FindComponentByClass<UOGSharedMotionControllerComponent>();
+    const bool bTurnMode = State.ExecutionMode==EOGCombatExecutionMode::Turn;
+    const int32 CommandCount=NativeCommands.Commands.Num();
+    if (CommandCount>0)
     {
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Ruin")));
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.Harvest")));
-        UltimateLabels = { TEXT("RUIN"), TEXT("HOLLOW CROWN") };
-    }
-    else if (bAwakened)
-    {
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.AzureDawn")));
-        UltimateLabels = { TEXT("AZURE DAWN") };
-    }
-    else if (bBerserker)
-    {
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.CrownBreaks")));
-        UltimateLabels = { TEXT("CROWN BREAKS") };
-    }
-    else if (bGrand)
-    {
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.GrandGenesis")));
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.GrandRuin")));
-        UltimateControls.Add(FName(TEXT("OG.Battle.Ultimate.GrandVerdict")));
-        UltimateLabels = { TEXT("GENESIS"), TEXT("RUIN"), TEXT("VERDICT") };
-    }
-    const int32 ButtonCount = ActiveCount + UltimateControls.Num();
-    const float ButtonGap = 8.f*S;
-    const float ButtonW = FMath::Min(140.f*S,
-        (W-2.f*Edge-FMath::Max(0,ButtonCount-1)*ButtonGap)/FMath::Max(1,ButtonCount));
-    const float ButtonH = 54.f*S;
-    const float Bottom = H-ButtonH-Edge;
-    DrawGameText(TEXT("AoE hits ALL eligible field allies/enemies automatically. Tap to set primary."),
-        Edge+6.f*S,Bottom-58.f*S,14.f*S,Accent,W*.85f);
-    for (int32 Slot=0; Slot<ActiveCount; ++Slot)
-    {
-        const FString Label = FString::Printf(TEXT("ACTIVE %d"),Slot+1);
-        DrawGameButton(Label,
-            FName(*FString::Printf(TEXT("OG.Battle.A%d"),Slot+1)),
-            Edge+Slot*(ButtonW+ButtonGap),Bottom,ButtonW,ButtonH,
-            Slot==0,bOwnTurn && Owned->SkillSet.ActiveSkills[Slot].IsValid(),158);
-    }
-    for (int32 U=0; U<UltimateControls.Num(); ++U)
-    {
-        // The shared kit supports multiple distinct Ultimates. Grand's
-        // controls still require its exact registered v4 executors before
-        // this legacy canvas fallback may activate them.
-        // No generic/Alter ultimate is a permissible gameplay substitute.
-        const bool bExecutable = !bGrand && bOwnTurn &&
-            Owned->SkillSet.UltimateSkill.IsValid();
-        DrawGameButton(UltimateLabels[U], UltimateControls[U],
-            Edge+(ActiveCount+U)*(ButtonW+ButtonGap),
-            Bottom,ButtonW,ButtonH,false,bExecutable,158);
+        // Multiple rows retain touch targets on narrow Android displays.
+        const int32 Columns=FMath::Min(4,CommandCount);
+        const int32 Rows=FMath::DivideAndRoundUp(CommandCount,Columns);
+        const float Gap=7.f*S,ButtonH=48.f*S;
+        const float ButtonW=FMath::Max(1.f,
+            (W-2.f*Edge-(Columns-1)*Gap)/Columns);
+        const float CommandGridTop=H-Edge-Rows*(ButtonH+Gap);
+        // Use the reserved guide line for canonical errors. Drawing status
+        // across the bottom row otherwise masks live Android touch buttons.
+        DrawGameText(!FoundationStatusMessage.IsEmpty() ? FoundationStatusMessage :
+            bWaitingForRealContact
+                ? TEXT("Original character action is in motion; contact settles actual results.")
+                : TEXT("Select a real participant. Area effects expand by source rules."),
+            Edge+6.f*S,CommandGridTop-27.f*S,13.f*S,Accent,W-2.f*Edge);
+        for (int32 Index=0;Index<CommandCount;++Index)
+        {
+            const FOGNativeBattleCommand& Command=NativeCommands.Commands[Index];
+            FString ReadyError;
+            bool bExecutable=bOwnTurn && Command.SkillId.IsValid() &&
+                Battle->HasNativeActionExecutor(*Owned,Command.SkillId,ReadyError);
+            if (bExecutable && bTurnMode)
+            {
+                FOGResolvedCombatAction Preview;
+                Command.BuildAction(*Owned,{},Preview);
+                const FName ExactMotion=FOGNativeBattleCommands::MotionForResolvedAction(
+                    *Owned,Preview,Battle->ResolveNativeAbilityMotion(*Owned,Command.SkillId));
+                bExecutable=SourceMotion && !ExactMotion.IsNone() &&
+                    SourceMotion->CanResolveTurnContactAction(ExactMotion);
+            }
+            DrawGameButton(Command.Label,
+                FName(*FString::Printf(TEXT("OG.Battle.Command.%s"),*Command.Id.ToString())),
+                Edge+(Index%Columns)*(ButtonW+Gap),
+                CommandGridTop+(Index/Columns)*(ButtonH+Gap),
+                ButtonW,ButtonH,Command.ActiveSlot==0,bExecutable,158);
+        }
     }
 
-    // Error messages are actual canonical preflight errors, not invented
-    // animation/gameplay consequences.
-    if (!FoundationStatusMessage.IsEmpty())
+    // No command grid exists only when the exact source kit has no actions.
+    // Keep its truthful preflight error readable without covering live buttons.
+    if (CommandCount==0 && !FoundationStatusMessage.IsEmpty())
         DrawGameText(FoundationStatusMessage,Edge+5.f*S,
-            Bottom-35.f*S,18.f*S,Accent,W-2.f*Edge);
+            H-Edge-35.f*S,18.f*S,Accent,W-2.f*Edge);
     return true;
 }
 

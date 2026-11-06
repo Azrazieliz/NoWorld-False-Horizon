@@ -11,6 +11,7 @@ class UWidget;
 class ULightComponent;
 class UMaterialInstanceDynamic;
 class UOGGameCoreSubsystem;
+struct FOGPlayerProfileSettings;
 struct FOGResolvedCombatAction;
 struct FOGTurnBattleState;
 
@@ -117,6 +118,9 @@ private:
         TWeakObjectPtr<UWidget> Widget;
         FLinearColor Base,Last;
         ERole Role=ERole::Original;
+        float BaseFontSize = 0.f;
+        float LastFontSize = 0.f;
+        void Restore() const;
     };
     struct FMaterialBinding
     {
@@ -138,6 +142,7 @@ private:
     FOGReactiveUiContext Context;
     FOGReactiveUiPalette Current,Target;
     FOGContentId ThemeId;
+    FName ReadabilityProfile;
     UPROPERTY(Transient) TObjectPtr<UOGReactiveUiThemeDefinition> ActiveTheme;
     bool bThemeDirty=true,bStyleDirty=true,bHasAuthoredPalette=false;
     FOGReactiveUiPalette AuthoredPalette;
@@ -153,6 +158,7 @@ private:
     void HandleDefinitions(int64);
     void HandleActorSpawned(AActor*);
     void DiscoverLight();
+    void ApplyPlayerProfile(const FOGPlayerProfileSettings& Profile);
     void Apply();
     void Track(UUserWidget*,UWidget*);
     FLinearColor Resolve(const FBinding&) const;

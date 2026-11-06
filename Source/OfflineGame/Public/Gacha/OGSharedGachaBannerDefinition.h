@@ -19,7 +19,9 @@ public:
 class OFFLINEGAME_API FOGInstalledGachaBannerLibrary
 {
 public:
-    static bool Collect(int64 WorldTick,TArray<FOGGachaBannerDefinition>& Out,FString& Error);
+    /** Next future activation/expiry from the same installed schedules, or -1 if none. */
+    static bool Collect(int64 WorldTick, TArray<FOGGachaBannerDefinition>& Out, FString& Error,
+        int64* OutNextBoundaryWorldTick = nullptr);
     static bool FilterSchedules(const TArray<FOGInstalledScheduledGachaBanner>& Schedules,int64 WorldTick,
         TArray<FOGGachaBannerDefinition>& Out,FString& Error);
     static FString DisplayName(const FOGContentId& BannerId);

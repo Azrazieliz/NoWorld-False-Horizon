@@ -1,0 +1,24 @@
+# HISTORICAL PC-ONLY SOURCE — DO NOT EXECUTE
+# Retrieved from protected native workspace on 2026-11-01.
+# Original: Scripts/production/patch_verified_zen_relocation.py
+# Original PC file SHA-256: 00335e962d67b1b5e4decc7dd33cc8dc4c21ff9f6d488975679692765f1d13d8
+# WARNING: one-time in-place source migration. Preserve as original evidence only.
+# The generalized 5-star factory supersedes ad hoc reruns when applicable.
+
+from pathlib import Path
+p=Path(r"D:\UnrealProjects\Gate12_WholeCharacter_Build_20261031\Scripts\production\relocate_unreal_zen_cache_lossless_20261031.ps1")
+s=p.read_text("utf8")
+lines=s.splitlines()
+out=[]
+found=0
+for line in lines:
+    if line.startswith("if((Test-Path $dest) -or (Test-Path $backup))"):
+        out.append("if(Test-Path $backup){throw 'Zen backup already exists; refusing source mutation'}")
+        found+=1
+    elif "bytes_verified=[long]" in line:
+        out.append(line.replace("($rows|Measure-Object -Property size -Sum)","($sourceFiles|Measure-Object -Property Length -Sum)"))
+        found+=1
+    else:out.append(line)
+assert found==2,found
+p.write_text("\n".join(out)+"\n","utf8")
+print("ZEN_CACHE_BYTE_VERIFICATION_SCRIPT_PATCHED",p)

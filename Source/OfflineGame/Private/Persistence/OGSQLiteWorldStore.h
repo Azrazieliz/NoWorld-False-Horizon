@@ -207,6 +207,7 @@ public:
 
     bool ValidateRealityTimeDirectorMigration0011(FString& OutError) const;
 
+    virtual bool ListDispatchIds(const FOGEntityId&,bool,TArray<FOGEntityId>&,FString&) const override;
     virtual bool UpsertDispatch(const FOGDispatchRecord&, int64, FString&) override;
     virtual bool TryReadDispatch(const FOGEntityId&, bool&, FOGDispatchRecord&, FString&) const override;
 
@@ -221,6 +222,7 @@ public:
 
     virtual bool UpsertFaction(const FOGFactionRecord&, int64, FString&) override;
     virtual bool TryReadFaction(const FOGEntityId&, bool&, FOGFactionRecord&, FString&) const override;
+    virtual bool ListFactionIdsLedBy(const FOGEntityId&,TArray<FOGEntityId>&,FString&) const override;
     virtual bool UpsertFactionLink(const FOGFactionLinkRecord&, FString&) override;
     virtual bool TryReadFactionLink(const FOGEntityId&, const FOGEntityId&, EOGFactionLinkType, bool&, FOGFactionLinkRecord&, FString&) const override;
 
@@ -305,6 +307,8 @@ public:
     virtual bool UpsertContainerContent(const FOGContainerContentRecord&, FString&) override;
     virtual bool ListContainerContents(
         const FOGEntityId&, TArray<FOGContainerContentRecord>&, FString&) const override;
+    virtual bool ListContainerPlacementsForItem(const FOGEntityId&,
+        TArray<FOGContainerContentRecord>&,FString&) const override;
     virtual bool DeleteContainerContentsForItem(
         const FOGEntityId&, FString&) override;
     virtual bool UpsertItemOwnerAffinity(

@@ -24,18 +24,7 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
     // Never permit a caller to create a made-up world entity or remove
     // another content namespace by guessing a UUID. Source IDs are literal
     // Gate02 authored population records and stable across all seeds.
-    bool bKnown=false;
-    for(const auto& Tile:R1TilePlacements)
-    {
-        for(const FR1Placement& P:Tile.Value)
-            if(P.PersistentId==Gate02StableScatterId)
-            {
-                bKnown=true;
-                break;
-            }
-        if(bKnown)break;
-    }
-    if(!bKnown)
+    if(!R1SourceTypeById.Contains(Gate02StableScatterId))
     {
         OutError=TEXT("Scatter record is absent from original Gate02 R1 authored population.");
         return false;
@@ -142,17 +131,11 @@ bool AOGStartingRegionGenerator::TryResolveGate02SourceScatterHit(
             return false;
         }
         const FString& Stable=Records[Hit.Item];
-        // A stale HISM index cannot refer to a newly invented record:
-        // verify the exact original source population, not a random GUID.
-        bool bOriginal=false;
-        for(const auto& Tile:R1TilePlacements)
-        {
-            for(const FR1Placement& Placement:Tile.Value)
-                if(Placement.PersistentId==Stable && Placement.TypeIndex==Type)
-                {bOriginal=true;break;}
-            if(bOriginal)break;
-        }
-        if(!bOriginal)
+        // Source IDs are indexed only after the original 10,454-record
+        // manifest passes duplicate/prototype integrity checking.
+        // Never accept a stale HISM index after a different tile was streamed.
+        const int32* SourceType=R1SourceTypeById.Find(Stable);
+        if(!SourceType || *SourceType!=Type)
         {
             OutError=TEXT("Streamed hit identity is not present in original Gate02 ecology.");
             return false;

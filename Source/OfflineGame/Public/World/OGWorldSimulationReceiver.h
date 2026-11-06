@@ -101,6 +101,8 @@ public:
     { if (!bActive) { bOriginalHidden=Hidden; bOriginalCollision=Collision; bCapturedBodyFlags=true; } }
     void HoldSuppressedOnRelease() { bSuppressOnRelease=true; }
     bool IsBodyActive() const { return bActive; }
+    /** Read canonical presence only for the currently resident, rehydrated NPC body. */
+    bool TryReadResidentNpcPresence(FOGWorldPresenceRecord& Out, FString& Error) const;
     bool IsControlledPresence() const { return Prepared && Prepared->bControlledPresence; }
     /** Save before changing possession or staging a body. This never restores,
      * activates an AI schedule, or adopts a newer canonical read fence. */

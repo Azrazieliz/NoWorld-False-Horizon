@@ -3,6 +3,7 @@
 // and independently streamed 128m ecology tiles; NO fake NPCs or settlements.
 #include "World/OGStartingRegionPresentation.h"
 #include "ProceduralMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
@@ -114,13 +115,34 @@ bool AOGStartingRegionGenerator::LoadR1MetricData()
 
 void AOGStartingRegionGenerator::BuildR1SourceTerrain()
 {
+    R1PendingTerrainSections.Reset();
     if (!bR1DatasetLoaded || !Terrain) return;
-    // 64 independently collidable 400x400m terrain mesh sections. No huge
-    // singular static mesh, and exactly the source's 6.25m grid and relief.
-    int32 SectionIndex=0;
-    for (int32 TileY=0;TileY<8;++TileY)
-    for (int32 TileX=0;TileX<8;++TileX)
+    // Original central clearing gets physical source collision before play.
+    for(int32 Y=3;Y<=4;++Y)
+    for(int32 X=3;X<=4;++X)
+        BuildR1SourceTerrainTile(Y*8+X);
+    // Preserve exact section identity, original height/mask and UV/normal data.
+    for(int32 Section=0;Section<64;++Section)
     {
+        const int32 X=Section%8,Y=Section/8;
+        if(X>=3 && X<=4 && Y>=3 && Y<=4) continue;
+        R1PendingTerrainSections.Add(Section);
+    }
+    R1PendingTerrainSections.Sort([](int32 A,int32 B)
+    {
+        const int32 AX=A%8,AY=A/8,BX=B%8,BY=B/8;
+        const int32 AD=FMath::Square(2*AX-7)+FMath::Square(2*AY-7);
+        const int32 BD=FMath::Square(2*BX-7)+FMath::Square(2*BY-7);
+        return AD==BD ? A<B : AD<BD;
+    });
+    UE_LOG(LogTemp,Display,
+        TEXT("GATE02_R1 source terrain: central original collision ready; 60 authentic sections queued."));
+}
+
+void AOGStartingRegionGenerator::BuildR1SourceTerrainTile(int32 SectionIndex)
+{
+    if (!bR1DatasetLoaded || !Terrain || SectionIndex<0 || SectionIndex>=64) return;
+    const int32 TileX=SectionIndex%8,TileY=SectionIndex/8;
         TArray<FVector> V,N;
         TArray<FVector2D> UV;
         TArray<FLinearColor> C;
@@ -161,18 +183,17 @@ void AOGStartingRegionGenerator::BuildR1SourceTerrain()
         // Applying material slot 0 only left 63/64 source terrain sections
         // rendering with Unreal's default grey fallback, hiding Gate02's
         // actual authored biome colors across almost the entire landscape.
-        const int32 CurrentSection=SectionIndex++;
+        const int32 CurrentSection=SectionIndex;
         Terrain->CreateMeshSection_LinearColor(CurrentSection,
             V,Indices,N,UV,C,Tan,true);
         if(TerrainMaterial)
-            Terrain->SetMaterial(CurrentSection,TerrainMaterial);
-    }
-    UE_LOG(LogTemp,Display,TEXT("GATE02_R1 source terrain: 513 grid, 64 collision sections, 3200m"));
+            Terrain->SetMaterial(CurrentSection,TerrainMaterial.Get());
 }
 
 void AOGStartingRegionGenerator::LoadR1SourceScatter()
 {
     R1TilePlacements.Reset();
+    R1SourceTypeById.Reset();
     FString Source;
     if (!FFileHelper::LoadFileToString(Source,
         *R1SourcePath(TEXT("baked_seed1412_scatter.jsonl"))))
@@ -192,8 +213,12 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         P.PersistentId=J->GetStringField(TEXT("persistent_id"));
         P.TypeIndex=SourceType(J->GetStringField(TEXT("prototype")));
         const TArray<TSharedPtr<FJsonValue>>& XYZ=J->GetArrayField(TEXT("position_m"));
-        if(P.PersistentId.IsEmpty() || P.TypeIndex==INDEX_NONE || XYZ.Num()!=3)
-        { bR1DatasetLoaded=false;return; }
+        if(P.PersistentId.IsEmpty() || P.TypeIndex==INDEX_NONE || XYZ.Num()!=3 ||
+           R1SourceTypeById.Contains(P.PersistentId))
+        {
+            UE_LOG(LogTemp,Error,TEXT("Gate02 R1 original scatter contains an absent/duplicate stable ID or invalid source prototype."));
+            bR1DatasetLoaded=false;return;
+        }
         P.PositionCm=FVector(
             XYZ[0]->AsNumber()*100.,XYZ[1]->AsNumber()*100.,
             XYZ[2]->AsNumber()*100.);
@@ -204,9 +229,11 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         P.TileIndex=FIntPoint(
             FMath::Clamp(FMath::FloorToInt((P.PositionCm.X+R1HalfExtentCm)/R1EcologyTileCm),0,24),
             FMath::Clamp(FMath::FloorToInt((P.PositionCm.Y+R1HalfExtentCm)/R1EcologyTileCm),0,24));
+        R1SourceTypeById.Add(P.PersistentId,P.TypeIndex);
         R1TilePlacements.FindOrAdd(P.TileIndex).Add(MoveTemp(P));
     }
-    if(Rows.Num()!=10454 || R1TilePlacements.Num()>R1TileGrid*R1TileGrid)
+    if(Rows.Num()!=10454 || R1SourceTypeById.Num()!=Rows.Num() ||
+       R1TilePlacements.Num()>R1TileGrid*R1TileGrid)
     {
         UE_LOG(LogTemp,Error,TEXT("Gate02 R1 scatter signature count wrong: %d"),Rows.Num());
         bR1DatasetLoaded=false;
@@ -216,6 +243,40 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
     // player coordinates, tick or global game RNG.
     UE_LOG(LogTemp,Display,TEXT("GATE02_R1 ecology: %d authored stable placements, %d tiles"),
         Rows.Num(),R1TilePlacements.Num());
+}
+
+bool AOGStartingRegionGenerator::IsR1SourceReadyForEntry() const
+{
+    return bGate02R1RegionSource && bR1DatasetLoaded &&
+        Terrain && Terrain->IsRegistered() && Terrain->GetNumSections() > 0;
+}
+
+bool AOGStartingRegionGenerator::TraceR1SourceGround(
+    const FVector& TraceStart, const FVector& TraceEnd, FHitResult& OutHit) const
+{
+    if (!bGate02R1RegionSource || !bR1DatasetLoaded || !Terrain || !Terrain->IsRegistered())
+    {
+        return false;
+    }
+    const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(OGSourceTerrainGroundSnap), false);
+    return Terrain->LineTraceComponent(OutHit, TraceStart, TraceEnd, QueryParams);
+}
+
+void AOGStartingRegionGenerator::ClearR1EcologyProjection()
+{
+    LastR1StreamTile = FIntPoint(MIN_int32, MIN_int32);
+    R1VisibleScatterSourceIdByType.Reset();
+    UHierarchicalInstancedStaticMeshComponent* Components[] =
+    {
+        RockInstances, TrunkInstances, CanopyInstances, AccentInstances
+    };
+    for (UHierarchicalInstancedStaticMeshComponent* Component : Components)
+    {
+        if (Component)
+        {
+            Component->ClearInstances();
+        }
+    }
 }
 
 void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
@@ -228,6 +289,36 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
     const FIntPoint Center(
         FMath::Clamp(FMath::FloorToInt((Local.X+R1HalfExtentCm)/R1EcologyTileCm),0,24),
         FMath::Clamp(FMath::FloorToInt((Local.Y+R1HalfExtentCm)/R1EcologyTileCm),0,24));
+    auto* Game = GetGameInstance();
+    auto* Core = Game ? Game->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    if (Core != R1EcologyCore.Get())
+    {
+        if (auto* PreviousCore = R1EcologyCore.Get())
+        {
+            PreviousCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
+        }
+        R1EcologyCore = Core;
+        if (Core)
+        {
+            Core->OnCanonicalRuntimeReleasing.AddUObject(this, &AOGStartingRegionGenerator::ClearR1EcologyProjection);
+        }
+        ClearR1EcologyProjection();
+    }
+
+    const IOGWorldStore* Store = Core ? Core->GetWorldStore() : nullptr;
+    if (GetWorld()->IsGameWorld() && (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen()))
+    {
+        return;
+    }
+    if (Store && Store->IsWriteTransactionActive())
+    {
+        if (bForce)
+        {
+            LastR1StreamTile = FIntPoint(MIN_int32, MIN_int32);
+        }
+        return;
+    }
+
     if (!bForce && Center==LastR1StreamTile) return;
     LastR1StreamTile=Center;
     UHierarchicalInstancedStaticMeshComponent* Targets[]={
@@ -240,10 +331,6 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
         Targets[T]->ClearInstances();
         Targets[T]->SetStaticMesh(R1ActualModule(T));
     }
-    IOGWorldStore* Store=nullptr;
-    if(UGameInstance* GI=GetGameInstance())
-        if(UOGGameCoreSubsystem* Core=GI->GetSubsystem<UOGGameCoreSubsystem>())
-            Store=Core->GetWorldStore();
     int32 Count=0;
     for(int32 Y=FMath::Max(0,Center.Y-2);Y<=FMath::Min(24,Center.Y+2);++Y)
     for(int32 X=FMath::Max(0,Center.X-2);X<=FMath::Min(24,Center.X+2);++X)
@@ -258,24 +345,25 @@ void AOGStartingRegionGenerator::RefreshR1StreamedTiles(bool bForce)
             {
                 const FOGEntityId PersistentId=R1PersistentStateId(P.PersistentId);
                 bool bFound=false;FName Kind;FString State;int64 Revision=0;FString Error;
-                if(PersistentId.IsValid() &&
-                    Store->TryReadEntity(PersistentId,bFound,Kind,State,Revision,Error) &&
-                    bFound && Kind==FName(TEXT("gate02_r1_ecology_v1")))
+                if (!PersistentId.IsValid() ||
+                    !Store->TryReadEntity(PersistentId, bFound, Kind, State, Revision, Error))
                 {
-                    // Persistence content is JSON, not a whitespace-dependent
-                    // substring: {"removed": true} and {"removed":true}
-                    // must have identical state after offline reload.
-                    // A corrupt persisted ecology record must not quietly
-                    // respawn a tree or rock whose removal may be canonical.
-                    bRemoved=true;
+                    // An unavailable read does not establish that a previously
+                    // removed source resource exists in the current save.
+                    continue;
+                }
+                if (bFound)
+                {
+                    bRemoved = true;
                     TSharedPtr<FJsonObject> PersistentState;
-                    bool bCanonicalRemoved=false;
-                    if(FJsonSerializer::Deserialize(
-                           TJsonReaderFactory<>::Create(State),PersistentState) &&
-                       PersistentState.IsValid() &&
-                       PersistentState->TryGetBoolField(
-                           TEXT("removed"),bCanonicalRemoved))
-                        bRemoved=bCanonicalRemoved;
+                    bool bCanonicalRemoved = false;
+                    if (Kind == TEXT("gate02_r1_ecology_v1") &&
+                        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(State), PersistentState) &&
+                        PersistentState.IsValid() &&
+                        PersistentState->TryGetBoolField(TEXT("removed"), bCanonicalRemoved))
+                    {
+                        bRemoved = bCanonicalRemoved;
+                    }
                 }
             }
             if(bRemoved)continue;
@@ -302,7 +390,16 @@ void AOGStartingRegionGenerator::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     if(bGate02R1RegionSource)
     {
+        // Four original source mesh/collision sections per frame instead
+        // of all 64 synchronously; source IDs and authored terrain are unchanged.
+        for(int32 Budget=0;Budget<4 && !R1PendingTerrainSections.IsEmpty();++Budget)
+        {
+            const int32 Index=R1PendingTerrainSections[0];
+            R1PendingTerrainSections.RemoveAt(0,1,EAllowShrinking::No);
+            BuildR1SourceTerrainTile(Index);
+        }
         RefreshR1StreamedTiles(false);
         UpdateR1MarketStreaming();
+        UpdateR1LandmarkStreaming();
     }
 }

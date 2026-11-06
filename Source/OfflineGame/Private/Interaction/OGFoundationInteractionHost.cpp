@@ -23,6 +23,8 @@
 #include "Animation/Skeleton.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Misc/CoreDelegates.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -32,6 +34,17 @@
 namespace
 {
     const FName InteractionClip(TEXT("FoundationInteraction.Optional"));
+    // Match the World's explicit -FoundationFixtures switch. Shipping builds
+    // never expose authored-content substitutes, even if diagnostic combat
+    // happens to be active during an actual encounter.
+    bool HasExplicitFoundationFixtures()
+    {
+#if UE_BUILD_SHIPPING
+        return false;
+#else
+        return FParse::Param(FCommandLine::Get(), TEXT("FoundationFixtures"));
+#endif
+    }
     bool IsEntry(FName Id)
     {
         return Id == TEXT("world") || Id == TEXT("ruler") || Id == TEXT("roster") ||
@@ -140,7 +153,7 @@ AActor* UOGFoundationInteractionHost::FindBoundActor(const FOGEntityId& Entity) 
 
 void UOGFoundationInteractionHost::BuildDiagnosticSelection(bool bAll)
 {
-    if (!Combat.IsValid() || !Combat->IsActive() || !BoundStore) return;
+    if (!HasExplicitFoundationFixtures() || !Combat.IsValid() || !Combat->IsActive() || !BoundStore) return;
     TArray<FOGInteractionParticipant> Candidates;
     FOGEntityId Controlled; FOGContentId Identity; FOGCharacterManifestationRecord Copy;
     bool bCopy = false; FString Error;
@@ -173,7 +186,7 @@ void UOGFoundationInteractionHost::BuildDiagnosticSelection(bool bAll)
         SelectionIndex = (SelectionIndex + 1) % Candidates.Num();
     }
     else SelectedParticipants.Reset();
-    Status = FString::Printf(TEXT("Selected / "), SelectedParticipants.Num());
+    Status = FString::Printf(TEXT("Selected %d"), SelectedParticipants.Num());
 }
 
 void UOGFoundationInteractionHost::RefreshProductionSelection()
@@ -247,7 +260,7 @@ void UOGFoundationInteractionHost::RefreshProductionSelection()
     }
     if (!AvailableDefinitions.Contains(SelectedDefinition))
         SelectedDefinition = AvailableDefinitions.IsEmpty() ? nullptr : AvailableDefinitions[0];
-    if (!SelectedDefinition && !(Combat.IsValid() && Combat->IsActive()))
+    if (!SelectedDefinition && !(HasExplicitFoundationFixtures() && Combat.IsValid() && Combat->IsActive()))
         Status = TEXT("No original interaction definitions installed. Real participant bindings are available; no substitute actions created.");
 }
 
@@ -287,7 +300,8 @@ bool UOGFoundationInteractionHost::BeginContext(FName Context,
                 { Status = Error.IsEmpty() ? TEXT("Original adult source metadata is unavailable for this participant.") : Error; return false; }
             }
     }
-    else if (Combat.IsValid() && Combat->IsActive()) Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
+    else if (HasExplicitFoundationFixtures() && Combat.IsValid() && Combat->IsActive())
+        Graph = FOGSystemicInteractionRuntime::MakeNeutralDiagnosticGraph();
     else { Status = TEXT("Install the approved original action definition before starting interaction."); return false; }
     return EnterAuthored(Entry, Graph);
 }
@@ -404,7 +418,8 @@ TArray<FOGFoundationInteractionRow> UOGFoundationInteractionHost::GetRows() cons
         }
         Rows.Add({TEXT("refresh"), TEXT("Refresh nearby character bindings"), bReady});
         Rows.Add({TEXT("clear_participants"), TEXT("Clear participant selection"), !SelectedParticipants.IsEmpty()});
-        const bool bContent = SelectedDefinition || (Combat.IsValid() && Combat->IsActive());
+        const bool bContent = SelectedDefinition ||
+            (HasExplicitFoundationFixtures() && Combat.IsValid() && Combat->IsActive());
         Rows.Add({TEXT("world"), TEXT("Begin World interaction"), bReady && bContent});
         Rows.Add({TEXT("ruler"), TEXT("Begin Ruler interaction"), bReady && bContent});
         Rows.Add({TEXT("roster"), TEXT("Begin character interaction"), bReady && bContent});
@@ -412,7 +427,7 @@ TArray<FOGFoundationInteractionRow> UOGFoundationInteractionHost::GetRows() cons
         const bool bEvent = GetAcceptedContextEvent(false).IsValid();
         Rows.Add({TEXT("event"), TEXT("Event interaction"), bContent && bEvent});
         Rows.Add({TEXT("post_combat"), TEXT("Post-combat interaction"), bContent && GetAcceptedContextEvent(true).IsValid()});
-        if (Combat.IsValid() && Combat->IsActive())
+        if (HasExplicitFoundationFixtures() && Combat.IsValid() && Combat->IsActive())
         {
             Rows.Add({TEXT("select_next"), TEXT("Diagnostic: next canonical participant"), true});
             Rows.Add({TEXT("select_all"), TEXT("Diagnostic: available group"), true});

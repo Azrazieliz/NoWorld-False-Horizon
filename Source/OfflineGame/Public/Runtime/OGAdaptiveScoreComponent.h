@@ -6,6 +6,10 @@
 #include "Runtime/OGSemanticAudioRuntime.h"
 #include "OGAdaptiveScoreComponent.generated.h"
 
+class UOGGameCoreSubsystem;
+struct FOGEntityId;
+struct FOGTurnBattleState;
+
 USTRUCT(BlueprintType)
 struct OFFLINEGAME_API FOGAdaptiveScoreRule
 {
@@ -43,7 +47,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Audio|Score")
     TSoftObjectPtr<UOGAdaptiveScoreDefinition> Score;
     /** Named state from actual biome/faction/weather/cinematic presentation providers.
-     * Reserved mode.* and battle.* are always read from the native core. */
+     * Native inputs include mode.*, battle.*, environment.water.swimming and environment.water.diving.
+     * Authored float inputs OGSwimming, OGDiving, OGTurnBattle and OGWorldBattle mirror the
+     * corresponding state as 0 or 1 on the existing semantic audio runtime. */
     UFUNCTION(BlueprintCallable, Category="Audio|Score")
     bool SetContextTags(FName Provider, const TArray<FName>& Tags);
     UFUNCTION(BlueprintCallable, Category="Audio|Score")
@@ -61,6 +67,7 @@ protected:
 private:
     UPROPERTY(Transient) TObjectPtr<UOGAdaptiveScoreDefinition> ActiveScore;
     UPROPERTY(Transient) TObjectPtr<UOGSemanticAudioRuntime> Audio;
+    TWeakObjectPtr<UOGGameCoreSubsystem> ObservedCore;
     TMap<FName, TArray<FName>> ProviderTags;
     TMap<FName, FName> EventsByRule;
     TSet<FName> FadingEvents;
@@ -68,6 +75,7 @@ private:
     FName PendingRule;
     double CurrentStartedAt = 0.0;
     bool bAttemptedLoad = false;
+    void HandleBattleCommitted(const FOGTurnBattleState& State, const FOGEntityId& Receipt);
     void HandleEventPlayed(FName Event, UAudioComponent* Component);
     void CommitTransition(FName RuleId);
     void ClearOwnedScore();

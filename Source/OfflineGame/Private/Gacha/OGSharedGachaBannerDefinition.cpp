@@ -9,8 +9,10 @@ bool UOGSharedGachaBannerDefinition::ValidateDefinition_Implementation(FString& 
     { Error=TEXT("Shared banner requires an exact key, display name and valid canonical World schedule."); return false; }
     return FOGGachaService::ValidateBanner(Schedule.Banner,Error);
 }
-bool FOGInstalledGachaBannerLibrary::Collect(int64 Tick,TArray<FOGGachaBannerDefinition>& Out,FString& Error)
+bool FOGInstalledGachaBannerLibrary::Collect(int64 Tick, TArray<FOGGachaBannerDefinition>& Out,
+    FString& Error, int64* OutNextBoundaryWorldTick)
 {
+    if (OutNextBoundaryWorldTick) *OutNextBoundaryWorldTick = -1;
     Out.Reset(); Error.Reset();
     if (Tick<0) { Error=TEXT("Banner discovery requires actual canonical World time."); return false; }
     TArray<FOGInstalledScheduledGachaBanner> Schedules;
@@ -26,7 +28,24 @@ bool FOGInstalledGachaBannerLibrary::Collect(int64 Tick,TArray<FOGGachaBannerDef
     if (const auto* Legacy=LoadObject<UOGApprovedGachaBannerCatalog>(nullptr,
         TEXT("/Game/NoWorld/Gacha/DA_NoWorld_ApprovedBanners.DA_NoWorld_ApprovedBanners")))
         Schedules.Append(Legacy->ActiveSchedules);
-    return FilterSchedules(Schedules,Tick,Out,Error);
+    if (!FilterSchedules(Schedules, Tick, Out, Error))
+    {
+        return false;
+    }
+    if (OutNextBoundaryWorldTick)
+    {
+        for (const auto& Schedule : Schedules)
+        {
+            if (!Schedule.bAcceptedInstalledAndActivated) continue;
+            const int64 Boundary = Tick < Schedule.BeginsAtWorldTick
+                ? Schedule.BeginsAtWorldTick : Schedule.EndsBeforeWorldTick;
+            if (Boundary > Tick && (*OutNextBoundaryWorldTick < 0 || Boundary < *OutNextBoundaryWorldTick))
+            {
+                *OutNextBoundaryWorldTick = Boundary;
+            }
+        }
+    }
+    return true;
 }
 bool FOGInstalledGachaBannerLibrary::FilterSchedules(const TArray<FOGInstalledScheduledGachaBanner>& Schedules,
     int64 Tick,TArray<FOGGachaBannerDefinition>& Out,FString& Error)

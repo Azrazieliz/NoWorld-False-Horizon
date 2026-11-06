@@ -12,6 +12,8 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/OverlapResult.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -164,8 +166,16 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     {
         if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         { FName Start,End; if (!TracePart(Step,Start,End,Error)) return false; }
-        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
-        { Error=TEXT("The original projectile mesh is unavailable."); return false; }
+        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
+        {
+            if (!Step.ProjectileMesh.LoadSynchronous())
+            { Error=TEXT("The original projectile mesh is unavailable."); return false; }
+            if (!Step.StartSocket.IsNone())
+            {
+                FName Start,End;
+                if (!TracePart(Step,Start,End,Error)) return false;
+            }
+        }
     }
     const FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Request.SkillId);
     if (!Semantic.IsNone())
@@ -221,8 +231,10 @@ bool UOGWorldAbilityExecutionComponent::IsAcceptedBodyCurrent() const
             Parts[Index].Get()!=Part || !Accepted.Mesh.IsValid() ||
             Part->GetSkeletalMeshAsset()!=Accepted.Mesh.Get()) return false;
     }
-    // Natural finish permits later cosmetic playback, never a replacement controller or physical rig.
-    return bSourceMotionFinished || SourceMotion->GetActiveCombatReceipt()==ActiveCast;
+    // Natural finish permits later cosmetic playback on the same physical rig.
+    return bSourceMotionFinished ||
+        (SourceMotion->GetActiveCombatReceipt()==ActiveCast &&
+         (Specification.MotionSemantic.IsNone() || SourceMotion->CurrentAction==Specification.MotionSemantic));
 }
 void UOGWorldAbilityExecutionComponent::ClearSourceMotionTracking()
 {
@@ -258,11 +270,14 @@ bool UOGWorldAbilityExecutionComponent::TrackAcceptedMotion(FString& Error)
 {
     ClearSourceMotionTracking();
     auto* Motion=WorldMotion(GetOwner());
-    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast) return CaptureSourceRig(*Motion,Error);
+    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast &&
+        (Specification.MotionSemantic.IsNone() || Motion->CurrentAction==Specification.MotionSemantic))
+        return CaptureSourceRig(*Motion,Error);
     const auto* Battle=Core.IsValid()?Core->GetOwnedLuminousTurnBattle():nullptr;
     const auto* Unit=Battle?Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Root.SourceUnitId;}):nullptr;
-    if (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone())
-    { Error=TEXT("Accepted World action has no matching source-motion receipt on its actual body."); return false; }
+    if (!Specification.MotionSemantic.IsNone() ||
+        (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone()))
+    { Error=TEXT("Accepted World action has no matching source motion and receipt on its actual body."); return false; }
     return true; // Motionless source staging remains valid.
 }
 void UOGWorldAbilityExecutionComponent::HandleSourceMotionFinished(FName,FName)
@@ -293,8 +308,16 @@ bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCas
     {
         if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         { FName A,B; if (!TracePart(Step,A,B,Error)) return false; }
-        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
-        { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
+        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
+        {
+            if (!Step.ProjectileMesh.LoadSynchronous())
+            { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
+            if (!Step.StartSocket.IsNone())
+            {
+                FName SocketStart,SocketEnd;
+                if (!TracePart(Step,SocketStart,SocketEnd,Error)) return false;
+            }
+        }
     }
     TSet<int32> PhysicalSteps;
     for (const auto& Projectile:Saved.Projectiles)
@@ -391,12 +414,35 @@ void UOGWorldAbilityExecutionComponent::QueryContacts(const FOGWorldAbilityStep&
         {
             FVector Center=Origin;
             if (!Root.TargetUnitIds.IsEmpty())
-                if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Root.TargetUnitIds[0]))
-                {
-                    if (FVector::DistSquared(Origin,Target->GetActorLocation())>FMath::Square(Step.RangeCentimeters)) return;
-                    Center=Target->GetActorLocation();
-                }
-            GetWorld()->SweepMultiByChannel(Hits,Center,Center,FQuat::Identity,Step.TraceChannel,FCollisionShape::MakeSphere(Step.RadiusCentimeters),Query);
+            {
+                // Never retarget a source-authored cast to arbitrary nearby
+                // actors when the original selected target streamed away.
+                auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                    GetWorld(),BattleId,Root.TargetUnitIds[0]);
+                if (!Target ||
+                    FVector::DistSquared(Origin,Target->GetActorLocation())>
+                        FMath::Square(Step.RangeCentimeters))
+                    return;
+                Center=Target->GetActorLocation();
+            }
+            // AoE is a genuine stationary overlap of the actual native
+            // collision shapes. A zero-length sweep can miss initial
+            // overlaps on several Chaos collision configurations.
+            TArray<FOverlapResult> Overlaps;
+            GetWorld()->OverlapMultiByChannel(
+                Overlaps,Center,FQuat::Identity,Step.TraceChannel,
+                FCollisionShape::MakeSphere(Step.RadiusCentimeters),Query);
+            for (const FOverlapResult& Contact:Overlaps)
+            {
+                AActor* Actor=Contact.GetActor();
+                const FOGEntityId Id=BodyId(Actor,BattleId);
+                if (!Id.IsValid())continue;
+                if (Step.bRequireLineOfSight &&
+                    !VisibleBetween(GetWorld(),GetOwner(),Actor,Origin,
+                                    Actor->GetActorLocation(),Step.VisibilityChannel))
+                    continue;
+                Out.AddUnique(Id);
+            }
         }
         else if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         {
@@ -469,13 +515,29 @@ void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tic
         if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
         {
             if (SpawnedProjectiles.Contains(Index)) continue;
+            // Source-authored projectile socket is authoritative whenever
+            // declared; spawning at the pawn origin could immediately hit
+            // the ground or pass through the character's real geometry.
+            FVector LaunchPosition=GetOwner()->GetActorLocation();
+            if (!Step.StartSocket.IsNone())
+            {
+                FName Start,End; FString SocketError;
+                if (USceneComponent* Part=TracePart(Step,Start,End,SocketError))
+                    LaunchPosition=Part->GetSocketLocation(Start);
+                else
+                {
+                    Status=SocketError;
+                    CommitContacts(Index,{},Error);
+                    continue;
+                }
+            }
             FVector Direction=GetOwner()->GetActorForwardVector();
             if (!Root.TargetUnitIds.IsEmpty())
                 if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Root.TargetUnitIds[0]))
-                    Direction=(Target->GetActorLocation()-GetOwner()->GetActorLocation()).GetSafeNormal();
+                    Direction=(Target->GetActorLocation()-LaunchPosition).GetSafeNormal();
             FActorSpawnParameters Params; Params.Owner=GetOwner(); Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
             auto* Projectile=GetWorld()->SpawnActor<AOGNativeWorldProjectile>(AOGNativeWorldProjectile::StaticClass(),
-                GetOwner()->GetActorLocation(),Direction.Rotation(),Params);
+                LaunchPosition,Direction.Rotation(),Params);
             if (!Projectile || !Projectile->InitializeAcceptedStep(this,ActiveCast,Index,Step,Direction,Error))
             { if (Projectile) Projectile->Destroy(); Status=Error; CommitContacts(Index,{},Error); }
             else

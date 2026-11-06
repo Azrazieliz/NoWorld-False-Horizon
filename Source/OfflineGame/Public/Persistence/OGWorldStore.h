@@ -197,6 +197,8 @@ public:
     virtual bool TryReadOfflineSimulationState(
         const FOGEntityId&, bool&, FOGOfflineSimulationStateRecord&, FString&) const = 0;
 
+    virtual bool ListDispatchIds(const FOGEntityId&,bool,TArray<FOGEntityId>& Out,FString& Error) const
+    { Out.Reset(); Error=TEXT("This World store cannot list dispatches."); return false; }
     virtual bool UpsertDispatch(const FOGDispatchRecord&, int64, FString&) = 0;
     virtual bool TryReadDispatch(const FOGEntityId&, bool&, FOGDispatchRecord&, FString&) const = 0;
 
@@ -211,6 +213,8 @@ public:
 
     virtual bool UpsertFaction(const FOGFactionRecord&, int64, FString&) = 0;
     virtual bool TryReadFaction(const FOGEntityId&, bool&, FOGFactionRecord&, FString&) const = 0;
+    virtual bool ListFactionIdsLedBy(const FOGEntityId&,TArray<FOGEntityId>& Out,FString& Error) const
+    { Out.Reset(); Error=TEXT("This World store cannot list factions by leader."); return false; }
     virtual bool UpsertFactionLink(const FOGFactionLinkRecord&, FString&) = 0;
     virtual bool TryReadFactionLink(const FOGEntityId&, const FOGEntityId&, EOGFactionLinkType, bool&, FOGFactionLinkRecord&, FString&) const = 0;
 
@@ -292,6 +296,8 @@ public:
     virtual bool UpsertContainerContent(const FOGContainerContentRecord&, FString&) = 0;
     virtual bool ListContainerContents(
         const FOGEntityId&, TArray<FOGContainerContentRecord>&, FString&) const = 0;
+    virtual bool ListContainerPlacementsForItem(const FOGEntityId&,TArray<FOGContainerContentRecord>& Out,FString& Error) const
+    { Out.Reset(); Error=TEXT("This World store cannot read item locations."); return false; }
     virtual bool DeleteContainerContentsForItem(
         const FOGEntityId&, FString&) = 0;
     virtual bool UpsertItemOwnerAffinity(

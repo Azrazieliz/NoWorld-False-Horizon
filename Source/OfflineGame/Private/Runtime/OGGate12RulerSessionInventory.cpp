@@ -8,6 +8,7 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Objects/OGObjectActionService.h"
+#include "World/OGInventoryStorageService.h"
 #include "Content/OGDefinitionLibrary.h"
 #include "Characters/OGCharacterAppearanceComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
@@ -87,7 +88,9 @@ bool ObjectActionTargets(IOGWorldStore& Store, const FOGObjectActionPreview& Rev
     for (const auto& M : Copies)
     {
         if (M.OwningRulerId != Review.Context.RulerId || M.LifecycleState != TEXT("active")) continue;
-        bool Affected = M.ManifestationId == Selected || M.ManifestationId == Review.SubjectBefore.OwnerEntityId ||
+        bool Affected = M.ManifestationId == Selected || M.ManifestationId == Review.Context.HealthRecipientId ||
+            M.ManifestationId == Review.Context.PracticingManifestationId ||
+            M.ManifestationId == Review.SubjectBefore.OwnerEntityId ||
             Review.Inputs.ContainsByPredicate([&](const auto& I) { return I.Item.OwnerEntityId == M.ManifestationId; });
         TArray<FOGEquipmentBindingRecord> Bindings;
         if (!Store.ListEquipmentBindings(M.ManifestationId, Bindings, Error)) return false;
@@ -274,6 +277,34 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedEquipment(
     return true;
 }
 
+bool UOGGate12RulerSessionSubsystem::ReadOwnedStorage(const FOGEntityId& Item,
+    TArray<FOGInventoryStorageMove>& Out,FString& Error)
+{
+    UOGGameCoreSubsystem* Core=nullptr; IOGWorldStore* Store=nullptr;
+    return ResolveStore(Core,Store,Error) && bRulerValidated &&
+        FOGInventoryStorageService(*Store).ReadDestinations(BoundRulerId,Item,Out,Error);
+}
+
+bool UOGGate12RulerSessionSubsystem::ReviewOwnedStorage(const FOGEntityId& Item,
+    const FOGEntityId& Destination,FOGInventoryStorageMove& Out,FString& Error)
+{
+    UOGGameCoreSubsystem* Core=nullptr; IOGWorldStore* Store=nullptr;
+    return ResolveStore(Core,Store,Error) && bRulerValidated &&
+        FOGInventoryStorageService(*Store).Review(BoundRulerId,Item,Destination,Out,Error);
+}
+
+bool UOGGate12RulerSessionSubsystem::ConfirmOwnedStorage(const FOGInventoryStorageMove& Reviewed,
+    const FOGEntityId& Request,FString& Error)
+{
+    if (bInventoryCommandInFlight)
+    { Error=TEXT("An inventory confirmation is already in progress."); return false; }
+    TGuardValue<bool> InFlight(bInventoryCommandInFlight,true);
+    UOGGameCoreSubsystem* Core=nullptr; IOGWorldStore* Store=nullptr;
+    if (!ResolveStore(Core,Store,Error) || !bRulerValidated || Reviewed.RulerId!=BoundRulerId)
+    { if (Error.IsEmpty()) Error=TEXT("The active Ruler changed. Review the storage move again."); return false; }
+    return FOGInventoryStorageService(*Store).Move(Reviewed,Request,Core->GetCanonicalWorldTick(),Error);
+}
+
 bool UOGGate12RulerSessionSubsystem::ReadOwnedObjectActions(const FOGEntityId& SelectedItem,
     const FOGEntityId& Counterparty,TArray<FOGObjectActionPreview>& Out,FString& Error)
 {
@@ -298,7 +329,8 @@ bool UOGGate12RulerSessionSubsystem::ReadOwnedObjectActions(const FOGEntityId& S
         if (!Counterparty.IsValid() && Definition->Kind==EOGObjectActionKind::Use && (!HasSelected ||
             !Definition->Inputs.ContainsByPredicate([&](const auto& Input)
             { return Input.From==EOGObjectActionParty::Ruler && Input.Disposition==EOGObjectInputDisposition::Consume && Input.ObjectId==Selected.DefinitionId; }))) continue;
-        if (!Counterparty.IsValid() && Definition->Kind==EOGObjectActionKind::Repair && (!HasSelected || Selected.DefinitionId!=Definition->SubjectObjectId)) continue;
+        if (!Counterparty.IsValid() && (Definition->Kind==EOGObjectActionKind::Repair || Definition->Kind==EOGObjectActionKind::Enhance) &&
+            (!HasSelected || Selected.DefinitionId!=Definition->SubjectObjectId)) continue;
         FOGObjectActionPreview Review;
         if (!ReviewOwnedObjectAction(Definition->DefinitionId,SelectedItem,Counterparty,Review,Error)) return false;
         if (Definition->UsesCounterparty() && Review.OfferStateJson.IsEmpty()) continue;
@@ -317,6 +349,10 @@ bool UOGGate12RulerSessionSubsystem::ReviewOwnedObjectAction(const FOGContentId&
     const auto* Definition=Library?Cast<UOGObjectActionDefinition>(Library->Resolve(TEXT("object_action"),ActionId)):nullptr;
     if (!Definition) { Error=TEXT("This object action is unavailable."); return false; }
     FOGObjectActionContext Context; Context.RulerId=BoundRulerId; Context.CounterpartyId=Counterparty; Context.SelectedItemId=SelectedItem;
+    if (Definition->Practice.Gain>0)
+        Context.PracticingManifestationId=SelectedManifestationId;
+    if (Definition->RestoreHealthBps>0)
+        Context.HealthRecipientId=SelectedManifestationId.IsValid()?SelectedManifestationId:BoundRulerId;
     if (!FOGObjectActionService(*Store).Preview(*Definition,Context,Core->GetCanonicalWorldTick(),Out,Error)) return false;
     TArray<FOGCharacterManifestationRecord> Targets;
     if (!ObjectActionTargets(*Store, Out, SelectedManifestationId, Targets, Error)) return false;
@@ -343,6 +379,11 @@ bool UOGGate12RulerSessionSubsystem::ConfirmOwnedObjectAction(const FOGObjectAct
     FOGObjectActionPreview Actual=Reviewed;
     if (!HasReceipt)
     {
+        const auto Recipient=SelectedManifestationId.IsValid()?SelectedManifestationId:BoundRulerId;
+        if (Definition->Practice.Gain>0 && Reviewed.Context.PracticingManifestationId!=SelectedManifestationId)
+        { Error=TEXT("The practicing character changed. Review the action again."); return false; }
+        if (Definition->RestoreHealthBps>0 && Reviewed.Context.HealthRecipientId!=Recipient)
+        { Error=TEXT("The selected recipient changed. Review the consumable again."); return false; }
         if (!FOGObjectActionService(*Store).Preview(*Definition,Reviewed.Context,Core->GetCanonicalWorldTick(),Actual,Error)) return false;
         if (!Actual.bCanApply || Actual.ConfirmationToken!=Reviewed.ConfirmationToken)
         { Error=TEXT("The action changed. Review the current objects and balances again."); return false; }

@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "OGNativeTurnAgentComponent.generated.h"
 
+class IOGWorldStore;
 class UOGGameCoreSubsystem;
 class UOGCanonicalCombatActorBindingComponent;
 class UOGNativeCombatAbility;
@@ -58,6 +59,8 @@ public:
 
     bool Validate(FString& Error) const;
     bool MatchesSource(const FOGContentId& Identity,const FOGContentId& Version) const;
+    bool ReadCanonicalActorState(IOGWorldStore& Store,const FOGCombatUnitState& Unit,
+        const FOGEntityId& LocalRuler,bool bAllowOwnedCompanion,FName& Phase,FString& Error) const;
     /** Pure selection. Caller verifies the canonical NPC and native physical body separately. */
     bool BuildDecision(const FOGTurnBattleState& State, const FOGEntityId& SourceId,
         FName CanonicalPhase, FOGResolvedCombatAction& Out, FName& OutRule, FString& Error,

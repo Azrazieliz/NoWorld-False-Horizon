@@ -4,10 +4,11 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
 
-bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString& Token,FString& Error)
+bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString& Token,FString& Error,
+    const FOGContentId& BatchTicketId)
 {
     Error.Reset();
-    if (bReviewedGachaDrawInFlight || Token.IsEmpty() || (Count!=1&&Count!=10) || !bHasActiveGachaPresentation)
+    if (bReviewedGachaDrawInFlight || Token.IsEmpty() || ((Count!=1&&Count!=10) && !BatchTicketId.IsValid()) || !bHasActiveGachaPresentation)
     { Error=TEXT("Review an available draw before confirming; another command may already be committing."); return false; }
     TGuardValue<bool> Guard(bReviewedGachaDrawInFlight,true);
     auto* Game=GetGameInstance();
@@ -15,8 +16,8 @@ bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString
     auto* Session=Game?Game->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
     auto* Store=Core?Core->GetWorldStore():nullptr;
     if (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen() ||
-        !Session || !Session->IsBoundToStoredRuler() || !Session->bRealGachaAccessUnlocked)
-    { Error=TEXT("Acquisition requires the actual unlocked local Ruler and canonical World."); return false; }
+        !Session || !Session->IsBoundToStoredRuler())
+    { Error=TEXT("Acquisition requires the local Ruler and canonical World."); return false; }
     const auto BannerId=ActiveGachaBanner.BannerId;
     if (!SelectInstalledGachaBanner(BannerId,Error)) return false; // Revalidates actual current playable pool and schedule.
     const int64 Tick=Core->GetCanonicalWorldTick();
@@ -24,7 +25,7 @@ bool AOGWorldPresentationHud::ExecuteReviewedGachaDraw(int32 Count,const FString
     { Error=TEXT("The canonical acquisition lifetime changed."); return false; }
     TArray<FOGGachaPullResult> Results;
     if (!FOGGachaService(*Store).PullBatchReviewed(ActiveGachaBanner,Session->BoundRulerId,
-        Tick,GachaCommandSeed,Count,Token,Results,Error)) return false;
+        Tick,GachaCommandSeed,Count,Token,Results,Error,BatchTicketId)) return false;
     LastGachaResults=MoveTemp(Results);
     for (const auto& Result:LastGachaResults)
         GachaCommandSeed=static_cast<int64>(static_cast<uint64>(GachaCommandSeed)+

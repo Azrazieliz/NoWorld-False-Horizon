@@ -1,5 +1,7 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "World/OGWorldSimulationReceiver.h"
+#include "World/OGGatheringDispatch.h"
+#include "World/OGStartingRegionPresentation.h"
 
 #include "Combat/OGNativeCombatPassive.h"
 #include "Combat/OGCombatVitalityService.h"
@@ -28,6 +30,7 @@
 #include "HAL/PlatformTime.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "Misc/DateTime.h"
 #include "Misc/App.h"
 #include "Misc/CoreDelegates.h"
@@ -37,6 +40,7 @@
 #include "Persistence/OGSQLiteWorldStore.h"
 #include "Persistence/OGSnapshotService.h"
 #include "Runtime/OGAndroidMediaVolumeBridge.h"
+#include "Runtime/OGAndroidBackupDocumentBridge.h"
 #include "Persistence/OGWorldBootstrap.h"
 
 void UOGGameCoreSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -235,6 +239,11 @@ bool UOGGameCoreSubsystem::InitializeCanonicalClock(FString& OutError)
         }
     }
     StrategicRuntime->RegisterClockResolvers(*CanonicalClock);
+    if (!FOGGatheringDispatch::AttachClock(*WorldStore,*CanonicalClock,OutError))
+    {
+        ReleaseCanonicalRuntime();
+        return false;
+    }
     if (const UOGPresentationModeSubsystem* Modes = GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>())
     {
         CanonicalClock->SetMode(Modes->GetMode() == EOGPresentationMode::Ruler
@@ -436,6 +445,67 @@ bool UOGGameCoreSubsystem::TickPerformanceTelemetry(
 }
 
 
+bool UOGGameCoreSubsystem::CheckpointPlayerWorldState(FString& OutError)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return true;
+    }
+
+    // Only the locally possessed body owns the shared Ruler exploration
+    // journal. Flush it before SQLite snapshots or the app goes to sleep.
+    APlayerController* Player = World->GetFirstPlayerController();
+    if (Player && Player->IsLocalController())
+    {
+        if (auto* Character = Cast<AOGWorldPrototypeCharacter>(Player->GetPawn()))
+        {
+            if (!Character->FlushR1ExplorationBeforePossession(OutError))
+            {
+                return false;
+            }
+        }
+    }
+
+    if (auto* Bodies = World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
+    {
+        return Bodies->CheckpointControlledBodies(OutError);
+    }
+    return true;
+}
+
+void UOGGameCoreSubsystem::QueueAutomaticExternalBackup()
+{
+#if PLATFORM_ANDROID
+    auto* Session = GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+    if (!Session || !Session->IsBoundToStoredRuler() || !WorldStore || !WorldStore->IsOpen() ||
+        WorldStore->IsWriteTransactionActive() ||
+        !FOGAndroidBackupDocumentBridge::ShouldQueueAutomaticBackup())
+    {
+        return;
+    }
+
+    const FString Directory = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("OfflineGame/AutoRecoveryStaging"));
+    IFileManager& Files = IFileManager::Get();
+    if (!Files.MakeDirectory(*Directory, true) && !Files.DirectoryExists(*Directory))
+    {
+        UE_LOG(LogOfflineGame, Warning, TEXT("Cannot prepare an automatic external recovery snapshot."));
+        return;
+    }
+    const FString Name = FString::Printf(TEXT("NoWorld_Auto_%s_%s.db"),
+        *FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%SZ")),
+        *FGuid::NewGuid().ToString(EGuidFormats::Digits));
+    const FString Snapshot = FPaths::Combine(Directory, Name);
+    FString Error;
+    if (!WorldStore->BackupTo(Snapshot, Error) ||
+        !FOGAndroidBackupDocumentBridge::QueueAutomaticBackup(Snapshot, Name, Error))
+    {
+        Files.Delete(*Snapshot, false, true, true);
+        UE_LOG(LogOfflineGame, Warning, TEXT("Automatic external backup could not start: %s"), *Error);
+    }
+#endif
+}
+
 void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
     const TCHAR* BoundaryName)
 {
@@ -457,6 +527,12 @@ void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
             BoundaryName ? BoundaryName : TEXT("unknown"),*Error);
         return;
     }
+    if (!CheckpointPlayerWorldState(Error))
+    {
+        UE_LOG(LogOfflineGame, Error, TEXT("Player World state checkpoint failed at lifecycle boundary %s: %s"),
+            BoundaryName ? BoundaryName : TEXT("unknown"), *Error);
+        return;
+    }
     if (!WorldStore->Checkpoint(Error))
     {
         UE_LOG(
@@ -467,6 +543,8 @@ void UOGGameCoreSubsystem::CheckpointForLifecycleBoundary(
             *Error);
         return;
     }
+
+    QueueAutomaticExternalBackup();
 
     UE_LOG(
         LogOfflineGame,
@@ -505,6 +583,12 @@ void UOGGameCoreSubsystem::VerifyCoreAfterResume(
         Log,
         TEXT("Authoritative game core resumed without reinitialization at lifecycle boundary %s."),
         BoundaryName ? BoundaryName : TEXT("unknown"));
+#if PLATFORM_ANDROID
+    if (bWasBackgrounded && FOGAndroidBackupDocumentBridge::ShouldQueueAutomaticBackup())
+    {
+        CheckpointForLifecycleBoundary(TEXT("external_recovery_resume"));
+    }
+#endif
 }
 
 void UOGGameCoreSubsystem::HandleApplicationWillDeactivate()
@@ -570,9 +654,7 @@ bool UOGGameCoreSubsystem::CreateManualRecoverySnapshot(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
-    if (auto* World=GetWorld())
-        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
-            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
+    if (!CheckpointPlayerWorldState(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
@@ -612,9 +694,7 @@ bool UOGGameCoreSubsystem::ExportCanonicalWorldBackup(
         return false;
     }
     if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
-    if (auto* World=GetWorld())
-        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
-            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
+    if (!CheckpointPlayerWorldState(OutError)) return false;
 
     FString CheckpointError;
     if (!WorldStore->Checkpoint(CheckpointError))
@@ -651,15 +731,14 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
     OutPreservedWorldPath.Reset();
     OutError.Reset();
 
-    if (!WorldStore || !WorldStore->IsOpen())
+    const bool bReadableLiveWorld = bCoreReady && WorldStore && WorldStore->IsOpen();
+    if (bReadableLiveWorld &&
+        (!FlushCanonicalClockBoundary(OutError) ||
+         !CheckpointOwnedNativeEncounter(OutError) ||
+         !CheckpointPlayerWorldState(OutError)))
     {
-        OutError = TEXT("Authoritative game core is not ready.");
         return false;
     }
-    if (!FlushCanonicalClockBoundary(OutError) || !CheckpointOwnedNativeEncounter(OutError)) return false;
-    if (auto* World=GetWorld())
-        if (auto* Bodies=World->GetSubsystem<UOGWorldSimulationBodyRegistry>())
-            if (!Bodies->CheckpointControlledBodies(OutError)) return false;
 
     const FString DatabaseDirectory =
         FPaths::Combine(
@@ -671,7 +750,7 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
             TEXT("WorldState.db"));
 
     FString CheckpointError;
-    if (!WorldStore->Checkpoint(CheckpointError))
+    if (bReadableLiveWorld && !WorldStore->Checkpoint(CheckpointError))
     {
         OutError = FString::Printf(
             TEXT("World checkpoint failed before import: %s"),
@@ -680,7 +759,7 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
     }
 
     if (!ReleaseCanonicalRuntime(&OutError)) return false;
-    WorldStore->Close();
+    if (WorldStore) WorldStore->Close();
     WorldStore.Reset();
     bCoreReady = false;
 
@@ -697,7 +776,8 @@ bool UOGGameCoreSubsystem::ImportCanonicalWorldBackup(
             TEXT("offlinegame:canonical_world"),
             FApp::GetBuildVersion(),
             OutPreservedWorldPath,
-            OutError);
+            OutError,
+            !bReadableLiveWorld);
 
     WorldStore = MakeUnique<FOGSQLiteWorldStore>();
     FString ReopenError;
@@ -829,6 +909,9 @@ void UOGGameCoreSubsystem::Deinitialize()
         FString ClockError;
         if (!bApplicationBackgrounded && !FlushCanonicalClockBoundary(ClockError))
             UE_LOG(LogOfflineGame, Error, TEXT("Canonical clock shutdown boundary failed: %s"), *ClockError);
+        FString WorldStateError;
+        if (!CheckpointPlayerWorldState(WorldStateError))
+            UE_LOG(LogOfflineGame, Error, TEXT("Player World state shutdown boundary failed: %s"), *WorldStateError);
     }
     bCoreReady = false;
     if (UOGPresentationModeSubsystem* Modes = GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>())

@@ -13,6 +13,8 @@
 #include "Camera/CameraComponent.h"
 #include "AudioDevice.h"
 #include "Combat/OGWorldActionRuntime.h"
+#include "Combat/OGNativeEncounterDefinition.h"
+#include "Objects/OGObjectOfferDefinition.h"
 #include "Combat/OGDiagnosticCombatComponent.h"
 #include "World/OGFoundationIntegrationWorld.h"
 #include "Animation/OGDiagnosticAnimationPresentation.h"
@@ -60,6 +62,8 @@
 #include "UI/OGUiViewModelService.h"
 #include "UI/OGGate12NativeRulerWidget.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Combat/OGTurnContactActionComponent.h"
+#include "Combat/OGCanonicalCombatActorBindingComponent.h"
 #include "UI/OGGate12NativeOpeningWidget.h"
 
 #include "UI/OGGate12CharacterVisualCatalog.h"
@@ -304,6 +308,17 @@ void AOGStartingRegionGenerator::BeginPlay()
 {
     Super::BeginPlay();
     if (Tags.Contains(TEXT("Gate02R1Source"))) bGate02R1RegionSource = true;
+    // Preplaced StartingWorld actors receive BeginPlay BEFORE GameMode
+    // StartPlay. Configuring them only in StartPlay allowed the legacy
+    // randomized region to generate and persist a fake layout first.
+    // The existing StartingWorld is the source-backed boot carrier.
+    if (UWorld* World=GetWorld())
+        if (World->IsGameWorld() &&
+            World->GetMapName().EndsWith(TEXT("StartingWorld")))
+        {
+            bGate02R1RegionSource=true;
+            Tags.AddUnique(FName(TEXT("Gate02R1Source")));
+        }
 
     if (UGameInstance* GameInstance = GetGameInstance())
     {
@@ -331,6 +346,18 @@ void AOGStartingRegionGenerator::BeginPlay()
         TEXT("Starting region presentation generated. Seed=%d GeneratorVersion=%d"),
         Seed,
         GeneratorVersion);
+}
+
+void AOGStartingRegionGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (auto* Core = R1EcologyCore.Get())
+    {
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    }
+    UnloadR1SourceRoads();
+    UnloadR1Landmarks();
+    UnloadR1MarketSections();
+    Super::EndPlay(EndPlayReason);
 }
 
 void AOGStartingRegionGenerator::RebuildPreview()
@@ -529,6 +556,7 @@ void AOGStartingRegionGenerator::GenerateRegion(int32 Seed)
         BuildR1SourceRiver();
         LoadR1SourceScatter();
         RefreshR1StreamedTiles(true);
+        RequestR1SourceRoads();
         return;
     }
     BuildLayout(Seed);
@@ -549,6 +577,10 @@ void AOGStartingRegionGenerator::ClearGeneratedContent()
     }
     if(R1RiverSurface)
         R1RiverSurface->ClearAllMeshSections();
+    R1PendingTerrainSections.Reset();
+    ClearR1EcologyProjection();
+    UnloadR1SourceRoads();
+    UnloadR1Landmarks();
     UnloadR1MarketSections();
 
     UHierarchicalInstancedStaticMeshComponent* Components[] =
@@ -2361,6 +2393,56 @@ void AOGWorldPrototypeCharacter::CameraZoomOutPressed()
 void AOGWorldPrototypeCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 {
     Super::CalcCamera(DeltaTime, OutResult);
+    // Physically frame the real combat target only while the currently
+    // possessed original character plays an authored contact-bound skill.
+    // No generic orbit, fake target, camera teleports, opponent information
+    // leak, interaction with the canonical damage/target resolver, or
+    // permanent replacement of player camera preferences.
+    if (IsLocallyControlled() && !bReducedMotion && GetWorld() &&
+        GetWorld()->IsGameWorld())
+    {
+        const auto* Contact =
+            FindComponentByClass<UOGTurnContactActionComponent>();
+        if (Contact && Contact->IsAwaitingAuthoredContact())
+        {
+            const FOGEntityId Battle = Contact->GetPendingBattleId();
+            const FOGEntityId Focus = Contact->GetPendingPrimaryTarget();
+            if (Battle.IsValid() && Focus.IsValid())
+            {
+                AActor* ActualTarget =
+                    UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                        GetWorld(), Battle, Focus);
+                if (IsValid(ActualTarget) && ActualTarget != this)
+                {
+                    FVector Center, Extent;
+                    ActualTarget->GetActorBounds(false, Center, Extent);
+                    const FVector ActorCenter =
+                        GetActorLocation() + FVector(0.f, 0.f, 86.f);
+                    const FVector PhysicalFocus =
+                        FMath::Lerp(ActorCenter,
+                            Center + FVector(0.f, 0.f, Extent.Z * .35f),
+                            .54f);
+                    const FVector Aim = PhysicalFocus - OutResult.Location;
+                    if (Aim.SizeSquared() > FMath::Square(60.f))
+                    {
+                        FRotator Desired = Aim.Rotation();
+                        Desired.Pitch = FMath::Clamp(Desired.Pitch,
+                            WorldCameraPitchMin, WorldCameraPitchMax);
+                        OutResult.Rotation = FMath::RInterpTo(
+                            OutResult.Rotation, Desired,
+                            FMath::Max(0.f, DeltaTime), 4.5f);
+                        const float Separation =
+                            FVector::Dist(ActorCenter, Center);
+                        const float FovDelta =
+                            FMath::Clamp((Separation - 350.f) / 300.f,
+                                0.f, 6.f);
+                        OutResult.FOV = FMath::Min(
+                            110.f, OutResult.FOV + FovDelta);
+                    }
+                }
+            }
+        }
+    }
     // Keep spring-arm collision intact. Hide the owner's body only when the
     // collision-shortened view is inside its silhouette; restore on retreat.
     const FVector RelativeCamera = OutResult.Location - GetActorLocation();
@@ -3266,16 +3348,7 @@ AActor* AOGWorldPrototypeCharacter::FindBestInteractable(
     for (TActorIterator<AActor> It(World); It; ++It)
     {
         AActor* Candidate = *It;
-        if (!Candidate ||
-            Candidate == this ||
-            !Candidate->GetClass()->ImplementsInterface(
-                UOGWorldInteractable::StaticClass()) ||
-            !IOGWorldInteractable::Execute_CanInteract(
-                Candidate,
-                const_cast<AOGWorldPrototypeCharacter*>(this)))
-        {
-            continue;
-        }
+        if (!IsValid(Candidate) || Candidate == this) continue;
 
         const FVector ToTarget =
             Candidate->GetActorLocation() - Origin;
@@ -3291,10 +3364,13 @@ AActor* AOGWorldPrototypeCharacter::FindBestInteractable(
                     Forward,
                     ToTarget / Distance)
                 : 1.0f;
-        if (Facing < 0.15f || !IsInteractionLineClear(Candidate))
-        {
+        if (Facing < 0.15f) continue;
+        const bool bEncounter = UOGNativeEncounterReceiver::FindWorldInteraction(Candidate, this) != nullptr;
+        if (!bEncounter && !UOGObjectOfferDefinitionReceiver::FindWorldInteraction(Candidate, this) &&
+            (!Candidate->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()) ||
+             !IOGWorldInteractable::Execute_CanInteract(Candidate, const_cast<AOGWorldPrototypeCharacter*>(this))))
             continue;
-        }
+        if (!IsInteractionLineClear(Candidate)) continue;
 
         const float Score =
             Distance * (1.15f - 0.35f * Facing);
@@ -3842,6 +3918,21 @@ void AOGWorldPrototypeCharacter::InteractPressed()
     if (AActor* Interactable =
             FindBestInteractable())
     {
+        if (auto* Encounter = UOGNativeEncounterReceiver::FindWorldInteraction(Interactable, this))
+        {
+            FString Error;
+            if (!Encounter->StartFromWorldInteraction(*this, Error))
+                UE_LOG(LogOfflineGame, Warning, TEXT("World encounter unavailable: %s"), *Error);
+            return;
+        }
+        if (auto* Offers = UOGObjectOfferDefinitionReceiver::FindWorldInteraction(Interactable, this))
+        {
+            FString Error;
+            if (!Offers->OpenFromWorldInteraction(*this, Error))
+                UE_LOG(LogOfflineGame, Warning, TEXT("World offers unavailable: %s"), *Error);
+            return;
+        }
+        if (!Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass())) return;
         IOGWorldInteractable::Execute_Interact(
             Interactable,
             this);
@@ -4335,10 +4426,15 @@ void AOGWorldPrototypeCharacter::Tick(float DeltaSeconds)
     RestoreR1ExplorationFromWorldStore();
     const FVector Location = GetActorLocation();
     const FVector2D MapPoint(Location.X, Location.Y);
-    if (!bHasMapTrailSample ||
-        FVector2D::Distance(
-            MapPoint,
-            LastMapTrailSample) >= 280.0f)
+    // Only the locally possessed player owns the Ruler's exploration
+    // journal. Parked former playable bodies, companion AI and streamed NPCs
+    // must never append movement samples to the account's shared map.
+    const bool bActualLocalPlayer =
+        IsLocallyControlled() &&
+        Cast<APlayerController>(GetController()) != nullptr;
+    if (bActualLocalPlayer &&
+        (!bHasMapTrailSample ||
+         FVector2D::Distance(MapPoint,LastMapTrailSample)>=280.0f))
     {
         VisitedMapTrail.Add(MapPoint);
         if(bR1ExplorationLoaded && IsFoundationWorldInputAllowed())
@@ -5145,8 +5241,16 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
     ++GroundSnapAttempts;
 
     const FVector Current = GetActorLocation();
-    const FVector TraceStart(Current.X, Current.Y, 12000.0f);
-    const FVector TraceEnd(Current.X, Current.Y, -12000.0f);
+    // Authored Gate02 R1 relief is -20m to 750m. The old +/-120m
+    // ray could miss legitimate source highlands and leave a player falling.
+    const bool bSourceR1 = StartingRegion.IsValid() &&
+        StartingRegion->bGate02R1RegionSource;
+    const float ProbeTop = bSourceR1
+        ? FMath::Max(Current.Z+5000.f,100000.f)
+        : FMath::Max(Current.Z+5000.f,12000.f);
+    const float ProbeBottom = FMath::Min(Current.Z-10000.f,-12000.f);
+    const FVector TraceStart(Current.X,Current.Y,ProbeTop);
+    const FVector TraceEnd(Current.X,Current.Y,ProbeBottom);
 
     FHitResult Hit;
     FCollisionQueryParams QueryParams(
@@ -5154,12 +5258,10 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
         false,
         this);
 
-    if (World->LineTraceSingleByChannel(
-            Hit,
-            TraceStart,
-            TraceEnd,
-            ECC_Visibility,
-            QueryParams))
+    const bool bGroundHit = bSourceR1
+        ? StartingRegion->TraceR1SourceGround(TraceStart, TraceEnd, Hit)
+        : World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+    if (bGroundHit && Hit.ImpactNormal.Z > .35f)
     {
         const float HalfHeight =
             GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -5187,14 +5289,19 @@ void AOGWorldPrototypeCharacter::TrySnapToGeneratedGround()
         return;
     }
 
-    if (GroundSnapAttempts < 30)
+    if (GroundSnapAttempts < 30 || bSourceR1)
     {
+        if (GroundSnapAttempts == 30 && bSourceR1)
+            UE_LOG(LogOfflineGame,Warning,
+                TEXT("Gate02 R1 ground is still streaming; retaining safe spawn until original collision is available."));
+        // Keep genuine source-bound players safe when streamed terrain arrives
+        // after the old 3-second deadline. Never stand on a fixture floor.
         FTimerHandle RetryHandle;
         GetWorldTimerManager().SetTimer(
             RetryHandle,
             this,
             &AOGWorldPrototypeCharacter::TrySnapToGeneratedGround,
-            0.1f,
+            GroundSnapAttempts<30 ? .1f : 1.f,
             false);
         return;
     }
@@ -5585,9 +5692,21 @@ void AOGWorldPresentationGameMode::StartPlay()
             }
             if (!Region)
             {
-                Region = World->SpawnActor<AOGStartingRegionGenerator>(
+                // Spawn deferred so the source mode and original Gate02 tag
+                // exist BEFORE BeginPlay->GenerateRegion. Ordinary SpawnActor
+                // could run BeginPlay immediately, generating the legacy
+                // synthetic region before this method set the source flag.
+                Region = World->SpawnActorDeferred<AOGStartingRegionGenerator>(
                     AOGStartingRegionGenerator::StaticClass(),
-                    FVector::ZeroVector, FRotator::ZeroRotator);
+                    FTransform::Identity, nullptr, nullptr,
+                    ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+                if (Region)
+                {
+                    Region->bGate02R1RegionSource = true;
+                    Region->Tags.AddUnique(FName(TEXT("Gate02R1Source")));
+                    UGameplayStatics::FinishSpawningActor(
+                        Region, FTransform::Identity);
+                }
             }
             if (Region)
             {
@@ -5844,7 +5963,7 @@ bool ValidateInstalledPlayableGachaPool(
         OutError=TEXT("No installed accepted character visual Registry catalog.");
         return false;
     }
-    for (const FOGGachaPoolEntry& Pool:Banner.Entries)
+    auto CheckMember=[&](const FOGGachaPoolEntry& Pool)
     {
         const FOGGate12CharacterVisualEntry* Installed =
             Catalog->FindExact(Pool.IdentityId,Pool.VersionId);
@@ -5863,7 +5982,13 @@ bool ValidateInstalledPlayableGachaPool(
             OutError=TEXT("Banner member lacks an approved exact owned World actor.");
             return false;
         }
-    }
+        return true;
+    };
+    for (const auto& Pool:Banner.Entries)
+        if (!CheckMember(Pool)) return false;
+    for (const auto& Ticket:Banner.CompatibleGuaranteedTickets)
+        for (const auto& Pool:Ticket.Entries)
+            if (!CheckMember(Pool)) return false;
     return true;
 }
 }
@@ -6126,6 +6251,30 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
         return;
     }
 
+    if (!Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn()))
+    {
+        FailAndReturnToRuler(TEXT("The local World character is unavailable."));
+        return;
+    }
+
+    if (!AreFoundationDebugFixturesEnabled())
+    {
+        bool bFoundPlayableSource = false;
+        for (TActorIterator<AOGStartingRegionGenerator> It(GetWorld()); It; ++It)
+        {
+            if (It->IsR1SourceReadyForEntry())
+            {
+                bFoundPlayableSource = true;
+                break;
+            }
+        }
+        if (!bFoundPlayableSource)
+        {
+            FailAndReturnToRuler(TEXT("The original First World could not load. Your local World is preserved."));
+            return;
+        }
+    }
+
     if (!Session->SelectedManifestationId.IsValid())
     {
         AOGWorldPrototypeCharacter* Previous =
@@ -6142,6 +6291,14 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 FailAndReturnToRuler(TEXT("The canonical Ruler's existing physical body is unavailable; current character preserved."));
                 return;
             }
+            FString ExplorationError;
+            if (!Previous->FlushR1ExplorationBeforePossession(ExplorationError))
+            {
+                FailAndReturnToRuler(ExplorationError.IsEmpty()
+                    ? TEXT("Cannot switch Ruler while World exploration is unsaved.")
+                    : ExplorationError);
+                return;
+            }
             PlayerOwner->Possess(OriginalRuler);
             if (PlayerOwner->GetPawn() != OriginalRuler)
             {
@@ -6149,6 +6306,9 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 FailAndReturnToRuler(TEXT("Ruler possession failed; previous pawn preserved."));
                 return;
             }
+            // The parked Ruler's journal may predate exploration performed
+            // by this Manifestation. Load the shared canonical owner record.
+            OriginalRuler->RefreshR1ExplorationAfterPossession();
             // The existing World is already initialized. Preserve its actors,
             // player location and state rather than rebuilding the test course.
             RememberEmbodiedOwnedCharacter(Previous);
@@ -6239,6 +6399,15 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 PreservedRulerWorldPawn = Previous; PreservedRulerOwnerId = Session->BoundRulerId;
             }
         }
+        FString ExplorationError;
+        if (!Previous->FlushR1ExplorationBeforePossession(ExplorationError))
+        {
+            if (!bReusingBody) Replacement->Destroy();
+            FailAndReturnToRuler(ExplorationError.IsEmpty()
+                ? TEXT("Cannot switch character while World exploration is unsaved.")
+                : ExplorationError);
+            return;
+        }
         PlayerOwner->Possess(Replacement);
         if (PlayerOwner->GetPawn() != Replacement)
         {
@@ -6248,6 +6417,7 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
                 TEXT("Player possession failed; old playable character restored."));
             return;
         }
+        Replacement->RefreshR1ExplorationAfterPossession();
         RememberEmbodiedOwnedCharacter(Replacement);
         if (bPreviousIsOwned && Previous != Replacement) RememberEmbodiedOwnedCharacter(Previous);
     }
@@ -8389,6 +8559,20 @@ void AOGWorldPresentationHud::DrawFoundationRuler(
                 TEXT("Export current world to Files..."),
                 FName(TEXT("OG.Recovery.ExportCurrent")),
                 true);
+#if PLATFORM_ANDROID
+            const FName AutomaticBackupState = FOGAndroidBackupDocumentBridge::GetAutomaticBackupState();
+            const TCHAR* AutomaticBackupLabel = AutomaticBackupState == TEXT("backed_up")
+                ? TEXT("Automatic backup saved. Change folder...")
+                : AutomaticBackupState == TEXT("writing")
+                    ? TEXT("Saving automatic backup...")
+                    : AutomaticBackupState == TEXT("folder_ready")
+                        ? TEXT("Automatic backups enabled. Change folder...")
+                        : AutomaticBackupState == TEXT("backup_failed") || AutomaticBackupState == TEXT("folder_unavailable")
+                            ? TEXT("Backup folder unavailable. Choose another...")
+                            : TEXT("Choose folder for automatic backups...");
+            RecoveryAction(AutomaticBackupLabel, TEXT("OG.Recovery.ChooseFolder"),
+                AutomaticBackupState != TEXT("writing"));
+#endif
             RecoveryAction(
                 TEXT("Import backup from Files..."),
                 FName(TEXT("OG.Recovery.PickImport")),
@@ -8401,6 +8585,9 @@ void AOGWorldPresentationHud::DrawFoundationRuler(
                 TransferState == FName(TEXT("imported")) &&
                     IFileManager::Get().FileExists(
                         *ImportedBackupPath));
+
+            if (OpeningPage == TEXT("recover") || OpeningPage == TEXT("import"))
+                RecoveryAction(TEXT("Back to opening"), TEXT("OG.Recovery.BackToOpening"), true);
 
             DrawFoundationText(
                 FString::Printf(
@@ -8773,7 +8960,22 @@ void AOGWorldPresentationHud::DrawHUD()
     if (NativeBattleWidget && (!Character || !NativeBattleWidget->IsForCharacter(Character) ||
         FoundationSurface!=TEXT("world") || bSettingsOpen || bPauseOpen || bInteractionMenuOpen ||
         !Character->HasNativeOwnedLuminousEncounter()))
+    {
+        const bool bWasBattleVisible=NativeBattleWidget->IsVisible();
         NativeBattleWidget->SetVisibility(ESlateVisibility::Collapsed);
+        // Battle's native UMG owns GameAndUI focus only while it is visible.
+        // A hidden combat overlay must not retain pointer focus and prevent
+        // actual camera-drag and mobile input after returning to the World.
+        // Never override the separate Ruler, opening or interaction modals.
+        if (bWasBattleVisible && PlayerOwner && Character &&
+            FoundationSurface==TEXT("world") && !bSettingsOpen &&
+            !bPauseOpen && !bInteractionMenuOpen)
+        {
+            PlayerOwner->SetInputMode(FInputModeGameOnly());
+            PlayerOwner->bShowMouseCursor=false;
+            Character->RefreshFoundationInputState();
+        }
+    }
     if (bInteractionMenuOpen)
         if (const auto* NativeCore = GetGameInstance() ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
             if (const auto* Battle = NativeCore->GetOwnedLuminousTurnBattle();
@@ -8788,9 +8990,11 @@ void AOGWorldPresentationHud::DrawHUD()
         Gate12NativeOpeningWidget->IsInViewport())
         return;
 
+    const bool bRecoveryPanelRequested = RulerDestination == TEXT("records") &&
+        RecordsDestination == TEXT("recovery") && (OpeningPage == TEXT("recover") || OpeningPage == TEXT("import"));
     const bool bNativeRulerVisible =
         bGate12NativeRulerUMGEnabled && !bSettingsOpen && !bPauseOpen && !bInteractionMenuOpen &&
-        FoundationSurface == FName(TEXT("ruler"));
+        !bRecoveryPanelRequested && FoundationSurface == FName(TEXT("ruler"));
     SynchronizeGate12NativeRulerUMG(bNativeRulerVisible);
     if (bNativeRulerVisible && Gate12NativeRulerWidget &&
         Gate12NativeRulerWidget->IsInViewport())
@@ -10327,8 +10531,18 @@ void AOGWorldPresentationHud::DrawHUD()
                 Canvas->ClipY * 0.72f;
             const float PromptW = 250.0f * Scale;
             const float PromptH = 56.0f * Scale;
-            FText Prompt;
-            if (Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()))
+            FText Prompt, Feedback;
+            if (const auto* Encounter = UOGNativeEncounterReceiver::FindWorldInteraction(Interactable, Character))
+            {
+                Prompt = Encounter->GetWorldInteractionPrompt();
+                Feedback = Encounter->GetWorldInteractionFeedback();
+            }
+            else if (const auto* Offers = UOGObjectOfferDefinitionReceiver::FindWorldInteraction(Interactable, Character))
+            {
+                Prompt = Offers->GetWorldInteractionPrompt();
+                Feedback = Offers->GetWorldInteractionFeedback();
+            }
+            else if (Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()))
                 Prompt = IOGWorldInteractable::Execute_GetInteractionPrompt(Interactable, Character);
             const FString PromptText =
                 Traversal == TEXT("Mounted") ? FString(TEXT("Dismount")) :
@@ -10355,6 +10569,12 @@ void AOGWorldPresentationHud::DrawHUD()
                 FName(TEXT("OG.World.Interact")),
                 true,
                 105);
+            if (!Feedback.IsEmpty())
+            {
+                const float Width = FMath::Min(Canvas->ClipX * 0.88f, 620.0f * Scale);
+                DrawGameText(Feedback.ToString(), (Canvas->ClipX - Width) * 0.5f,
+                    PromptY + PromptH + 10.0f * Scale, 23.0f * Scale, MainText, Width);
+            }
         }
     }
 
@@ -10456,8 +10676,21 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
                     TEXT("Invalid canonical target selection.") : Error;
             else FoundationStatusMessage.Reset();
         }
+        else if (Hit.StartsWith(TEXT("OG.Battle.Command.")))
+        {
+            // Use the exact command identity issued by the approved source
+            // registry, identical to the native UMG command path.
+            const FString Id=Hit.Mid(FCString::Strlen(TEXT("OG.Battle.Command.")));
+            if (Id.IsEmpty() ||
+                !Character->SubmitApprovedLuminousWorldCommand(FName(*Id),Error))
+                FoundationStatusMessage=Error.IsEmpty()
+                    ?TEXT("This exact native combat command is unavailable."):Error;
+            else FoundationStatusMessage.Reset();
+        }
         else
         {
+            // Retain historical saved input aliases; new controls must use
+            // OG.Battle.Command.<source command ID> for every kit and branch.
             // -1 is the valid Ultimate command, so it cannot also mean unknown.
             int32 Slot = MIN_int32;
             FName Branch = NAME_None;
@@ -10585,6 +10818,24 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
                 }
             }
         }
+        return;
+    }
+
+    if (BoxName == TEXT("OG.Recovery.ChooseFolder"))
+    {
+        FString Error;
+        if (!FOGAndroidBackupDocumentBridge::ChooseAutomaticBackupFolder(Error))
+        {
+            FoundationStatusMessage = Error;
+        }
+        return;
+    }
+
+    if (BoxName == TEXT("OG.Recovery.BackToOpening"))
+    {
+        bPendingImportedBackupRestore = false;
+        OpeningPage = TEXT("main");
+        SetFoundationSurface(TEXT("opening"));
         return;
     }
 
@@ -10719,6 +10970,22 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
                 TEXT("OfflineGame"),
                 TEXT("Import"),
                 TEXT("selected_import.db"));
+
+#if PLATFORM_ANDROID
+        FString TransferDetail;
+        if (FOGAndroidBackupDocumentBridge::GetTransferState(TransferDetail) != TEXT("imported"))
+        {
+            bPendingImportedBackupRestore = false;
+            FoundationStatusMessage = TEXT("Choose and import a backup document before confirming restore.");
+            return;
+        }
+#endif
+        if (!IFileManager::Get().FileExists(*Candidate))
+        {
+            bPendingImportedBackupRestore = false;
+            FoundationStatusMessage = TEXT("The selected backup is no longer available.");
+            return;
+        }
 
         if (!bPendingImportedBackupRestore)
         {
@@ -11687,12 +11954,26 @@ void AOGWorldPrototypeCharacter::InitializeFoundationIntegration()
         {
             if (DiagnosticMenu) DiagnosticMenu->Initialize();
             if (InteractionHost) InteractionHost->Initialize();
+            bMissingNativeWorldSourceReported = false;
             bNativeFirstWorldRuntimeInitialized = true;
             UE_LOG(LogOfflineGame,Display,
                    TEXT("Gate02 R1 first World: genuine gameplay services initialized without diagnostic fixture"));
             return;
         }
 
+    // An absent native R1 actor is a missing production World source, not
+    // permission to replace the real offline game with a diagnostic course.
+    // The course remains available only by explicit native developer opt-in.
+    if (!AreFoundationDebugFixturesEnabled())
+    {
+        if (!bMissingNativeWorldSourceReported)
+        {
+            UE_LOG(LogOfflineGame, Error,
+                TEXT("Gate02 R1 source actor is missing; no diagnostic World will be substituted in production."));
+            bMissingNativeWorldSourceReported = true;
+        }
+        return; // Recheck after World Partition streams the genuine source.
+    }
     if (!IntegrationWorld) IntegrationWorld = GetWorld()->SpawnActor<AOGFoundationIntegrationWorld>(FVector::ZeroVector, FRotator::ZeroRotator);
     if (!IntegrationWorld) return;
     for (TActorIterator<AOGStartingRegionGenerator> It(GetWorld()); It; ++It)

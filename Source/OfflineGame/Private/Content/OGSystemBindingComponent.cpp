@@ -120,7 +120,7 @@ void UOGSystemBindingComponent::ReleaseActiveReceivers()
 }
 void UOGSystemBindingComponent::RetainWorldBodyFlags()
 {
-    for (auto* Receiver:ActiveReceivers)
+    for (const auto& Receiver:ActiveReceivers)
         if (auto* Body=Cast<UOGWorldSimulationReceiver>(Receiver))
         {
             if (Body->GetOriginalBodyFlags(bWorldBodyHidden,bWorldBodyCollision)) bHoldingWorldBody=true;

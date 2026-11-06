@@ -1,4 +1,5 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "World/OGGatheringDispatch.h"
 
 #include "Engine/GameInstance.h"
 #include "Persistence/OGWorldStore.h"
@@ -46,8 +47,9 @@ bool UOGGate12RulerSessionSubsystem::TryRestoreLocalRuler(FString& OutError)
 
     bool bFound = false;
     FOGEntityId ExistingRuler;
+    FOGEntityId SavedWorldSelection;
     if (!FOGGate12LocalRulerBootstrap::TryLoad(
-            *Store, bFound, ExistingRuler, OutError))
+            *Store, bFound, ExistingRuler, OutError, &SavedWorldSelection))
     {
         UserFacingAvailability = OutError;
         return false;
@@ -59,7 +61,25 @@ bool UOGGate12RulerSessionSubsystem::TryRestoreLocalRuler(FString& OutError)
         OutError.Reset();
         return false;
     }
-    return BindExistingRuler(ExistingRuler, OutError);
+    const bool bAlreadyBound = bRulerValidated && BoundRulerId == ExistingRuler;
+    if (!BindExistingRuler(ExistingRuler, OutError))
+    {
+        return false;
+    }
+    if (!bAlreadyBound && SavedWorldSelection.IsValid())
+    {
+        for (const FOGRosterIdentityViewModel& Identity : OwnedRoster)
+        {
+            if (Identity.Manifestations.ContainsByPredicate([&](const auto& Copy)
+                { return Copy.ManifestationId == SavedWorldSelection && !Copy.bLocked; }))
+            {
+                SelectedIdentityId = Identity.IdentityId;
+                SelectedManifestationId = SavedWorldSelection;
+                break;
+            }
+        }
+    }
+    return true;
 }
 
 bool UOGGate12RulerSessionSubsystem::CreateLocalRuler(FString& OutError)
@@ -456,6 +476,14 @@ bool UOGGate12RulerSessionSubsystem::SelectRulerForWorld(FString& OutError)
     if (!RefreshCanonicalProjections(OutError))
         return false;
 
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    if (!ResolveStore(Core, Store, OutError) ||
+        !FOGGate12LocalRulerBootstrap::SaveWorldSelection(*Store, BoundRulerId, FOGEntityId(), OutError))
+    {
+        return false;
+    }
+
     // No manufactured owned Manifestation and no deletion of the previously
     // acquired roster. This selection changes only the World controller.
     SelectedIdentityId = FOGContentId();
@@ -535,6 +563,11 @@ bool UOGGate12RulerSessionSubsystem::SelectOwnedManifestation(
         return false;
     }
 
+    bool Assigned=false;
+    if (!FOGGatheringDispatch::IsAssigned(*Store,BoundRulerId,ManifestationId,Assigned,OutError)) return false;
+    if (Assigned)
+    { OutError=TEXT("This Manifestation is away on a dispatch."); return false; }
+
     const int64 Tick = Core->GetCanonicalWorldTick();
     if (Tick < 0)
     {
@@ -549,8 +582,14 @@ bool UOGGate12RulerSessionSubsystem::SelectOwnedManifestation(
     Selection.ManifestationId = ManifestationId;
     Selection.UpdatedWorldTick = Tick;
 
-    if (!Store->UpsertManifestationContextSelection(Selection, OutError))
+    if (!Store->BeginTransaction(OutError)) return false;
+    if (!Store->UpsertManifestationContextSelection(Selection, OutError) ||
+        !FOGGate12LocalRulerBootstrap::SaveWorldSelection(*Store, BoundRulerId, ManifestationId, OutError) ||
+        !Store->CommitTransaction(OutError))
     {
+        FString RollbackError;
+        Store->RollbackTransaction(RollbackError);
+        if (OutError.IsEmpty()) OutError = RollbackError;
         return false;
     }
 

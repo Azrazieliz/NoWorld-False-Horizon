@@ -33,9 +33,10 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
     if (!Super::ValidateDefinition_Implementation(Error)) return false;
     if (System!=TEXT("object_action") || DefinitionId.Value.StartsWith(TEXT("diagnostic:")) ||
         OriginalSourceReference.TrimStartAndEnd().IsEmpty() || DisplayName.IsEmpty() ||
-        static_cast<uint8>(Kind)>static_cast<uint8>(EOGObjectActionKind::Exchange) ||
+        static_cast<uint8>(Kind)>static_cast<uint8>(EOGObjectActionKind::Enhance) ||
         Inputs.Num()>4096 || Outputs.Num()>4096 || Resources.Num()>4096 ||
-        (Inputs.IsEmpty() && Outputs.IsEmpty() && Resources.IsEmpty() && Kind!=EOGObjectActionKind::Repair))
+        (Inputs.IsEmpty() && Outputs.IsEmpty() && Resources.IsEmpty() &&
+         Kind!=EOGObjectActionKind::Repair && Kind!=EOGObjectActionKind::Enhance))
     { Error=TEXT("Object action requires a sourced definition and actual executable operations."); return false; }
     bool Cost=false; int64 OutputCount=0;
     for (const auto& I:Inputs)
@@ -56,6 +57,29 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
     }
     if (OutputCount>10000 || (Kind==EOGObjectActionKind::Exchange && !Outputs.IsEmpty()))
     { Error=TEXT("An exchange transfers real stock; generated output counts must remain bounded."); return false; }
+    if (RestoreHealthBps<0 || RestoreHealthBps>10000 ||
+        (RestoreHealthBps>0 && (Kind!=EOGObjectActionKind::Use || UsesCounterparty() ||
+         !Inputs.ContainsByPredicate([](const auto& Input)
+         { return Input.From==EOGObjectActionParty::Ruler && Input.Disposition==EOGObjectInputDisposition::Consume; }))))
+    { Error=TEXT("Health restoration must be an authored use that consumes an owned item."); return false; }
+    const bool HasPractice=Practice.Gain!=0 || !Practice.ToolObjectId.IsEmpty() ||
+        !Practice.ProficiencyId.IsEmpty() || !Practice.Grades.IsEmpty();
+    if (HasPractice)
+    {
+        if (Kind==EOGObjectActionKind::Exchange || Practice.Gain<=0 || !Practice.ToolObjectId.IsValid() ||
+            !Practice.ProficiencyId.IsValid() || Practice.Grades.IsEmpty() || !Inputs.ContainsByPredicate([&](const auto& Input)
+            { return Input.From==EOGObjectActionParty::Ruler && Input.Disposition==EOGObjectInputDisposition::Retain &&
+                Input.ObjectId==Practice.ToolObjectId; }))
+        { Error=TEXT("Equipment practice must identify the actual retained tool and its authored proficiency."); return false; }
+        int64 Previous=-1;
+        TSet<FOGContentId> SeenGrades;
+        for (const auto& Grade:Practice.Grades)
+        {
+            if (!Grade.GradeId.IsValid() || Grade.MinimumValue<=Previous || SeenGrades.Contains(Grade.GradeId))
+            { Error=TEXT("Proficiency grades require distinct IDs and increasing thresholds."); return false; }
+            Previous=Grade.MinimumValue; SeenGrades.Add(Grade.GradeId);
+        }
+    }
     TSet<FString> Accounts; TMap<FOGContentId,int64> ExchangeDebits,ExchangeCredits;
     for (const auto& R:Resources)
     {
@@ -75,10 +99,22 @@ bool UOGObjectActionDefinition::ValidateDefinition_Implementation(FString& Error
             if (ExchangeCredits.FindRef(R.Key)!=R.Value)
             { Error=TEXT("Exchange debits and credits must balance exactly."); return false; }
     }
+    const bool Repairs=Kind==EOGObjectActionKind::Repair;
+    const bool Enhances=Kind==EOGObjectActionKind::Enhance;
     if (Cost==bExplicitNoCost || (UsesCounterparty() && CounterpartyEntityKind.IsNone()) ||
-        (Kind==EOGObjectActionKind::Repair && (!SubjectObjectId.IsValid() || RepairToConditionBps<1 || RepairToConditionBps>10000)) ||
-        (Kind!=EOGObjectActionKind::Repair && (!SubjectObjectId.IsEmpty() || RepairToConditionBps!=0)))
-    { Error=TEXT("Declare costs or explicit no-cost, an exact counterparty kind, and repair-only subject/condition rules."); return false; }
+        ((Repairs || Enhances)?!SubjectObjectId.IsValid():!SubjectObjectId.IsEmpty()) ||
+        (Repairs?(RepairToConditionBps<1 || RepairToConditionBps>10000):RepairToConditionBps!=0))
+    { Error=TEXT("Declare costs or explicit no-cost, an exact counterparty kind and the authored subject rules."); return false; }
+    if (Enhances)
+    {
+        if (!OptionalId(EnhanceFromRankId) || !OptionalId(EnhanceFromQualityId) ||
+            !OptionalId(EnhanceToRankId) || !OptionalId(EnhanceToQualityId) ||
+            (EnhanceFromRankId==EnhanceToRankId && EnhanceFromQualityId==EnhanceToQualityId))
+        { Error=TEXT("Enhancement needs distinct exact starting and resulting item grades."); return false; }
+    }
+    else if (!EnhanceFromRankId.IsEmpty() || !EnhanceFromQualityId.IsEmpty() ||
+             !EnhanceToRankId.IsEmpty() || !EnhanceToQualityId.IsEmpty())
+    { Error=TEXT("Only enhancement may change an item's Rank or Quality."); return false; }
     return true;
 }
 FString UOGObjectActionDefinition::Fingerprint() const
@@ -93,6 +129,25 @@ FString UOGObjectActionDefinition::Fingerprint() const
     for (const auto& O:Outputs) for (const auto& V:{O.ObjectId.ToString(),FString::FromInt(O.InstanceCount),FString::FromInt(static_cast<int32>(O.To))}) AppendObjectDefinitionPart(S,V);
     AppendObjectDefinitionPart(S,TEXT("resources"));
     for (const auto& R:Resources) for (const auto& V:{R.ResourceId.ToString(),FString::FromInt(static_cast<int32>(R.Account)),LexToString(R.Amount),R.DisplayName.ToString()}) AppendObjectDefinitionPart(S,V);
+    if (RestoreHealthBps>0)
+    {
+        AppendObjectDefinitionPart(S,TEXT("restore_health_bps"));
+        AppendObjectDefinitionPart(S,LexToString(RestoreHealthBps));
+    }
+    if (Kind==EOGObjectActionKind::Enhance)
+        for (const auto& Grade:{EnhanceFromRankId,EnhanceFromQualityId,EnhanceToRankId,EnhanceToQualityId})
+            AppendObjectDefinitionPart(S,Grade.ToString());
+    if (Practice.Gain>0)
+    {
+        AppendObjectDefinitionPart(S,TEXT("equipment_practice"));
+        for (const auto& Part:{Practice.ToolObjectId.ToString(),Practice.ProficiencyId.ToString(),LexToString(Practice.Gain)})
+            AppendObjectDefinitionPart(S,Part);
+        for (const auto& Grade:Practice.Grades)
+        {
+            AppendObjectDefinitionPart(S,Grade.GradeId.ToString());
+            AppendObjectDefinitionPart(S,LexToString(Grade.MinimumValue));
+        }
+    }
     return FMD5::HashAnsiString(*S);
 }
 void UOGObjectActionDefinition::CollectRequiredDefinitions(TArray<FOGDefinitionReference>& Out) const

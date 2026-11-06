@@ -70,7 +70,8 @@ public:
         const FString& WorldIdentity,
         const FString& SourceBuildVersion,
         FString& OutPreservedWorldPath,
-        FString& OutError);
+        FString& OutError,
+        bool bPreserveUnreadableWorld = false);
 
     static FString HashFile(
         const FString& FilePath);

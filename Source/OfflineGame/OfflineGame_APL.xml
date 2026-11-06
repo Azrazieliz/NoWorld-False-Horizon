@@ -32,6 +32,8 @@ import java.io.OutputStream;
         <!-- Keep UE's volume receiver contract; marshal notifications to its game-thread callback. -->
         <copyFile src="$S(PluginDir)/../../Build/Android/src/com/epicgames/unreal/VolumeReceiver.java"
                   dst="$S(BuildDir)/src/com/epicgames/unreal/VolumeReceiver.java" />
+        <copyFile src="$S(PluginDir)/../../Build/Android/src/com/epicgames/unreal/OGExternalBackupStore.java"
+                  dst="$S(BuildDir)/src/com/epicgames/unreal/OGExternalBackupStore.java" />
     </resourceCopies>
 
     <gameActivityClassAdditions>
@@ -39,6 +41,27 @@ import java.io.OutputStream;
 public static native void nativeOGMediaVolumeChanged(int volume);
 private static final int OG_BACKUP_EXPORT_REQUEST = 8121;
 private static final int OG_BACKUP_IMPORT_REQUEST = 8122;
+private static final int OG_BACKUP_FOLDER_REQUEST = 8123;
+
+public void AndroidThunkJava_OGChooseBackupFolder()
+{
+    OGExternalBackupStore.pickFolder(this, OG_BACKUP_FOLDER_REQUEST);
+}
+
+public boolean AndroidThunkJava_OGShouldQueueAutomaticBackup()
+{
+    return OGExternalBackupStore.shouldQueue(this);
+}
+
+public void AndroidThunkJava_OGQueueAutomaticBackup(String sourcePath, String name)
+{
+    OGExternalBackupStore.queue(this, sourcePath, name);
+}
+
+public String AndroidThunkJava_OGGetAutomaticBackupState()
+{
+    return OGExternalBackupStore.state(this);
+}
 private String OGBackupExportSource = "";
 private String OGBackupImportDestination = "";
 private String OGBackupTransferState = "idle";
@@ -144,6 +167,11 @@ private boolean OGCopyUriToFile(Uri source, String destinationPath)
 
     <gameActivityOnActivityResultAdditions>
         <insert><![CDATA[
+if (requestCode == OG_BACKUP_FOLDER_REQUEST)
+{
+    OGExternalBackupStore.acceptFolder(this, resultCode, data);
+}
+
 if (requestCode == OG_BACKUP_EXPORT_REQUEST)
 {
     if (resultCode == RESULT_OK && data != null && data.getData() != null)

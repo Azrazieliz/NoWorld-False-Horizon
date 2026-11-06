@@ -60,6 +60,16 @@ bool UOGCanonicalCombatActorBindingComponent::RefreshCanonicalEncounter(FString&
     return Bound;
 }
 
+bool UOGCanonicalCombatActorBindingComponent::HasNativeSkeletalBody(const AActor& Actor)
+{
+    TArray<USkeletalMeshComponent*> Parts;
+    Actor.GetComponents<USkeletalMeshComponent>(Parts);
+    for (const USkeletalMeshComponent* Part:Parts)
+        if (IsValid(Part) && Part->GetSkeletalMeshAsset() && Part->GetSkeletalMeshAsset()->GetSkeleton())
+            return true;
+    return false;
+}
+
 bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     const FOGEntityId& UnitId, const FOGContentId& ApprovedIdentity,
     FString& OutError)
@@ -94,14 +104,7 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     }
     // Reject mock actors: the physical participant must have actual native
     // source skeletal geometry. This creates no mesh, version or placeholder.
-    bool bHasNativeBody=false;
-    TArray<USkeletalMeshComponent*> Parts;
-    Owner->GetComponents<USkeletalMeshComponent>(Parts);
-    for (USkeletalMeshComponent* Part:Parts)
-        if (Part && Part->GetSkeletalMeshAsset() &&
-            Part->GetSkeletalMeshAsset()->GetSkeleton())
-        { bHasNativeBody=true;break; }
-    if (!bHasNativeBody)
+    if (!HasNativeSkeletalBody(*Owner))
     {
         OutError=TEXT("Source character has no valid native skeletal body.");
         return false;
@@ -239,29 +242,40 @@ void UOGCanonicalCombatActorBindingComponent::HandleNativeAction(const FOGResolv
             if (!Direction.IsNearlyZero()) GetOwner()->SetActorRotation(FRotator(0,Direction.Rotation().Yaw,0));
             break;
         }
+    const bool bImmediateWorldAction=Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World &&
+        Action.InterruptPriority==0;
+    const auto* WorldSpec=bImmediateWorldAction && Battle->GetUnitWorldCast(BoundUnitId)==Action.ActionId
+        ? Battle->FindWorldAbility(*Unit,Action.SkillId) : nullptr;
+    const FName AuthoredWorldMotion=WorldSpec ? WorldSpec->MotionSemantic : NAME_None;
+
     if (auto* Routes=GetOwner()->FindComponentByClass<UOGSharedAnimationReceiver>())
     {
-        bool Handled=false; FString Error;
-        if (!Routes->PresentAcceptedCombat(Action,*Battle,Handled,Error)) { UE_LOG(LogTemp,Warning,TEXT("%s"),*Error); return; }
-        if (Handled) { LastPresentedAction=Action.ActionId; return; }
+        const auto* Definition=Cast<UOGSharedAnimationRoutes>(Routes->BoundDefinition.Get());
+        const auto* Route=Definition ? Definition->FindRoute(TEXT("combat"),FName(*Action.SkillId.ToString())) : nullptr;
+        // A live World cast samples physical contact from its staged motion.
+        // Keep overlays and matching routes, but do not let a skill route replace that body motion.
+        if (AuthoredWorldMotion.IsNone() ||
+            (Route && (Route->Kind==EOGSharedAnimationKind::Expression || Route->Action==AuthoredWorldMotion)))
+        {
+            bool Handled=false; FString Error;
+            if (!Routes->PresentAcceptedCombat(Action,*Battle,Handled,Error))
+            {
+                UE_LOG(LogTemp,Warning,TEXT("%s"),*Error);
+                if (AuthoredWorldMotion.IsNone()) return;
+            }
+            if (Handled) { LastPresentedAction=Action.ActionId; return; }
+        }
     }
-    FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId);
-    if (Semantic.IsNone())
-    {
-        FOGNativeBattleCommandSet Set; FString Error; TSharedPtr<FJsonObject> Context; FString Branch,Mode;
-        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Action.ResolutionJson),Context);
-        if (Context) { Context->TryGetStringField(TEXT("branch"),Branch); Context->TryGetStringField(TEXT("mode"),Mode); }
-        if (FOGNativeBattleCommands::BuildFor(*Unit,Set,Error))
-            for (const auto& Command:Set.Commands)
-                if (Command.SkillId==Action.SkillId && Command.Branch==FName(*Branch) && Command.Mode==FName(*Mode))
-                { Semantic=Command.MotionSemantic(); break; }
-    }
+    const FName Semantic=AuthoredWorldMotion.IsNone()
+        ? FOGNativeBattleCommands::MotionForResolvedAction(
+            *Unit,Action,Battle->ResolveNativeAbilityMotion(*Unit,Action.SkillId))
+        : AuthoredWorldMotion;
     auto* Appearance=GetOwner()?GetOwner()->FindComponentByClass<UOGCharacterAppearanceComponent>():nullptr;
     auto* Motion=Appearance?Appearance->GetMotionController():nullptr;
     if (!Motion && GetOwner()) Motion=GetOwner()->FindComponentByClass<UOGSharedMotionControllerComponent>();
     if (Motion && !Semantic.IsNone())
     {
-        const bool Presented=Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World && Action.InterruptPriority==0?
+        const bool Presented=bImmediateWorldAction?
             Motion->StartImmediateCombatAction(Semantic,BoundBattleId,Action.ActionId):
             Motion->EnqueueCombatAction(Semantic,BoundBattleId,Action.ActionId);
         if (Presented) LastPresentedAction=Action.ActionId;

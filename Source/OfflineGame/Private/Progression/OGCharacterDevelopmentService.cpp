@@ -139,6 +139,22 @@ FString DefinitionFingerprint(const FOGCharacterDevelopmentDefinition& D)
         FingerprintPart(Text, Cost.QualityId.ToString());
         FingerprintPart(Text, LexToString(Cost.InstanceCount));
     }
+    if (!D.RequiredAttainedRankId.IsEmpty())
+    {
+        FingerprintPart(Text,TEXT("attained_rank"));
+        FingerprintPart(Text,D.RequiredAttainedRankId.Value);
+    }
+    if (D.bReopensReinforcement) FingerprintPart(Text,TEXT("reopens_reinforcement"));
+    for (const auto& Need : D.RequiredSkills)
+        for (const auto& Value : {FString(TEXT("skill")),Need.SkillId.Value,Need.State.ToString(),Need.DisplayName})
+            FingerprintPart(Text,Value);
+    for (const auto& Need : D.RequiredProficiencies)
+        for (const auto& Value : {FString(TEXT("proficiency")),Need.ProficiencyId.Value,Need.GradeId.Value,Need.DisplayName})
+            FingerprintPart(Text,Value);
+    for (const auto& Need : D.RequiredEquipment)
+        for (const auto& Value : {FString(TEXT("equipped")),Need.SlotId.Value,Need.ItemDefinitionId.Value,
+            Need.AffinityMilestoneId.Value,Need.DisplayName})
+            FingerprintPart(Text,Value);
     FingerprintPart(Text, WriteState(WriteGrants(D.StatGrants)));
     for (const auto& Form : D.GrantedForms) FingerprintPart(Text, Form.ToString());
     return Text;
@@ -246,6 +262,82 @@ bool PreviewItemCosts(IOGWorldStore& Store, const FOGEntityId& RulerId,
     return true;
 }
 
+bool PreviewProgressionRequirements(IOGWorldStore& Store, const FOGCharacterManifestationRecord& Manifestation,
+    const FOGCharacterDevelopmentDefinition& Definition, FOGCharacterDevelopmentPreview& Out,
+    FString& Token, FString& Error)
+{
+    const FOGEntityId& Copy = Manifestation.ManifestationId;
+    TArray<FOGEntitySkillRecord> Skills;
+    if (!Definition.RequiredSkills.IsEmpty() && !Store.ListEntitySkills(Copy,Skills,Error)) return false;
+    for (const auto& Need : Definition.RequiredSkills)
+    {
+        const auto* Skill = Skills.FindByPredicate([&](const FOGEntitySkillRecord& Row)
+            { return Row.OwnerEntityId == Copy && Row.SkillId == Need.SkillId; });
+        if (!Skill || Skill->CurrentState != Need.State)
+            Out.MissingRequirements.Add(Need.DisplayName);
+        FingerprintPart(Token,LexToString(Skill != nullptr));
+        if (Skill)
+            for (const auto& Value : {Skill->CurrentState.ToString(),LexToString(Skill->LearnedWorldTick),
+                Skill->DevelopmentStateJson})
+                FingerprintPart(Token,Value);
+    }
+    for (const auto& Need : Definition.RequiredProficiencies)
+    {
+        bool bFound = false;
+        FOGEquipmentProficiencyRecord Proficiency;
+        if (!Store.TryReadEquipmentProficiency(Copy,Need.ProficiencyId,bFound,Proficiency,Error)) return false;
+        if (!bFound || Proficiency.OwnerEntityId != Copy || Proficiency.ProficiencyId != Need.ProficiencyId ||
+            Proficiency.GradeId != Need.GradeId)
+            Out.MissingRequirements.Add(Need.DisplayName);
+        FingerprintPart(Token,LexToString(bFound));
+        if (bFound)
+            for (const auto& Value : {Proficiency.GradeId.Value,LexToString(Proficiency.ProficiencyValue),
+                LexToString(Proficiency.UpdatedWorldTick),Proficiency.StateJson})
+                FingerprintPart(Token,Value);
+    }
+    for (const auto& Need : Definition.RequiredEquipment)
+    {
+        bool bBound = false;
+        FOGEquipmentBindingRecord Binding;
+        if (!Store.TryReadEquipmentBinding(Copy,Need.SlotId,bBound,Binding,Error)) return false;
+        FingerprintPart(Token,LexToString(bBound));
+        if (!bBound)
+        {
+            Out.MissingRequirements.Add(Need.DisplayName);
+            continue;
+        }
+        bool bFound = false;
+        FOGItemInstanceRecord Item;
+        if (!Store.TryReadItemInstance(Binding.ItemId,bFound,Item,Error)) return false;
+        for (const auto& Value : {Binding.ItemId.ToString(),Binding.StateJson,LexToString(bFound),
+            Item.OwnerEntityId.ToString(),Item.DefinitionId.Value,Item.CurrentRankId.Value,Item.QualityId.Value,
+            Item.DurabilityStateJson,Item.EvolutionStateJson})
+            FingerprintPart(Token,Value);
+        const bool bOwnedEquippedItem = bFound && Binding.WearerEntityId == Copy && Binding.SlotId == Need.SlotId &&
+            Item.ItemId == Binding.ItemId && Item.DefinitionId == Need.ItemDefinitionId &&
+            (Item.OwnerEntityId == Copy || Item.OwnerEntityId == Manifestation.OwningRulerId);
+        if (!bOwnedEquippedItem)
+        {
+            Out.MissingRequirements.Add(Need.DisplayName);
+            continue;
+        }
+        if (!Need.AffinityMilestoneId.IsEmpty())
+        {
+            FOGItemOwnerAffinityRecord Affinity;
+            if (!Store.TryReadItemOwnerAffinity(Item.ItemId,Copy,bFound,Affinity,Error)) return false;
+            if (!bFound || Affinity.ItemId != Item.ItemId || Affinity.OwnerEntityId != Copy ||
+                Affinity.MilestoneId != Need.AffinityMilestoneId)
+                Out.MissingRequirements.Add(Need.DisplayName);
+            FingerprintPart(Token,LexToString(bFound));
+            if (bFound)
+                for (const auto& Value : {Affinity.MilestoneId.Value,LexToString(Affinity.AffinityValue),
+                    LexToString(Affinity.UpdatedWorldTick),Affinity.StateJson})
+                    FingerprintPart(Token,Value);
+        }
+    }
+    return true;
+}
+
 bool AddStatGrants(FOGCombatStats& Stats, const TMap<FName, FOGLargeNumber>& Grants, FString& Error)
 {
     FOGCombatStats Candidate = Stats;
@@ -259,7 +351,7 @@ bool AddStatGrants(FOGCombatStats& Stats, const TMap<FName, FOGLargeNumber>& Gra
         else
         {
             int32* Field = nullptr;
-#define OG_DEV_STAT(Key, Member) if (Pair.Key == TEXT(Key)) Field = &Candidate.Member
+#define OG_DEV_STAT(StatLiteral, Member) if (Pair.Key == TEXT(StatLiteral)) Field = &Candidate.Member
             OG_DEV_STAT("speed", Speed);
             else OG_DEV_STAT("crit_rate_bps", CritRateBps);
             else OG_DEV_STAT("crit_damage_bonus_bps", CritDamageBonusBps);
@@ -326,23 +418,35 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
     TArray<FString> Completed;
     if (!ReadState(R.StateJson, State, Error) || !ReadCompleted(State, Completed, Error)) return false;
 
+    FOGEntityRankStateRecord Rank;
+    bool HasRank = false;
+    if (!Store.TryReadEntityRankState(ManifestationId,HasRank,Rank,Error)) return false;
+    const int32 AttainedLevel = HasRank ? Rank.AttainedLevel : M.Level;
+
     Out.DevelopmentId = D.DevelopmentId;
     Out.ManifestationId = ManifestationId;
     Out.DisplayName = D.DisplayName;
     Out.Description = D.Description;
     Out.Current = M;
     Out.Result = M;
+    // The Manifestation level mirrors the attained rank record when present.
+    Out.Current.Level = AttainedLevel;
+    Out.Result.Level = AttainedLevel;
     Out.CurrentReinforcementState = R.ReinforcementState;
     Out.ResultReinforcementState = D.ResultReinforcementState.IsNone() ? R.ReinforcementState : D.ResultReinforcementState;
     Out.bCurrentlyMaxReinforced = R.bMaxReinforced;
-    Out.bResultMaxReinforced = R.bMaxReinforced || D.bCompletesReinforcement;
+    Out.bResultMaxReinforced = !D.bReopensReinforcement && (R.bMaxReinforced || D.bCompletesReinforcement);
+    if (D.bReopensReinforcement && !R.bMaxReinforced)
+        Out.MissingRequirements.Add(TEXT("Complete the current reinforcement ceiling first."));
     Out.StatGrants = D.StatGrants;
     Out.GrantedRoutes = D.GrantedRoutes;
     Out.GrantedForms = D.GrantedForms;
     Out.bAlreadyCompleted = Completed.Contains(D.DevelopmentId.ToString());
     if (Out.bAlreadyCompleted) Out.MissingRequirements.Add(TEXT("This development is already completed by this copy."));
-    if (M.Level < D.MinimumLevel)
-        Out.MissingRequirements.Add(FString::Printf(TEXT("Requires level %d."), D.MinimumLevel));
+    if (AttainedLevel < D.MinimumLevel)
+        Out.MissingRequirements.Add(FString::Printf(TEXT("Requires attained level %d."), D.MinimumLevel));
+    if (!D.RequiredAttainedRankId.IsEmpty() && (!HasRank || Rank.AttainedRankId != D.RequiredAttainedRankId))
+        Out.MissingRequirements.Add(TEXT("Requires attained Rank ") + D.RequiredAttainedRankId.Value);
     if (!D.RequiredRarity.IsNone() && M.CurrentRarity != D.RequiredRarity)
         Out.MissingRequirements.Add(TEXT("Requires rarity ") + D.RequiredRarity.ToString());
     if (!D.RequiredReinforcementState.IsNone() && R.ReinforcementState != D.RequiredReinforcementState)
@@ -351,7 +455,7 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
     {
         // A lower authored level floor cannot regress an already developed
         // copy, nor make every old tier break the entire options screen.
-        Out.Result.Level = FMath::Max(M.Level, D.ResultLevel);
+        Out.Result.Level = FMath::Max(AttainedLevel, D.ResultLevel);
     }
     if (!D.ResultRarity.IsNone())
     {
@@ -372,18 +476,25 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
         if (!Routes.ContainsByPredicate([&Required](const FOGManifestationRouteNodeRecord& Node)
             { return Node.RouteId == Required.RouteId && Node.NodeId == Required.NodeId && Node.State == Required.State; }))
             Out.MissingRequirements.Add(TEXT("Requires route ") + Required.NodeId.ToString() + TEXT(" / ") + Required.State.ToString());
+    FString TokenInput = DefinitionFingerprint(D);
     for (const auto& Required : D.RequiredFacts)
     {
         TArray<FOGWorldEvent> Events;
         if (!Store.ListWorldEvents(Required.bSubjectIsRuler ? RulerId : ManifestationId,
             Required.FactKey, false, 1, Events, Error)) return false;
-        if (Events.IsEmpty()) Out.MissingRequirements.Add(Required.DisplayName.IsEmpty()
-            ? Required.FactKey.ToString() : Required.DisplayName);
+        FingerprintPart(TokenInput,LexToString(Events.Num()));
+        if (Events.IsEmpty())
+            Out.MissingRequirements.Add(Required.DisplayName);
+        else
+        {
+            FingerprintPart(TokenInput,Events[0].EventId.ToString());
+            FingerprintPart(TokenInput,LexToString(Events[0].WorldTick));
+        }
     }
-    FString TokenInput = DefinitionFingerprint(D);
     FingerprintPart(TokenInput, OwnerState);
     FingerprintPart(TokenInput, LexToString(OwnerRevision));
-    if (!PreviewItemCosts(Store, RulerId, D.ItemCosts, Out, TokenInput, Error)) return false;
+    if (!PreviewProgressionRequirements(Store,M,D,Out,TokenInput,Error) ||
+        !PreviewItemCosts(Store,RulerId,D.ItemCosts,Out,TokenInput,Error)) return false;
     for (const auto& Cost : D.Costs)
     {
         FOGDevelopmentCostPreview P;
@@ -447,9 +558,6 @@ bool FOGCharacterDevelopmentService::Preview(const FOGEntityId& RulerId,
     FingerprintPart(TokenInput, R.ReinforcementState.ToString());
     FingerprintPart(TokenInput, LexToString(R.UpdatedWorldTick));
     FingerprintPart(TokenInput, R.bMaxReinforced ? TEXT("max") : TEXT("developing"));
-    FOGEntityRankStateRecord Rank;
-    bool HasRank = false;
-    if (!Store.TryReadEntityRankState(ManifestationId, HasRank, Rank, Error)) return false;
     FingerprintPart(TokenInput, HasRank ? TEXT("rank_present") : TEXT("rank_absent"));
     if (HasRank)
     {
@@ -536,6 +644,8 @@ bool FOGCharacterDevelopmentService::Apply(const FOGEntityId& RulerId,
         Grants.FindOrAdd(Grant.Key) = FOGLargeNumber::Add(Grants.FindRef(Grant.Key), Grant.Value);
     State->SetObjectField(GrantsKey, WriteGrants(Grants));
     State->SetStringField(TEXT("last_development_request"), RequestId.ToString());
+    if (R.bMaxReinforced || Quote.bResultMaxReinforced)
+        State->SetBoolField(TEXT("ever_max_reinforced"),true);
     R.StateJson = WriteState(State.ToSharedRef());
     R.ReinforcementState = Quote.ResultReinforcementState;
     R.bMaxReinforced = Quote.bResultMaxReinforced;
@@ -548,6 +658,8 @@ bool FOGCharacterDevelopmentService::Apply(const FOGEntityId& RulerId,
         if (!Store.TryReadEntityRankState(ManifestationId, Found, Rank, Error)) return Fail();
         if (Found)
         {
+            if (Tick < Rank.UpdatedWorldTick)
+            { Error = TEXT("Development cannot precede the saved Rank history."); return Fail(); }
             Rank.AttainedLevel = FMath::Max(Rank.AttainedLevel, Quote.Result.Level);
             if (Rank.PeakRankId == Rank.AttainedRankId) Rank.PeakLevel = FMath::Max(Rank.PeakLevel, Rank.AttainedLevel);
             Rank.UpdatedWorldTick = Tick;
@@ -586,6 +698,9 @@ bool FOGCharacterDevelopmentService::Apply(const FOGEntityId& RulerId,
     auto Payload = MakeShared<FJsonObject>();
     Payload->SetStringField(TEXT("ruler_id"), RulerId.ToString());
     Payload->SetStringField(TEXT("development_id"), D.DevelopmentId.ToString());
+    Payload->SetStringField(TEXT("display_name"),D.DisplayName);
+    Payload->SetBoolField(TEXT("completed_ceiling"),D.bCompletesReinforcement && !Quote.bCurrentlyMaxReinforced);
+    Payload->SetBoolField(TEXT("reopened_ceiling"),D.bReopensReinforcement);
     Payload->SetStringField(TEXT("confirmation_token"), Token);
     Payload->SetNumberField(TEXT("previous_level"), Quote.Current.Level);
     Payload->SetNumberField(TEXT("result_level"), Quote.Result.Level);
@@ -618,18 +733,61 @@ bool FOGCharacterDevelopmentService::Apply(const FOGEntityId& RulerId,
     return true;
 }
 
-bool FOGCharacterDevelopmentService::ApplyEarnedStats(const FOGEntityId& ManifestationId,
-    FOGCombatStats& InOutStats, FString& Error) const
+bool FOGCharacterDevelopmentService::ReadAppliedHistory(const FOGEntityId& RulerId,
+    const FOGEntityId& ManifestationId, int32 Limit, TArray<FOGDevelopmentHistoryEntry>& Out, FString& Error) const
 {
+    Out.Reset();
+    Error.Reset();
+    bool bFound = false;
+    FOGCharacterManifestationRecord Manifestation;
+    if (!Store.TryReadCharacterManifestation(ManifestationId,bFound,Manifestation,Error)) return false;
+    if (!RulerId.IsValid() || !bFound || Manifestation.OwningRulerId != RulerId)
+    { Error = TEXT("Development history requires an owned Manifestation."); return false; }
+
+    TArray<FOGWorldEvent> Events;
+    if (!Store.ListWorldEvents(ManifestationId,DevelopmentEvent,true,Limit,Events,Error)) return false;
+    for (const FOGWorldEvent& Event : Events)
+    {
+        if (Event.PrimaryEntity != ManifestationId || Event.EventType != DevelopmentEvent) continue;
+        TSharedPtr<FJsonObject> Receipt;
+        FString ParseError, Owner, DevelopmentId, PreviousRarity, ResultRarity;
+        FOGDevelopmentHistoryEntry Entry;
+        if (!ReadState(Event.PayloadJson,Receipt,ParseError) ||
+            !Receipt->TryGetStringField(TEXT("ruler_id"),Owner) || Owner != RulerId.ToString() ||
+            !Receipt->TryGetStringField(TEXT("development_id"),DevelopmentId) || !FOGContentId(DevelopmentId).IsValid() ||
+            !Receipt->TryGetNumberField(TEXT("previous_level"),Entry.PreviousLevel) ||
+            !Receipt->TryGetNumberField(TEXT("result_level"),Entry.ResultLevel)) continue;
+
+        Entry.WorldTick = Event.WorldTick;
+        if (!Receipt->TryGetStringField(TEXT("display_name"),Entry.DisplayName) || Entry.DisplayName.IsEmpty())
+            Entry.DisplayName = MoveTemp(DevelopmentId);
+        if (Receipt->TryGetStringField(TEXT("previous_rarity"),PreviousRarity)) Entry.PreviousRarity = FName(*PreviousRarity);
+        if (Receipt->TryGetStringField(TEXT("result_rarity"),ResultRarity)) Entry.ResultRarity = FName(*ResultRarity);
+        Receipt->TryGetBoolField(TEXT("completed_ceiling"),Entry.bCompletedCeiling);
+        Receipt->TryGetBoolField(TEXT("reopened_ceiling"),Entry.bReopenedCeiling);
+        Out.Add(MoveTemp(Entry));
+    }
+    return true;
+}
+
+bool FOGCharacterDevelopmentService::ReadEarnedStats(const FOGEntityId& ManifestationId,
+    TMap<FName, FOGLargeNumber>& Out, FString& Error) const
+{
+    Out.Reset();
     Error.Reset();
     bool Found = false;
     FOGManifestationReinforcementRecord R;
-    if (!Store.TryReadManifestationReinforcement(ManifestationId, Found, R, Error)) return false;
+    if (!Store.TryReadManifestationReinforcement(ManifestationId,Found,R,Error)) return false;
     if (!Found) return true;
     TSharedPtr<FJsonObject> State;
+    return ReadState(R.StateJson,State,Error) && ReadGrants(State,Out,Error);
+}
+
+bool FOGCharacterDevelopmentService::ApplyEarnedStats(const FOGEntityId& ManifestationId,
+    FOGCombatStats& InOutStats, FString& Error) const
+{
     TMap<FName, FOGLargeNumber> Grants;
-    return ReadState(R.StateJson, State, Error) && ReadGrants(State, Grants, Error) &&
-        AddStatGrants(InOutStats, Grants, Error);
+    return ReadEarnedStats(ManifestationId,Grants,Error) && AddStatGrants(InOutStats,Grants,Error);
 }
 
 bool FOGCharacterDevelopmentService::ProjectCombatUnit(FOGCombatUnitState& Unit, FString& Error) const

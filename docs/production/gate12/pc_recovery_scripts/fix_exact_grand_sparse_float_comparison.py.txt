@@ -1,0 +1,30 @@
+# HISTORICAL PC-ONLY SOURCE — DO NOT EXECUTE
+# Retrieved from protected native workspace on 2026-11-01.
+# Original: Scripts/production/fix_exact_grand_sparse_float_comparison.py
+# Original PC file SHA-256: 9e25e21107057d9a42d35abcff53e9a62e11b6d1bf0047b42ada638230034604
+# WARNING: one-time in-place source migration. Preserve as original evidence only.
+# The generalized 5-star factory supersedes ad hoc reruns when applicable.
+
+from pathlib import Path
+r=Path(__file__).resolve().parents[2]
+p=r/"Scripts/production/Gate12GrandExactUnityMeshStream.cs"
+s=p.read_text("utf8")
+needle='''    static void WriteVec(BinaryWriter w,Vector2 v){w.Write(v.x);w.Write(v.y);}'''
+assert s.count(needle)==1
+s=s.replace(needle,'''    // Unity's Vector3 == and != operators are approximate. These exact float
+    // comparisons preserve every arbitrarily small nonzero morph delta.
+    static bool HasSourceMorphValue(Vector3 v)
+    {return v.x!=0f || v.y!=0f || v.z!=0f;}
+'''+needle)
+before='''if(deltaV[i]!=Vector3.zero || deltaN[i]!=Vector3.zero ||
+                           deltaT[i]!=Vector3.zero)changed++;'''
+after='''if(HasSourceMorphValue(deltaV[i]) || HasSourceMorphValue(deltaN[i]) ||
+                           HasSourceMorphValue(deltaT[i]))changed++;'''
+assert s.count(before)==1;s=s.replace(before,after)
+before='''if(deltaV[i]==Vector3.zero && deltaN[i]==Vector3.zero &&
+                           deltaT[i]==Vector3.zero)continue;'''
+after='''if(!HasSourceMorphValue(deltaV[i]) && !HasSourceMorphValue(deltaN[i]) &&
+                           !HasSourceMorphValue(deltaT[i]))continue;'''
+assert s.count(before)==1;s=s.replace(before,after)
+p.write_text(s,"utf8")
+print("NO_APPROXIMATE_MORPH_DELTA_DROPPING_IN_SOURCE_STREAM")

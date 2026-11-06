@@ -33,4 +33,9 @@ class OFFLINEGAME_API FOGNativeBattleCommands
 public:
     /** Exact frozen kit identity and full owned skill set are verified before exposure. */
     static bool BuildFor(const FOGCombatUnitState& Source, FOGNativeBattleCommandSet& Out, FString& Error);
+
+    /** Exact branch/mode motion route for a resolved canonical action.
+     * UnbranchedFallback is never applied to a different Ultimate branch. */
+    static FName MotionForResolvedAction(const FOGCombatUnitState& Source,
+        const FOGResolvedCombatAction& Action, FName UnbranchedFallback = NAME_None);
 };

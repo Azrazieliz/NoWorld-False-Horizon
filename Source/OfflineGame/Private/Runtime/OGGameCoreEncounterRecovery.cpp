@@ -25,7 +25,7 @@ FOGEntityId RecoveryId(const FOGEntityId& Ruler)
     FGuid Id; FGuid::ParseExact(FMD5::HashAnsiString(*(TEXT("native.encounter.recovery.v1|")+Ruler.ToString())),EGuidFormats::Digits,Id);
     return FOGEntityId(Id);
 }
-bool ReadId(const FJsonObject& O,const TCHAR* Key,FOGEntityId& Out)
+bool ReadEncounterRecoveryId(const FJsonObject& O,const TCHAR* Key,FOGEntityId& Out)
 {
     FString S; FGuid Id;
     if (!O.TryGetStringField(Key,S) || !FGuid::Parse(S,Id) || !Id.IsValid()) return false;
@@ -142,8 +142,8 @@ bool UOGGameCoreSubsystem::RestoreOwnedNativeEncounter(const FOGEntityId& Ruler,
     FOGEntityId Owner,BattleId,Receipt,Controlled;
     if (Kind!=TEXT("native_encounter_recovery") || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json),Record) ||
         !Record || !Record->TryGetStringField(TEXT("schema"),Schema) || Schema!=TEXT("noworld.native_encounter_recovery.v1") ||
-        !ReadId(*Record,TEXT("ruler_id"),Owner) || Owner!=Ruler || !ReadId(*Record,TEXT("battle_id"),BattleId) ||
-        !ReadId(*Record,TEXT("receipt_id"),Receipt) || !ReadId(*Record,TEXT("controlled_entity_id"),Controlled) ||
+        !ReadEncounterRecoveryId(*Record,TEXT("ruler_id"),Owner) || Owner!=Ruler || !ReadEncounterRecoveryId(*Record,TEXT("battle_id"),BattleId) ||
+        !ReadEncounterRecoveryId(*Record,TEXT("receipt_id"),Receipt) || !ReadEncounterRecoveryId(*Record,TEXT("controlled_entity_id"),Controlled) ||
         !Record->TryGetStringField(TEXT("state"),State) ||
         !Record->TryGetStringField(TEXT("world_tick_exact"),Tick) || Tick!=LexToString(Revision) || Revision>GetCanonicalWorldTick())
     { Error=TEXT("Native encounter recovery record is inconsistent; original bytes preserved."); return false; }
@@ -302,9 +302,19 @@ bool UOGGameCoreSubsystem::CompleteNativeWorldRecovery(FString& Error)
     if (!bNativeRecoveryAwaitingWorld) return true;
     if (!OwnedLuminousTurnBattle || !GetWorld()) { Error=TEXT("Recovered World is not available."); return false; }
     const auto& State=OwnedLuminousTurnBattle->GetState();
-    for (const auto& Unit:State.Units) if (Unit.CanAct())
-        if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Unit.UnitEntityId))
+    if (State.EncounterDefinitionId.IsValid())
+    {
+        // Opening attached these bindings to the actors at runtime. After a restart,
+        // reconnect each streamed participant before restoring transforms or accepted casts.
+        if (UOGNativeEncounterReceiver::ReconnectParticipantBodies(GetWorld(),State)>0)
         { Error=TEXT("Recovered encounter waits for its actual participant bodies."); return false; }
+    }
+    else
+    {
+        for (const auto& Unit:State.Units) if (Unit.CanAct())
+            if (!UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),State.BattleId,Unit.UnitEntityId))
+            { Error=TEXT("Recovered encounter waits for its actual participant bodies."); return false; }
+    }
     for (const auto& Cast:NativeWorldRecoveryPresentation.Casts)
     {
         FOGWorldAbilityCastView View;

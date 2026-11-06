@@ -151,6 +151,10 @@ void UOGGate12NativeRulerWidget::NativeConstruct()
     {
         Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
         Core->OnCanonicalRuntimeReleasing.AddUObject(this,&UOGGate12NativeRulerWidget::ResetGachaUi);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(this,&UOGGate12NativeRulerWidget::ResetDiplomacy);
+        Core->OnCanonicalRuntimeReleasing.AddUObject(this,&UOGGate12NativeRulerWidget::ResetGathering);
+        Core->OnCanonicalWorldEventsCommitted.RemoveAll(this);
+        Core->OnCanonicalWorldEventsCommitted.AddUObject(this,&UOGGate12NativeRulerWidget::HandleGatheringEvents);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
             this, &UOGGate12NativeRulerWidget::ResetCharacterDevelopment);
         Core->OnCanonicalRuntimeReleasing.AddUObject(
@@ -166,10 +170,15 @@ void UOGGate12NativeRulerWidget::NativeDestruct()
     ResetGachaUi();
     ResetNarrativePage();
     ResetInventoryUi();
+    ResetDiplomacy();
+    ResetGathering();
     ResetCharacterDevelopment();
     if (UOGGameCoreSubsystem* Core = GetGameInstance()
             ? GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>() : nullptr)
+    {
         Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+        Core->OnCanonicalWorldEventsCommitted.RemoveAll(this);
+    }
     ReleasePreviewStage();
     Super::NativeDestruct();
 }
@@ -179,6 +188,11 @@ void UOGGate12NativeRulerWidget::NativeTick(
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
     SynchronizeGachaUi();
+    if (bGatheringOpen && bGatheringRefresh && !bGatheringBusy)
+    {
+        bGatheringRefresh=false;
+        BuildCurrentPage();
+    }
     const UGameInstance* GI = GetGameInstance();
     const UOGGate12RulerSessionSubsystem* Session =
         GI ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
@@ -602,6 +616,7 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
     ClearGachaReview();
     ClearInventoryReview();
     ClearNarrativeReview();
+    ClearTerritoryProjectReview();
     if (!Screen) BuildRoot();
     UGameInstance* GI = GetGameInstance();
     UOGGate12RulerSessionSubsystem* Session = GI
@@ -621,7 +636,10 @@ void UOGGate12NativeRulerWidget::RefreshFromCanonical()
             if (!Session->RefreshCanonicalProjections(Error))
                 LastUiError = Error;
             else
+            {
                 LastUiError.Reset();
+                RestoreTerritoryProjectDeadlines(*Session);
+            }
         }
         else if (!Error.IsEmpty())
         {
@@ -648,6 +666,13 @@ void UOGGate12NativeRulerWidget::BuildCurrentPage()
         ? GI->GetSubsystem<UOGGate12RulerSessionSubsystem>() : nullptr;
     SynchronizeDevelopmentContext(Session);
     SynchronizeInventoryContext(Session);
+    if (!Session || !Session->IsBoundToStoredRuler() ||
+        Session->CurrentDestination != EOGRulerPrimaryDestination::Territory)
+    {
+        ResetTerritoryProjectOrders();
+        ResetDiplomacy();
+        ResetGathering();
+    }
     RefreshFrozenScene(Session ? Session->CurrentDestination
                               : EOGRulerPrimaryDestination::Home);
 
@@ -1386,8 +1411,10 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
         AddMessage(Content,
             TEXT("Known traversed path only. Drag to pan; pinch controls and scroll to zoom. Undiscovered geography remains hidden."),
             12, TextMuted);
+    BuildDiplomacy(*Session);
     if (Territory.Territories.IsEmpty())
     {
+        ResetTerritoryProjectOrders();
         AddMessage(Content,
             TEXT("No territories are owned in this world."),
             17, TextMuted);
@@ -1446,6 +1473,9 @@ void UOGGate12NativeRulerWidget::BuildTerritory()
                     *Chosen->RootLocationId.ToString()), 15, TextMuted);
         if (Chosen->bContested)
             AddMessage(Content, TEXT("Control is contested."), 15, Gate12RulerGold);
+        SelectedTerritoryId = Chosen->TerritoryId;
+        BuildTerritoryProjectOrders(*Session, *Chosen);
+        BuildGathering(*Session,*Chosen);
     }
 
     AddMessage(Content,
@@ -1696,10 +1726,7 @@ void UOGGate12NativeRulerWidget::BuildRecords()
                 16, TextMain);
         break;
     case 2:
-        AddMessage(Detail,
-            TEXT("No verified installed Codex entries are available. "
-                 "Unknown lore remains unknown."),
-            16, TextMuted);
+        BuildNarrativeCodex(Detail);
         break;
     case 3:
         if (Session->IntelligenceProjection.IsEmpty())
@@ -1976,6 +2003,21 @@ void UOGGate12NativeRulerWidget::InvokeAction(const FString& Action)
         return;
     }
 
+    if (Action.StartsWith(TEXT("gathering/")))
+    {
+        HandleGatheringAction(Action,*Session);
+        return;
+    }
+    if (Action.StartsWith(TEXT("diplomacy/")))
+    {
+        HandleDiplomacyAction(Action,*Session);
+        return;
+    }
+    if (Action.StartsWith(TEXT("project-orders/")))
+    {
+        HandleTerritoryProjectAction(Action, *Session);
+        return;
+    }
     if (Action.StartsWith(TEXT("gacha")))
     {
         ClearDevelopmentReview(); ResetInventoryUi(); ResetNarrativePage();

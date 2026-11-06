@@ -41,8 +41,8 @@ bool FOGSharedAutomaticAnimationRule::Matches(const FOGSharedMotionEnvironment& 
     default: return E.Mode==Condition;
     }
 }
-const FOGSharedSystemAnimationRoute* UOGSharedAnimationRoutes::FindRoute(FName System,FName Event) const
-{ return Routes.FindByPredicate([&](const auto& Route){return Route.SourceSystem==System && Route.Event==Event;}); }
+const FOGSharedSystemAnimationRoute* UOGSharedAnimationRoutes::FindRoute(FName SourceSystem,FName Event) const
+{ return Routes.FindByPredicate([&](const auto& Route){return Route.SourceSystem==SourceSystem && Route.Event==Event;}); }
 bool UOGSharedAnimationRoutes::ValidateDefinition_Implementation(FString& Error) const
 {
     if (!Super::ValidateDefinition_Implementation(Error)) return false;

@@ -45,6 +45,28 @@ struct OFFLINEGAME_API FOGDevelopmentFactRequirement
     bool bSubjectIsRuler = false;
 };
 
+struct OFFLINEGAME_API FOGDevelopmentSkillRequirement
+{
+    FOGContentId SkillId;
+    FName State;
+    FString DisplayName;
+};
+
+struct OFFLINEGAME_API FOGDevelopmentProficiencyRequirement
+{
+    FOGContentId ProficiencyId;
+    FOGContentId GradeId;
+    FString DisplayName;
+};
+
+struct OFFLINEGAME_API FOGDevelopmentEquipmentRequirement
+{
+    FOGContentId SlotId;
+    FOGContentId ItemDefinitionId;
+    FOGContentId AffinityMilestoneId;
+    FString DisplayName;
+};
+
 /** One explicit development choice. Tiers, costs, maxima and stat grants are
  * supplied by character content, never generated from a universal curve. */
 struct OFFLINEGAME_API FOGCharacterDevelopmentDefinition
@@ -61,15 +83,32 @@ struct OFFLINEGAME_API FOGCharacterDevelopmentDefinition
     TArray<FOGContentId> ExcludedDevelopmentIds;
     TArray<FOGDevelopmentRouteRequirement> RequiredRoutes;
     TArray<FOGDevelopmentFactRequirement> RequiredFacts;
+    FOGContentId RequiredAttainedRankId;
+    TArray<FOGDevelopmentSkillRequirement> RequiredSkills;
+    TArray<FOGDevelopmentProficiencyRequirement> RequiredProficiencies;
+    TArray<FOGDevelopmentEquipmentRequirement> RequiredEquipment;
     TArray<FOGDevelopmentCost> Costs;
     TArray<FOGDevelopmentItemCost> ItemCosts;
     int32 ResultLevel = 0; // zero preserves current level
     FName ResultRarity; // None preserves current rarity
     FName ResultReinforcementState;
     bool bCompletesReinforcement = false;
+    bool bReopensReinforcement = false; // explicit authored extension of a completed ceiling
     TMap<FName, FOGLargeNumber> StatGrants;
     TArray<FOGDevelopmentRouteRequirement> GrantedRoutes;
     TArray<FOGContentId> GrantedForms;
+};
+
+struct OFFLINEGAME_API FOGDevelopmentHistoryEntry
+{
+    int64 WorldTick = 0;
+    FString DisplayName;
+    int32 PreviousLevel = 0;
+    int32 ResultLevel = 0;
+    FName PreviousRarity;
+    FName ResultRarity;
+    bool bCompletedCeiling = false;
+    bool bReopenedCeiling = false;
 };
 
 struct OFFLINEGAME_API FOGDevelopmentCostPreview
@@ -132,6 +171,10 @@ public:
         const FOGCharacterDevelopmentDefinition& Definition,
         const FString& ConfirmationToken, const FOGEntityId& RequestId,
         int64 WorldTick, bool& bOutAlreadyApplied, FString& Error);
+    bool ReadAppliedHistory(const FOGEntityId& RulerId, const FOGEntityId& ManifestationId,
+        int32 Limit, TArray<FOGDevelopmentHistoryEntry>& Out, FString& Error) const;
+    bool ReadEarnedStats(const FOGEntityId& ManifestationId,
+        TMap<FName, FOGLargeNumber>& Out, FString& Error) const;
     /** Add earned development grants to fresh content-resolved base stats.
      * Call once when constructing a battle snapshot, never once per hit. */
     bool ApplyEarnedStats(const FOGEntityId& ManifestationId,

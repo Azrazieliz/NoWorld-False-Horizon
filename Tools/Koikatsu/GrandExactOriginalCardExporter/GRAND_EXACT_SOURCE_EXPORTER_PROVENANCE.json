@@ -1,0 +1,18 @@
+{
+  "schema": "noworld.gate12.grand_exact_koikatsu_source_stream.v4",
+  "card_file": "LUMINOUS_GRAND_CONVERGENCE_CLOTHED_KK.png",
+  "original_card_sha256": "26c48e1c03c154f9f39a0b06afaade53423c11dbd079604e430162eb4cae5353",
+  "plugin_binary": "Tools/Koikatsu/GrandExactOriginalCardExporter/Gate12GrandExactUnityTextureStream.dll",
+  "compiled_plugin_sha256": "e89bea06c53b26d6889271b5a5ce418b725c9343e43c76ea3e0339a5aa53e92d",
+  "compiled_plugin_bytes": 32768,
+  "source_code": "Scripts/production/Gate12GrandExactUnityMeshStream.cs",
+  "source_sha256": "9285f36f45acb3f8cd599c708d67a35815235259e40385088a52a1f2c4314647",
+  "unity_version": "Koikatsu Party installed UnityEngine.dll .NET 3.5",
+  "geometry": "source vertex/index/normals/uv/weight matrices and all original morph frame values",
+  "textures": "full original GPU pixel readback for defined live named shader texture properties",
+  "texture_slots_all_shaders_exhaustively_covered": false,
+  "actual_original_card_export_complete": false,
+  "native_blender_unreal_asset_import_complete": false,
+  "native_android_gameplay_verified": false,
+  "status": "PASS_COMPILED_NATIVE_KOIKATSU_EXACT_CARD_EXPORTER_ONLY_NOT_EXPORTED"
+}
