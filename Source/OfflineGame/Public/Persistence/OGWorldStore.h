@@ -197,6 +197,8 @@ public:
     virtual bool TryReadOfflineSimulationState(
         const FOGEntityId&, bool&, FOGOfflineSimulationStateRecord&, FString&) const = 0;
 
+    virtual bool ListDispatchIds(const FOGEntityId&,bool,TArray<FOGEntityId>& Out,FString& Error) const
+    { Out.Reset(); Error=TEXT("This World store cannot list dispatches."); return false; }
     virtual bool UpsertDispatch(const FOGDispatchRecord&, int64, FString&) = 0;
     virtual bool TryReadDispatch(const FOGEntityId&, bool&, FOGDispatchRecord&, FString&) const = 0;
 

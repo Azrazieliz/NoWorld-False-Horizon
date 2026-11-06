@@ -11,6 +11,7 @@
 #include "Objects/OGObjectActionDefinition.h"
 #include "World/OGInventoryStorageService.h"
 #include "World/OGRulerDiplomacyService.h"
+#include "World/OGGatheringDispatch.h"
 #include "Gacha/OGGachaService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
@@ -191,6 +192,10 @@ private:
     bool bGachaRatesExpanded = false;
     bool bGachaResultsExpanded = false;
     FOGEntityId SelectedTerritoryId;
+    FOGEntityId GatheringRulerId,GatheringTerritoryId,GatheringParticipantId,GatheringRequest;
+    FOGGatheringDispatchQuote PendingGathering;
+    FString GatheringFeedback;
+    bool bGatheringOpen=false,bGatheringBusy=false,bGatheringRefresh=false;
     FOGEntityId DiplomacyRulerId,DiplomacyOwnFaction,DiplomacyOtherFaction,DiplomacyRequest;
     FOGRulerDiplomacyReview PendingDiplomacy;
     FString DiplomacyFeedback;
@@ -311,6 +316,10 @@ private:
     void ClearNarrativeReview();
     void ResetNarrativePage();
     void BuildTerritory();
+    void BuildGathering(UOGGate12RulerSessionSubsystem& Session,const FOGTerritorySummaryViewModel& Holding);
+    void HandleGatheringAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
+    void ResetGathering();
+    void HandleGatheringEvents(const TArray<FOGWorldEvent>& Events);
     void BuildDiplomacy(UOGGate12RulerSessionSubsystem& Session);
     void HandleDiplomacyAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
     void ResetDiplomacy();

@@ -207,6 +207,7 @@ public:
 
     bool ValidateRealityTimeDirectorMigration0011(FString& OutError) const;
 
+    virtual bool ListDispatchIds(const FOGEntityId&,bool,TArray<FOGEntityId>&,FString&) const override;
     virtual bool UpsertDispatch(const FOGDispatchRecord&, int64, FString&) override;
     virtual bool TryReadDispatch(const FOGEntityId&, bool&, FOGDispatchRecord&, FString&) const override;
 

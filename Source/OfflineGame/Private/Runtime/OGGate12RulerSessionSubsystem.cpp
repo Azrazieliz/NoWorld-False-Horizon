@@ -1,4 +1,5 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "World/OGGatheringDispatch.h"
 
 #include "Engine/GameInstance.h"
 #include "Persistence/OGWorldStore.h"
@@ -561,6 +562,11 @@ bool UOGGate12RulerSessionSubsystem::SelectOwnedManifestation(
             TEXT("Selected Manifestation has no valid active owned Identity/Version mapping.");
         return false;
     }
+
+    bool Assigned=false;
+    if (!FOGGatheringDispatch::IsAssigned(*Store,BoundRulerId,ManifestationId,Assigned,OutError)) return false;
+    if (Assigned)
+    { OutError=TEXT("This Manifestation is away on a dispatch."); return false; }
 
     const int64 Tick = Core->GetCanonicalWorldTick();
     if (Tick < 0)

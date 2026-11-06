@@ -1,5 +1,6 @@
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "World/OGWorldSimulationReceiver.h"
+#include "World/OGGatheringDispatch.h"
 #include "World/OGStartingRegionPresentation.h"
 
 #include "Combat/OGNativeCombatPassive.h"
@@ -238,6 +239,11 @@ bool UOGGameCoreSubsystem::InitializeCanonicalClock(FString& OutError)
         }
     }
     StrategicRuntime->RegisterClockResolvers(*CanonicalClock);
+    if (!FOGGatheringDispatch::AttachClock(*WorldStore,*CanonicalClock,OutError))
+    {
+        ReleaseCanonicalRuntime();
+        return false;
+    }
     if (const UOGPresentationModeSubsystem* Modes = GetGameInstance()->GetSubsystem<UOGPresentationModeSubsystem>())
     {
         CanonicalClock->SetMode(Modes->GetMode() == EOGPresentationMode::Ruler
