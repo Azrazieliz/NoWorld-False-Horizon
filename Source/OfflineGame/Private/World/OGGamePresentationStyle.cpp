@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Font.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include <initializer_list>
 
 namespace
@@ -12,6 +13,16 @@ const FLinearColor Ink(.025f,.038f,.067f,1);
 const FLinearColor Slate(.065f,.10f,.16f,1);
 const FLinearColor Gold(.83f,.69f,.40f,1);
 const FLinearColor Paper(.94f,.94f,.89f,1);
+const FName LargeTextProfile(TEXT("large_text"));
+const FName HighContrastProfile(TEXT("high_contrast"));
+constexpr float LargeTextScale = 1.12f;
+
+const AOGWorldPrototypeCharacter* FindCanvasReadabilityPawn(const APlayerController* Owner, FName Surface)
+{
+    const auto* Character = Owner ? Cast<AOGWorldPrototypeCharacter>(Owner->GetPawn()) : nullptr;
+    return Character && (Surface == TEXT("world") || Character->IsFoundationSettingsOpen())
+        ? Character : nullptr;
+}
 }
 
 void AOGWorldPresentationHud::DrawGamePolygon(const TArray<FVector2D>& Points, FLinearColor Color)
@@ -61,17 +72,36 @@ void AOGWorldPresentationHud::DrawGamePolygon(const TArray<FVector2D>& Points, F
 
 void AOGWorldPresentationHud::DrawGamePanel(FLinearColor Fill, float X,float Y,float W,float H)
 {
-    const auto* Theme=UOGReactiveUiSubsystem::Find(this);
-    if (Theme&&FMath::Max3(Fill.R,Fill.G,Fill.B)<.16f&&FMath::Max3(Fill.R,Fill.G,Fill.B)-FMath::Min3(Fill.R,Fill.G,Fill.B)<.06f)
-    { const float Alpha=Fill.A; Fill=FMath::Lerp(Fill,Theme->GetPalette().Surface,.55f); Fill.A=Alpha; }
+    const auto* Theme = UOGReactiveUiSubsystem::Find(this);
+    const auto* Character = FindCanvasReadabilityPawn(PlayerOwner, FoundationSurface);
+    const float MaxChannel = FMath::Max3(Fill.R, Fill.G, Fill.B);
+    const bool bNeutralSurface = MaxChannel < .16f && MaxChannel - FMath::Min3(Fill.R, Fill.G, Fill.B) < .06f;
+    const bool bHighContrast = Character && Character->GetUiReadabilityProfile() == HighContrastProfile &&
+        (Character->IsFoundationSettingsOpen() || bNeutralSurface);
+    if (bHighContrast)
+    {
+        // Darken the face without discarding the selected Settings colour-vision tint.
+        const float Shade = .10f / FMath::Max(.10f, MaxChannel);
+        Fill = FLinearColor(Fill.R * Shade, Fill.G * Shade, Fill.B * Shade, FMath::Max(Fill.A, .985f));
+    }
+    else if (Theme && bNeutralSurface)
+    {
+        const float Alpha = Fill.A;
+        Fill = FMath::Lerp(Fill, Theme->GetPalette().Surface, .55f);
+        Fill.A = Alpha;
+    }
 
     const float C=FMath::Min(9.f,H*.12f);
     DrawGamePolygon({{X+C,Y},{X+W,Y},{X+W,Y+H-C},{X+W-C,Y+H},{X,Y+H},{X,Y+C}},Fill);
-    DrawLine(X+C,Y,X+W,Y,Theme?Theme->AccentFor(FLinearColor(.52f,.64f,.72f,.24f),.45f):FLinearColor(.52f,.64f,.72f,.24f),1.f);
+    const FLinearColor DefaultTop(.52f, .64f, .72f, .24f);
+    const FLinearColor ContrastRim(.86f, .88f, .90f, .85f);
+    const FLinearColor Top = bHighContrast ? ContrastRim : Theme ? Theme->AccentFor(DefaultTop, .45f) : DefaultTop;
+    DrawLine(X+C,Y,X+W,Y,Top,1.f);
     DrawLine(X,Y+H,X+W-C,Y+H,FLinearColor(0,0,0,.5f),2.f);
-    const auto Rim=Theme?Theme->GetPalette().Rim:FLinearColor(.36f,.35f,.4f,1);
-    DrawLine(X+W,Y+1,X+W,Y+H-C,FLinearColor(Rim.R,Rim.G,Rim.B,.33f),1.f);
-    DrawLine(X+1,Y+C,X+1,Y+H-1,FLinearColor(Rim.R,Rim.G,Rim.B,.33f),1.f);
+    const FLinearColor Rim = Theme ? Theme->GetPalette().Rim : FLinearColor(.36f, .35f, .4f, 1.f);
+    const FLinearColor Side = bHighContrast ? ContrastRim : FLinearColor(Rim.R, Rim.G, Rim.B, .33f);
+    DrawLine(X+W,Y+1,X+W,Y+H-C,Side,1.f);
+    DrawLine(X+1,Y+C,X+1,Y+H-1,Side,1.f);
     DrawRect(FLinearColor(1,1,1,.025f),X+C+2,Y+2,FMath::Max(0.f,W-C-4),FMath::Min(2.f,H*.04f));
 }
 
@@ -83,13 +113,27 @@ void AOGWorldPresentationHud::DrawGameText(const FString& Text,float X,float Y,f
 
     UFont* Font=GEngine?GEngine->GetLargeFont():nullptr;
     if (!Font) return;
-    const float S=Height/FMath::Max(1.f,Font->GetMaxCharHeight());
+    const auto* Character = FindCanvasReadabilityPawn(PlayerOwner, FoundationSurface);
+    const FName Profile = Character ? Character->GetUiReadabilityProfile() : NAME_None;
+    float S = Height / FMath::Max(1.f, Font->GetMaxCharHeight());
     FString Line=Text;
     Line.ReplaceInline(TEXT("diagnostic:identity.kit_0"),TEXT("Protagonist"));
     Line.ReplaceInline(TEXT("diagnostic:identity.kit_1"),TEXT("Guardian"));
     Line.ReplaceInline(TEXT("diagnostic:identity.kit_2"),TEXT("Striker"));
     float W=0,H=0;
     GetTextSize(Line,W,H,Font,S);
+    if (Profile == LargeTextProfile && W > 0.f && W < MaxWidth)
+    {
+        // Use available width without shortening text that fit at its original size.
+        const float LargerScale = S * FMath::Min(LargeTextScale, MaxWidth / W);
+        float LargerWidth = 0.f;
+        GetTextSize(Line, LargerWidth, H, Font, LargerScale);
+        if (LargerWidth <= MaxWidth)
+        {
+            S = LargerScale;
+            W = LargerWidth;
+        }
+    }
     if (MaxWidth>0 && W>MaxWidth)
     {
         while (Line.Len()>1)
@@ -100,7 +144,19 @@ void AOGWorldPresentationHud::DrawGameText(const FString& Text,float X,float Y,f
         }
         Line+=TEXT("...");
     }
-    Super::DrawText(Line,FLinearColor(0,0,0,Color.A*.65f),X+1,Y+2,Font,S);
+    if (Profile == HighContrastProfile)
+    {
+        // Outline text without retinting semantic HP or status colours.
+        const FLinearColor Outline(0.f, 0.f, 0.f, Color.A);
+        Super::DrawText(Line, Outline, X - 1.f, Y, Font, S);
+        Super::DrawText(Line, Outline, X + 1.f, Y, Font, S);
+        Super::DrawText(Line, Outline, X, Y - 1.f, Font, S);
+        Super::DrawText(Line, Outline, X, Y + 1.f, Font, S);
+    }
+    else
+    {
+        Super::DrawText(Line,FLinearColor(0,0,0,Color.A*.65f),X+1,Y+2,Font,S);
+    }
     Super::DrawText(Line,Color,X,Y,Font,S);
 }
 

@@ -133,6 +133,10 @@ void AOGWorldPresentationHud::RegisterCanonicalCombatImpact(
 void AOGWorldPresentationHud::DrawNativeCombatImpacts(float Scale)
 {
     if (!Canvas || !PlayerOwner || !GetWorld()) return;
+    const auto* Character = Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn());
+    const FName DamagePresentation = Character ? Character->GetDamageNumberPresentation() : NAME_None;
+    const bool bCompact = DamagePresentation == TEXT("compact");
+    const bool bReducedMotion = Character && Character->GetReducedMotion();
     const double Now=GetWorld()->GetTimeSeconds();
     for(int32 I=NativeCombatImpacts.Num()-1;I>=0;--I)
     {
@@ -141,13 +145,14 @@ void AOGWorldPresentationHud::DrawNativeCombatImpacts(float Scale)
         const double Age=Now-Cue.StartAt;
         if(!Target || Age>1.5 || Age<0)
         { NativeCombatImpacts.RemoveAtSwap(I);continue; }
+        if (DamagePresentation == TEXT("off")) continue;
         FVector Center,Extents;
         Target->GetActorBounds(false,Center,Extents);
         FVector2D Screen;
         if(PlayerOwner->ProjectWorldLocationToScreen(
             Center+FVector(0,0,Extents.Z+30),Screen,true))
         {
-            Screen.Y-=static_cast<float>(Age)*42.f*Scale;
+            if (!bReducedMotion) Screen.Y -= static_cast<float>(Age) * (bCompact ? 24.f : 42.f) * Scale;
             if(Screen.X>0 && Screen.X<Canvas->ClipX &&
                Screen.Y>0 && Screen.Y<Canvas->ClipY)
             {
@@ -156,7 +161,7 @@ void AOGWorldPresentationHud::DrawNativeCombatImpacts(float Scale)
                     ?FLinearColor(.43f,.94f,.68f,Alpha)
                     :FLinearColor(.95f,.45f,.46f,Alpha);
                 DrawGameText(Cue.Number,Screen.X-32.f*Scale,
-                    Screen.Y,22.f*Scale,ImpactTint,155.f*Scale);
+                    Screen.Y,(bCompact ? 17.f : 22.f)*Scale,ImpactTint,155.f*Scale);
             }
         }
     }
@@ -451,6 +456,7 @@ bool AOGWorldPresentationHud::DrawOwnedLuminousCombatSurface(
 
 void AOGWorldPresentationHud::EndPlay(const EEndPlayReason::Type Reason)
 {
+    SynchronizeMobileSettingsOverlay(nullptr, false);
     if (NativeBattleWidget) { NativeBattleWidget->RemoveFromParent(); NativeBattleWidget=nullptr; }
     Super::EndPlay(Reason);
 }

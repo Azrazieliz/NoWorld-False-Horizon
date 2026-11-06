@@ -496,6 +496,7 @@ public:
     virtual void Landed(const FHitResult& Hit) override;
 
     virtual void BeginPlay() override;
+    virtual void PossessedBy(AController* NewController) override;
     virtual void Tick(float DeltaSeconds) override;
     virtual float TakeDamage(
         float DamageAmount,
@@ -610,6 +611,9 @@ public:
     }
     bool GetReducedMotion() const { return bReducedMotion; }
     bool GetReducedCameraShake() const { return bReducedCameraShake; }
+    bool GetMotionBlurEnabled() const { return bMotionBlurEnabled; }
+    float GetUiEffectsIntensity() const { return UiEffectsIntensity; }
+    const FString& GetMobileSettingsFeedback() const { return MobileSettingsFeedback; }
     bool GetSubtitlesEnabled() const { return bSubtitlesEnabled; }
     FName GetSubtitlePresentation() const { return SubtitlePresentation; }
     FName GetUiReadabilityProfile() const { return UiReadabilityProfile; }
@@ -659,6 +663,8 @@ public:
     void ToggleLargeDownloadsUnmeteredOnly();
     void ToggleReducedMotion();
     void ToggleReducedCameraShake();
+    void ToggleMotionBlur();
+    void AdjustUiEffectsIntensity(float Delta);
     void ToggleSubtitles();
     void CycleSubtitlePresentation();
     void CycleUiReadabilityProfile();
@@ -872,7 +878,7 @@ private:
     void CreateFoundationTouchInterface();
     void RefreshFoundationTouchInterfaceIfNeeded();
     void LoadControlProfile();
-    bool LoadMutablePlayerProfile(FOGPlayerProfileSettings& OutProfile) const;
+    bool LoadMutablePlayerProfile(FOGPlayerProfileSettings& OutProfile);
     void SaveMutablePlayerProfileAndApply(const FOGPlayerProfileSettings& Profile);
     void ApplyAudioAndSubtitlePresentationSettings();
     float ShapeLookInput(float Value) const;
@@ -930,6 +936,9 @@ private:
     bool bLargeDownloadsUnmeteredOnly = true;
     bool bReducedMotion = false;
     bool bReducedCameraShake = false;
+    bool bMotionBlurEnabled = true;
+    float UiEffectsIntensity = 1.f;
+    FString MobileSettingsFeedback;
     bool bSubtitlesEnabled = true;
     FName SubtitlePresentation = FName(TEXT("standard"));
     FName UiReadabilityProfile = FName(TEXT("standard"));
@@ -1131,6 +1140,15 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<class UOGGate12NativeRulerWidget> Gate12NativeRulerWidget;
 
+    UPROPERTY(Transient)
+    TObjectPtr<class UOGMobileSettingsOverlay> MobileSettingsOverlay;
+    bool SynchronizeMobileSettingsOverlay(const AOGWorldPrototypeCharacter* Character, bool bShowSettingsShortcut);
+    void DrawMobileSettingsSurface(const AOGWorldPrototypeCharacter& Character, float Scale,
+        FLinearColor MainText, FLinearColor SubText, FLinearColor Panel, FLinearColor Button);
+    void DrawMobileControlText(const FString& Label, FLinearColor Color, float X, float Y,
+        float Width, float Height, float OriginalScale);
+    void DrawMobileWorldAction(AOGWorldPrototypeCharacter& Character, const FString& Label, FName HitBoxName,
+        float HorizontalInset, float BottomInset, FLinearColor MainText, FLinearColor SubText);
     void DrawGamePolygon(const TArray<FVector2D>& Points, FLinearColor Color);
     void DrawGamePanel(FLinearColor Fill, float X, float Y, float W, float H);
     void DrawGameText(const FString& Text, float X, float Y, float Height, FLinearColor Color, float MaxWidth = 0);

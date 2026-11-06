@@ -2030,6 +2030,8 @@ void AOGWorldPrototypeCharacter::LoadControlProfile()
         TEXT("any_network");
     bReducedMotion = Profile.bReducedMotion;
     bReducedCameraShake = Profile.bReducedCameraShake;
+    bMotionBlurEnabled = Profile.bMotionBlurEnabled;
+    UiEffectsIntensity = Profile.UiEffectsIntensity;
     bSubtitlesEnabled = Profile.bSubtitlesEnabled;
     SubtitlePresentation = Profile.SubtitlePresentation;
     UiReadabilityProfile = Profile.UiReadabilityProfile;
@@ -2055,8 +2057,7 @@ void AOGWorldPrototypeCharacter::LoadControlProfile()
     }
 
     ApplyAudioAndSubtitlePresentationSettings();
-    SemanticAudio->ConfigureRoutes(FoundationMusicSoundClass, FoundationVoiceSoundClass, FoundationSfxSoundClass, FoundationAmbienceSoundClass);
-    SemanticAudio->ApplyProfile(Profile);
+    if (SemanticAudio) SemanticAudio->ApplyProfile(Profile);
     CanonicalPresentation->SetPrivacyPresentation(bSfwPresentation);
     if (ProtagonistRepresentation)
         if (auto* Presenter = ProtagonistRepresentation->FindComponentByClass<UOGCanonicalCharacterPresentation>())
@@ -2068,16 +2069,9 @@ void AOGWorldPrototypeCharacter::ApplyAudioAndSubtitlePresentationSettings()
     UGameplayStatics::SetSubtitlesEnabled(
         bSubtitlesEnabled);
 
-    if (GEngine)
-    {
-        FAudioDeviceHandle AudioDevice =
-            GEngine->GetMainAudioDevice();
-        if (AudioDevice.IsValid())
-        {
-            AudioDevice->SetTransientPrimaryVolume(
-                FMath::Clamp(MasterVolume, 0.0f, 1.0f));
-        }
-    }
+    FAudioDeviceHandle AudioDevice = GetWorld() ? GetWorld()->GetAudioDevice() : FAudioDeviceHandle();
+    if (AudioDevice.IsValid())
+        AudioDevice->SetTransientPrimaryVolume(FMath::Clamp(MasterVolume, 0.f, 1.f));
 
     if (!FoundationVolumeMix)
     {
@@ -2178,7 +2172,8 @@ void AOGWorldPrototypeCharacter::ApplyAudioAndSubtitlePresentationSettings()
         }
     }
 
-    if (FoundationVolumeMix)
+    const bool bApplyCategoryMix = AudioDevice.IsValid() && FoundationVolumeMix != nullptr;
+    if (bApplyCategoryMix)
     {
         UGameplayStatics::SetBaseSoundMix(
             this,
@@ -2206,14 +2201,8 @@ void AOGWorldPrototypeCharacter::ApplyAudioAndSubtitlePresentationSettings()
 
             // Runtime fallback classes need registration on this world's device.
             // Keep asset base volume authored; the mix contributes exactly one gain.
-            if (Route.SoundClass->GetOuter() == this && GetWorld())
-            {
-                FAudioDeviceHandle Device = GetWorld()->GetAudioDevice();
-                if (Device.IsValid())
-                {
-                    Device->RegisterSoundClass(Route.SoundClass);
-                }
-            }
+            if (Route.SoundClass->GetOuter() == this)
+                AudioDevice->RegisterSoundClass(Route.SoundClass);
             UGameplayStatics::SetSoundMixClassOverride(
                 this,
                 FoundationVolumeMix,
@@ -2231,11 +2220,13 @@ void AOGWorldPrototypeCharacter::ApplyAudioAndSubtitlePresentationSettings()
         OwnedDynamicRangeMix = SelectedAuthoredDynamicMix;
         if (OwnedDynamicRangeMix) UGameplayStatics::PushSoundMixModifier(this, OwnedDynamicRangeMix);
     }
-
+    if (SemanticAudio)
+        SemanticAudio->ConfigureRoutes(MusicClass, VoiceClass, SfxClass, AmbienceClass,
+            bApplyCategoryMix, AudioDevice.IsValid());
 }
 
 bool AOGWorldPrototypeCharacter::LoadMutablePlayerProfile(
-    FOGPlayerProfileSettings& OutProfile) const
+    FOGPlayerProfileSettings& OutProfile)
 {
     FString Error;
     if (FOGPlayerProfileSettingsService::Load(
@@ -2249,9 +2240,8 @@ bool AOGWorldPrototypeCharacter::LoadMutablePlayerProfile(
     UE_LOG(
         LogOfflineGame,
         Warning,
-        TEXT("Player profile load failed while editing settings; defaults will be used. Error=%s"),
-        *Error);
-    OutProfile = FOGPlayerProfileSettings();
+        TEXT("Player profile load failed while editing settings. Error=%s"), *Error);
+    MobileSettingsFeedback = Error;
     return false;
 }
 
@@ -2268,25 +2258,20 @@ void AOGWorldPrototypeCharacter::SaveMutablePlayerProfileAndApply(
             UpgradedProfile,
             Error))
     {
-        UE_LOG(
-            LogOfflineGame,
-            Error,
-            TEXT("Player profile settings save failed. Error=%s"),
-            *Error);
+        UE_LOG(LogOfflineGame, Error, TEXT("Player profile settings save failed. Error=%s"), *Error);
+        MobileSettingsFeedback = Error;
         return;
     }
 
+    MobileSettingsFeedback.Reset();
+    const bool bStickChanged = Profile.bLeftHandedControls != bLeftHandedControls ||
+        Profile.TouchControlScale != TouchControlScale || Profile.TouchControlOpacity != TouchControlOpacity ||
+        Profile.MovementStickInset != MovementStickInset || Profile.MovementStickBottom != MovementStickBottom;
     LoadControlProfile();
-    LastTouchViewportSize = FIntPoint::ZeroValue;
-    RefreshFoundationTouchInterfaceIfNeeded();
-
-    if (UGameInstance* GameInstance = GetGameInstance())
+    if (bStickChanged)
     {
-        if (UOGPresentationModeSubsystem* Presentation =
-                GameInstance->GetSubsystem<UOGPresentationModeSubsystem>())
-        {
-            Presentation->SetMode(Presentation->GetMode());
-        }
+        LastTouchViewportSize = FIntPoint::ZeroValue;
+        RefreshFoundationTouchInterfaceIfNeeded();
     }
 }
 
@@ -2389,6 +2374,11 @@ void AOGWorldPrototypeCharacter::CameraZoomOutPressed()
 void AOGWorldPrototypeCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 {
     Super::CalcCamera(DeltaTime, OutResult);
+    if (IsLocallyControlled() && !bMotionBlurEnabled)
+    {
+        OutResult.PostProcessSettings.bOverride_MotionBlurAmount = true;
+        OutResult.PostProcessSettings.MotionBlurAmount = 0.f;
+    }
     // Physically frame the real combat target only while the currently
     // possessed original character plays an authored contact-bound skill.
     // No generic orbit, fake target, camera teleports, opponent information
@@ -2459,7 +2449,7 @@ void AOGWorldPrototypeCharacter::SetFoundationSettingsPage(int32 Page)
 void AOGWorldPrototypeCharacter::AdjustCameraHorizontalSensitivity(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.CameraHorizontalSensitivity =
         FMath::Clamp(CameraHorizontalSensitivity + Delta, 0.35f, 2.50f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2468,7 +2458,7 @@ void AOGWorldPrototypeCharacter::AdjustCameraHorizontalSensitivity(float Delta)
 void AOGWorldPrototypeCharacter::AdjustCameraVerticalSensitivity(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.CameraVerticalSensitivity =
         FMath::Clamp(CameraVerticalSensitivity + Delta, 0.30f, 2.00f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2477,7 +2467,7 @@ void AOGWorldPrototypeCharacter::AdjustCameraVerticalSensitivity(float Delta)
 void AOGWorldPrototypeCharacter::AdjustCameraResponseExponent(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.CameraResponseExponent =
         FMath::Clamp(CameraResponseExponent + Delta, 1.0f, 2.5f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2486,7 +2476,7 @@ void AOGWorldPrototypeCharacter::AdjustCameraResponseExponent(float Delta)
 void AOGWorldPrototypeCharacter::ToggleInvertCameraX()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bInvertCameraX = !bInvertCameraX;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2494,7 +2484,7 @@ void AOGWorldPrototypeCharacter::ToggleInvertCameraX()
 void AOGWorldPrototypeCharacter::ToggleInvertCameraY()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bInvertCameraY = !bInvertCameraY;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2502,7 +2492,7 @@ void AOGWorldPrototypeCharacter::ToggleInvertCameraY()
 void AOGWorldPrototypeCharacter::ToggleSprintPreference()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bSprintToggle = !bSprintTogglePreference;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2517,7 +2507,7 @@ void AOGWorldPrototypeCharacter::CycleOrientationOverride()
 void AOGWorldPrototypeCharacter::ToggleLeftHandedControls()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bLeftHandedControls = !bLeftHandedControls;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2525,7 +2515,7 @@ void AOGWorldPrototypeCharacter::ToggleLeftHandedControls()
 void AOGWorldPrototypeCharacter::AdjustTouchControlScale(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.TouchControlScale =
         FMath::Clamp(TouchControlScale + Delta, 0.75f, 1.40f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2534,7 +2524,7 @@ void AOGWorldPrototypeCharacter::AdjustTouchControlScale(float Delta)
 void AOGWorldPrototypeCharacter::AdjustTouchControlOpacity(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.TouchControlOpacity =
         FMath::Clamp(TouchControlOpacity + Delta, 0.30f, 1.0f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2543,7 +2533,7 @@ void AOGWorldPrototypeCharacter::AdjustTouchControlOpacity(float Delta)
 void AOGWorldPrototypeCharacter::AdjustMovementDeadzone(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.MovementDeadzone =
         FMath::Clamp(MovementDeadzone + Delta, 0.0f, 0.35f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2552,7 +2542,7 @@ void AOGWorldPrototypeCharacter::AdjustMovementDeadzone(float Delta)
 void AOGWorldPrototypeCharacter::AdjustLookDeadzone(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.LookDeadzone =
         FMath::Clamp(LookDeadzone + Delta, 0.0f, 0.25f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2561,7 +2551,7 @@ void AOGWorldPrototypeCharacter::AdjustLookDeadzone(float Delta)
 void AOGWorldPrototypeCharacter::AdjustMovementStickInset(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.MovementStickInset =
         FMath::Clamp(MovementStickInset + Delta, 0.06f, 0.34f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2570,7 +2560,7 @@ void AOGWorldPrototypeCharacter::AdjustMovementStickInset(float Delta)
 void AOGWorldPrototypeCharacter::AdjustMovementStickBottom(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.MovementStickBottom =
         FMath::Clamp(MovementStickBottom + Delta, 0.08f, 0.36f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2579,7 +2569,7 @@ void AOGWorldPrototypeCharacter::AdjustMovementStickBottom(float Delta)
 void AOGWorldPrototypeCharacter::AdjustActionClusterHorizontalOffset(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.ActionClusterHorizontalOffset =
         FMath::Clamp(
             ActionClusterHorizontalOffset + Delta,
@@ -2591,7 +2581,7 @@ void AOGWorldPrototypeCharacter::AdjustActionClusterHorizontalOffset(float Delta
 void AOGWorldPrototypeCharacter::AdjustActionClusterVerticalOffset(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.ActionClusterVerticalOffset =
         FMath::Clamp(
             ActionClusterVerticalOffset + Delta,
@@ -2603,7 +2593,7 @@ void AOGWorldPrototypeCharacter::AdjustActionClusterVerticalOffset(float Delta)
 void AOGWorldPrototypeCharacter::ToggleSfwPresentation()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bSfwPresentation = !bSfwPresentation;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2611,7 +2601,7 @@ void AOGWorldPrototypeCharacter::ToggleSfwPresentation()
 void AOGWorldPrototypeCharacter::CycleRosterDensity()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     if (RosterDensity == FName(TEXT("dense")))
     {
         Profile.RosterDensity = FName(TEXT("comfortable"));
@@ -2630,7 +2620,7 @@ void AOGWorldPrototypeCharacter::CycleRosterDensity()
 void AOGWorldPrototypeCharacter::CycleCinematicRepeatPolicy()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
 
     FString Next(TEXT("first_time"));
     if (CinematicRepeatPolicy == FName(TEXT("first_time")))
@@ -2653,7 +2643,7 @@ void AOGWorldPrototypeCharacter::CycleCinematicRepeatPolicy()
 void AOGWorldPrototypeCharacter::ToggleAutoDownload()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bAutoDownload = !bAutoDownload;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2661,7 +2651,7 @@ void AOGWorldPrototypeCharacter::ToggleAutoDownload()
 void AOGWorldPrototypeCharacter::ToggleLargeDownloadsUnmeteredOnly()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.NetworkPreferencesJson =
         WriteJsonStringPreference(
             Profile.NetworkPreferencesJson,
@@ -2675,7 +2665,7 @@ void AOGWorldPrototypeCharacter::ToggleLargeDownloadsUnmeteredOnly()
 void AOGWorldPrototypeCharacter::ToggleReducedMotion()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bReducedMotion = !bReducedMotion;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2683,7 +2673,7 @@ void AOGWorldPrototypeCharacter::ToggleReducedMotion()
 void AOGWorldPrototypeCharacter::ToggleReducedCameraShake()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bReducedCameraShake = !bReducedCameraShake;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2691,7 +2681,7 @@ void AOGWorldPrototypeCharacter::ToggleReducedCameraShake()
 void AOGWorldPrototypeCharacter::ToggleSubtitles()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bSubtitlesEnabled = !bSubtitlesEnabled;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2699,7 +2689,7 @@ void AOGWorldPrototypeCharacter::ToggleSubtitles()
 void AOGWorldPrototypeCharacter::CycleSubtitlePresentation()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     if (SubtitlePresentation == FName(TEXT("standard")))
     {
         Profile.SubtitlePresentation = FName(TEXT("large"));
@@ -2718,7 +2708,7 @@ void AOGWorldPrototypeCharacter::CycleSubtitlePresentation()
 void AOGWorldPrototypeCharacter::CycleUiReadabilityProfile()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     if (UiReadabilityProfile == FName(TEXT("standard")))
     {
         Profile.UiReadabilityProfile = FName(TEXT("large_text"));
@@ -2737,7 +2727,7 @@ void AOGWorldPrototypeCharacter::CycleUiReadabilityProfile()
 void AOGWorldPrototypeCharacter::CycleColorVisionProfile()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     if (ColorVisionProfile == FName(TEXT("standard")))
     {
         Profile.ColorVisionProfile = FName(TEXT("deuteranopia"));
@@ -2760,7 +2750,7 @@ void AOGWorldPrototypeCharacter::CycleColorVisionProfile()
 void AOGWorldPrototypeCharacter::ToggleHaptics()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.bHapticsEnabled = !bHapticsEnabled;
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2768,7 +2758,7 @@ void AOGWorldPrototypeCharacter::ToggleHaptics()
 void AOGWorldPrototypeCharacter::AdjustHapticsIntensity(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.HapticsIntensity =
         FMath::Clamp(HapticsIntensity + Delta, 0.0f, 1.0f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2777,7 +2767,7 @@ void AOGWorldPrototypeCharacter::AdjustHapticsIntensity(float Delta)
 void AOGWorldPrototypeCharacter::AdjustMasterVolume(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.MasterVolume = FMath::Clamp(MasterVolume + Delta, 0.0f, 1.0f);
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2785,7 +2775,7 @@ void AOGWorldPrototypeCharacter::AdjustMasterVolume(float Delta)
 void AOGWorldPrototypeCharacter::AdjustMusicVolume(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.MusicVolume = FMath::Clamp(MusicVolume + Delta, 0.0f, 1.0f);
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2793,7 +2783,7 @@ void AOGWorldPrototypeCharacter::AdjustMusicVolume(float Delta)
 void AOGWorldPrototypeCharacter::AdjustVoiceVolume(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.VoiceVolume = FMath::Clamp(VoiceVolume + Delta, 0.0f, 1.0f);
     SaveMutablePlayerProfileAndApply(Profile);
 }
@@ -2801,7 +2791,7 @@ void AOGWorldPrototypeCharacter::AdjustVoiceVolume(float Delta)
 void AOGWorldPrototypeCharacter::AdjustSfxVolume(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.SfxVolume = FMath::Clamp(SfxVolume + Delta, 0.0f, 1.0f);
     Profile.EffectsVolume = Profile.SfxVolume;
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2810,7 +2800,7 @@ void AOGWorldPrototypeCharacter::AdjustSfxVolume(float Delta)
 void AOGWorldPrototypeCharacter::AdjustAmbienceVolume(float Delta)
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     Profile.AmbienceVolume =
         FMath::Clamp(AmbienceVolume + Delta, 0.0f, 1.0f);
     SaveMutablePlayerProfileAndApply(Profile);
@@ -2819,7 +2809,7 @@ void AOGWorldPrototypeCharacter::AdjustAmbienceVolume(float Delta)
 void AOGWorldPrototypeCharacter::CycleDynamicRangeProfile()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     if (DynamicRangeProfile == FName(TEXT("full")))
     {
         Profile.DynamicRangeProfile = FName(TEXT("night"));
@@ -2838,7 +2828,7 @@ void AOGWorldPrototypeCharacter::CycleDynamicRangeProfile()
 void AOGWorldPrototypeCharacter::CycleDamageNumberPresentation()
 {
     FOGPlayerProfileSettings Profile;
-    LoadMutablePlayerProfile(Profile);
+    if (!LoadMutablePlayerProfile(Profile)) return;
     if (DamageNumberPresentation == FName(TEXT("standard")))
     {
         Profile.DamageNumberPresentation = FName(TEXT("compact"));
@@ -2852,174 +2842,6 @@ void AOGWorldPrototypeCharacter::CycleDamageNumberPresentation()
         Profile.DamageNumberPresentation = FName(TEXT("standard"));
     }
     SaveMutablePlayerProfileAndApply(Profile);
-}
-
-void AOGWorldPrototypeCharacter::CreateFoundationTouchInterface()
-{
-#if PLATFORM_ANDROID || PLATFORM_IOS
-    APlayerController* PlayerController =
-        Cast<APlayerController>(Controller);
-    if (!PlayerController)
-    {
-        return;
-    }
-
-    JumpReleased(); TraversalDownReleased(); SprintReleased();
-    bCameraTouchActive = false;
-    FoundationTouchInterface =
-        NewObject<UTouchInterface>(this);
-    if (!FoundationTouchInterface)
-    {
-        return;
-    }
-
-    UTexture2D* Thumb = LoadObject<UTexture2D>(
-        nullptr,
-        TEXT("/Engine/MobileResources/HUD/VirtualJoystick_Thumb.VirtualJoystick_Thumb"));
-    UTexture2D* Background = LoadObject<UTexture2D>(
-        nullptr,
-        TEXT("/Engine/MobileResources/HUD/VirtualJoystick_Background.VirtualJoystick_Background"));
-
-    int32 ViewWidth = 0;
-    int32 ViewHeight = 0;
-    PlayerController->GetViewportSize(ViewWidth, ViewHeight);
-    const float RelativeXForSquare =
-        ViewWidth > 0 && ViewHeight > 0
-            ? static_cast<float>(ViewHeight) / static_cast<float>(ViewWidth)
-            : 1.0f;
-
-    const float ShortSideFraction = ViewHeight > 0
-        ? static_cast<float>(FMath::Min(ViewWidth, ViewHeight)) / ViewHeight : 1.0f;
-    auto SquareRelative =
-        [RelativeXForSquare, ShortSideFraction, this](float RelativeSize)
-        {
-            const float ScaledSize =
-                RelativeSize * ShortSideFraction * FMath::Clamp(TouchControlScale, 0.9f, 1.1f);
-            return FVector2D(
-                ScaledSize * RelativeXForSquare,
-                ScaledSize);
-        };
-
-    auto ActionCenter =
-        [this](float HorizontalInset, float BottomInset)
-        {
-            const float X =
-                FMath::Clamp(
-                    HorizontalInset + ActionClusterHorizontalOffset,
-                    0.06f,
-                    0.46f);
-            const float Y =
-                FMath::Clamp(
-                    BottomInset + ActionClusterVerticalOffset,
-                    0.08f,
-                    0.48f);
-            return FVector2D(
-                bLeftHandedControls ? X : -X,
-                -Y);
-        };
-
-    auto MakeButton =
-        [&](int32 TextureIndex,
-            const FVector2D& Center,
-            const FKey& Key,
-            float VisualSize = 0.055f,
-            float InteractionSize = 0.034f)
-        {
-            // The engine MobileHUDButton textures are very wide pills on modern
-            // ultrawide phones. Reuse the circular joystick art for compact,
-            // aspect-ratio-stable Foundation action controls instead.
-            (void)TextureIndex;
-            FTouchInputControl Button;
-            Button.bTreatAsButton = true;
-            Button.Image1 = Background;
-            Button.Image2 = Thumb;
-            Button.Center = Center;
-            Button.VisualSize = SquareRelative(VisualSize);
-            Button.ThumbSize = SquareRelative(VisualSize);
-            Button.InteractionSize = SquareRelative(InteractionSize);
-            Button.InputScale = FVector2D(1.0f, 1.0f);
-            Button.MainInputKey = Key;
-            return Button;
-        };
-
-    FTouchInputControl LeftStick;
-    LeftStick.Image1 = Thumb;
-    LeftStick.Image2 = Background;
-    const FVector2D StickTouchSize = SquareRelative(0.20f);
-    const float StickInsetX = FMath::Clamp(MovementStickInset,
-        StickTouchSize.X * 0.5f + 0.015f, 0.30f);
-    const float StickInsetY = FMath::Clamp(MovementStickBottom,
-        StickTouchSize.Y * 0.5f + 0.015f, 0.30f);
-    LeftStick.Center = FVector2D(
-        bLeftHandedControls ? -StickInsetX : StickInsetX, -StickInsetY);
-    // TouchInterface relative X and Y sizes are measured against different
-    // viewport dimensions. Aspect-correct them so the movement stick is a true
-    // screen-space X/Y circle instead of a landscape-stretched X/Z-looking oval.
-    LeftStick.VisualSize = SquareRelative(0.15f);
-    LeftStick.ThumbSize = SquareRelative(0.065f);
-    LeftStick.InteractionSize = SquareRelative(0.20f);
-    LeftStick.InputScale = FVector2D(1.0f, 1.0f);
-    LeftStick.MainInputKey = EKeys::Gamepad_LeftX;
-    LeftStick.AltInputKey = EKeys::Gamepad_LeftY;
-
-    const FTouchInputControl AttackButton =
-        MakeButton(
-            1,
-            ActionCenter(0.105f, 0.125f),
-            EKeys::Gamepad_RightTrigger,
-            0.064f,
-            0.038f);
-    const FTouchInputControl DodgeButton =
-        MakeButton(
-            2,
-            ActionCenter(0.185f, 0.195f),
-            EKeys::Gamepad_FaceButton_Right);
-    const FTouchInputControl JumpButton =
-        MakeButton(
-            3,
-            ActionCenter(0.105f, 0.245f),
-            EKeys::Gamepad_FaceButton_Bottom);
-    const FTouchInputControl LockButton =
-        MakeButton(
-            2,
-            ActionCenter(0.285f, 0.205f),
-            EKeys::Gamepad_RightThumbstick,
-            0.047f,
-            0.032f);
-    const FTouchInputControl SprintButton =
-        MakeButton(
-            3,
-            ActionCenter(0.265f, 0.285f),
-            EKeys::Gamepad_LeftThumbstick,
-            0.047f,
-            0.032f);
-
-    // Keep only actions that are universally meaningful in the Foundation
-    // shell. Contextual actions (Interact, traversal-down, QTE, party switch,
-    // skills, Ultimate and Aim) are drawn as HUD controls only when the
-    // current state actually supports them; dead permanent buttons are not
-    // allowed on mobile.
-    FoundationTouchInterface->Controls.Reset();
-    FoundationTouchInterface->Controls.Add(LeftStick);
-    FoundationTouchInterface->ActiveOpacity = TouchControlOpacity;
-    FoundationTouchInterface->InactiveOpacity =
-        FMath::Clamp(TouchControlOpacity * 0.45f, 0.18f, 0.50f);
-    FoundationTouchInterface->TimeUntilDeactive = 0.25f;
-    FoundationTouchInterface->TimeUntilReset = 0.0f;
-    FoundationTouchInterface->ActivationDelay = 0.0f;
-    FoundationTouchInterface->StartupDelay = 0.0f;
-    FoundationTouchInterface->bPreventRecenter = true;
-    LastTouchViewportSize = FIntPoint(ViewWidth, ViewHeight);
-
-    PlayerController->ActivateTouchInterface(FoundationTouchInterface);
-
-    RefreshFoundationInputState();
-
-    UE_LOG(
-        LogOfflineGame,
-        Log,
-        TEXT("Foundation mobile touch profile activated: fixed X/Y movement, camera drag and only universally valid actions."));
-#endif
 }
 
 void AOGWorldPrototypeCharacter::RefreshFoundationTouchInterfaceIfNeeded()
@@ -3056,48 +2878,6 @@ float AOGWorldPrototypeCharacter::ShapeLookInput(float Value) const
         FMath::Pow(Magnitude, CameraResponseExponent);
 }
 
-
-bool AOGWorldPrototypeCharacter::IsCameraDragTouch(
-    const FVector& ScreenLocation) const
-{
-    const APlayerController* PlayerController =
-        Cast<APlayerController>(Controller);
-    if (!PlayerController)
-    {
-        return false;
-    }
-
-    int32 Width = 0;
-    int32 Height = 0;
-    PlayerController->GetViewportSize(Width, Height);
-    if (Width <= 0 || Height <= 0)
-    {
-        return false;
-    }
-
-    const float NormalizedX =
-        ScreenLocation.X / static_cast<float>(Width);
-    const float NormalizedY =
-        ScreenLocation.Y / static_cast<float>(Height);
-
-    if (!IsFoundationWorldInputAllowed())
-    {
-        return false;
-    }
-
-    // The old hard-coded half-screen, upper-55%-only strip caused the
-    // unusable camera demonstrated on the S26. Permit all unoccupied look
-    // surface, while reserving joystick, action cluster and top HUD areas.
-    // Exact UMG controls are excluded by GetHitBoxAtCoordinates above.
-    const bool bTopUi = NormalizedY < 0.11f;
-    const bool bMovementZone = NormalizedY > 0.54f &&
-        (bLeftHandedControls ? NormalizedX > 0.67f
-                            : NormalizedX < 0.33f);
-    const bool bActionZone = NormalizedY > 0.62f &&
-        (bLeftHandedControls ? NormalizedX < 0.35f
-                            : NormalizedX > 0.65f);
-    return !bTopUi && !bMovementZone && !bActionZone;
-}
 
 void AOGWorldPrototypeCharacter::TouchPressed(
     ETouchIndex::Type FingerIndex,
@@ -8926,26 +8706,36 @@ void AOGWorldPresentationHud::DrawHUD()
         bGate12NativeOpeningUMGEnabled && !bSettingsOpen && !bPauseOpen &&
         FoundationSurface == FName(TEXT("opening"));
     SynchronizeGate12NativeOpeningUMG(bNativeOpeningVisible);
-    if (bNativeOpeningVisible && Gate12NativeOpeningWidget &&
-        Gate12NativeOpeningWidget->IsInViewport())
-        return;
-
     const bool bNativeRulerVisible =
         bGate12NativeRulerUMGEnabled && !bSettingsOpen && !bPauseOpen && !bInteractionMenuOpen &&
-        FoundationSurface == FName(TEXT("ruler"));
-    SynchronizeGate12NativeRulerUMG(bNativeRulerVisible);
-    if (bNativeRulerVisible && Gate12NativeRulerWidget &&
-        Gate12NativeRulerWidget->IsInViewport())
+        FoundationSurface == TEXT("ruler");
+    const bool bKeepRulerMounted = bSettingsOpen && FoundationSurface == TEXT("ruler") &&
+        Gate12NativeRulerWidget && Gate12NativeRulerWidget->IsInViewport();
+    SynchronizeGate12NativeRulerUMG(bNativeRulerVisible || bKeepRulerMounted);
+    if (Gate12NativeRulerWidget && Gate12NativeRulerWidget->IsInViewport())
+        Gate12NativeRulerWidget->SetVisibility(bSettingsOpen ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+
+    const bool bNativeRulerDisplayed = bNativeRulerVisible && Gate12NativeRulerWidget &&
+        Gate12NativeRulerWidget->IsInViewport();
+    if (bNativeRulerDisplayed || (bNativeOpeningVisible && Gate12NativeOpeningWidget &&
+        Gate12NativeOpeningWidget->IsInViewport()))
+    {
+        SynchronizeMobileSettingsOverlay(Character, Character && bNativeRulerDisplayed);
         return;
+    }
 
     if (bInteractionMenuOpen || (Character && Character->FindComponentByClass<UOGFoundationInteractionHost>() &&
         Character->FindComponentByClass<UOGFoundationInteractionHost>()->IsActive()))
     {
         FString InteractionError;
-        if (ShowNativeInteractionSurface(InteractionError)) return;
+        if (ShowNativeInteractionSurface(InteractionError))
+        {
+            SynchronizeMobileSettingsOverlay(Character, false);
+            return;
+        }
         FoundationStatusMessage = InteractionError;
     }
-    float Scale =
+    const float Scale =
         FMath::Clamp(Canvas->ClipY / 1080.0f, 0.72f, 1.2f);
     FLinearColor MainText(0.94f, 0.94f, 0.89f, 1.0f);
     FLinearColor SubText(0.63f, 0.73f, 0.80f, 1.0f);
@@ -8956,13 +8746,7 @@ void AOGWorldPresentationHud::DrawHUD()
 
     if (Character)
     {
-        if (Character->GetUiReadabilityProfile() ==
-            FName(TEXT("large_text")))
-        {
-            Scale = FMath::Min(Scale * 1.12f, 1.32f);
-        }
-        else if (Character->GetUiReadabilityProfile() ==
-                 FName(TEXT("high_contrast")))
+        if (Character->GetUiReadabilityProfile() == TEXT("high_contrast"))
         {
             MainText = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
             SubText = FLinearColor(0.86f, 0.88f, 0.90f, 1.0f);
@@ -8985,10 +8769,18 @@ void AOGWorldPresentationHud::DrawHUD()
         }
     }
 
-    if (!bSettingsOpen && DrawFoundationDiagnosticSurface(Character, Scale, true)) return;
+    if (!bSettingsOpen && DrawFoundationDiagnosticSurface(Character, Scale, true))
+    {
+        SynchronizeMobileSettingsOverlay(Character, false);
+        return;
+    }
     if (!bSettingsOpen && !bPauseOpen && FoundationSurface == TEXT("world") &&
-        DrawOwnedLuminousCombatSurface(Character, Scale)) return;
-    if (!bSettingsOpen && !bPauseOpen && FoundationSurface == TEXT("world") && DrawCanonicalTurnSurface(Character, Scale)) return;
+        (DrawOwnedLuminousCombatSurface(Character, Scale) || DrawCanonicalTurnSurface(Character, Scale)))
+    {
+        SynchronizeMobileSettingsOverlay(Character, Character != nullptr);
+        return;
+    }
+    const bool bMobileOverlay = SynchronizeMobileSettingsOverlay(Character, false);
 
     if (!bSettingsOpen &&
         FoundationSurface == FName(TEXT("opening")))
@@ -9044,8 +8836,8 @@ void AOGWorldPresentationHud::DrawHUD()
         DrawLine(Center.X,Center.Y-Radius*1.17f,
                  Center.X,Center.Y-Radius*.83f,
                  FLinearColor(.78f,.68f,.87f,.94f),1.3f);
-        DrawFoundationText(Glyph,MainText,X+W*.34f,Y+H*.21f,
-                           nullptr,.49f*Scale,false);
+        DrawMobileControlText(Glyph, MainText, X + W * .34f, Y + H * .21f,
+            W * .55f, H * .62f, .49f * Scale);
     };
     DrawGothicWorldUtility(MenuX,MenuY,MenuWidth,MenuHeight,
         bSettingsOpen ? TEXT("X") : TEXT("S"));
@@ -9158,521 +8950,7 @@ void AOGWorldPresentationHud::DrawHUD()
 
     if (bSettingsOpen && Character)
     {
-        DrawRect(
-            FLinearColor(0.0f, 0.0f, 0.0f, 0.55f),
-            0.0f,
-            0.0f,
-            Canvas->ClipX,
-            Canvas->ClipY);
-
-        const float PanelWidth =
-            FMath::Min(820.0f * Scale, Canvas->ClipX * 0.90f);
-        const float PanelHeight =
-            Canvas->ClipY * 0.84f;
-        const float PanelX =
-            (Canvas->ClipX - PanelWidth) * 0.5f;
-        const float PanelY =
-            (Canvas->ClipY - PanelHeight) * 0.5f;
-
-        DrawGamePanel(Panel, PanelX, PanelY, PanelWidth, PanelHeight);
-        DrawFoundationText(
-            TEXT("SETTINGS"),
-            MainText,
-            PanelX + 28.0f * Scale,
-            PanelY + 24.0f * Scale,
-            nullptr,
-            0.92f * Scale,
-            false);
-        DrawFoundationText(
-            TEXT("Changes save automatically"),
-            SubText,
-            PanelX + 28.0f * Scale,
-            PanelY + 74.0f * Scale,
-            nullptr,
-            0.68f * Scale,
-            false);
-
-        const float ReadableHeight = FMath::Min(Canvas->ClipX, Canvas->ClipY) / 27.0f;
-        const float ButtonH = FMath::Max(32.0f * Scale, ReadableHeight + 16.0f);
-        const float RowStep = ButtonH + 10.0f * Scale;
-        const float RowsTop = PanelY + 122.0f * Scale + ButtonH + 12.0f * Scale;
-        const float RowsBottom = PanelY + PanelHeight - ButtonH - 20.0f * Scale;
-        const int32 VisibleRows = FMath::Max(1, FMath::FloorToInt((RowsBottom - RowsTop) / RowStep));
-        auto ProjectSettingsY = [&](float RawY) { return RawY - SettingsRowPage * VisibleRows * RowStep; };
-        auto IsSettingsRowVisible = [&](float RawY)
-        {
-            const float ScreenY = ProjectSettingsY(RawY);
-            return ScreenY >= RowsTop - 1.0f && ScreenY + ButtonH <= RowsBottom;
-        };
-
-        auto DrawHitButton =
-            [&](const FString& Label,
-                FName BoxName,
-                float X,
-                float Y,
-                float W,
-                float H,
-                float TextScale = 0.66f)
-            {
-                if (Y >= RowsTop - 1.0f)
-                {
-                    if (!IsSettingsRowVisible(Y)) return;
-                    Y = ProjectSettingsY(Y);
-                }
-                DrawGamePanel(Button, X, Y, W, H);
-                DrawFoundationText(
-                    Label,
-                    MainText,
-                    X + 10.0f * Scale,
-                    Y + 8.0f * Scale,
-                    nullptr,
-                    TextScale * Scale,
-                    false);
-                AddFoundationHitBox(
-                    FVector2D(X, Y),
-                    FVector2D(W, H),
-                    BoxName,
-                    true,
-                    110);
-            };
-
-        const float Left = PanelX + 28.0f * Scale;
-        const float RowWidth = PanelWidth - 56.0f * Scale;
-
-        const float SmallW = 48.0f * Scale;
-        const float ValueW = 150.0f * Scale;
-
-        float Y = PanelY + 122.0f * Scale;
-
-        const float TabGap = 6.0f * Scale;
-        const float TabW = (RowWidth - 3.0f * TabGap) / 4.0f;
-        DrawHitButton(
-            TEXT("Controls"),
-            FName(TEXT("OG.Settings.Page.Controls")),
-            Left,
-            Y,
-            TabW,
-            ButtonH,
-            0.56f);
-        DrawHitButton(
-            TEXT("Access"),
-            FName(TEXT("OG.Settings.Page.Accessibility")),
-            Left + TabW + TabGap,
-            Y,
-            TabW,
-            ButtonH,
-            0.50f);
-        DrawHitButton(
-            TEXT("Audio"),
-            FName(TEXT("OG.Settings.Page.Audio")),
-            Left + 2.0f * (TabW + TabGap),
-            Y,
-            TabW,
-            ButtonH,
-            0.56f);
-        DrawHitButton(
-            TEXT("Content"),
-            FName(TEXT("OG.Settings.Page.Content")),
-            Left + 3.0f * (TabW + TabGap),
-            Y,
-            TabW,
-            ButtonH,
-            0.52f);
-        Y = RowsTop;
-
-        auto DrawAdjustableRow =
-            [&](const TCHAR* Label,
-                float Value,
-                FName MinusName,
-                FName PlusName)
-            {
-                if (!IsSettingsRowVisible(Y)) { Y += RowStep; return; }
-                const float ScreenY = ProjectSettingsY(Y);
-                DrawFoundationText(
-                    Label,
-                    MainText,
-                    Left,
-                    ScreenY + 7.0f * Scale,
-                    nullptr,
-                    0.54f * Scale,
-                    false);
-                const float PlusX = Left + RowWidth - SmallW;
-                const float MinusX = PlusX - SmallW - 6.0f * Scale;
-                DrawHitButton(
-                    TEXT("-"),
-                    MinusName,
-                    MinusX,
-                    Y,
-                    SmallW,
-                    ButtonH,
-                    0.72f);
-                DrawHitButton(
-                    TEXT("+"),
-                    PlusName,
-                    PlusX,
-                    Y,
-                    SmallW,
-                    ButtonH,
-                    0.72f);
-                DrawFoundationText(
-                    FString::Printf(TEXT("%.2f"), Value),
-                    SubText,
-                    MinusX - FMath::Max(90.0f * Scale, ReadableHeight * 2.5f),
-                    ScreenY + 8.0f * Scale,
-                    nullptr,
-                    0.54f * Scale,
-                    false);
-                Y += RowStep;
-            };
-
-        const float HalfW = (RowWidth - 8.0f * Scale) * 0.5f;
-        const int32 Page = Character->GetFoundationSettingsPage();
-
-        if (Page == 0)
-        {
-            if (IsSettingsRowVisible(Y))
-                DrawFoundationText(TEXT("Orientation"), MainText, Left,
-                    ProjectSettingsY(Y) + 7.0f * Scale, nullptr, 0.54f * Scale, false);
-            // Fixed per-mode orientation. Do not offer a selector that can
-            // force portrait World or landscape Ruler.
-            if (IsSettingsRowVisible(Y))
-                DrawFoundationText(TEXT("AUTO BY MODE"), MainText,
-                    Left + RowWidth - ValueW,
-                    ProjectSettingsY(Y) + 7.0f * Scale, nullptr,
-                    0.48f * Scale, false);
-            Y += RowStep;
-
-            DrawAdjustableRow(
-                TEXT("Camera horizontal"),
-                Character->GetCameraHorizontalSensitivity(),
-                FName(TEXT("OG.Settings.CameraH.Minus")),
-                FName(TEXT("OG.Settings.CameraH.Plus")));
-            DrawAdjustableRow(
-                TEXT("Camera vertical"),
-                Character->GetCameraVerticalSensitivity(),
-                FName(TEXT("OG.Settings.CameraV.Minus")),
-                FName(TEXT("OG.Settings.CameraV.Plus")));
-            DrawAdjustableRow(
-                TEXT("Camera response"),
-                Character->GetCameraResponseExponent(),
-                FName(TEXT("OG.Settings.Response.Minus")),
-                FName(TEXT("OG.Settings.Response.Plus")));
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Invert horizontal: %s"),
-                    Character->GetInvertCameraX()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.InvertX")),
-                Left,
-                Y,
-                HalfW,
-                ButtonH,
-                0.48f);
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Invert vertical: %s"),
-                    Character->GetInvertCameraY()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.InvertY")),
-                Left + HalfW + 8.0f * Scale,
-                Y,
-                HalfW,
-                ButtonH,
-                0.48f);
-            Y += RowStep;
-            DrawAdjustableRow(
-                TEXT("Control scale"),
-                Character->GetTouchControlScale(),
-                FName(TEXT("OG.Settings.TouchScale.Minus")),
-                FName(TEXT("OG.Settings.TouchScale.Plus")));
-            DrawAdjustableRow(
-                TEXT("Control opacity"),
-                Character->GetTouchControlOpacity(),
-                FName(TEXT("OG.Settings.TouchOpacity.Minus")),
-                FName(TEXT("OG.Settings.TouchOpacity.Plus")));
-            DrawAdjustableRow(
-                TEXT("Movement deadzone"),
-                Character->GetMovementDeadzone(),
-                FName(TEXT("OG.Settings.MoveDeadzone.Minus")),
-                FName(TEXT("OG.Settings.MoveDeadzone.Plus")));
-            DrawAdjustableRow(
-                TEXT("Look deadzone"),
-                Character->GetLookDeadzone(),
-                FName(TEXT("OG.Settings.LookDeadzone.Minus")),
-                FName(TEXT("OG.Settings.LookDeadzone.Plus")));
-            DrawAdjustableRow(
-                TEXT("Stick horizontal"),
-                Character->GetMovementStickInset(),
-                FName(TEXT("OG.Settings.MoveInset.Minus")),
-                FName(TEXT("OG.Settings.MoveInset.Plus")));
-            DrawAdjustableRow(
-                TEXT("Stick vertical"),
-                Character->GetMovementStickBottom(),
-                FName(TEXT("OG.Settings.MoveBottom.Minus")),
-                FName(TEXT("OG.Settings.MoveBottom.Plus")));
-            DrawAdjustableRow(
-                TEXT("Actions horizontal"),
-                Character->GetActionClusterHorizontalOffset(),
-                FName(TEXT("OG.Settings.ActionX.Minus")),
-                FName(TEXT("OG.Settings.ActionX.Plus")));
-            DrawAdjustableRow(
-                TEXT("Actions vertical"),
-                Character->GetActionClusterVerticalOffset(),
-                FName(TEXT("OG.Settings.ActionY.Minus")),
-                FName(TEXT("OG.Settings.ActionY.Plus")));
-
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Handedness: %s"),
-                    Character->GetLeftHandedControls()
-                        ? TEXT("Left")
-                        : TEXT("Right")),
-                FName(TEXT("OG.Settings.Handedness")),
-                Left,
-                Y,
-                HalfW,
-                ButtonH,
-                0.48f);
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Sprint: %s"),
-                    Character->GetSprintTogglePreference()
-                        ? TEXT("Toggle")
-                        : TEXT("Hold")),
-                FName(TEXT("OG.Settings.Sprint")),
-                Left + HalfW + 8.0f * Scale,
-                Y,
-                HalfW,
-                ButtonH,
-                0.48f);
-        }
-        else if (Page == 1)
-        {
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Privacy / SFW: %s"),
-                    Character->GetSfwPresentation()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.SFW")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Reduced motion: %s"),
-                    Character->GetReducedMotion()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.ReducedMotion")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Reduced camera shake: %s"),
-                    Character->GetReducedCameraShake()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.ReducedShake")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Subtitles / captions: %s"),
-                    Character->GetSubtitlesEnabled()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.Subtitles")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Subtitle presentation: %s"),
-                    *Character->GetSubtitlePresentation().ToString()),
-                FName(TEXT("OG.Settings.SubtitlePresentation")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("UI readability: %s"),
-                    *Character->GetUiReadabilityProfile().ToString()),
-                FName(TEXT("OG.Settings.Readability")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Color-vision palette: %s"),
-                    *Character->GetColorVisionProfile().ToString()),
-                FName(TEXT("OG.Settings.ColorVision")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Haptics: %s"),
-                    Character->GetHapticsEnabled()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.Haptics")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-            Y += RowStep;
-            DrawAdjustableRow(
-                TEXT("Haptics intensity"),
-                Character->GetHapticsIntensity(),
-                FName(TEXT("OG.Settings.HapticsIntensity.Minus")),
-                FName(TEXT("OG.Settings.HapticsIntensity.Plus")));
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Damage numbers: %s"),
-                    *Character->GetDamageNumberPresentation().ToString()),
-                FName(TEXT("OG.Settings.DamageNumbers")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-        }
-        else if (Page == 2)
-        {
-            DrawAdjustableRow(
-                TEXT("Master volume"),
-                Character->GetMasterVolume(),
-                FName(TEXT("OG.Settings.MasterVolume.Minus")),
-                FName(TEXT("OG.Settings.MasterVolume.Plus")));
-            DrawAdjustableRow(
-                TEXT("Music volume"),
-                Character->GetMusicVolume(),
-                FName(TEXT("OG.Settings.MusicVolume.Minus")),
-                FName(TEXT("OG.Settings.MusicVolume.Plus")));
-            DrawAdjustableRow(
-                TEXT("Voice volume"),
-                Character->GetVoiceVolume(),
-                FName(TEXT("OG.Settings.VoiceVolume.Minus")),
-                FName(TEXT("OG.Settings.VoiceVolume.Plus")));
-            DrawAdjustableRow(
-                TEXT("SFX volume"),
-                Character->GetSfxVolume(),
-                FName(TEXT("OG.Settings.SfxVolume.Minus")),
-                FName(TEXT("OG.Settings.SfxVolume.Plus")));
-            DrawAdjustableRow(
-                TEXT("Ambience volume"),
-                Character->GetAmbienceVolume(),
-                FName(TEXT("OG.Settings.AmbienceVolume.Minus")),
-                FName(TEXT("OG.Settings.AmbienceVolume.Plus")));
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Dynamic range: %s"),
-                    *Character->GetDynamicRangeProfile().ToString()),
-                FName(TEXT("OG.Settings.DynamicRange")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.52f);
-        }
-        else
-        {
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Roster density: %s"),
-                    *Character->GetRosterDensity().ToString()),
-                FName(TEXT("OG.Settings.RosterDensity")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.50f);
-            Y += RowStep;
-
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Ultimate cinematics: %s"),
-                    *Character->GetCinematicRepeatPolicy().ToString()),
-                FName(TEXT("OG.Settings.CinematicPolicy")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.50f);
-            Y += RowStep;
-
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Automatic content downloads: %s"),
-                    Character->GetAutoDownloadEnabled()
-                        ? TEXT("On")
-                        : TEXT("Off")),
-                FName(TEXT("OG.Settings.AutoDownload")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.50f);
-            Y += RowStep;
-
-            DrawHitButton(
-                FString::Printf(
-                    TEXT("Large downloads: %s"),
-                    Character->GetLargeDownloadsUnmeteredOnly()
-                        ? TEXT("Wi-Fi / unmetered only")
-                        : TEXT("Any network")),
-                FName(TEXT("OG.Settings.DownloadNetwork")),
-                Left,
-                Y,
-                RowWidth,
-                ButtonH,
-                0.48f);
-        }
-        const int32 TotalRows = FMath::FloorToInt((Y - RowsTop) / RowStep) + 1;
-        SettingsLastRowPage = FMath::Max(0, (TotalRows - 1) / VisibleRows);
-        SettingsRowPage = FMath::Clamp(SettingsRowPage, 0, SettingsLastRowPage);
-        if (SettingsLastRowPage > 0)
-        {
-            const float FooterY = PanelY + PanelHeight - ButtonH - 8.0f * Scale;
-            const float FooterW = (RowWidth - 12.0f * Scale) * 0.5f;
-            // Footer targets are outside the scrolling row projection.
-            for (int32 Direction : {-1, 1})
-            {
-                const float X = Left + (Direction > 0 ? FooterW + 12.0f * Scale : 0.0f);
-                const FName Name = Direction < 0 ? TEXT("OG.Settings.Rows.Previous") : TEXT("OG.Settings.Rows.Next");
-                DrawGamePanel(Button, X, FooterY, FooterW, ButtonH);
-                DrawFoundationText(Direction < 0 ? TEXT("Previous controls") : TEXT("More controls"),
-                    MainText, X + 10.0f * Scale, FooterY + 8.0f * Scale, nullptr, 0.54f * Scale);
-                AddFoundationHitBox(FVector2D(X, FooterY), FVector2D(FooterW, ButtonH), Name, true, 112);
-            }
-        }
+        DrawMobileSettingsSurface(*Character, Scale, MainText, SubText, Panel, Button);
         return;
     }
 
@@ -9981,14 +9259,8 @@ void AOGWorldPresentationHud::DrawHUD()
                         CardY,
                         QteW,
                         CardH);
-                    DrawFoundationText(
-                        TEXT("QTE"),
-                        MainText,
-                        CardX - QteW + 17.0f * Scale,
-                        CardY + 17.0f * Scale,
-                        nullptr,
-                        0.58f * Scale,
-                        false);
+                    DrawMobileControlText(TEXT("QTE"), MainText, CardX - QteW - 2.f * Scale,
+                        CardY + 17.f * Scale, QteW - 12.f * Scale, CardH - 23.f * Scale, .58f * Scale);
                     AddFoundationHitBox(
                         FVector2D(
                             CardX - QteW - 8.0f * Scale,
@@ -10012,91 +9284,10 @@ void AOGWorldPresentationHud::DrawHUD()
         // Active-kit controls are projected only when the controlled unit's
         // resolved authored kit actually contains them. This keeps the
         // unarmed opening clean while making real skills usable on touch.
-        auto DrawWorldActionButton =
-            [&](const FString& Label,
-                FName HitBoxName,
-                float HorizontalInset,
-                float BottomInset)
-            {
-                const bool bLeftHanded =
-                    Character->GetLeftHandedControls();
-                const float ShortSide = FMath::Min(Canvas->ClipX, Canvas->ClipY);
-                const float ButtonSize = ShortSide * 0.148f *
-                    FMath::Clamp(Character->GetTouchControlScale(), 0.9f, 1.1f);
-                const float Cell = ButtonSize + ShortSide * 0.016f;
-                const float Column = FMath::RoundToFloat((HorizontalInset - 0.08f) / 0.09f);
-                const float Row = FMath::RoundToFloat((BottomInset - 0.13f) / 0.17f);
-                const float Margin = ShortSide * 0.016f;
-                const float MinimumInset = ButtonSize * 0.5f + Margin;
-                // Clamp the whole grid, preserving spacing at profile extremes.
-                const float BaseX = FMath::Clamp(ShortSide * 0.08f +
-                    Canvas->ClipX * Character->GetActionClusterHorizontalOffset(),
-                    MinimumInset, FMath::Max(MinimumInset,
-                        Canvas->ClipX * 0.62f - 2.0f * Cell - ButtonSize * 0.5f));
-                const float BaseY = FMath::Clamp(ShortSide * 0.13f +
-                    Canvas->ClipY * Character->GetActionClusterVerticalOffset(),
-                    MinimumInset, FMath::Max(MinimumInset,
-                        Canvas->ClipY * 0.65f - 2.0f * Cell - ButtonSize * 0.5f));
-                const float SideInset = BaseX + Column * Cell;
-                const float CenterX = bLeftHanded ? SideInset : Canvas->ClipX - SideInset;
-                const float CenterY = Canvas->ClipY - BaseY - Row * Cell;
-                const float X = CenterX - ButtonSize * 0.5f;
-                const float Y = CenterY - ButtonSize * 0.5f;
-
-                bool bReady = Character->GetFoundationHealth() > 0.0f;
-                FString DisabledReason;
-                if (auto* Combat = Character->FindComponentByClass<UOGDiagnosticCombatComponent>())
-                {
-                    if (HitBoxName == TEXT("OG.World.Attack")) bReady = Combat->IsWorldActionReady(EOGDiagnosticCommand::Basic, DisabledReason);
-                    else if (HitBoxName == TEXT("OG.World.Skill.0")) bReady = Combat->IsWorldActionReady(EOGDiagnosticCommand::Skill1, DisabledReason);
-                    else if (HitBoxName == TEXT("OG.World.Skill.1")) bReady = Combat->IsWorldActionReady(EOGDiagnosticCommand::Skill2, DisabledReason);
-                    else if (HitBoxName == TEXT("OG.World.Ultimate")) bReady = Combat->IsWorldActionReady(EOGDiagnosticCommand::Ultimate, DisabledReason);
-                }
-                const bool bPressed = PressedWorldControls.Contains(HitBoxName);
-                const FLinearColor Accent = bReady ? FLinearColor(.77f,.69f,.86f,1) : FLinearColor(.38f,.37f,.46f,1);
-                Canvas->K2_DrawPolygon(nullptr, FVector2D(CenterX,CenterY),
-                    FVector2D(ButtonSize*.48f,ButtonSize*.48f), 8,
-                    FLinearColor(bPressed?.14f:.025f,bPressed?.24f:.045f,bPressed?.30f:.075f,Character->GetTouchControlOpacity()));
-                for(int32 I=0; I<8; ++I)
-                {
-                    const float A=I*2*PI/8.f, B=(I+1)*2*PI/8.f, R=ButtonSize*.46f;
-                    DrawLine(CenterX+FMath::Cos(A)*R,CenterY+FMath::Sin(A)*R,
-                        CenterX+FMath::Cos(B)*R,CenterY+FMath::Sin(B)*R,Accent,bPressed?3.f:1.5f);
-                }
-                if (HitBoxName==TEXT("OG.World.Attack"))
-                {
-                    // Universal ACTION glyph, never a fixed sword, gun,
-                    // bow, staff or anatomical fist. The actual effect and
-                    // motion are determined by the bound authored kit/weapon,
-                    // not by the HUD's invented equipment assumption.
-                    const float L=ButtonSize*.23f;
-                    for (int32 I=0;I<4;++I)
-                    {
-                        const float A=I*PI*.5f+PI*.25f;
-                        const float B=(I+1)*PI*.5f+PI*.25f;
-                        DrawLine(CenterX+FMath::Cos(A)*L,
-                            CenterY+FMath::Sin(A)*L,
-                            CenterX+FMath::Cos(B)*L,
-                            CenterY+FMath::Sin(B)*L,Accent,1.8f);
-                    }
-                    DrawLine(CenterX-L*.44f,CenterY,
-                        CenterX+L*.44f,CenterY,Accent,1.8f);
-                    DrawLine(CenterX,CenterY-L*.44f,
-                        CenterX,CenterY+L*.44f,Accent,1.8f);
-                }
-                else
-                    DrawGameIcon(FName(*Label),X+ButtonSize*.26f,
-                        Y+ButtonSize*.10f,ButtonSize*.48f,Accent);
-                const FString Caption=Label;
-                DrawGameText(Caption,X+ButtonSize*.15f,Y+ButtonSize*.65f,
-                    ButtonSize*.18f,bReady?MainText:SubText,ButtonSize*.70f);
-                AddFoundationHitBox(
-                    FVector2D(X, Y),
-                    FVector2D(ButtonSize, ButtonSize),
-                    HitBoxName,
-                    true,
-                    109);
-            };
+        auto DrawWorldActionButton = [&](const FString& Label, FName Id, float Horizontal, float Bottom)
+        {
+            DrawMobileWorldAction(*Character, Label, Id, Horizontal, Bottom, MainText, SubText);
+        };
 
         DrawWorldActionButton(TEXT("Attack"), TEXT("OG.World.Attack"), .08f, .13f);
         DrawWorldActionButton(TEXT("Dodge"), TEXT("OG.World.Dodge"), .17f, .13f);
@@ -10383,16 +9574,9 @@ void AOGWorldPresentationHud::DrawHUD()
                 TargetY,
                 AimW,
                 TargetH);
-            DrawFoundationText(
-                Character->IsManualAimEnabled()
-                    ? TEXT("Aim on")
-                    : TEXT("Aim"),
-                MainText,
-                AimX + 10.0f * Scale,
-                TargetY + 13.0f * Scale,
-                nullptr,
-                0.53f * Scale,
-                false);
+            DrawMobileControlText(Character->IsManualAimEnabled() ? TEXT("Aim on") : TEXT("Aim"),
+                MainText, AimX + 10.f * Scale, TargetY + 13.f * Scale,
+                AimW - 20.f * Scale, TargetH - 19.f * Scale, .53f * Scale);
             AddFoundationHitBox(
                 FVector2D(AimX, TargetY),
                 FVector2D(AimW, TargetH),
@@ -10431,7 +9615,7 @@ void AOGWorldPresentationHud::DrawHUD()
                 Canvas->ClipX * 0.5f + 28.0f * Scale,
                 Canvas->ClipY * 0.40f,
                 nullptr,
-                0.95f * Scale,
+                (Character->GetDamageNumberPresentation() == TEXT("compact") ? .72f : .95f) * Scale,
                 false);
         }
 
@@ -10454,8 +9638,8 @@ void AOGWorldPresentationHud::DrawHUD()
             const float ExitW = 180.0f * Scale, ExitH = 56.0f * Scale;
             const FVector2D ExitAt((Canvas->ClipX - ExitW) * 0.5f, Canvas->ClipY * 0.65f);
             DrawGamePanel(Button, ExitAt.X, ExitAt.Y, ExitW, ExitH);
-            DrawFoundationText(TEXT("Stop flight"), MainText, ExitAt.X + 12.0f * Scale,
-                ExitAt.Y + 14.0f * Scale, nullptr, 0.62f * Scale);
+            DrawMobileControlText(TEXT("Stop flight"), MainText, ExitAt.X + 12.f * Scale,
+                ExitAt.Y + 14.f * Scale, ExitW - 24.f * Scale, ExitH - 20.f * Scale, .62f * Scale);
             AddFoundationHitBox(ExitAt, FVector2D(ExitW, ExitH),
                 TEXT("OG.World.EndFlight"), true, 110);
         }
@@ -10483,14 +9667,8 @@ void AOGWorldPresentationHud::DrawHUD()
                 PromptY,
                 PromptW,
                 PromptH);
-            DrawFoundationText(
-                PromptText,
-                MainText,
-                PromptX + 16.0f * Scale,
-                PromptY + 10.0f * Scale,
-                nullptr,
-                0.62f * Scale,
-                false);
+            DrawMobileControlText(PromptText, MainText, PromptX + 16.f * Scale, PromptY + 10.f * Scale,
+                PromptW - 32.f * Scale, PromptH - 16.f * Scale, .62f * Scale);
             AddFoundationHitBox(
                 FVector2D(PromptX, PromptY),
                 FVector2D(PromptW, PromptH),
@@ -10526,7 +9704,7 @@ void AOGWorldPresentationHud::DrawHUD()
     else bLuminousAuthoredEmotesExpanded=false;
 
     DrawFoundationDiagnosticSurface(Character, Scale, false);
-    if (Character)
+    if (Character && !bMobileOverlay)
     {
         // Not every approved playable World pawn installs optional semantic
         // audio. Missing audio must not crash the live World/HUD render loop.
@@ -10676,7 +9854,8 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
 
     if (HandleFoundationDiagnosticClick(BoxName, Character))
     { Character->RefreshFoundationInputState(); return; }
-    Character->FindComponentByClass<UOGSemanticAudioRuntime>()->PlaySemanticEvent(TEXT("ui.activate"), Character->GetActorLocation());
+    if (auto* Audio = Character->FindComponentByClass<UOGSemanticAudioRuntime>())
+        Audio->PlaySemanticEvent(TEXT("ui.activate"), Character->GetActorLocation());
     if (BoxName.ToString().StartsWith(TEXT("OG.Turn.")) &&
         Character->FindComponentByClass<UOGDiagnosticCombatComponent>()->IsInTurn())
     {
@@ -11377,9 +10556,21 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
     {
         if (Character->IsFoundationPauseMenuOpen())
             Character->SetFoundationPauseMenuOpen(false);
-        Character->SetFoundationSettingsOpen(
-            !Character->IsFoundationSettingsOpen());
-        SetFoundationSurface(FoundationSurface);
+        const bool bOpenSettings = !Character->IsFoundationSettingsOpen();
+        Character->SetFoundationSettingsOpen(bOpenSettings);
+        if (PlayerOwner)
+        {
+            if (bOpenSettings || FoundationSurface != TEXT("world"))
+            {
+                FInputModeGameAndUI InputMode;
+                InputMode.SetHideCursorDuringCapture(false);
+                PlayerOwner->SetInputMode(InputMode);
+            }
+            else
+            {
+                PlayerOwner->SetInputMode(FInputModeGameOnly());
+            }
+        }
         return;
     }
 
@@ -11713,6 +10904,18 @@ void AOGWorldPresentationHud::NotifyHitBoxClick(FName BoxName)
     else if (BoxName == FName(TEXT("OG.Settings.ReducedShake")))
     {
         Character->ToggleReducedCameraShake();
+    }
+    else if (BoxName == TEXT("OG.Settings.MotionBlur"))
+    {
+        Character->ToggleMotionBlur();
+    }
+    else if (BoxName == TEXT("OG.Settings.UiEffects.Minus"))
+    {
+        Character->AdjustUiEffectsIntensity(-.10f);
+    }
+    else if (BoxName == TEXT("OG.Settings.UiEffects.Plus"))
+    {
+        Character->AdjustUiEffectsIntensity(.10f);
     }
     else if (BoxName == FName(TEXT("OG.Settings.Subtitles")))
     {

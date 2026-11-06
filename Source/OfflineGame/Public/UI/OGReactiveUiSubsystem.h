@@ -143,6 +143,8 @@ private:
     FOGReactiveUiPalette Current,Target;
     FOGContentId ThemeId;
     FName ReadabilityProfile;
+    FName ColorVisionProfile;
+    float UiEffectsIntensity = 1.f;
     UPROPERTY(Transient) TObjectPtr<UOGReactiveUiThemeDefinition> ActiveTheme;
     bool bThemeDirty=true,bStyleDirty=true,bHasAuthoredPalette=false;
     FOGReactiveUiPalette AuthoredPalette;

@@ -44,6 +44,8 @@ struct OFFLINEGAME_API FOGPlayerProfileSettings
 
     bool bReducedMotion = false;
     bool bReducedCameraShake = false;
+    bool bMotionBlurEnabled = true;
+    float UiEffectsIntensity = 1.0f;
     bool bSubtitlesEnabled = true;
     FName SubtitlePresentation = FName(TEXT("standard"));
     FName UiReadabilityProfile = FName(TEXT("standard"));

@@ -315,6 +315,9 @@ bool FOGPlayerProfileSettingsService::Load(
             Root,
             TEXT("reduced_camera_shake"),
             false);
+    OutSettings.bMotionBlurEnabled = BoolOrDefault(Root, TEXT("motion_blur_enabled"), true);
+    OutSettings.UiEffectsIntensity = static_cast<float>(FMath::Clamp(
+        NumberOrDefault(Root, TEXT("ui_effects_intensity"), 1.0), 0.0, 1.0));
     OutSettings.bSubtitlesEnabled =
         BoolOrDefault(
             Root,
@@ -515,6 +518,8 @@ bool FOGPlayerProfileSettingsService::Save(
     Root->SetBoolField(
         TEXT("reduced_camera_shake"),
         Settings.bReducedCameraShake);
+    Root->SetBoolField(TEXT("motion_blur_enabled"), Settings.bMotionBlurEnabled);
+    Root->SetNumberField(TEXT("ui_effects_intensity"), FMath::Clamp(Settings.UiEffectsIntensity, 0.f, 1.f));
     Root->SetBoolField(
         TEXT("subtitles_enabled"),
         Settings.bSubtitlesEnabled);

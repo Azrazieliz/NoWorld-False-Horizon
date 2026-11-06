@@ -293,8 +293,10 @@ void UOGReactiveUiSubsystem::SetReducedMotion(bool Reduced) { bReducedMotion=Red
 void UOGReactiveUiSubsystem::ApplyPlayerProfile(const FOGPlayerProfileSettings& Profile)
 {
     SetReducedMotion(Profile.bReducedMotion);
-    if (ReadabilityProfile == Profile.UiReadabilityProfile) return;
+    UiEffectsIntensity = FMath::Clamp(Profile.UiEffectsIntensity, 0.f, 1.f);
+    if (ReadabilityProfile == Profile.UiReadabilityProfile && ColorVisionProfile == Profile.ColorVisionProfile) return;
     ReadabilityProfile = Profile.UiReadabilityProfile;
+    ColorVisionProfile = Profile.ColorVisionProfile;
     Apply();
 }
 bool UOGReactiveUiSubsystem::BindMaterial(UMaterialInstanceDynamic* M,FName Accent,FName Glow)
@@ -416,6 +418,14 @@ FLinearColor UOGReactiveUiSubsystem::Resolve(const FBinding& B) const
             C = Cast<UButton>(B.Widget.Get()) ? ContrastButton : ContrastPanel;
         else
             C = FMath::Lerp(C, Current.Surface, .55f);
+        if (Cast<UButton>(B.Widget.Get()))
+        {
+            if (ColorVisionProfile == TEXT("deuteranopia")) C = FLinearColor(.12f, .22f, .32f, 1.f);
+            else if (ColorVisionProfile == TEXT("protanopia")) C = FLinearColor(.14f, .22f, .30f, 1.f);
+            else if (ColorVisionProfile == TEXT("tritanopia")) C = FLinearColor(.24f, .16f, .22f, 1.f);
+            if (bHighContrast && ColorVisionProfile != TEXT("standard") && !ColorVisionProfile.IsNone())
+                C *= .10f / FMath::Max(.10f, FMath::Max3(C.R, C.G, C.B));
+        }
         break;
     case ERole::Ornament: C=AccentFor(C,.28f); break;
     default: break;
@@ -521,6 +531,8 @@ void UOGReactiveUiSubsystem::Tick(float Delta)
       Target.Accent=FMath::Lerp(Target.Accent,Target.Accent*Environment,.18f); }
     ActionPulse=FMath::Max(0.f,ActionPulse-Delta*1.8f);
     if (!bReducedMotion) Target.Glow+=ActionPulse*.16f;
+    Target.Glow *= UiEffectsIntensity;
+    Target.MotionRate *= UiEffectsIntensity;
     const float Alpha=Target.TransitionSeconds<=SMALL_NUMBER?1.f:1.f-FMath::Exp(-Delta*6.f/Target.TransitionSeconds);
     auto Next=Blend(Current,Target,Alpha);
     if (!bReducedMotion) Phase=FMath::Fmod(Phase+Delta*Current.MotionRate*2.f*PI,2.f*PI);
