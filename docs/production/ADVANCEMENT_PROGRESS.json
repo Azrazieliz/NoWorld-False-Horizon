@@ -4262,9 +4262,50 @@
         "Source/OfflineGame/Private/World/OGGatheringDispatch.cpp",
         "Source/OfflineGame/Public/World/OGGatheringDispatch.h"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "a0b956cd2d39ae25bd2a067dce420419cb951d28",
+      "system_ids": [
+        "M16"
+      ],
+      "result": "The native banner details now redeem an exact owned compatible multi-pull ticket for its authored two-to-ten ordinary draws. The review is rechecked in the root transaction, only one ticket is debited, all results advance ordinary pity and grant actual independent copies, and receipts distinguish the paid and prepaid draws.",
+      "remaining_player_visible_work": "Install approved production banners, pools and ticket definition assets. Separate guaranteed rarity or selector instruments and earned production acquisition currency remain outstanding.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Gacha/OGGachaDefinitions.h",
+        "Source/OfflineGame/Public/Gacha/OGGachaService.h",
+        "Source/OfflineGame/Private/Gacha/OGGachaBatchPreview.cpp",
+        "Source/OfflineGame/Private/Gacha/OGGachaService.cpp",
+        "Source/OfflineGame/Public/World/OGStartingRegionPresentation.h",
+        "Source/OfflineGame/Private/World/OGNativeGachaReview.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerGacha.cpp"
+      ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "db4711ab9ca7f457c92742fee8839191ab572f38",
+      "system_ids": [
+        "M25",
+        "M26"
+      ],
+      "result": "Quest failures and missed previously viewed offers now reconcile from the canonical commit feed without reopening the Journal. The deferred runtime processes real matching closing events outside source transactions, and reads saved events after local Ruler binding, load or foreground resume.",
+      "remaining_player_visible_work": "Install exact production quests, resident NPCs, dialogue and closing-event definitions. No native/device acceptance claimed.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Narrative/OGNarrativeQuestLifecycle.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeSessionSubsystem.cpp",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeSessionSubsystem.h"
+      ]
     }
   ],
-  "continuation_last_source_commit": "e120a200514af2a20a336c243b45de6d6f281716",
+  "continuation_last_source_commit": "db4711ab9ca7f457c92742fee8839191ab572f38",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
