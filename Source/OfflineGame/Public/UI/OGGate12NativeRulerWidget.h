@@ -186,6 +186,14 @@ private:
     bool bGachaResultsExpanded = false;
     FOGEntityId SelectedTerritoryId;
     int32 SelectedTerritoryOverlayIndex = 0;
+    FOGEntityId ProjectOrdersRulerId;
+    FOGEntityId ProjectOrdersTerritoryId;
+    FOGContentId PendingProjectDefinitionId;
+    FGuid PendingProjectReviewId;
+    int64 PendingProjectLibraryRevision = -1;
+    bool bProjectOrdersOpen = false;
+    bool bProjectOrderInFlight = false;
+    FString ProjectOrderFeedback;
     FString LastUiError;
 
     // In-memory review only: never reflected, serialized, or treated as truth.
@@ -275,6 +283,12 @@ private:
     void ClearNarrativeReview();
     void ResetNarrativePage();
     void BuildTerritory();
+    void BuildTerritoryProjectOrders(const UOGGate12RulerSessionSubsystem& Session,
+        const FOGTerritorySummaryViewModel& Holding);
+    void HandleTerritoryProjectAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);
+    void RestoreTerritoryProjectDeadlines(const UOGGate12RulerSessionSubsystem& Session);
+    void ClearTerritoryProjectReview();
+    void ResetTerritoryProjectOrders();
     void BuildNav();
     void AddMessage(UVerticalBox* Parent, const FString& Value, int32 FontSize = 22,
         FLinearColor Tint = FLinearColor(0.83f, 0.84f, 0.88f, 1.0f));
