@@ -3983,9 +3983,35 @@
         "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionInventory.cpp",
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerInventory.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "325999e6c2e955a2e340cb42f91902667bfbc6f4",
+      "system_ids": [
+        "M17"
+      ],
+      "result": "The native inventory now exposes the actual saved compartments of a selected owned item. It previews and commits whole-stack moves against installed item burdens, stored capacity dimensions and current occupancy, preserving item identity and ownership. Equipping a single stored item withdraws it in the equipment transaction.",
+      "remaining_player_visible_work": "Production storage definitions, per-body/access profiles and real storage providers must be installed; full inventories, equipment source rules and physical capacity across every intended storage capability are still open.",
+      "source_paths": [
+        "Source/OfflineGame/Public/World/OGInventoryStorageService.h",
+        "Source/OfflineGame/Private/World/OGInventoryStorageService.cpp",
+        "Source/OfflineGame/Public/Persistence/OGWorldStore.h",
+        "Source/OfflineGame/Private/Persistence/OGSQLiteWorldStore.h",
+        "Source/OfflineGame/Private/Persistence/OGSQLiteWorldStore.Items.cpp",
+        "Source/OfflineGame/Public/Runtime/OGGate12RulerSessionSubsystem.h",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionInventory.cpp",
+        "Source/OfflineGame/Public/UI/OGGate12NativeRulerWidget.h",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerInventory.cpp",
+        "Source/OfflineGame/Public/World/OGOwnedEquipmentService.h",
+        "Source/OfflineGame/Private/World/OGOwnedEquipmentService.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "6f5da03e44802d80aa4b13e3bf1fe1aec9aa8f4f",
+  "continuation_last_source_commit": "325999e6c2e955a2e340cb42f91902667bfbc6f4",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
