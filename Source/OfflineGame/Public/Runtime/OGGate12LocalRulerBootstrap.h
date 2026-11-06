@@ -23,7 +23,12 @@ struct OFFLINEGAME_API FOGGate12LocalRulerBootstrap
         IOGWorldStore& Store,
         bool& bOutFound,
         FOGEntityId& OutRulerId,
-        FString& OutError);
+        FString& OutError,
+        FOGEntityId* OutWorldSelection = nullptr);
+
+    /** Optional local control choice in the same saved binding. Empty selects the Ruler. */
+    static bool SaveWorldSelection(IOGWorldStore& Store, const FOGEntityId& RulerId,
+        const FOGEntityId& ManifestationId, FString& OutError);
 
     /**
      * Explicit new-game operation. Entire world-store write is transactional,

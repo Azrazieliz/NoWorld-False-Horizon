@@ -4,6 +4,7 @@
 #include "Persistence/OGWorldStore.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 
 FOGEntityId FOGGate12LocalRulerBootstrap::LocalBindingRecordId()
 {
@@ -15,8 +16,9 @@ FOGEntityId FOGGate12LocalRulerBootstrap::LocalBindingRecordId()
 
 bool FOGGate12LocalRulerBootstrap::TryLoad(
     IOGWorldStore& Store, bool& bOutFound,
-    FOGEntityId& OutRulerId, FString& OutError)
+    FOGEntityId& OutRulerId, FString& OutError, FOGEntityId* OutWorldSelection)
 {
+    if (OutWorldSelection) *OutWorldSelection = FOGEntityId();
     bOutFound = false;
     OutRulerId = FOGEntityId();
     OutError.Reset();
@@ -80,7 +82,70 @@ bool FOGGate12LocalRulerBootstrap::TryLoad(
     }
     bOutFound = true;
     OutRulerId = Candidate;
+    if (OutWorldSelection)
+    {
+        FString SavedSelection;
+        FGuid Selected;
+        if (Json->TryGetStringField(TEXT("worldManifestationId"), SavedSelection) &&
+            FGuid::Parse(SavedSelection, Selected) && Selected.IsValid())
+        {
+            *OutWorldSelection = FOGEntityId(Selected);
+        }
+    }
     return true;
+}
+
+bool FOGGate12LocalRulerBootstrap::SaveWorldSelection(
+    IOGWorldStore& Store, const FOGEntityId& RulerId, const FOGEntityId& ManifestationId, FString& OutError)
+{
+    bool bBound = false;
+    FOGEntityId BoundRuler;
+    if (!TryLoad(Store, bBound, BoundRuler, OutError) || !bBound || BoundRuler != RulerId)
+    {
+        if (OutError.IsEmpty()) OutError = TEXT("Only the stored local Ruler can save a World selection.");
+        return false;
+    }
+    if (ManifestationId.IsValid())
+    {
+        FOGCharacterManifestationRecord Manifestation;
+        bool bFound = false;
+        if (!Store.TryReadCharacterManifestation(ManifestationId, bFound, Manifestation, OutError) ||
+            !bFound || Manifestation.OwningRulerId != RulerId ||
+            Manifestation.LifecycleState != TEXT("active") || !Manifestation.ActiveVersionId.IsValid())
+        {
+            if (OutError.IsEmpty()) OutError = TEXT("The World selection is no longer an active owned Manifestation.");
+            return false;
+        }
+    }
+
+    FName Kind;
+    FString State;
+    int64 CreatedTick = 0;
+    if (!Store.TryReadEntity(LocalBindingRecordId(), bBound, Kind, State, CreatedTick, OutError) || !bBound)
+    {
+        return false;
+    }
+    TSharedPtr<FJsonObject> Json;
+    if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(State), Json) || !Json.IsValid())
+    {
+        OutError = TEXT("The existing local player binding is unreadable.");
+        return false;
+    }
+    if (ManifestationId.IsValid())
+    {
+        Json->SetStringField(TEXT("worldManifestationId"), ManifestationId.ToString());
+    }
+    else
+    {
+        Json->RemoveField(TEXT("worldManifestationId"));
+    }
+    State.Reset();
+    if (!FJsonSerializer::Serialize(Json.ToSharedRef(), TJsonWriterFactory<>::Create(&State)))
+    {
+        OutError = TEXT("Could not serialize the local World selection.");
+        return false;
+    }
+    return Store.UpsertEntity(LocalBindingRecordId(), Kind, CreatedTick, State, OutError);
 }
 
 bool FOGGate12LocalRulerBootstrap::Create(
