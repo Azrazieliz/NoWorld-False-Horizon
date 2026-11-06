@@ -4161,9 +4161,30 @@
         "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionInventory.cpp",
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerInventory.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "ea954b04f8e9b0024f141aa916fc3bf67051bf31",
+      "system_ids": [
+        "M19",
+        "M21"
+      ],
+      "result": "Authored recipes may now award tool proficiency to the exact active owned copy that uses the retained real tool. The native review shows the tool and grade result, and confirmation saves proficiency and tool provenance atomically with recipe inputs and outputs. Existing reinforcement prerequisites read the same stored grades.",
+      "remaining_player_visible_work": "Approved practice recipes, tool definitions, gains and thresholds need production admission. Combat-use proficiency, item affinity/evolution earning and complete Rank/Grand progression remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Objects/OGObjectActionDefinition.h",
+        "Source/OfflineGame/Private/Objects/OGObjectActionDefinition.cpp",
+        "Source/OfflineGame/Private/Objects/OGObjectActionService.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionInventory.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerInventory.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "3699be93554b3a04c0671d6b497be9495dbbb222",
+  "continuation_last_source_commit": "ea954b04f8e9b0024f141aa916fc3bf67051bf31",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
