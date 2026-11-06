@@ -10,6 +10,19 @@ const FLinearColor GatheringGold(.77f,.67f,.45f,1.f);
 const FLinearColor GatheringText(.90f,.88f,.92f,1.f);
 const FLinearColor GatheringMuted(.60f,.60f,.67f,1.f);
 
+const TCHAR* DispatchTypeName(EOGDispatchType Type)
+{
+    switch (Type)
+    {
+    case EOGDispatchType::Exploration: return TEXT("Exploration");
+    case EOGDispatchType::Gathering: return TEXT("Gathering");
+    case EOGDispatchType::Reconnaissance: return TEXT("Reconnaissance");
+    case EOGDispatchType::Espionage: return TEXT("Espionage");
+    case EOGDispatchType::Support: return TEXT("Support");
+    default: return TEXT("Dispatch");
+    }
+}
+
 FString CopyName(const UOGGate12RulerSessionSubsystem& Session,const FOGEntityId& Id)
 {
     for (const auto& Identity:Session.OwnedRoster)
@@ -33,7 +46,8 @@ void UOGGate12NativeRulerWidget::ResetGathering()
 void UOGGate12NativeRulerWidget::HandleGatheringEvents(const TArray<FOGWorldEvent>& Events)
 {
     if (bGatheringOpen && Events.ContainsByPredicate([&](const auto& Event)
-    { return Event.PrimaryEntity==GatheringRulerId && Event.EventType==TEXT("dispatch.gathering_resolved"); }))
+    { return Event.PrimaryEntity==GatheringRulerId &&
+        (Event.EventType==TEXT("dispatch.gathering_resolved") || Event.EventType==TEXT("dispatch.authored_resolved")); }))
         bGatheringRefresh=true;
 }
 
@@ -43,7 +57,7 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
     {
         ResetGathering(); GatheringRulerId=Session.BoundRulerId; GatheringTerritoryId=Holding.TerritoryId;
     }
-    AddAction(Content,bGatheringOpen?TEXT("CLOSE GATHERING ORDERS"):TEXT("GATHERING ORDERS"),TEXT("gathering/toggle"));
+    AddAction(Content,bGatheringOpen?TEXT("CLOSE DISPATCH ORDERS"):TEXT("DISPATCH ORDERS"),TEXT("gathering/toggle"));
     if (!bGatheringOpen) return;
     if (!GatheringFeedback.IsEmpty()) AddMessage(Content,GatheringFeedback,17,GatheringText);
 
@@ -55,7 +69,7 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
     AddMessage(Content,TEXT("DISPATCH HISTORY"),20,GatheringGold);
     TArray<FOGDispatchRecord> Orders;
     if (!Dispatch.ReadOrders(Session.BoundRulerId,Orders,Error)) AddMessage(Content,Error,16,GatheringMuted);
-    else if (Orders.IsEmpty()) AddMessage(Content,TEXT("No gathering parties have been dispatched."),16,GatheringMuted);
+    else if (Orders.IsEmpty()) AddMessage(Content,TEXT("No parties have been dispatched."),16,GatheringMuted);
     else
     {
         int32 Completed=0;
@@ -64,7 +78,7 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
             if (Order.Status!=EOGDispatchStatus::Active && ++Completed>8) continue;
             FString Name,Result;
             if (FOGGatheringDispatch::ReadSummary(Order,Name,Result))
-                AddMessage(Content,Name+TEXT("  /  ")+(Order.ParticipantEntityIds.Num()==1?
+                AddMessage(Content,FString(DispatchTypeName(Order.Type))+TEXT("  /  ")+Name+TEXT("  /  ")+(Order.ParticipantEntityIds.Num()==1?
                     CopyName(Session,Order.ParticipantEntityIds[0]):FString(TEXT("Party")))+TEXT("\n")+Result,17,GatheringText);
         }
     }
@@ -77,10 +91,24 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
                 Core->GetCanonicalWorldTick(),Fresh,Error) && Fresh.bCanStart && Fresh.Token==PendingGathering.Token)
         {
             AddMessage(Content,Fresh.Name,22,GatheringGold);
-            AddMessage(Content,CopyName(Session,Fresh.ParticipantId)+TEXT("  /  ")+Fresh.ResourceName+
-                TEXT(" × ")+FText::AsNumber(Fresh.Amount).ToString(),18,GatheringText);
+            AddMessage(Content,CopyName(Session,Fresh.ParticipantId)+TEXT("  /  ")+
+                DispatchTypeName(Fresh.Type),18,GatheringText);
+            if (Fresh.Amount>0)
+                AddMessage(Content,Fresh.ResourceName+TEXT(" × ")+FText::AsNumber(Fresh.Amount).ToString(),18,GatheringText);
             AddMessage(Content,TEXT("Duration: ")+FText::AsNumber(Fresh.Duration).ToString()+
-                TEXT(" world ticks. Collection depends on the holding and its remaining stock at arrival."),16,GatheringMuted);
+                TEXT(" world ticks."),16,GatheringMuted);
+            if (Fresh.Type==EOGDispatchType::Gathering)
+                AddMessage(Content,TEXT("Collection depends on the holding and its remaining stock at arrival."),16,GatheringMuted);
+            else
+            {
+                AddMessage(Content,Fresh.Briefing,17,GatheringText);
+                AddMessage(Content,Fresh.RiskDescription,16,GatheringMuted);
+                if (Fresh.Risk>Fresh.RiskTolerance)
+                    AddMessage(Content,TEXT("The authored risk policy calls for return without completing this order."),
+                        16,GatheringMuted);
+                for (const FString& Objective:Fresh.ObjectiveNames)
+                    AddMessage(Content,Objective,16,GatheringText);
+            }
             AddAction(Content,TEXT("DISPATCH"),TEXT("gathering/confirm/")+GatheringRequest.ToString());
             AddAction(Content,TEXT("CANCEL"),TEXT("gathering/cancel"));
             return;
@@ -95,7 +123,7 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
     Assets.RemoveAll([&](const UDataAsset* Asset)
     { return CastChecked<UOGGatheringDispatchDefinition>(Asset)->LocationId!=Holding.RootLocationId; });
     if (Assets.IsEmpty())
-    { AddMessage(Content,TEXT("No gathering orders are available from this holding."),16,GatheringMuted); return; }
+    { AddMessage(Content,TEXT("No dispatch orders are available from this holding."),16,GatheringMuted); return; }
 
     AddMessage(Content,TEXT("ASSIGN AN OWNED CHARACTER"),20,GatheringGold);
     for (const auto& Identity:Session.OwnedRoster)
@@ -110,17 +138,23 @@ void UOGGate12NativeRulerWidget::BuildGathering(UOGGate12RulerSessionSubsystem& 
     if (!GatheringParticipantId.IsValid())
     { AddMessage(Content,TEXT("Select an available owned copy other than the one you control."),16,GatheringMuted); return; }
 
+    bool bVisibleOrder=false;
     for (const auto* Asset:Assets)
     {
         const auto* Definition=CastChecked<UOGGatheringDispatchDefinition>(Asset);
         FOGGatheringDispatchQuote Quote;
         if (!Dispatch.Preview(*Definition,Session.BoundRulerId,Holding.TerritoryId,GatheringParticipantId,
-            Core->GetCanonicalWorldTick(),Quote,Error)) continue;
+            Core->GetCanonicalWorldTick(),Quote,Error) || !Quote.bVisible) continue;
+        bVisibleOrder=true;
+        FString Label=FString(DispatchTypeName(Quote.Type))+TEXT(" / ")+Quote.Name;
+        if (Quote.Amount>0)
+            Label+=TEXT(" / ")+Quote.ResourceName+TEXT(" × ")+FText::AsNumber(Quote.Amount).ToString();
         if (Quote.bCanStart)
-            AddAction(Content,Quote.Name+TEXT(" / ")+Quote.ResourceName+TEXT(" × ")+FText::AsNumber(Quote.Amount).ToString(),
-                TEXT("gathering/review/")+Quote.DefinitionId.ToString());
-        else AddMessage(Content,Quote.Name+TEXT(" / ")+Quote.Reason,16,GatheringMuted);
+            AddAction(Content,Label,TEXT("gathering/review/")+Quote.DefinitionId.ToString());
+        else AddMessage(Content,Label+TEXT(" / ")+Quote.Reason,16,GatheringMuted);
     }
+    if (!bVisibleOrder)
+        AddMessage(Content,TEXT("No known orders are available for this character."),16,GatheringMuted);
 }
 
 void UOGGate12NativeRulerWidget::HandleGatheringAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session)
