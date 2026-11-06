@@ -3935,9 +3935,34 @@
       "device_verified": false,
       "owner_accepted": false,
       "saved_utc": "2026-11-06"
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "dab7d3f5850a9f06a3f402900917b91a67e1873a",
+      "system_ids": [
+        "M03",
+        "M09"
+      ],
+      "result": "The existing World context action now opens an installed native encounter from the actual controlled canonical body and authored placed roster. The new entry resolves stored versions and vitality, checks exact authored stats, active formation and opponent AI, and reuses the durable battle startup with native body connections and in-World error feedback.",
+      "remaining_player_visible_work": "No approved battle plan with placed source-backed opponent actors, combat stat/timing profiles, original contact routes and rewards has been installed through this route. No milestone freeze, native gameplay result or phone delivery claimed.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Characters/OGCharacterGameplayDefinition.h",
+        "Source/OfflineGame/Private/Characters/OGCharacterGameplayDefinition.cpp",
+        "Source/OfflineGame/Public/Combat/OGCanonicalCombatActorBindingComponent.h",
+        "Source/OfflineGame/Private/Combat/OGCanonicalCombatActorBindingComponent.cpp",
+        "Source/OfflineGame/Public/Combat/OGNativeTurnAgentComponent.h",
+        "Source/OfflineGame/Private/Combat/OGNativeTurnAgentComponent.cpp",
+        "Source/OfflineGame/Public/Combat/OGNativeEncounterDefinition.h",
+        "Source/OfflineGame/Private/Combat/OGNativeEncounterDefinition.cpp",
+        "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "e4a10645241964bb4b0da564a08a8695ff58ddc2",
+  "continuation_last_source_commit": "dab7d3f5850a9f06a3f402900917b91a67e1873a",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
