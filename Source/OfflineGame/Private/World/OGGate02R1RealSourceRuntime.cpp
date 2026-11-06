@@ -245,6 +245,12 @@ void AOGStartingRegionGenerator::LoadR1SourceScatter()
         Rows.Num(),R1TilePlacements.Num());
 }
 
+bool AOGStartingRegionGenerator::IsR1SourceReadyForEntry() const
+{
+    return bGate02R1RegionSource && bR1DatasetLoaded &&
+        Terrain && Terrain->IsRegistered() && Terrain->GetNumSections() > 0;
+}
+
 bool AOGStartingRegionGenerator::TraceR1SourceGround(
     const FVector& TraceStart, const FVector& TraceEnd, FHitResult& OutHit) const
 {

@@ -98,6 +98,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "OfflineGame|World|Generation")
     void RebuildPreview();
 
+    /** Real source terrain exists before the opening flow hands control to World Mode. */
+    bool IsR1SourceReadyForEntry() const;
+
     void SetFoundationIntegrationBoundary(AActor* Provider)
     { FoundationIntegrationBoundary = Provider; if (Provider) ClearGeneratedContent(); }
 

@@ -6234,6 +6234,30 @@ void AOGWorldPresentationHud::OnGate12NativeWorldRequested()
         return;
     }
 
+    if (!Cast<AOGWorldPrototypeCharacter>(PlayerOwner->GetPawn()))
+    {
+        FailAndReturnToRuler(TEXT("The local World character is unavailable."));
+        return;
+    }
+
+    if (!AreFoundationDebugFixturesEnabled())
+    {
+        bool bFoundPlayableSource = false;
+        for (TActorIterator<AOGStartingRegionGenerator> It(GetWorld()); It; ++It)
+        {
+            if (It->IsR1SourceReadyForEntry())
+            {
+                bFoundPlayableSource = true;
+                break;
+            }
+        }
+        if (!bFoundPlayableSource)
+        {
+            FailAndReturnToRuler(TEXT("The original First World could not load. Your local World is preserved."));
+            return;
+        }
+    }
+
     if (!Session->SelectedManifestationId.IsValid())
     {
         AOGWorldPrototypeCharacter* Previous =
