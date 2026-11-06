@@ -353,6 +353,7 @@ void AOGStartingRegionGenerator::EndPlay(const EEndPlayReason::Type EndPlayReaso
         Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
     }
     UnloadR1SourceRoads();
+    UnloadR1Landmarks();
     UnloadR1MarketSections();
     Super::EndPlay(EndPlayReason);
 }
@@ -577,6 +578,7 @@ void AOGStartingRegionGenerator::ClearGeneratedContent()
     R1PendingTerrainSections.Reset();
     ClearR1EcologyProjection();
     UnloadR1SourceRoads();
+    UnloadR1Landmarks();
     UnloadR1MarketSections();
 
     UHierarchicalInstancedStaticMeshComponent* Components[] =

@@ -249,6 +249,20 @@ private:
     void RequestR1SourceRoads();
     void AttachR1SourceRoads(int32 Generation);
     void UnloadR1SourceRoads();
+    void UpdateR1LandmarkStreaming();
+    void OnR1LandmarkLoaded(int32 Index, int64 Generation);
+    void UnloadR1Landmark(int32 Index);
+    void UnloadR1Landmarks();
+
+    struct FR1LandmarkStreamState
+    {
+        TSharedPtr<struct FStreamableHandle> Handle;
+        TWeakObjectPtr<UStaticMeshComponent> Component;
+        int64 Generation = 0;
+        bool bRequested = false;
+    };
+    TArray<FR1LandmarkStreamState> R1Landmarks;
+    int64 R1LandmarkGeneration = 0;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> R1SourceRoadComponents;
     TSharedPtr<struct FStreamableHandle> R1RoadStreamHandle;

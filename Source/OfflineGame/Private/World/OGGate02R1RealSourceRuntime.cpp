@@ -394,5 +394,6 @@ void AOGStartingRegionGenerator::Tick(float DeltaSeconds)
         }
         RefreshR1StreamedTiles(false);
         UpdateR1MarketStreaming();
+        UpdateR1LandmarkStreaming();
     }
 }
