@@ -64,6 +64,24 @@ bool DecodePlan(const FOGDispatchRecord& Order,FGatheringPlan& Out)
     Out.Resource=FOGContentId(Resource);
     return Out.Resource.IsValid();
 }
+TArray<TSharedPtr<FJsonValue>> DispatchPartyJson(const TArray<FOGEntityId>& Participants)
+{
+    TArray<TSharedPtr<FJsonValue>> Ids;
+    for (const auto& Id:Participants) Ids.Add(MakeShared<FJsonValueString>(Id.ToString()));
+    return Ids;
+}
+
+bool IsDistinctDispatchParty(const TArray<FOGEntityId>& Participants)
+{
+    TSet<FOGEntityId> Seen;
+    for (const auto& Id:Participants)
+    {
+        if (!Id.IsValid() || Seen.Contains(Id)) return false;
+        Seen.Add(Id);
+    }
+    return true;
+}
+
 FOGContentId DueContent(const FOGEntityId& Dispatch)
 { return FOGContentId(TEXT("gathering_dispatch:due/")+Dispatch.ToString()); }
 
@@ -91,7 +109,8 @@ bool IsActiveOwned(IOGWorldStore& Store,const FOGEntityId& Ruler,const FOGEntity
 {
     FOGCharacterManifestationRecord Copy; bool Found=false;
     if (!Store.TryReadCharacterManifestation(Participant,Found,Copy,Error)) return false;
-    Owned=Found && Copy.OwningRulerId==Ruler && Copy.LifecycleState==TEXT("active");
+    Owned=Found && Copy.ManifestationId==Participant && Copy.OwningRulerId==Ruler &&
+        Copy.LifecycleState==TEXT("active");
     return true;
 }
 
@@ -112,8 +131,9 @@ bool UOGGatheringDispatchDefinition::ValidateDefinition_Implementation(FString& 
         DisplayName.IsEmpty() || !LocationId.IsValid() || DurationTicks<=0)
     { Error=TEXT("Dispatch requires an original source, issuing holding and duration."); return false; }
     if (DispatchType!=EOGDispatchType::Gathering) return OGDispatchAuthored::Validate(*this,Error);
-    if (ResourceId.IsValid() && !ResourceName.IsEmpty() && Amount>0) return true;
-    Error=TEXT("Gathering dispatch requires original stock and quantity.");
+    if (ResourceId.IsValid() && !ResourceName.IsEmpty() && Amount>0 &&
+        MinimumPartySize==1 && MaximumPartySize==1) return true;
+    Error=TEXT("Gathering dispatch requires original stock, quantity and one participant.");
     return false;
 }
 
@@ -123,31 +143,56 @@ const UOGGatheringDispatchDefinition* FOGGatheringDispatch::FindDefinition(const
     return Library?Cast<UOGGatheringDispatchDefinition>(Library->Resolve(TEXT("gathering_dispatch"),Id)):nullptr;
 }
 
-bool FOGGatheringDispatch::IsAssigned(IOGWorldStore& Store,const FOGEntityId& Ruler,const FOGEntityId& Participant,
+bool FOGGatheringDispatch::ReadAssignedParticipants(IOGWorldStore& Store,TSet<FOGEntityId>& Out,FString& Error)
+{
+    Out.Reset();
+    TArray<FOGEntityId> Ids;
+    // An existing reservation follows a copy even if its owner changes.
+    if (!Store.ListDispatchIds(FOGEntityId(),true,Ids,Error)) return false;
+    TSet<FOGEntityId> Assigned;
+    for (const auto& Id:Ids)
+    {
+        bool Found=false;
+        FOGDispatchRecord Order;
+        if (!Store.TryReadDispatch(Id,Found,Order,Error)) return false;
+        if (Found && Order.Status==EOGDispatchStatus::Active)
+            for (const auto& Participant:Order.ParticipantEntityIds) Assigned.Add(Participant);
+    }
+    Out=MoveTemp(Assigned);
+    return true;
+}
+
+bool FOGGatheringDispatch::IsAssigned(IOGWorldStore& Store,const FOGEntityId&,const FOGEntityId& Participant,
     bool& Assigned,FString& Error)
 {
     Assigned=false;
-    TArray<FOGEntityId> Ids;
-    if (!Store.ListDispatchIds(Ruler,true,Ids,Error)) return false;
-    for (const auto& Id:Ids)
-    {
-        bool Found=false; FOGDispatchRecord Order;
-        if (!Store.TryReadDispatch(Id,Found,Order,Error)) return false;
-        if (Found && Order.Status==EOGDispatchStatus::Active && Order.ParticipantEntityIds.Contains(Participant))
-        { Assigned=true; return true; }
-    }
+    if (!Participant.IsValid()) return true;
+    TSet<FOGEntityId> Reservations;
+    if (!ReadAssignedParticipants(Store,Reservations,Error)) return false;
+    Assigned=Reservations.Contains(Participant);
     return true;
 }
 
 bool FOGGatheringDispatch::Preview(const UOGGatheringDispatchDefinition& Definition,const FOGEntityId& Ruler,
     const FOGEntityId& Territory,const FOGEntityId& Participant,int64 Tick,FOGGatheringDispatchQuote& Out,FString& Error) const
 {
+    return PreviewParty(Definition,Ruler,Territory,TArray<FOGEntityId>{Participant},Tick,Out,Error);
+}
+
+bool FOGGatheringDispatch::PreviewParty(const UOGGatheringDispatchDefinition& Definition,const FOGEntityId& Ruler,
+    const FOGEntityId& Territory,const TArray<FOGEntityId>& Participants,int64 Tick,
+    FOGGatheringDispatchQuote& Out,FString& Error) const
+{
     Out=FOGGatheringDispatchQuote(); Error.Reset();
-    if (!Ruler.IsValid() || !Territory.IsValid() || !Participant.IsValid() || Tick<0 ||
+    if (!Ruler.IsValid() || !Territory.IsValid() || !IsDistinctDispatchParty(Participants) || Tick<0 ||
         !Definition.ValidateDefinition(Error) || Definition.DurationTicks>MAX_int64-Tick)
-    { if (Error.IsEmpty()) Error=TEXT("Select an actual holding and owned participant."); return false; }
+    { if (Error.IsEmpty()) Error=TEXT("Select an actual holding and distinct owned copies."); return false; }
     Out.DefinitionId=Definition.DefinitionId; Out.ResourceId=Definition.ResourceId; Out.RulerId=Ruler;
-    Out.ParticipantId=Participant; Out.TerritoryId=Territory; Out.LocationId=Definition.LocationId;
+    Out.ParticipantIds=Participants;
+    if (Participants.Num()==1) Out.ParticipantId=Participants[0];
+    Out.TerritoryId=Territory; Out.LocationId=Definition.LocationId;
+    Out.MinimumPartySize=Definition.MinimumPartySize;
+    Out.MaximumPartySize=Definition.MaximumPartySize;
     Out.Name=Definition.DisplayName.ToString(); Out.ResourceName=Definition.ResourceName.ToString();
     Out.Type=Definition.DispatchType;
     Out.TargetLocationId=Definition.LocationId;
@@ -156,15 +201,50 @@ bool FOGGatheringDispatch::Preview(const UOGGatheringDispatchDefinition& Definit
     Out.Duration=Definition.DurationTicks;
     if (!bGathering && !OGDispatchAuthored::Prepare(Store,Definition,Out,Error)) return false;
     if (!Out.bVisible) return true;
-    bool Access=false,Owned=false,Assigned=false;
+    if (Participants.Num()<Out.MinimumPartySize || Participants.Num()>Out.MaximumPartySize)
+    {
+        Out.Reason=Out.MinimumPartySize==Out.MaximumPartySize
+            ? FString::Printf(TEXT("Select exactly %d participants."),Out.MinimumPartySize)
+            : FString::Printf(TEXT("Select %d to %d participants."),Out.MinimumPartySize,Out.MaximumPartySize);
+        return true;
+    }
+    if (!Out.Reason.IsEmpty()) return true;
+
+    bool Access=false;
+    TSet<FOGEntityId> Assigned;
     if (!HasHoldingAccess(Store,Ruler,Territory,Definition.LocationId,Tick,Access,Error) ||
-        !IsActiveOwned(Store,Ruler,Participant,Owned,Error) || !IsAssigned(Store,Ruler,Participant,Assigned,Error) ||
+        !ReadAssignedParticipants(Store,Assigned,Error) ||
         (Out.Amount>0 && !ReadStock(Store,Definition.LocationId,Definition.ResourceId,Out.Available,Error))) return false;
     if (!Access) Out.Reason=TEXT("This holding no longer controls the issuing location.");
-    else if (!Owned) Out.Reason=TEXT("The chosen participant is no longer an active owned copy.");
-    else if (Assigned) Out.Reason=TEXT("This character already has an active dispatch.");
-    else if (Out.Available<Out.Amount) Out.Reason=TEXT("The issuing location does not have enough stock.");
+    for (const auto& Participant:Participants)
+    {
+        if (!Out.Reason.IsEmpty()) break;
+        bool Owned=false;
+        if (!IsActiveOwned(Store,Ruler,Participant,Owned,Error)) return false;
+        if (!Owned) Out.Reason=TEXT("A selected participant is no longer an active owned copy.");
+        else if (Assigned.Contains(Participant)) Out.Reason=TEXT("A selected participant already has an active dispatch.");
+        else
+        {
+            bool bFound=false;
+            FOGManifestationManagementMetadataRecord Metadata;
+            if (!Store.TryReadManifestationManagementMetadata(Participant,bFound,Metadata,Error)) return false;
+            if (bFound && Metadata.bLocked) Out.Reason=TEXT("A selected participant is locked.");
+        }
+    }
+    if (Out.Reason.IsEmpty() && Out.Available<Out.Amount)
+        Out.Reason=TEXT("The issuing location does not have enough stock.");
     if (!Out.Reason.IsEmpty()) return true;
+    if (!bGathering)
+    {
+        bool Qualified=false;
+        if (!OGDispatchAuthored::CheckQualification(Store,Definition,Participants,Qualified,Error)) return false;
+        if (!Qualified)
+        {
+            Out.Reason=FString::Printf(TEXT("This order requires %d participants with the authored capability."),
+                Definition.MinimumQualifiedParticipants);
+            return true;
+        }
+    }
     FString Key=Out.DefinitionId.ToString()+TEXT("|")+Out.RulerId.ToString()+TEXT("|")+Out.TerritoryId.ToString()+
         TEXT("|")+Out.LocationId.ToString()+TEXT("|")+Out.ParticipantId.ToString()+TEXT("|")+Out.ResourceId.ToString()+
         TEXT("|")+LexToString(Out.Amount)+TEXT("|")+LexToString(Out.Duration)+TEXT("|")+LexToString(Out.Available);
@@ -176,6 +256,7 @@ bool FOGGatheringDispatch::Preview(const UOGGatheringDispatchDefinition& Definit
         Contract->SetNumberField(TEXT("risk"),Out.Risk);
         Contract->SetNumberField(TEXT("tolerance"),Out.RiskTolerance);
         Contract->SetStringField(TEXT("plan"),Out.AuthoredPlanJson);
+        Contract->SetArrayField(TEXT("participants"),DispatchPartyJson(Participants));
         TArray<TSharedPtr<FJsonValue>> Objectives;
         for (const auto& Objective:Out.Objectives)
         {
@@ -218,14 +299,15 @@ bool FOGGatheringDispatch::Start(const FOGGatheringDispatchQuote& Quote,const FO
         if (Previous.EventType!=Expected || Previous.PrimaryEntity!=Quote.RulerId ||
             !Parse(Previous.PayloadJson,Saved) || !Saved->TryGetStringField(TEXT("confirmation_token"),Token) ||
             Token!=Quote.Token || !GuidField(*Saved,TEXT("dispatch_id"),Id) ||
-            !Store.TryReadDispatch(Id,Found,Order,Error) || !Found || Order.OwnerEntityId!=Quote.RulerId)
+            !Store.TryReadDispatch(Id,Found,Order,Error) || !Found || Order.OwnerEntityId!=Quote.RulerId ||
+            Order.ParticipantEntityIds!=Quote.ParticipantIds)
         { if (Error.IsEmpty()) Error=TEXT("Request belongs to a different dispatch."); return Rollback(); }
         if (!Store.CommitTransaction(Error)) return Rollback();
         return RegisterOrder(Store,Clock,Order,Error);
     }
     const auto* Definition=FindDefinition(Quote.DefinitionId);
     FOGGatheringDispatchQuote Fresh;
-    if (!Definition || !Preview(*Definition,Quote.RulerId,Quote.TerritoryId,Quote.ParticipantId,Tick,Fresh,Error) ||
+    if (!Definition || !PreviewParty(*Definition,Quote.RulerId,Quote.TerritoryId,Quote.ParticipantIds,Tick,Fresh,Error) ||
         !Fresh.bCanStart || Fresh.Token!=Quote.Token)
     { if (Error.IsEmpty()) Error=Fresh.Reason.IsEmpty()?TEXT("The gathering order changed. Review it again."):Fresh.Reason; return Rollback(); }
 
@@ -251,7 +333,7 @@ bool FOGGatheringDispatch::Start(const FOGGatheringDispatchQuote& Quote,const FO
     const int64 Due=Tick+Fresh.Duration;
     const int64 Seed=static_cast<int64>(GetTypeHash(Request));
     if (!FOGDispatchService(Store).StartDispatch(Fresh.RulerId,Fresh.TargetLocationId,Fresh.Type,
-        {Fresh.ParticipantId},Tick,Due,Fresh.Risk,Fresh.RiskTolerance,Serialize(Plan),Fresh.Objectives,
+        Fresh.ParticipantIds,Tick,Due,Fresh.Risk,Fresh.RiskTolerance,Serialize(Plan),Fresh.Objectives,
         Fresh.Constraints,Seed,DispatchId,Error)) return Rollback();
 
     auto Provenance=MakeShared<FJsonObject>();
@@ -269,8 +351,10 @@ bool FOGGatheringDispatch::Start(const FOGGatheringDispatchQuote& Quote,const FO
     auto Receipt=MakeShared<FJsonObject>();
     Receipt->SetStringField(TEXT("dispatch_id"),DispatchId.ToString());
     Receipt->SetStringField(TEXT("confirmation_token"),Fresh.Token);
+    Receipt->SetArrayField(TEXT("participant_ids"),DispatchPartyJson(Fresh.ParticipantIds));
     FOGWorldEvent Event; Event.EventId=Request; Event.EventType=bGathering?StartedEvent:AuthoredStartedEvent; Event.WorldTick=Tick;
-    Event.PrimaryEntity=Fresh.RulerId; Event.RelatedEntities={DispatchId,Fresh.ParticipantId,Fresh.LocationId};
+    Event.PrimaryEntity=Fresh.RulerId; Event.RelatedEntities={DispatchId,Fresh.LocationId};
+    for (const auto& Participant:Fresh.ParticipantIds) Event.RelatedEntities.AddUnique(Participant);
     // The target can be unknown until a successful discovery.
     if (bGathering) Event.RelatedEntities.AddUnique(Fresh.TargetLocationId);
     Event.PayloadJson=Serialize(Receipt); Event.bChronicleEligible=true;
@@ -309,7 +393,8 @@ bool FOGGatheringDispatch::Resolve(IOGWorldStore& Store,const FOGWorldDirectorSc
     bool Found=false; FOGDispatchRecord Order; FGatheringPlan Plan;
     if (!Store.TryReadDispatch(Id,Found,Order,Error) || !Found || !DecodePlan(Order,Plan) ||
         Order.ResolveWorldTick!=Schedule.ScheduledStartWorldTick || Order.ResolutionSeed!=Schedule.ResolutionSeed ||
-        Order.ParticipantEntityIds.Num()!=1)
+        Order.ParticipantEntityIds.IsEmpty() || !IsDistinctDispatchParty(Order.ParticipantEntityIds) ||
+        (Order.Type==EOGDispatchType::Gathering && Order.ParticipantEntityIds.Num()!=1))
     { if (Error.IsEmpty()) Error=TEXT("The authored gathering dispatch is no longer readable."); return Rollback(); }
     if (Order.Status!=EOGDispatchStatus::Active)
     {
@@ -324,10 +409,16 @@ bool FOGGatheringDispatch::Resolve(IOGWorldStore& Store,const FOGWorldDirectorSc
     {
         if (!bGathering)
         {
-            bool Access=false,Owned=false;
-            if (!HasHoldingAccess(Store,Order.OwnerEntityId,Plan.Territory,Plan.Origin,Tick,Access,Failure) ||
-                !IsActiveOwned(Store,Order.OwnerEntityId,Order.ParticipantEntityIds[0],Owned,Failure)) return false;
-            return OGDispatchAuthored::Evaluate(Store,Order,Context,Schedule.ScheduleId,Tick,bOffline,Access,Owned,Result,Failure);
+            bool Access=false;
+            if (!HasHoldingAccess(Store,Order.OwnerEntityId,Plan.Territory,Plan.Origin,Tick,Access,Failure)) return false;
+            TArray<FOGEntityId> Unavailable;
+            for (const auto& Participant:Order.ParticipantEntityIds)
+            {
+                bool Owned=false;
+                if (!IsActiveOwned(Store,Order.OwnerEntityId,Participant,Owned,Failure)) return false;
+                if (!Owned) Unavailable.Add(Participant);
+            }
+            return OGDispatchAuthored::Evaluate(Store,Order,Context,Schedule.ScheduleId,Tick,bOffline,Access,Unavailable,Result,Failure);
         }
         if (Context.MandatoryObjectives.Num()!=1 || !Context.SecondaryObjectives.IsEmpty() || !Context.HardConstraints.IsEmpty() ||
             Context.MandatoryObjectives[0].ObjectiveId!=Plan.Definition ||
@@ -359,7 +450,8 @@ bool FOGGatheringDispatch::Resolve(IOGWorldStore& Store,const FOGWorldDirectorSc
     };
     if (!FOGDispatchService(Store).ResolveDispatchWithPolicy(Id,Tick,Resolver,Settled,Error)) return Rollback();
     FOGWorldEvent Receipt; Receipt.EventId=Schedule.ScheduleId; Receipt.EventType=bGathering?ResolvedEvent:AuthoredResolvedEvent;
-    Receipt.WorldTick=Tick; Receipt.PrimaryEntity=Order.OwnerEntityId; Receipt.RelatedEntities={Id,Order.ParticipantEntityIds[0]};
+    Receipt.WorldTick=Tick; Receipt.PrimaryEntity=Order.OwnerEntityId; Receipt.RelatedEntities={Id};
+    for (const auto& Participant:Order.ParticipantEntityIds) Receipt.RelatedEntities.AddUnique(Participant);
     if (bGathering) Receipt.RelatedEntities.AddUnique(Order.TargetEntityId);
     Receipt.PayloadJson=Settled.ResultJson; Receipt.bChronicleEligible=true;
     FOGEntityId Report;

@@ -43,6 +43,29 @@ bool HasDispatchSkill(IOGWorldStore& Store,const FOGEntityId& Participant,const 
     return true;
 }
 
+bool ReadQualifiedDispatchParty(IOGWorldStore& Store,const TArray<FOGEntityId>& Participants,
+    const TArray<FOGEntityId>& Unavailable,const FOGContentId& Skill,FName State,
+    TArray<FOGEntityId>& Qualified,FString& Error)
+{
+    Qualified.Reset();
+    if (Skill.IsEmpty()) return true;
+    for (const auto& Participant:Participants)
+    {
+        if (Unavailable.Contains(Participant)) continue;
+        bool bQualified=false;
+        if (!HasDispatchSkill(Store,Participant,Skill,State,bQualified,Error)) return false;
+        if (bQualified) Qualified.Add(Participant);
+    }
+    return true;
+}
+
+TArray<TSharedPtr<FJsonValue>> AuthoredPartyJson(const TArray<FOGEntityId>& Participants)
+{
+    TArray<TSharedPtr<FJsonValue>> Ids;
+    for (const auto& Id:Participants) Ids.Add(MakeShared<FJsonValueString>(Id.ToString()));
+    return Ids;
+}
+
 bool FindDispatchEvidence(IOGWorldStore& Store,const FOGDispatchRecord& Order,FName Type,bool bPrior,
     FOGEntityId& Evidence,FString& Error)
 {
@@ -114,11 +137,13 @@ bool OGDispatchAuthored::Validate(const UOGGatheringDispatchDefinition& D,FStrin
     if (!bSupported || !D.TargetLocationId.IsValid() || D.Briefing.IsEmpty() ||
         D.RiskDescription.IsEmpty() || D.SuccessSummary.IsEmpty() || D.RiskBps<0 || D.RiskBps>10000 ||
         D.RiskToleranceBps<0 || D.RiskToleranceBps>10000 ||
+        D.MinimumPartySize<1 || D.MaximumPartySize<D.MinimumPartySize ||
+        D.MinimumQualifiedParticipants<1 || D.MinimumQualifiedParticipants>D.MaximumPartySize ||
         (!D.RequiredParticipantSkillId.IsEmpty() && !D.RequiredParticipantSkillId.IsValid()) ||
         (D.RequiredParticipantSkillId.IsEmpty()!=D.RequiredParticipantSkillState.IsNone()) ||
         (D.bTransferHoldingStock && (D.DispatchType!=EOGDispatchType::Support || D.TargetLocationId==D.LocationId ||
             !D.ResourceId.IsValid() || D.ResourceName.IsEmpty() || D.Amount<=0)))
-        return DispatchError(Error,TEXT("Dispatch requires an original target, briefing, risk policy and valid success effects."));
+        return DispatchError(Error,TEXT("Dispatch requires an original target, briefing, risk policy, valid party limits and success effects."));
     if (D.bRevealLocation && (D.RevealedLocationLevel<EOGLocationKnowledgeLevel::Rumored ||
         D.RevealedLocationLevel>EOGLocationKnowledgeLevel::Explored))
         return DispatchError(Error,TEXT("Dispatch has an invalid authored location knowledge level."));
@@ -172,12 +197,9 @@ bool OGDispatchAuthored::Prepare(IOGWorldStore& Store,const UOGGatheringDispatch
         }
     }
     FOGLocationRecord Target;
-    bool bFound=false,bQualified=false;
-    if (!Store.TryReadLocation(D.TargetLocationId,bFound,Target,Error) ||
-        !HasDispatchSkill(Store,Quote.ParticipantId,D.RequiredParticipantSkillId,D.RequiredParticipantSkillState,bQualified,Error))
-        return false;
+    bool bFound=false;
+    if (!Store.TryReadLocation(D.TargetLocationId,bFound,Target,Error)) return false;
     if (!bFound) Quote.Reason=TEXT("The original dispatch target is unavailable.");
-    else if (!bQualified) Quote.Reason=TEXT("The assigned character lacks the authored capability.");
     if (!Quote.Reason.IsEmpty()) return true;
 
     auto Plan=MakeShared<FJsonObject>();
@@ -189,6 +211,9 @@ bool OGDispatchAuthored::Prepare(IOGWorldStore& Store,const UOGGatheringDispatch
     Plan->SetStringField(TEXT("source_reference"),D.OriginalSourceReference);
     Plan->SetStringField(TEXT("skill_id"),D.RequiredParticipantSkillId.Value);
     Plan->SetStringField(TEXT("skill_state"),D.RequiredParticipantSkillState.ToString());
+    Plan->SetNumberField(TEXT("minimum_party_size"),D.MinimumPartySize);
+    Plan->SetNumberField(TEXT("maximum_party_size"),D.MaximumPartySize);
+    Plan->SetNumberField(TEXT("minimum_qualified_participants"),D.MinimumQualifiedParticipants);
     Plan->SetStringField(TEXT("summary"),D.SuccessSummary.ToString());
     Plan->SetBoolField(TEXT("transfer"),D.bTransferHoldingStock);
     Plan->SetStringField(TEXT("resource"),D.ResourceId.Value);
@@ -223,9 +248,20 @@ bool OGDispatchAuthored::Prepare(IOGWorldStore& Store,const UOGGatheringDispatch
     return true;
 }
 
+bool OGDispatchAuthored::CheckQualification(IOGWorldStore& Store,const UOGGatheringDispatchDefinition& D,
+    const TArray<FOGEntityId>& Participants,bool& Qualified,FString& Error)
+{
+    TArray<FOGEntityId> Skilled;
+    if (!ReadQualifiedDispatchParty(Store,Participants,{},D.RequiredParticipantSkillId,
+        D.RequiredParticipantSkillState,Skilled,Error)) return false;
+    Qualified=D.RequiredParticipantSkillId.IsEmpty() || Skilled.Num()>=D.MinimumQualifiedParticipants;
+    return true;
+}
+
 bool OGDispatchAuthored::Evaluate(IOGWorldStore& Store,const FOGDispatchRecord& Order,
     const FOGDispatchResolutionContext& Policy,const FOGEntityId& ReceiptId,int64 Tick,bool bOffline,
-    bool bHoldingAccess,bool bParticipantAvailable,FOGDispatchResolutionResult& Result,FString& Error)
+    bool bHoldingAccess,const TArray<FOGEntityId>& UnavailableParticipants,
+    FOGDispatchResolutionResult& Result,FString& Error)
 {
     TSharedPtr<FJsonObject> Envelope,Plan;
     FString PlanText,DefinitionId,Skill,SkillState,Summary;
@@ -244,11 +280,26 @@ bool OGDispatchAuthored::Evaluate(IOGWorldStore& Store,const FOGDispatchRecord& 
         !Plan->TryGetStringField(TEXT("summary"),Summary))
         return DispatchError(Error,TEXT("The authored dispatch no longer matches its saved policy."));
 
+    // Previously persisted authored orders had exactly one participant.
+    int32 Minimum=1,Maximum=1,MinimumQualified=1;
+    if (Plan->HasField(TEXT("minimum_party_size")) &&
+        (!Plan->TryGetNumberField(TEXT("minimum_party_size"),Minimum) ||
+            !Plan->TryGetNumberField(TEXT("maximum_party_size"),Maximum) ||
+            !Plan->TryGetNumberField(TEXT("minimum_qualified_participants"),MinimumQualified)))
+        return DispatchError(Error,TEXT("The saved dispatch party contract is unreadable."));
+    const int32 PartySize=Order.ParticipantEntityIds.Num();
+    if (Minimum<1 || Maximum<Minimum || MinimumQualified<1 || MinimumQualified>Maximum ||
+        PartySize<Minimum || PartySize>Maximum)
+        return DispatchError(Error,TEXT("The saved dispatch party does not match its authored limits."));
+
     FOGLocationRecord Location;
-    bool bTarget=false,bQualified=false;
+    bool bTarget=false;
+    TArray<FOGEntityId> Qualified;
     if (!Store.TryReadLocation(Target,bTarget,Location,Error) ||
-        !HasDispatchSkill(Store,Order.ParticipantEntityIds[0],FOGContentId(Skill),FName(*SkillState),bQualified,Error))
-        return false;
+        !ReadQualifiedDispatchParty(Store,Order.ParticipantEntityIds,UnavailableParticipants,
+            FOGContentId(Skill),FName(*SkillState),Qualified,Error)) return false;
+    const bool bQualified=Skill.IsEmpty() || Qualified.Num()>=MinimumQualified;
+    const bool bParticipantAvailable=UnavailableParticipants.IsEmpty();
     auto Outcome=MakeShared<FJsonObject>();
     TArray<TSharedPtr<FJsonValue>> ObjectiveResults;
     bool bMandatory=false,bSecondary=true;
@@ -261,7 +312,7 @@ bool OGDispatchAuthored::Evaluate(IOGWorldStore& Store,const FOGDispatchRecord& 
     Result.bSurvivalAbortPolicyEvaluated=true;
 
     bool bSuccess=bMandatory && bHardConstraints && bParticipantAvailable && bWithinTolerance;
-    const TCHAR* Failure=!bParticipantAvailable?TEXT("The assigned character is no longer available."):
+    const TCHAR* Failure=!bParticipantAvailable?TEXT("A member of the assigned party is no longer available."):
         !bHardConstraints?TEXT("A target, capability or holding requirement changed."):
         !bWithinTolerance?TEXT("The order returned under its authored risk policy."):
         TEXT("The required objectives were not met by the deadline.");
@@ -343,7 +394,8 @@ bool OGDispatchAuthored::Evaluate(IOGWorldStore& Store,const FOGDispatchRecord& 
             Fact.ConfidenceBps=Confidence;
             Fact.LearnedWorldTick=Tick;
             Fact.UpdatedWorldTick=Tick;
-            Fact.SourceEntityId=Order.ParticipantEntityIds[0];
+            Fact.SourceEntityId=Qualified.Num()==1?Qualified[0]:
+                Order.ParticipantEntityIds.Num()==1?Order.ParticipantEntityIds[0]:Order.DispatchId;
             Fact.SourceEventId=ReceiptId;
             Fact.bHasEvidenceWorldTick=true;
             Fact.EvidenceWorldTick=Tick;
@@ -363,6 +415,9 @@ bool OGDispatchAuthored::Evaluate(IOGWorldStore& Store,const FOGDispatchRecord& 
     Outcome->SetBoolField(TEXT("offline"),bOffline);
     Outcome->SetBoolField(TEXT("hard_constraints_met"),bHardConstraints);
     Outcome->SetBoolField(TEXT("participant_available"),bParticipantAvailable);
+    Outcome->SetArrayField(TEXT("participant_ids"),AuthoredPartyJson(Order.ParticipantEntityIds));
+    Outcome->SetArrayField(TEXT("unavailable_participant_ids"),AuthoredPartyJson(UnavailableParticipants));
+    Outcome->SetArrayField(TEXT("qualified_participant_ids"),AuthoredPartyJson(Qualified));
     Outcome->SetBoolField(TEXT("within_risk_policy"),bWithinTolerance);
     Outcome->SetBoolField(TEXT("secondary_evaluated"),bSecondaryEvaluated);
     Outcome->SetArrayField(TEXT("objectives"),ObjectiveResults);
