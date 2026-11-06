@@ -4203,9 +4203,29 @@
         "Source/OfflineGame/Private/World/OGRulerDiplomacyService.cpp",
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerDiplomacy.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "dcb14dbc282d85f463935f173af7e6c3467972db",
+      "system_ids": [
+        "M25",
+        "M26"
+      ],
+      "result": "The Journal persists accepted quests as failed and previously viewed quest offers as missed when a matching authored closing event occurs. The original cause and branch changes are retained and exposed through Story History, with unseen quests still hidden.",
+      "remaining_player_visible_work": "Install the approved quest/dialogue definitions, resident contacts and their original closing-event mappings. At this checkpoint the Journal reconciles closures when opened. No native or owner acceptance claimed.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Narrative/OGNarrativeChronicle.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeService.cpp",
+        "Source/OfflineGame/Private/Narrative/OGNarrativeSessionSubsystem.cpp",
+        "Source/OfflineGame/Public/Narrative/OGNarrativeService.h"
+      ]
     }
   ],
-  "continuation_last_source_commit": "1cb21cfc3dd672d8716036939d834fd8144ae345",
+  "continuation_last_source_commit": "dcb14dbc282d85f463935f173af7e6c3467972db",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
