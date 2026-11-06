@@ -6,6 +6,17 @@
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Characters/OGCharacterGameplayDefinition.h"
+#include "Characters/OGContentCharacterActors.h"
+#include "Combat/OGCombatVitalityService.h"
+#include "Combat/OGNativeTurnAgentComponent.h"
+#include "Dom/JsonObject.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Runtime/OGFoundationCharacterRuntime.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 bool FOGEncounterRankRules::Validate(FString& Error) const
 {
@@ -168,6 +179,185 @@ bool UOGNativeEncounterReceiver::StartEncounter(const TArray<FOGResolvedEncounte
     Status=Missing
         ? FString::Printf(TEXT("Encounter saved; %d active participant bodies are not connected yet."),Missing)
         : TEXT("Encounter saved; actual participant bodies connected.");
+    return true;
+}
+
+UOGNativeEncounterReceiver* UOGNativeEncounterReceiver::FindWorldInteraction(AActor* Target,const AActor* Interactor)
+{
+    const auto* Pawn=Cast<APawn>(Interactor);
+    if (!IsValid(Target) || !Pawn || Target==Interactor || Target->GetWorld()!=Pawn->GetWorld() ||
+        Target->IsActorBeingDestroyed() || Target->IsHidden() || !Pawn->IsLocallyControlled() ||
+        !Cast<APlayerController>(Pawn->GetController())) return nullptr;
+
+    const auto* Roster=Target->FindComponentByClass<UOGWorldEncounterRosterComponent>();
+    if (!Roster || Roster->Members.IsEmpty()) return nullptr;
+    const auto* Game=Target->GetGameInstance();
+    const auto* Core=Game?Game->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+    const auto* Session=Game?Game->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+    const auto* Battle=Core?Core->GetOwnedLuminousTurnBattle():nullptr;
+    if (!Core || !Core->IsCoreReady() || !Session || !Session->IsBoundToStoredRuler() ||
+        (Battle && Battle->GetState().Status==EOGTurnBattleStatus::Running)) return nullptr;
+
+    TInlineComponentArray<UOGNativeEncounterReceiver*> Receivers(Target);
+    UOGNativeEncounterReceiver* Found=nullptr;
+    for (auto* Receiver:Receivers)
+    {
+        if (!Receiver->IsActive() || !Cast<UOGNativeEncounterDefinition>(Receiver->BoundDefinition)) continue;
+        if (Found) return nullptr;
+        Found=Receiver;
+    }
+    return Found;
+}
+
+FText UOGNativeEncounterReceiver::GetWorldInteractionPrompt() const
+{
+    if (const auto* Roster=GetOwner()->FindComponentByClass<UOGWorldEncounterRosterComponent>();
+        Roster && !Roster->InteractionPrompt.IsEmpty()) return Roster->InteractionPrompt;
+    return NSLOCTEXT("NoWorldEncounter","BeginEncounter","Begin encounter");
+}
+
+FText UOGNativeEncounterReceiver::GetWorldInteractionFeedback() const
+{
+    if (GetWorld() && GetWorld()->GetTimeSeconds()<WorldFeedbackUntil)
+        return FText::FromString(Status);
+    return FText::GetEmpty();
+}
+
+bool UOGNativeEncounterReceiver::StartFromWorldInteraction(AActor& Interactor,FString& Error)
+{
+    Error.Reset();
+    if (!IsInGameThread() || FindWorldInteraction(GetOwner(),&Interactor)!=this)
+    {
+        Error=TEXT("This encounter is not available to the controlled World character.");
+        return false;
+    }
+
+    TArray<FOGResolvedEncounterParticipant> Participants;
+    if (!BuildWorldParticipants(Interactor,Participants,Error) || !StartEncounter(Participants,Error))
+    {
+        Status=Error;
+        WorldFeedbackUntil=GetWorld()->GetTimeSeconds()+5.0;
+        return false;
+    }
+    WorldFeedbackUntil=0.0;
+    return true;
+}
+
+bool UOGNativeEncounterReceiver::BuildWorldParticipants(const AActor& Interactor,
+    TArray<FOGResolvedEncounterParticipant>& Out,FString& Error) const
+{
+    Out.Reset();
+    auto* Game=GetWorld()->GetGameInstance();
+    auto* Core=Game->GetSubsystem<UOGGameCoreSubsystem>();
+    const auto* Session=Game->GetSubsystem<UOGGate12RulerSessionSubsystem>();
+    const auto* Definition=CastChecked<UOGNativeEncounterDefinition>(BoundDefinition);
+    const auto* Roster=GetOwner()->FindComponentByClass<UOGWorldEncounterRosterComponent>();
+    auto* Store=Core->GetWorldStore();
+    if (!Store || !Store->IsOpen() || !Roster || !Definition->ValidateDefinition(Error))
+    { if (Error.IsEmpty()) Error=TEXT("This encounter needs its original plan and saved World."); return false; }
+
+    const FOGEntityId ControlledId=Session->SelectedManifestationId.IsValid()
+        ? Session->SelectedManifestationId : Session->BoundRulerId;
+    int32 ControlledSlots=0;
+    auto* Library=UOGDefinitionLibrary::Get();
+    for (const auto& Member:Roster->Members)
+    {
+        const AActor* Actor=Member.bUseControlledCharacter ? &Interactor
+            : (Member.PlacedCharacter.IsNull() ? GetOwner() : Member.PlacedCharacter.Get());
+        const auto* Body=IsValid(Actor)?Actor->FindComponentByClass<UOGInteractionParticipantComponent>():nullptr;
+        FOGFoundationCharacterProjection Projection;
+        if (!Body || Actor->GetWorld()!=GetWorld() || Actor->IsActorBeingDestroyed() || Actor->IsHidden() ||
+            !UOGCanonicalCombatActorBindingComponent::HasNativeSkeletalBody(*Actor) ||
+            !Body->GetCurrentProjection(Projection,Error))
+        { if (Error.IsEmpty()) Error=TEXT("An authored encounter character is absent or has no connected World body."); return false; }
+
+        FOGResolvedEncounterParticipant Entry;
+        auto& Unit=Entry.Unit;
+        Unit.UnitEntityId=Body->GetBoundCanonicalEntityId();
+        if (!Unit.UnitEntityId.IsValid() || Unit.UnitEntityId!=Projection.Context.EntityId ||
+            Member.bUseControlledCharacter!=(Unit.UnitEntityId==ControlledId))
+        { Error=TEXT("Encounter assignment does not match the controlled or placed character."); return false; }
+
+        FOGContentId Version;
+        if (Projection.bHasManifestation)
+        {
+            Unit.IdentityId=Projection.Manifestation.IdentityId;
+            Version=Projection.Manifestation.ActiveVersionId;
+            if (Projection.Manifestation.LifecycleState!=TEXT("active") ||
+                (Member.bUseControlledCharacter && Projection.Manifestation.OwningRulerId!=Session->BoundRulerId))
+            { Error=TEXT("An encounter Manifestation is inactive or ownership changed."); return false; }
+        }
+        else
+        {
+            FString IdentityText,VersionText;
+            TSharedPtr<FJsonObject> State;
+            if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Projection.EntityStateJson),State) ||
+                !State || !State->TryGetStringField(Definition->CanonicalIdentityField.ToString(),IdentityText) ||
+                !State->TryGetStringField(Definition->CanonicalVersionField.ToString(),VersionText))
+            { Error=TEXT("This World character has no authored canonical combat Identity and Version."); return false; }
+            Unit.IdentityId=FOGContentId(IdentityText);
+            Version=FOGContentId(VersionText);
+        }
+
+        const auto* Kit=UOGCharacterGameplayDefinition::Find(Unit.IdentityId,Version,Error);
+        if (!Kit) return false;
+        if (Kit->EncounterActionDelay<=0)
+        { Error=TEXT("This character Version has no authored encounter statistics and timing."); return false; }
+        Unit.SkillSet=Kit->Skills;
+        Unit.Stats=Kit->EncounterBaseStats;
+        Unit.CurrentHp=Unit.Stats.MaxHp;
+        Unit.DefaultActionDelay=Kit->EncounterActionDelay;
+        if (!FOGCombatVitalityService(*Store).Project(Unit,Error)) return false;
+
+        if (Member.bUseControlledCharacter)
+        {
+            ++ControlledSlots;
+            if (Projection.bHasManifestation)
+            {
+                const auto* Original=Cast<AOGLuminousV3PlayableCharacter>(Actor);
+                const auto* Content=Cast<AOGContentPlayableCharacter>(Actor);
+                FOGResolvedSkillSet OwnedSkills;
+                if (!((Original && Original->IsBoundToOwnedLuminousCombatUnit(Session->BoundRulerId,ControlledId,Version)) ||
+                      (Content && Content->IsBoundToOwnedCombatUnit(Session->BoundRulerId,ControlledId,Version))) ||
+                    !Core->ReadOwnedCharacterSkills(ControlledId,Session->BoundRulerId,OwnedSkills,Error) ||
+                    !Kit->MatchesKit(OwnedSkills))
+                { if (Error.IsEmpty()) Error=TEXT("The controlled body does not match the active owned combat Version."); return false; }
+            }
+        }
+        else if (Unit.IsAlive())
+        {
+            const auto* Pawn=Cast<APawn>(Actor);
+            if (Pawn && Cast<APlayerController>(Pawn->GetController()))
+            { Error=TEXT("A placed encounter role cannot take control of another player body."); return false; }
+            const auto* Agent=Actor->FindComponentByClass<UOGNativeTurnAgentComponent>();
+            const auto* Policy=Agent && !Agent->Policy.IsNull()
+                ? Agent->Policy.LoadSynchronous()
+                : Library && Kit->TurnPolicy.Id.IsValid()
+                    ? Cast<UOGNativeTurnPolicy>(Library->Resolve(Kit->TurnPolicy.System,Kit->TurnPolicy.Id)) : nullptr;
+            FName Phase;
+            if (!Policy || !Policy->MatchesSource(Unit.IdentityId,Version) || !Policy->Validate(Error) ||
+                !Policy->ReadCanonicalActorState(*Store,Unit,Session->BoundRulerId,
+                    Definition->Mode==EOGCombatExecutionMode::World,Phase,Error))
+            { if (Error.IsEmpty()) Error=TEXT("A living encounter character is missing its compatible original AI policy."); return false; }
+        }
+
+        Entry.Role=Member.Role;
+        Entry.FormationIndex=Member.FormationIndex;
+        Entry.OpeningActionValue=Member.OpeningActionValue;
+        Entry.bWorldActive=Member.bWorldActive;
+        Out.Add(MoveTemp(Entry));
+    }
+
+    if (ControlledSlots!=1)
+    { Error=TEXT("An interactive encounter needs one controlled character slot."); return false; }
+    FOGTurnBattleState Opening;
+    if (!Definition->Assemble(Out,FOGEntityId::NewId(),Opening,Error)) return false;
+    const auto* Player=Opening.Units.FindByPredicate([&](const auto& Unit){ return Unit.UnitEntityId==ControlledId; });
+    if (!Player || !Player->CanAct())
+    { Error=TEXT("The controlled character cannot enter the active formation."); return false; }
+    for (const auto& Team:Opening.Teams)
+        if (!Opening.Units.ContainsByPredicate([&](const auto& Unit){ return Unit.TeamIndex==Team.TeamIndex && Unit.CanAct(); }))
+        { Error=TEXT("An encounter team has no living character in its opening formation."); return false; }
     return true;
 }
 

@@ -60,6 +60,16 @@ bool UOGCanonicalCombatActorBindingComponent::RefreshCanonicalEncounter(FString&
     return Bound;
 }
 
+bool UOGCanonicalCombatActorBindingComponent::HasNativeSkeletalBody(const AActor& Actor)
+{
+    TArray<USkeletalMeshComponent*> Parts;
+    Actor.GetComponents<USkeletalMeshComponent>(Parts);
+    for (const USkeletalMeshComponent* Part:Parts)
+        if (IsValid(Part) && Part->GetSkeletalMeshAsset() && Part->GetSkeletalMeshAsset()->GetSkeleton())
+            return true;
+    return false;
+}
+
 bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     const FOGEntityId& UnitId, const FOGContentId& ApprovedIdentity,
     FString& OutError)
@@ -94,14 +104,7 @@ bool UOGCanonicalCombatActorBindingComponent::BindActualNativeUnit(
     }
     // Reject mock actors: the physical participant must have actual native
     // source skeletal geometry. This creates no mesh, version or placeholder.
-    bool bHasNativeBody=false;
-    TArray<USkeletalMeshComponent*> Parts;
-    Owner->GetComponents<USkeletalMeshComponent>(Parts);
-    for (USkeletalMeshComponent* Part:Parts)
-        if (Part && Part->GetSkeletalMeshAsset() &&
-            Part->GetSkeletalMeshAsset()->GetSkeleton())
-        { bHasNativeBody=true;break; }
-    if (!bHasNativeBody)
+    if (!HasNativeSkeletalBody(*Owner))
     {
         OutError=TEXT("Source character has no valid native skeletal body.");
         return false;

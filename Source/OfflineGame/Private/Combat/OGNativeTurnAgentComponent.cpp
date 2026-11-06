@@ -19,10 +19,8 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
-namespace
-{
-bool ReadActualNpc(IOGWorldStore& Store, const UOGNativeTurnPolicy& Policy,
-    const FOGCombatUnitState& Unit, const FOGEntityId& LocalRuler, bool AllowOwnedCompanion,FName& Phase, FString& Error)
+bool UOGNativeTurnPolicy::ReadCanonicalActorState(IOGWorldStore& Store,const FOGCombatUnitState& Unit,
+    const FOGEntityId& LocalRuler,bool bAllowOwnedCompanion,FName& Phase,FString& Error) const
 {
     Phase = NAME_None;
     bool bFound = false; FName Kind; FString Saved; int64 Revision = 0;
@@ -33,27 +31,26 @@ bool ReadActualNpc(IOGWorldStore& Store, const UOGNativeTurnPolicy& Policy,
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Saved), State) || !State || State->HasField(TEXT("diagnosticFixture")))
     { Error = TEXT("Opponent state is missing, malformed or diagnostic-only."); return false; }
     FString Identity, Version, Life;
-    if (!State->TryGetStringField(Policy.CanonicalIdentityField.ToString(), Identity) || Identity != Unit.IdentityId.ToString() ||
-        !State->TryGetStringField(Policy.CanonicalVersionField.ToString(), Version) || Version != Unit.SkillSet.CurrentForm.ToString() ||
-        !State->TryGetStringField(Policy.CanonicalLifeField.ToString(), Life) || Life != Policy.RequiredLifeValue)
+    if (!State->TryGetStringField(CanonicalIdentityField.ToString(), Identity) || Identity != Unit.IdentityId.ToString() ||
+        !State->TryGetStringField(CanonicalVersionField.ToString(), Version) || Version != Unit.SkillSet.CurrentForm.ToString() ||
+        !State->TryGetStringField(CanonicalLifeField.ToString(), Life) || Life != RequiredLifeValue)
     { Error = TEXT("Canonical opponent identity, kit or life state does not match the authored policy."); return false; }
     FOGCharacterManifestationRecord Copy;
     if (!Store.TryReadCharacterManifestation(Unit.UnitEntityId, bFound, Copy, Error)) return false;
     if (bFound && (Copy.IdentityId != Unit.IdentityId || Copy.ActiveVersionId != Unit.SkillSet.CurrentForm ||
-        Copy.LifecycleState != TEXT("active") || (!AllowOwnedCompanion && LocalRuler.IsValid() && Copy.OwningRulerId == LocalRuler)))
+        Copy.LifecycleState != TEXT("active") || (!bAllowOwnedCompanion && LocalRuler.IsValid() && Copy.OwningRulerId == LocalRuler)))
     { Error = TEXT("An opponent agent cannot control the local Ruler's owned roster or an invalid manifestation."); return false; }
     FOGWorldPresenceRecord Presence;
     if (!Store.TryReadWorldPresence(Unit.UnitEntityId, bFound, Presence, Error) || !bFound)
     { if (Error.IsEmpty()) Error = TEXT("Canonical opponent has no real World presence."); return false; }
-    if (!Policy.CanonicalPhaseField.IsNone())
+    if (!CanonicalPhaseField.IsNone())
     {
         FString SavedPhase;
-        if (!State->TryGetStringField(Policy.CanonicalPhaseField.ToString(), SavedPhase) || SavedPhase.IsEmpty())
+        if (!State->TryGetStringField(CanonicalPhaseField.ToString(), SavedPhase) || SavedPhase.IsEmpty())
         { Error = TEXT("Authored canonical opponent phase is unavailable."); return false; }
         Phase = FName(*SavedPhase);
     }
     return true;
-}
 }
 
 UOGNativeTurnAgentComponent::UOGNativeTurnAgentComponent()
@@ -112,7 +109,7 @@ bool UOGNativeTurnAgentComponent::ConfigureBattleUnit(const FOGEntityId& BattleI
         if (!Unit->SkillSet.ActiveSkills.Contains(Rule.SkillId) && !Unit->SkillSet.IsUltimate(Rule.SkillId))
         { Error = TEXT("An AI rule refers to an ability absent from the source unit's exact kit."); return false; }
     FName Phase;
-    if (!ReadActualNpc(*Runtime->GetWorldStore(), *CandidatePolicy, *Unit,
+    if (!CandidatePolicy->ReadCanonicalActorState(*Runtime->GetWorldStore(), *Unit,
         Session ? Session->BoundRulerId : FOGEntityId(),
         Battle->GetState().ExecutionMode==EOGCombatExecutionMode::World,Phase, Error)) return false;
     TArray<UOGNativeCombatAbility*> Abilities; TArray<FOGContentId> Required;
@@ -162,7 +159,7 @@ bool UOGNativeTurnAgentComponent::ReadCanonicalPhase(const FOGCombatUnitState& U
     const UOGGate12RulerSessionSubsystem* Session = GetWorld()->GetGameInstance()->GetSubsystem<UOGGate12RulerSessionSubsystem>();
     if (!Session || !Session->IsBoundToStoredRuler() || Session->BoundRulerId != Core->GetOwnedBattleRulerId())
     { Error = TEXT("The local Ruler no longer owns this actual encounter."); return false; }
-    return ReadActualNpc(*Core->GetWorldStore(), *ActivePolicy, Unit,
+    return ActivePolicy->ReadCanonicalActorState(*Core->GetWorldStore(), Unit,
         Session ? Session->BoundRulerId : FOGEntityId(),
         Core->GetOwnedLuminousTurnBattle() && Core->GetOwnedLuminousTurnBattle()->GetState().ExecutionMode==EOGCombatExecutionMode::World,OutPhase, Error);
 }

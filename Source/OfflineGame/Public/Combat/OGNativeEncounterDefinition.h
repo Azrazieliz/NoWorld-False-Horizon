@@ -78,7 +78,30 @@ public:
     bool Assemble(const TArray<FOGResolvedEncounterParticipant>& Participants,const FOGEntityId& BattleId,
         FOGTurnBattleState& Out,FString& Error) const;
 };
-/** A reusable World trigger/actor receiver. The caller supplies existing resolved participants. */
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGWorldEncounterMember
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FName Role;
+    /** Empty uses the encounter host. Actor references resolve only when their levels are loaded. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) TSoftObjectPtr<AActor> PlacedCharacter;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bUseControlledCharacter=false;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 FormationIndex=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 OpeningActionValue=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) bool bWorldActive=true;
+};
+
+/** A placed encounter's real actor assignments. The shared definition owns role and team rules. */
+UCLASS(ClassGroup=(OfflineGame),meta=(BlueprintSpawnableComponent))
+class OFFLINEGAME_API UOGWorldEncounterRosterComponent : public UActorComponent
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Encounter") FText InteractionPrompt;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Encounter") TArray<FOGWorldEncounterMember> Members;
+};
+
+/** A reusable World receiver. Authored script callers may still supply resolved participants. */
 UCLASS(ClassGroup=(OfflineGame),meta=(BlueprintSpawnableComponent))
 class OFFLINEGAME_API UOGNativeEncounterReceiver : public UOGDefinitionReceiverComponent
 {
@@ -93,6 +116,15 @@ public:
     UFUNCTION(BlueprintCallable,Category="Encounter")
     bool StartEncounter(const TArray<FOGResolvedEncounterParticipant>& Participants,FString& Error);
 
+    static UOGNativeEncounterReceiver* FindWorldInteraction(AActor* Target,const AActor* Interactor);
+    FText GetWorldInteractionPrompt() const;
+    FText GetWorldInteractionFeedback() const;
+    bool StartFromWorldInteraction(AActor& Interactor,FString& Error);
+
     /** Reconnect existing active participant actors and return the number still missing. */
     static int32 ReconnectParticipantBodies(UWorld* World,const FOGTurnBattleState& State);
+
+private:
+    bool BuildWorldParticipants(const AActor& Interactor,TArray<FOGResolvedEncounterParticipant>& Out,FString& Error) const;
+    double WorldFeedbackUntil=0.0;
 };

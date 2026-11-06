@@ -13,6 +13,7 @@
 #include "Camera/CameraComponent.h"
 #include "AudioDevice.h"
 #include "Combat/OGWorldActionRuntime.h"
+#include "Combat/OGNativeEncounterDefinition.h"
 #include "Combat/OGDiagnosticCombatComponent.h"
 #include "World/OGFoundationIntegrationWorld.h"
 #include "Animation/OGDiagnosticAnimationPresentation.h"
@@ -3346,16 +3347,7 @@ AActor* AOGWorldPrototypeCharacter::FindBestInteractable(
     for (TActorIterator<AActor> It(World); It; ++It)
     {
         AActor* Candidate = *It;
-        if (!Candidate ||
-            Candidate == this ||
-            !Candidate->GetClass()->ImplementsInterface(
-                UOGWorldInteractable::StaticClass()) ||
-            !IOGWorldInteractable::Execute_CanInteract(
-                Candidate,
-                const_cast<AOGWorldPrototypeCharacter*>(this)))
-        {
-            continue;
-        }
+        if (!IsValid(Candidate) || Candidate == this) continue;
 
         const FVector ToTarget =
             Candidate->GetActorLocation() - Origin;
@@ -3371,10 +3363,13 @@ AActor* AOGWorldPrototypeCharacter::FindBestInteractable(
                     Forward,
                     ToTarget / Distance)
                 : 1.0f;
-        if (Facing < 0.15f || !IsInteractionLineClear(Candidate))
-        {
+        if (Facing < 0.15f) continue;
+        const bool bEncounter = UOGNativeEncounterReceiver::FindWorldInteraction(Candidate, this) != nullptr;
+        if (!bEncounter &&
+            (!Candidate->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()) ||
+             !IOGWorldInteractable::Execute_CanInteract(Candidate, const_cast<AOGWorldPrototypeCharacter*>(this))))
             continue;
-        }
+        if (!IsInteractionLineClear(Candidate)) continue;
 
         const float Score =
             Distance * (1.15f - 0.35f * Facing);
@@ -3922,6 +3917,14 @@ void AOGWorldPrototypeCharacter::InteractPressed()
     if (AActor* Interactable =
             FindBestInteractable())
     {
+        if (auto* Encounter = UOGNativeEncounterReceiver::FindWorldInteraction(Interactable, this))
+        {
+            FString Error;
+            if (!Encounter->StartFromWorldInteraction(*this, Error))
+                UE_LOG(LogOfflineGame, Warning, TEXT("World encounter unavailable: %s"), *Error);
+            return;
+        }
+        if (!Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass())) return;
         IOGWorldInteractable::Execute_Interact(
             Interactable,
             this);
@@ -10514,8 +10517,13 @@ void AOGWorldPresentationHud::DrawHUD()
                 Canvas->ClipY * 0.72f;
             const float PromptW = 250.0f * Scale;
             const float PromptH = 56.0f * Scale;
-            FText Prompt;
-            if (Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()))
+            FText Prompt, Feedback;
+            if (const auto* Encounter = UOGNativeEncounterReceiver::FindWorldInteraction(Interactable, Character))
+            {
+                Prompt = Encounter->GetWorldInteractionPrompt();
+                Feedback = Encounter->GetWorldInteractionFeedback();
+            }
+            else if (Interactable->GetClass()->ImplementsInterface(UOGWorldInteractable::StaticClass()))
                 Prompt = IOGWorldInteractable::Execute_GetInteractionPrompt(Interactable, Character);
             const FString PromptText =
                 Traversal == TEXT("Mounted") ? FString(TEXT("Dismount")) :
@@ -10542,6 +10550,12 @@ void AOGWorldPresentationHud::DrawHUD()
                 FName(TEXT("OG.World.Interact")),
                 true,
                 105);
+            if (!Feedback.IsEmpty())
+            {
+                const float Width = FMath::Min(Canvas->ClipX * 0.88f, 620.0f * Scale);
+                DrawGameText(Feedback.ToString(), (Canvas->ClipX - Width) * 0.5f,
+                    PromptY + PromptH + 10.0f * Scale, 23.0f * Scale, MainText, Width);
+            }
         }
     }
 

@@ -39,6 +39,7 @@ public:
     bool IsBoundTo(const FOGEntityId& BattleId, const FOGEntityId& UnitId) const;
     FOGEntityId GetBoundBattleId() const { return BoundBattleId; }
     FOGEntityId GetBoundUnitId() const { return BoundUnitId; }
+    static bool HasNativeSkeletalBody(const AActor& Actor);
     static AActor* FindActualWorldActor(UWorld* World,
         const FOGEntityId& BattleId, const FOGEntityId& UnitId);
 
