@@ -3960,9 +3960,32 @@
         "Source/OfflineGame/Private/Combat/OGNativeEncounterDefinition.cpp",
         "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp"
       ]
+    },
+    {
+      "status": "IN_PROGRESS",
+      "counted_as_completed_system": false,
+      "device_verified": false,
+      "owner_accepted": false,
+      "saved_utc": "2026-11-05",
+      "source_commit": "6f5da03e44802d80aa4b13e3bf1fe1aec9aa8f4f",
+      "system_ids": [
+        "M17",
+        "M18"
+      ],
+      "result": "Authored consumable actions show the selected recipient, exact HP before and after and the real items/costs in native inventory. Confirm consumes those items and saves the recipient's recovered HP in the same canonical transaction with exact receipt, life and retry binding.",
+      "remaining_player_visible_work": "Approved production food, recovery consumable and acquisition/reward definitions are still needed to expose these actions in ordinary play. Other M17–M18 inventory and reward requirements remain open.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Objects/OGObjectActionDefinition.h",
+        "Source/OfflineGame/Private/Objects/OGObjectActionDefinition.cpp",
+        "Source/OfflineGame/Public/Combat/OGCombatVitalityService.h",
+        "Source/OfflineGame/Private/Combat/OGCombatVitalityService.cpp",
+        "Source/OfflineGame/Private/Objects/OGObjectActionService.cpp",
+        "Source/OfflineGame/Private/Runtime/OGGate12RulerSessionInventory.cpp",
+        "Source/OfflineGame/Private/UI/OGGate12NativeRulerInventory.cpp"
+      ]
     }
   ],
-  "continuation_last_source_commit": "dab7d3f5850a9f06a3f402900917b91a67e1873a",
+  "continuation_last_source_commit": "6f5da03e44802d80aa4b13e3bf1fe1aec9aa8f4f",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
