@@ -32,6 +32,25 @@ void Conditions(FString& S, const FOGNarrativeConditions& C)
         for (const auto& E : *List) { AppendNarrativeFingerprintPart(S,E.EventType.ToString()); AppendNarrativeFingerprintPart(S,E.bSubjectIsRuler ? TEXT("ruler") : TEXT("subject")); }
     }
     Branches(S,C.RequiredBranches);
+    if (!C.RequiredDiscoveries.IsEmpty())
+    {
+        Part(S,TEXT("required_discoveries.v1"));
+        Part(S,LexToString(C.RequiredDiscoveries.Num()));
+        for (const FOGContentId& Id : C.RequiredDiscoveries) Part(S,Id.Value);
+    }
+    if (!C.InteractorStateEquals.IsEmpty())
+    {
+        Part(S,TEXT("interactor_state_equals.v1"));
+        TArray<FString> Keys;
+        C.InteractorStateEquals.GetKeys(Keys);
+        Keys.Sort();
+        Part(S,LexToString(Keys.Num()));
+        for (const FString& Key : Keys)
+        {
+            Part(S,Key);
+            Part(S,C.InteractorStateEquals.FindChecked(Key));
+        }
+    }
 }
 void Effects(FString& S, const FOGNarrativeEffects& E)
 {
@@ -40,6 +59,21 @@ void Effects(FString& S, const FOGNarrativeEffects& E)
         AppendNarrativeFingerprintPart(S,LexToString(List->Num())); for (const auto& R : *List) { AppendNarrativeFingerprintPart(S,R.ResourceId.Value); AppendNarrativeFingerprintPart(S,R.DisplayName); AppendNarrativeFingerprintPart(S,LexToString(R.Amount)); }
     }
     Branches(S,E.BranchLocks);
+    // Existing definitions without discoveries retain their persisted fingerprint.
+    if (!E.Discoveries.IsEmpty())
+    {
+        Part(S,TEXT("codex_discoveries.v1"));
+        Part(S,LexToString(E.Discoveries.Num()));
+        for (const FOGNarrativeDiscovery& Discovery : E.Discoveries)
+        {
+            Part(S,Discovery.EntryId.Value);
+            Part(S,Discovery.Category.ToString());
+            Part(S,Discovery.DisplayName);
+            Part(S,Discovery.Summary);
+            Part(S,Discovery.BeliefState.ToString());
+            Part(S,LexToString(Discovery.ConfidenceBps));
+        }
+    }
 }
 }
 FString DefinitionHash(const FOGNarrativeQuestDefinition& Q)
@@ -47,6 +81,12 @@ FString DefinitionHash(const FOGNarrativeQuestDefinition& Q)
     FString S; AppendNarrativeFingerprintPart(S,TEXT("quest.v1"));
     for (const auto& V : {Q.QuestId.Value,Q.DisplayName,Q.Description,LexToString(Q.bAllowRemoteCompletion)}) AppendNarrativeFingerprintPart(S,V);
     Subject(S,Q.Subject); Conditions(S,Q.Conditions); Effects(S,Q.AcceptEffects); Effects(S,Q.CompletionEffects);
+    if (!Q.ExpirationEvent.EventType.IsNone())
+    {
+        Part(S,TEXT("expires_on.v1"));
+        Part(S,Q.ExpirationEvent.EventType.ToString());
+        Part(S,LexToString(Q.ExpirationEvent.bSubjectIsRuler));
+    }
     AppendNarrativeFingerprintPart(S,LexToString(Q.Objectives.Num()));
     for (const auto& O : Q.Objectives)
         for (const auto& V : {O.ObjectiveId.Value,O.DisplayName,O.Event.EventType.ToString(),

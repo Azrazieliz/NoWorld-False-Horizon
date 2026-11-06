@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Narrative/OGNarrativeService.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "UI/OGUiViewModels.h"
 #include "OGNarrativeSessionSubsystem.generated.h"
 
 class AActor;
@@ -12,11 +13,18 @@ struct OFFLINEGAME_API FOGNarrativeJournalEntry
 {
     FOGNarrativeQuestDefinition Definition;
     FOGNarrativeQuestState State;
+    bool bExpired = false;
 };
 
 struct OFFLINEGAME_API FOGNarrativeMemoryEntry
 {
     int64 WorldTick = 0;
+    FString Summary;
+};
+
+struct OFFLINEGAME_API FOGNarrativeCodexEntry
+{
+    FOGCodexEntryViewModel Entry;
     FString Summary;
 };
 
@@ -35,6 +43,10 @@ public:
     bool HasOpenSubject() const { return SubjectActor.IsValid(); }
     bool ReadJournal(TArray<FOGNarrativeJournalEntry>& Out, FString& Error) const;
     bool ReadRecentMemories(TArray<FOGNarrativeMemoryEntry>& Out, FString& Error) const;
+    bool ReadMemoryPage(const FOGWorldEventCursor& Before, TArray<FOGNarrativeMemoryEntry>& Out,
+        FOGWorldEventCursor& Next, FString& Error) const;
+    bool ReadCodexDiscoveries(const FString& SearchText, FName CategoryFilter,
+        TArray<FOGNarrativeCodexEntry>& Out, FString& Error) const;
     bool ReadSubjectDialogues(TArray<FOGNarrativeDialogueDefinition>& Out, FString& Error) const;
     bool ReadConversation(const FOGContentId& DialogueId, FOGNarrativeConversationView& Out, FString& Error) const;
     bool ReviewQuest(const FOGContentId& QuestId, EOGNarrativeCommand Kind,

@@ -7,6 +7,7 @@
 #include "UI/OGUiViewModels.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Narrative/OGNarrativeService.h"
+#include "Types/SlateEnums.h"
 #include "Objects/OGObjectActionDefinition.h"
 #include "Gacha/OGGachaService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
@@ -223,6 +224,12 @@ private:
 #endif
 
     bool bNarrativeJournalOpen = false;
+    bool bNarrativeCodexOpen = false;
+    FString NarrativeCodexSearch;
+    FName NarrativeCodexCategory = NAME_None;
+    TWeakObjectPtr<UVerticalBox> NarrativeCodexRows;
+    FOGWorldEventCursor NarrativeMemoryBefore;
+    FOGWorldEventCursor NarrativeMemoryNext;
     FOGContentId OpenNarrativeQuestId;
     FOGContentId OpenNarrativeDialogueId;
     FOGEntityId NarrativePageRulerId;
@@ -271,6 +278,12 @@ private:
     void LoadSelectedPresentationPreference(const UOGGate12RulerSessionSubsystem* Session, FString& OutError);
     void BuildRecords();
     void BuildNarrativeJournal();
+    void BuildNarrativeCodex(UVerticalBox* Parent);
+    void RebuildNarrativeCodexRows();
+    UFUNCTION()
+    void HandleNarrativeCodexSearch(const FText& Search);
+    UFUNCTION()
+    void HandleNarrativeCodexCategory(FString Selected, ESelectInfo::Type SelectionType);
     void HandleNarrativeAction(const FString& Action);
     void ClearNarrativeReview();
     void ResetNarrativePage();

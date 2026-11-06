@@ -205,6 +205,9 @@ bool UOGNarrativeSessionSubsystem::ReadJournal(TArray<FOGNarrativeJournalEntry>&
         FOGNarrativeJournalEntry Entry;
         Entry.Definition = Definition;
         if (!Service.ReadQuest(Context.RulerId, Definition.QuestId, Entry.State, Error)) return false;
+        if (Entry.State.bExists && !Entry.State.bCompleted &&
+            !Service.ReadQuestExpiration(Definition,Context.RulerId,Entry.State.SubjectId,
+                Core->GetCanonicalWorldTick(),Entry.bExpired,Error)) return false;
         // Unaccepted story text is revealed only when its authored conditions
         // actually permit acceptance in this context. A catalog is not a Codex.
         if (!Entry.State.bExists)
