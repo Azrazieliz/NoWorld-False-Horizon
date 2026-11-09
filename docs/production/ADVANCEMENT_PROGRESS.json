@@ -1214,6 +1214,11 @@
             "commit": "d1c3939161e88a7645fb24aa44f223432ea272bb",
             "type": "SOURCE_PARTIAL",
             "change": "Native World-mode projectiles now enforce original ability maximum travel range at the actual collision impact point, rather than the projectile sphere centre. The original launch origin remains authoritative after World-cast recovery, so an impact past the authored maximum cannot commit an authoritative target hit merely because the sphere centre was still in range. Native build/device acceptance not performed."
+          },
+          {
+            "commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
+            "type": "SOURCE_PARTIAL",
+            "change": "World projectile source staging now rejects nonfinite/zero range, collision radius, speed, gravity and invalid authored time windows; recovered missiles must belong to the still-active authoritative cast, have valid finite geometry/lifetime and remain within original launch range. Orphaned physical hits destroy the projectile without committing combat effects. Existing projectile mesh, source motion, cast receipt and native World executor are reused. Native/Android acceptance outstanding."
           }
         ],
         "completed_in_this_update": false,
@@ -1442,6 +1447,11 @@
             "commit": "d1c3939161e88a7645fb24aa44f223432ea272bb",
             "type": "SOURCE_PARTIAL",
             "change": "Native World-mode projectiles now enforce original ability maximum travel range at the actual collision impact point, rather than the projectile sphere centre. The original launch origin remains authoritative after World-cast recovery, so an impact past the authored maximum cannot commit an authoritative target hit merely because the sphere centre was still in range. Native build/device acceptance not performed."
+          },
+          {
+            "commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
+            "type": "SOURCE_PARTIAL",
+            "change": "World projectile source staging now rejects nonfinite/zero range, collision radius, speed, gravity and invalid authored time windows; recovered missiles must belong to the still-active authoritative cast, have valid finite geometry/lifetime and remain within original launch range. Orphaned physical hits destroy the projectile without committing combat effects. Existing projectile mesh, source motion, cast receipt and native World executor are reused. Native/Android acceptance outstanding."
           }
         ],
         "completed_in_this_update": false,
@@ -1970,7 +1980,13 @@
         "implementation_commit": "75d03009cd41cfa9ccc562d8986d54a1b404443a",
         "implementation_evidence": "The existing canonical migrations, transaction and snapshot paths now also cover the actual opening recovery route, a player-authorized Android folder with rotating durable copies, and restoration when the live database is unreadable. Existing original database and journal bytes are preserved before replacement. Android packaging and phone acceptance remain pending.",
         "acceptance_state": "NO_OWNER_VERDICT_NOT_PHONE_TESTED",
-        "source_only_delta": [],
+        "source_only_delta": [
+          {
+            "commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
+            "type": "SOURCE_PARTIAL",
+            "change": "World projectile source staging now rejects nonfinite/zero range, collision radius, speed, gravity and invalid authored time windows; recovered missiles must belong to the still-active authoritative cast, have valid finite geometry/lifetime and remain within original launch range. Orphaned physical hits destroy the projectile without committing combat effects. Existing projectile mesh, source motion, cast receipt and native World executor are reused. Native/Android acceptance outstanding."
+          }
+        ],
         "completed_in_this_update": false,
         "owner_phone_review": "NO_OWNER_VERDICT",
         "owner_explicit_rejection": false,
@@ -4647,9 +4663,26 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T06:50:00Z"
+    },
+    {
+      "source_commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
+      "system_ids": [
+        "M03",
+        "M07",
+        "M32"
+      ],
+      "result": "World projectile source staging now rejects nonfinite/zero range, collision radius, speed, gravity and invalid authored time windows; recovered missiles must belong to the still-active authoritative cast, have valid finite geometry/lifetime and remain within original launch range. Orphaned physical hits destroy the projectile without committing combat effects. Existing projectile mesh, source motion, cast receipt and native World executor are reused.",
+      "remaining_player_visible_work": "Finish remaining original 937 combat contact/action bindings, ability-specific projectile effects and full Android integration; native compile/cook, recovery playback and owner phone verdict have not occurred.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGWorldAbilityExecutionComponent, AOGNativeWorldProjectile and native original projectile specification; no new content factory or duplicate motion library.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T08:13:25Z"
     }
   ],
-  "continuation_last_source_commit": "d1c3939161e88a7645fb24aa44f223432ea272bb",
+  "continuation_last_source_commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
