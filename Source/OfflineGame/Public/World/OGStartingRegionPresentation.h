@@ -112,6 +112,19 @@ public:
         const FString& Gate02StableScatterId,
         FString& OutError);
 
+    /** An already authorized physical harvest: consume exactly one original
+     * source and credit the caller's authored resource in ONE WorldStore
+     * transaction. The caller must have verified live hit, tool, expertise,
+     * resource definition and exact quantity; no rewards are inferred here.
+     * Stable RequestId supplies durable exact-replay protection. */
+    bool CommitAuthorizedGate02SourceHarvest(
+        const FString& Gate02StableScatterId,
+        const FOGEntityId& RulerId,
+        const FOGContentId& AuthoredResourceId,
+        int64 AuthoredAmount,
+        const FOGEntityId& RequestId,
+        FString& OutError);
+
     /** Resolve an ACTUAL terrain ecology instance hit to its authored stable
      * population ID. Does not award loot or authorize a destructive harvest;
      * the game action executor must verify tool/ownership before Persist*. */
@@ -276,6 +289,10 @@ private:
     float R1HeightAt(int32 X,int32 Y) const;
     // One shared stable-ID resolver for streaming reads and canonical writes.
     static FOGEntityId R1PersistentStateId(const FString& SourceId);
+    bool PersistGate02ScatterMutation(
+        const FString& SourceId,const FOGEntityId& Ruler,
+        const FOGContentId& Resource,int64 Amount,
+        const FOGEntityId& Request,FString& Error);
 
     static constexpr int32 GeneratorVersion = 1;
 
