@@ -6,7 +6,9 @@ param(
     [string]$EngineRoot = 'D:\Epic Games\UE_5.8',
     [string]$ArchiveRoot = '',
     [string]$TempRoot = '',
-    [string]$CookFlavor = 'ASTC'
+    [string]$CookFlavor = 'ASTC',
+    [ValidateSet('Auto','Standard','Constrained')]
+    [string]$CookMemoryMode = 'Auto'
 )
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = (Resolve-Path $ProjectRoot).Path
@@ -21,6 +23,27 @@ $CacheDir = Join-Path $TempRoot 'UnrealDDC'
 New-Item -ItemType Directory -Force $CacheDir | Out-Null
 $LogPath = Join-Path $TempRoot 'noworld_android_build.log'
 $BatchPath = Join-Path $TempRoot 'run_noworld_android_build.cmd'
+# The first native Android cook crashed inside ShaderCompileWorker with an
+# out-of-memory exception on the owner's 8 GiB PC. Constrain *only this cook*
+# when host RAM is insufficient; leave UE installation, project rendering,
+# original materials and Windows pagefile untouched. Unreal 5.8 accepts both
+# -noshaderworker and -cookprocesscount through AdditionalCookerOptions.
+$ConstrainedCook = $CookMemoryMode -eq 'Constrained'
+if ($CookMemoryMode -eq 'Auto') {
+    try {
+        $Memory = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+        $ConstrainedCook = $Memory.TotalVisibleMemorySize -lt (24 * 1024 * 1024) -or
+            $Memory.FreePhysicalMemory -lt (8 * 1024 * 1024)
+    }
+    catch {
+        # Never guess that an unknown worker has enough memory for many SCWs.
+        $ConstrainedCook = $true
+    }
+}
+$CookOptions = if ($ConstrainedCook) {
+    ' -AdditionalCookerOptions="-cookprocesscount=1 -noshaderworker"'
+} else { '' }
+Write-Host ('Android cook shader mode: ' + $(if ($ConstrainedCook) { 'Constrained single-process' } else { 'Standard' }))
 # Batch wrapper keeps Unreal's native exit code and all compile/cook/packaging
 # diagnostics. It does not modify the protected source projects or run QA suites.
 $Lines = @(
@@ -31,7 +54,8 @@ $Lines = @(
     ('call "' + $RunUAT + '" BuildCookRun -project="' + $ProjectFile +
       '" -noP4 -platform=Android -cookflavor=' + $CookFlavor +
       ' -clientconfig=Development -build -cook -stage -pak -package -archive -archivedirectory="' +
-      $ArchiveRoot + '" -unattended -utf8output -nocompileeditor > "' + $LogPath + '" 2>&1'),
+      $ArchiveRoot + '" -unattended -utf8output -nocompileeditor' +
+      $CookOptions + ' > "' + $LogPath + '" 2>&1'),
     'exit /b %ERRORLEVEL%'
 )
 Set-Content -LiteralPath $BatchPath -Value $Lines -Encoding ASCII
