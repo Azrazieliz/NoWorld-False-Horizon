@@ -153,10 +153,26 @@ bool AOGStartingRegionGenerator::TryResolveGate02SourceScatterHit(
             OutError=TEXT("The original ecology mesh is no longer bound.");
             return false;
         }
-        const float Radius=SourceMesh->GetBounds().BoxExtent.Size() *
-            InstanceWorld.GetScale3D().GetAbs().GetMax() + 25.0f;
-        if (!FMath::IsFinite(Radius) ||
-            FVector::DistSquared(Hit.ImpactPoint,InstanceWorld.GetLocation()) > FMath::Square(Radius))
+        // Validate the contact against the CURRENT instance's rotated and
+        // scaled mesh bounds, not a generous world-space sphere. Adjacent
+        // streamed resources may overlap that sphere and must not inherit
+        // one another's stale contact indices.
+        const FVector Scale=InstanceWorld.GetScale3D();
+        if (!Scale.IsFinite() ||
+            FMath::Abs(Scale.X)<KINDA_SMALL_NUMBER ||
+            FMath::Abs(Scale.Y)<KINDA_SMALL_NUMBER ||
+            FMath::Abs(Scale.Z)<KINDA_SMALL_NUMBER)
+        {
+            OutError=TEXT("The ecology instance has a degenerate world transform.");
+            return false;
+        }
+        const FBox LocalBounds=SourceMesh->GetBounds().GetBox();
+        const FVector LocalImpact=InstanceWorld.InverseTransformPosition(Hit.ImpactPoint);
+        const FVector Tolerance(25.0f/FMath::Abs(Scale.X),
+                                25.0f/FMath::Abs(Scale.Y),
+                                25.0f/FMath::Abs(Scale.Z));
+        if (!LocalImpact.IsFinite() ||
+            !LocalBounds.ExpandBy(Tolerance).IsInsideOrOn(LocalImpact))
         {
             OutError=TEXT("The ecology contact belongs to a previous streamed placement.");
             return false;
