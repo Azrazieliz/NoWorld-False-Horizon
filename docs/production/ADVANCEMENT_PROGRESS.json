@@ -4837,9 +4837,24 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_date": "2026-11-09"
+    },
+    {
+      "source_commit": "d5fa08b1b0e11d7c9fdf58e5e9bcb62196640a7f",
+      "system_ids": [
+        "M13"
+      ],
+      "result": "Gate02 R1 resource removal now preserves existing canonical ecology JSON fields while setting removed=true in the existing WorldStore transaction, rather than overwriting the entire persisted record with a one-field tombstone. Serialization failures roll back without consuming the resource. This preserves future depletion, provenance and regeneration metadata without adding new source identities or assets.",
+      "remaining_player_visible_work": "Authorized tool-specific harvesting, atomic inventory/loot transfer, actual regeneration, wildlife, biome/weather and complete Android integration remain unfinished. Native compile and owner phone acceptance not performed.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1EcologyMutation.cpp"
+      ],
+      "five_star_reused_runtime": "Reused the existing Gate02 authored scatter identity, WorldStore persistence and source-binding pipeline; no new factory or asset duplication.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_date": "2026-11-09"
     }
   ],
-  "continuation_last_source_commit": "266bd192f338e1a6bb6a83f162432acb44ef4845",
+  "continuation_last_source_commit": "d5fa08b1b0e11d7c9fdf58e5e9bcb62196640a7f",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
