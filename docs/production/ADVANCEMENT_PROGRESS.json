@@ -1194,6 +1194,11 @@
             "commit": "e22ae65b78ceb98083ba0db720675776ac3ad33d",
             "type": "SOURCE_PARTIAL",
             "change": "Authentic native turn melee collision now resolves an actual non-penetrating collision hit on the bound target and traces obstruction to the measured physical impact point rather than the actor origin. This preserves genuine hand-bone sweep, live battle receipt, target binding and source-authored motion gates, while preventing pivot-height occlusion from wrongly rejecting contact. Source-only; Android/device acceptance unverified."
+          },
+          {
+            "commit": "49a62b83aeb9e210877f4f0b0712da79b4b64d38",
+            "type": "SOURCE_PARTIAL",
+            "change": "UOGTurnContactActionComponent::StageActualTurnAction now validates that every canonical target exists in the live encounter and that every active living non-self recipient has its actual World actor before any original motion starts. Applies to native autonomous actors and other direct staging callers, not just player HUD preflight; defeated revival recipients remain legal without an embodied actor. Contact-time validation remains intact. No native/device verification."
           }
         ],
         "completed_in_this_update": false,
@@ -1402,6 +1407,11 @@
             "commit": "e22ae65b78ceb98083ba0db720675776ac3ad33d",
             "type": "SOURCE_PARTIAL",
             "change": "Authentic native turn melee collision now resolves an actual non-penetrating collision hit on the bound target and traces obstruction to the measured physical impact point rather than the actor origin. This preserves genuine hand-bone sweep, live battle receipt, target binding and source-authored motion gates, while preventing pivot-height occlusion from wrongly rejecting contact. Source-only; Android/device acceptance unverified."
+          },
+          {
+            "commit": "49a62b83aeb9e210877f4f0b0712da79b4b64d38",
+            "type": "SOURCE_PARTIAL",
+            "change": "UOGTurnContactActionComponent::StageActualTurnAction now validates that every canonical target exists in the live encounter and that every active living non-self recipient has its actual World actor before any original motion starts. Applies to native autonomous actors and other direct staging callers, not just player HUD preflight; defeated revival recipients remain legal without an embodied actor. Contact-time validation remains intact. No native/device verification."
           }
         ],
         "completed_in_this_update": false,
@@ -4543,9 +4553,25 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T02:53:53Z"
+    },
+    {
+      "source_commit": "49a62b83aeb9e210877f4f0b0712da79b4b64d38",
+      "system_ids": [
+        "M03",
+        "M07"
+      ],
+      "result": "UOGTurnContactActionComponent::StageActualTurnAction now validates that every canonical target exists in the live encounter and that every active living non-self recipient has its actual World actor before any original motion starts. Applies to native autonomous actors and other direct staging callers, not just player HUD preflight; defeated revival recipients remain legal without an embodied actor. Contact-time validation remains intact.",
+      "remaining_player_visible_work": "Complete authentic source/contact authoring across the remaining 937 indexed combat entries, all kits and projectile/weapon effects, integrated Android build and owner phone review. Source-only; no compilation or device cycle performed.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGTurnContactActionComponent, FOGTurnBattle canonical validation, UOGCanonicalCombatActorBindingComponent and original 5-star motion catalog; no duplicated source or new factory required.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T03:52:29Z"
     }
   ],
-  "continuation_last_source_commit": "e22ae65b78ceb98083ba0db720675776ac3ad33d",
+  "continuation_last_source_commit": "49a62b83aeb9e210877f4f0b0712da79b4b64d38",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
