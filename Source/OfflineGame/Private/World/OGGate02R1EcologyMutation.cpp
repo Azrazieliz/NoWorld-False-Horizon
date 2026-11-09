@@ -1,5 +1,6 @@
 #include "World/OGStartingRegionPresentation.h"
 #include "Runtime/OGGameCoreSubsystem.h"
+#include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Persistence/OGWorldStore.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -8,13 +9,59 @@
 #include "Serialization/JsonSerializer.h"
 
 // Native Gate02 R1 one-instance causal ecology mutation.
-// Called only after higher-level authorized harvesting/destruction resolution.
-// Uses the existing canonical SQLite store, not an Actor's ephemeral lifetime.
+// Caller owns tool/skill/physical-authored-source verification. This method
+// persists only the exact source and transactional outcomes, never guessed loot.
 bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
     const FString& Gate02StableScatterId,
     FString& OutError)
 {
+    return PersistGate02ScatterMutation(Gate02StableScatterId,
+        FOGEntityId(),FOGContentId(),0,FOGEntityId(),OutError);
+}
+
+bool AOGStartingRegionGenerator::CommitAuthorizedGate02SourceHarvest(
+    const FString& Gate02StableScatterId,
+    const FOGEntityId& RulerId,
+    const FOGContentId& AuthoredResourceId,
+    int64 AuthoredAmount,
+    const FOGEntityId& RequestId,
+    FString& OutError)
+{
     OutError.Reset();
+    if(!RulerId.IsValid() || !AuthoredResourceId.IsValid() ||
+       AuthoredAmount<=0 || !RequestId.IsValid())
+    {
+        OutError=TEXT("An authenticated ruler, authored resource amount and unique harvest request are required.");
+        return false;
+    }
+    UGameInstance* GI=GetWorld()?GetWorld()->GetGameInstance():nullptr;
+    const UOGGate12RulerSessionSubsystem* Session=
+        GI?GI->GetSubsystem<UOGGate12RulerSessionSubsystem>():nullptr;
+    if(!Session || !Session->IsBoundToStoredRuler() ||
+       Session->BoundRulerId!=RulerId)
+    {
+        OutError=TEXT("Harvest rewards must belong to the current stored Ruler.");
+        return false;
+    }
+    return PersistGate02ScatterMutation(Gate02StableScatterId,
+        RulerId,AuthoredResourceId,AuthoredAmount,RequestId,OutError);
+}
+
+bool AOGStartingRegionGenerator::PersistGate02ScatterMutation(
+    const FString& Gate02StableScatterId,
+    const FOGEntityId& RulerId,
+    const FOGContentId& ResourceId,
+    int64 Amount,
+    const FOGEntityId& RequestId,
+    FString& OutError)
+{
+    OutError.Reset();
+    if(!IsInGameThread() || !GetWorld() || !GetWorld()->IsGameWorld())
+    {
+        OutError=TEXT("Ecology changes require the active authoritative game world thread.");
+        return false;
+    }
+    const bool bWithReward=RulerId.IsValid();
     if(!bGate02R1RegionSource || !bR1DatasetLoaded ||
        Gate02StableScatterId.IsEmpty() || R1TilePlacements.IsEmpty())
     {
@@ -44,6 +91,37 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
     {
         OutError=TEXT("Gate02 source record has an invalid deterministic persistent entity ID.");
         return false;
+    }
+    // An exact replay of a committed harvest is a successful no-op. This
+    // check precedes the consumed-source check and never grants stock twice.
+    if(bWithReward)
+    {
+        bool bReceiptFound=false;
+        FOGWorldEvent Previous;
+        if(!Store->TryReadWorldEvent(RequestId,bReceiptFound,Previous,OutError))
+            return false;
+        if(bReceiptFound)
+        {
+            TSharedPtr<FJsonObject> Receipt;
+            FString Source,Resource,AmountExact;
+            if(Previous.EventType!=FName(TEXT("ecology.source_harvested")) ||
+               Previous.PrimaryEntity!=RulerId ||
+               !FJsonSerializer::Deserialize(
+                    TJsonReaderFactory<>::Create(Previous.PayloadJson),Receipt) ||
+               !Receipt.IsValid() ||
+               !Receipt->TryGetStringField(TEXT("source_id"),Source) ||
+               !Receipt->TryGetStringField(TEXT("resource_id"),Resource) ||
+               !Receipt->TryGetStringField(TEXT("amount_exact"),AmountExact) ||
+               Source!=Gate02StableScatterId ||
+               Resource!=ResourceId.ToString() ||
+               AmountExact!=LexToString(Amount))
+            {
+                OutError=TEXT("Harvest request ID is already committed to another action.");
+                return false;
+            }
+            RefreshR1StreamedTiles(true);
+            return true;
+        }
     }
     bool bFound=false;
     FName Kind;
@@ -151,6 +229,51 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
         FString Ignored;
         Store->RollbackTransaction(Ignored);
         return false;
+    }
+    if(bWithReward)
+    {
+        // Reuse the same canonical balance path as existing Gathering Dispatch.
+        // The required resource identity and quantity come from the caller's
+        // authored tool/action definition, never the generic mesh prototype.
+        bool bBalanceFound=false;
+        int64 Balance=0;
+        if(!Store->TryReadResourceBalance(
+                RulerId,ResourceId,bBalanceFound,Balance,OutError))
+        {
+            FString Ignored; Store->RollbackTransaction(Ignored);
+            return false;
+        }
+        if(Balance<0 || Balance>MAX_int64-Amount)
+        {
+            OutError=TEXT("Harvest resource balance is invalid or would overflow.");
+            FString Ignored; Store->RollbackTransaction(Ignored);
+            return false;
+        }
+        if(!Store->SetResourceBalance(RulerId,ResourceId,Balance+Amount,OutError))
+        {
+            FString Ignored; Store->RollbackTransaction(Ignored);
+            return false;
+        }
+        TSharedPtr<FJsonObject> Receipt=MakeShared<FJsonObject>();
+        Receipt->SetStringField(TEXT("source_id"),Gate02StableScatterId);
+        Receipt->SetStringField(TEXT("resource_id"),ResourceId.ToString());
+        Receipt->SetStringField(TEXT("amount_exact"),LexToString(Amount));
+        Receipt->SetStringField(TEXT("source_entity_id"),StableEntityId.ToString());
+        FOGWorldEvent Event;
+        Event.EventId=RequestId;
+        Event.EventType=TEXT("ecology.source_harvested");
+        Event.WorldTick=CanonicalTick;
+        Event.PrimaryEntity=RulerId;
+        Event.RelatedEntities.Add(StableEntityId);
+        Event.bChronicleEligible=true;
+        if(!FJsonSerializer::Serialize(
+               Receipt.ToSharedRef(),
+               TJsonWriterFactory<>::Create(&Event.PayloadJson)) ||
+           !Store->AppendWorldEvent(Event,OutError))
+        {
+            FString Ignored; Store->RollbackTransaction(Ignored);
+            return false;
+        }
     }
     if(!Store->CommitTransaction(OutError))
     {
