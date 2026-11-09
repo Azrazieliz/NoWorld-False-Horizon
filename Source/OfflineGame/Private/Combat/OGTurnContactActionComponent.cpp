@@ -55,16 +55,16 @@ void UOGTurnContactActionComponent::TickComponent(
         TEXT("hand_r"),TEXT("hand_l"),
         TEXT("RightHand"),TEXT("LeftHand"),
         TEXT("Hand_R"),TEXT("Hand_L")};
-    TSet<FName> Seen;
+    // Every source mesh owns a separate pose history; matching bone names
+    // on different native skinned parts are NOT evidence of the same transform.
     for(USkeletalMeshComponent* Mesh:Parts)
     {
         if(!Mesh || !Mesh->GetSkeletalMeshAsset() || !Mesh->IsVisible())
             continue;
         for(const FName Bone:HandBones)
         {
-            if(Seen.Contains(Bone) || Mesh->GetBoneIndex(Bone)==INDEX_NONE)
+            if(Mesh->GetBoneIndex(Bone)==INDEX_NONE)
                 continue;
-            Seen.Add(Bone);
             const FVector Current=Mesh->GetBoneLocation(Bone);
             if(Current.ContainsNaN())continue;
             const FVector* Last=PreviousPhysicalMeleeBones.Find(Bone);
