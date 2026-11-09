@@ -4822,9 +4822,24 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_date": "2026-11-09"
+    },
+    {
+      "source_commit": "266bd192f338e1a6bb6a83f162432acb44ef4845",
+      "system_ids": [
+        "M13"
+      ],
+      "result": "Gate02 R1 canonical ecology removal now returns failure for already-consumed resources rather than reporting a fresh successful harvest. After acquiring the WorldStore write transaction it re-reads the resource state, rejects conflicting or already-removed records, and rolls back before mutation. Prevents stale preflight reads and repeat success from authorizing duplicate harvest outcomes; original scatter IDs, HISM meshes and saves are unchanged.",
+      "remaining_player_visible_work": "M13 still lacks authorized tool-specific harvest entry, resource-to-atomic inventory loot transfer, regeneration, wildlife and biome/weather gameplay. Source-only implementation; no UE5.8 compile, APK, Asterion Control run or owner phone acceptance.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1EcologyMutation.cpp"
+      ],
+      "five_star_reused_runtime": "Existing 5-star original Gate02 source manifest, native HISM source identity and canonical WorldStore transaction integration; no duplicate source or new content factory.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_date": "2026-11-09"
     }
   ],
-  "continuation_last_source_commit": "8596a5ec9a17593efbd3434df42a92ae2c050cf6",
+  "continuation_last_source_commit": "266bd192f338e1a6bb6a83f162432acb44ef4845",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
