@@ -115,8 +115,12 @@ bool AOGWorldPrototypeCharacter::SubmitApprovedLuminousWorldCommand(FName Comman
         const bool bDefeatedAlly=Target &&
             Target->Presence==EOGCombatPresence::Defeated &&
             !Target->IsAlive() && Target->TeamIndex==Source->TeamIndex;
-        if (!Target || (!Target->CanAct() && !bDefeatedAlly))
-        { Error=TEXT("Selected participant is not an eligible living target or defeated ally."); return false; }
+        // Whether a participant may ACT does not govern whether it may be
+        // TARGETED. Stunned, bound or otherwise incapacitated living targets
+        // remain eligible for source-authored abilities after battle validation.
+        if (!Target || (!bDefeatedAlly &&
+            (Target->Presence!=EOGCombatPresence::Active || !Target->IsAlive())))
+        { Error=TEXT("Selected participant is not an active living target or defeated ally."); return false; }
         if (!bDefeatedAlly && Id!=SourceId &&
             !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Id))
         { Error=TEXT("A required living battle character is unavailable in the World."); return false; }
