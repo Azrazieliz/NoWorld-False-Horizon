@@ -74,6 +74,11 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
     bRecoveryPaused=false;
     SetLifeSpan(RecoveryRemainingLife); return true;
 }
+void AOGNativeWorldProjectile::SetAcceptedRemainingLife(float Seconds)
+{
+    RecoveryRemainingLife=FMath::Max(0.f,Seconds);
+    SetLifeSpan(bRecoveryPaused?0.f:RecoveryRemainingLife);
+}
 bool AOGNativeWorldProjectile::CaptureCheckpoint(FOGNativeProjectileCheckpoint& Out) const
 {
     if (!Source.IsValid() || !CastId.IsValid() || StepIndex<0 || !Movement || IsActorBeingDestroyed()) return false;
@@ -617,7 +622,8 @@ void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tic
             { if (Projectile) Projectile->Destroy(); Status=Error; CommitContacts(Index,{},Error); }
             else
             {
-                Projectile->SetLifeSpan(FMath::Max(.001,static_cast<double>(Step.ClosesAtMilliseconds-Elapsed)/1000.0));
+                Projectile->SetAcceptedRemainingLife(FMath::Max(.001f,
+                    static_cast<float>(Step.ClosesAtMilliseconds-Elapsed)/1000.f));
                 Projectiles.Add(Projectile);
             }
             SpawnedProjectiles.Add(Index); continue;
