@@ -93,14 +93,20 @@ void UOGTurnContactActionComponent::TickComponent(
                     UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
                         GetWorld(),BattleId,Id);
                 if(!PhysicalTarget || PhysicalTarget==GetOwner())continue;
-                if(!Hits.ContainsByPredicate([PhysicalTarget](const FHitResult& Hit)
-                    {return Hit.GetActor()==PhysicalTarget;}))
+                // A hit on the actual actor's collision, not its pivot,
+                // establishes physical contact. The pivot can be far below
+                // the struck limb or inside another collision surface.
+                const FHitResult* Contact=Hits.FindByPredicate(
+                    [PhysicalTarget](const FHitResult& Hit)
+                    { return Hit.GetActor()==PhysicalTarget && !Hit.bStartPenetrating; });
+                if(!Contact)
                     continue;
-                // World obstacles still block contact. This is not a
-                // distance-only/aim-only strike through walls.
+                // The authored moving hand must have an unobstructed path
+                // to the measured impact point. Never accept a hit through
+                // a World wall or substitute a target-center proximity check.
                 FHitResult Obstruction;
                 if(GetWorld()->LineTraceSingleByChannel(
-                    Obstruction,Old,PhysicalTarget->GetActorLocation(),
+                    Obstruction,Old,Contact->ImpactPoint,
                     ECC_Visibility,Query) &&
                    Obstruction.GetActor()!=PhysicalTarget)
                     continue;
