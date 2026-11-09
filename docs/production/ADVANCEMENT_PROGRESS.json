@@ -1174,6 +1174,16 @@
             "commit": "c4b427ca625c6b7a843140708b19abe7b8f04588",
             "type": "SOURCE_PARTIAL",
             "change": "Native battle UI now permits selection of alive active incapacitated/stunned participants independently of their ability to act, while preserving canonical target legality checks. Build/phone acceptance remains open."
+          },
+          {
+            "commit": "cbc5864177b40ed3cba58f20b3e493b68abe630a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real owned-character native command dispatch now accepts active living stunned/incapacitated targets; CanAct of a target no longer vetoes casting after canonical ValidateResolvedAction. Existing source authenticity, target-presence and revival paths are preserved. Runtime/Android not verified."
+          },
+          {
+            "commit": "4a8383081f7d05203742cfc5377bd49115098ae2",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native turn melee contact scans each visible original skinned source mesh and its own hand bones rather than suppressing all later meshes that reuse a bone name. Source bone history remains keyed by actual component; physical sweeps require matching World actor, existing collision, and live authoritative battle receipt. Runtime/Android not verified."
           }
         ],
         "completed_in_this_update": false,
@@ -1357,6 +1367,11 @@
             "commit": "c00c2c08",
             "type": "SOURCE_PARTIAL",
             "change": "Authentic turn contact stage now records the exact selected original native motion ID, discards mismatched source callbacks, and cancels without costs/damage when a contact-marked animation reaches its natural end without emitting its authored impact. Explicit natural-completion actions still resolve only at authorized source finish. Prevents unresolved stuck turns and unsourced hit settlement without inventing generic damage."
+          },
+          {
+            "commit": "4a8383081f7d05203742cfc5377bd49115098ae2",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native turn melee contact scans each visible original skinned source mesh and its own hand bones rather than suppressing all later meshes that reuse a bone name. Source bone history remains keyed by actual component; physical sweeps require matching World actor, existing collision, and live authoritative battle receipt. Runtime/Android not verified."
           }
         ],
         "completed_in_this_update": false,
@@ -1436,6 +1451,11 @@
             "commit": "c4b427ca625c6b7a843140708b19abe7b8f04588",
             "type": "SOURCE_PARTIAL",
             "change": "Native battle UI now permits selection of alive active incapacitated/stunned participants independently of their ability to act, while preserving canonical target legality checks. Build/phone acceptance remains open."
+          },
+          {
+            "commit": "cbc5864177b40ed3cba58f20b3e493b68abe630a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real owned-character native command dispatch now accepts active living stunned/incapacitated targets; CanAct of a target no longer vetoes casting after canonical ValidateResolvedAction. Existing source authenticity, target-presence and revival paths are preserved. Runtime/Android not verified."
           }
         ],
         "completed_in_this_update": false,
@@ -4394,9 +4414,41 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T00:00:00Z"
+    },
+    {
+      "source_commit": "cbc5864177b40ed3cba58f20b3e493b68abe630a",
+      "system_ids": [
+        "M03",
+        "M09"
+      ],
+      "result": "Real owned-character native command dispatch now accepts active living stunned/incapacitated targets; CanAct of a target no longer vetoes casting after canonical ValidateResolvedAction. Existing source authenticity, target-presence and revival paths are preserved.",
+      "remaining_player_visible_work": "Complete original authored ability executors/target binding and deliver compiled Android game for owner's observed acceptance.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1LuminousCombatInput.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGTurnContactActionComponent / World action and native shared-motion integration",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T00:00:00Z"
+    },
+    {
+      "source_commit": "4a8383081f7d05203742cfc5377bd49115098ae2",
+      "system_ids": [
+        "M03",
+        "M07"
+      ],
+      "result": "Native turn melee contact scans each visible original skinned source mesh and its own hand bones rather than suppressing all later meshes that reuse a bone name. Source bone history remains keyed by actual component; physical sweeps require matching World actor, existing collision, and live authoritative battle receipt.",
+      "remaining_player_visible_work": "Complete full 937 original contact/action bindings and validate actual native gameplay after combined Android packaging.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGTurnContactActionComponent / World action and native shared-motion integration",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T00:00:00Z"
     }
   ],
-  "continuation_last_source_commit": "c4b427ca625c6b7a843140708b19abe7b8f04588",
+  "continuation_last_source_commit": "4a8383081f7d05203742cfc5377bd49115098ae2",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
