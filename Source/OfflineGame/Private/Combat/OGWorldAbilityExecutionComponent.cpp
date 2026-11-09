@@ -360,8 +360,14 @@ bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCas
             !Saved.SpawnedSteps.Contains(Projectile.StepIndex) || PhysicalSteps.Contains(Projectile.StepIndex) ||
             Projectile.Transform.ContainsNaN() || !Projectile.Transform.GetRotation().IsNormalized() ||
             Projectile.Velocity.ContainsNaN() || Projectile.LaunchOrigin.ContainsNaN() ||
-            !FMath::IsFinite(Projectile.RemainingLifeSeconds) || Projectile.RemainingLifeSeconds<=0)
-        { Error=TEXT("Recovered projectile has an inconsistent original cast/step or physical state."); return false; }
+            !FMath::IsFinite(Projectile.RemainingLifeSeconds) || Projectile.RemainingLifeSeconds<=0 ||
+            !FMath::IsFinite(Spec.Steps[Projectile.StepIndex].RangeCentimeters) ||
+            Spec.Steps[Projectile.StepIndex].RangeCentimeters<=0.f ||
+            FVector::DistSquared(Projectile.LaunchOrigin,Projectile.Transform.GetLocation())>
+                FMath::Square(Spec.Steps[Projectile.StepIndex].RangeCentimeters) ||
+            !FMath::IsFinite(Spec.Steps[Projectile.StepIndex].ProjectileSpeed) ||
+            Spec.Steps[Projectile.StepIndex].ProjectileSpeed<=0.f)
+        { Error=TEXT("Recovered projectile has an inconsistent original cast/step, launch range or physical state."); return false; }
         PhysicalSteps.Add(Projectile.StepIndex);
     }
     for (int32 Index:Saved.SpawnedSteps)
