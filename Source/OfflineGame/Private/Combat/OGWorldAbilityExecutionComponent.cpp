@@ -76,7 +76,15 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
 }
 void AOGNativeWorldProjectile::SetAcceptedRemainingLife(float Seconds)
 {
-    RecoveryRemainingLife=FMath::Max(0.f,Seconds);
+    // Unreal treats SetLifeSpan(0) as an infinite lifetime, not immediate expiry.
+    // A late projectile with no remaining authored contact window must not persist.
+    if (!FMath::IsFinite(Seconds) || Seconds<=0.f)
+    {
+        RecoveryRemainingLife=0.f;
+        Destroy();
+        return;
+    }
+    RecoveryRemainingLife=Seconds;
     SetLifeSpan(bRecoveryPaused?0.f:RecoveryRemainingLife);
 }
 bool AOGNativeWorldProjectile::CaptureCheckpoint(FOGNativeProjectileCheckpoint& Out) const
@@ -84,7 +92,12 @@ bool AOGNativeWorldProjectile::CaptureCheckpoint(FOGNativeProjectileCheckpoint& 
     if (!Source.IsValid() || !CastId.IsValid() || StepIndex<0 || !Movement || IsActorBeingDestroyed()) return false;
     Out.StepIndex=StepIndex; Out.Transform=GetActorTransform(); Out.Velocity=Movement->Velocity;
     Out.LaunchOrigin=LaunchOrigin; Out.RemainingLifeSeconds=RecoveryRemainingLife;
-    return FMath::IsFinite(Out.RemainingLifeSeconds) && Out.RemainingLifeSeconds>0;
+    // Checkpoints must never persist an already expired or nonphysical missile.
+    return FMath::IsFinite(Out.RemainingLifeSeconds) && Out.RemainingLifeSeconds>0.f &&
+        !Out.Velocity.ContainsNaN() && !Out.LaunchOrigin.ContainsNaN() &&
+        !Out.Transform.ContainsNaN() && FMath::IsFinite(Movement->MaxSpeed) &&
+        Movement->MaxSpeed>0.f &&
+        Out.Velocity.SizeSquared()<=FMath::Square(Movement->MaxSpeed*1.01f);
 }
 bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckpoint& State,FString& Error)
 {
@@ -95,6 +108,8 @@ bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckp
         State.Velocity.ContainsNaN() || State.LaunchOrigin.ContainsNaN() ||
         !FMath::IsFinite(State.RemainingLifeSeconds) ||
         State.RemainingLifeSeconds<=0.f ||
+        !Movement || !FMath::IsFinite(Movement->MaxSpeed) || Movement->MaxSpeed<=0.f ||
+        State.Velocity.SizeSquared()>FMath::Square(Movement->MaxSpeed*1.01f) ||
         !FMath::IsFinite(MaximumTravelCentimeters) || MaximumTravelCentimeters<=0.f ||
         FVector::DistSquared(State.LaunchOrigin,State.Transform.GetLocation())>
             FMath::Square(MaximumTravelCentimeters))
@@ -148,7 +163,8 @@ void AOGNativeWorldProjectile::Tick(float Delta)
     if (bRecoveryPaused) return;
     if (FMath::IsFinite(Delta) && Delta>0.f)
         RecoveryRemainingLife=FMath::Max(0.f,RecoveryRemainingLife-Delta);
-    if (RecoveryRemainingLife<=0.f ||
+    if (!FMath::IsFinite(RecoveryRemainingLife) || RecoveryRemainingLife<=0.f ||
+        GetActorLocation().ContainsNaN() || Movement->Velocity.ContainsNaN() ||
         FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters))
         Destroy();
 }
