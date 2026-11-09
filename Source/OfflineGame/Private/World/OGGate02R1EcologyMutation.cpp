@@ -33,9 +33,10 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
     UOGGameCoreSubsystem* Core=GI?GI->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
     IOGWorldStore* Store=Core?Core->GetWorldStore():nullptr;
     const int64 CanonicalTick=Core?Core->GetCanonicalWorldTick():-1;
-    if(!Store || !Store->IsOpen() || CanonicalTick<0)
+    if(!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen() ||
+       Store->IsWriteTransactionActive() || CanonicalTick<0)
     {
-        OutError=TEXT("Offline canonical store/clock unavailable; refusing unpersisted destructive World mutation.");
+        OutError=TEXT("Offline canonical store/clock unavailable or another write transaction is active; refusing destructive World mutation.");
         return false;
     }
     const FOGEntityId StableEntityId=R1PersistentStateId(Gate02StableScatterId);
@@ -78,6 +79,9 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
             return false;
         }
     }
+    // The resource tombstone must own its transaction. Never nest it inside
+    // another gameplay operation: an inner commit could prematurely commit
+    // unrelated inventory/reward writes or break their rollback contract.
     if(!Store->BeginTransaction(OutError))
         return false;
     // Re-read under the write transaction. The first read above is only a
@@ -173,7 +177,7 @@ bool AOGStartingRegionGenerator::TryResolveGate02SourceScatterHit(
     OutError.Reset();
     if(!bGate02R1RegionSource || !bR1DatasetLoaded || !GetWorld() ||
        !GetWorld()->IsGameWorld() || Hit.GetActor()!=this ||
-       Hit.Item<0 || R1VisibleScatterSourceIdByType.Num()!=4)
+       !Hit.bBlockingHit || Hit.Item<0 || R1VisibleScatterSourceIdByType.Num()!=4)
     {
         OutError=TEXT("Interaction did not hit an active Gate02 source ecology instance.");
         return false;
