@@ -141,14 +141,12 @@ bool UOGTurnContactActionComponent::IsSameLiveTurn(
         Error = TEXT("The original turn actor changed before animation contact.");
         return false;
     }
-    if (const auto* Body =
-        GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>())
+    const auto* Body =
+        GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
+    if (!Body || !Body->IsBoundTo(BattleId, StagedAction.SourceUnitId))
     {
-        if (!Body->IsBoundTo(BattleId, StagedAction.SourceUnitId))
-        {
-            Error = TEXT("The staged action no longer belongs to its actual World character.");
-            return false;
-        }
+        Error = TEXT("The staged action no longer belongs to its actual World character.");
+        return false;
     }
     UOGSharedMotionControllerComponent* Motion = BoundMotion.Get();
     if (!Motion || Motion->GetOwner() != GetOwner() ||
@@ -195,12 +193,14 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
         OutError = TEXT("This real character is not the current action-value actor.");
         return false;
     }
-    if (const auto* Binding =
+    // Never stage a canonical battle action on an unbound or unrelated World
+    // actor: the real embodied participant must own this exact battle/unit.
+    const auto* Binding =
         GetOwner()->FindComponentByClass<UOGCanonicalCombatActorBindingComponent>();
-        Binding && !Binding->IsBoundTo(
+    if (!Binding || !Binding->IsBoundTo(
             Battle->GetState().BattleId, Requested.SourceUnitId))
     {
-        OutError = TEXT("The original visual character is bound to a different battle unit.");
+        OutError = TEXT("The original World character is not bound to this battle unit.");
         return false;
     }
     const auto* Appearance =
