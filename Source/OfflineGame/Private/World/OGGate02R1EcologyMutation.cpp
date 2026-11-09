@@ -187,6 +187,51 @@ bool AOGStartingRegionGenerator::TryResolveGate02SourceScatterHit(
             OutError=TEXT("Streamed hit identity is not present in original Gate02 ecology.");
             return false;
         }
+        // The streamed projection is not the persistence authority: a contact
+        // may have been cached before a different action removed this source.
+        // Never return an already-consumed record to a harvesting caller.
+        UGameInstance* GI=GetWorld()->GetGameInstance();
+        UOGGameCoreSubsystem* Core=GI?GI->GetSubsystem<UOGGameCoreSubsystem>():nullptr;
+        IOGWorldStore* Store=Core?Core->GetWorldStore():nullptr;
+        if (!Core || !Core->IsCoreReady() || !Store || !Store->IsOpen() ||
+            Store->IsWriteTransactionActive())
+        {
+            OutError=TEXT("Canonical ecology persistence is unavailable during hit resolution.");
+            return false;
+        }
+        const FOGEntityId PersistentId=R1PersistentStateId(Stable);
+        if (!PersistentId.IsValid())
+        {
+            OutError=TEXT("Original ecology source has no valid persistent identity.");
+            return false;
+        }
+        bool bFound=false;
+        FName SavedKind;
+        FString SavedJson;
+        int64 CreatedTick=0;
+        if (!Store->TryReadEntity(PersistentId,bFound,SavedKind,SavedJson,CreatedTick,OutError))
+            return false;
+        if (bFound)
+        {
+            if (SavedKind!=FName(TEXT("gate02_r1_ecology_v1")))
+            {
+                OutError=TEXT("Ecology source identity conflicts with persisted entity kind.");
+                return false;
+            }
+            TSharedPtr<FJsonObject> SavedState;
+            bool bRemoved=false;
+            if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(SavedJson),SavedState) ||
+                !SavedState.IsValid() || !SavedState->TryGetBoolField(TEXT("removed"),bRemoved))
+            {
+                OutError=TEXT("Invalid persisted ecology state; refusing interaction.");
+                return false;
+            }
+            if (bRemoved)
+            {
+                OutError=TEXT("This original ecology source has already been removed.");
+                return false;
+            }
+        }
         OutStableSourceId=Stable;
         return true;
     }
