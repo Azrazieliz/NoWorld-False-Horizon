@@ -8,6 +8,7 @@
 class UOGSharedMotionControllerComponent;
 class UOGGameCoreSubsystem;
 class AController;
+class USkeletalMeshComponent;
 
 /**
  * Real turn-mode action staging on the actual source character.
