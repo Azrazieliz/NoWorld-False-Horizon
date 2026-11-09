@@ -1731,6 +1731,11 @@
             "commit": "316c926b6e6dc505f637279ddaf291a448d58b03",
             "type": "SOURCE_PARTIAL",
             "change": "Added native CommitAuthorizedGate02SourceHarvest using the existing 5-star original Gate02 stable scatter identity, canonical SQLite IOGWorldStore resource balance, and World event receipt. One write transaction consumes an unremoved original source, credits the authenticated stored Ruler with caller-authored ResourceId and positive quantity, and appends a durable 'ecology.source_harvested' receipt; any write or serialization failure rolls back source consumption and resource credit together. Exact RequestId replay returns the existing success without duplicate credit, while conflicting receipts are rejected. Existing un-rewarded source removal stays unchanged. NOT an implemented player harvest loop yet: a physical World hit and approved per-resource/tool/expertise rules must call this API with genuine authored ResourceId/Amount; canonical item-instance placement/equipment storage, source regrowth and live Android integration remain missing. No native UE5.8 build or owner phone acceptance has occurred."
+          },
+          {
+            "commit": "b5e165a91a5d8c3db997c4d367537f4e41df0dfb",
+            "type": "SOURCE_PARTIAL",
+            "change": "Exact-request replay/collision is now rechecked inside canonical ecology harvest write transaction; source only, unbuilt."
           }
         ],
         "completed_in_this_update": false,
@@ -1808,6 +1813,11 @@
             "commit": "316c926b6e6dc505f637279ddaf291a448d58b03",
             "type": "SOURCE_PARTIAL",
             "change": "Added native CommitAuthorizedGate02SourceHarvest using the existing 5-star original Gate02 stable scatter identity, canonical SQLite IOGWorldStore resource balance, and World event receipt. One write transaction consumes an unremoved original source, credits the authenticated stored Ruler with caller-authored ResourceId and positive quantity, and appends a durable 'ecology.source_harvested' receipt; any write or serialization failure rolls back source consumption and resource credit together. Exact RequestId replay returns the existing success without duplicate credit, while conflicting receipts are rejected. Existing un-rewarded source removal stays unchanged. NOT an implemented player harvest loop yet: a physical World hit and approved per-resource/tool/expertise rules must call this API with genuine authored ResourceId/Amount; canonical item-instance placement/equipment storage, source regrowth and live Android integration remain missing. No native UE5.8 build or owner phone acceptance has occurred."
+          },
+          {
+            "commit": "b5e165a91a5d8c3db997c4d367537f4e41df0dfb",
+            "type": "SOURCE_PARTIAL",
+            "change": "Exact-request replay/collision is now rechecked inside canonical ecology harvest write transaction; source only, unbuilt."
           }
         ],
         "completed_in_this_update": false,
@@ -1935,6 +1945,11 @@
             "commit": "316c926b6e6dc505f637279ddaf291a448d58b03",
             "type": "SOURCE_PARTIAL",
             "change": "Added native CommitAuthorizedGate02SourceHarvest using the existing 5-star original Gate02 stable scatter identity, canonical SQLite IOGWorldStore resource balance, and World event receipt. One write transaction consumes an unremoved original source, credits the authenticated stored Ruler with caller-authored ResourceId and positive quantity, and appends a durable 'ecology.source_harvested' receipt; any write or serialization failure rolls back source consumption and resource credit together. Exact RequestId replay returns the existing success without duplicate credit, while conflicting receipts are rejected. Existing un-rewarded source removal stays unchanged. NOT an implemented player harvest loop yet: a physical World hit and approved per-resource/tool/expertise rules must call this API with genuine authored ResourceId/Amount; canonical item-instance placement/equipment storage, source regrowth and live Android integration remain missing. No native UE5.8 build or owner phone acceptance has occurred."
+          },
+          {
+            "commit": "b5e165a91a5d8c3db997c4d367537f4e41df0dfb",
+            "type": "SOURCE_PARTIAL",
+            "change": "Exact-request replay/collision is now rechecked inside canonical ecology harvest write transaction; source only, unbuilt."
           }
         ],
         "completed_in_this_update": false,
@@ -4930,9 +4945,26 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_date": "2026-11-09"
+    },
+    {
+      "source_commit": "b5e165a91a5d8c3db997c4d367537f4e41df0dfb",
+      "system_ids": [
+        "M13",
+        "M18",
+        "M26"
+      ],
+      "result": "Native Gate02 R1 authored source harvesting now checks the unique WorldEvent RequestId again inside its canonical SQLite write transaction, before any ecology removal or resource balance credit. If a receipt appeared between the preliminary read and the transaction, an exact same Ruler/source/resource/amount replay returns a no-op success after rollback; a conflicting receipt is rejected. Read failures roll back. This closes the request-ID race at the durable mutation boundary without new loot definitions, assets or gameplay systems.",
+      "remaining_player_visible_work": "This is a source-only transaction integrity improvement, not a complete harvest loop: live player/tool/skill-authorized physical hits must bind to actual resource definitions and quantities; physical storage, ecology regeneration and owner Android acceptance remain incomplete. No native compile or APK was performed.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1EcologyMutation.cpp"
+      ],
+      "five_star_reused_runtime": "Existing 5★ original Gate02 stable source IDs, original source collision resolver, canonical IOGWorldStore WorldEvent receipt and resource-balance transaction; no new content factory.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_date": "2026-11-09"
     }
   ],
-  "continuation_last_source_commit": "85a1e564027c3b5ab370e48e99a1e724bd8f64c6",
+  "continuation_last_source_commit": "b5e165a91a5d8c3db997c4d367537f4e41df0dfb",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
