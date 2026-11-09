@@ -69,7 +69,11 @@ private:
     FOGEntityId BattleId;
     FName SourceSemantic = NAME_None;
     FName StagedMotionId = NAME_None;
-    TMap<FName,FVector> PreviousPhysicalMeleeBones;
+    // Original characters can have several separately animated source meshes
+    // with identically named hand bones. Keep previous positions per actual
+    // skeletal component, never discard a real limb because another part
+    // uses the same bone name.
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>,TMap<FName,FVector>> PreviousPhysicalMeleeBones;
     bool bStaged = false;
     bool bPhysicalMeleeContact = false;
     bool bNaturalCompletionAuthorized = false;
