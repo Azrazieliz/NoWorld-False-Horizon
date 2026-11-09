@@ -71,15 +71,50 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
         }
         if(bAlreadyRemoved)
         {
-            // Idempotent. Do not repeat rewards or rewrite canonical time.
+            // A successful result can trigger a second loot grant upstream.
+            // A consumed source is not a successful new removal.
+            OutError=TEXT("Original ecology source was already consumed.");
             RefreshR1StreamedTiles(true);
-            return true;
+            return false;
         }
     }
     if(!Store->BeginTransaction(OutError))
         return false;
+    // Re-read under the write transaction. The first read above is only a
+    // fast preflight; another action may consume the resource before our
+    // transaction begins. Never overwrite its removal or grant duplicate
+    // harvest success after such a race.
+    bool bCurrentFound=false;
+    FName CurrentKind;
+    FString CurrentJson;
+    int64 CurrentCreatedTick=0;
+    if(!Store->TryReadEntity(StableEntityId,bCurrentFound,CurrentKind,
+                             CurrentJson,CurrentCreatedTick,OutError))
+    {
+        FString Ignored;
+        Store->RollbackTransaction(Ignored);
+        return false;
+    }
+    if(bCurrentFound)
+    {
+        TSharedPtr<FJsonObject> CurrentState;
+        bool bCurrentRemoved=false;
+        if(CurrentKind!=ExpectedKind ||
+           !FJsonSerializer::Deserialize(
+               TJsonReaderFactory<>::Create(CurrentJson),CurrentState) ||
+           !CurrentState.IsValid() ||
+           !CurrentState->TryGetBoolField(TEXT("removed"),bCurrentRemoved) ||
+           bCurrentRemoved)
+        {
+            OutError=TEXT("Ecology source changed or was consumed before mutation.");
+            FString Ignored;
+            Store->RollbackTransaction(Ignored);
+            RefreshR1StreamedTiles(true);
+            return false;
+        }
+    }
     const FString RemovedJson=TEXT("{\"removed\":true}");
-    const int64 OriginalCreatedTick=bFound?ExistingCreatedTick:CanonicalTick;
+    const int64 OriginalCreatedTick=bCurrentFound?CurrentCreatedTick:CanonicalTick;
     const bool bWritten=Store->UpsertEntity(
         StableEntityId,ExpectedKind,OriginalCreatedTick,RemovedJson,OutError);
     if(!bWritten)
