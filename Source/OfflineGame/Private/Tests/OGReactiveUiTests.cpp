@@ -5,6 +5,8 @@
 #include "Components/Image.h"
 #include "Components/Border.h"
 #include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Components/PanelSlot.h"
 #include "Misc/AutomationTest.h"
 #include "Engine/World.h"
 
@@ -90,7 +92,7 @@ bool FOGReactiveUiPreservesWidgetsAndSemanticColours::RunTest(const FString&)
     FOGReactiveUiPalette Palette; Palette.Accent=FLinearColor(.3f,.7f,.8f,1);
     FOGReactiveUiTestAccess::Apply(*Driver,Palette);
     TestTrue(TEXT("Accent changes in place"),Title->GetColorAndOpacity().GetSpecifiedColor().Equals(Palette.Accent));
-    TestTrue(TEXT("Layout, child identity and slot stay intact"),Layout->GetChildAt(0)==Title && Title->Slot.Get()==Slot);
+    TestTrue(TEXT("Layout, child identity and slot stay intact"),Layout->GetChildAt(0)==Title && Title->Slot.Get()==static_cast<UPanelSlot*>(Slot));
     TestTrue(TEXT("Original artwork pixels receive no automatic tint"),Art->GetColorAndOpacity().Equals(ArtColour));
     TestTrue(TEXT("An imported image with ornament in its name retains source colours"),Imported->GetColorAndOpacity().Equals(ArtColour));
     TestTrue(TEXT("Explicit MR semantic frame is preserved"),MRFrame->GetBrushColor().Equals(MRBlack));

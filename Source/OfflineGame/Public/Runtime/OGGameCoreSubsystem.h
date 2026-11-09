@@ -269,7 +269,9 @@ private:
     void HandleApplicationHasReactivated();
     void HandleApplicationWillEnterBackground();
     void HandleApplicationHasEnteredForeground();
+    bool CheckpointPlayerWorldState(FString& OutError);
     void CheckpointForLifecycleBoundary(const TCHAR* BoundaryName);
+    void QueueAutomaticExternalBackup();
     void VerifyCoreAfterResume(const TCHAR* BoundaryName);
 
     TUniquePtr<IOGWorldStore> WorldStore;

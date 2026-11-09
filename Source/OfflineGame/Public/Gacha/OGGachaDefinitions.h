@@ -28,6 +28,27 @@ struct OFFLINEGAME_API FOGGachaPoolEntry
 };
 
 USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGGachaMultiPullTicket
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId ResourceId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FText DisplayName;
+    /** Exactly this many ordinary draws on this authored compatible banner. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 PullCount=0;
+};
+
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGGachaGuaranteedTicket
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId ResourceId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FText DisplayName;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FName GuaranteedRarity;
+    /** This original pool is separate from ordinary banner pity. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGGachaPoolEntry> Entries;
+};
+
+USTRUCT(BlueprintType)
 struct OFFLINEGAME_API FOGGachaBannerDefinition
 {
     GENERATED_BODY()
@@ -51,6 +72,12 @@ struct OFFLINEGAME_API FOGGachaBannerDefinition
      */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TArray<FOGContentId> CompatibleTicketIds;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FOGGachaMultiPullTicket> CompatibleMultiPullTickets;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FOGGachaGuaranteedTicket> CompatibleGuaranteedTickets;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FName TopRarity = NAME_None;
@@ -131,6 +158,16 @@ struct OFFLINEGAME_API FOGGachaPullResult
 
     UPROPERTY(BlueprintReadOnly)
     bool bUsedTicket = false;
+
+    /** Exact debit on this result. Other results in a prepaid batch have a zero debit. */
+    UPROPERTY(BlueprintReadOnly)
+    int64 PaymentAmount = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    FOGEntityId PaymentBatchId;
+
+    UPROPERTY(BlueprintReadOnly)
+    bool bAdvancedBannerPity=true;
 
     UPROPERTY(BlueprintReadOnly)
     int64 Seed = 0;

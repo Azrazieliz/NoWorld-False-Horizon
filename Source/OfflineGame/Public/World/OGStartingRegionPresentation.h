@@ -21,6 +21,7 @@ class UStaticMeshComponent;
 class USkeletalMeshComponent;
 class UTouchInterface;
 class UOGDiagnosticCombatComponent;
+class UOGGameCoreSubsystem;
 class UOGDiagnosticAnimationPresentation;
 class UOGSemanticAudioRuntime;
 class UOGAdaptiveScoreComponent;
@@ -86,6 +87,7 @@ public:
 
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaSeconds) override;
 
     virtual bool IsInsidePlayableBoundary_Implementation(
@@ -95,6 +97,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "OfflineGame|World|Generation")
     void RebuildPreview();
+
+    /** Real source terrain exists before the opening flow hands control to World Mode. */
+    bool IsR1SourceReadyForEntry() const;
 
     void SetFoundationIntegrationBoundary(AActor* Provider)
     { FoundationIntegrationBoundary = Provider; if (Provider) ClearGeneratedContent(); }
@@ -107,12 +112,28 @@ public:
         const FString& Gate02StableScatterId,
         FString& OutError);
 
+    /** An already authorized physical harvest: consume exactly one original
+     * source and credit the caller's authored resource in ONE WorldStore
+     * transaction. The caller must have verified live hit, tool, expertise,
+     * resource definition and exact quantity; no rewards are inferred here.
+     * Stable RequestId supplies durable exact-replay protection. */
+    bool CommitAuthorizedGate02SourceHarvest(
+        const FString& Gate02StableScatterId,
+        const FOGEntityId& RulerId,
+        const FOGContentId& AuthoredResourceId,
+        int64 AuthoredAmount,
+        const FOGEntityId& RequestId,
+        FString& OutError);
+
     /** Resolve an ACTUAL terrain ecology instance hit to its authored stable
      * population ID. Does not award loot or authorize a destructive harvest;
      * the game action executor must verify tool/ownership before Persist*. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|FirstWorld|SourceEcology")
     bool TryResolveGate02SourceScatterHit(
         const FHitResult& Hit,FString& OutStableSourceId,FString& OutError) const;
+
+    /** Initial grounding uses this exact R1 terrain component, even under authored scenery. */
+    bool TraceR1SourceGround(const FVector& TraceStart, const FVector& TraceEnd, FHitResult& OutHit) const;
 
     /** Query the actual 513x513 authored RiverVale mask/relief; no generated
      * global water plane or false volume. Shared with native swimming/hazards. */
@@ -213,11 +234,16 @@ private:
     TArray<float> R1RockMask;
     TArray<float> R1RiverMask;
     TMap<FIntPoint,TArray<FR1Placement>> R1TilePlacements;
+    // Built from the exact 10,454 original source records once, not invented
+    // on interaction. Stable ID -> actual authored prototype index.
+    TMap<FString,int32> R1SourceTypeById;
     // Per-HISM instance index -> actual source record, reconstructed on every
     // streaming window swap. Never infer an instance's identity from position.
     TArray<TArray<FString>> R1VisibleScatterSourceIdByType;
     FIntPoint LastR1StreamTile = FIntPoint(MIN_int32,MIN_int32);
     bool bR1DatasetLoaded = false;
+    // Authentic source collision terrain, queued without a monolithic startup mesh build.
+    TArray<int32> R1PendingTerrainSections;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> R1MarketSectionComponents;
     TSharedPtr<struct FStreamableHandle> R1MarketStreamHandle;
@@ -228,6 +254,7 @@ private:
     bool bR1MarketSourceAssetUnavailable = false;
     bool LoadR1MetricData();
     void BuildR1SourceTerrain();
+    void BuildR1SourceTerrainTile(int32 SectionIndex);
     void BuildR1SourceRiver();
     void LoadR1SourceScatter();
     // Exact original Eastern Market assets are loaded on demand by source
@@ -235,10 +262,37 @@ private:
     void UpdateR1MarketStreaming();
     void OnR1MarketSectionLoaded(int32 RequestGeneration,int32 RequestedSection);
     void UnloadR1MarketSections();
+    void RequestR1SourceRoads();
+    void AttachR1SourceRoads(int32 Generation);
+    void UnloadR1SourceRoads();
+    void UpdateR1LandmarkStreaming();
+    void OnR1LandmarkLoaded(int32 Index, int64 Generation);
+    void UnloadR1Landmark(int32 Index);
+    void UnloadR1Landmarks();
+
+    struct FR1LandmarkStreamState
+    {
+        TSharedPtr<struct FStreamableHandle> Handle;
+        TWeakObjectPtr<UStaticMeshComponent> Component;
+        int64 Generation = 0;
+        bool bRequested = false;
+    };
+    TArray<FR1LandmarkStreamState> R1Landmarks;
+    int64 R1LandmarkGeneration = 0;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UStaticMeshComponent>> R1SourceRoadComponents;
+    TSharedPtr<struct FStreamableHandle> R1RoadStreamHandle;
+    int32 R1RoadLoadGeneration = 0;
     void RefreshR1StreamedTiles(bool bForce);
+    void ClearR1EcologyProjection();
+    TWeakObjectPtr<UOGGameCoreSubsystem> R1EcologyCore;
     float R1HeightAt(int32 X,int32 Y) const;
     // One shared stable-ID resolver for streaming reads and canonical writes.
     static FOGEntityId R1PersistentStateId(const FString& SourceId);
+    bool PersistGate02ScatterMutation(
+        const FString& SourceId,const FOGEntityId& Ruler,
+        const FOGContentId& Resource,int64 Amount,
+        const FOGEntityId& Request,FString& Error);
 
     static constexpr int32 GeneratorVersion = 1;
 
@@ -670,6 +724,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="OfflineGame|World|Luminous")
     bool SubmitApprovedLuminousWorldCommand(FName CommandId,FString& Error);
     bool HasNativeOwnedLuminousEncounter() const;
+    /** Flush the canonical Ruler's actual exploration before relinquishing
+     * this possessed body, so another body cannot load a stale map journal. */
+    bool FlushR1ExplorationBeforePossession(FString& OutError);
+    /** Invalidate a previously cached per-pawn journal after possession.
+     * The newly controlled pawn restores the current Ruler's shared store. */
+    void RefreshR1ExplorationAfterPossession();
     // Advance non-player participants on the REAL canonical encounter timeline,
     // using their existing approved skills and world actors. Never spawn foes.
     void AdvanceCanonicalNonPlayerBattleTurn();
@@ -789,6 +849,7 @@ protected:
     UPROPERTY() TObjectPtr<ACharacter> ProtagonistRepresentation;
     UPROPERTY() TObjectPtr<USoundMix> OwnedDynamicRangeMix;
     bool bIntegrationCourseBuilt = false;
+    bool bMissingNativeWorldSourceReported = false;
     // First World needs a real UI/interaction runtime, not fixture actors.
     // Guard against invoking the diagnostic course on every World tick.
     bool bNativeFirstWorldRuntimeInitialized = false;
@@ -1025,6 +1086,8 @@ public:
     /** Content-driven World interactions enter the actual native HUD surface. */
     UFUNCTION(BlueprintCallable, Category="OfflineGame|Ruler|UMG")
     bool ShowNativeRulerSurface(FString& OutError);
+    /** Open the existing native transaction surface for a verified World interaction. */
+    bool ShowNativeObjectOffers(const FOGEntityId& Counterparty, FString& OutError);
     FName GetInteractionReturnSurface() const { return FoundationSurface; }
     /** Existing native HUD/presentation transition, without changing possession. */
     void SetInteractionSurface(FName Surface);
@@ -1060,7 +1123,8 @@ public:
     const FOGGachaBannerDefinition& GetActiveGachaBanner() const { return ActiveGachaBanner; }
     const TArray<FOGGachaPullResult>& GetLastGachaResults() const { return LastGachaResults; }
     bool ExecuteActiveGachaDraw(int32 Count, FString& OutError);
-    bool ExecuteReviewedGachaDraw(int32 Count,const FString& ConfirmationToken,FString& OutError);
+    bool ExecuteReviewedGachaDraw(int32 Count,const FString& ConfirmationToken,FString& OutError,
+        const FOGContentId& BatchTicketId=FOGContentId());
     bool LoadInstalledGachaBannerForRuler(FString& OutError);
     bool ListInstalledGachaBanners(TArray<FOGGachaBannerDefinition>& Out,FString& Error) const;
     bool SelectInstalledGachaBanner(const FOGContentId& BannerId,FString& Error);

@@ -1,4 +1,5 @@
 #include "World/OGOwnedEquipmentService.h"
+#include "World/OGInventoryStorageService.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/SecureHash.h"
@@ -248,6 +249,25 @@ bool FOGOwnedEquipmentService::Preview(const FOGEntityId& Ruler,
         }
     if (!bUnequip)
     {
+        TArray<FOGContainerContentRecord> Locations;
+        if (!Store.ListContainerPlacementsForItem(ItemId,Locations,Error)) return false;
+        if (Locations.Num()>1 || (!Locations.IsEmpty() && Locations[0].Amount!=1))
+            Out.MissingRequirements.Add(TEXT("Only one item from a single physical location can be equipped."));
+        else if (!Locations.IsEmpty())
+        {
+            FOGInventoryContainerRecord Stored;
+            if (!Store.TryReadInventoryContainer(Locations[0].ContainerId,bFound,Stored,Error)) return false;
+            if (!bFound || Stored.OwnerEntityId!=Out.Item.OwnerEntityId)
+                Out.MissingRequirements.Add(TEXT("The item's stored compartment does not belong to its owner."));
+            else
+            {
+                Out.StorageContainerId=Stored.ContainerId;
+                const auto* Library=UOGDefinitionLibrary::Get();
+                const auto* Storage=Library?Cast<UOGInventoryStorageDefinition>(
+                    Library->Resolve(TEXT("inventory_storage"),Stored.ContainerTypeId)):nullptr;
+                Out.StorageContainerName=Storage?Storage->DisplayName.ToString():Stored.ContainerTypeId.ToString();
+            }
+        }
         const auto* Rule = Catalog.FindRule(Out.Target, SlotId, Out.Item);
         if (!Slot || !Rule)
             Out.MissingRequirements.Add(TEXT("No approved exact version/slot/item/rank/quality rule is installed."));
@@ -274,6 +294,7 @@ bool FOGOwnedEquipmentService::Preview(const FOGEntityId& Ruler,
         Out.bHasPreviousItem ? FString(TEXT("occupied")) : FString(TEXT("empty")), Previous.StateJson})
         EquipmentQuotePart(Quote, Part);
     EquipmentItemQuote(Quote, Out.Item);
+    if (Out.StorageContainerId.IsValid()) EquipmentQuotePart(Quote,Out.StorageContainerId.ToString());
     if (Out.bHasPreviousItem) EquipmentItemQuote(Quote, Out.PreviousItem);
     for (const auto& Modifier : Modifiers)
         for (const auto& Part : {Modifier.ModifierId.Value, LexToString(Modifier.Ordinal), Modifier.StateJson})
@@ -360,7 +381,9 @@ bool FOGOwnedEquipmentService::Apply(const FOGOwnedEquipmentPreview& Reviewed,
             return true;
         };
         if (!FOGInventoryEquipmentService(Store).EquipItem(Fresh.Target.ManifestationId,
-                Fresh.SlotId, Fresh.Item.ItemId, Strict, Error)) return Fail();
+                Fresh.SlotId, Fresh.Item.ItemId, Strict, Error) ||
+            (Fresh.StorageContainerId.IsValid() && !Store.DeleteContainerContentsForItem(Fresh.Item.ItemId,Error)))
+            return Fail();
     }
     auto Receipt = MakeShared<FJsonObject>();
     Receipt->SetStringField(TEXT("ruler_id"), Fresh.RulerId.ToString());
@@ -375,8 +398,9 @@ bool FOGOwnedEquipmentService::Apply(const FOGOwnedEquipmentPreview& Reviewed,
     Event.WorldTick = Tick;
     Event.PrimaryEntity = Fresh.Target.ManifestationId;
     Event.RelatedEntities = {Fresh.RulerId, Fresh.Item.ItemId};
+    if (Fresh.StorageContainerId.IsValid()) Event.RelatedEntities.AddUnique(Fresh.StorageContainerId);
     Event.bChronicleEligible = true;
-    FJsonSerializer::Serialize(Receipt.ToSharedRef(), TJsonWriterFactory<>::Create(&Event.PayloadJson));
+    FJsonSerializer::Serialize(Receipt, TJsonWriterFactory<>::Create(&Event.PayloadJson));
     if (!Store.AppendWorldEvent(Event, Error) || !Store.CommitTransaction(Error)) return Fail();
     return true;
 }

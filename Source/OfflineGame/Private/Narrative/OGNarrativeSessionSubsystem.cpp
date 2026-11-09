@@ -9,10 +9,12 @@
 #include "GameFramework/PlayerController.h"
 #include "Narrative/OGNarrativeWorldActor.h"
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Misc/CoreDelegates.h"
 #include "UI/OGGate12OwnedWorldCharacterBinding.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
+#include "World/OGWorldSimulationReceiver.h"
 
 void UOGNarrativeSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -20,17 +22,37 @@ void UOGNarrativeSessionSubsystem::Initialize(FSubsystemCollectionBase& Collecti
     Collection.InitializeDependency<UOGGameCoreSubsystem>();
     Collection.InitializeDependency<UOGGate12RulerSessionSubsystem>();
     BoundCore = GetGameInstance()->GetSubsystem<UOGGameCoreSubsystem>();
-    if (BoundCore.IsValid()) BoundCore->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::HandleRuntimeReleasing);
+    if (auto* Core = BoundCore.Get())
+    {
+        Core->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::HandleRuntimeReleasing);
+        Core->OnCanonicalWorldEventsCommitted.AddUObject(this, &ThisClass::QueueQuestClosingEvents);
+    }
+    QuestLifecycleForegroundHandle = FCoreDelegates::ApplicationHasEnteredForegroundDelegate.AddUObject(
+        this, &ThisClass::OnQuestLifecycleForeground);
+    QuestLifecycleTicker = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(this, &ThisClass::TickQuestLifecycle), 0.5f);
 }
 
 void UOGNarrativeSessionSubsystem::Deinitialize()
 {
-    if (BoundCore.IsValid()) BoundCore->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    FTSTicker::GetCoreTicker().RemoveTicker(QuestLifecycleTicker);
+    QuestLifecycleTicker.Reset();
+    FCoreDelegates::ApplicationHasEnteredForegroundDelegate.Remove(QuestLifecycleForegroundHandle);
+    QuestLifecycleForegroundHandle.Reset();
+    if (auto* Core = BoundCore.Get())
+    {
+        Core->OnCanonicalWorldEventsCommitted.RemoveAll(this);
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    }
     HandleRuntimeReleasing();
     Super::Deinitialize();
 }
 
-void UOGNarrativeSessionSubsystem::HandleRuntimeReleasing() { CloseSubject(); }
+void UOGNarrativeSessionSubsystem::HandleRuntimeReleasing()
+{
+    ResetQuestLifecycle();
+    CloseSubject();
+}
 void UOGNarrativeSessionSubsystem::ClearReview()
 {
     ReviewedCommand = FOGNarrativeCommand();
@@ -45,19 +67,31 @@ void UOGNarrativeSessionSubsystem::CloseSubject()
     SubjectInteractor.Reset();
 }
 
-bool UOGNarrativeSessionSubsystem::CanOpenWorldSubject(const AOGNarrativeWorldActor& Subject,
+bool UOGNarrativeSessionSubsystem::CanOpenWorldSubject(const AActor& Subject,
     const AActor* Interactor, FString& Error) const
 {
+    FOGNarrativeContext Context;
+    return ResolveWorldSubject(Subject, Interactor, Context, Error);
+}
+
+bool UOGNarrativeSessionSubsystem::ResolveWorldSubject(const AActor& Subject,
+    const AActor* Interactor, FOGNarrativeContext& Out, FString& Error) const
+{
     Error.Reset();
+    Out = FOGNarrativeContext();
+    const auto* Placed = Cast<AOGNarrativeWorldActor>(&Subject);
+    const auto* Npc = Cast<AOGNarrativeWorldCharacter>(&Subject);
+    if (!Placed && !Npc)
+    { Error = TEXT("The World actor has no narrative binding."); return false; }
+    const FText& Prompt = Placed ? Placed->InteractionPrompt : Npc->InteractionPrompt;
+    const float Range = Placed ? Placed->InteractionRangeCm : Npc->InteractionRangeCm;
     const APawn* Pawn = Cast<APawn>(Interactor);
     const UWorld* World = Subject.GetWorld();
     if (!IsInGameThread() || !World || !World->IsGameWorld() || !Pawn ||
         Pawn->GetWorld() != World || !Pawn->IsLocallyControlled() ||
         !Cast<APlayerController>(Pawn->GetController()) || Subject.IsActorBeingDestroyed() ||
-        !Subject.CanonicalSubjectId.IsValid() || !Subject.CanonicalLocationId.IsValid() ||
-        Subject.InteractionPrompt.IsEmpty() || !FMath::IsFinite(Subject.InteractionRangeCm) ||
-        Subject.InteractionRangeCm <= 0.f ||
-        FVector::DistSquared(Subject.GetActorLocation(), Pawn->GetActorLocation()) > FMath::Square(Subject.InteractionRangeCm))
+        Prompt.IsEmpty() || !FMath::IsFinite(Range) || Range <= 0.f ||
+        FVector::DistSquared(Subject.GetActorLocation(), Pawn->GetActorLocation()) > FMath::Square(Range))
     { Error = TEXT("An actual local character and nearby authored canonical subject are required."); return false; }
     const UGameInstance* Game = GetGameInstance();
     const UOGGameCoreSubsystem* Core = Game ? Game->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
@@ -103,16 +137,34 @@ bool UOGNarrativeSessionSubsystem::CanOpenWorldSubject(const AOGNarrativeWorldAc
             Presentation->GetProjection().bHasManifestation)
         { Error = TEXT("The actual controlled World body is not bound to the selected Ruler."); return false; }
     }
-    FOGWorldPresenceRecord SubjectPresence, ObserverPresence;
-    if (!Store->TryReadWorldPresence(Subject.CanonicalSubjectId, bFound, SubjectPresence, Error) || !bFound ||
-        SubjectPresence.LocationId != Subject.CanonicalLocationId ||
-        !Store->TryReadWorldPresence(Observer, bFound, ObserverPresence, Error) || !bFound ||
+    FOGWorldPresenceRecord SubjectPresence;
+    if (Placed)
+    {
+        if (!Placed->CanonicalSubjectId.IsValid() || !Placed->CanonicalLocationId.IsValid() ||
+            !Store->TryReadWorldPresence(Placed->CanonicalSubjectId, bFound, SubjectPresence, Error) || !bFound ||
+            SubjectPresence.LocationId != Placed->CanonicalLocationId)
+        { if (Error.IsEmpty()) Error = TEXT("The narrative subject does not occupy its authored location."); return false; }
+    }
+    else
+    {
+        const auto* Receiver = Npc->FindComponentByClass<UOGWorldSimulationReceiver>();
+        if (!Receiver || !Receiver->TryReadResidentNpcPresence(SubjectPresence, Error))
+        { if (Error.IsEmpty()) Error = TEXT("The NPC has no active canonical presence binding."); return false; }
+    }
+
+    FOGWorldPresenceRecord ObserverPresence;
+    if (!Store->TryReadWorldPresence(Observer, bFound, ObserverPresence, Error) || !bFound ||
         ObserverPresence.LocationId != SubjectPresence.LocationId)
-    { if (Error.IsEmpty()) Error = TEXT("Canonical participants do not share the authored location."); return false; }
+    { if (Error.IsEmpty()) Error = TEXT("Canonical participants do not share a location."); return false; }
+
+    Out.RulerId = Ruler->BoundRulerId;
+    Out.InteractorEntityId = Observer;
+    Out.SubjectId = Placed ? Placed->CanonicalSubjectId : SubjectPresence.EntityId;
+    Out.LocationId = SubjectPresence.LocationId;
     return true;
 }
 
-bool UOGNarrativeSessionSubsystem::OpenWorldSubject(AOGNarrativeWorldActor* Subject, AActor* Interactor, FString& Error)
+bool UOGNarrativeSessionSubsystem::OpenWorldSubject(AActor* Subject, AActor* Interactor, FString& Error)
 {
     if (!Subject || !CanOpenWorldSubject(*Subject, Interactor, Error)) return false;
     CloseSubject();
@@ -140,15 +192,16 @@ bool UOGNarrativeSessionSubsystem::ResolveRuntime(UOGGameCoreSubsystem*& Core, I
     Context = FOGNarrativeContext();
     Context.RulerId = Ruler->BoundRulerId;
     Context.InteractorEntityId = Ruler->SelectedManifestationId.IsValid() ? Ruler->SelectedManifestationId : Ruler->BoundRulerId;
-    bool bPresenceFound = false;
-    FOGWorldPresenceRecord Presence;
-    if (!Store->TryReadWorldPresence(Context.InteractorEntityId, bPresenceFound, Presence, Error)) return false;
-    if (bPresenceFound) Context.LocationId = Presence.LocationId;
     if (bUseSubject && SubjectActor.IsValid())
     {
-        if (!CanOpenWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), Error)) return false;
-        Context.SubjectId = SubjectActor->CanonicalSubjectId;
-        Context.LocationId = SubjectActor->CanonicalLocationId;
+        if (!ResolveWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), Context, Error)) return false;
+    }
+    else
+    {
+        bool bPresenceFound = false;
+        FOGWorldPresenceRecord Presence;
+        if (!Store->TryReadWorldPresence(Context.InteractorEntityId, bPresenceFound, Presence, Error)) return false;
+        if (bPresenceFound) Context.LocationId = Presence.LocationId;
     }
     if (!FOGNarrativeCatalog::LoadInstalled(Catalog, Error)) return false;
     return true;
@@ -163,18 +216,24 @@ bool UOGNarrativeSessionSubsystem::ReadJournal(TArray<FOGNarrativeJournalEntry>&
     FOGNarrativeContext Context;
     if (!ResolveRuntime(Core, Store, Catalog, Context, false, Error)) return false;
     FOGNarrativeService Service(*Store);
+    FOGContentId TrackedQuest;
+    FString TrackingError;
+    // A failed preference read should still leave the quest journal usable.
+    Service.ReadTrackedQuestId(Context.RulerId, TrackedQuest, TrackingError);
     FOGNarrativeContext AvailableContext = Context;
     FString SubjectError;
-    if (SubjectActor.IsValid() && CanOpenWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), SubjectError))
-    {
-        AvailableContext.SubjectId = SubjectActor->CanonicalSubjectId;
-        AvailableContext.LocationId = SubjectActor->CanonicalLocationId;
-    }
+    FOGNarrativeContext LocalContext;
+    const bool bLocalSubject = SubjectActor.IsValid() &&
+        ResolveWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), LocalContext, SubjectError);
+    if (bLocalSubject) AvailableContext = LocalContext;
     for (const FOGNarrativeQuestDefinition& Definition : Catalog.Quests)
     {
         FOGNarrativeJournalEntry Entry;
         Entry.Definition = Definition;
-        if (!Service.ReadQuest(Context.RulerId, Definition.QuestId, Entry.State, Error)) return false;
+        bool bMissed = false;
+        if (!Service.ReconcileQuestLifecycle(Definition, Context.RulerId, Core->GetCanonicalWorldTick(),
+                Entry.State, bMissed, Error)) return false;
+        Entry.bExpired = Entry.State.bFailed;
         // Unaccepted story text is revealed only when its authored conditions
         // actually permit acceptance in this context. A catalog is not a Codex.
         if (!Entry.State.bExists)
@@ -185,12 +244,41 @@ bool UOGNarrativeSessionSubsystem::ReadJournal(TArray<FOGNarrativeJournalEntry>&
             Command.ContentId = Definition.QuestId;
             FOGNarrativePreview Preview;
             FString AvailabilityError;
-            if (!Service.Preview(Catalog, Command, Core->GetCanonicalWorldTick(), Preview, AvailabilityError) || !Preview.bCanApply)
-                continue;
+            const bool bAvailable = Service.Preview(Catalog, Command, Core->GetCanonicalWorldTick(),
+                Preview, AvailabilityError) && Preview.bCanApply;
+            if (!bAvailable)
+            {
+                if (!bMissed) continue;
+                // The journal has a durable closed row for this known offer.
+                // The quest service still reports that it was never accepted.
+                Entry.State.bExists = true;
+                Entry.bExpired = true;
+            }
         }
+        Entry.bTracked = TrackedQuest == Definition.QuestId &&
+            Entry.State.bExists && !Entry.State.bCompleted && !Entry.bExpired;
+        Entry.bTrackedSubjectHere = Entry.bTracked && bLocalSubject &&
+            Entry.State.SubjectId.IsValid() && Entry.State.SubjectId == LocalContext.SubjectId;
         Out.Add(MoveTemp(Entry));
     }
     return true;
+}
+
+bool UOGNarrativeSessionSubsystem::SetQuestTracking(const FOGEntityId& ExpectedRuler, const FOGContentId& QuestId,
+    bool bTrack, FString& Error)
+{
+    UOGGameCoreSubsystem* Core = nullptr;
+    IOGWorldStore* Store = nullptr;
+    FOGNarrativeCatalog Catalog;
+    FOGNarrativeContext Context;
+    if (!ResolveRuntime(Core, Store, Catalog, Context, false, Error)) return false;
+    if (Context.RulerId != ExpectedRuler)
+    {
+        Error = TEXT("The active Ruler changed. Open the journal again.");
+        return false;
+    }
+    return FOGNarrativeService(*Store).SetTrackedQuest(
+        Catalog, Context.RulerId, QuestId, bTrack, Core->GetCanonicalWorldTick(), Error);
 }
 
 bool UOGNarrativeSessionSubsystem::ReadSubjectDialogues(TArray<FOGNarrativeDialogueDefinition>& Out, FString& Error) const
@@ -242,10 +330,11 @@ bool UOGNarrativeSessionSubsystem::PrepareQuestCommand(IOGWorldStore& Store,
     if (State.bExists) Context.SubjectId = State.SubjectId;
     if (Kind == EOGNarrativeCommand::CompleteQuest && State.SubjectId.IsValid() && !Definition->bAllowRemoteCompletion)
     {
-        if (!SubjectActor.IsValid() || SubjectActor->CanonicalSubjectId != State.SubjectId ||
-            !CanOpenWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), Error))
+        FOGNarrativeContext LocalContext;
+        if (!SubjectActor.IsValid() || !ResolveWorldSubject(*SubjectActor.Get(), SubjectInteractor.Get(), LocalContext, Error) ||
+            LocalContext.SubjectId != State.SubjectId)
         { if (Error.IsEmpty()) Error = TEXT("Return to this quest's subject to complete it."); return false; }
-        Context.LocationId = SubjectActor->CanonicalLocationId;
+        Context.LocationId = LocalContext.LocationId;
     }
     Out = FOGNarrativeCommand();
     Out.Context = Context;
@@ -315,6 +404,13 @@ bool UOGNarrativeSessionSubsystem::ReviewQuest(const FOGContentId& QuestId, EOGN
     {
         const FOGNarrativeQuestDefinition* Definition = Catalog.Quests.FindByPredicate(
             [&QuestId](const FOGNarrativeQuestDefinition& Q) { return Q.QuestId == QuestId; });
+        if (Kind == EOGNarrativeCommand::AcceptQuest &&
+            !FOGNarrativeService(*Store).RememberReviewedQuestOffer(Catalog, Command, Out.ConfirmationToken,
+                Core->GetCanonicalWorldTick(), Error))
+        {
+            Out = FOGNarrativePreview();
+            return false;
+        }
         bReviewedRequiresSubject = Command.Context.SubjectId.IsValid() &&
             (Kind == EOGNarrativeCommand::AcceptQuest ||
              (Kind == EOGNarrativeCommand::CompleteQuest && Definition && !Definition->bAllowRemoteCompletion));
@@ -356,8 +452,9 @@ bool UOGNarrativeSessionSubsystem::ConfirmReview(const FString& Token, const FOG
     const FOGTurnBattle* Battle = Core->GetOwnedLuminousTurnBattle();
     if (Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running)
     { Error = TEXT("Resolve the current battle before changing narrative state."); return false; }
-    if (bReviewedRequiresSubject && (!Context.SubjectId.IsValid() || Context.SubjectId != ReviewedCommand.Context.SubjectId))
-    { Error = TEXT("Conversation subject changed; review again."); ClearReview(); return false; }
+    if (bReviewedRequiresSubject && (!Context.SubjectId.IsValid() ||
+        Context.SubjectId != ReviewedCommand.Context.SubjectId || Context.LocationId != ReviewedCommand.Context.LocationId))
+    { Error = TEXT("The narrative subject or location changed. Review the choice again."); ClearReview(); return false; }
     bool bAlreadyApplied = false;
     if (!FOGNarrativeService(*Store).Apply(Catalog, ReviewedCommand, Token, RequestId,
         Core->GetCanonicalWorldTick(), bAlreadyApplied, Error)) return false;

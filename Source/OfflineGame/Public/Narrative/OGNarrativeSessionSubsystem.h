@@ -1,17 +1,34 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "Narrative/OGNarrativeService.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "UI/OGUiViewModels.h"
 #include "OGNarrativeSessionSubsystem.generated.h"
 
-class AOGNarrativeWorldActor;
+class AActor;
 class UOGGameCoreSubsystem;
 
 struct OFFLINEGAME_API FOGNarrativeJournalEntry
 {
     FOGNarrativeQuestDefinition Definition;
     FOGNarrativeQuestState State;
+    bool bExpired = false;
+    bool bTracked = false;
+    bool bTrackedSubjectHere = false;
+};
+
+struct OFFLINEGAME_API FOGNarrativeMemoryEntry
+{
+    int64 WorldTick = 0;
+    FString Summary;
+};
+
+struct OFFLINEGAME_API FOGNarrativeCodexEntry
+{
+    FOGCodexEntryViewModel Entry;
+    FString Summary;
 };
 
 /** Native journal/conversation command boundary. Stores only transient selection/review.
@@ -23,11 +40,18 @@ class OFFLINEGAME_API UOGNarrativeSessionSubsystem : public UGameInstanceSubsyst
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
-    bool CanOpenWorldSubject(const AOGNarrativeWorldActor& Subject, const AActor* Interactor, FString& Error) const;
-    bool OpenWorldSubject(AOGNarrativeWorldActor* Subject, AActor* Interactor, FString& Error);
+    bool CanOpenWorldSubject(const AActor& Subject, const AActor* Interactor, FString& Error) const;
+    bool OpenWorldSubject(AActor* Subject, AActor* Interactor, FString& Error);
     void CloseSubject();
     bool HasOpenSubject() const { return SubjectActor.IsValid(); }
     bool ReadJournal(TArray<FOGNarrativeJournalEntry>& Out, FString& Error) const;
+    bool SetQuestTracking(const FOGEntityId& ExpectedRuler, const FOGContentId& QuestId,
+        bool bTrack, FString& Error);
+    bool ReadRecentMemories(TArray<FOGNarrativeMemoryEntry>& Out, FString& Error) const;
+    bool ReadMemoryPage(const FOGWorldEventCursor& Before, TArray<FOGNarrativeMemoryEntry>& Out,
+        FOGWorldEventCursor& Next, FString& Error) const;
+    bool ReadCodexDiscoveries(const FString& SearchText, FName CategoryFilter,
+        TArray<FOGNarrativeCodexEntry>& Out, FString& Error) const;
     bool ReadSubjectDialogues(TArray<FOGNarrativeDialogueDefinition>& Out, FString& Error) const;
     bool ReadConversation(const FOGContentId& DialogueId, FOGNarrativeConversationView& Out, FString& Error) const;
     bool ReviewQuest(const FOGContentId& QuestId, EOGNarrativeCommand Kind,
@@ -37,13 +61,33 @@ public:
     bool ConfirmReview(const FString& Token, const FOGEntityId& RequestId, FString& Error);
     void ClearReview();
 private:
-    TWeakObjectPtr<AOGNarrativeWorldActor> SubjectActor;
+    TWeakObjectPtr<AActor> SubjectActor;
     TWeakObjectPtr<AActor> SubjectInteractor;
     TWeakObjectPtr<UOGGameCoreSubsystem> BoundCore;
     FOGNarrativeCommand ReviewedCommand;
     FString ReviewedToken;
     FOGEntityId ReviewedRuler;
     bool bReviewedRequiresSubject = false;
+
+    FTSTicker::FDelegateHandle QuestLifecycleTicker;
+    FDelegateHandle QuestLifecycleForegroundHandle;
+    FOGEntityId QuestLifecycleRuler;
+    TArray<FOGNarrativeQuestDefinition> ClosingQuestDefinitions;
+    TSet<FName> QuestClosingEventTypes;
+    TMap<FName, TSet<int64>> PendingQuestClosingTicks;
+    int64 QuestLifecycleCatalogRevision = -1;
+    double QuestLifecycleRetryAfter = 0.0;
+    TAtomic<bool> bQuestLifecycleForegroundRequested{false};
+    bool bQuestLifecycleCatalogLoaded = false;
+    bool bQuestLifecycleNeedsCatchup = true;
+
+    void QueueQuestClosingEvents(const TArray<FOGWorldEvent>& Events);
+    void OnQuestLifecycleForeground();
+    void RequestQuestLifecycleCatchup();
+    bool TickQuestLifecycle(float DeltaSeconds);
+    void ResetQuestLifecycle();
+    bool ResolveWorldSubject(const AActor& Subject, const AActor* Interactor,
+        FOGNarrativeContext& Out, FString& Error) const;
     bool ResolveRuntime(UOGGameCoreSubsystem*& Core, IOGWorldStore*& Store,
         FOGNarrativeCatalog& Catalog, FOGNarrativeContext& Context, bool bUseSubject, FString& Error) const;
     bool PrepareQuestCommand(IOGWorldStore& Store, const FOGNarrativeCatalog& Catalog,

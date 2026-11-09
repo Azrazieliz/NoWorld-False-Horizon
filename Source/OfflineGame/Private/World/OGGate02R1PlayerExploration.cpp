@@ -3,6 +3,7 @@
 #include "World/OGStartingRegionPresentation.h"
 #include "EngineUtils.h"
 #include "Engine/GameInstance.h"
+#include "GameFramework/PlayerController.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGGate12RulerSessionSubsystem.h"
 #include "Persistence/OGWorldStore.h"
@@ -32,6 +33,12 @@ bool ReadRealOwner(AOGWorldPrototypeCharacter* Pawn,
                    int64& OutTick)
 {
     OutStore=nullptr;OutTick=-1;OutOwner=FOGEntityId();
+    // Exploration belongs only to the actually locally possessed Ruler/
+    // Manifestation. Native AI pawns share this GameInstance but must never
+    // write their roaming trail over the owner's canonical explored tiles.
+    const APlayerController* Player=Pawn
+        ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+    if(!Player || !Player->IsLocalController())return false;
     UGameInstance* GI=Pawn?Pawn->GetGameInstance():nullptr;
     if(!GI)return false;
     UOGGate12RulerSessionSubsystem* Session=
@@ -64,7 +71,8 @@ TSharedPtr<FJsonValue> Pair(double X,double Y)
 
 void AOGWorldPrototypeCharacter::RestoreR1ExplorationFromWorldStore()
 {
-    if(bR1ExplorationLoaded || bR1ExplorationRestoreRejected || !FindOriginalR1(this))
+    if(bR1ExplorationLoaded || bR1ExplorationRestoreRejected ||
+       !Cast<APlayerController>(GetController()) || !FindOriginalR1(this))
         return;
     FOGEntityId RulerOwner;
     IOGWorldStore* Store=nullptr;
@@ -175,9 +183,49 @@ bool AOGWorldPrototypeCharacter::SaveR1ExplorationToWorldStore(FString& OutError
     return true;
 }
 
+
+bool AOGWorldPrototypeCharacter::FlushR1ExplorationBeforePossession(
+    FString& OutError)
+{
+    OutError.Reset();
+    if (!bR1ExplorationDirty) return true;
+    if (!bR1ExplorationLoaded || bR1ExplorationRestoreRejected)
+    {
+        OutError=TEXT("The existing source exploration has not been safely restored.");
+        return false;
+    }
+    return SaveR1ExplorationToWorldStore(OutError);
+}
+
+void AOGWorldPrototypeCharacter::RefreshR1ExplorationAfterPossession()
+{
+    // All actor swaps call FlushR1ExplorationBeforePossession on the outgoing
+    // locally possessed pawn before changing controller ownership. A
+    // previously parked body may hold an older snapshot of that same Ruler's
+    // exploration; reload one canonical SQLite record, never overwrite it.
+    if (bR1ExplorationDirty)
+    {
+        UE_LOG(LogTemp,Error,
+            TEXT("Refusing to discard an unflushed R1 exploration journal during possession."));
+        return;
+    }
+    bR1ExplorationLoaded=false;
+    bR1ExplorationRestoreRejected=false;
+    bR1ExplorationDirty=false;
+    R1ExplorationRuler=FOGEntityId();
+    R1ExploredSourceTiles.Reset();
+    VisitedMapTrail.Reset();
+    bHasMapTrailSample=false;
+    LastMapTrailSample=FVector2D::ZeroVector;
+    R1NextExplorationSaveSeconds=0.;
+    RestoreR1ExplorationFromWorldStore();
+}
+
 void AOGWorldPrototypeCharacter::RecordR1ExplorationAndSaveIfDue(
     const FVector& WorldLocation)
 {
+    // Enemy/NPC actor ticks are never a player's persisted exploration.
+    if(!Cast<APlayerController>(GetController()))return;
     AOGStartingRegionGenerator* R1=FindOriginalR1(this);
     if(!R1 || !bR1ExplorationLoaded || bR1ExplorationRestoreRejected ||
        !IsFoundationWorldInputAllowed())return;

@@ -984,6 +984,41 @@ bool FOGSQLiteWorldStore::ListContainerContents(
     return true;
 }
 
+bool FOGSQLiteWorldStore::ListContainerPlacementsForItem(const FOGEntityId& ItemId,
+    TArray<FOGContainerContentRecord>& Out,FString& Error) const
+{
+    Out.Reset(); Error.Reset();
+    if (!ItemId.IsValid()) { Error=TEXT("Storage lookup requires a real item."); return false; }
+    sqlite3_stmt* Statement=nullptr;
+    if (sqlite3_prepare_v2(Database,"SELECT container_entity_id, amount FROM container_contents "
+        "WHERE item_entity_id = ? ORDER BY container_entity_id;",-1,&Statement,nullptr)!=SQLITE_OK)
+    { Error=LastError(TEXT("Prepare item location lookup")); return false; }
+    if (!BindItemText(Statement,1,ItemId.ToString()))
+    {
+        Error=LastError(TEXT("Bind item location lookup"));
+        sqlite3_finalize(Statement); return false;
+    }
+    TArray<FOGContainerContentRecord> Rows;
+    int32 Step;
+    while ((Step=sqlite3_step(Statement))==SQLITE_ROW)
+    {
+        FOGContainerContentRecord Row;
+        Row.ItemId=ItemId; Row.ContainerId=ParseItemEntity(ItemColumnText(Statement,0));
+        Row.Amount=sqlite3_column_int64(Statement,1);
+        if (!Row.ContainerId.IsValid() || Row.Amount<=0)
+        {
+            Error=TEXT("Stored item location is invalid.");
+            sqlite3_finalize(Statement); return false;
+        }
+        Rows.Add(MoveTemp(Row));
+    }
+    if (Step!=SQLITE_DONE) Error=LastError(TEXT("Read item location lookup"));
+    sqlite3_finalize(Statement);
+    if (Step!=SQLITE_DONE) return false;
+    Out=MoveTemp(Rows);
+    return true;
+}
+
 bool FOGSQLiteWorldStore::DeleteContainerContentsForItem(
     const FOGEntityId& ItemId,
     FString& OutError)

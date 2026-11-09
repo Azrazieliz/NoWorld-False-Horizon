@@ -30,8 +30,7 @@ FSoftObjectPath ExactMarketSourcePath(const int32 Section)
 
 void AOGStartingRegionGenerator::UpdateR1MarketStreaming()
 {
-    if(!bGate02R1RegionSource || !bR1DatasetLoaded ||
-       bR1MarketSourceAssetUnavailable || !GetWorld() ||
+    if(!bGate02R1RegionSource || !bR1DatasetLoaded || !GetWorld() ||
        !GetWorld()->IsGameWorld())return;
     const APlayerController* PC=GetWorld()->GetFirstPlayerController();
     const APawn* Pawn=PC?PC->GetPawn():nullptr;
@@ -44,11 +43,19 @@ void AOGStartingRegionGenerator::UpdateR1MarketStreaming()
 
     if(DistanceSq>FMath::Square(StopLoadingRangeCm))
     {
-        if(R1MarketNextSection>0 || R1MarketStreamHandle.IsValid() ||
+        // A failed source mesh request must not permanently disable the
+        // market. The old early bR1MarketSourceAssetUnavailable return
+        // prevented this distance reset when section zero failed, leaving
+        // the actual authored market absent for the rest of the session.
+        // Re-arm ONLY after exiting the source market's unload radius;
+        // never invent a replacement mesh or retry every tick while nearby.
+        if(bR1MarketSourceAssetUnavailable || R1MarketNextSection>0 ||
+           R1MarketStreamHandle.IsValid() ||
            !R1MarketSectionComponents.IsEmpty())
             UnloadR1MarketSections();
         return;
     }
+    if(bR1MarketSourceAssetUnavailable) return;
     if(DistanceSq>FMath::Square(StartLoadingRangeCm) ||
        R1MarketNextSection>=MarketSourceSectionCount ||
        R1MarketStreamHandle.IsValid())

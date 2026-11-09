@@ -68,6 +68,7 @@ public:
     virtual void Tick(float DeltaSeconds) override;
     bool CaptureCheckpoint(FOGNativeProjectileCheckpoint& Out) const;
     bool RestoreCheckpoint(const FOGNativeProjectileCheckpoint& State,FString& Error);
+    void SetAcceptedRemainingLife(float Seconds);
 private:
     UPROPERTY() TObjectPtr<USphereComponent> Collision;
     UPROPERTY() TObjectPtr<UStaticMeshComponent> Visual;

@@ -11,6 +11,7 @@
 
 class UOGGameCoreSubsystem;
 class IOGWorldStore;
+struct FOGInventoryStorageMove;
 class UOGGate12CharacterVisualCatalog;
 class AOGWorldPrototypeCharacter;
 struct FOGCharacterDevelopmentPreview;
@@ -118,6 +119,11 @@ public:
 
     /** Shared object operations use the selected real instances and canonical wallets/stock. */
     UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")
+    bool ReadOwnedStorage(const FOGEntityId& Item,TArray<FOGInventoryStorageMove>& Out,FString& Error);
+    bool ReviewOwnedStorage(const FOGEntityId& Item,const FOGEntityId& Destination,
+        FOGInventoryStorageMove& Out,FString& Error);
+    bool ConfirmOwnedStorage(const FOGInventoryStorageMove& Reviewed,const FOGEntityId& Request,FString& Error);
+
     bool ReadOwnedObjectActions(const FOGEntityId& SelectedItem,const FOGEntityId& Counterparty,
         TArray<FOGObjectActionPreview>& Out,FString& Error);
     UFUNCTION(BlueprintCallable,Category="OfflineGame|Ruler|Objects")

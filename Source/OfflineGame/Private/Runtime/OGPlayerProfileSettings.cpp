@@ -10,6 +10,14 @@
 
 namespace
 {
+bool ReadSavedProfile(const FString& Path, TSharedPtr<FJsonObject>& Out)
+{
+    Out.Reset();
+    FString Json;
+    return FFileHelper::LoadFileToString(Json, *Path) &&
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Out) && Out.IsValid();
+}
+
 FString JsonOrDefault(
     const TSharedPtr<FJsonObject>& Root,
     const TCHAR* Field,
@@ -63,34 +71,17 @@ bool FOGPlayerProfileSettingsService::Load(
         return false;
     }
 
-    if (!IFileManager::Get().FileExists(
-            *ProfilePath))
+    IFileManager& Files = IFileManager::Get();
+    const FString PreviousPath = ProfilePath + TEXT(".previous");
+    if (!Files.FileExists(*ProfilePath) && !Files.FileExists(*PreviousPath))
     {
-        // Missing profile is a valid first-run state; defaults include automatic
-        // orientation and do not touch canonical world causality.
-        return true;
-    }
-
-    FString Json;
-    if (!FFileHelper::LoadFileToString(
-            Json,
-            *ProfilePath))
-    {
-        OutError =
-            TEXT("Failed to read player profile sidecar.");
-        return false;
+        return true; // Valid first run with the established profile defaults.
     }
 
     TSharedPtr<FJsonObject> Root;
-    const TSharedRef<TJsonReader<>> Reader =
-        TJsonReaderFactory<>::Create(Json);
-    if (!FJsonSerializer::Deserialize(
-            Reader,
-            Root) ||
-        !Root.IsValid())
+    if (!ReadSavedProfile(ProfilePath, Root) && !ReadSavedProfile(PreviousPath, Root))
     {
-        OutError =
-            TEXT("Player profile sidecar is not valid JSON.");
+        OutError = TEXT("Neither the current nor previous player profile is readable.");
         return false;
     }
 
@@ -561,13 +552,31 @@ bool FOGPlayerProfileSettingsService::Save(
         return false;
     }
 
-    if (!FFileHelper::SaveStringToFile(
-            Json,
-            *ProfilePath,
-            FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+    IFileManager& Files = IFileManager::Get();
+    const FString PendingPath = ProfilePath + TEXT(".pending.") +
+        FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    if (!FFileHelper::SaveStringToFile(Json, *PendingPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
     {
-        OutError =
-            TEXT("Failed to write player profile sidecar.");
+        OutError = TEXT("Failed to stage player profile settings.");
+        return false;
+    }
+
+    // Keep the last readable profile until its replacement is complete.
+    // If Android terminates between these operations, Load still has it.
+    const FString PreviousPath = ProfilePath + TEXT(".previous");
+    TSharedPtr<FJsonObject> Current;
+    if (ReadSavedProfile(ProfilePath, Current) &&
+        Files.Copy(*PreviousPath, *ProfilePath, true, true) != COPY_OK)
+    {
+        Files.Delete(*PendingPath, false, true, true);
+        OutError = TEXT("Failed to preserve the previous player profile.");
+        return false;
+    }
+
+    if (!Files.Move(*ProfilePath, *PendingPath, true, true))
+    {
+        Files.Delete(*PendingPath, false, true, true);
+        OutError = TEXT("Failed to publish player profile settings. The previous profile is preserved.");
         return false;
     }
 

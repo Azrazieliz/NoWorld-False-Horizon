@@ -12,6 +12,8 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/OverlapResult.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -53,8 +55,14 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
     const FOGEntityId& Cast,int32 Step,const FOGWorldAbilityStep& Spec,const FVector& Direction,FString& Error)
 {
     auto* Mesh=Spec.ProjectileMesh.LoadSynchronous();
-    if (!InSource || !Cast.IsValid() || Step<0 || !Mesh || Direction.IsNearlyZero() || Spec.ProjectileSpeed<=0)
-    { Error=TEXT("Projectile requires its accepted cast and original installed visual/kinematics."); return false; }
+    if (!InSource || !Cast.IsValid() || Step<0 || !Mesh ||
+        Direction.ContainsNaN() || Direction.IsNearlyZero() ||
+        !FMath::IsFinite(Spec.ProjectileSpeed) || Spec.ProjectileSpeed<=0.f ||
+        !FMath::IsFinite(Spec.RangeCentimeters) || Spec.RangeCentimeters<=0.f ||
+        !FMath::IsFinite(Spec.RadiusCentimeters) || Spec.RadiusCentimeters<=0.f ||
+        !FMath::IsFinite(Spec.ProjectileGravityScale) ||
+        Spec.ClosesAtMilliseconds<=Spec.OpensAtMilliseconds)
+    { Error=TEXT("Projectile requires its accepted cast, original installed visual, valid geometry and authored timing."); return false; }
     Source=InSource; CastId=Cast; StepIndex=Step;
     LaunchOrigin=GetActorLocation(); MaximumTravelCentimeters=Spec.RangeCentimeters;
     Collision->SetSphereRadius(Spec.RadiusCentimeters); Collision->SetCollisionProfileName(Spec.ProjectileCollisionProfile);
@@ -62,41 +70,103 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
     Visual->SetStaticMesh(Mesh); Visual->SetRelativeTransform(Spec.ProjectileMeshTransform);
     Movement->InitialSpeed=Spec.ProjectileSpeed; Movement->MaxSpeed=Spec.ProjectileSpeed;
     Movement->ProjectileGravityScale=Spec.ProjectileGravityScale; Movement->Velocity=Direction.GetSafeNormal()*Spec.ProjectileSpeed;
-    SetLifeSpan((Spec.ClosesAtMilliseconds-Spec.OpensAtMilliseconds)/1000.0); return true;
+    RecoveryRemainingLife=(Spec.ClosesAtMilliseconds-Spec.OpensAtMilliseconds)/1000.0f;
+    bRecoveryPaused=false;
+    SetLifeSpan(RecoveryRemainingLife); return true;
+}
+void AOGNativeWorldProjectile::SetAcceptedRemainingLife(float Seconds)
+{
+    // Unreal treats SetLifeSpan(0) as an infinite lifetime, not immediate expiry.
+    // A late projectile with no remaining authored contact window must not persist.
+    if (!FMath::IsFinite(Seconds) || Seconds<=0.f)
+    {
+        RecoveryRemainingLife=0.f;
+        Destroy();
+        return;
+    }
+    RecoveryRemainingLife=Seconds;
+    SetLifeSpan(bRecoveryPaused?0.f:RecoveryRemainingLife);
 }
 bool AOGNativeWorldProjectile::CaptureCheckpoint(FOGNativeProjectileCheckpoint& Out) const
 {
     if (!Source.IsValid() || !CastId.IsValid() || StepIndex<0 || !Movement || IsActorBeingDestroyed()) return false;
     Out.StepIndex=StepIndex; Out.Transform=GetActorTransform(); Out.Velocity=Movement->Velocity;
-    Out.LaunchOrigin=LaunchOrigin; Out.RemainingLifeSeconds=bRecoveryPaused?RecoveryRemainingLife:GetLifeSpan();
-    return Out.RemainingLifeSeconds>0;
+    Out.LaunchOrigin=LaunchOrigin; Out.RemainingLifeSeconds=RecoveryRemainingLife;
+    // Checkpoints must never persist an already expired or nonphysical missile.
+    return FMath::IsFinite(Out.RemainingLifeSeconds) && Out.RemainingLifeSeconds>0.f &&
+        !Out.Velocity.ContainsNaN() && !Out.LaunchOrigin.ContainsNaN() &&
+        !Out.Transform.ContainsNaN() && FMath::IsFinite(Movement->MaxSpeed) &&
+        Movement->MaxSpeed>0.f &&
+        Out.Velocity.SizeSquared()<=FMath::Square(Movement->MaxSpeed*1.01f);
 }
 bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckpoint& State,FString& Error)
 {
-    if (State.StepIndex!=StepIndex || State.Transform.ContainsNaN() || State.Velocity.ContainsNaN() ||
-        State.LaunchOrigin.ContainsNaN() || !FMath::IsFinite(State.RemainingLifeSeconds) || State.RemainingLifeSeconds<=0)
-    { Error=TEXT("Saved projectile geometry or remaining lifetime is invalid."); return false; }
+    // Never restore an invalid or already out-of-range missile into the live
+    // encounter. The original launch origin is authoritative across recovery.
+    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId ||
+        State.StepIndex!=StepIndex || State.Transform.ContainsNaN() ||
+        State.Velocity.ContainsNaN() || State.LaunchOrigin.ContainsNaN() ||
+        !FMath::IsFinite(State.RemainingLifeSeconds) ||
+        State.RemainingLifeSeconds<=0.f ||
+        !Movement || !FMath::IsFinite(Movement->MaxSpeed) || Movement->MaxSpeed<=0.f ||
+        State.Velocity.SizeSquared()>FMath::Square(Movement->MaxSpeed*1.01f) ||
+        !FMath::IsFinite(MaximumTravelCentimeters) || MaximumTravelCentimeters<=0.f ||
+        FVector::DistSquared(State.LaunchOrigin,State.Transform.GetLocation())>
+            FMath::Square(MaximumTravelCentimeters))
+    { Error=TEXT("Saved projectile has no matching live cast, valid geometry, range or remaining lifetime."); return false; }
     SetActorTransform(State.Transform,false,nullptr,ETeleportType::TeleportPhysics);
     LaunchOrigin=State.LaunchOrigin; Movement->Velocity=State.Velocity;
     bRecoveryPaused=Source.IsValid() && Source->IsRecoveryPaused(); RecoveryRemainingLife=State.RemainingLifeSeconds;
     Movement->SetComponentTickEnabled(!bRecoveryPaused); SetLifeSpan(bRecoveryPaused?0:RecoveryRemainingLife);
     return true;
 }
-void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,UPrimitiveComponent*,FVector,const FHitResult&)
+void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,UPrimitiveComponent*,FVector,const FHitResult& Hit)
 {
     if (Other==GetOwner() || (Source.IsValid() && Source->IsRecoveryPaused())) return;
-    if (FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) { Destroy(); return; }
-    if (Source.IsValid()) { FString Error; Source->CommitProjectileContact(CastId,StepIndex,Other,Error); }
+    // A projectile must never outlive its original authoritative cast.
+    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId)
+    { Destroy(); return; }
+    // The actual collision point is authoritative for the projectile's
+    // source-authored maximum range. The moving sphere's centre can still be
+    // within range when its leading surface strikes an actor beyond it.
+    // A recovered projectile retains its original LaunchOrigin.
+    const FVector ContactPoint=Hit.bBlockingHit && !Hit.ImpactPoint.ContainsNaN()
+        ? Hit.ImpactPoint : GetActorLocation();
+    if (MaximumTravelCentimeters<=0.f ||
+        FVector::DistSquared(LaunchOrigin,ContactPoint)>
+            FMath::Square(MaximumTravelCentimeters))
+    {
+        Destroy();
+        return;
+    }
+    if (Source.IsValid())
+    {
+        FString Error;
+        Source->CommitProjectileContact(CastId,StepIndex,Other,Error);
+    }
     Destroy();
 }
 void AOGNativeWorldProjectile::Tick(float Delta)
 {
     Super::Tick(Delta);
-    if (Source.IsValid() && Source->IsRecoveryPaused()) return;
-    if (bRecoveryPaused)
-    { bRecoveryPaused=false; Movement->SetComponentTickEnabled(true); SetLifeSpan(RecoveryRemainingLife); }
-    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId ||
-        FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) Destroy();
+    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId)
+    { Destroy(); return; }
+    const bool bShouldPause=Source->IsRecoveryPaused();
+    if (bShouldPause!=bRecoveryPaused)
+    {
+        bRecoveryPaused=bShouldPause;
+        Movement->SetComponentTickEnabled(!bRecoveryPaused);
+        // Unreal's actor lifespan timer continues while the encounter is
+        // paused unless explicitly suspended; preserve the remaining window.
+        SetLifeSpan(bRecoveryPaused?0.f:RecoveryRemainingLife);
+    }
+    if (bRecoveryPaused) return;
+    if (FMath::IsFinite(Delta) && Delta>0.f)
+        RecoveryRemainingLife=FMath::Max(0.f,RecoveryRemainingLife-Delta);
+    if (!FMath::IsFinite(RecoveryRemainingLife) || RecoveryRemainingLife<=0.f ||
+        GetActorLocation().ContainsNaN() || Movement->Velocity.ContainsNaN() ||
+        FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters))
+        Destroy();
 }
 UOGWorldAbilityExecutionComponent::UOGWorldAbilityExecutionComponent()
 {
@@ -164,8 +234,16 @@ bool UOGWorldAbilityExecutionComponent::BeginNativeAction(const FOGResolvedComba
     {
         if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         { FName Start,End; if (!TracePart(Step,Start,End,Error)) return false; }
-        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
-        { Error=TEXT("The original projectile mesh is unavailable."); return false; }
+        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
+        {
+            if (!Step.ProjectileMesh.LoadSynchronous())
+            { Error=TEXT("The original projectile mesh is unavailable."); return false; }
+            if (!Step.StartSocket.IsNone())
+            {
+                FName Start,End;
+                if (!TracePart(Step,Start,End,Error)) return false;
+            }
+        }
     }
     const FName Semantic=Battle->ResolveNativeAbilityMotion(*Unit,Request.SkillId);
     if (!Semantic.IsNone())
@@ -221,8 +299,10 @@ bool UOGWorldAbilityExecutionComponent::IsAcceptedBodyCurrent() const
             Parts[Index].Get()!=Part || !Accepted.Mesh.IsValid() ||
             Part->GetSkeletalMeshAsset()!=Accepted.Mesh.Get()) return false;
     }
-    // Natural finish permits later cosmetic playback, never a replacement controller or physical rig.
-    return bSourceMotionFinished || SourceMotion->GetActiveCombatReceipt()==ActiveCast;
+    // Natural finish permits later cosmetic playback on the same physical rig.
+    return bSourceMotionFinished ||
+        (SourceMotion->GetActiveCombatReceipt()==ActiveCast &&
+         (Specification.MotionSemantic.IsNone() || SourceMotion->CurrentAction==Specification.MotionSemantic));
 }
 void UOGWorldAbilityExecutionComponent::ClearSourceMotionTracking()
 {
@@ -258,11 +338,14 @@ bool UOGWorldAbilityExecutionComponent::TrackAcceptedMotion(FString& Error)
 {
     ClearSourceMotionTracking();
     auto* Motion=WorldMotion(GetOwner());
-    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast) return CaptureSourceRig(*Motion,Error);
+    if (Motion && Motion->GetActiveCombatReceipt()==ActiveCast &&
+        (Specification.MotionSemantic.IsNone() || Motion->CurrentAction==Specification.MotionSemantic))
+        return CaptureSourceRig(*Motion,Error);
     const auto* Battle=Core.IsValid()?Core->GetOwnedLuminousTurnBattle():nullptr;
     const auto* Unit=Battle?Battle->GetState().Units.FindByPredicate([&](const auto& U){return U.UnitEntityId==Root.SourceUnitId;}):nullptr;
-    if (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone())
-    { Error=TEXT("Accepted World action has no matching source-motion receipt on its actual body."); return false; }
+    if (!Specification.MotionSemantic.IsNone() ||
+        (Unit && !Battle->ResolveNativeAbilityMotion(*Unit,Root.SkillId).IsNone()))
+    { Error=TEXT("Accepted World action has no matching source motion and receipt on its actual body."); return false; }
     return true; // Motionless source staging remains valid.
 }
 void UOGWorldAbilityExecutionComponent::HandleSourceMotionFinished(FName,FName)
@@ -293,8 +376,16 @@ bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCas
     {
         if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         { FName A,B; if (!TracePart(Step,A,B,Error)) return false; }
-        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile && !Step.ProjectileMesh.LoadSynchronous())
-        { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
+        if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
+        {
+            if (!Step.ProjectileMesh.LoadSynchronous())
+            { Error=TEXT("Recovered projectile requires its original installed mesh."); return false; }
+            if (!Step.StartSocket.IsNone())
+            {
+                FName SocketStart,SocketEnd;
+                if (!TracePart(Step,SocketStart,SocketEnd,Error)) return false;
+            }
+        }
     }
     TSet<int32> PhysicalSteps;
     for (const auto& Projectile:Saved.Projectiles)
@@ -304,8 +395,14 @@ bool UOGWorldAbilityExecutionComponent::CanRecoverAcceptedCast(const FOGWorldCas
             !Saved.SpawnedSteps.Contains(Projectile.StepIndex) || PhysicalSteps.Contains(Projectile.StepIndex) ||
             Projectile.Transform.ContainsNaN() || !Projectile.Transform.GetRotation().IsNormalized() ||
             Projectile.Velocity.ContainsNaN() || Projectile.LaunchOrigin.ContainsNaN() ||
-            !FMath::IsFinite(Projectile.RemainingLifeSeconds) || Projectile.RemainingLifeSeconds<=0)
-        { Error=TEXT("Recovered projectile has an inconsistent original cast/step or physical state."); return false; }
+            !FMath::IsFinite(Projectile.RemainingLifeSeconds) || Projectile.RemainingLifeSeconds<=0 ||
+            !FMath::IsFinite(Spec.Steps[Projectile.StepIndex].RangeCentimeters) ||
+            Spec.Steps[Projectile.StepIndex].RangeCentimeters<=0.f ||
+            FVector::DistSquared(Projectile.LaunchOrigin,Projectile.Transform.GetLocation())>
+                FMath::Square(Spec.Steps[Projectile.StepIndex].RangeCentimeters) ||
+            !FMath::IsFinite(Spec.Steps[Projectile.StepIndex].ProjectileSpeed) ||
+            Spec.Steps[Projectile.StepIndex].ProjectileSpeed<=0.f)
+        { Error=TEXT("Recovered projectile has an inconsistent original cast/step, launch range or physical state."); return false; }
         PhysicalSteps.Add(Projectile.StepIndex);
     }
     for (int32 Index:Saved.SpawnedSteps)
@@ -378,7 +475,11 @@ void UOGWorldAbilityExecutionComponent::QueryContacts(const FOGWorldAbilityStep&
         for (const auto& Unit:Battle->GetState().Units)
         {
             auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Unit.UnitEntityId);
-            if (!Actor || !Unit.CanAct()) continue;
+            // Direct contact targets an embodied living participant, not
+            // merely one eligible to take its own turn. Stun, binding and
+            // other action denial must not grant immunity to authored hits.
+            if (!Actor || Unit.Presence!=EOGCombatPresence::Active ||
+                !Unit.IsAlive()) continue;
             if (Actor!=GetOwner() && (Step.RangeCentimeters<=0 || FVector::DistSquared(Origin,Actor->GetActorLocation())>FMath::Square(Step.RangeCentimeters))) continue;
             if (Step.bRequireLineOfSight && Actor!=GetOwner() && !VisibleBetween(GetWorld(),GetOwner(),Actor,Origin,Actor->GetActorLocation(),Step.VisibilityChannel)) continue;
             Out.Add(Unit.UnitEntityId);
@@ -391,12 +492,35 @@ void UOGWorldAbilityExecutionComponent::QueryContacts(const FOGWorldAbilityStep&
         {
             FVector Center=Origin;
             if (!Root.TargetUnitIds.IsEmpty())
-                if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Root.TargetUnitIds[0]))
-                {
-                    if (FVector::DistSquared(Origin,Target->GetActorLocation())>FMath::Square(Step.RangeCentimeters)) return;
-                    Center=Target->GetActorLocation();
-                }
-            GetWorld()->SweepMultiByChannel(Hits,Center,Center,FQuat::Identity,Step.TraceChannel,FCollisionShape::MakeSphere(Step.RadiusCentimeters),Query);
+            {
+                // Never retarget a source-authored cast to arbitrary nearby
+                // actors when the original selected target streamed away.
+                auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                    GetWorld(),BattleId,Root.TargetUnitIds[0]);
+                if (!Target ||
+                    FVector::DistSquared(Origin,Target->GetActorLocation())>
+                        FMath::Square(Step.RangeCentimeters))
+                    return;
+                Center=Target->GetActorLocation();
+            }
+            // AoE is a genuine stationary overlap of the actual native
+            // collision shapes. A zero-length sweep can miss initial
+            // overlaps on several Chaos collision configurations.
+            TArray<FOverlapResult> Overlaps;
+            GetWorld()->OverlapMultiByChannel(
+                Overlaps,Center,FQuat::Identity,Step.TraceChannel,
+                FCollisionShape::MakeSphere(Step.RadiusCentimeters),Query);
+            for (const FOverlapResult& Contact:Overlaps)
+            {
+                AActor* Actor=Contact.GetActor();
+                const FOGEntityId Id=BodyId(Actor,BattleId);
+                if (!Id.IsValid())continue;
+                if (Step.bRequireLineOfSight &&
+                    !VisibleBetween(GetWorld(),GetOwner(),Actor,Origin,
+                                    Actor->GetActorLocation(),Step.VisibilityChannel))
+                    continue;
+                Out.AddUnique(Id);
+            }
         }
         else if (Step.Delivery==EOGWorldAbilityDelivery::MeleeSweep)
         {
@@ -437,10 +561,28 @@ bool UOGWorldAbilityExecutionComponent::CommitContacts(int32 Step,const TArray<F
 bool UOGWorldAbilityExecutionComponent::CommitProjectileContact(const FOGEntityId& Cast,int32 Step,AActor* Contact,FString& Error)
 {
     if (Cast!=ActiveCast || Completed.Contains(Step) || !Specification.Steps.IsValidIndex(Step)) return false;
-    TArray<FOGEntityId> Targets; const auto Id=BodyId(Contact,BattleId); if (Id.IsValid()) Targets.Add(Id);
     if (!IsAcceptedBodyCurrent())
     { CancelActiveCast(); return false; }
-    const bool Accepted=CommitContacts(Step,Targets,Error); if (!Accepted) Status=Error; return Accepted;
+    // A physical projectile collision does not bypass the same canonical
+    // recipient/skill rules used by direct, sphere and melee World contacts.
+    // A wall, friendly actor or invalid target consumes the actual impact,
+    // but must never become an unauthorized damage recipient.
+    TArray<FOGEntityId> PhysicalContacts;
+    const FOGEntityId Id=BodyId(Contact,BattleId);
+    if (Id.IsValid()) PhysicalContacts.Add(Id);
+    TArray<FOGEntityId> Eligible;
+    const FOGTurnBattle* Battle=Core.IsValid()?Core->GetOwnedLuminousTurnBattle():nullptr;
+    if (!Battle || Battle->GetState().BattleId!=BattleId ||
+        !Battle->FilterWorldContacts(Root,PhysicalContacts,Eligible,Error))
+    {
+        if (Error.IsEmpty())
+            Error=TEXT("The projectile's original encounter or canonical targets changed.");
+        Status=Error;
+        return false;
+    }
+    const bool Accepted=CommitContacts(Step,Eligible,Error);
+    if (!Accepted) Status=Error;
+    return Accepted;
 }
 void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tick,FActorComponentTickFunction* Function)
 {
@@ -469,18 +611,35 @@ void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tic
         if (Step.Delivery==EOGWorldAbilityDelivery::Projectile)
         {
             if (SpawnedProjectiles.Contains(Index)) continue;
+            // Source-authored projectile socket is authoritative whenever
+            // declared; spawning at the pawn origin could immediately hit
+            // the ground or pass through the character's real geometry.
+            FVector LaunchPosition=GetOwner()->GetActorLocation();
+            if (!Step.StartSocket.IsNone())
+            {
+                FName Start,End; FString SocketError;
+                if (USceneComponent* Part=TracePart(Step,Start,End,SocketError))
+                    LaunchPosition=Part->GetSocketLocation(Start);
+                else
+                {
+                    Status=SocketError;
+                    CommitContacts(Index,{},Error);
+                    continue;
+                }
+            }
             FVector Direction=GetOwner()->GetActorForwardVector();
             if (!Root.TargetUnitIds.IsEmpty())
                 if (auto* Target=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Root.TargetUnitIds[0]))
-                    Direction=(Target->GetActorLocation()-GetOwner()->GetActorLocation()).GetSafeNormal();
+                    Direction=(Target->GetActorLocation()-LaunchPosition).GetSafeNormal();
             FActorSpawnParameters Params; Params.Owner=GetOwner(); Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
             auto* Projectile=GetWorld()->SpawnActor<AOGNativeWorldProjectile>(AOGNativeWorldProjectile::StaticClass(),
-                GetOwner()->GetActorLocation(),Direction.Rotation(),Params);
+                LaunchPosition,Direction.Rotation(),Params);
             if (!Projectile || !Projectile->InitializeAcceptedStep(this,ActiveCast,Index,Step,Direction,Error))
             { if (Projectile) Projectile->Destroy(); Status=Error; CommitContacts(Index,{},Error); }
             else
             {
-                Projectile->SetLifeSpan(FMath::Max(.001,static_cast<double>(Step.ClosesAtMilliseconds-Elapsed)/1000.0));
+                Projectile->SetAcceptedRemainingLife(FMath::Max(.001f,
+                    static_cast<float>(Step.ClosesAtMilliseconds-Elapsed)/1000.f));
                 Projectiles.Add(Projectile);
             }
             SpawnedProjectiles.Add(Index); continue;

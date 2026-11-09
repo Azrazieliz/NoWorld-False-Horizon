@@ -18,6 +18,10 @@ bool UOGCharacterGameplayDefinition::ValidateDefinition_Implementation(FString& 
         { Error=TEXT("Invalid skill in shared character definition."); return false; }
     if (!TurnPolicy.Id.IsEmpty() && (TurnPolicy.System!=TEXT("agent") || !TurnPolicy.Id.IsValid() || TurnPolicy.MinimumVersion<1))
     { Error=TEXT("Character turn policy requires a valid shared agent reference."); return false; }
+    if (EncounterActionDelay<0 || (EncounterActionDelay>0 &&
+        (EncounterBaseStats.MaxHp.GetSign()<=0 || EncounterBaseStats.Attack.GetSign()<0 ||
+         EncounterBaseStats.Defense.GetSign()<0 || EncounterBaseStats.Speed<=0)))
+    { Error=TEXT("World encounter statistics require a sourced health, speed and action delay."); return false; }
     TSet<FOGContentId> Resources;
     for (const auto& Ref:BattleResources)
     {

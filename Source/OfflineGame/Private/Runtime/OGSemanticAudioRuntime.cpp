@@ -458,6 +458,7 @@ void UOGSemanticAudioRuntime::SetWorldPresentationActive(bool bActive)
 void UOGSemanticAudioRuntime::SetEnvironmentState(FName StateName, float Value)
 {
     if (StateName.IsNone() || !FMath::IsFinite(Value)) return;
+    if (const float* Previous = EnvironmentParameters.Find(StateName); Previous && *Previous == Value) return;
     EnvironmentParameters.Add(StateName, Value);
     for (const auto& Event : ActiveEvents)
         if (UAudioComponent* Audio = Event.Audio.Get()) Audio->SetFloatParameter(StateName, Value);

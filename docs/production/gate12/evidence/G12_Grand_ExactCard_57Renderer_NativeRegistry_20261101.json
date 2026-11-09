@@ -1,0 +1,471 @@
+{
+    "ordinary_lineage":  false,
+    "native_uasset_count":  209,
+    "exact_original_card_sha256":  "26c48e1c03c154f9f39a0b06afaade53423c11dbd079604e430162eb4cae5353",
+    "registered_component_count":  57,
+    "original_meshes":  [
+                            {
+                                "renderer_index":  0,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_000.Grand_ExactRenderer_000",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_000.uasset",
+                                "source_sha256":  "163fa40482374cf3ac3a9d3f1488c881cad6430dbbb8a5c7d8a9a67d409bdb00",
+                                "uasset_bytes":  4102085
+                            },
+                            {
+                                "renderer_index":  1,
+                                "group":  "Part_06",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_001.Grand_ExactRenderer_001",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_001.uasset",
+                                "source_sha256":  "3f0166a9179e5b39a52a5a84d01e1429925c279d6b30a25fc2c72de6a2c4efc7",
+                                "uasset_bytes":  372312
+                            },
+                            {
+                                "renderer_index":  2,
+                                "group":  "Part_05",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_002.Grand_ExactRenderer_002",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_002.uasset",
+                                "source_sha256":  "11137261ec93339a28d0f2bc72291b615a0ae9e5a5afb631cdd2c870acdefe65",
+                                "uasset_bytes":  480504
+                            },
+                            {
+                                "renderer_index":  3,
+                                "group":  "Part_01",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_003.Grand_ExactRenderer_003",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_003.uasset",
+                                "source_sha256":  "cd4922e6c7b95388d907b854ae0c7def3e14c7bbf522fdc900dd99d60da7d4e2",
+                                "uasset_bytes":  401546
+                            },
+                            {
+                                "renderer_index":  4,
+                                "group":  "Part_08",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_004.Grand_ExactRenderer_004",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_004.uasset",
+                                "source_sha256":  "74b90a391421e2c82dbf84210e313dccb3c7b7f22205cee6970759441b7c4e48",
+                                "uasset_bytes":  402349
+                            },
+                            {
+                                "renderer_index":  5,
+                                "group":  "Part_03",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_005.Grand_ExactRenderer_005",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_005.uasset",
+                                "source_sha256":  "1331b213e5624a3957e9716e66754a92859a82ed72bee5ffaaf78df8cba21c9b",
+                                "uasset_bytes":  6626544
+                            },
+                            {
+                                "renderer_index":  6,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_006.Grand_ExactRenderer_006",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_006.uasset",
+                                "source_sha256":  "76535997d69538aa5c1fb1723698f3afdca776440209f9276c1a7eaa66660722",
+                                "uasset_bytes":  2074937
+                            },
+                            {
+                                "renderer_index":  7,
+                                "group":  "Part_05",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_007.Grand_ExactRenderer_007",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_007.uasset",
+                                "source_sha256":  "51a5183e273456a858bc3f5bf01524d9a43c27faeae260a9fe4a0cf15c8d8d10",
+                                "uasset_bytes":  414328
+                            },
+                            {
+                                "renderer_index":  8,
+                                "group":  "Part_06",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_008.Grand_ExactRenderer_008",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_008.uasset",
+                                "source_sha256":  "c31ba370b89a8e36c1cb86c162db13e486184726bd056ad0f8f066c691ccf4b3",
+                                "uasset_bytes":  414330
+                            },
+                            {
+                                "renderer_index":  9,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_009.Grand_ExactRenderer_009",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_009.uasset",
+                                "source_sha256":  "164d00840557eef03b9e63def9cda75279b46d44e304b33bb4f5c74a483953ba",
+                                "uasset_bytes":  423815
+                            },
+                            {
+                                "renderer_index":  10,
+                                "group":  "Part_02",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_010.Grand_ExactRenderer_010",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_010.uasset",
+                                "source_sha256":  "bd09d4941984d6ea0b20f1c156cc789c936df3c36aa389f8bbabdce625f29355",
+                                "uasset_bytes":  408876
+                            },
+                            {
+                                "renderer_index":  11,
+                                "group":  "Part_03",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_011.Grand_ExactRenderer_011",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_011.uasset",
+                                "source_sha256":  "14e0c9bc62b3253a97dfaa36ea083aa7dcb3521bb23fe1de4249fb985a5e80f4",
+                                "uasset_bytes":  422821
+                            },
+                            {
+                                "renderer_index":  12,
+                                "group":  "Part_01",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_012.Grand_ExactRenderer_012",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_012.uasset",
+                                "source_sha256":  "4747dfea8e6d3ce699a73a8010cf91f96afb6d9907b6b6c654355f3b06f556aa",
+                                "uasset_bytes":  420942
+                            },
+                            {
+                                "renderer_index":  13,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_013.Grand_ExactRenderer_013",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_013.uasset",
+                                "source_sha256":  "35be002fa29ed4dc2bd05e9f80369404a7d8dec9f8fd45ad7c3f15be78b780b3",
+                                "uasset_bytes":  803828
+                            },
+                            {
+                                "renderer_index":  14,
+                                "group":  "Part_02",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_014.Grand_ExactRenderer_014",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_014.uasset",
+                                "source_sha256":  "d7ed8ea587ca1fda168a12783deaf3d1c1be07c8f5168e603e32dd7370f8aca3",
+                                "uasset_bytes":  481446
+                            },
+                            {
+                                "renderer_index":  15,
+                                "group":  "Part_08",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_015.Grand_ExactRenderer_015",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_015.uasset",
+                                "source_sha256":  "2ac4c5403cbf624f5e9388b2eb232d9c2ac1771f72290909c20ebbbc96f6d5d9",
+                                "uasset_bytes":  2918707
+                            },
+                            {
+                                "renderer_index":  16,
+                                "group":  "Part_05",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_016.Grand_ExactRenderer_016",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_016.uasset",
+                                "source_sha256":  "7bc5a2281deafa546584b5942aa17d3f29f50cd9d1258fffa975ae31f877fff3",
+                                "uasset_bytes":  4616201
+                            },
+                            {
+                                "renderer_index":  17,
+                                "group":  "Part_06",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_017.Grand_ExactRenderer_017",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_017.uasset",
+                                "source_sha256":  "c21f2e4a232eb94e3c4ddfefb9b5f557bdf97606b8d3d89dd7febe3691daa9b9",
+                                "uasset_bytes":  4631623
+                            },
+                            {
+                                "renderer_index":  18,
+                                "group":  "Part_00",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_00/Luminous_Grand_ExactOriginalClothed_Part_00/SkeletalMeshes/Luminous_Grand_E_lClothed_Part_00.Luminous_Grand_E_lClothed_Part_00",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_00/Luminous_Grand_ExactOriginalClothed_Part_00/SkeletalMeshes/Luminous_Grand_E_lClothed_Part_00.uasset",
+                                "source_sha256":  "ab14705bb25453e0d73bb252ca736e28f063a057c3367c54971843ef36d55c03",
+                                "uasset_bytes":  11252407
+                            },
+                            {
+                                "renderer_index":  19,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_019.Grand_ExactRenderer_019",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_019.uasset",
+                                "source_sha256":  "686fdb078c1fd3f6a4b9d1a637d441dcaf4a14ec91580c064074bbba4590eab5",
+                                "uasset_bytes":  1225619
+                            },
+                            {
+                                "renderer_index":  20,
+                                "group":  "Part_01",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_020.Grand_ExactRenderer_020",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_020.uasset",
+                                "source_sha256":  "d5af865488b6d69f7d961205e0659ae45b2368475e2c3bf9a35fc3a61257bef3",
+                                "uasset_bytes":  1091778
+                            },
+                            {
+                                "renderer_index":  21,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_021.Grand_ExactRenderer_021",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_021.uasset",
+                                "source_sha256":  "e979b01f6559b01b2fe67612d16e3f0883f84607e0449d98cdb80f791f9c014c",
+                                "uasset_bytes":  622142
+                            },
+                            {
+                                "renderer_index":  22,
+                                "group":  "Part_03",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_022.Grand_ExactRenderer_022",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_022.uasset",
+                                "source_sha256":  "7d2e82e04326fdf2750b97fb062babd65d1e0727cdcdf8a1e5d999afbc975fff",
+                                "uasset_bytes":  714545
+                            },
+                            {
+                                "renderer_index":  23,
+                                "group":  "Part_06",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_023.Grand_ExactRenderer_023",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_023.uasset",
+                                "source_sha256":  "63793868e4b2b778263d24c084ed07250a18c13df2a79773e236cb5b409679b2",
+                                "uasset_bytes":  1470185
+                            },
+                            {
+                                "renderer_index":  24,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_024.Grand_ExactRenderer_024",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_024.uasset",
+                                "source_sha256":  "9419af8bd15466ee0151639db4e7443bdfd6fc731622bf0a0f00dfa42f880e1d",
+                                "uasset_bytes":  1213653
+                            },
+                            {
+                                "renderer_index":  25,
+                                "group":  "Part_03",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_025.Grand_ExactRenderer_025",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_025.uasset",
+                                "source_sha256":  "cfef4331261028b83665e5185e43e60ed3b690b132602d433c53621d826af53b",
+                                "uasset_bytes":  1611995
+                            },
+                            {
+                                "renderer_index":  27,
+                                "group":  "Part_05",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_027.Grand_ExactRenderer_027",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_027.uasset",
+                                "source_sha256":  "73a52ba6b3d7899d0b6bd7a8e874ecaf708f821a81094a47cfd2d0b6fbf9a28b",
+                                "uasset_bytes":  13240024
+                            },
+                            {
+                                "renderer_index":  28,
+                                "group":  "Part_06",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_028.Grand_ExactRenderer_028",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_028.uasset",
+                                "source_sha256":  "fb429b79d0facbae67f863c7582df34f48d068ca55ead4ecb36a6ac5f8a05653",
+                                "uasset_bytes":  12605447
+                            },
+                            {
+                                "renderer_index":  29,
+                                "group":  "Part_08",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_029.Grand_ExactRenderer_029",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_029.uasset",
+                                "source_sha256":  "1a910ab060a67567c5a0a195ac7a7f5c06274a8048c4a2ca22e6b790dd38f0a8",
+                                "uasset_bytes":  1899997
+                            },
+                            {
+                                "renderer_index":  30,
+                                "group":  "Part_01",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_030.Grand_ExactRenderer_030",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_030.uasset",
+                                "source_sha256":  "1a9497a8f7e64d6ba04b4883971fe4a47461d4454b236331cc929eda118cd868",
+                                "uasset_bytes":  539818
+                            },
+                            {
+                                "renderer_index":  31,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_031.Grand_ExactRenderer_031",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_031.uasset",
+                                "source_sha256":  "0934290844d66285821db266aa0a90947ec26c0347e33e5fa9bd51f794c2e488",
+                                "uasset_bytes":  1785121
+                            },
+                            {
+                                "renderer_index":  32,
+                                "group":  "Part_05",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_032.Grand_ExactRenderer_032",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_032.uasset",
+                                "source_sha256":  "572ddf9a01b9c314d0eccb04100ca80c1eb1a3597be5c2cc2104b50fc5db722b",
+                                "uasset_bytes":  1830321
+                            },
+                            {
+                                "renderer_index":  33,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_033.Grand_ExactRenderer_033",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_033.uasset",
+                                "source_sha256":  "1eb9b62c2734f63c860ffdeaf6c9c3c7afb66d457ee6eaa80487bf2615032b74",
+                                "uasset_bytes":  1824702
+                            },
+                            {
+                                "renderer_index":  37,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_037.Grand_ExactRenderer_037",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_037.uasset",
+                                "source_sha256":  "f3af0008aee41982dd2c1a413158671675046c702ec9faa84253b5ad4b7e6f5d",
+                                "uasset_bytes":  777719
+                            },
+                            {
+                                "renderer_index":  38,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_038.Grand_ExactRenderer_038",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_038.uasset",
+                                "source_sha256":  "2610f12d918c1a7e8f2006d39c3e70f3b5cd87688f5a72b6dbbdb56805559c0b",
+                                "uasset_bytes":  769665
+                            },
+                            {
+                                "renderer_index":  39,
+                                "group":  "Part_03",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_039.Grand_ExactRenderer_039",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_039.uasset",
+                                "source_sha256":  "f31a29ef030d97c5a944dfd3aeee7e489137690a5ab46d5d615cf20ba8cc365a",
+                                "uasset_bytes":  425386
+                            },
+                            {
+                                "renderer_index":  40,
+                                "group":  "Part_01",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_040.Grand_ExactRenderer_040",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_040.uasset",
+                                "source_sha256":  "4e2637bea61f3c8ba36ac836c8be144be33ce19adceb727c3ea38fb3533edf5a",
+                                "uasset_bytes":  428827
+                            },
+                            {
+                                "renderer_index":  44,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_044.Grand_ExactRenderer_044",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_044.uasset",
+                                "source_sha256":  "bad31690bd7f4d555732af7616171b93fcf0fd25205b8f7c5a47dbc1b72eb9bb",
+                                "uasset_bytes":  1510534
+                            },
+                            {
+                                "renderer_index":  47,
+                                "group":  "Part_06",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_047.Grand_ExactRenderer_047",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_047.uasset",
+                                "source_sha256":  "020e1c073c25c4f606dffeceea919e96f6de5b245920fe6ca385065ce575f520",
+                                "uasset_bytes":  1004508
+                            },
+                            {
+                                "renderer_index":  48,
+                                "group":  "Part_02",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_048.Grand_ExactRenderer_048",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_048.uasset",
+                                "source_sha256":  "cfb4793ff8e8b7ec9a8fd9fb4c72ac618d34ef2d635b3a514174ce5e9e03182a",
+                                "uasset_bytes":  367055
+                            },
+                            {
+                                "renderer_index":  49,
+                                "group":  "Part_08",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_049.Grand_ExactRenderer_049",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_049.uasset",
+                                "source_sha256":  "fe7c686f9379bc0aad6d5afafc35b167de19dc1c09f17a6560f2908ec017ae77",
+                                "uasset_bytes":  552278
+                            },
+                            {
+                                "renderer_index":  50,
+                                "group":  "Part_02",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_050.Grand_ExactRenderer_050",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_050.uasset",
+                                "source_sha256":  "573889cb0e277688ad179430f02db8d8ef3f1dd0adf453ef8860c6510fc2419c",
+                                "uasset_bytes":  264943
+                            },
+                            {
+                                "renderer_index":  54,
+                                "group":  "Part_01",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_054.Grand_ExactRenderer_054",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_01/Luminous_Grand_ExactOriginalClothed_Part_01/SkeletalMeshes/Grand_ExactRenderer_054.uasset",
+                                "source_sha256":  "8d38f149a4ea62dbcf18c3ea785bcb47c877ffa1bfd2c55e9ca6c72c448b0af3",
+                                "uasset_bytes":  9986893
+                            },
+                            {
+                                "renderer_index":  57,
+                                "group":  "Part_03",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_057.Grand_ExactRenderer_057",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_057.uasset",
+                                "source_sha256":  "4c3f82aeb5fc4e508d61ab855d60316f6bd44d7fd96dc56e0dd0cba436fb5809",
+                                "uasset_bytes":  1395494
+                            },
+                            {
+                                "renderer_index":  58,
+                                "group":  "Part_02",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_058.Grand_ExactRenderer_058",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_058.uasset",
+                                "source_sha256":  "3ae2c17245fee82206f4892b4f79ba0a3f70d6a4b0996dc3472e01caf9216950",
+                                "uasset_bytes":  9974931
+                            },
+                            {
+                                "renderer_index":  60,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_060.Grand_ExactRenderer_060",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_060.uasset",
+                                "source_sha256":  "4b40ca1f60594b1bb552aaa0c59498e47d88e93b010391e07e18044e008df5e1",
+                                "uasset_bytes":  5225316
+                            },
+                            {
+                                "renderer_index":  62,
+                                "group":  "Part_08",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_062.Grand_ExactRenderer_062",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_062.uasset",
+                                "source_sha256":  "36b4aa44aa85707a501019b8d8a293b95ca569ecf495edce0bec0da83bbd862e",
+                                "uasset_bytes":  1063560
+                            },
+                            {
+                                "renderer_index":  66,
+                                "group":  "Part_08",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_066.Grand_ExactRenderer_066",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_066.uasset",
+                                "source_sha256":  "96e354bc806c674ac235973f1cafeb8b5db9b3653586c42fc068f890df4d725c",
+                                "uasset_bytes":  3515336
+                            },
+                            {
+                                "renderer_index":  67,
+                                "group":  "Part_04",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_067.Grand_ExactRenderer_067",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_04/Luminous_Grand_ExactOriginalClothed_Part_04/SkeletalMeshes/Grand_ExactRenderer_067.uasset",
+                                "source_sha256":  "04416d1803a1b790fa73add81430ff1fa41d3ec9a74a7eb0e19c89b92e7cd792",
+                                "uasset_bytes":  775008
+                            },
+                            {
+                                "renderer_index":  68,
+                                "group":  "Part_02",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_068.Grand_ExactRenderer_068",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_02/Luminous_Grand_ExactOriginalClothed_Part_02/SkeletalMeshes/Grand_ExactRenderer_068.uasset",
+                                "source_sha256":  "496bd473272747db23874d2e55532ae9473560df8f1ba9eaf8dd435529377154",
+                                "uasset_bytes":  1262457
+                            },
+                            {
+                                "renderer_index":  71,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_071.Grand_ExactRenderer_071",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_071.uasset",
+                                "source_sha256":  "2bb7c138e7c06b8f35c80ef50534548c8ea3cb36cb0f45533598e1a28cd58b61",
+                                "uasset_bytes":  1478850
+                            },
+                            {
+                                "renderer_index":  72,
+                                "group":  "Part_05",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_072.Grand_ExactRenderer_072",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_072.uasset",
+                                "source_sha256":  "ab4cc372dbfcedba4d0525caf6c872c725c64d235716b5015b4a2e76d1c9a437",
+                                "uasset_bytes":  1032446
+                            },
+                            {
+                                "renderer_index":  74,
+                                "group":  "Part_06",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_074.Grand_ExactRenderer_074",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_06/Luminous_Grand_ExactOriginalClothed_Part_06/SkeletalMeshes/Grand_ExactRenderer_074.uasset",
+                                "source_sha256":  "a3b15b609fb104b3260ec44d73317f12d2dd0748d30c76711f5f4e29969f7337",
+                                "uasset_bytes":  743834
+                            },
+                            {
+                                "renderer_index":  75,
+                                "group":  "Part_07",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_075.Grand_ExactRenderer_075",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_07/Luminous_Grand_ExactOriginalClothed_Part_07/SkeletalMeshes/Grand_ExactRenderer_075.uasset",
+                                "source_sha256":  "ccfc19baab0969e7d6ca3c6137f641ab1b6b3813a0ff470df545d87ec3dda281",
+                                "uasset_bytes":  2814988
+                            },
+                            {
+                                "renderer_index":  76,
+                                "group":  "Part_03",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_076.Grand_ExactRenderer_076",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_03/Luminous_Grand_ExactOriginalClothed_Part_03/SkeletalMeshes/Grand_ExactRenderer_076.uasset",
+                                "source_sha256":  "e6344ebc77ec04e4fb244f7a12b9a620c5c354a06f6d7f4453bdbf44017c979e",
+                                "uasset_bytes":  392202
+                            },
+                            {
+                                "renderer_index":  80,
+                                "group":  "Part_08",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_080.Grand_ExactRenderer_080",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_08/Luminous_Grand_ExactOriginalClothed_Part_08/SkeletalMeshes/Grand_ExactRenderer_080.uasset",
+                                "source_sha256":  "f0d22f0d61a67208e42711653aae556de9d0129138d40e2fbd9196e995e4a1d7",
+                                "uasset_bytes":  2358956
+                            },
+                            {
+                                "renderer_index":  81,
+                                "group":  "Part_05",
+                                "soft_object_path":  "/Game/NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_081.Grand_ExactRenderer_081",
+                                "uasset_path":  "NoWorld/Characters/Luminous/Grand/ExactOriginalClothed/Part_05/Luminous_Grand_ExactOriginalClothed_Part_05/SkeletalMeshes/Grand_ExactRenderer_081.uasset",
+                                "source_sha256":  "2e4312377b6e4eced105c47c0b36def4bec2055c63518c0049931cfc6673a2d8",
+                                "uasset_bytes":  2823064
+                            }
+                        ],
+    "compilation_and_gameplay_testing_performed":  false,
+    "original_active_unity_renderers":  57,
+    "source_original_armature_bones":  561,
+    "native_unreal_skeletal_meshes":  57,
+    "native_asset_groups":  9,
+    "form":  "Grand Convergence",
+    "schema":  "noworld.original_grand_exact_card_57_native_character_registry.v1"
+}

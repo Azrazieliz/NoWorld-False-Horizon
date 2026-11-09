@@ -284,7 +284,7 @@ bool FOGTurnBattle::RestoreNativeCheckpointWithBindings(const TArray<uint8>& Byt
     { Error=TEXT("Installed native recovery provider has not rebuilt all required callback authority."); return false; }
     Candidate.IdentityContext=MoveTemp(Bindings.Identity);
     Candidate.NativeFallbackConditions=Bindings.Conditions;
-    Candidate.TriggerRuntime.ConditionEvaluator=MoveTemp(Bindings.Conditions);
+    Candidate.TriggerRuntime.SetConditionEvaluator(MoveTemp(Bindings.Conditions));
     Candidate.RankSuppressionResolver=MoveTemp(Bindings.Rank);
     const auto ExpectedBleed=Candidate.AcceptedBleedFamilyId;
     if (Bindings.RebindSpecialized && !Bindings.RebindSpecialized(Candidate,Error)) return false;

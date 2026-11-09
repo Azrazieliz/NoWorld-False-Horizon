@@ -1,11 +1,12 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Content/OGDefinitionLibrary.h"
+#include "Math/OGLargeNumber.h"
 #include "World/OGItemKnowledgeCharacterRecords.h"
 #include "OGObjectActionDefinition.generated.h"
 
 UENUM(BlueprintType)
-enum class EOGObjectActionKind : uint8 { Use, Craft, Repair, Exchange };
+enum class EOGObjectActionKind : uint8 { Use, Craft, Repair, Exchange, Enhance };
 UENUM(BlueprintType)
 enum class EOGObjectActionParty : uint8 { Ruler, Counterparty };
 UENUM(BlueprintType)
@@ -53,6 +54,24 @@ public:
     UPROPERTY(EditAnywhere,BlueprintReadOnly,meta=(MultiLine=true)) FString InitialEvolutionJson=TEXT("{}");
     virtual bool ValidateDefinition_Implementation(FString& Error) const override;
 };
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGObjectPracticeGrade
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId GradeId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 MinimumValue=0;
+};
+
+USTRUCT(BlueprintType)
+struct OFFLINEGAME_API FOGObjectPractice
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId ToolObjectId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId ProficiencyId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) int64 Gain=0;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectPracticeGrade> Grades;
+};
+
 /** Shared executable recipe. Instances, wallets, stock and repair condition stay canonical in WorldStore. */
 UCLASS(BlueprintType)
 class OFFLINEGAME_API UOGObjectActionDefinition : public UOGReusableDefinition
@@ -68,9 +87,18 @@ public:
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectActionInput> Inputs;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectActionOutput> Outputs;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) TArray<FOGObjectActionResourceChange> Resources;
-    /** Required for repair. The selected owned instance is preserved, including its modifiers/history. */
+    /** Repair and enhancement preserve the selected owned instance, its modifiers and its history. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId SubjectObjectId;
     UPROPERTY(EditAnywhere,BlueprintReadOnly) int32 RepairToConditionBps=0;
+    /** Enhancement rows name both exact stages. Empty rank or quality explicitly means ungraded. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceFromRankId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceFromQualityId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceToRankId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGContentId EnhanceToQualityId;
+    /** Authored out-of-combat recovery as basis points of the recipient's retained maximum HP. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,meta=(ClampMin="0",ClampMax="10000")) int32 RestoreHealthBps=0;
+    /** Optional original practice rule for the tool this action really uses and retains. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly) FOGObjectPractice Practice;
     /** Any counterparty access requires a real, explicitly published canonical offer. */
     UPROPERTY(EditAnywhere,BlueprintReadOnly) FName CounterpartyEntityKind;
     bool UsesCounterparty() const;
@@ -87,6 +115,8 @@ struct OFFLINEGAME_API FOGObjectActionContext
     UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId RulerId;
     UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId CounterpartyId;
     UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId SelectedItemId;
+    UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId HealthRecipientId;
+    UPROPERTY(EditAnywhere,BlueprintReadWrite) FOGEntityId PracticingManifestationId;
 };
 USTRUCT(BlueprintType)
 struct OFFLINEGAME_API FOGObjectActionSelectedInput
@@ -118,6 +148,18 @@ struct OFFLINEGAME_API FOGObjectActionPreview
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionSelectedInput> Inputs;
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionOutput> Outputs;
     UPROPERTY(BlueprintReadOnly) TArray<FOGObjectActionWalletPreview> Wallets;
+    UPROPERTY(BlueprintReadOnly) bool bGrantsPractice=false;
+    UPROPERTY(BlueprintReadOnly) FOGEquipmentProficiencyRecord PracticeBefore;
+    UPROPERTY(BlueprintReadOnly) FOGEquipmentProficiencyRecord PracticeAfter;
+    UPROPERTY(BlueprintReadOnly) FText PracticeToolName;
+    UPROPERTY(BlueprintReadOnly) FOGEntityId PracticeToolId;
+    UPROPERTY(BlueprintReadOnly) bool bRestoresHealth=false;
+    UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthBefore;
+    UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthAfter;
+    UPROPERTY(BlueprintReadOnly) FOGLargeNumber HealthMaximum;
+    UPROPERTY(BlueprintReadOnly) bool bEnhancesSubject=false;
+    UPROPERTY(BlueprintReadOnly) FOGContentId EnhancedRankId;
+    UPROPERTY(BlueprintReadOnly) FOGContentId EnhancedQualityId;
     UPROPERTY(BlueprintReadOnly) bool bRepairsSubject=false;
     UPROPERTY(BlueprintReadOnly) int32 RepairBeforeConditionBps=0;
     UPROPERTY(BlueprintReadOnly) int32 RepairAfterConditionBps=0;
@@ -128,6 +170,7 @@ struct OFFLINEGAME_API FOGObjectActionPreview
     UPROPERTY(BlueprintReadOnly) TArray<FString> MissingRequirements;
     UPROPERTY(BlueprintReadOnly) FString ConfirmationToken;
     /** Internal canonical offer snapshot, included in the confirmation fingerprint. */
+    FOGEntityId HealthBattleId;
     FOGEntityId OfferId;
     FString OfferStateJson;
     int64 OfferRemaining=0;

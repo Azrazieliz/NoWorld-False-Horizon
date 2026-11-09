@@ -7,7 +7,11 @@
 #include "UI/OGUiViewModels.h"
 #include "World/OGOwnedEquipmentService.h"
 #include "Narrative/OGNarrativeService.h"
+#include "Types/SlateEnums.h"
 #include "Objects/OGObjectActionDefinition.h"
+#include "World/OGInventoryStorageService.h"
+#include "World/OGRulerDiplomacyService.h"
+#include "World/OGGatheringDispatch.h"
 #include "Gacha/OGGachaService.h"
 #include "OGGate12NativeRulerWidget.generated.h"
 
@@ -163,6 +167,8 @@ private:
     int32 RecordsSection = -1;
     FOGEntityId GachaContextRulerId;
     FOGContentId GachaContextBannerId;
+    TArray<FOGContentId> VisibleGachaBannerIds;
+    int64 GachaNextScheduleTick = -1;
     TSharedPtr<FOGWorldStoreCommittedEvents> GachaEventFeed;
     FDelegateHandle GachaEventHandle,GachaLibraryHandle;
     FOGGachaBatchPreview PendingGachaReview;
@@ -177,13 +183,33 @@ private:
     UPROPERTY(Transient) TObjectPtr<UTextBlock> GachaReviewStatus;
     UPROPERTY(Transient) TObjectPtr<UOGGate12RulerActionButton> GachaConfirmButton;
     FString GachaFeedback;
-    int32 GachaRevealedResults=1;
+    int32 GachaRevealedResults=0;
+    double GachaRevealEndsAt=0.0;
+    bool bGachaRevealCue=false;
+    UPROPERTY(Transient) TObjectPtr<UWidget> GachaAnimatedReveal;
     bool bGachaDirty=true,bGachaCommandInFlight=false,bGachaDefinitionsDirty=false;
     bool bGachaHistoryExpanded = false;
     bool bGachaRatesExpanded = false;
     bool bGachaResultsExpanded = false;
     FOGEntityId SelectedTerritoryId;
+    FOGEntityId GatheringRulerId,GatheringTerritoryId,GatheringRequest;
+    TArray<FOGEntityId> GatheringParticipants;
+    FOGGatheringDispatchQuote PendingGathering;
+    FString GatheringFeedback;
+    bool bGatheringOpen=false,bGatheringBusy=false,bGatheringRefresh=false;
+    FOGEntityId DiplomacyRulerId,DiplomacyOwnFaction,DiplomacyOtherFaction,DiplomacyRequest;
+    FOGRulerDiplomacyReview PendingDiplomacy;
+    FString DiplomacyFeedback;
+    bool bDiplomacyOpen=false,bDiplomacyBusy=false;
     int32 SelectedTerritoryOverlayIndex = 0;
+    FOGEntityId ProjectOrdersRulerId;
+    FOGEntityId ProjectOrdersTerritoryId;
+    FOGContentId PendingProjectDefinitionId;
+    FGuid PendingProjectReviewId;
+    int64 PendingProjectLibraryRevision = -1;
+    bool bProjectOrdersOpen = false;
+    bool bProjectOrderInFlight = false;
+    FString ProjectOrderFeedback;
     FString LastUiError;
 
     // In-memory review only: never reflected, serialized, or treated as truth.
@@ -207,6 +233,8 @@ private:
     FOGEntityId InventoryContextRulerId;
     FOGContentId InventoryContextIdentityId;
     FOGEntityId InventoryContextManifestationId;
+    FOGInventoryStorageMove PendingStorageReview;
+    FOGEntityId PendingStorageRequestId;
     FOGObjectActionPreview PendingObjectReview;
     FOGEntityId PendingObjectRequestId;
     FOGEntityId ObjectActionCounterpartyId;
@@ -221,6 +249,12 @@ private:
 #endif
 
     bool bNarrativeJournalOpen = false;
+    bool bNarrativeCodexOpen = false;
+    FString NarrativeCodexSearch;
+    FName NarrativeCodexCategory = NAME_None;
+    TWeakObjectPtr<UVerticalBox> NarrativeCodexRows;
+    FOGWorldEventCursor NarrativeMemoryBefore;
+    FOGWorldEventCursor NarrativeMemoryNext;
     FOGContentId OpenNarrativeQuestId;
     FOGContentId OpenNarrativeDialogueId;
     FOGEntityId NarrativePageRulerId;
@@ -237,6 +271,8 @@ private:
     void HandleGachaAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
     void ResetGachaUi();
     void ClearGachaReview();
+    void FinishGachaReveal();
+    bool AdvanceGachaReveal();
     void ObserveGacha(UOGGate12RulerSessionSubsystem& Session);
     void SynchronizeGachaUi();
     void HandleGachaEvents(const TArray<FOGWorldEvent>& Events);
@@ -257,6 +293,8 @@ private:
     void ResetCharacterDevelopment();
     bool SynchronizeDevelopmentContext(const UOGGate12RulerSessionSubsystem* Session);
     void BuildInventory();
+    void BuildStorage(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session,
+        const FOGEntityId& SelectedItem);
     void BuildObjectActions(UVerticalBox* Parent,UOGGate12RulerSessionSubsystem& Session);
     void BuildEquipmentReview(UVerticalBox* Parent, const FOGOwnedEquipmentPreview& Review);
     void HandleInventoryAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);
@@ -269,10 +307,29 @@ private:
     void LoadSelectedPresentationPreference(const UOGGate12RulerSessionSubsystem* Session, FString& OutError);
     void BuildRecords();
     void BuildNarrativeJournal();
+    void BuildNarrativeCodex(UVerticalBox* Parent);
+    void RebuildNarrativeCodexRows();
+    UFUNCTION()
+    void HandleNarrativeCodexSearch(const FText& Search);
+    UFUNCTION()
+    void HandleNarrativeCodexCategory(FString Selected, ESelectInfo::Type SelectionType);
     void HandleNarrativeAction(const FString& Action);
     void ClearNarrativeReview();
     void ResetNarrativePage();
     void BuildTerritory();
+    void BuildGathering(UOGGate12RulerSessionSubsystem& Session,const FOGTerritorySummaryViewModel& Holding);
+    void HandleGatheringAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
+    void ResetGathering();
+    void HandleGatheringEvents(const TArray<FOGWorldEvent>& Events);
+    void BuildDiplomacy(UOGGate12RulerSessionSubsystem& Session);
+    void HandleDiplomacyAction(const FString& Action,UOGGate12RulerSessionSubsystem& Session);
+    void ResetDiplomacy();
+    void BuildTerritoryProjectOrders(const UOGGate12RulerSessionSubsystem& Session,
+        const FOGTerritorySummaryViewModel& Holding);
+    void HandleTerritoryProjectAction(const FString& Action, UOGGate12RulerSessionSubsystem& Session);
+    void RestoreTerritoryProjectDeadlines(const UOGGate12RulerSessionSubsystem& Session);
+    void ClearTerritoryProjectReview();
+    void ResetTerritoryProjectOrders();
     void BuildNav();
     void AddMessage(UVerticalBox* Parent, const FString& Value, int32 FontSize = 22,
         FLinearColor Tint = FLinearColor(0.83f, 0.84f, 0.88f, 1.0f));

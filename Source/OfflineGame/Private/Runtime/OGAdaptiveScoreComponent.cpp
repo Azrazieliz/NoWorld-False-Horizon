@@ -6,13 +6,51 @@
 #include "GameFramework/Pawn.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Runtime/OGPresentationModeSubsystem.h"
+#include "World/OGTraversalFramework.h"
 
 namespace
 {
+const FName SwimmingTag(TEXT("environment.water.swimming"));
+const FName DivingTag(TEXT("environment.water.diving"));
+const FName TurnBattleTag(TEXT("battle.turn"));
+const FName WorldBattleTag(TEXT("battle.world"));
+
 bool ReservedScoreTag(FName Tag)
 {
     const FString Name = Tag.ToString();
-    return Name.StartsWith(TEXT("mode.")) || Name.StartsWith(TEXT("battle."));
+    return Name.StartsWith(TEXT("mode.")) || Name.StartsWith(TEXT("battle.")) ||
+        Tag == SwimmingTag || Tag == DivingTag;
+}
+
+void ApplyNativeAudioContext(UOGSemanticAudioRuntime& Audio, const FOGTurnBattleState* Battle,
+    const UOGTraversalCapabilityComponent* Traversal, TSet<FName>* Tags = nullptr)
+{
+    const bool bRunning = Battle && Battle->Status == EOGTurnBattleStatus::Running;
+    const EOGTraversalMode TraversalMode = Traversal ? Traversal->GetTraversalMode() : EOGTraversalMode::Ground;
+    const struct
+    {
+        FName Tag;
+        FName Parameter;
+        bool bActive;
+    } States[] = {
+        { SwimmingTag, FName(TEXT("OGSwimming")), TraversalMode == EOGTraversalMode::Swimming },
+        { DivingTag, FName(TEXT("OGDiving")), TraversalMode == EOGTraversalMode::Diving },
+        { TurnBattleTag, FName(TEXT("OGTurnBattle")), bRunning && Battle->ExecutionMode == EOGCombatExecutionMode::Turn },
+        { WorldBattleTag, FName(TEXT("OGWorldBattle")), bRunning && Battle->ExecutionMode == EOGCombatExecutionMode::World }
+    };
+    for (const auto& State : States)
+    {
+        Audio.SetEnvironmentState(State.Parameter, State.bActive ? 1.f : 0.f);
+        if (Tags && State.bActive) Tags->Add(State.Tag);
+    }
+
+    if (!Tags) return;
+    Tags->Add(bRunning ? FName(TEXT("battle.running")) : FName(TEXT("battle.idle")));
+    if (bRunning && Battle->EncounterDefinitionId.IsValid())
+    {
+        const FString EncounterTag = TEXT("battle.encounter.") + Battle->EncounterDefinitionId.Value;
+        if (EncounterTag.Len() < NAME_SIZE) Tags->Add(FName(*EncounterTag));
+    }
 }
 }
 
@@ -99,6 +137,20 @@ void UOGAdaptiveScoreComponent::BeginPlay()
     Super::BeginPlay();
     Audio = GetOwner() ? GetOwner()->FindComponentByClass<UOGSemanticAudioRuntime>() : nullptr;
     if (Audio) Audio->OnSemanticEventPlayed.AddUObject(this, &ThisClass::HandleEventPlayed);
+    if (UGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
+    {
+        if (UOGGameCoreSubsystem* Core = GI->GetSubsystem<UOGGameCoreSubsystem>())
+        {
+            ObservedCore = Core;
+            Core->OnNativeBattleStateCommitted.AddUObject(this, &ThisClass::HandleBattleCommitted);
+            Core->OnCanonicalRuntimeReleasing.AddUObject(this, &ThisClass::ClearOwnedScore);
+        }
+    }
+    RefreshScore();
+}
+
+void UOGAdaptiveScoreComponent::HandleBattleCommitted(const FOGTurnBattleState&, const FOGEntityId&)
+{
     RefreshScore();
 }
 
@@ -107,6 +159,18 @@ void UOGAdaptiveScoreComponent::RefreshScore()
     if (!GetWorld() || !Audio || !GetWorld()->IsGameWorld()) return;
     const APawn* Pawn = Cast<APawn>(GetOwner());
     if (Pawn && !Pawn->IsLocallyControlled()) { ClearOwnedScore(); return; }
+    UGameInstance* GI = GetWorld()->GetGameInstance();
+    const UOGGameCoreSubsystem* Core = GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
+    if (!Core || !Core->IsCoreReady()) { ClearOwnedScore(); return; }
+
+    TSet<FName> Tags;
+    const UOGPresentationModeSubsystem* Modes = GI->GetSubsystem<UOGPresentationModeSubsystem>();
+    const bool bWorld = !Modes || Modes->GetMode() == EOGPresentationMode::World;
+    Tags.Add(bWorld ? FName(TEXT("mode.world")) : FName(TEXT("mode.ruler")));
+    const FOGTurnBattle* Battle = Core->GetOwnedLuminousTurnBattle();
+    const auto* Traversal = bWorld && Pawn ? Pawn->FindComponentByClass<UOGTraversalCapabilityComponent>() : nullptr;
+    ApplyNativeAudioContext(*Audio, Battle ? &Battle->GetState() : nullptr, Traversal, &Tags);
+
     if (!bAttemptedLoad)
     {
         bAttemptedLoad = true;
@@ -126,16 +190,6 @@ void UOGAdaptiveScoreComponent::RefreshScore()
             }
     }
     if (!ActiveScore) return;
-    UGameInstance* GI = GetWorld()->GetGameInstance();
-    const UOGGameCoreSubsystem* Core = GI ? GI->GetSubsystem<UOGGameCoreSubsystem>() : nullptr;
-    if (!Core || !Core->IsCoreReady()) { ClearOwnedScore(); return; }
-    TSet<FName> Tags;
-    const UOGPresentationModeSubsystem* Modes = GI->GetSubsystem<UOGPresentationModeSubsystem>();
-    const bool bWorld = !Modes || Modes->GetMode() == EOGPresentationMode::World;
-    Tags.Add(bWorld ? FName(TEXT("mode.world")) : FName(TEXT("mode.ruler")));
-    const FOGTurnBattle* Battle = Core->GetOwnedLuminousTurnBattle();
-    Tags.Add(Battle && Battle->GetState().Status == EOGTurnBattleStatus::Running
-        ? FName(TEXT("battle.running")) : FName(TEXT("battle.idle")));
     for (const auto& Pair : ProviderTags) for (FName Tag : Pair.Value) Tags.Add(Tag);
     const FOGAdaptiveScoreRule* Desired = ActiveScore->Select(Tags, bWorld);
     const FName DesiredId = Desired ? Desired->RuleId : NAME_None;
@@ -220,7 +274,11 @@ void UOGAdaptiveScoreComponent::CommitTransition(FName RuleId)
 
 void UOGAdaptiveScoreComponent::ClearOwnedScore()
 {
-    if (Audio) for (const auto& Pair : EventsByRule) Audio->StopSemanticEvent(Pair.Value);
+    if (Audio)
+    {
+        for (const auto& Pair : EventsByRule) Audio->StopSemanticEvent(Pair.Value);
+        ApplyNativeAudioContext(*Audio, nullptr, nullptr);
+    }
     CurrentRule = PendingRule = NAME_None;
     FadingEvents.Reset();
 }
@@ -234,6 +292,12 @@ void UOGAdaptiveScoreComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UOGAdaptiveScoreComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
+    if (UOGGameCoreSubsystem* Core = ObservedCore.Get())
+    {
+        Core->OnNativeBattleStateCommitted.RemoveAll(this);
+        Core->OnCanonicalRuntimeReleasing.RemoveAll(this);
+    }
+    ObservedCore.Reset();
     ClearOwnedScore();
     if (Audio)
     {

@@ -28,7 +28,7 @@ bool Matches(const FJsonObject& Json, const TMap<FName, FString>& Selector)
 bool ReadId(const FJsonObject& Json, const TCHAR* Field, FOGEntityId& Out)
 {
     FString Text; FGuid Guid;
-    if (!Json.TryGetStringField(Field, Text) || !FGuid::ParseFoundationWorldSimulation(Text, Guid) || !Guid.IsValid()) return false;
+    if (!Json.TryGetStringField(Field, Text) || !FGuid::Parse(Text, Guid) || !Guid.IsValid()) return false;
     Out = FOGEntityId(Guid); return true;
 }
 bool SamePresence(const FOGWorldPresenceRecord& A, const FOGWorldPresenceRecord& B)
@@ -134,7 +134,7 @@ bool FOGFoundationWorldSimulationRuntime::Read(const UOGWorldSimulationDefinitio
         return FailFoundationWorldSimulation(Error, TEXT("Canonical schedule selector must be an exact persisted schedule ID string."));
     if (ScheduleText.IsEmpty()) { Out = MoveTemp(State); return true; }
     FGuid Guid;
-    if (!FGuid::ParseFoundationWorldSimulation(ScheduleText, Guid) || !Guid.IsValid())
+    if (!FGuid::Parse(ScheduleText, Guid) || !Guid.IsValid())
         return FailFoundationWorldSimulation(Error, TEXT("Canonical schedule selector contains an invalid ID."));
     if (!Store.TryReadWorldDirectorSchedule(FOGEntityId(Guid), Found, State.Schedule, Error)) return false;
     if (!Found) return FailFoundationWorldSimulation(Error, TEXT("Canonical NPC schedule is not installed in the shared Director."));

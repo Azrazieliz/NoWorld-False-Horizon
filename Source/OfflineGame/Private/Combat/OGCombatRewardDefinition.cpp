@@ -185,7 +185,7 @@ bool FOGCombatRewardService::ApplyCommittedVictory(const FOGTurnBattleState& Sta
         FOGWorldEvent Award; Award.EventId=Claim; Award.EventType=TEXT("combat_reward_claimed"); Award.PrimaryEntity=Ruler;
         Award.RelatedEntities={Unit->UnitEntityId,State.BattleId,Completion.EventId,InventoryEvent};
         Award.WorldTick=Completion.WorldTick; Award.bChronicleEligible=true; Award.PayloadJson.Reset();
-        FJsonSerializer::Serialize(Payload.ToSharedRef(),TJsonWriterFactory<>::Create(&Award.PayloadJson));
+        FJsonSerializer::Serialize(Payload,TJsonWriterFactory<>::Create(&Award.PayloadJson));
         if (!Store.AppendWorldEvent(Award,Error)) return false;
         Out.RewardEventIds.Add(Claim); Out.CreatedItemIds.Append(Created);
         for (const auto& Resource:D->Resources)

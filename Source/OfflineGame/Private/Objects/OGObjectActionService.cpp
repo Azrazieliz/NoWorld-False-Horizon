@@ -1,4 +1,7 @@
 #include "Objects/OGObjectActionService.h"
+#include "Objects/OGObjectOfferDefinition.h"
+#include "Combat/OGCombatVitalityService.h"
+#include "World/OGOwnedEquipmentService.h"
 #include "Dom/JsonObject.h"
 #include "Misc/SecureHash.h"
 #include "Serialization/JsonReader.h"
@@ -8,13 +11,13 @@ namespace
 {
 const FName ActionEvent(TEXT("object_action_applied")),OfferEvent(TEXT("object_action_offer_published"));
 void AppendObjectServicePart(FString& S,const FString& V) { S+=LexToString(V.Len())+TEXT(":")+V; }
-FString Digest(const FString& Text)
+FString ObjectActionStableDigest(const FString& Text)
 {
     FTCHARToUTF8 Bytes(*Text); FMD5 Hash; Hash.Update(reinterpret_cast<const uint8*>(Bytes.Get()),Bytes.Length());
     uint8 Result[16]; Hash.Final(Result); return BytesToHex(Result,16);
 }
 FOGEntityId StableId(const FString& Text)
-{ FGuid Guid; FGuid::ParseExact(Digest(Text),EGuidFormats::Digits,Guid); return FOGEntityId(Guid); }
+{ FGuid Guid; FGuid::ParseExact(ObjectActionStableDigest(Text),EGuidFormats::Digits,Guid); return FOGEntityId(Guid); }
 FOGEntityId OfferId(const FOGEntityId& Counterparty,const FOGContentId& Action)
 { return StableId(TEXT("object_offer|")+Counterparty.ToString()+TEXT("|")+Action.ToString()); }
 bool Object(const FString& S,TSharedPtr<FJsonObject>& J)
@@ -111,6 +114,33 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
     }
     else if (C.CounterpartyId.IsValid())
     { Error=TEXT("This definition has no counterparty operation."); return false; }
+    if (D.RestoreHealthBps>0)
+    {
+        if (!C.HealthRecipientId.IsValid())
+        { Error=TEXT("Select the character who will use this consumable."); return false; }
+        if (C.HealthRecipientId!=C.RulerId)
+        {
+            FOGCharacterManifestationRecord Copy; bool Found=false;
+            if (!Store.TryReadCharacterManifestation(C.HealthRecipientId,Found,Copy,Error)) return false;
+            if (!Found || Copy.OwningRulerId!=C.RulerId || Copy.LifecycleState!=TEXT("active"))
+            { Error=TEXT("Consumable recovery requires the Ruler or an active owned Manifestation."); return false; }
+        }
+        FOGStoredCombatVitality Saved; bool Found=false;
+        if (!FOGCombatVitalityService(Store).Read(C.HealthRecipientId,Found,Saved,Error)) return false;
+        if (!Found || Saved.CurrentHp.GetSign()<=0)
+            Out.MissingRequirements.Add(TEXT("This character has no living saved HP to restore."));
+        else
+        {
+            Out.bRestoresHealth=true; Out.HealthBattleId=Saved.BattleId; Out.HealthBefore=Saved.CurrentHp;
+            Out.HealthMaximum=Saved.MaximumHpAtCommit;
+            Out.HealthAfter=FOGCombatVitalityService::ResolveRestoredHealth(Saved,D.RestoreHealthBps);
+            if (FOGLargeNumber::Compare(Out.HealthAfter,Out.HealthBefore)<=0)
+                Out.MissingRequirements.Add(TEXT("This character would not regain any HP."));
+            for (const auto& Value:{C.HealthRecipientId.ToString(),Saved.LifeId.ToString(),Saved.ReceiptId.ToString(),
+                Out.HealthBefore.ToDebugString(),Out.HealthAfter.ToDebugString(),Out.HealthMaximum.ToDebugString()})
+                AppendObjectServicePart(Quote,Value);
+        }
+    }
     TArray<FOGItemInstanceRecord> PlayerItems,OtherItems; TSet<FOGEntityId> Equipped;
     if (!OwnedItems(Store,C.RulerId,true,PlayerItems,Equipped,Quote,Error) ||
         (D.UsesCounterparty() && !OwnedItems(Store,C.CounterpartyId,false,OtherItems,Equipped,Quote,Error))) return false;
@@ -134,14 +164,79 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             ItemQuote(Quote,*Item); Used.Add(Item->ItemId);
         }
     }
+    if (D.Kind==EOGObjectActionKind::Enhance)
+    {
+        const auto* Item=PlayerItems.FindByPredicate([&](const auto& Row)
+        { return Row.ItemId==C.SelectedItemId && Row.DefinitionId==D.SubjectObjectId; });
+        if (!Item || Item->CurrentRankId!=D.EnhanceFromRankId || Item->QualityId!=D.EnhanceFromQualityId)
+            Out.MissingRequirements.Add(TEXT("Select an owned item at this enhancement's exact starting Rank and Quality."));
+        else
+        {
+            if (!ResolveObject(Item->DefinitionId,Error)) return false;
+            Out.bEnhancesSubject=true; Out.SubjectBefore=*Item;
+            Out.EnhancedRankId=D.EnhanceToRankId; Out.EnhancedQualityId=D.EnhanceToQualityId;
+            ItemQuote(Quote,*Item); Used.Add(Item->ItemId);
+            TArray<FOGContainerContentRecord> Storage;
+            if (!Store.ListContainerPlacementsForItem(Item->ItemId,Storage,Error)) return false;
+            if (Storage.Num()>1 || (!Storage.IsEmpty() && Storage[0].Amount!=1))
+                Out.MissingRequirements.Add(TEXT("Enhancement requires a single item instance in one physical location."));
+            TArray<FOGItemModifierRecord> Modifiers;
+            if (!Store.ListItemModifiers(Item->ItemId,Modifiers,Error)) return false;
+            for (const auto& Modifier:Modifiers)
+            {
+                AppendObjectServicePart(Quote,Modifier.ModifierId.ToString());
+                AppendObjectServicePart(Quote,LexToString(Modifier.Ordinal));
+                AppendObjectServicePart(Quote,Modifier.StateJson);
+            }
+            if (Equipped.Contains(Item->ItemId))
+            {
+                FOGEquipmentCatalog Equipment;
+                FString RulesError;
+                if (!FOGEquipmentCatalog::LoadInstalled(Equipment,RulesError))
+                    Out.MissingRequirements.Add(TEXT("This equipped item's resulting slot rule is unavailable."));
+                else
+                {
+                    auto Enhanced=*Item;
+                    Enhanced.CurrentRankId=D.EnhanceToRankId; Enhanced.QualityId=D.EnhanceToQualityId;
+                    TArray<FOGCharacterManifestationRecord> Copies;
+                    if (!Store.ListCharacterManifestationsByOwner(C.RulerId,Copies,Error)) return false;
+                    TArray<FOGEquipmentBindingRecord> RulerBindings;
+                    if (!Store.ListEquipmentBindings(C.RulerId,RulerBindings,Error)) return false;
+                    bool Compatible=!RulerBindings.ContainsByPredicate([&](const auto& B){return B.ItemId==Item->ItemId;});
+                    for (const auto& Copy:Copies)
+                    {
+                        TArray<FOGEquipmentBindingRecord> Bindings;
+                        if (!Store.ListEquipmentBindings(Copy.ManifestationId,Bindings,Error)) return false;
+                        for (const auto& Binding:Bindings)
+                            if (Binding.ItemId==Item->ItemId && !Equipment.FindRule(Copy,Binding.SlotId,Enhanced))
+                                Compatible=false;
+                    }
+                    if (!Compatible)
+                        Out.MissingRequirements.Add(TEXT("The resulting item grade has no authored rule for its current equipped slot."));
+                    AppendObjectServicePart(Quote,Equipment.Fingerprint());
+                }
+            }
+        }
+    }
+    TSet<FOGEntityId> PractitionerEquipment;
+    if (D.Practice.Gain>0 && C.PracticingManifestationId.IsValid())
+    {
+        TArray<FOGEquipmentBindingRecord> Bindings;
+        if (!Store.ListEquipmentBindings(C.PracticingManifestationId,Bindings,Error)) return false;
+        for (const auto& Binding:Bindings) PractitionerEquipment.Add(Binding.ItemId);
+    }
     bool SelectedUsed=false;
     for (const auto& Input:D.Inputs)
     {
         const auto* Definition=ResolveObject(Input.ObjectId,Error); if (!Definition) return false;
         const auto& Items=Input.From==EOGObjectActionParty::Ruler?PlayerItems:OtherItems;
         TArray<const FOGItemInstanceRecord*> Matches;
+        const bool PracticeTool=D.Practice.Gain>0 && Input.From==EOGObjectActionParty::Ruler &&
+            Input.Disposition==EOGObjectInputDisposition::Retain && Input.ObjectId==D.Practice.ToolObjectId;
         for (const auto& Item:Items)
             if (!Used.Contains(Item.ItemId) && Item.DefinitionId==Input.ObjectId && Item.CurrentRankId==Input.RankId && Item.QualityId==Input.QualityId &&
+                (!PracticeTool || ((Item.OwnerEntityId==C.RulerId || Item.OwnerEntityId==C.PracticingManifestationId) &&
+                    (!Equipped.Contains(Item.ItemId) || PractitionerEquipment.Contains(Item.ItemId)))) &&
                 (Input.Disposition==EOGObjectInputDisposition::Retain || !Equipped.Contains(Item.ItemId))) Matches.Add(&Item);
         Matches.Sort([&](const FOGItemInstanceRecord& A,const FOGItemInstanceRecord& B)
         { if ((A.ItemId==C.SelectedItemId)!=(B.ItemId==C.SelectedItemId)) return A.ItemId==C.SelectedItemId; return A.ItemId.ToString()<B.ItemId.ToString(); });
@@ -163,6 +258,59 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
             for (const auto& M:Modifiers)
             { AppendObjectServicePart(Quote,M.ModifierId.ToString()); AppendObjectServicePart(Quote,FString::FromInt(M.Ordinal)); AppendObjectServicePart(Quote,M.StateJson); }
             Out.Inputs.Add(MoveTemp(Selection));
+        }
+    }
+    if (D.Practice.Gain>0)
+    {
+        const auto* Tool=Out.Inputs.FindByPredicate([&](const auto& Input)
+        {
+            return Input.Disposition==EOGObjectInputDisposition::Retain && Input.Item.DefinitionId==D.Practice.ToolObjectId &&
+                (Input.Item.OwnerEntityId==C.RulerId || Input.Item.OwnerEntityId==C.PracticingManifestationId);
+        });
+        bool Found=false; FOGCharacterManifestationRecord Copy;
+        if (C.PracticingManifestationId.IsValid() &&
+            !Store.TryReadCharacterManifestation(C.PracticingManifestationId,Found,Copy,Error)) return false;
+        if (!Found || Copy.OwningRulerId!=C.RulerId || Copy.LifecycleState!=TEXT("active"))
+            Out.MissingRequirements.Add(TEXT("Choose the active owned character performing this practice."));
+        else if (!Tool)
+            Out.MissingRequirements.Add(TEXT("The practicing character needs the actual required tool."));
+        else
+        {
+            if (!Store.TryReadEquipmentProficiency(Copy.ManifestationId,D.Practice.ProficiencyId,Found,Out.PracticeBefore,Error))
+                return false;
+            if (!Found)
+            {
+                Out.PracticeBefore.OwnerEntityId=Copy.ManifestationId;
+                Out.PracticeBefore.ProficiencyId=D.Practice.ProficiencyId;
+            }
+            if (Out.PracticeBefore.ProficiencyValue<0 || Out.PracticeBefore.OwnerEntityId!=Copy.ManifestationId ||
+                Out.PracticeBefore.ProficiencyId!=D.Practice.ProficiencyId)
+            { Error=TEXT("Saved proficiency does not match the practicing character and tool."); return false; }
+            const int32 ExistingGrade=D.Practice.Grades.IndexOfByPredicate(
+                [&](const auto& Grade){return Grade.GradeId==Out.PracticeBefore.GradeId;});
+            if (Out.PracticeBefore.GradeId.IsValid() && ExistingGrade==INDEX_NONE)
+                Out.MissingRequirements.Add(TEXT("The installed practice rule does not include the saved proficiency grade."));
+            else if (Out.PracticeBefore.ProficiencyValue>MAX_int64-D.Practice.Gain)
+                Out.MissingRequirements.Add(TEXT("This proficiency cannot retain more practice."));
+            else
+            {
+                Out.PracticeAfter=Out.PracticeBefore;
+                Out.PracticeAfter.ProficiencyValue+=D.Practice.Gain;
+                Out.PracticeAfter.UpdatedWorldTick=Tick;
+                for (int32 I=ExistingGrade+1; I<D.Practice.Grades.Num(); ++I)
+                {
+                    const auto& Grade=D.Practice.Grades[I];
+                    if (Grade.MinimumValue>Out.PracticeAfter.ProficiencyValue) break;
+                    Out.PracticeAfter.GradeId=Grade.GradeId;
+                }
+                Out.bGrantsPractice=true;
+                Out.PracticeToolName=Tool->DisplayName;
+                Out.PracticeToolId=Tool->Item.ItemId;
+                for (const auto& Value:{Copy.ManifestationId.ToString(),Copy.ActiveVersionId.ToString(),
+                    D.Practice.ProficiencyId.ToString(),Out.PracticeBefore.GradeId.ToString(),
+                    LexToString(Out.PracticeBefore.ProficiencyValue),Out.PracticeBefore.StateJson})
+                    AppendObjectServicePart(Quote,Value);
+            }
         }
     }
     if (D.Kind==EOGObjectActionKind::Use && !SelectedUsed)
@@ -187,7 +335,7 @@ bool FOGObjectActionService::Preview(const UOGObjectActionDefinition& D,const FO
         for (const auto& Value:{Output.ObjectId.ToString(),ObjectDefinition->InitialRankId.ToString(),ObjectDefinition->InitialQualityId.ToString(),
             ObjectDefinition->InitialDurabilityJson,ObjectDefinition->InitialEvolutionJson}) AppendObjectServicePart(Quote,Value);
     }
-    Out.bCanApply=Out.MissingRequirements.IsEmpty(); Out.ConfirmationToken=Digest(Quote); return true;
+    Out.bCanApply=Out.MissingRequirements.IsEmpty(); Out.ConfirmationToken=ObjectActionStableDigest(Quote); return true;
 }
 bool FOGObjectActionService::Apply(const UOGObjectActionDefinition& Definition,const FOGObjectActionPreview& Reviewed,
     const FOGEntityId& Request,int64 Tick,bool& Already,TArray<FOGEntityId>& Created,FString& Error)
@@ -216,6 +364,18 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
             !Receipt->TryGetStringField(TEXT("counterparty_id"),Other) || Other!=(Reviewed.Context.CounterpartyId.IsValid()?Reviewed.Context.CounterpartyId.ToString():TEXT("")) ||
             !Receipt->TryGetStringField(TEXT("selected_item_id"),Subject) || Subject!=(Reviewed.Context.SelectedItemId.IsValid()?Reviewed.Context.SelectedItemId.ToString():TEXT("")))
         { Error=TEXT("Request ID belongs to a different canonical object action."); return Fail(); }
+        FString HealthRecipient;
+        if ((Receipt->HasField(TEXT("health_recipient_id")) &&
+             (!Receipt->TryGetStringField(TEXT("health_recipient_id"),HealthRecipient) ||
+              HealthRecipient!=Reviewed.Context.HealthRecipientId.ToString())) ||
+            (!Receipt->HasField(TEXT("health_recipient_id")) && Reviewed.Context.HealthRecipientId.IsValid()))
+        { Error=TEXT("Request ID belongs to a different consumable recipient."); return Fail(); }
+        FString Practitioner;
+        if ((Receipt->HasField(TEXT("practicing_manifestation_id")) &&
+             (!Receipt->TryGetStringField(TEXT("practicing_manifestation_id"),Practitioner) ||
+              Practitioner!=Reviewed.Context.PracticingManifestationId.ToString())) ||
+            (!Receipt->HasField(TEXT("practicing_manifestation_id")) && Reviewed.Context.PracticingManifestationId.IsValid()))
+        { Error=TEXT("Request ID belongs to a different practicing character."); return Fail(); }
         const TArray<TSharedPtr<FJsonValue>>* Ids=nullptr;
         if (!Receipt->TryGetArrayField(TEXT("created_item_ids"),Ids)) { Error=TEXT("Stored object receipt is incomplete."); return Fail(); }
         for (const auto& Value:*Ids)
@@ -260,6 +420,17 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
         History->SetStringField(TEXT("last_repair_event"),RequestId.ToString()); Subject.HistoryStateJson=Write(History.ToSharedRef());
         if (!Store.UpsertItemInstance(Subject,Tick,Error)) return Fail();
     }
+    if (Fresh.bEnhancesSubject)
+    {
+        auto Subject=Fresh.SubjectBefore;
+        Subject.CurrentRankId=Fresh.EnhancedRankId;
+        Subject.QualityId=Fresh.EnhancedQualityId;
+        TSharedPtr<FJsonObject> History;
+        if (!Object(Subject.HistoryStateJson,History)) { Error=TEXT("Stored item provenance is invalid."); return Fail(); }
+        History->SetStringField(TEXT("last_enhancement_event"),RequestId.ToString());
+        Subject.HistoryStateJson=Write(History.ToSharedRef());
+        if (!Store.UpsertItemInstance(Subject,Tick,Error)) return Fail();
+    }
     int32 Ordinal=0;
     for (const auto& Output:D.Outputs)
     {
@@ -286,7 +457,18 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
         if (Fresh.OfferRemaining>0) Offer->SetStringField(TEXT("remaining_uses_exact"),LexToString(Fresh.OfferRemaining-1));
         if (!Store.UpsertEntity(Fresh.OfferId,TEXT("object_action_offer"),Tick,Write(Offer.ToSharedRef()),Error)) return Fail();
     }
+    if (Fresh.bGrantsPractice && !Store.UpsertEquipmentProficiency(Fresh.PracticeAfter,Error)) return Fail();
     auto Receipt=MakeShared<FJsonObject>();
+    if (Fresh.bGrantsPractice)
+    {
+        Receipt->SetStringField(TEXT("practicing_manifestation_id"),Fresh.Context.PracticingManifestationId.ToString());
+        Receipt->SetStringField(TEXT("proficiency_id"),Fresh.PracticeAfter.ProficiencyId.ToString());
+        Receipt->SetStringField(TEXT("practice_tool_id"),Fresh.PracticeToolId.ToString());
+        Receipt->SetStringField(TEXT("practice_value_before_exact"),LexToString(Fresh.PracticeBefore.ProficiencyValue));
+        Receipt->SetStringField(TEXT("practice_value_after_exact"),LexToString(Fresh.PracticeAfter.ProficiencyValue));
+        Receipt->SetStringField(TEXT("practice_grade_before"),Fresh.PracticeBefore.GradeId.ToString());
+        Receipt->SetStringField(TEXT("practice_grade_after"),Fresh.PracticeAfter.GradeId.ToString());
+    }
     Receipt->SetStringField(TEXT("action_id"),D.DefinitionId.ToString());
     Receipt->SetStringField(TEXT("definition_fingerprint"),D.Fingerprint());
     Receipt->SetStringField(TEXT("confirmation_token"),Reviewed.ConfirmationToken);
@@ -310,20 +492,94 @@ bool FOGObjectActionService::ApplyImpl(const UOGObjectActionDefinition& D,const 
         Receipt->SetStringField(TEXT("durability_before"),Fresh.SubjectBefore.DurabilityStateJson);
         Receipt->SetStringField(TEXT("durability_after"),Fresh.SubjectDurabilityAfter);
     }
+    if (Fresh.bEnhancesSubject)
+    {
+        Receipt->SetStringField(TEXT("enhanced_item_id"),Fresh.SubjectBefore.ItemId.ToString());
+        Receipt->SetStringField(TEXT("rank_before"),Fresh.SubjectBefore.CurrentRankId.ToString());
+        Receipt->SetStringField(TEXT("rank_after"),Fresh.EnhancedRankId.ToString());
+        Receipt->SetStringField(TEXT("quality_before"),Fresh.SubjectBefore.QualityId.ToString());
+        Receipt->SetStringField(TEXT("quality_after"),Fresh.EnhancedQualityId.ToString());
+    }
+    if (Fresh.bRestoresHealth)
+    {
+        Receipt->SetStringField(TEXT("battle_id"),Fresh.HealthBattleId.ToString());
+        Receipt->SetStringField(TEXT("health_recipient_id"),Fresh.Context.HealthRecipientId.ToString());
+        auto Delta=MakeShared<FJsonObject>();
+        Delta->SetStringField(TEXT("unit_id"),Fresh.Context.HealthRecipientId.ToString());
+        Delta->SetStringField(TEXT("hp_before"),Fresh.HealthBefore.ToDebugString());
+        Delta->SetStringField(TEXT("hp_after"),Fresh.HealthAfter.ToDebugString());
+        TArray<TSharedPtr<FJsonValue>> Deltas;
+        Deltas.Add(MakeShared<FJsonValueObject>(Delta));
+        Receipt->SetArrayField(TEXT("unit_deltas"),MoveTemp(Deltas));
+    }
     FOGWorldEvent Event; Event.EventId=RequestId; Event.EventType=ActionEvent; Event.WorldTick=Tick;
     Event.PrimaryEntity=Fresh.Context.RulerId; Event.bChronicleEligible=true; Event.PayloadJson=Write(Receipt);
     if (Fresh.Context.CounterpartyId.IsValid()) Event.RelatedEntities.Add(Fresh.Context.CounterpartyId);
     for (const auto& I:Fresh.Inputs) Event.RelatedEntities.AddUnique(I.Item.ItemId);
     for (const auto& Id:CreatedItems) Event.RelatedEntities.AddUnique(Id);
-    if (Fresh.bRepairsSubject) Event.RelatedEntities.AddUnique(Fresh.SubjectBefore.ItemId);
-    if (!Store.AppendWorldEvent(Event,Error) || (OwnTransaction && !Store.CommitTransaction(Error))) return Fail();
+    if (Fresh.bRepairsSubject || Fresh.bEnhancesSubject) Event.RelatedEntities.AddUnique(Fresh.SubjectBefore.ItemId);
+    if (Fresh.bRestoresHealth) Event.RelatedEntities.AddUnique(Fresh.Context.HealthRecipientId);
+    if (Fresh.bGrantsPractice) Event.RelatedEntities.AddUnique(Fresh.Context.PracticingManifestationId);
+    if (!Store.AppendWorldEvent(Event,Error) ||
+        (Fresh.bRestoresHealth && !FOGCombatVitalityService(Store).CommitConsumableRestoration(
+            Fresh.Context.HealthRecipientId,D.RestoreHealthBps,Event,Error)) ||
+        (OwnTransaction && !Store.CommitTransaction(Error))) return Fail();
     return true;
 }
-bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& D,const FOGEntityId& Counterparty,
-    const FOGEntityId& AllowedRuler,int64 RemainingUses,int64 Opens,int64 Closes,const FOGEntityId& RequestId,int64 Tick,FString& Error)
+bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& Definition,
+    const FOGEntityId& Counterparty, const FOGEntityId& AllowedRuler, int64 RemainingUses,
+    int64 Opens, int64 Closes, const FOGEntityId& RequestId, int64 Tick, FString& Error)
 {
-    Error.Reset(); FString State; int64 Revision=0;
-    if (!IsInGameThread() || !D.ValidateDefinition(Error) || !D.UsesCounterparty() || !RequestId.IsValid() || Tick<0 ||
+    Error.Reset();
+    if (!IsInGameThread() || !Store.BeginTransaction(Error)) return false;
+    if (PublishOfferInTransaction(Definition, Counterparty, AllowedRuler, RemainingUses,
+            Opens, Closes, RequestId, Tick, Error) && Store.CommitTransaction(Error)) return true;
+    FString Ignored;
+    Store.RollbackTransaction(Ignored);
+    return false;
+}
+
+bool FOGObjectActionService::PublishOffers(const UOGObjectOfferDefinition& Profile,
+    const FOGEntityId& Counterparty, int64 Tick, FString& Error)
+{
+    Error.Reset();
+    if (!IsInGameThread() || !Profile.ValidateDefinition(Error)) return false;
+    auto* Library = UOGDefinitionLibrary::Get();
+    if (!Library)
+    {
+        Error = TEXT("The installed object action library is unavailable.");
+        return false;
+    }
+    if (!Store.BeginTransaction(Error)) return false;
+
+    for (const FOGObjectOfferSpecification& Offer : Profile.Offers)
+    {
+        const auto* Action = Cast<UOGObjectActionDefinition>(Library->Resolve(TEXT("object_action"), Offer.ActionId));
+        // Keep the original publication identity so saved receipts still prevent stock refills.
+        const FOGEntityId RequestId = StableId(TEXT("object_offer_allocation|") + Counterparty.ToString() +
+            TEXT("|") + Offer.PublicationId.ToString() + TEXT("|") + Offer.ActionId.ToString());
+        if (!Action || !PublishOfferInTransaction(*Action, Counterparty, Offer.AllowedRuler,
+                Offer.RemainingUses, Offer.OpensTick, Offer.ClosesTick, RequestId, Tick, Error))
+        {
+            FString Ignored;
+            Store.RollbackTransaction(Ignored);
+            Error = TEXT("Could not publish offer ") + Offer.ActionId.ToString() +
+                TEXT(". ") + (Error.IsEmpty() ? FString(TEXT("The installed allocation is unavailable.")) : Error);
+            return false;
+        }
+    }
+    if (Store.CommitTransaction(Error)) return true;
+    FString Ignored;
+    Store.RollbackTransaction(Ignored);
+    return false;
+}
+
+bool FOGObjectActionService::PublishOfferInTransaction(const UOGObjectActionDefinition& D,
+    const FOGEntityId& Counterparty, const FOGEntityId& AllowedRuler, int64 RemainingUses,
+    int64 Opens, int64 Closes, const FOGEntityId& RequestId, int64 Tick, FString& Error)
+{
+    FString State; int64 Revision=0;
+    if (!D.ValidateDefinition(Error) || !D.UsesCounterparty() || !RequestId.IsValid() || Tick<0 ||
         RemainingUses < -1 || Opens<0 || (Closes!=-1 && Closes<=Opens) ||
         !ReadParty(Store,Counterparty,D.CounterpartyEntityKind,State,Revision,Error)) return false;
     if (AllowedRuler.IsValid() && !ReadParty(Store,AllowedRuler,TEXT("ruler"),State,Revision,Error)) return false;
@@ -331,23 +587,20 @@ bool FOGObjectActionService::PublishOffer(const UOGObjectActionDefinition& D,con
     Offer->SetStringField(TEXT("counterparty_id"),Counterparty.ToString());
     Offer->SetStringField(TEXT("allowed_ruler_id"),AllowedRuler.IsValid()?AllowedRuler.ToString():TEXT(""));
     Offer->SetStringField(TEXT("remaining_uses_exact"),LexToString(RemainingUses));
-    Offer->SetStringField(TEXT("opens_tick_exact"),LexToString(Opens)); Offer->SetStringField(TEXT("closes_tick_exact"),LexToString(Closes));
+    Offer->SetStringField(TEXT("opens_tick_exact"),LexToString(Opens));
+    Offer->SetStringField(TEXT("closes_tick_exact"),LexToString(Closes));
     const auto Id=OfferId(Counterparty,D.DefinitionId); const FString Json=Write(Offer);
-    if (!Store.BeginTransaction(Error)) return false;
-    auto Fail=[&](){FString Ignored; Store.RollbackTransaction(Ignored); return false;};
     bool Found=false; FOGWorldEvent Prior;
-    if (!Store.TryReadWorldEvent(RequestId,Found,Prior,Error)) return Fail();
+    if (!Store.TryReadWorldEvent(RequestId,Found,Prior,Error)) return false;
     if (Found)
     {
         if (Prior.EventType!=OfferEvent || Prior.PrimaryEntity!=Id || Prior.PayloadJson!=Json)
-        { Error=TEXT("Offer request ID belongs to a different event."); return Fail(); }
-        if (!Store.CommitTransaction(Error)) return Fail();
+        { Error=TEXT("Offer request ID belongs to a different event."); return false; }
         return true; // Never replenish already-consumed stock on publication retries.
     }
-    if (!Store.UpsertEntity(Id,TEXT("object_action_offer"),Tick,Json,Error)) return Fail();
+    if (!Store.UpsertEntity(Id,TEXT("object_action_offer"),Tick,Json,Error)) return false;
     FOGWorldEvent Event; Event.EventId=RequestId; Event.EventType=OfferEvent; Event.PrimaryEntity=Id;
     Event.RelatedEntities={Counterparty}; if (AllowedRuler.IsValid()) Event.RelatedEntities.Add(AllowedRuler);
     Event.WorldTick=Tick; Event.PayloadJson=Json;
-    if (!Store.AppendWorldEvent(Event,Error) || !Store.CommitTransaction(Error)) return Fail();
-    return true;
+    return Store.AppendWorldEvent(Event,Error);
 }

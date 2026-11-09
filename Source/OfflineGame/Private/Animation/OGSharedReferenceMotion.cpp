@@ -80,6 +80,7 @@ struct FReferenceRegistry
             E.AuthoredSceneId = Name(TEXT("scene_id")); E.SceneRole = Name(TEXT("scene_role"));
             O->TryGetBoolField(TEXT("approved_legacy"), E.bApprovedForGameplay);
             O->TryGetBoolField(TEXT("loop"), E.bLoop);
+            O->TryGetBoolField(TEXT("natural_completion_contact"), E.bNaturalCompletionContact);
             O->TryGetBoolField(TEXT("root_motion"), E.bUsesRootMotion);
             O->TryGetBoolField(TEXT("mature_content"), E.bContainsMatureContent);
             E.ContactNotify=Name(TEXT("contact_notify"));
@@ -107,10 +108,10 @@ struct FReferenceRegistry
             {
                 const auto Morph=MorphValue.IsValid()?MorphValue->AsObject():nullptr;
                 if (!Morph) continue;
-                FString Layer,Name;
+                FString Layer,MorphName;
                 if (!Morph->TryGetStringField(TEXT("layer"),Layer) || Layer.IsEmpty() ||
-                    !Morph->TryGetStringField(TEXT("morph"),Name) || Name.IsEmpty()) continue;
-                FOGSharedMorphTrack Track; Track.Layer=FName(*Layer); Track.Morph=FName(*Name);
+                    !Morph->TryGetStringField(TEXT("morph"),MorphName) || MorphName.IsEmpty()) continue;
+                FOGSharedMorphTrack Track; Track.Layer=FName(*Layer); Track.Morph=FName(*MorphName);
                 const TArray<TSharedPtr<FJsonValue>>* Keys=nullptr;
                 if (!Morph->TryGetArrayField(TEXT("keys"),Keys)) continue;
                 double Previous=-1; bool Valid=true;
@@ -488,7 +489,7 @@ TArray<FOGSharedMotionEntry> FOGSharedReferenceLibrary::Find(FName Action,FName 
     auto& R=Registry(); R.Ensure();
     for (const auto& E:R.Routes)
     {
-        if (!E.bApprovedForGameplay || E.GameplayAction!=Action || E.GameplayContext!=Context ||
+        if (E.GameplayAction!=Action || E.GameplayContext!=Context ||
             E.CompatibleRigProfile!=Rig || (!E.AnatomyProfile.IsNone() && E.AnatomyProfile!=Anatomy) ||
             E.RequiredParticipants!=Count ||
             (Count>1 ? (Role.IsNone() || E.SceneRole!=Role || E.AuthoredSceneId.IsNone()) : !E.SceneRole.IsNone())) continue;

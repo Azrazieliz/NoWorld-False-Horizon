@@ -1,4 +1,6 @@
 #include "Koikatsu/OGLuminousV3PlayableCharacter.h"
+#include "Combat/OGTurnContactActionComponent.h"
+#include "Koikatsu/OGExactOriginalLuminousParts.h"
 #include "Interaction/OGInteractionParticipantComponent.h"
 #include "Runtime/OGCanonicalCharacterPresentation.h"
 
@@ -112,11 +114,14 @@ bool SameBoneTopologyAndRest(const USkeletalMesh* A, const USkeletalMesh* B)
     const FReferenceSkeleton& Left = A->GetRefSkeleton();
     const FReferenceSkeleton& Right = B->GetRefSkeleton();
     // The source-authentic additional forms use their own exported rigs:
-    // Awakened 1131, Berserker 886, and Grand 1123 bones after the FBX root
-    // is admitted. Never compare them through Base/Alter's 975-bone proxy.
+    // Preserve the distinct original source rigs: approved Awakened/Berserker
+    // and exact original-card Grand (561 bones, possibly one importer root).
+    // Never substitute Base/Alter's 975-bone proxy or old unpaired Grand rigs.
     if (Left.GetNum() != Right.GetNum() ||
         (Left.GetNum() != 975 && Left.GetNum() != 886 &&
-         Left.GetNum() != 1131 && Left.GetNum() != 1123)) return false;
+         Left.GetNum() != 1073 && Left.GetNum() != 882 &&
+         Left.GetNum() != 1131 && Left.GetNum() != 1123 &&
+         Left.GetNum() != 561 && Left.GetNum() != 562)) return false;
     for (int32 Index = 0; Index < Left.GetNum(); ++Index)
     {
         if (Left.GetBoneName(Index) != Right.GetBoneName(Index) ||
@@ -170,7 +175,10 @@ AOGLuminousV3PlayableCharacter::AOGLuminousV3PlayableCharacter()
     SharedMotionController = CreateDefaultSubobject<UOGSharedMotionControllerComponent>(TEXT("NativeSharedMotionController"));
     CanonicalCombatBody = CreateDefaultSubobject<UOGCanonicalCombatActorBindingComponent>(TEXT("CanonicalCombatNativeBody"));
     SharedMotionController->RigProfile = TEXT("koikatsu_original");
-    SharedMotionController->bUseIdenticalTopologyLeaderPose = true;
+    // Attach the WHOLE current character to one shared library. Source
+    // garments and body parts need not all share identical bone topology.
+    SharedMotionController->bUseIdenticalTopologyLeaderPose = false;
+    SharedMotionController->bGroupPartsByReferencePose = true;
     // Existing Gate11 allocated DESIGN identifiers, verified from the original
     // preserved intake. Assignment here does NOT install a Registry package,
     // grant a Manifestation or declare this asset production-accepted.
@@ -272,8 +280,16 @@ bool AOGLuminousV3PlayableCharacter::ValidateWardrobeAssets(
         const FString VersionNamespace = Form.IsEmpty() ? FString() :
             FString::Printf(TEXT("/Game/NoWorld/Characters/Luminous/%s/NativeOriginal%s/"),
                 *Form, StateFolder);
-        const bool bNewOriginalSource = !VersionNamespace.IsEmpty() &&
-            AssetPath.StartsWith(VersionNamespace);
+        const bool bVerifiedExactClothed =
+            Desired == EOGLuminousV3Wardrobe::Clothed &&
+            !Form.IsEmpty() &&
+            (Form == TEXT("Awakened") || Form == TEXT("Berserker") ||
+             Form == TEXT("Grand")) &&
+            AssetPath.StartsWith(FString::Printf(
+                TEXT("/Game/NoWorld/Characters/Luminous/%s/ExactOriginalClothed/"),
+                *Form));
+        const bool bNewOriginalSource = (!VersionNamespace.IsEmpty() &&
+            AssetPath.StartsWith(VersionNamespace)) || bVerifiedExactClothed;
         if (!bBaseSource && !bAlterSource && !bNewOriginalSource)
         {
             Error = TEXT("Luminous V3: refusing an unexpected or cross-character asset namespace");
@@ -320,16 +336,32 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     // Prepare the exact full state first; do not publish a half-loaded wardrobe.
     TArray<USkeletalMesh*> Prepared;
     Prepared.Reserve(Paths.Num());
+    int32 WholeFormBoneCount = INDEX_NONE;
+    const bool bExactSourceClothed =
+        Desired == EOGLuminousV3Wardrobe::Clothed &&
+        (CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_awakened_v4") ||
+         CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_berserker_v4") ||
+         CanonicalLuminousVersionId ==
+            TEXT("character:luminous_valentine.version_grand_v4"));
     for (int32 Index = 0; Index < Paths.Num(); ++Index)
     {
         USkeletalMesh* NativeMesh = Cast<USkeletalMesh>(Paths[Index].TryLoad());
-        if (!NativeMesh || !NativeMesh->GetSkeleton() ||
-            NativeMesh->GetRefSkeleton().GetNum() != ExpectedNativeBoneCount(Desired))
+        const int32 ActualBones = NativeMesh ? NativeMesh->GetRefSkeleton().GetNum() : 0;
+        const int32 Expected = ExpectedNativeBoneCount(Desired);
+        const bool bRigMatches = bExactSourceClothed
+            ? (ActualBones >= Expected && ActualBones <= Expected + 1 &&
+               (WholeFormBoneCount == INDEX_NONE || WholeFormBoneCount == ActualBones))
+            : (ActualBones == Expected);
+        if (!NativeMesh || !NativeMesh->GetSkeleton() || !bRigMatches)
         {
-            Error = FString::Printf(TEXT("Luminous V3: missing/invalid source rig %d bones at index %d state %s"),
-                ExpectedNativeBoneCount(Desired), Index, WardrobeName(Desired));
+            Error = FString::Printf(
+                TEXT("Luminous: missing or mismatched authentic native source rig expected=%d actual=%d index=%d state=%s"),
+                Expected, ActualBones, Index, WardrobeName(Desired));
             return false;
         }
+        WholeFormBoneCount = ActualBones;
         Prepared.Add(NativeMesh);
     }
     // One component pool reused for all three states. Never instantiate 121
@@ -375,12 +407,15 @@ bool AOGLuminousV3PlayableCharacter::ApplyVisualWardrobe(
     {
         TArray<USkeletalMeshComponent*> Native;
         for (int32 I = 0; I < ActivePartCount; ++I) Native.Add(RuntimeParts[I]);
-        SharedMotionController->RigProfile = MotionRigProfile;
-        SharedMotionController->AnatomyProfile = MotionAnatomyProfile;
-        SharedMotionController->Capabilities = MotionCapabilities;
+        // Enforce one whole-character binding at runtime. Some preserved
+        // native Blueprints serialize old controller defaults, so constructor
+        // settings alone cannot guarantee the approved rig-cohort path.
+        SharedMotionController->bUseIdenticalTopologyLeaderPose = false;
+        SharedMotionController->bGroupPartsByReferencePose = true;
         SharedMotionController->SharedLibrary = SharedMotionLibrary;
-        SharedMotionController->SetCurrentOutfit(FName(WardrobeName(Desired)));
-        if (!SharedMotionController->RegisterNativeParts(Native))
+        if (!SharedMotionController->BindNativeRigAndParts(
+                MotionRigProfile, MotionAnatomyProfile,
+                FName(WardrobeName(Desired)), MotionCapabilities, Native))
         {
             Error = TEXT("Shared motion component could not register actual wardrobe meshes");
             return false;
@@ -736,28 +771,40 @@ bool AOGLuminousV3PlayableCharacter::PlaySharedGameplayAction(
           (ActionName.StartsWith(TEXT("AdultInteraction.")) ||
            ActionName.StartsWith(TEXT("Adult.")))
         ? FName(TEXT("AdultInteraction")) : FName(TEXT("Interaction"));
-    UAnimSequence* Clip = ResolveSharedMotion(GameplayAction, Context,
-        bAuthorizedAdultContext, ParticipantCount, &Entry);
-    if (!Clip || !Entry) return false;
-    // All character Versions use one source-authoritative native controller.
-    // If the reusable controller cannot bind an approved exact-rig derivative,
-    // retain the established working Luminous driver as a safe fallback.
+    // The controller owns ALL currently rendered parts and can choose one
+    // exact native clip per compatible rig cohort or genuine reference
+    // motion. Do not reject an entire character because a legacy single-
+    // skeleton lookup cannot resolve every original wardrobe mesh at once.
     const bool bControllerPlayed = SharedMotionController &&
         SharedMotionController->PlayAction(GameplayAction, Context,
             bAuthorizedAdultContext, ParticipantCount);
-    if (!bControllerPlayed && !SetLuminousNativeMotionClip(Clip, Entry->bLoop))
-        return false;
     if (bControllerPlayed)
     {
-        CurrentNativeClip = Clip;
+        CurrentNativeClip = nullptr;
         ActiveMotionLeaderIndex = INDEX_NONE;
         bCompatibleNativeMotion = true;
+        bSharedActionPlaying = true;
+        // The shared controller has its own authored motion lifecycle.
+        // Never invent a clip duration when it plays a reference packet.
+        SharedActionEndTime = 0.f;
+        UE_LOG(LogTemp, Display,
+            TEXT("G12_SHARED_WHOLE_CHARACTER_ACTION=%s source=%s parts=%d"),
+            *GameplayAction.ToString(),
+            *SharedMotionController->CurrentSourceClipId.ToString(),
+            SharedMotionController->GetNativePartCount());
+        return true;
     }
+    // Preserve the established exact native Luminous playback fallback,
+    // without substituting a different character or cross-form clip.
+    UAnimSequence* Clip = ResolveSharedMotion(GameplayAction, Context,
+        bAuthorizedAdultContext, ParticipantCount, &Entry);
+    if (!Clip || !Entry || !SetLuminousNativeMotionClip(Clip, Entry->bLoop))
+        return false;
     bSharedActionPlaying = true;
     SharedActionEndTime = GetWorld()->GetTimeSeconds() +
         FMath::Max(0.02f, Clip->GetPlayLength() / FMath::Max(0.01f, Entry->PlayRate));
     UE_LOG(LogTemp, Display,
-        TEXT("G12_SHARED_ACTION_PLAYED=%s source=%s native=%s"),
+        TEXT("G12_SHARED_LEGACY_FALLBACK_ACTION=%s source=%s native=%s"),
         *GameplayAction.ToString(), *Entry->SourceClipId.ToString(),
         *Clip->GetPathName());
     return true;
@@ -1000,8 +1047,8 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
     if (!Sequence || !Sequence->GetSkeleton()) return nullptr;
     for (const USkeletalMeshComponent* Part : RuntimeParts)
     {
-        const USkeletalMesh* Mesh = Part ? Part->GetSkeletalMeshAsset() : nullptr;
-        if (Mesh && Mesh->GetSkeleton() == Sequence->GetSkeleton())
+        const USkeletalMesh* SourceRigMesh = Part ? Part->GetSkeletalMeshAsset() : nullptr;
+        if (SourceRigMesh && SourceRigMesh->GetSkeleton() == Sequence->GetSkeleton())
             return Sequence;
     }
     return nullptr;
@@ -1010,6 +1057,13 @@ UAnimSequence* AOGLuminousV3PlayableCharacter::ResolveAuthoredMotionClip(
 void AOGLuminousV3PlayableCharacter::UpdateNativeMotionFromTraversal()
 {
     if (!bLuminousReady) return;
+    // Actual approved source attack owns the same whole-character skeletal
+    // playback until its contact. A traversal/fall/idle state change must
+    // never stop the accepted combat strike before the canonical hit.
+    if (const auto* Pending =
+            FindComponentByClass<UOGTurnContactActionComponent>();
+        Pending && Pending->IsAwaitingAuthoredContact())
+        return;
     const UCharacterMovementComponent* Movement = GetCharacterMovement();
     EOGLuminousV3MotionPhase Desired = EOGLuminousV3MotionPhase::Idle;
     if (Movement && Movement->IsFlying())
@@ -1321,8 +1375,10 @@ void AOGLuminousV3PlayableCharacter::Tick(float DeltaSeconds)
     }
     if (bSharedActionPlaying)
     {
-        if (Now < SharedActionEndTime)
-            return; // Do not let traversal overwrite an accepted gameplay action.
+        if (Now < SharedActionEndTime ||
+            (SharedActionEndTime <= 0.f && SharedMotionController &&
+             SharedMotionController->IsPlayingAction()))
+            return; // Shared source lifecycle, not guessed Version-specific timing.
         bSharedActionPlaying = false;
         SharedActionEndTime = 0.f;
         if (SharedMotionController && SharedMotionController->IsPlayingAction())
@@ -1393,4 +1449,45 @@ void AOGLuminousV3PlayableCharacter::EndPlay(const EEndPlayReason::Type Reason)
     bCompatibleNativeMotion = false;
     bLuminousReady = false;
     Super::EndPlay(Reason);
+}
+
+AOGLuminousAwakenedOriginalWorldCharacter::AOGLuminousAwakenedOriginalWorldCharacter()
+{
+    CanonicalLuminousVersionId =
+        TEXT("character:luminous_valentine.version_awakened_v4");
+    int32 Bones = 0;
+    if (FOGExactOriginalLuminousParts::GetClothed(
+        CanonicalLuminousVersionId, ClothedNativeParts, Bones))
+    {
+        AdditionalVersionNativePartCounts = {ClothedNativeParts.Num(), 0, 0};
+        AdditionalVersionNativeSkeletonBones = {Bones, 0, 0};
+    }
+}
+
+AOGLuminousBerserkerOriginalWorldCharacter::AOGLuminousBerserkerOriginalWorldCharacter()
+{
+    CanonicalLuminousVersionId =
+        TEXT("character:luminous_valentine.version_berserker_v4");
+    int32 Bones = 0;
+    if (FOGExactOriginalLuminousParts::GetClothed(
+        CanonicalLuminousVersionId, ClothedNativeParts, Bones))
+    {
+        AdditionalVersionNativePartCounts = {ClothedNativeParts.Num(), 0, 0};
+        AdditionalVersionNativeSkeletonBones = {Bones, 0, 0};
+    }
+}
+
+AOGLuminousGrandOriginalWorldCharacter::AOGLuminousGrandOriginalWorldCharacter()
+{
+    // Exceptional final manifestation of the SAME Luminous Identity;
+    // no extra ordinary lineage and no per-form animation library.
+    CanonicalLuminousVersionId =
+        TEXT("character:luminous_valentine.version_grand_v4");
+    int32 Bones = 0;
+    if (FOGExactOriginalLuminousParts::GetClothed(
+        CanonicalLuminousVersionId, ClothedNativeParts, Bones))
+    {
+        AdditionalVersionNativePartCounts = {ClothedNativeParts.Num(), 0, 0};
+        AdditionalVersionNativeSkeletonBones = {Bones, 0, 0};
+    }
 }

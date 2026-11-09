@@ -153,6 +153,9 @@ bool UOGGate12RulerSessionSubsystem::ReadOwnedDevelopmentState(
         OutReinforcementState = Reinforcement.ReinforcementState;
         bOutMaxReinforced = Reinforcement.bMaxReinforced;
     }
+    FOGEntityRankStateRecord Rank;
+    if (!Store->TryReadEntityRankState(ManifestationId,bFound,Rank,OutError)) return false;
+    if (bFound) Current.Level = Rank.AttainedLevel;
     OutCurrent = MoveTemp(Current);
     return true;
 }

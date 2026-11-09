@@ -11,6 +11,8 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Misc/ScopeExit.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Persistence/OGWorldStore.h"
 #include "Runtime/OGGameCoreSubsystem.h"
 #include "Serialization/JsonReader.h"
@@ -90,6 +92,54 @@ UOGCharacterAppearanceDefinition* UOGCharacterAppearanceComponent::FindDefinitio
         if (Definition->IdentityId!=Identity || Definition->VersionId!=Version) continue;
         if (Match) { Error=TEXT("Duplicate exact Identity/Version appearance definitions."); return nullptr; }
         Match=Definition;
+    }
+    if (!Match)
+    {
+        // 5★ factory authoring emits a real UOGCharacterAppearanceDefinition
+        // and a packaged exact-Identity/Version registry. Only use it when
+        // no existing accepted definition was matched; never override one.
+        FString Source;
+        const FString Registry=FPaths::Combine(FPaths::ProjectContentDir(),
+            TEXT("NoWorld/ContentFactory/Characters.json"));
+        if (FFileHelper::LoadFileToString(Source,*Registry))
+        {
+            TSharedPtr<FJsonObject> Root;
+            if (FJsonSerializer::Deserialize(
+                    TJsonReaderFactory<>::Create(Source),Root) &&
+                Root.IsValid())
+            {
+                FString Schema;
+                const TArray<TSharedPtr<FJsonValue>>* Rows=nullptr;
+                if (Root->TryGetStringField(TEXT("schema"),Schema) &&
+                    Schema==TEXT("noworld.content_factory.index.v1") &&
+                    Root->TryGetArrayField(TEXT("characters"),Rows) && Rows)
+                {
+                    int32 ExactCount=0;
+                    FString Asset;
+                    for(const auto& Value:*Rows)
+                    {
+                        const auto Row=Value.IsValid()?Value->AsObject():nullptr;
+                        FString RowIdentity,RowVersion,RowAsset;
+                        if(!Row || !Row->TryGetStringField(TEXT("identity"),RowIdentity) ||
+                           !Row->TryGetStringField(TEXT("version"),RowVersion) ||
+                           !Row->TryGetStringField(TEXT("appearance"),RowAsset))
+                            continue;
+                        if(RowIdentity==Identity.ToString() && RowVersion==Version.ToString())
+                        { ++ExactCount; Asset=RowAsset; }
+                    }
+                    if(ExactCount>1)
+                    { Error=TEXT("Duplicate exact factory native appearance registry entries.");return nullptr; }
+                    if(ExactCount==1 &&
+                        Asset.StartsWith(TEXT("/Game/NoWorld/ContentFactory/Appearances/")))
+                    {
+                        auto* Candidate=LoadObject<UOGCharacterAppearanceDefinition>(nullptr,*Asset);
+                        if(Candidate && Candidate->GetPathName()==Asset &&
+                           Candidate->IdentityId==Identity && Candidate->VersionId==Version)
+                            Match=Candidate;
+                    }
+                }
+            }
+        }
     }
     if (!Match) Error=TEXT("No authored native appearance for this exact Identity/Version.");
     return Match;
@@ -330,16 +380,23 @@ bool UOGCharacterAppearanceComponent::InstallAppearance(
     CandidateController = NewObject<UOGSharedMotionControllerComponent>(Owner, NAME_None, RF_Transient);
     if (!CandidateController) return AppearanceError(Error, TEXT("Could not allocate candidate shared motion controller."));
     CandidateController->SharedLibrary = Definition->SharedMotionLibrary;
-    CandidateController->RigProfile = Rendered->RigProfile;
-    CandidateController->AnatomyProfile = Rendered->AnatomyProfile;
-    CandidateController->OutfitProfile = Rendered->OutfitProfile;
-    CandidateController->Capabilities = Rendered->Capabilities;
+    // The canonical character identity is attached to the reusable controller
+    // BEFORE any Version/wardrobe-specific skeletal parts are installed.
+    // A privacy wardrobe or alternate Version never becomes another identity.
+    if (!CandidateController->BindCanonicalCharacter(Definition->IdentityId))
+        return AppearanceError(Error, TEXT("Original shared motion cannot bind this canonical character identity."));
     CandidateController->bUseIdenticalTopologyLeaderPose = Rendered->bUseIdenticalTopologyLeaderPose;
+    // One gameplay action drives every compatible original rest-pose cohort.
+    // Mixed authentic source-part skeletons are NOT silently copied/retargeted.
+    CandidateController->bGroupPartsByReferencePose = !Rendered->bUseIdenticalTopologyLeaderPose;
     CandidateController->bPhaseLockIndependentParts = true;
     CandidateController->bPermitAuthoritativeRootMotion = false;
     Owner->AddInstanceComponent(CandidateController);
     CandidateController->RegisterComponent();
-    if (!CandidateController->IsRegistered() || !CandidateController->RegisterNativeParts(Candidates))
+    if (!CandidateController->IsRegistered() ||
+        !CandidateController->BindNativeRigAndParts(
+            Rendered->RigProfile, Rendered->AnatomyProfile,
+            Rendered->OutfitProfile, Rendered->Capabilities, Candidates))
         return AppearanceError(Error, TEXT("Shared motion registration rejected the hidden native candidate parts."));
 
     // Loading/registering can invoke engine callbacks. Recheck canonical truth before publishing.
