@@ -736,19 +736,24 @@ bool UOGSharedMotionControllerComponent::PlayResolvedAction(
     FOGSharedMotionEntry Shared;
     TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe> Source;
     TArray<TArray<FOGReferenceBoneConnection>> Mapping; FString SharedError;
-    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
-        Shared, Source, Mapping, SharedError, RequiredSourceClip))
-        return StartReference(Shared, MoveTemp(Source), MoveTemp(Mapping));
-    TArray<UAnimSequence*> Sequences;
-    TArray<const FOGSharedMotionEntry*> Entries;
-    TArray<USkeletalMeshComponent*> RigDrivers;
-    TArray<int32> RigDriverForPart;
-    USkeletalMeshComponent* Leader = nullptr;
     const bool bCanVaryPresentation = RequiredSourceClip.IsNone() &&
         ParticipantCount == 1 &&
         (Context == TEXT("Interaction") || Context == TEXT("Traversal"));
     const FName AvoidPreviousPresentation = bCanVaryPresentation
         ? LastPresentationSourceByAction.FindRef(GameplayAction) : NAME_None;
+    if (FindReference(GameplayAction, Context, ParticipantCount, ParticipantRole,
+        Shared, Source, Mapping, SharedError, RequiredSourceClip, AvoidPreviousPresentation))
+    {
+        const bool bStarted=StartReference(Shared, MoveTemp(Source), MoveTemp(Mapping));
+        if (bStarted && bCanVaryPresentation)
+            LastPresentationSourceByAction.Add(GameplayAction,Shared.SourceClipId);
+        return bStarted;
+    }
+    TArray<UAnimSequence*> Sequences;
+    TArray<const FOGSharedMotionEntry*> Entries;
+    TArray<USkeletalMeshComponent*> RigDrivers;
+    TArray<int32> RigDriverForPart;
+    USkeletalMeshComponent* Leader = nullptr;
     if (!ResolveNativeRigAction(GameplayAction, Context, bAdultContextAuthorized,
             ParticipantCount, ParticipantRole, RequiredSourceClip, {},
             RigDrivers, RigDriverForPart, Sequences, Entries, AvoidPreviousPresentation))
@@ -996,11 +1001,25 @@ bool UOGSharedMotionControllerComponent::PrepareReference(const FOGReferenceMoti
 }
 bool UOGSharedMotionControllerComponent::FindReference(FName Action,FName Context,int32 Count,FName Role,
     FOGSharedMotionEntry& OutEntry,TSharedPtr<const FOGReferenceMotionClip,ESPMode::ThreadSafe>& OutClip,
-    TArray<TArray<FOGReferenceBoneConnection>>& OutMapping,FString& Error,FName RequiredSourceClip) const
+    TArray<TArray<FOGReferenceBoneConnection>>& OutMapping,FString& Error,
+    FName RequiredSourceClip,FName AvoidPreviousPresentation) const
 {
     OutClip.Reset(); OutMapping.Reset();
-    for (const auto& Entry:FOGSharedReferenceLibrary::Find(Action,Context,RigProfile,AnatomyProfile,Capabilities,Count,Role))
+    const auto Choices=FOGSharedReferenceLibrary::Find(
+        Action,Context,RigProfile,AnatomyProfile,Capabilities,Count,Role);
+    // Source-authentic presentation variation is best-effort and scoped to
+    // the top authored priority. Failed alternate meshes/clip loads fall back
+    // to the original complete ordering, without affecting pinned combat.
+    const bool bRotate=!AvoidPreviousPresentation.IsNone() &&
+        RequiredSourceClip.IsNone() && Count==1 && Choices.Num()>1;
+    const int32 Passes=bRotate?2:1;
+    for(int32 Pass=0;Pass<Passes;++Pass)
+    for (const auto& Entry:Choices)
     {
+        if (bRotate && Pass==0 &&
+            (Entry.Priority!=Choices[0].Priority ||
+             Entry.SourceClipId==AvoidPreviousPresentation))
+            continue;
         if (!RequiredSourceClip.IsNone() &&
             FOGSharedReferenceLibrary::CanonicalId(RequiredSourceClip)!=Entry.SourceClipId) continue;
         if (Entry.bUsesRootMotion || (!Entry.ContactNotify.IsNone() && Entry.ContactSeconds<0)) continue; // Existing collision-authorized native root path remains authoritative.
