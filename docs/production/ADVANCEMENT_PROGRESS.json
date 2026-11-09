@@ -1169,6 +1169,11 @@
             "commit": "e808e55c",
             "type": "SOURCE_PARTIAL",
             "change": "The fallback native Android encounter UI now uses the already committed GameCore outcome receipt and victory flag instead of guessing victory/defeat from the selected Manifestation's remaining HP; it also renders genuine combat controls for the currently possessed canonical Ruler where the original body/battle binding has already been independently verified. Closing the native UMG result restores GameOnly input and hides the mouse cursor, preserving real World camera/touch controls."
+          },
+          {
+            "commit": "c4b427ca625c6b7a843140708b19abe7b8f04588",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native battle UI now permits selection of alive active incapacitated/stunned participants independently of their ability to act, while preserving canonical target legality checks. Build/phone acceptance remains open."
           }
         ],
         "completed_in_this_update": false,
@@ -1426,6 +1431,11 @@
             "commit": "3be2b51f",
             "type": "SOURCE_PARTIAL",
             "change": "Native Gate02 R1 source ecology now builds one immutable type lookup from exact authored stable scatter IDs during original JSONL load; duplicate IDs/prototypes are detected instead of silently inventing ambiguous World state. Physical HISM interaction and persistent removal check the same source index in O(1) rather than scanning 10,454 scatter records every hit/removal, preserving original causal SQLite mutations."
+          },
+          {
+            "commit": "c4b427ca625c6b7a843140708b19abe7b8f04588",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native battle UI now permits selection of alive active incapacitated/stunned participants independently of their ability to act, while preserving canonical target legality checks. Build/phone acceptance remains open."
           }
         ],
         "completed_in_this_update": false,
@@ -4368,9 +4378,25 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T00:00:00Z"
+    },
+    {
+      "source_commit": "c4b427ca625c6b7a843140708b19abe7b8f04588",
+      "system_ids": [
+        "M03",
+        "M09"
+      ],
+      "result": "The existing native battle HUD now allows an actual alive, active but stunned/incapacitated World opponent or ally to remain selectable. A combatant's own CanAct() determines turn execution, not whether another character may target it; canonical ability validation still governs each command.",
+      "remaining_player_visible_work": "Finish target presentation and actual authored encounter integration across all eligible abilities and combat modes, then compile/cook and check phone play; no device acceptance claimed.",
+      "source_paths": [
+        "Source/OfflineGame/Private/UI/OGNativeBattleWidget.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGNativeBattleWidget and FOGTurnBattle canonical validator",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T00:00:00Z"
     }
   ],
-  "continuation_last_source_commit": "3d50748243acb8ab297f8a252817d4f6de263de8",
+  "continuation_last_source_commit": "c4b427ca625c6b7a843140708b19abe7b8f04588",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
