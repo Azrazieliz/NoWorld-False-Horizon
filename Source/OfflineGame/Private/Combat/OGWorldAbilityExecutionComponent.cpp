@@ -70,14 +70,16 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
     Visual->SetStaticMesh(Mesh); Visual->SetRelativeTransform(Spec.ProjectileMeshTransform);
     Movement->InitialSpeed=Spec.ProjectileSpeed; Movement->MaxSpeed=Spec.ProjectileSpeed;
     Movement->ProjectileGravityScale=Spec.ProjectileGravityScale; Movement->Velocity=Direction.GetSafeNormal()*Spec.ProjectileSpeed;
-    SetLifeSpan((Spec.ClosesAtMilliseconds-Spec.OpensAtMilliseconds)/1000.0); return true;
+    RecoveryRemainingLife=(Spec.ClosesAtMilliseconds-Spec.OpensAtMilliseconds)/1000.0f;
+    bRecoveryPaused=false;
+    SetLifeSpan(RecoveryRemainingLife); return true;
 }
 bool AOGNativeWorldProjectile::CaptureCheckpoint(FOGNativeProjectileCheckpoint& Out) const
 {
     if (!Source.IsValid() || !CastId.IsValid() || StepIndex<0 || !Movement || IsActorBeingDestroyed()) return false;
     Out.StepIndex=StepIndex; Out.Transform=GetActorTransform(); Out.Velocity=Movement->Velocity;
-    Out.LaunchOrigin=LaunchOrigin; Out.RemainingLifeSeconds=bRecoveryPaused?RecoveryRemainingLife:GetLifeSpan();
-    return Out.RemainingLifeSeconds>0;
+    Out.LaunchOrigin=LaunchOrigin; Out.RemainingLifeSeconds=RecoveryRemainingLife;
+    return FMath::IsFinite(Out.RemainingLifeSeconds) && Out.RemainingLifeSeconds>0;
 }
 bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckpoint& State,FString& Error)
 {
@@ -127,11 +129,23 @@ void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,
 void AOGNativeWorldProjectile::Tick(float Delta)
 {
     Super::Tick(Delta);
-    if (Source.IsValid() && Source->IsRecoveryPaused()) return;
-    if (bRecoveryPaused)
-    { bRecoveryPaused=false; Movement->SetComponentTickEnabled(true); SetLifeSpan(RecoveryRemainingLife); }
-    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId ||
-        FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) Destroy();
+    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId)
+    { Destroy(); return; }
+    const bool bShouldPause=Source->IsRecoveryPaused();
+    if (bShouldPause!=bRecoveryPaused)
+    {
+        bRecoveryPaused=bShouldPause;
+        Movement->SetComponentTickEnabled(!bRecoveryPaused);
+        // Unreal's actor lifespan timer continues while the encounter is
+        // paused unless explicitly suspended; preserve the remaining window.
+        SetLifeSpan(bRecoveryPaused?0.f:RecoveryRemainingLife);
+    }
+    if (bRecoveryPaused) return;
+    if (FMath::IsFinite(Delta) && Delta>0.f)
+        RecoveryRemainingLife=FMath::Max(0.f,RecoveryRemainingLife-Delta);
+    if (RecoveryRemainingLife<=0.f ||
+        FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters))
+        Destroy();
 }
 UOGWorldAbilityExecutionComponent::UOGWorldAbilityExecutionComponent()
 {
