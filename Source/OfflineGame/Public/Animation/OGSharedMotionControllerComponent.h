@@ -244,6 +244,9 @@ private:
 
     struct FQueuedCombatMotion { FName Action; FOGEntityId Receipt; };
     TArray<FQueuedCombatMotion> CombatQueue;
+    // Presentation-only history. Exactly one original source take is selected
+    // per whole-character action; combat and authored scenes never use it.
+    TMap<FName, FName> LastPresentationSourceByAction;
     TSet<FOGEntityId> CombatReceipts;
     FOGEntityId CombatScope;
     FOGEntityId ActiveCombatReceipt;
@@ -322,11 +325,13 @@ private:
         TOptional<bool> RootPolicy,
         const TArray<USkeletalMeshComponent*>& RigDrivers,
         TArray<UAnimSequence*>& OutSequences,
-        TArray<const FOGSharedMotionEntry*>& OutEntries) const;
+        TArray<const FOGSharedMotionEntry*>& OutEntries,
+        FName AvoidPreviousPresentation = NAME_None) const;
     bool ResolveNativeRigAction(FName Action, FName Context, bool bAuthorizedAdult,
         int32 ParticipantCount, FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy,
         TArray<USkeletalMeshComponent*>& OutRigDrivers, TArray<int32>& OutRigDriverForPart,
-        TArray<UAnimSequence*>& OutSequences, TArray<const FOGSharedMotionEntry*>& OutEntries) const;
+        TArray<UAnimSequence*>& OutSequences, TArray<const FOGSharedMotionEntry*>& OutEntries,
+        FName AvoidPreviousPresentation = NAME_None) const;
     bool PreviewResolvedSource(FName Action, FName Context, bool bAuthorizedAdult,
         int32 ParticipantCount, FName ParticipantRole, TOptional<bool> RootPolicy,
         FName& OutSourceClipId, FName& OutAuthoredSceneId) const;
