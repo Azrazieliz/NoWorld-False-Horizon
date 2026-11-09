@@ -84,11 +84,27 @@ bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckp
     Movement->SetComponentTickEnabled(!bRecoveryPaused); SetLifeSpan(bRecoveryPaused?0:RecoveryRemainingLife);
     return true;
 }
-void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,UPrimitiveComponent*,FVector,const FHitResult&)
+void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,UPrimitiveComponent*,FVector,const FHitResult& Hit)
 {
     if (Other==GetOwner() || (Source.IsValid() && Source->IsRecoveryPaused())) return;
-    if (FVector::DistSquared(LaunchOrigin,GetActorLocation())>FMath::Square(MaximumTravelCentimeters)) { Destroy(); return; }
-    if (Source.IsValid()) { FString Error; Source->CommitProjectileContact(CastId,StepIndex,Other,Error); }
+    // The actual collision point is authoritative for the projectile's
+    // source-authored maximum range. The moving sphere's centre can still be
+    // within range when its leading surface strikes an actor beyond it.
+    // A recovered projectile retains its original LaunchOrigin.
+    const FVector ContactPoint=Hit.bBlockingHit && !Hit.ImpactPoint.ContainsNaN()
+        ? Hit.ImpactPoint : GetActorLocation();
+    if (MaximumTravelCentimeters<=0.f ||
+        FVector::DistSquared(LaunchOrigin,ContactPoint)>
+            FMath::Square(MaximumTravelCentimeters))
+    {
+        Destroy();
+        return;
+    }
+    if (Source.IsValid())
+    {
+        FString Error;
+        Source->CommitProjectileContact(CastId,StepIndex,Other,Error);
+    }
     Destroy();
 }
 void AOGNativeWorldProjectile::Tick(float Delta)
