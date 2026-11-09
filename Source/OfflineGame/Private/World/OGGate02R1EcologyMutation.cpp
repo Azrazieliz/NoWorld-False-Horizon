@@ -243,6 +243,7 @@ bool AOGStartingRegionGenerator::PersistGate02ScatterMutation(
             FString Ignored; Store->RollbackTransaction(Ignored);
             return false;
         }
+        if(!bBalanceFound) Balance=0;
         if(Balance<0 || Balance>MAX_int64-Amount)
         {
             OutError=TEXT("Harvest resource balance is invalid or would overflow.");
