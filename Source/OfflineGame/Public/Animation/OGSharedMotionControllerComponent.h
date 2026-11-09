@@ -309,7 +309,8 @@ private:
     bool FindReference(FName Action, FName Context, int32 Count, FName Role,
         FOGSharedMotionEntry&, TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>&,
         TArray<TArray<FOGReferenceBoneConnection>>&, FString&,
-        FName RequiredSourceClip = NAME_None) const;
+        FName RequiredSourceClip = NAME_None,
+        FName AvoidPreviousPresentation = NAME_None) const;
     bool StartReference(const FOGSharedMotionEntry&,
         TSharedPtr<const FOGReferenceMotionClip, ESPMode::ThreadSafe>,
         TArray<TArray<FOGReferenceBoneConnection>>&&);
