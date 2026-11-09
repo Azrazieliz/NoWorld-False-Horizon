@@ -296,6 +296,22 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
     // ONLY when its actual hand bone physically sweeps a live World target.
     bPhysicalMeleeContact=IsActualMeleeSemantic(SourceSemantic) &&
         !bNaturalCompletionAuthorized && !Motion->IsCurrentSourceAuthoredContact();
+    // A hand contacting one actor cannot authorize damage to every recipient
+    // of an authored multi-target action. Those actions require their own
+    // authentic source contact event, not this single-limb fallback.
+    if (bPhysicalMeleeContact)
+    {
+        const bool bSingleEmbodiedTarget=StagedAction.TargetUnitIds.Num()==1 &&
+            StagedAction.TargetUnitIds[0]!=StagedAction.SourceUnitId &&
+            UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                World,BattleId,StagedAction.TargetUnitIds[0])!=nullptr;
+        if (!bSingleEmbodiedTarget)
+        {
+            OutError=TEXT("A single-target original melee contact cannot authorize an area, self, or unembodied action.");
+            DropStagedAction(true);
+            return false;
+        }
+    }
     PreviousPhysicalMeleeBones.Reset();
     SetComponentTickEnabled(bPhysicalMeleeContact);
     return true;
