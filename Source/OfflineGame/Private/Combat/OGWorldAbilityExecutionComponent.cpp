@@ -55,8 +55,14 @@ bool AOGNativeWorldProjectile::InitializeAcceptedStep(UOGWorldAbilityExecutionCo
     const FOGEntityId& Cast,int32 Step,const FOGWorldAbilityStep& Spec,const FVector& Direction,FString& Error)
 {
     auto* Mesh=Spec.ProjectileMesh.LoadSynchronous();
-    if (!InSource || !Cast.IsValid() || Step<0 || !Mesh || Direction.IsNearlyZero() || Spec.ProjectileSpeed<=0)
-    { Error=TEXT("Projectile requires its accepted cast and original installed visual/kinematics."); return false; }
+    if (!InSource || !Cast.IsValid() || Step<0 || !Mesh ||
+        Direction.ContainsNaN() || Direction.IsNearlyZero() ||
+        !FMath::IsFinite(Spec.ProjectileSpeed) || Spec.ProjectileSpeed<=0.f ||
+        !FMath::IsFinite(Spec.RangeCentimeters) || Spec.RangeCentimeters<=0.f ||
+        !FMath::IsFinite(Spec.RadiusCentimeters) || Spec.RadiusCentimeters<=0.f ||
+        !FMath::IsFinite(Spec.ProjectileGravityScale) ||
+        Spec.ClosesAtMilliseconds<=Spec.OpensAtMilliseconds)
+    { Error=TEXT("Projectile requires its accepted cast, original installed visual, valid geometry and authored timing."); return false; }
     Source=InSource; CastId=Cast; StepIndex=Step;
     LaunchOrigin=GetActorLocation(); MaximumTravelCentimeters=Spec.RangeCentimeters;
     Collision->SetSphereRadius(Spec.RadiusCentimeters); Collision->SetCollisionProfileName(Spec.ProjectileCollisionProfile);
@@ -75,9 +81,17 @@ bool AOGNativeWorldProjectile::CaptureCheckpoint(FOGNativeProjectileCheckpoint& 
 }
 bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckpoint& State,FString& Error)
 {
-    if (State.StepIndex!=StepIndex || State.Transform.ContainsNaN() || State.Velocity.ContainsNaN() ||
-        State.LaunchOrigin.ContainsNaN() || !FMath::IsFinite(State.RemainingLifeSeconds) || State.RemainingLifeSeconds<=0)
-    { Error=TEXT("Saved projectile geometry or remaining lifetime is invalid."); return false; }
+    // Never restore an invalid or already out-of-range missile into the live
+    // encounter. The original launch origin is authoritative across recovery.
+    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId ||
+        State.StepIndex!=StepIndex || State.Transform.ContainsNaN() ||
+        State.Velocity.ContainsNaN() || State.LaunchOrigin.ContainsNaN() ||
+        !FMath::IsFinite(State.RemainingLifeSeconds) ||
+        State.RemainingLifeSeconds<=0.f ||
+        !FMath::IsFinite(MaximumTravelCentimeters) || MaximumTravelCentimeters<=0.f ||
+        FVector::DistSquared(State.LaunchOrigin,State.Transform.GetLocation())>
+            FMath::Square(MaximumTravelCentimeters))
+    { Error=TEXT("Saved projectile has no matching live cast, valid geometry, range or remaining lifetime."); return false; }
     SetActorTransform(State.Transform,false,nullptr,ETeleportType::TeleportPhysics);
     LaunchOrigin=State.LaunchOrigin; Movement->Velocity=State.Velocity;
     bRecoveryPaused=Source.IsValid() && Source->IsRecoveryPaused(); RecoveryRemainingLife=State.RemainingLifeSeconds;
@@ -87,6 +101,9 @@ bool AOGNativeWorldProjectile::RestoreCheckpoint(const FOGNativeProjectileCheckp
 void AOGNativeWorldProjectile::OnPhysicalHit(UPrimitiveComponent*,AActor* Other,UPrimitiveComponent*,FVector,const FHitResult& Hit)
 {
     if (Other==GetOwner() || (Source.IsValid() && Source->IsRecoveryPaused())) return;
+    // A projectile must never outlive its original authoritative cast.
+    if (!Source.IsValid() || Source->GetActiveCastId()!=CastId)
+    { Destroy(); return; }
     // The actual collision point is authoritative for the projectile's
     // source-authored maximum range. The moving sphere's centre can still be
     // within range when its leading surface strikes an actor beyond it.
