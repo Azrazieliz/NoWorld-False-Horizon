@@ -130,6 +130,37 @@ bool AOGStartingRegionGenerator::TryResolveGate02SourceScatterHit(
             OutError=TEXT("The visible source instance has no stable Gate02 record.");
             return false;
         }
+        // A tile refresh can recycle the same HISM index for a different
+        // authored scatter. Never resolve a cached hit solely by its index:
+        // require the live component instance and its actual world placement
+        // to agree with the physics contact being processed.
+        if (!Components[Type]->IsRegistered() ||
+            !Components[Type]->IsValidInstance(Hit.Item))
+        {
+            OutError=TEXT("The struck ecology instance is no longer streamed.");
+            return false;
+        }
+        FTransform InstanceWorld;
+        if (!Components[Type]->GetInstanceTransform(Hit.Item,InstanceWorld,true) ||
+            !InstanceWorld.IsValid() || !Hit.ImpactPoint.IsFinite())
+        {
+            OutError=TEXT("The streamed ecology contact has no valid world placement.");
+            return false;
+        }
+        const UStaticMesh* SourceMesh=Components[Type]->GetStaticMesh();
+        if (!SourceMesh)
+        {
+            OutError=TEXT("The original ecology mesh is no longer bound.");
+            return false;
+        }
+        const float Radius=SourceMesh->GetBounds().BoxExtent.Size() *
+            InstanceWorld.GetScale3D().GetAbs().GetMax() + 25.0f;
+        if (!FMath::IsFinite(Radius) ||
+            FVector::DistSquared(Hit.ImpactPoint,InstanceWorld.GetLocation()) > FMath::Square(Radius))
+        {
+            OutError=TEXT("The ecology contact belongs to a previous streamed placement.");
+            return false;
+        }
         const FString& Stable=Records[Hit.Item];
         // Source IDs are indexed only after the original 10,454-record
         // manifest passes duplicate/prototype integrity checking.
