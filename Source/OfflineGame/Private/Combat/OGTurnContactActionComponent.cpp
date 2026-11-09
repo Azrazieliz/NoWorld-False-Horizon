@@ -227,6 +227,31 @@ bool UOGTurnContactActionComponent::StageActualTurnAction(
     if (!Battle->HasNativeActionExecutor(
             Battle->GetState().Units[Acting], Expanded.SkillId, OutError))
         return false;
+    // All native callers, including autonomous opponents, must stage against
+    // actual embodied living recipients. A valid canonical target ID alone
+    // cannot authorize an invisible attack after World streaming removed it.
+    // Defeated revival recipients remain canonical and need no live actor.
+    for (const FOGEntityId& Id : Expanded.TargetUnitIds)
+    {
+        const FOGCombatUnitState* Target =
+            Battle->GetState().Units.FindByPredicate(
+                [&Id](const FOGCombatUnitState& Unit)
+                { return Unit.UnitEntityId == Id; });
+        if (!Target)
+        {
+            OutError = TEXT("The authored combat target is absent from the live encounter.");
+            return false;
+        }
+        if (Id != Expanded.SourceUnitId &&
+            Target->Presence == EOGCombatPresence::Active &&
+            Target->IsAlive() &&
+            !UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(
+                World, Battle->GetState().BattleId, Id))
+        {
+            OutError = TEXT("The living target has no actual World body for this staged action.");
+            return false;
+        }
+    }
     if (!Expanded.ActionId.IsValid())
         Expanded.ActionId = FOGEntityId::NewId();
     if (!Expanded.ActionId.IsValid())
