@@ -293,10 +293,13 @@ void UOGNativeBattleWidget::Refresh()
             if (Observed && !Observed->HpDisplay.IsEmpty())
                 HpLine=Observed->HpDisplay;
         }
+        // Targetability is not turn eligibility: a living incapacitated or
+        // stunned opponent is still a valid target for an authored ability.
+        // The canonical action validator determines actual ability targets.
         AddButton(Targets,FString::Printf(TEXT("%s %d%s\n%s"),
                 *Side,I+1,*Suffix,*HpLine),
             TEXT("Select an actual participant; the canonical ability still checks target and revival eligibility."),
-            NAME_None,I,Own && (bDefeatedAlly || (Unit.CanAct() && Embodied)),Selected,176);
+            NAME_None,I,Own && (bDefeatedAlly || (Unit.IsAlive() && Embodied)),Selected,176);
     }
     const bool Portrait=ViewWidth<ViewHeight;
     const float Available=FMath::Max(200.f,ViewWidth*.96f-32.f);
