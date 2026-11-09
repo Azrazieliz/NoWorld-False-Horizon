@@ -1219,6 +1219,11 @@
             "commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
             "type": "SOURCE_PARTIAL",
             "change": "World projectile source staging now rejects nonfinite/zero range, collision radius, speed, gravity and invalid authored time windows; recovered missiles must belong to the still-active authoritative cast, have valid finite geometry/lifetime and remain within original launch range. Orphaned physical hits destroy the projectile without committing combat effects. Existing projectile mesh, source motion, cast receipt and native World executor are reused. Native/Android acceptance outstanding."
+          },
+          {
+            "commit": "99ac4dc6c3ab5edad36f4655bd03f5092567c015",
+            "type": "SOURCE_PARTIAL",
+            "change": "Physical World projectile impacts now run through the existing FOGTurnBattle::FilterWorldContacts canonical skill/recipient validation before committing the original impact. Colliding with scenery or an invalid target does not grant an unauthorized hit; the same accepted step executor remains authoritative. Build/device/owner acceptance remains open."
           }
         ],
         "completed_in_this_update": false,
@@ -1452,6 +1457,16 @@
             "commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
             "type": "SOURCE_PARTIAL",
             "change": "World projectile source staging now rejects nonfinite/zero range, collision radius, speed, gravity and invalid authored time windows; recovered missiles must belong to the still-active authoritative cast, have valid finite geometry/lifetime and remain within original launch range. Orphaned physical hits destroy the projectile without committing combat effects. Existing projectile mesh, source motion, cast receipt and native World executor are reused. Native/Android acceptance outstanding."
+          },
+          {
+            "commit": "99ac4dc6c3ab5edad36f4655bd03f5092567c015",
+            "type": "SOURCE_PARTIAL",
+            "change": "Physical World projectile impacts now run through the existing FOGTurnBattle::FilterWorldContacts canonical skill/recipient validation before committing the original impact. Colliding with scenery or an invalid target does not grant an unauthorized hit; the same accepted step executor remains authoritative. Build/device/owner acceptance remains open."
+          },
+          {
+            "commit": "f46963ecc5936435175c1f39307eb8dcee74237e",
+            "type": "SOURCE_PARTIAL",
+            "change": "World cast recovery preflight now rejects projectile checkpoints already outside the original authored launch range or carrying an invalid original projectile speed, before any recovered actor is spawned. Existing source cast and per-step identities remain unchanged. Build/device/owner acceptance remains open."
           }
         ],
         "completed_in_this_update": false,
@@ -1985,6 +2000,11 @@
             "commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
             "type": "SOURCE_PARTIAL",
             "change": "World projectile source staging now rejects nonfinite/zero range, collision radius, speed, gravity and invalid authored time windows; recovered missiles must belong to the still-active authoritative cast, have valid finite geometry/lifetime and remain within original launch range. Orphaned physical hits destroy the projectile without committing combat effects. Existing projectile mesh, source motion, cast receipt and native World executor are reused. Native/Android acceptance outstanding."
+          },
+          {
+            "commit": "f46963ecc5936435175c1f39307eb8dcee74237e",
+            "type": "SOURCE_PARTIAL",
+            "change": "World cast recovery preflight now rejects projectile checkpoints already outside the original authored launch range or carrying an invalid original projectile speed, before any recovered actor is spawned. Existing source cast and per-step identities remain unchanged. Build/device/owner acceptance remains open."
           }
         ],
         "completed_in_this_update": false,
@@ -4680,9 +4700,41 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T08:13:25Z"
+    },
+    {
+      "source_commit": "99ac4dc6c3ab5edad36f4655bd03f5092567c015",
+      "system_ids": [
+        "M03",
+        "M07"
+      ],
+      "result": "Physical World projectile impacts now run through the existing FOGTurnBattle::FilterWorldContacts canonical skill/recipient validation before committing the original impact. Colliding with scenery or an invalid target does not grant an unauthorized hit; the same accepted step executor remains authoritative.",
+      "remaining_player_visible_work": "Complete authentic original projectile/ability content bindings, impact effects and remaining combat-motion contacts; native build and phone verification pending.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGWorldAbilityExecutionComponent, FOGTurnBattle::FilterWorldContacts and native projectile recovery; no new source factory or duplicate executor",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T08:59:30Z"
+    },
+    {
+      "source_commit": "f46963ecc5936435175c1f39307eb8dcee74237e",
+      "system_ids": [
+        "M07",
+        "M32"
+      ],
+      "result": "World cast recovery preflight now rejects projectile checkpoints already outside the original authored launch range or carrying an invalid original projectile speed, before any recovered actor is spawned. Existing source cast and per-step identities remain unchanged.",
+      "remaining_player_visible_work": "Finish full World combat persistence/recovery and original projectile assets, then integrated UE5.8 Android packaging and owner testing.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGWorldAbilityExecutionComponent, FOGTurnBattle::FilterWorldContacts and native projectile recovery; no new source factory or duplicate executor",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T08:59:30Z"
     }
   ],
-  "continuation_last_source_commit": "14d889c4c375041d722dd61f8f74483715bc8ba1",
+  "continuation_last_source_commit": "f46963ecc5936435175c1f39307eb8dcee74237e",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
