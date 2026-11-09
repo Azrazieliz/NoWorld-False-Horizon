@@ -162,6 +162,45 @@ bool AOGStartingRegionGenerator::PersistGate02ScatterMutation(
     // unrelated inventory/reward writes or break their rollback contract.
     if(!Store->BeginTransaction(OutError))
         return false;
+    // The preflight request lookup is not an authoritative replay barrier.
+    // Recheck the exact event identity after acquiring the SQLite write
+    // transaction, before changing ecology or balances. A colliding request
+    // committed between preflight and BeginTransaction must never be reused.
+    if(bWithReward)
+    {
+        bool bReceiptNowFound=false;
+        FOGWorldEvent ReceiptNow;
+        if(!Store->TryReadWorldEvent(RequestId,bReceiptNowFound,ReceiptNow,OutError))
+        {
+            FString Ignored; Store->RollbackTransaction(Ignored);
+            return false;
+        }
+        if(bReceiptNowFound)
+        {
+            TSharedPtr<FJsonObject> ReceiptJson;
+            FString ReceiptSource,ReceiptResource,ReceiptAmount;
+            const bool bExactReplay=
+                ReceiptNow.EventType==FName(TEXT("ecology.source_harvested")) &&
+                ReceiptNow.PrimaryEntity==RulerId &&
+                FJsonSerializer::Deserialize(
+                    TJsonReaderFactory<>::Create(ReceiptNow.PayloadJson),ReceiptJson) &&
+                ReceiptJson.IsValid() &&
+                ReceiptJson->TryGetStringField(TEXT("source_id"),ReceiptSource) &&
+                ReceiptJson->TryGetStringField(TEXT("resource_id"),ReceiptResource) &&
+                ReceiptJson->TryGetStringField(TEXT("amount_exact"),ReceiptAmount) &&
+                ReceiptSource==Gate02StableScatterId &&
+                ReceiptResource==ResourceId.ToString() &&
+                ReceiptAmount==LexToString(Amount);
+            FString Ignored; Store->RollbackTransaction(Ignored);
+            if(!bExactReplay)
+            {
+                OutError=TEXT("Harvest request ID was committed to a different action.");
+                return false;
+            }
+            RefreshR1StreamedTiles(true);
+            return true;
+        }
+    }
     // Re-read under the write transaction. The first read above is only a
     // fast preflight; another action may consume the resource before our
     // transaction begins. Never overwrite its removal or grant duplicate
