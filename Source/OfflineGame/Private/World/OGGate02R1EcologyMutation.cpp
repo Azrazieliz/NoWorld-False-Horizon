@@ -113,7 +113,32 @@ bool AOGStartingRegionGenerator::PersistGate02SourceScatterRemoval(
             return false;
         }
     }
-    const FString RemovedJson=TEXT("{\"removed\":true}");
+    // Preserve all previously authored/persisted ecology fields. Replacing the
+    // record with a one-field tombstone would silently discard future resource
+    // depletion, regeneration and provenance state when removing a source.
+    TSharedPtr<FJsonObject> RemovedState=MakeShared<FJsonObject>();
+    if(bCurrentFound)
+    {
+        if(!FJsonSerializer::Deserialize(
+               TJsonReaderFactory<>::Create(CurrentJson),RemovedState) ||
+           !RemovedState.IsValid())
+        {
+            OutError=TEXT("Ecology state could not be preserved during removal.");
+            FString Ignored;
+            Store->RollbackTransaction(Ignored);
+            return false;
+        }
+    }
+    RemovedState->SetBoolField(TEXT("removed"),true);
+    FString RemovedJson;
+    const TSharedRef<TJsonWriter<>> Writer=TJsonWriterFactory<>::Create(&RemovedJson);
+    if(!FJsonSerializer::Serialize(RemovedState.ToSharedRef(),Writer))
+    {
+        OutError=TEXT("Ecology removal state could not be serialized.");
+        FString Ignored;
+        Store->RollbackTransaction(Ignored);
+        return false;
+    }
     const int64 OriginalCreatedTick=bCurrentFound?CurrentCreatedTick:CanonicalTick;
     const bool bWritten=Store->UpsertEntity(
         StableEntityId,ExpectedKind,OriginalCreatedTick,RemovedJson,OutError);
