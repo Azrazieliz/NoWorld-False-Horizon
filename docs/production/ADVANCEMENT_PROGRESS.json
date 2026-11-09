@@ -1189,6 +1189,11 @@
             "commit": "caa6ba902f09842dd4a66f850d5b906700e7e63c",
             "type": "SOURCE_PARTIAL",
             "change": "Native turn-contact action staging and every pre-contact turn recheck now require an actual UOGCanonicalCombatActorBindingComponent bound to the exact live BattleId and SourceUnitId. Unbound or reassigned World actors can no longer stage/settle someone else's authoritative turn. Added explicit USkeletalMeshComponent forward declaration for the existing per-part authentic hand-bone pose history. Android build and device acceptance remain open."
+          },
+          {
+            "commit": "e22ae65b78ceb98083ba0db720675776ac3ad33d",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic native turn melee collision now resolves an actual non-penetrating collision hit on the bound target and traces obstruction to the measured physical impact point rather than the actor origin. This preserves genuine hand-bone sweep, live battle receipt, target binding and source-authored motion gates, while preventing pivot-height occlusion from wrongly rejecting contact. Source-only; Android/device acceptance unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -1392,6 +1397,11 @@
             "commit": "caa6ba902f09842dd4a66f850d5b906700e7e63c",
             "type": "SOURCE_PARTIAL",
             "change": "Native turn-contact action staging and every pre-contact turn recheck now require an actual UOGCanonicalCombatActorBindingComponent bound to the exact live BattleId and SourceUnitId. Unbound or reassigned World actors can no longer stage/settle someone else's authoritative turn. Added explicit USkeletalMeshComponent forward declaration for the existing per-part authentic hand-bone pose history. Android build and device acceptance remain open."
+          },
+          {
+            "commit": "e22ae65b78ceb98083ba0db720675776ac3ad33d",
+            "type": "SOURCE_PARTIAL",
+            "change": "Authentic native turn melee collision now resolves an actual non-penetrating collision hit on the bound target and traces obstruction to the measured physical impact point rather than the actor origin. This preserves genuine hand-bone sweep, live battle receipt, target binding and source-authored motion gates, while preventing pivot-height occlusion from wrongly rejecting contact. Source-only; Android/device acceptance unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -4517,9 +4527,25 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T01:53:00Z"
+    },
+    {
+      "source_commit": "e22ae65b78ceb98083ba0db720675776ac3ad33d",
+      "system_ids": [
+        "M03",
+        "M07"
+      ],
+      "result": "Authentic native turn melee collision now resolves an actual non-penetrating collision hit on the bound target and traces obstruction to the measured physical impact point rather than the actor origin. This preserves genuine hand-bone sweep, live battle receipt, target binding and source-authored motion gates, while preventing pivot-height occlusion from wrongly rejecting contact.",
+      "remaining_player_visible_work": "Complete authentic source/contact mappings for the remaining 937 combat source entries, weapon/projectile and all original kits, then compile/cook Android game and obtain actual owner phone verdict.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing UOGTurnContactActionComponent, UOGCanonicalCombatActorBindingComponent and original shared-motion catalog; no new source or automation.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T02:53:53Z"
     }
   ],
-  "continuation_last_source_commit": "caa6ba902f09842dd4a66f850d5b906700e7e63c",
+  "continuation_last_source_commit": "e22ae65b78ceb98083ba0db720675776ac3ad33d",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
