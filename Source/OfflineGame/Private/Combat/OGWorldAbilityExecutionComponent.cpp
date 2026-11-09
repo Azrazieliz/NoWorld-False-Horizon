@@ -401,7 +401,11 @@ void UOGWorldAbilityExecutionComponent::QueryContacts(const FOGWorldAbilityStep&
         for (const auto& Unit:Battle->GetState().Units)
         {
             auto* Actor=UOGCanonicalCombatActorBindingComponent::FindActualWorldActor(GetWorld(),BattleId,Unit.UnitEntityId);
-            if (!Actor || !Unit.CanAct()) continue;
+            // Direct contact targets an embodied living participant, not
+            // merely one eligible to take its own turn. Stun, binding and
+            // other action denial must not grant immunity to authored hits.
+            if (!Actor || Unit.Presence!=EOGCombatPresence::Active ||
+                !Unit.IsAlive()) continue;
             if (Actor!=GetOwner() && (Step.RangeCentimeters<=0 || FVector::DistSquared(Origin,Actor->GetActorLocation())>FMath::Square(Step.RangeCentimeters))) continue;
             if (Step.bRequireLineOfSight && Actor!=GetOwner() && !VisibleBetween(GetWorld(),GetOwner(),Actor,Origin,Actor->GetActorLocation(),Step.VisibilityChannel)) continue;
             Out.Add(Unit.UnitEntityId);
