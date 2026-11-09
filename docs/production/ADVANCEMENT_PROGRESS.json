@@ -4761,9 +4761,25 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T09:00:00Z"
+    },
+    {
+      "source_commit": "92de46735d66d5cf792a0d7790874bfd644ef1b0",
+      "system_ids": [
+        "M07",
+        "M32"
+      ],
+      "result": "Fixed the Unreal zero-lifespan infinite-projectile edge case for late authored spawns; checkpoint capture and recovery now reject invalid/nonphysical velocities beyond the existing authored projectile speed, and live missiles discard nonfinite movement/lifetime state. Reuses existing projectile actor, cast identity, recovery checkpoint and source-authored speed.",
+      "remaining_player_visible_work": "Complete genuine source-authored action/contact and projectile-effect coverage, native UE5.8 Android integration and owner phone testing. No compilation or phone acceptance in this run.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing 5-star original source/animation binding contract and native World projectile recovery; no duplicate factory or executor.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T10:55:00Z"
     }
   ],
-  "continuation_last_source_commit": "6950145f313dce6e6a518eeadd930ca6a81e027a",
+  "continuation_last_source_commit": "92de46735d66d5cf792a0d7790874bfd644ef1b0",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
