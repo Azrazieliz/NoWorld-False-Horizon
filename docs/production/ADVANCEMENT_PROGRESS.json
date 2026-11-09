@@ -1278,6 +1278,11 @@
             "commit": "48f23804",
             "type": "SOURCE_PARTIAL",
             "change": "Actual native Android packaging now checks tracked original Git LFS Unreal UAssets/Maps for unhydrated pointer-sized files before costly UE BuildCookRun. GitHub tree shows 427 pointer-sized original Awakened/Berserker/Grand source UAssets; the new gate refuses to mispackage ASCII LFS pointer files as genuine character native geometry/materials and reports exact missing file names."
+          },
+          {
+            "commit": "3d50748243acb8ab297f8a252817d4f6de263de8",
+            "type": "SOURCE_PARTIAL",
+            "change": "One source-authentic whole-character native performance rotates across equally ranked original takes during single-participant presentation; exact combat and multi-actor source pins are unchanged. Native build and phone playback remain unverified."
           }
         ],
         "completed_in_this_update": false,
@@ -4345,9 +4350,27 @@
         "Source/OfflineGame/Private/World/OGStartingRegionPresentation.cpp",
         "Source/OfflineGame/Private/UI/OGGate12NativeRulerGacha.cpp"
       ]
+    },
+    {
+      "source_commit": "3d50748243acb8ab297f8a252817d4f6de263de8",
+      "related_declaration_commit": "70c279414f30321dbc7c91c0ed105e671a5b6b36",
+      "system_ids": [
+        "M05",
+        "M29"
+      ],
+      "result": "Native full-character shared-motion selection now rotates among equally ranked original source clips for successive single-person Traversal/Interaction plays, only after a successful native action start. Source-pinned combat actions and synchronized multi-participant scenes retain exact source selection; all rig-driver parts still require a coherent source identity. Reuses existing UOGSharedMotionControllerComponent and global native animation library, without new animation copies.",
+      "remaining_player_visible_work": "Finish source-authentic skill contact/executor integration for 937 combat source entries, animated expressions and multipart scene binding; compile/cook and inspect actual original character playback on the owner's Android phone.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Animation/OGSharedMotionControllerComponent.h",
+        "Source/OfflineGame/Private/Animation/OGSharedMotionControllerComponent.cpp"
+      ],
+      "five_star_reused_runtime": "UOGSharedMotionControllerComponent + FOGSharedMotionResolver (existing 5-star indexed native motion pipeline)",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T00:00:00Z"
     }
   ],
-  "continuation_last_source_commit": "886f0fc521f7993d75bd36cadfe0639ce7677d04",
+  "continuation_last_source_commit": "3d50748243acb8ab297f8a252817d4f6de263de8",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
