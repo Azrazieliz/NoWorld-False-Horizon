@@ -1204,6 +1204,11 @@
             "commit": "d10bd1ca45beb3dd5eeaa8a668f8e71428958415",
             "type": "SOURCE_PARTIAL",
             "change": "Native turn-mode original hand-bone contact fallback now refuses to stage an area/multi-recipient, self-target, or unembodied-target melee action. A single physical hand-to-body collision cannot authorize applying the entire canonical multi-target result; those skills must use genuine source-authored contact evidence. Existing canonical validation, contact receipts and natural-completion rules remain unchanged. Not compiled or phone-tested."
+          },
+          {
+            "commit": "69beef89a7887cba9561eaa0c9c8535067be9494",
+            "type": "SOURCE_PARTIAL",
+            "change": "World-mode native Direct ability contact now enumerates real bound active living combat actors independently of CanAct(), so stunned or otherwise action-disabled participants remain hittable. Existing physical range, line-of-sight and canonical FilterWorldContacts still govern eligibility. No fabricated motion/contact or new executor. Not native-built or device-verified."
           }
         ],
         "completed_in_this_update": false,
@@ -1422,6 +1427,11 @@
             "commit": "d10bd1ca45beb3dd5eeaa8a668f8e71428958415",
             "type": "SOURCE_PARTIAL",
             "change": "Native turn-mode original hand-bone contact fallback now refuses to stage an area/multi-recipient, self-target, or unembodied-target melee action. A single physical hand-to-body collision cannot authorize applying the entire canonical multi-target result; those skills must use genuine source-authored contact evidence. Existing canonical validation, contact receipts and natural-completion rules remain unchanged. Not compiled or phone-tested."
+          },
+          {
+            "commit": "69beef89a7887cba9561eaa0c9c8535067be9494",
+            "type": "SOURCE_PARTIAL",
+            "change": "World-mode native Direct ability contact now enumerates real bound active living combat actors independently of CanAct(), so stunned or otherwise action-disabled participants remain hittable. Existing physical range, line-of-sight and canonical FilterWorldContacts still govern eligibility. No fabricated motion/contact or new executor. Not native-built or device-verified."
           }
         ],
         "completed_in_this_update": false,
@@ -4595,9 +4605,25 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T04:54:43Z"
+    },
+    {
+      "source_commit": "69beef89a7887cba9561eaa0c9c8535067be9494",
+      "system_ids": [
+        "M03",
+        "M07"
+      ],
+      "result": "World-mode native Direct ability contact now enumerates real bound active living combat actors independently of CanAct(), so stunned or otherwise action-disabled participants remain hittable. Existing physical range, line-of-sight and canonical FilterWorldContacts still govern eligibility. No fabricated motion/contact or new executor.",
+      "remaining_player_visible_work": "Finish authentic combat source/contact bindings and World delivery coverage, full original kits, Android native compilation/cook and actual owner phone acceptance.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing 5★ shared source-motion/ability catalog and UOGWorldAbilityExecutionComponent with canonical FOGTurnBattle::FilterWorldContacts; no new pipeline required.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T05:46:35Z"
     }
   ],
-  "continuation_last_source_commit": "d10bd1ca45beb3dd5eeaa8a668f8e71428958415",
+  "continuation_last_source_commit": "69beef89a7887cba9561eaa0c9c8535067be9494",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
