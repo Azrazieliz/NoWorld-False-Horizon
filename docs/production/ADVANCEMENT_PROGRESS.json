@@ -4777,9 +4777,24 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T10:55:00Z"
+    },
+    {
+      "source_commit": "f4f832f62bbe196baa56deac1c21be2ef52cec57",
+      "system_ids": [
+        "M13"
+      ],
+      "result": "Gate02 original R1 ecology physical-hit resolution now requires the HISM instance still to exist, its source mesh to remain bound, and its live world transform to encompass the collision impact. Rejects recycled/stale streamed instance-index hits before mapping to a persistent original scatter ID. Existing WorldStore harvest mutation and 10,454 original scatter identities remain unchanged.",
+      "remaining_player_visible_work": "Bind complete authorized harvest/tool/loot transactions to ecology hits, regeneration and wildlife/biome/weather. Native UE5.8 compile and Android phone gameplay are unverified.",
+      "source_paths": [
+        "Source/OfflineGame/Private/World/OGGate02R1EcologyMutation.cpp"
+      ],
+      "five_star_reused_runtime": "Existing original Gate02 authored ecology manifest, HISM streaming, canonical WorldStore and 5-star source-preserving integration; no new source assets or duplicate factory.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_date": "2026-11-09"
     }
   ],
-  "continuation_last_source_commit": "92de46735d66d5cf792a0d7790874bfd644ef1b0",
+  "continuation_last_source_commit": "f4f832f62bbe196baa56deac1c21be2ef52cec57",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
