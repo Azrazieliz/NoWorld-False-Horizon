@@ -2101,6 +2101,11 @@
             "commit": "aab76867",
             "type": "SOURCE_PARTIAL",
             "change": "Unreal Android cooks dynamically linked genuine source meshes, original art and actor appearance asset directory"
+          },
+          {
+            "commit": "85a1e564027c3b5ab370e48e99a1e724bd8f64c6",
+            "type": "SOURCE_PARTIAL",
+            "change": "Real Asterion Control GitHub bridge returned completed pc_status, phone_status and phone_ui receipts; existing paired Samsung/Windows link is operational, no infrastructure replacement. On the existing native Windows build worker, the earlier standalone NoWorld Android cook failed: UE ShaderCompileWorker out-of-memory, UAT code 25; no APK in inspected archive. The actual host has about 7.63 GiB RAM (1.2 GiB free when checked), a ~7.8 GiB pagefile, and free disk space C 4.42 GiB / D 25.19 GiB. Existing Scripts/production/build_noworld_android_test.ps1 now chooses UE 5.8 single-process/in-process shader compilation (-cookprocesscount=1 -noshaderworker forwarded through AdditionalCookerOptions) for constrained RAM or explicit mode, without altering original assets, UE installation, protected checkout or OS pagefile. The 36-gameplay-system implementation is not complete, and no fresh UE Android cook, APK delivery, native game launch or owner acceptance has occurred. Before the final integrated Android build, use a current isolated source checkout (protected native original is d4e68de, old build checkout 61534bc), hydrate required LFS assets, confirm usable memory/pagefile and rerun only the real final package; fix actual build blockers as observed. The memory-aware flag is source committed but not production-cook verified."
           }
         ],
         "completed_in_this_update": false,
@@ -4909,9 +4914,25 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_date": "2026-11-09"
+    },
+    {
+      "source_commit": "85a1e564027c3b5ab370e48e99a1e724bd8f64c6",
+      "system_ids": [
+        "M34",
+        "M35"
+      ],
+      "result": "Real Asterion Control GitHub bridge returned completed pc_status, phone_status and phone_ui receipts; existing paired Samsung/Windows link is operational, no infrastructure replacement. On the existing native Windows build worker, the earlier standalone NoWorld Android cook failed: UE ShaderCompileWorker out-of-memory, UAT code 25; no APK in inspected archive. The actual host has about 7.63 GiB RAM (1.2 GiB free when checked), a ~7.8 GiB pagefile, and free disk space C 4.42 GiB / D 25.19 GiB. Existing Scripts/production/build_noworld_android_test.ps1 now chooses UE 5.8 single-process/in-process shader compilation (-cookprocesscount=1 -noshaderworker forwarded through AdditionalCookerOptions) for constrained RAM or explicit mode, without altering original assets, UE installation, protected checkout or OS pagefile.",
+      "remaining_player_visible_work": "The 36-gameplay-system implementation is not complete, and no fresh UE Android cook, APK delivery, native game launch or owner acceptance has occurred. Before the final integrated Android build, use a current isolated source checkout (protected native original is d4e68de, old build checkout 61534bc), hydrate required LFS assets, confirm usable memory/pagefile and rerun only the real final package; fix actual build blockers as observed. The memory-aware flag is source committed but not production-cook verified.",
+      "source_paths": [
+        "Scripts/production/build_noworld_android_test.ps1"
+      ],
+      "five_star_reused_runtime": "Existing 5★ Android BuildCookRun packaging script and Asterion Control verified Windows worker via private shared GitHub bridge; no new worker or infrastructure.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_date": "2026-11-09"
     }
   ],
-  "continuation_last_source_commit": "316c926b6e6dc505f637279ddaf291a448d58b03",
+  "continuation_last_source_commit": "85a1e564027c3b5ab370e48e99a1e724bd8f64c6",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
@@ -4990,7 +5011,7 @@
     "notes": "All 12 original Eastern Market source-derived mobile GLBs and provenance manifest published through Git LFS; 257 native UE section StaticMesh and original materials/textures files published. No device frame-rate, full project compile, authoritative acceptance or original candidate artistic signoff."
   },
   "android_test_package_20261102": {
-    "status": "ANDROID_BUILD_RESTARTED_AFTER_TWO_COMPILER_FIXES_NO_APK_YET",
+    "status": "FAILED_NATIVE_COOK_SHADERCOMPILEWORKER_OOM_NO_APK",
     "native_pc": "LAPTOP-1LI4VRCJ",
     "isolated_project": "D:\\UnrealProjects\\NoWorld_P0_NativeCompile_20261102",
     "original_assets_staged_non_destructively": true,
@@ -5013,7 +5034,8 @@
     ],
     "build_restarted_date": "2026-11-05",
     "build_restart_command": "D:\\RelocatedTemp\\noworld_android_build.cmd",
-    "next_action": "Let actual UE5.8 Android BuildCookRun compile/cook/package original game to an APK; fix build errors only if reported. No gameplay tests or approval gates before owner installs APK."
+    "next_action": "Let actual UE5.8 Android BuildCookRun compile/cook/package original game to an APK; fix build errors only if reported. No gameplay tests or approval gates before owner installs APK.",
+    "native_cook_failure_20261109": "Prior native log's actual 2026-11-05 cook ended with UAT exit 25, ShaderCompileWorker OOM; memory-aware packaging source update is unbuilt."
   },
   "codex_fast_execution_policy_20261105": {
     "priority": "OWNER_DIRECTED_ALL_36_SYSTEMS_FAST_IMPLEMENTATION",
@@ -5031,5 +5053,29 @@
     "all_36_implemented": false,
     "android_release_delivered": false,
     "note": "This is a new execution mandate, not a claim that previously incomplete milestones are now implemented."
+  },
+  "native_pc_current_status_20261109": {
+    "source": "Verified existing Asterion Control GitHub commands pc_status / phone_status / phone_bridge_status / phone_ui / pc_command and completed receipts",
+    "bridge_repository": "Azrazieliz/Asterion-Control-Bridge",
+    "bridge_branch": "main",
+    "worker_host": "LAPTOP-1LI4VRCJ",
+    "worker_version": "0.8.0",
+    "phone_device": "SM-S948B",
+    "phone_paired": true,
+    "phone_reachable": true,
+    "phone_accessibility_available": true,
+    "phone_stream_current_capture": false,
+    "pc_total_ram_gib": 7.63,
+    "pc_free_ram_gib_at_inspection": 1.2,
+    "pc_pagefile_allocated_mb": 7812,
+    "pc_free_c_gib": 4.42,
+    "pc_free_d_gib": 25.19,
+    "previous_ue_android_cook": "FAILED_SHADERCOMPILEWORKER_OUT_OF_MEMORY_EXIT_25",
+    "prior_cook_log": "D:\\RelocatedTemp\\noworld_android_build_20261102.log",
+    "apk_found_in_prior_archive": false,
+    "current_branch_build_produced": false,
+    "packaging_memory_mode_commit": "85a1e564027c3b5ab370e48e99a1e724bd8f64c6",
+    "owner_phone_acceptance": false,
+    "notes": "Read-only PC inventory and Android Accessibility semantic state; no native new build, no device APK install and no changes to protected original sources."
   }
 }
