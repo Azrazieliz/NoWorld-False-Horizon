@@ -1184,6 +1184,11 @@
             "commit": "4a8383081f7d05203742cfc5377bd49115098ae2",
             "type": "SOURCE_PARTIAL",
             "change": "Native turn melee contact scans each visible original skinned source mesh and its own hand bones rather than suppressing all later meshes that reuse a bone name. Source bone history remains keyed by actual component; physical sweeps require matching World actor, existing collision, and live authoritative battle receipt. Runtime/Android not verified."
+          },
+          {
+            "commit": "caa6ba902f09842dd4a66f850d5b906700e7e63c",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native turn-contact action staging and every pre-contact turn recheck now require an actual UOGCanonicalCombatActorBindingComponent bound to the exact live BattleId and SourceUnitId. Unbound or reassigned World actors can no longer stage/settle someone else's authoritative turn. Added explicit USkeletalMeshComponent forward declaration for the existing per-part authentic hand-bone pose history. Android build and device acceptance remain open."
           }
         ],
         "completed_in_this_update": false,
@@ -1382,6 +1387,11 @@
             "commit": "acee5e2fb7798dbe972cdbdebffd5ac4b02e47cc",
             "type": "SOURCE_PARTIAL",
             "change": "Corrected the real skeletal melee collision pose-history implementation to match the existing per-source-SkeletalMeshComponent, per-hand-bone map declared in the native component header, preserving independently observed movements on each original character part. This repairs a source type mismatch; no native compile executed."
+          },
+          {
+            "commit": "caa6ba902f09842dd4a66f850d5b906700e7e63c",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native turn-contact action staging and every pre-contact turn recheck now require an actual UOGCanonicalCombatActorBindingComponent bound to the exact live BattleId and SourceUnitId. Unbound or reassigned World actors can no longer stage/settle someone else's authoritative turn. Added explicit USkeletalMeshComponent forward declaration for the existing per-part authentic hand-bone pose history. Android build and device acceptance remain open."
           }
         ],
         "completed_in_this_update": false,
@@ -4489,9 +4499,27 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T00:00:00Z"
+    },
+    {
+      "source_commit": "caa6ba902f09842dd4a66f850d5b906700e7e63c",
+      "related_declaration_commit": "e363d6492769d849c903f7b58e9eec1a2a238da7",
+      "system_ids": [
+        "M03",
+        "M07"
+      ],
+      "result": "Native turn-contact action staging and every pre-contact turn recheck now require an actual UOGCanonicalCombatActorBindingComponent bound to the exact live BattleId and SourceUnitId. Unbound or reassigned World actors can no longer stage/settle someone else's authoritative turn. Added explicit USkeletalMeshComponent forward declaration for the existing per-part authentic hand-bone pose history.",
+      "remaining_player_visible_work": "Continue 937 source-authentic combat contact/action bindings, full encounter outcomes, native UE5.8 build and owner phone acceptance. No Android/PC control bridge exposed in this execution.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Combat/OGTurnContactActionComponent.h",
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing canonical combat actor binding, UOGTurnContactActionComponent and 5-star shared original animation catalog; no new factory or duplicated source.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T01:53:00Z"
     }
   ],
-  "continuation_last_source_commit": "5e93e42c3866d8315270a896a8cb586a154550f4",
+  "continuation_last_source_commit": "caa6ba902f09842dd4a66f850d5b906700e7e63c",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
