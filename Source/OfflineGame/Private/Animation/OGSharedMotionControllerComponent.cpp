@@ -49,6 +49,8 @@ bool UOGSharedMotionControllerComponent::BindCanonicalCharacter(const FOGContent
     if (!IdentityId.IsValid() ||
         (BoundCharacterIdentity.IsValid() && BoundCharacterIdentity != IdentityId))
         return false;
+    if (!BoundCharacterIdentity.IsValid())
+        LastPresentationSourceByAction.Reset();
     BoundCharacterIdentity = IdentityId;
     return true;
 }
@@ -232,7 +234,8 @@ bool UOGSharedMotionControllerComponent::ResolveCoherentNativeAction(
     TOptional<bool> RootPolicy,
     const TArray<USkeletalMeshComponent*>& RigDrivers,
     TArray<UAnimSequence*>& OutSequences,
-    TArray<const FOGSharedMotionEntry*>& OutEntries) const
+    TArray<const FOGSharedMotionEntry*>& OutEntries,
+    FName AvoidPreviousPresentation) const
 {
     OutSequences.Reset();
     OutEntries.Reset();
@@ -304,6 +307,36 @@ bool UOGSharedMotionControllerComponent::ResolveCoherentNativeAction(
         return A.Motion.LexicalLess(B.Motion);
     });
 
+    // Rotate only among the best equally ranked, source-authentic takes.
+    // The caller supplies history exclusively for one-person presentation:
+    // NEVER rotate exact combat/source-pinned or synchronized scene actions.
+    // Failed alternate rig matches still fall through to all other choices.
+    if (!AvoidPreviousPresentation.IsNone() && Candidates.Num() > 1)
+    {
+        const FCandidate Best = Candidates[0];
+        int32 EquallyRanked = 1;
+        while (EquallyRanked < Candidates.Num() &&
+               Candidates[EquallyRanked].OutfitRank == Best.OutfitRank &&
+               Candidates[EquallyRanked].Priority == Best.Priority &&
+               Candidates[EquallyRanked].bSpecificContext == Best.bSpecificContext)
+            ++EquallyRanked;
+        int32 PreviousIndex = INDEX_NONE;
+        for (int32 I = 0; I < EquallyRanked; ++I)
+            if (Candidates[I].Source == AvoidPreviousPresentation)
+            { PreviousIndex = I; break; }
+        if (PreviousIndex != INDEX_NONE && EquallyRanked > 1)
+        {
+            const int32 Start = (PreviousIndex + 1) % EquallyRanked;
+            TArray<FCandidate> Ordered;
+            Ordered.Reserve(Candidates.Num());
+            for (int32 I = 0; I < EquallyRanked; ++I)
+                Ordered.Add(Candidates[(Start + I) % EquallyRanked]);
+            for (int32 I = EquallyRanked; I < Candidates.Num(); ++I)
+                Ordered.Add(Candidates[I]);
+            Candidates = MoveTemp(Ordered);
+        }
+    }
+
     // An original source performance wins ONLY if every separate real rig can
     // play an exact-Skeleton derivative of that same source. No invented
     // retargeting, timestamps or per-character motion copies are introduced.
@@ -341,7 +374,8 @@ bool UOGSharedMotionControllerComponent::ResolveNativeRigAction(
     FName Action, FName Context, bool bAuthorizedAdult, int32 ParticipantCount,
     FName ParticipantRole, FName RequiredSourceClip, TOptional<bool> RootPolicy,
     TArray<USkeletalMeshComponent*>& RigDrivers, TArray<int32>& RigDriverForPart,
-    TArray<UAnimSequence*>& Sequences, TArray<const FOGSharedMotionEntry*>& Entries) const
+    TArray<UAnimSequence*>& Sequences, TArray<const FOGSharedMotionEntry*>& Entries,
+    FName AvoidPreviousPresentation) const
 {
     RigDrivers.Reset();
     RigDriverForPart.Reset();
@@ -389,7 +423,7 @@ bool UOGSharedMotionControllerComponent::ResolveNativeRigAction(
     }
     return ResolveCoherentNativeAction(Library, Action, Context, bAuthorizedAdult,
         ParticipantCount, ParticipantRole, RequiredSourceClip, RootPolicy,
-        RigDrivers, Sequences, Entries);
+        RigDrivers, Sequences, Entries, AvoidPreviousPresentation);
 }
 
 bool UOGSharedMotionControllerComponent::CanPlayResolvedAction(
@@ -710,9 +744,14 @@ bool UOGSharedMotionControllerComponent::PlayResolvedAction(
     TArray<USkeletalMeshComponent*> RigDrivers;
     TArray<int32> RigDriverForPart;
     USkeletalMeshComponent* Leader = nullptr;
+    const bool bCanVaryPresentation = RequiredSourceClip.IsNone() &&
+        ParticipantCount == 1 &&
+        (Context == TEXT("Interaction") || Context == TEXT("Traversal"));
+    const FName AvoidPreviousPresentation = bCanVaryPresentation
+        ? LastPresentationSourceByAction.FindRef(GameplayAction) : NAME_None;
     if (!ResolveNativeRigAction(GameplayAction, Context, bAdultContextAuthorized,
             ParticipantCount, ParticipantRole, RequiredSourceClip, {},
-            RigDrivers, RigDriverForPart, Sequences, Entries))
+            RigDrivers, RigDriverForPart, Sequences, Entries, AvoidPreviousPresentation))
     {
         return false;
     }
@@ -807,6 +846,10 @@ bool UOGSharedMotionControllerComponent::PlayResolvedAction(
             }
         }
     }
+    // Store selection only after the complete original multi-rig playback
+    // actually started. Pure preflights and failed loads never advance it.
+    if (bCanVaryPresentation)
+        LastPresentationSourceByAction.Add(GameplayAction, PrimaryEntry->SourceClipId);
     SetComponentTickEnabled(true);
     return true;
 }
