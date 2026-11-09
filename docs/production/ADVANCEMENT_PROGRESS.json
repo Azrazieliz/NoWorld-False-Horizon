@@ -1372,6 +1372,11 @@
             "commit": "4a8383081f7d05203742cfc5377bd49115098ae2",
             "type": "SOURCE_PARTIAL",
             "change": "Native turn melee contact scans each visible original skinned source mesh and its own hand bones rather than suppressing all later meshes that reuse a bone name. Source bone history remains keyed by actual component; physical sweeps require matching World actor, existing collision, and live authoritative battle receipt. Runtime/Android not verified."
+          },
+          {
+            "commit": "acee5e2fb7798dbe972cdbdebffd5ac4b02e47cc",
+            "type": "SOURCE_PARTIAL",
+            "change": "Corrected the real skeletal melee collision pose-history implementation to match the existing per-source-SkeletalMeshComponent, per-hand-bone map declared in the native component header, preserving independently observed movements on each original character part. This repairs a source type mismatch; no native compile executed."
           }
         ],
         "completed_in_this_update": false,
@@ -4446,9 +4451,24 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T00:00:00Z"
+    },
+    {
+      "source_commit": "acee5e2fb7798dbe972cdbdebffd5ac4b02e47cc",
+      "system_ids": [
+        "M07"
+      ],
+      "result": "Corrected the real skeletal melee collision pose-history implementation to match the existing per-source-SkeletalMeshComponent, per-hand-bone map declared in the native component header, preserving independently observed movements on each original character part. This repairs a source type mismatch; no native compile executed.",
+      "remaining_player_visible_work": "Implement remaining source-backed contact skills and compile full UE5.8 game only during integrated Android packaging; device test and acceptance outstanding.",
+      "source_paths": [
+        "Source/OfflineGame/Private/Combat/OGTurnContactActionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing OGTurnContactActionComponent + global shared source motion integration",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T00:00:00Z"
     }
   ],
-  "continuation_last_source_commit": "4a8383081f7d05203742cfc5377bd49115098ae2",
+  "continuation_last_source_commit": "acee5e2fb7798dbe972cdbdebffd5ac4b02e47cc",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
