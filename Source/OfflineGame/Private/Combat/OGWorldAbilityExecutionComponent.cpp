@@ -520,10 +520,28 @@ bool UOGWorldAbilityExecutionComponent::CommitContacts(int32 Step,const TArray<F
 bool UOGWorldAbilityExecutionComponent::CommitProjectileContact(const FOGEntityId& Cast,int32 Step,AActor* Contact,FString& Error)
 {
     if (Cast!=ActiveCast || Completed.Contains(Step) || !Specification.Steps.IsValidIndex(Step)) return false;
-    TArray<FOGEntityId> Targets; const auto Id=BodyId(Contact,BattleId); if (Id.IsValid()) Targets.Add(Id);
     if (!IsAcceptedBodyCurrent())
     { CancelActiveCast(); return false; }
-    const bool Accepted=CommitContacts(Step,Targets,Error); if (!Accepted) Status=Error; return Accepted;
+    // A physical projectile collision does not bypass the same canonical
+    // recipient/skill rules used by direct, sphere and melee World contacts.
+    // A wall, friendly actor or invalid target consumes the actual impact,
+    // but must never become an unauthorized damage recipient.
+    TArray<FOGEntityId> PhysicalContacts;
+    const FOGEntityId Id=BodyId(Contact,BattleId);
+    if (Id.IsValid()) PhysicalContacts.Add(Id);
+    TArray<FOGEntityId> Eligible;
+    const FOGTurnBattle* Battle=Core.IsValid()?Core->GetOwnedLuminousTurnBattle():nullptr;
+    if (!Battle || Battle->GetState().BattleId!=BattleId ||
+        !Battle->FilterWorldContacts(Root,PhysicalContacts,Eligible,Error))
+    {
+        if (Error.IsEmpty())
+            Error=TEXT("The projectile's original encounter or canonical targets changed.");
+        Status=Error;
+        return false;
+    }
+    const bool Accepted=CommitContacts(Step,Eligible,Error);
+    if (!Accepted) Status=Error;
+    return Accepted;
 }
 void UOGWorldAbilityExecutionComponent::TickComponent(float Delta,ELevelTick Tick,FActorComponentTickFunction* Function)
 {
