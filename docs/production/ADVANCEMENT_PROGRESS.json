@@ -1467,6 +1467,11 @@
             "commit": "f46963ecc5936435175c1f39307eb8dcee74237e",
             "type": "SOURCE_PARTIAL",
             "change": "World cast recovery preflight now rejects projectile checkpoints already outside the original authored launch range or carrying an invalid original projectile speed, before any recovered actor is spawned. Existing source cast and per-step identities remain unchanged. Build/device/owner acceptance remains open."
+          },
+          {
+            "commit": "6950145f313dce6e6a518eeadd930ca6a81e027a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native World projectile checkpoints now record a decreasing actual remaining lifetime instead of Unreal AActor::GetLifeSpan() configured lifespan; late-spawned projectiles synchronize the authored remaining contact window; combat recovery pauses suspend both projectile movement and actor lifespan expiry and resume with preserved time. Original projectile visuals, canonical cast receipts, physical collision and recovery schema are reused. No native build, phone verification or owner acceptance."
           }
         ],
         "completed_in_this_update": false,
@@ -2005,6 +2010,11 @@
             "commit": "f46963ecc5936435175c1f39307eb8dcee74237e",
             "type": "SOURCE_PARTIAL",
             "change": "World cast recovery preflight now rejects projectile checkpoints already outside the original authored launch range or carrying an invalid original projectile speed, before any recovered actor is spawned. Existing source cast and per-step identities remain unchanged. Build/device/owner acceptance remains open."
+          },
+          {
+            "commit": "6950145f313dce6e6a518eeadd930ca6a81e027a",
+            "type": "SOURCE_PARTIAL",
+            "change": "Native World projectile checkpoints now record a decreasing actual remaining lifetime instead of Unreal AActor::GetLifeSpan() configured lifespan; late-spawned projectiles synchronize the authored remaining contact window; combat recovery pauses suspend both projectile movement and actor lifespan expiry and resume with preserved time. Original projectile visuals, canonical cast receipts, physical collision and recovery schema are reused. No native build, phone verification or owner acceptance."
           }
         ],
         "completed_in_this_update": false,
@@ -4732,9 +4742,28 @@
       "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
       "counted_as_completed_system": false,
       "saved_utc": "2026-11-09T08:59:30Z"
+    },
+    {
+      "source_commit": "6950145f313dce6e6a518eeadd930ca6a81e027a",
+      "related_declaration_commit": "005bf13ed6a5e92d66e1f9e0df888fb3a6ad20bf",
+      "related_runtime_commit": "cd0f20e5df581e217ab4c1b028b692d2edd1b9fb",
+      "system_ids": [
+        "M07",
+        "M32"
+      ],
+      "result": "Native World projectile checkpoints now record a decreasing actual remaining lifetime instead of Unreal AActor::GetLifeSpan() configured lifespan; late-spawned projectiles synchronize the authored remaining contact window; combat recovery pauses suspend both projectile movement and actor lifespan expiry and resume with preserved time. Original projectile visuals, canonical cast receipts, physical collision and recovery schema are reused.",
+      "remaining_player_visible_work": "Complete authored projectile/contact effects and all source action bindings, integrate UE5.8 native build and Android delivery. This is source-only; actual checkpoint persistence and pause behavior have not been device-tested.",
+      "source_paths": [
+        "Source/OfflineGame/Public/Combat/OGWorldAbilityExecutionComponent.h",
+        "Source/OfflineGame/Private/Combat/OGWorldAbilityExecutionComponent.cpp"
+      ],
+      "five_star_reused_runtime": "Existing 5-star native source bindings, UOGWorldAbilityExecutionComponent and FOGNativeProjectileCheckpoint; no new source assets or duplicate executor.",
+      "status": "SOURCE_IMPLEMENTED_NOT_NATIVE_BUILT_NOT_OWNER_ACCEPTED",
+      "counted_as_completed_system": false,
+      "saved_utc": "2026-11-09T09:00:00Z"
     }
   ],
-  "continuation_last_source_commit": "f46963ecc5936435175c1f39307eb8dcee74237e",
+  "continuation_last_source_commit": "6950145f313dce6e6a518eeadd930ca6a81e027a",
   "continuation_required_read_order": [
     "docs/production/NOWORLD_7STAR_AUTHORITY.md",
     "docs/production/ADVANCEMENT_PROGRESS.json",
